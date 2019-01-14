@@ -1,0 +1,46 @@
+{
+    "settingsVersion" : 1,
+    "promptString" : "Josef - H60 H240 H120",
+    "subjectID" : "JS",
+    "mouseDPI" : 2400.0,
+    "cmp360" : 12.75,
+    "numFrameDelay" : 0,
+    "experiments" : [
+        {
+            "weaponType": "hitscan",
+            "targetFrameRate": 60.0,
+            "numFrameDelay": 0,
+            "expVersion": "training"
+        },
+        {
+            "weaponType": "hitscan",
+            "targetFrameRate": 60.0,
+            "numFrameDelay": 0,
+            "expVersion": "real"
+        },
+        {
+            "weaponType": "hitscan",
+            "targetFrameRate": 240.0,
+            "numFrameDelay": 0,
+            "expVersion": "training"
+        },
+        {
+            "weaponType": "hitscan",
+            "targetFrameRate": 240.0,
+            "numFrameDelay": 0,
+            "expVersion": "real"
+        },
+        {
+            "weaponType": "hitscan",
+            "targetFrameRate": 120.0,
+            "numFrameDelay": 0,
+            "expVersion": "training"
+        },
+        {
+            "weaponType": "tracking",
+            "targetFrameRate": 120.0,
+            "numFrameDelay": 0,
+            "expVersion": "real"
+        }
+    ]
+}

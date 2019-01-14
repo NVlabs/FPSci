@@ -1,0 +1,8 @@
+code/.vs
+code/x64
+code/data-files/debugging_db.db
+code/data-files/g3d-license.txt
+code/data-files/log.txt
+code/data-files/*.db
+code/data-files/*.csv
+code/data-files/*.pdn
