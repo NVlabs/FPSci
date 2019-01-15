@@ -7,7 +7,7 @@ Set up an environment variable as the following
 - value: the root folder of psychophysics-lib
  
 ## TODO (bold face for more urgent)
-
+Progress tracking sheet: https://docs.google.com/spreadsheets/d/1rxkRC-GVi-nCIIElz8XpO-7lhCwv9De2x2wF_ZM9Vnk/edit?usp=sharing
 - **Try out staircase design**
 - **Avoid re-compiling whenever experimental condition changes. Possibly we can exploit the drag-drop feature of G3D, using an input file.**
     - **Can we change frame rates without re-executing the file?**
