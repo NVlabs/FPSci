@@ -31,7 +31,7 @@ static const bool  unlockFramerate = true;
 //========================================================================
 // variables related to experimental condition and record.
 static const std::string weaponType = "tracking"; // hitscan or tracking
-static const float targetFrameRate = 120.0f; // hz
+static const float targetFrameRate = 360.0f; // hz
 static const std::string subjectID = "JK"; // your name
 const int numFrameDelay = 0;
 static const std::string expVersion = "real"; // training or real
@@ -61,8 +61,9 @@ int main(int argc, const char* argv[]) {
     settings.window.resizable   = ! settings.window.fullScreen;
     settings.window.asynchronous = false;
     settings.window.caption = "Max Perf";
-    settings.window.refreshRate = int(targetFrameRate);
-    // settings.window.fullScreenMonitorName = "Generic PnP Monitor"; // use this on Josef's machine
+	//settings.window.refreshRate = int(targetFrameRate);
+	settings.window.refreshRate = -1;
+	// settings.window.fullScreenMonitorName = "Generic PnP Monitor"; // use this on Josef's machine
 
     //ExperimentSettingsList expList = ExperimentSettingsList(Any::fromFile(System::findDataFile("experiment1.Exp.Any")));
     //debugPrintf("Experiment: %s %lfDPI %lfcmp360 %d settings\n", expList.subjectID, expList.mouseDPI, expList.cmp360, expList.settingsList.size());
@@ -102,9 +103,11 @@ void App::initPsychophysicsLib() {
 void App::onInit() {
     GApp::onInit();
 
-    float const dt = 1.0f / (unlockFramerate ? 2048.0f : float(window()->settings().refreshRate));
-    setFrameDuration(dt);
-    renderDevice->setColorClearValue(Color3::white() * 0.0f);
+	//float const dt = 1.0f / (unlockFramerate ? 2048.0f : float(window()->settings().refreshRate));
+	float const dt = 1.0f / targetFrameRate;
+	setFrameDuration(dt);
+	//setFrameDuration(-1);
+	renderDevice->setColorClearValue(Color3::white() * 0.0f);
     debugCamera()->setFrame(Point3(-5, -2, 0));
     m_debugController->setFrame(debugCamera()->frame());
 
