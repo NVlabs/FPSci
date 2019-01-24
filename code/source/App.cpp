@@ -28,6 +28,14 @@ static const bool playMode = true;
 // by the monitor. 
 static const bool  unlockFramerate = true;
 
+// Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
+// which allows the application to submit asynchronously with vsync
+// without tearing.
+static const bool  variableRefreshRate = true;
+
+static const float verticalFieldOfViewDegrees = 90; // deg
+
+// JBS: TODO: Refactor these as experiment variables
 //========================================================================
 // variables related to experimental condition and record.
 static const std::string weaponType = "tracking"; // hitscan or tracking
@@ -42,8 +50,8 @@ static const std::string datafile = "ver2.db";
 /** Make objects fade towards black with distance as a depth cue */
 
 static float distanceDarken(const float csZ) {
-    const float t = max(0.0f, abs(csZ) - 30.0f);
-    return exp(-t * 0.02f);
+    const float t = max(0.0f, abs(csZ) - 10.0f);
+    return exp(-t * 0.1f);
 }
 
 G3D_START_AT_MAIN();
@@ -59,7 +67,7 @@ int main(int argc, const char* argv[]) {
     }
     settings.window.fullScreen  = playMode;
     settings.window.resizable   = ! settings.window.fullScreen;
-    settings.window.asynchronous = false;
+    settings.window.asynchronous = unlockFramerate;
     settings.window.caption = "Max Perf";
 	//settings.window.refreshRate = int(targetFrameRate);
 	settings.window.refreshRate = -1;
@@ -103,12 +111,23 @@ void App::initPsychophysicsLib() {
 void App::onInit() {
     GApp::onInit();
 
-	//float const dt = 1.0f / (unlockFramerate ? 2048.0f : float(window()->settings().refreshRate));
-	float const dt = 1.0f / targetFrameRate;
-	setFrameDuration(dt);
-	//setFrameDuration(-1);
+    // set frame duration based on settings
+    float dt = 0;
+    if (unlockFramerate) {
+        dt = 1.0f / 5000.0f;
+    }
+    else if (variableRefreshRate) {
+        dt = 1.0f / targetFrameRate;
+    }
+    else {
+        dt = 1.0f / float(window()->settings().refreshRate);
+    }
+    float(targetFrameRate) / (unlockFramerate ? 4000.0f : float(window()->settings().refreshRate));
+    setFrameDuration(dt);
+
 	renderDevice->setColorClearValue(Color3::white() * 0.0f);
     debugCamera()->setFrame(Point3(-5, -2, 0));
+    debugCamera()->projection().setFieldOfViewAngleDegrees(verticalFieldOfViewDegrees);
     m_debugController->setFrame(debugCamera()->frame());
 
     if (playMode) {
@@ -172,9 +191,8 @@ static Color3 computeTunnelColor(float alpha, float angle) {
     static const Color3 pink(1.0f, 0.5f, 0.5f);
     const float c = abs(wrap(0.25f + angle / (2.0f * pif()), 1.0f) - 0.5f) * 2.0f;
     const Color3 shade = Color3::cyan().lerp(pink, c);
-    const float distance = max(0.0f, 100.0f * abs(alpha) - 10.0f);
 
-    return (shade * exp(-distance * 0.1f)).pow(0.5f);
+    return (shade * distanceDarken(alpha * 100.0f)).pow(0.5f);
 }
 
 void App::resetView() {
@@ -566,9 +584,6 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface3D)
     // Draw::axes(Point3::zero(), rd);
 
     static const shared_ptr<Texture> reticleTexture = Texture::fromFile("reticle.png");
-
-        //System::findDataFile("ifs/head.ifs"), 0.01f);
-
     static SlowMesh tunnelMesh(PrimitiveType::LINES);
     static bool first = true;
 
@@ -679,6 +694,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& surface2D
 	expDebugStr += ex.getDebugStr(); // debugging message
     debugFont->draw2D(rd, format(expDebugStr.c_str(), iRound(renderDevice->stats().smoothFrameRate)), Point2(10,10), 12.0f, Color3::yellow());
 
+    // Display DONE when complete
     if (ex.getFSMState() == Psychophysics::FSM::State::SHUTDOWN) {
         static const shared_ptr<Texture> doneTexture = Texture::fromFile("done.png");
         rd->push2D(); {
