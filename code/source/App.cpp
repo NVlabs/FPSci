@@ -31,7 +31,7 @@ static const bool  unlockFramerate = true;
 //========================================================================
 // variables related to experimental condition and record.
 static const std::string weaponType = "tracking"; // hitscan or tracking
-static const float targetFrameRate = 360.0f; // hz
+static const float targetFrameRate = 1440.0f; // hz
 static const std::string subjectID = "JK"; // your name
 const int numFrameDelay = 0;
 static const std::string expVersion = "real"; // training or real
