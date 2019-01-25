@@ -2,7 +2,7 @@
 
 ## Dependency setting for Psychophysics library
 
-Set up an environment variable as the following
+Set up an environment variable as the following (note that we are not distributing it yet!)
 - name: PSYCHOPHYSICS
 - value: the root folder of psychophysics-lib
  
