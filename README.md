@@ -28,7 +28,6 @@ Progress tracking sheet (only accessible to developers): https://docs.google.com
 - Time to add latency measuring tools!
 - Add object scaling.
 - Implement scoreboard. What to display as score must be configurable by the experimenter or input configuration.
-- Reach out to the creator of AimHero and AimLab. If the creator is interested in collaborating, find out what the creator learned.
 - Full record of target motion
     - Analyze motion characteristics and subjects performance, infer difficulty level from the data (Ben)
         - Come up w/ some basic metrics that summarize path smoothness (i.e. integrated jerk magnitude)
