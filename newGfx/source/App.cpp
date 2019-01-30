@@ -17,7 +17,7 @@ static const bool  unlockFramerate            = true;
    without tearing. */
 static const bool  variableRefreshRate        = true;
 
-static const float verticalFieldOfViewDegrees = 90; // deg
+static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
 static const bool  playMode                   = true;
@@ -45,110 +45,25 @@ void App::onInit() {
         dt = 1.0f / float(window()->settings().refreshRate);
     }
     setFrameDuration(dt);
-
-    // Call setScene(shared_ptr<Scene>()) or setScene(MyScene::create()) to replace
-    // the default scene here.
-    
-    showRenderingStats      = false;
-
+    setSubmitToDisplayMode(SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);    
+    showRenderingStats      = true;
     makeGUI();
-    // For higher-quality screenshots:
-    // developerWindow->videoRecordDialog->setScreenShotFormat("PNG");
-    // developerWindow->videoRecordDialog->setCaptureGui(false);
+    developerWindow->videoRecordDialog->setCaptureGui(false);
 
-    loadScene(
-#       ifndef G3D_DEBUG
-            "G3D Simple Cornell Box (Area Light)" // Load something simple
-//            "G3D Sponza"
-#       else
-            "G3D Simple Cornell Box (Area Light)" // Load something simple
-#       endif
-        //developerWindow->sceneEditorWindow->selectedSceneName()  // Load the first scene encountered 
-        );
+    loadScene("Test");
 }
 
 
 void App::makeGUI() {
-    debugWindow->setVisible(true);
+    debugWindow->setVisible(false);
     developerWindow->videoRecordDialog->setEnabled(true);
-
-    GuiPane* infoPane = debugPane->addPane("Info", GuiTheme::ORNATE_PANE_STYLE);
-    
-    // Example of how to add debugging controls
-    infoPane->addLabel("You can add GUI controls");
-    infoPane->addLabel("in App::onInit().");
-    infoPane->addButton("Exit", [this]() { m_endProgram = true; });
-    infoPane->pack();
-
-    // More examples of debugging GUI controls:
-    // debugPane->addCheckBox("Use explicit checking", &explicitCheck);
-    // debugPane->addTextBox("Name", &myName);
-    // debugPane->addNumberBox("height", &height, "m", GuiTheme::LINEAR_SLIDER, 1.0f, 2.5f);
-    // button = debugPane->addButton("Run Simulator");
-    // debugPane->addButton("Generate Heightfield", [this](){ generateHeightfield(); });
-    // debugPane->addButton("Generate Heightfield", [this](){ makeHeightfield(imageName, scale, "model/heightfield.off"); });
-
     debugWindow->pack();
     debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 }
 
 
-// This default implementation is a direct copy of GApp::onGraphics3D to make it easy
-// for you to modify. If you aren't changing the hardware rendering strategy, you can
-// delete this override entirely.
-void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurfaces) {
-    if (! scene()) {
-        if ((submitToDisplayMode() == SubmitToDisplayMode::MAXIMIZE_THROUGHPUT) && (!rd->swapBuffersAutomatically())) {
-            swapBuffers();
-        }
-        rd->clear();
-        rd->pushState(); {
-            rd->setProjectionAndCameraMatrix(activeCamera()->projection(), activeCamera()->frame());
-            drawDebugShapes();
-        } rd->popState();
-        return;
-    }
-
-
-    GBuffer::Specification gbufferSpec = m_gbufferSpecification;
-    extendGBufferSpecification(gbufferSpec);
-    m_gbuffer->setSpecification(gbufferSpec);
-    m_gbuffer->resize(m_framebuffer->width(), m_framebuffer->height());
-    m_gbuffer->prepare(rd, activeCamera(), 0, -(float)previousSimTimeStep(), m_settings.hdrFramebuffer.depthGuardBandThickness, m_settings.hdrFramebuffer.colorGuardBandThickness);
-
-    m_renderer->render(rd,
-        activeCamera(),
-        m_framebuffer,
-        scene()->lightingEnvironment().ambientOcclusionSettings.enabled ? m_depthPeelFramebuffer : nullptr,
-        scene()->lightingEnvironment(), m_gbuffer,
-        allSurfaces);
-   
-    // Debug visualizations and post-process effects
-    rd->pushState(m_framebuffer); {
-        // Call to make the App show the output of debugDraw(...)
-        rd->setProjectionAndCameraMatrix(activeCamera()->projection(), activeCamera()->frame());
-        drawDebugShapes();
-        const shared_ptr<Entity>& selectedEntity = (notNull(developerWindow) && notNull(developerWindow->sceneEditorWindow)) ? developerWindow->sceneEditorWindow->selectedEntity() : nullptr;
-        scene()->visualize(rd, selectedEntity, allSurfaces, sceneVisualizationSettings(), activeCamera());
-
-        onPostProcessHDR3DEffects(rd);
-    } rd->popState();
-
-    // We're about to render to the actual back buffer, so swap the buffers now.
-    // This call also allows the screenshot and video recording to capture the
-    // previous frame just before it is displayed.
-    if (submitToDisplayMode() == SubmitToDisplayMode::MAXIMIZE_THROUGHPUT) {
-        swapBuffers();
-    }
-
-    // Clear the entire screen (needed even though we'll render over it, since
-    // AFR uses clear() to detect that the buffer is not re-used.)
-    rd->clear();
-
-    // Perform gamma correction, bloom, and AA, and write to the native window frame buffer
-    m_film->exposeAndRender(rd, activeCamera()->filmSettings(), m_framebuffer->texture(0), settings().hdrFramebuffer.colorGuardBandThickness.x + settings().hdrFramebuffer.depthGuardBandThickness.x, settings().hdrFramebuffer.depthGuardBandThickness.x, 
-        Texture::opaqueBlackIfNull(notNull(m_gbuffer) ? m_gbuffer->texture(GBuffer::Field::SS_POSITION_CHANGE) : nullptr),
-        activeCamera()->jitterMotion());
+void App::onAfterLoadScene(const Any& any, const String& sceneName) {
+    m_debugCamera->setFieldOfView(horizontalFieldOfViewDegrees * units::degrees(), FOVDirection::HORIZONTAL);
 }
 
 
@@ -185,12 +100,6 @@ bool App::onEvent(const GEvent& event) {
     // if ((event.type == GEventType::GUI_ACTION) && (event.gui.control == m_button)) { ... return true; }
     // if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) { ... return true; }
     // if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == 'p')) { ... return true; }
-
-    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == 'p')) { 
-        shared_ptr<DefaultRenderer> r = dynamic_pointer_cast<DefaultRenderer>(m_renderer);
-        r->setDeferredShading(! r->deferredShading());
-        return true; 
-    }
 
     return false;
 }

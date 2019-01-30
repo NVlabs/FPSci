@@ -15,6 +15,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="journal\journal.md.html" />
+    <None Include="data-files\scene\test.Scene.Any">
+      <Filter>Scene Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
