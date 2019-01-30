@@ -20,7 +20,7 @@ static const bool  variableRefreshRate        = true;
 static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
-static const bool  playMode                   = true;
+static const bool  playMode                   = false;
 
 
 
@@ -50,7 +50,7 @@ void App::onInit() {
     makeGUI();
     developerWindow->videoRecordDialog->setCaptureGui(false);
 
-    loadScene("Test");
+    loadScene("eSports Simple Hallway");
 }
 
 
@@ -150,7 +150,7 @@ int main(int argc, const char* argv[]) {
     settings.window.fullScreen  = playMode;
     settings.window.resizable   = ! settings.window.fullScreen;
     settings.window.asynchronous = unlockFramerate;
-    settings.window.caption = "Max Perf";
+    settings.window.caption = "NVIDIA Abstract FPS";
     settings.window.refreshRate = -1;
     settings.window.defaultIconFilename = "icon.png";
 
