@@ -10,6 +10,15 @@
 /** \brief Application framework. */
 class App : public GApp {
 protected:
+    const int                       numReticles = 55;
+
+    shared_ptr<GFont>               m_outputFont;
+    shared_ptr<Texture>             m_reticleTexture;
+
+    /** Used to detect GUI changes to m_reticleIndex */
+    int                             m_lastReticleLoaded = -1;
+    int                             m_reticleIndex = 0;
+    float                           m_sceneBrightness = 1.0f;
 
     /** Called from onInit */
     void makeGUI();
@@ -17,6 +26,17 @@ protected:
 public:
     
     App(const GApp::Settings& settings = GApp::Settings());
+
+    /** Call to change the reticle. */
+    void setReticle(int r);
+
+    /** Increment the current reticle index */
+    void nextReticle() {
+        setReticle((m_reticleIndex + 1) % numReticles); 
+    }
+
+    /** Call to set the 3D scene brightness. Default is 1.0. */
+    void setSceneBrightness(float b);
 
     virtual void onInit() override;
     virtual void onAI() override;

@@ -23,7 +23,6 @@ static const float horizontalFieldOfViewDegrees = 90; // deg
 static const bool  playMode                   = false;
 
 
-
 App::App(const GApp::Settings& settings) : GApp(settings) {
 }
 
@@ -46,17 +45,29 @@ void App::onInit() {
     }
     setFrameDuration(dt);
     setSubmitToDisplayMode(SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);    
-    showRenderingStats      = true;
+    showRenderingStats      = false;
     makeGUI();
     developerWindow->videoRecordDialog->setCaptureGui(false);
+    m_outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
 
+    setReticle(m_reticleIndex);
     loadScene("eSports Simple Hallway");
+
+    if (playMode) {
+        // Force into FPS mode
+        const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+        fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
+        fpm->setMoveRate(0.0);
+    }
 }
 
 
 void App::makeGUI() {
-    debugWindow->setVisible(false);
+    debugWindow->setVisible(! playMode);
     developerWindow->videoRecordDialog->setEnabled(true);
+
+    debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1);
+
     debugWindow->pack();
     debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 }
@@ -64,6 +75,7 @@ void App::makeGUI() {
 
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
     m_debugCamera->setFieldOfView(horizontalFieldOfViewDegrees * units::degrees(), FOVDirection::HORIZONTAL);
+    setSceneBrightness(m_sceneBrightness);
 }
 
 
@@ -110,6 +122,11 @@ void App::onUserInput(UserInput* ui) {
     (void)ui;
     // Add key handling here based on the keys currently held or
     // ones that changed in the last frame.
+
+    if (m_lastReticleLoaded != m_reticleIndex) {
+        // Slider was used to change the reticle
+        setReticle(m_reticleIndex);
+    }
 }
 
 
@@ -122,7 +139,32 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 
 void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& posed2D) {
     // Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
+
+    rd->push2D(); {
+        const float scale = rd->viewport().width() / 3840.0f;
+        rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+        Draw::rect2D(m_reticleTexture->rect2DBounds() * scale + (rd->viewport().wh() - m_reticleTexture->vector2Bounds() * scale) / 2.0f, rd, Color3::white(), m_reticleTexture);
+
+        // Faster than the full stats widget
+        m_outputFont->draw2D(rd, format("%d measured / %d requested fps", 
+            iRound(renderDevice->stats().smoothFrameRate), 
+            window()->settings().refreshRate), 
+            (Point2(36, 24) * scale).floor(), floor(28.0f * scale), Color3::yellow());
+    } rd->pop2D();
+
     Surface2D::sortAndRender(rd, posed2D);
+}
+
+
+void App::setReticle(int r) {
+    m_lastReticleLoaded = m_reticleIndex = clamp(0, r, numReticles - 1);
+    m_reticleTexture = Texture::fromFile(System::findDataFile(format("gui/reticle/reticle-%03d.png", m_reticleIndex)));
+}
+
+
+void App::setSceneBrightness(float b) {
+    m_sceneBrightness = b;
+    m_debugCamera->filmSettings().setSensitivity(m_sceneBrightness);
 }
 
 
@@ -130,7 +172,6 @@ void App::onCleanup() {
     // Called after the application loop ends.  Place a majority of cleanup code
     // here instead of in the constructor so that exceptions can be caught.
 }
-
 
 
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
@@ -156,8 +197,7 @@ int main(int argc, const char* argv[]) {
 
     settings.hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
     settings.hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
-    settings.dataDir                    = FileSystem::currentDirectory();
-    settings.screenCapture.outputDirectory = FileSystem::currentDirectory();
+    settings.dataDir                       = FileSystem::currentDirectory();
     settings.screenCapture.includeAppRevision = false;
     settings.screenCapture.includeG3DRevision = false;
     settings.screenCapture.filenamePrefix = "_";
