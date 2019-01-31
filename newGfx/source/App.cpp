@@ -64,9 +64,13 @@ void App::onInit() {
 
 void App::makeGUI() {
     debugWindow->setVisible(! playMode);
+    developerWindow->setVisible(! playMode);
+    developerWindow->sceneEditorWindow->setVisible(! playMode);
+    developerWindow->cameraControlWindow->setVisible(! playMode);
     developerWindow->videoRecordDialog->setEnabled(true);
 
     debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1);
+    debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f);
 
     debugWindow->pack();
     debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
@@ -76,6 +80,7 @@ void App::makeGUI() {
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
     m_debugCamera->setFieldOfView(horizontalFieldOfViewDegrees * units::degrees(), FOVDirection::HORIZONTAL);
     setSceneBrightness(m_sceneBrightness);
+    setActiveCamera(m_debugCamera);
 }
 
 
@@ -127,6 +132,9 @@ void App::onUserInput(UserInput* ui) {
         // Slider was used to change the reticle
         setReticle(m_reticleIndex);
     }
+
+    m_debugCamera->filmSettings().setSensitivity(m_sceneBrightness);
+
 }
 
 
@@ -141,9 +149,9 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& posed2D)
     // Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
 
     rd->push2D(); {
-        const float scale = rd->viewport().width() / 3840.0f;
+        const float scale = rd->viewport().width() / 1920.0f;
         rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-        Draw::rect2D(m_reticleTexture->rect2DBounds() * scale + (rd->viewport().wh() - m_reticleTexture->vector2Bounds() * scale) / 2.0f, rd, Color3::white(), m_reticleTexture);
+        Draw::rect2D((m_reticleTexture->rect2DBounds() * scale - m_reticleTexture->vector2Bounds() * scale / 2.0f) / 4.0f + rd->viewport().wh() / 2.0f, rd, Color3::white(), m_reticleTexture);
 
         // Faster than the full stats widget
         m_outputFont->draw2D(rd, format("%d measured / %d requested fps", 
@@ -164,7 +172,6 @@ void App::setReticle(int r) {
 
 void App::setSceneBrightness(float b) {
     m_sceneBrightness = b;
-    m_debugCamera->filmSettings().setSensitivity(m_sceneBrightness);
 }
 
 
