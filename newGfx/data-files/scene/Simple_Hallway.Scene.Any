@@ -84,7 +84,7 @@
             }; 
             
         }; 
-        
+
         sun = Light { 
             attenuation = ( 0, 0, 1 ); 
             bulbPower = Power3(200000, 180000, 130000 ); 
@@ -247,6 +247,7 @@
             scale = 1; 
             stripLightMaps = true; 
         }; 
+
         
         d120 = ArticulatedModel::Specification { 
             alphaFilter = "DETECT"; 

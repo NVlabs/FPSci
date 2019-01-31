@@ -15,13 +15,17 @@ protected:
     shared_ptr<GFont>               m_outputFont;
     shared_ptr<Texture>             m_reticleTexture;
 
+    shared_ptr<ArticulatedModel>    m_viewModel;
+
     /** Used to detect GUI changes to m_reticleIndex */
     int                             m_lastReticleLoaded = -1;
     int                             m_reticleIndex = 0;
     float                           m_sceneBrightness = 1.0f;
+    bool                            m_renderViewModel = true;
 
     /** Called from onInit */
     void makeGUI();
+    void loadViewModel();
 
 public:
     

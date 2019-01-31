@@ -20,7 +20,7 @@ static const bool  variableRefreshRate        = true;
 static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
-static const bool  playMode                   = false;
+static const bool  playMode                   = true;
 
 
 App::App(const GApp::Settings& settings) : GApp(settings) {
@@ -50,6 +50,7 @@ void App::onInit() {
     developerWindow->videoRecordDialog->setCaptureGui(false);
     m_outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
 
+    loadViewModel();
     setReticle(m_reticleIndex);
     loadScene("eSports Simple Hallway");
 
@@ -59,6 +60,21 @@ void App::onInit() {
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
         fpm->setMoveRate(0.0);
     }
+
+}
+
+
+void App::loadViewModel() {
+    const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification {
+        filename = "model/sniper/sniper.obj";
+        preprocess = {
+            transformGeometry(all(), Matrix4::yawDegrees(90));
+        transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
+        };
+        scale = 0.25;
+    });
+
+    m_viewModel = ArticulatedModel::create(modelSpec, "viewModel");
 }
 
 
@@ -69,6 +85,7 @@ void App::makeGUI() {
     developerWindow->cameraControlWindow->setVisible(! playMode);
     developerWindow->videoRecordDialog->setEnabled(true);
 
+    debugPane->addCheckBox("Weapon", &m_renderViewModel);
     debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1);
     debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f);
 
@@ -141,7 +158,11 @@ void App::onUserInput(UserInput* ui) {
 void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {
     GApp::onPose(surface, surface2D);
 
-    // Append any models to the arrays that you want to later be rendered by onGraphics()
+    if (m_renderViewModel) {
+        static const CFrame weaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f, -1.1f, 10, 5);
+        CFrame frame = m_debugCamera->frame() * weaponPos;
+        m_viewModel->pose(surface, m_debugCamera->frame() * weaponPos, m_debugCamera->previousFrame() * weaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
+    }
 }
 
 
