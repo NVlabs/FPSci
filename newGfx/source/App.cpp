@@ -20,7 +20,7 @@ static const bool  variableRefreshRate        = true;
 static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
-static const bool  playMode                   = true;
+static const bool  playMode                   = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -151,6 +151,7 @@ void App::makeGUI() {
     debugPane->setNewChildSize(280.0f, -1.0f, 62.0f);
     debugPane->beginRow(); {
         debugPane->addCheckBox("Hitscan", &m_hitScan);
+        debugPane->addCheckBox("Show Hitscan", &m_renderHitscan);
         debugPane->addCheckBox("Weapon", &m_renderViewModel);
         debugPane->addCheckBox("HUD", &m_renderHud);
         debugPane->addCheckBox("FPS", &m_renderFPS);
@@ -216,7 +217,7 @@ void App::onUserInput(UserInput* ui) {
     (void)ui;
     
 
-    if (playMode && ui->keyPressed(GKey::LEFT_MOUSE)) {
+    if ((playMode || m_debugController->enabled()) && ui->keyPressed(GKey::LEFT_MOUSE)) {
         // Fire
         Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
 
@@ -238,7 +239,7 @@ void App::onUserInput(UserInput* ui) {
         }
 
         // Create the laser
-        if (false) {
+        if (m_renderHitscan) {
             CFrame laserStartFrame = m_weaponFrame;
             laserStartFrame.translation += laserStartFrame.upVector() * 0.1f;
             
@@ -256,7 +257,9 @@ void App::onUserInput(UserInput* ui) {
             scene()->insert(laser);
         }
 
-        m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
+        if (playMode) {
+            m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
+        }
     }
 
     if (m_lastReticleLoaded != m_reticleIndex) {

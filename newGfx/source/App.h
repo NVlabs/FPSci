@@ -39,6 +39,7 @@ protected:
     bool                            m_renderViewModel = true;
     bool                            m_renderHud = true;
     bool                            m_renderFPS = true;
+    bool                            m_renderHitscan = true;
 
     /** Projectile if false         */
     bool                            m_hitScan = true;
