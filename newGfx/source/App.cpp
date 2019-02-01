@@ -128,7 +128,9 @@ void App::makeGUI() {
         debugPane->addCheckBox("Weapon", &m_renderViewModel);
         debugPane->addCheckBox("HUD", &m_renderHud);
         debugPane->addCheckBox("FPS", &m_renderFPS);
-        debugPane->addNumberBox("Input Lag", &m_inputLatencyMilliseconds, "ms", GuiTheme::LINEAR_SLIDER, 0.0f, 120.0f);
+        debugPane->addNumberBox("Input Lag", Pointer<float>(
+            [&](){ return userInput->artificialLatency() * 1000.0f; },
+            [&](float ms) { userInput->setArtificialLatency(ms * 0.001f); }), "ms", GuiTheme::LINEAR_SLIDER, 0.0f, 120.0f, 0.5f);
         debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1)->moveBy(50, 0);
         debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(50, 0);
     } debugPane->endRow();
