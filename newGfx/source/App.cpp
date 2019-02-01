@@ -80,7 +80,7 @@ void App::onInit() {
 shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale) {
     const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + 10), 0, m_targetModelArray.length() - 1);    
     
-    const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastSpawnedTargetIndex), scene().get(), m_targetModelArray[scaleIndex], CFrame());
+    const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
     const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(),
         Any::parse(format("combine(orbit(0, 0.1), CFrame::fromXYZYPRDegrees(%f, %f, %f))", position.x, position.y, position.z)));
     target->setTrack(track);
@@ -189,6 +189,24 @@ void App::onNetwork() {
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
     GApp::onSimulation(rdt, sdt, idt);
 
+    const RealTime now = System::time();
+    for (int p = 0; p < m_projectileArray.size(); ++p) {
+        const Projectile& projectile = m_projectileArray[p];
+
+        if (! m_hitScan) {
+            // Check for collisions
+        }
+
+        if (projectile.endTime < now) {
+            // Expire
+            m_projectileArray.fastRemove(p);
+            --p;
+        } else {
+            // Animate
+            projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * 1.0f);
+        }
+    }
+
     // Example GUI dynamic layout code.  Resize the debugWindow to fill
     // the screen horizontally.
     debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
@@ -247,13 +265,16 @@ void App::onUserInput(UserInput* ui) {
             laserStartFrame.lookAt(aimPoint);
 
             laserStartFrame.translation += laserStartFrame.lookVector() * 2.0f; 
-            const shared_ptr<VisibleEntity>& laser = VisibleEntity::create(format("laser%03d", ++m_lastSpawnedTargetIndex), scene().get(), m_laserModel, CFrame());
+            const shared_ptr<VisibleEntity>& laser = VisibleEntity::create(format("laser%03d", ++m_lastUniqueID), scene().get(), m_laserModel, laserStartFrame);
             laser->setShouldBeSaved(false);
             laser->setCanCauseCollisions(false);
             laser->setCastsShadows(false);
+            /*
             const shared_ptr<Entity::Track>& track = Entity::Track::create(laser.get(), scene().get(),
                 Any::parse(format("%s", laserStartFrame.toXYZYPRDegreesString().c_str())));
             laser->setTrack(track);
+            */
+            m_projectileArray.push(Projectile(laser, System::time() + 1.0f));
             scene()->insert(laser);
         }
 
@@ -379,6 +400,7 @@ int main(int argc, const char* argv[]) {
     settings.dataDir                       = FileSystem::currentDirectory();
     settings.screenCapture.includeAppRevision = false;
     settings.screenCapture.includeG3DRevision = false;
+    settings.screenCapture.outputDirectory = "../journal/";
     settings.screenCapture.filenamePrefix = "_";
 
     settings.renderer.deferredShading = true;

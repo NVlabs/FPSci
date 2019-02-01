@@ -7,6 +7,15 @@
 #pragma once
 #include <G3D/G3D.h>
 
+class Projectile {
+public:
+    shared_ptr<VisibleEntity>       entity;
+    /** When in hitscan mode */
+    RealTime                        endTime;
+    Projectile() : endTime(0) {}
+    Projectile(const shared_ptr<VisibleEntity>& e, RealTime t = 0) : entity(e), endTime(t) {}
+};
+
 /** \brief Application framework. */
 class App : public GApp {
 protected:
@@ -29,6 +38,8 @@ protected:
     /** Array of all targets in the scene */
     Array<shared_ptr<VisibleEntity>> m_targetArray;
 
+    Array<Projectile>               m_projectileArray;
+
     /** Coordinate frame of the weapon, updated in onPose() */
     CFrame                          m_weaponFrame;
 
@@ -44,7 +55,7 @@ protected:
     /** Projectile if false         */
     bool                            m_hitScan = true;
 
-    int                             m_lastSpawnedTargetIndex = 0;
+    int                             m_lastUniqueID = 0;
 
     /** Called from onInit */
     void makeGUI();
