@@ -20,7 +20,7 @@ static const bool  variableRefreshRate        = true;
 static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
-static const bool  playMode                   = true;
+static const bool  playMode                   = false;
 
 
 App::App(const GApp::Settings& settings) : GApp(settings) {
@@ -159,9 +159,13 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
     GApp::onPose(surface, surface2D);
 
     if (m_renderViewModel) {
-        static const CFrame weaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f, -1.1f, 10, 5);
-        CFrame frame = m_debugCamera->frame() * weaponPos;
-        m_viewModel->pose(surface, m_debugCamera->frame() * weaponPos, m_debugCamera->previousFrame() * weaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
+        const float yScale = -0.12f;
+        const float zScale = -yScale * 0.5f;
+        const float lookY = m_debugCamera->frame().lookVector().y;
+        const float prevLookY = m_debugCamera->previousFrame().lookVector().y;
+        const CFrame weaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
+        const CFrame prevWeaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f + prevLookY * yScale, -1.1f + prevLookY * zScale, 10, 5);
+        m_viewModel->pose(surface, m_debugCamera->frame() * weaponPos, m_debugCamera->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
     }
 }
 
@@ -214,7 +218,7 @@ int main(int argc, const char* argv[]) {
     if (playMode) {
         settings.window.width       = 1920; settings.window.height      = 1080;
     } else {
-        settings.window.width       = 1280; settings.window.height      = 720;
+        settings.window.width       = 1920; settings.window.height      = 980;
     }
     settings.window.fullScreen  = playMode;
     settings.window.resizable   = ! settings.window.fullScreen;
