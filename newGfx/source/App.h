@@ -18,6 +18,10 @@ protected:
     shared_ptr<Texture>             m_hudTexture;
     shared_ptr<ArticulatedModel>    m_viewModel;
     shared_ptr<Sound>               m_fireSound;
+    shared_ptr<ArticulatedModel>    m_targetModel;
+
+    /** Array of all targets in the scene */
+    Array<shared_ptr<VisibleEntity>> m_targetArray;
 
     /** Used to detect GUI changes to m_reticleIndex */
     int                             m_lastReticleLoaded = -1;
@@ -42,6 +46,8 @@ public:
     void nextReticle() {
         setReticle((m_reticleIndex + 1) % numReticles); 
     }
+
+    shared_ptr<VisibleEntity> spawnTarget(const Point3& position, float scale);
 
     /** Call to set the 3D scene brightness. Default is 1.0. */
     void setSceneBrightness(float b);

@@ -102,15 +102,7 @@
             spotHalfAngleDegrees = 10; 
             type = "SPOT"; 
         }; 
-        
-        target = VisibleEntity { 
-            canCauseCollisions = true; 
-            canChange = true; 
-            track = combine(orbit(0, 0.1), CFrame::fromXYZYPRDegrees(37.6184, -0.54509, -2.12245 )); 
-            mass = 1; 
-            model = "d120"; 
-        }; 
-        
+                
     }; 
     
     lightingEnvironment = LightingEnvironment { 
@@ -246,32 +238,6 @@
             
             scale = 1; 
             stripLightMaps = true; 
-        }; 
-
-        
-        d120 = ArticulatedModel::Specification { 
-            alphaFilter = "DETECT"; 
-            cachable = true; 
-            cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings { 
-                allowVertexMerging = true; 
-                forceComputeNormals = false; 
-                forceComputeTangents = false; 
-                forceVertexMerging = true; 
-                maxEdgeLength = inf; 
-                maxNormalWeldAngleDegrees = 0; 
-                maxSmoothAngleDegrees = 0; 
-            }; 
-            
-            filename = "ifs/d12.ifs"; 
-            preprocess = preprocess{
-                setMaterial(all(), UniversalMaterial::Specification { 
-                        emissive = Color3(0.7, 0, 0 ); 
-                        glossy = Color4(0.4, 0.2, 0.1, 0.8 ); 
-                        lambertian = Color3(1, 0.09, 0 ); 
-                    } ) }; 
-            
-            refractionHint = "DYNAMIC_FLAT"; 
-            scale = 1; 
         }; 
         
     }; 

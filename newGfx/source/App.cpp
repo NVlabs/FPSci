@@ -20,7 +20,7 @@ static const bool  variableRefreshRate        = true;
 static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
-static const bool  playMode                   = true;
+static const bool  playMode                   = false;
 
 
 App::App(const GApp::Settings& settings) : GApp(settings) {
@@ -51,6 +51,24 @@ void App::onInit() {
     m_outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
     m_hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
     m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
+    m_targetModel = ArticulatedModel::create(PARSE_ANY(ArticulatedModel::Specification { 
+        filename = "ifs/d12.ifs"; 
+        cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings { 
+            allowVertexMerging = true; 
+            forceComputeNormals = false; 
+            forceComputeTangents = false; 
+            forceVertexMerging = true; 
+            maxEdgeLength = inf; 
+            maxNormalWeldAngleDegrees = 0; 
+            maxSmoothAngleDegrees = 0; 
+        }; 
+        preprocess = preprocess{
+            setMaterial(all(), UniversalMaterial::Specification { 
+            emissive = Color3(0.7, 0, 0 ); 
+            glossy = Color4(0.4, 0.2, 0.1, 0.8 ); 
+            lambertian = Color3(1, 0.09, 0 ); 
+            } ) }; 
+        };));
     
     if (playMode) {
         m_fireSound = Sound::create(System::findDataFile("sound/42108__marcuslee__Laser_Wrath_6.wav"));
@@ -60,6 +78,9 @@ void App::onInit() {
     setReticle(m_reticleIndex);
     loadScene("eSports Simple Hallway");
 
+    spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
+    spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
+
     if (playMode) {
         // Force into FPS mode
         const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
@@ -67,6 +88,17 @@ void App::onInit() {
         fpm->setMoveRate(0.0);
     }
 
+}
+
+
+shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale) {
+    const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%02d", m_targetArray.size()), scene().get(), m_targetModel, CFrame());
+    const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(),
+        Any::parse(format("combine(orbit(0, 0.1), CFrame::fromXYZYPRDegrees(%f, %f, %f))", position.x, position.y, position.z)));
+    target->setTrack(track);
+    m_targetArray.append(target);
+    scene()->insert(target);
+    return target;
 }
 
 
