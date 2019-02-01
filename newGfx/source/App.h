@@ -30,6 +30,7 @@ protected:
     bool                            m_renderViewModel = true;
     bool                            m_renderHud = true;
     bool                            m_renderFPS = true;
+    float                           m_inputLatencyMilliseconds = 0.0f;
 
     /** Called from onInit */
     void makeGUI();

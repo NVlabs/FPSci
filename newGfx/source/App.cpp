@@ -123,11 +123,15 @@ void App::makeGUI() {
     developerWindow->cameraControlWindow->setVisible(! playMode);
     developerWindow->videoRecordDialog->setEnabled(true);
 
-    debugPane->addCheckBox("Weapon", &m_renderViewModel);
-    debugPane->addCheckBox("HUD", &m_renderHud);
-    debugPane->addCheckBox("FPS", &m_renderFPS);
-    debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1);
-    debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f);
+    debugPane->setNewChildSize(280.0f, -1.0f, 62.0f);
+    debugPane->beginRow(); {
+        debugPane->addCheckBox("Weapon", &m_renderViewModel);
+        debugPane->addCheckBox("HUD", &m_renderHud);
+        debugPane->addCheckBox("FPS", &m_renderFPS);
+        debugPane->addNumberBox("Input Lag", &m_inputLatencyMilliseconds, "ms", GuiTheme::LINEAR_SLIDER, 0.0f, 120.0f);
+        debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1)->moveBy(50, 0);
+        debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(50, 0);
+    } debugPane->endRow();
 
     debugWindow->pack();
     debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
@@ -174,14 +178,7 @@ bool App::onEvent(const GEvent& event) {
     // if ((event.type == GEventType::GUI_ACTION) && (event.gui.control == m_button)) { ... return true; }
     // if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) { ... return true; }
     // if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == 'p')) { ... return true; }
-
-    if ((event.type == GEventType::MOUSE_BUTTON_DOWN) && playMode) {
-        // Fire
-
-        // This can be modified to be a 3D sound and to track the laser itself
-        m_fireSound->play();
-    }
-
+    
     return false;
 }
 
@@ -189,8 +186,14 @@ bool App::onEvent(const GEvent& event) {
 void App::onUserInput(UserInput* ui) {
     GApp::onUserInput(ui);
     (void)ui;
-    // Add key handling here based on the keys currently held or
-    // ones that changed in the last frame.
+    
+
+    if (playMode && ui->keyPressed(GKey::LEFT_MOUSE)) {
+        // Fire
+
+        // This effect can be modified to be a 3D sound and to track the laser itself
+        m_fireSound->play();
+    }
 
     if (m_lastReticleLoaded != m_reticleIndex) {
         // Slider was used to change the reticle
