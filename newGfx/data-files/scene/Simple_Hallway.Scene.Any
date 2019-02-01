@@ -151,6 +151,8 @@
     }; 
     
     models = { 
+      
+
         buildingModel = ArticulatedModel::Specification { 
             alphaFilter = "BINARY"; 
             cleanGeometrySettings = CleanGeometrySettings { 

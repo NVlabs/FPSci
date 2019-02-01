@@ -20,7 +20,7 @@ static const bool  variableRefreshRate        = true;
 static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
-static const bool  playMode                   = false;
+static const bool  playMode                   = true;
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -50,10 +50,71 @@ void App::onInit() {
     setSubmitToDisplayMode(SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);    
     showRenderingStats      = false;
     makeGUI();
-    developerWindow->videoRecordDialog->setCaptureGui(false);
+    developerWindow->videoRecordDialog->setCaptureGui(true);
     m_outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
     m_hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
     m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
+        
+    if (playMode) {
+        m_fireSound = Sound::create(System::findDataFile("sound/42108__marcuslee__Laser_Wrath_6.wav"));
+        m_explosionSound = Sound::create(System::findDataFile("sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav"));
+    }
+
+    loadModels();
+    setReticle(m_reticleIndex);
+    loadScene("eSports Simple Hallway");
+
+    spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
+    spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
+
+    if (playMode) {
+        // Force into FPS mode
+        const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+        fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
+        fpm->setMoveRate(0.0);
+    }
+
+}
+
+
+shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale) {
+    const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + 10), 0, m_targetModelArray.length() - 1);    
+    
+    const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastSpawnedTargetIndex), scene().get(), m_targetModelArray[scaleIndex], CFrame());
+    const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(),
+        Any::parse(format("combine(orbit(0, 0.1), CFrame::fromXYZYPRDegrees(%f, %f, %f))", position.x, position.y, position.z)));
+    target->setTrack(track);
+    target->setShouldBeSaved(false);
+    m_targetArray.append(target);
+    scene()->insert(target);
+    return target;
+}
+
+
+void App::loadModels() {
+    const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification {
+        filename = "model/sniper/sniper.obj";
+        preprocess = {
+            transformGeometry(all(), Matrix4::yawDegrees(90));
+        transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
+        };
+        scale = 0.25;
+    });
+
+    m_viewModel = ArticulatedModel::create(modelSpec, "viewModel");
+
+    const static Any laserSpec = PARSE_ANY(ArticulatedModel::Specification {
+        filename = "ifs/d10.ifs";
+        preprocess = {
+            transformGeometry(all(), Matrix4::pitchDegrees(90));
+            transformGeometry(all(), Matrix4::scale(0.05,0.05,2));
+            setMaterial(all(), UniversalMaterial::Specification {
+                lambertian = Color3(0);
+            emissive = Power3(5,4,0);
+            });
+        };});
+
+    m_laserModel = ArticulatedModel::create(laserSpec, "laserModel");
 
     for (int i = 0; i <= 20; ++i) {
         const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - 10.0f);
@@ -77,52 +138,6 @@ void App::onInit() {
                 } ) }; 
             };), scale))));
     }
-    
-    if (playMode) {
-        m_fireSound = Sound::create(System::findDataFile("sound/42108__marcuslee__Laser_Wrath_6.wav"));
-    }
-
-    loadViewModel();
-    setReticle(m_reticleIndex);
-    loadScene("eSports Simple Hallway");
-
-    spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
-    spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
-
-    if (playMode) {
-        // Force into FPS mode
-        const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-        fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
-        fpm->setMoveRate(0.0);
-    }
-
-}
-
-
-shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale) {
-    const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + 10), 0, m_targetModelArray.length() - 1);    
-    
-    const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%02d", m_targetArray.size()), scene().get(), m_targetModelArray[scaleIndex], CFrame());
-    const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(),
-        Any::parse(format("combine(orbit(0, 0.1), CFrame::fromXYZYPRDegrees(%f, %f, %f))", position.x, position.y, position.z)));
-    target->setTrack(track);
-    m_targetArray.append(target);
-    scene()->insert(target);
-    return target;
-}
-
-
-void App::loadViewModel() {
-    const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification {
-        filename = "model/sniper/sniper.obj";
-        preprocess = {
-            transformGeometry(all(), Matrix4::yawDegrees(90));
-        transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
-        };
-        scale = 0.25;
-    });
-
-    m_viewModel = ArticulatedModel::create(modelSpec, "viewModel");
 }
 
 
@@ -135,6 +150,7 @@ void App::makeGUI() {
 
     debugPane->setNewChildSize(280.0f, -1.0f, 62.0f);
     debugPane->beginRow(); {
+        debugPane->addCheckBox("Hitscan", &m_hitScan);
         debugPane->addCheckBox("Weapon", &m_renderViewModel);
         debugPane->addCheckBox("HUD", &m_renderHud);
         debugPane->addCheckBox("FPS", &m_renderFPS);
@@ -202,9 +218,45 @@ void App::onUserInput(UserInput* ui) {
 
     if (playMode && ui->keyPressed(GKey::LEFT_MOUSE)) {
         // Fire
+        Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
 
-        // This effect can be modified to be a 3D sound and to track the laser itself
-        m_fireSound->play();
+        if (m_hitScan) {
+            const Ray& ray = m_debugCamera->frame().lookRay();
+
+            float closest = finf();
+            int closestIndex = -1;
+            for (int t = 0; t < m_targetArray.size(); ++t) {
+                if (m_targetArray[t]->intersect(ray, closest)) {
+                    closestIndex = t;
+                }
+            }
+
+            if (closestIndex >= 0) {
+                destroyTarget(closestIndex);
+                aimPoint = ray.origin() + ray.direction() * closest;
+            }
+        }
+
+        // Create the laser
+        if (false) {
+            CFrame laserStartFrame = m_weaponFrame;
+            laserStartFrame.translation += laserStartFrame.upVector() * 0.1f;
+            
+            // Adjust for the discrepancy between where the gun is and where the player is looking
+            laserStartFrame.lookAt(aimPoint);
+
+            laserStartFrame.translation += laserStartFrame.lookVector() * 2.0f; 
+            const shared_ptr<VisibleEntity>& laser = VisibleEntity::create(format("laser%03d", ++m_lastSpawnedTargetIndex), scene().get(), m_laserModel, CFrame());
+            laser->setShouldBeSaved(false);
+            laser->setCanCauseCollisions(false);
+            laser->setCastsShadows(false);
+            const shared_ptr<Entity::Track>& track = Entity::Track::create(laser.get(), scene().get(),
+                Any::parse(format("%s", laserStartFrame.toXYZYPRDegreesString().c_str())));
+            laser->setTrack(track);
+            scene()->insert(laser);
+        }
+
+        m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
     }
 
     if (m_lastReticleLoaded != m_reticleIndex) {
@@ -217,6 +269,20 @@ void App::onUserInput(UserInput* ui) {
 }
 
 
+void App::destroyTarget(int index) {
+    // Not a reference because we're about to manipulate the array
+    const shared_ptr<VisibleEntity> target = m_targetArray[index];
+    m_targetArray.fastRemove(index);
+
+    scene()->removeEntity(target->name());
+
+    if (playMode) {
+        // 3D audio
+        m_explosionSound->play(target->frame().translation, Vector3::zero(), 16.0f);
+    }
+}
+
+
 void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {
     GApp::onPose(surface, surface2D);
 
@@ -225,9 +291,9 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
         const float zScale = -yScale * 0.5f;
         const float lookY = m_debugCamera->frame().lookVector().y;
         const float prevLookY = m_debugCamera->previousFrame().lookVector().y;
-        const CFrame weaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
+        m_weaponFrame = m_debugCamera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
         const CFrame prevWeaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f + prevLookY * yScale, -1.1f + prevLookY * zScale, 10, 5);
-        m_viewModel->pose(surface, m_debugCamera->frame() * weaponPos, m_debugCamera->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
+        m_viewModel->pose(surface, m_weaponFrame, m_debugCamera->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
     }
 }
 

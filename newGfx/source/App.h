@@ -19,12 +19,18 @@ protected:
     shared_ptr<Texture>             m_hudTexture;
     shared_ptr<ArticulatedModel>    m_viewModel;
     shared_ptr<Sound>               m_fireSound;
+    shared_ptr<Sound>               m_explosionSound;
+
+    shared_ptr<ArticulatedModel>    m_laserModel;
 
     /** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
     Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
 
     /** Array of all targets in the scene */
     Array<shared_ptr<VisibleEntity>> m_targetArray;
+
+    /** Coordinate frame of the weapon, updated in onPose() */
+    CFrame                          m_weaponFrame;
 
     /** Used to detect GUI changes to m_reticleIndex */
     int                             m_lastReticleLoaded = -1;
@@ -34,9 +40,15 @@ protected:
     bool                            m_renderHud = true;
     bool                            m_renderFPS = true;
 
+    /** Projectile if false         */
+    bool                            m_hitScan = true;
+
+    int                             m_lastSpawnedTargetIndex = 0;
+
     /** Called from onInit */
     void makeGUI();
-    void loadViewModel();
+    void loadModels();
+    void destroyTarget(int index);
 
 public:
     
