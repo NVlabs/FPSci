@@ -22,6 +22,9 @@ static const float horizontalFieldOfViewDegrees = 90; // deg
 /** Set to false when debugging */
 static const bool  playMode                   = false;
 
+////////////////////////////////////////////////////////////////////////////////////////////
+
+const float App::TARGET_MODEL_ARRAY_SCALING = 0.1f;
 
 App::App(const GApp::Settings& settings) : GApp(settings) {
 }
@@ -51,24 +54,29 @@ void App::onInit() {
     m_outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
     m_hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
     m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
-    m_targetModel = ArticulatedModel::create(PARSE_ANY(ArticulatedModel::Specification { 
-        filename = "ifs/d12.ifs"; 
-        cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings { 
-            allowVertexMerging = true; 
-            forceComputeNormals = false; 
-            forceComputeTangents = false; 
-            forceVertexMerging = true; 
-            maxEdgeLength = inf; 
-            maxNormalWeldAngleDegrees = 0; 
-            maxSmoothAngleDegrees = 0; 
-        }; 
-        preprocess = preprocess{
-            setMaterial(all(), UniversalMaterial::Specification { 
-            emissive = Color3(0.7, 0, 0 ); 
-            glossy = Color4(0.4, 0.2, 0.1, 0.8 ); 
-            lambertian = Color3(1, 0.09, 0 ); 
-            } ) }; 
-        };));
+
+    for (int i = 0; i <= 20; ++i) {
+        const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - 10.0f);
+        m_targetModelArray.push(ArticulatedModel::create(Any::parse(format(STR(ArticulatedModel::Specification { 
+            filename = "ifs/d12.ifs"; 
+            cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings { 
+                allowVertexMerging = true; 
+                forceComputeNormals = false; 
+                forceComputeTangents = false; 
+                forceVertexMerging = true; 
+                maxEdgeLength = inf; 
+                maxNormalWeldAngleDegrees = 0; 
+                maxSmoothAngleDegrees = 0; 
+            }; 
+            scale = %f;
+            preprocess = preprocess{
+                setMaterial(all(), UniversalMaterial::Specification { 
+                emissive = Color3(0.7, 0, 0 ); 
+                glossy = Color4(0.4, 0.2, 0.1, 0.8 ); 
+                lambertian = Color3(1, 0.09, 0 ); 
+                } ) }; 
+            };), scale))));
+    }
     
     if (playMode) {
         m_fireSound = Sound::create(System::findDataFile("sound/42108__marcuslee__Laser_Wrath_6.wav"));
@@ -92,7 +100,9 @@ void App::onInit() {
 
 
 shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale) {
-    const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%02d", m_targetArray.size()), scene().get(), m_targetModel, CFrame());
+    const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + 10), 0, m_targetModelArray.length() - 1);    
+    
+    const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%02d", m_targetArray.size()), scene().get(), m_targetModelArray[scaleIndex], CFrame());
     const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(),
         Any::parse(format("combine(orbit(0, 0.1), CFrame::fromXYZYPRDegrees(%f, %f, %f))", position.x, position.y, position.z)));
     target->setTrack(track);

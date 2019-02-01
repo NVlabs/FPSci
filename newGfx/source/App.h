@@ -10,6 +10,7 @@
 /** \brief Application framework. */
 class App : public GApp {
 protected:
+    static const float TARGET_MODEL_ARRAY_SCALING;
     const int                       numReticles = 55;
 
     shared_ptr<GFont>               m_outputFont;
@@ -18,7 +19,9 @@ protected:
     shared_ptr<Texture>             m_hudTexture;
     shared_ptr<ArticulatedModel>    m_viewModel;
     shared_ptr<Sound>               m_fireSound;
-    shared_ptr<ArticulatedModel>    m_targetModel;
+
+    /** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
+    Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
 
     /** Array of all targets in the scene */
     Array<shared_ptr<VisibleEntity>> m_targetArray;
