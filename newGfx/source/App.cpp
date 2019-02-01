@@ -49,6 +49,8 @@ void App::onInit() {
     makeGUI();
     developerWindow->videoRecordDialog->setCaptureGui(false);
     m_outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
+    m_hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
+    m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
     loadViewModel();
     setReticle(m_reticleIndex);
@@ -86,6 +88,8 @@ void App::makeGUI() {
     developerWindow->videoRecordDialog->setEnabled(true);
 
     debugPane->addCheckBox("Weapon", &m_renderViewModel);
+    debugPane->addCheckBox("HUD", &m_renderHud);
+    debugPane->addCheckBox("FPS", &m_renderFPS);
     debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1);
     debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f);
 
@@ -176,13 +180,25 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& posed2D)
     rd->push2D(); {
         const float scale = rd->viewport().width() / 1920.0f;
         rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+
+        // Reticle
         Draw::rect2D((m_reticleTexture->rect2DBounds() * scale - m_reticleTexture->vector2Bounds() * scale / 2.0f) / 4.0f + rd->viewport().wh() / 2.0f, rd, Color3::white(), m_reticleTexture);
 
-        // Faster than the full stats widget
-        m_outputFont->draw2D(rd, format("%d measured / %d requested fps", 
-            iRound(renderDevice->stats().smoothFrameRate), 
-            window()->settings().refreshRate), 
-            (Point2(36, 24) * scale).floor(), floor(28.0f * scale), Color3::yellow());
+        if (m_renderHud) {
+            const Point2 hudCenter(rd->viewport().width() / 2.0f, m_hudTexture->height() * scale * 0.48f);
+            Draw::rect2D((m_hudTexture->rect2DBounds() * scale - m_hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_hudTexture);
+            m_hudFont->draw2D(rd, "1:36", hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+            m_hudFont->draw2D(rd, "86%", hudCenter + Vector2(7, -1), scale * 30, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+            m_hudFont->draw2D(rd, "2080", hudCenter + Vector2(125, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+        }
+
+        // FPS display (faster than the full stats widget)
+        if (m_renderFPS) {
+            m_outputFont->draw2D(rd, format("%d measured / %d requested fps", 
+                iRound(renderDevice->stats().smoothFrameRate), 
+                window()->settings().refreshRate), 
+                (Point2(36, 24) * scale).floor(), floor(28.0f * scale), Color3::yellow());
+        }
     } rd->pop2D();
 
     Surface2D::sortAndRender(rd, posed2D);

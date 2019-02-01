@@ -13,8 +13,9 @@ protected:
     const int                       numReticles = 55;
 
     shared_ptr<GFont>               m_outputFont;
+    shared_ptr<GFont>               m_hudFont;
     shared_ptr<Texture>             m_reticleTexture;
-
+    shared_ptr<Texture>             m_hudTexture;
     shared_ptr<ArticulatedModel>    m_viewModel;
 
     /** Used to detect GUI changes to m_reticleIndex */
@@ -22,6 +23,8 @@ protected:
     int                             m_reticleIndex = 0;
     float                           m_sceneBrightness = 1.0f;
     bool                            m_renderViewModel = true;
+    bool                            m_renderHud = true;
+    bool                            m_renderFPS = true;
 
     /** Called from onInit */
     void makeGUI();
