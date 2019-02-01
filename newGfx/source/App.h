@@ -17,6 +17,7 @@ protected:
     shared_ptr<Texture>             m_reticleTexture;
     shared_ptr<Texture>             m_hudTexture;
     shared_ptr<ArticulatedModel>    m_viewModel;
+    shared_ptr<Sound>               m_fireSound;
 
     /** Used to detect GUI changes to m_reticleIndex */
     int                             m_lastReticleLoaded = -1;

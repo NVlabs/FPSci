@@ -20,7 +20,7 @@ static const bool  variableRefreshRate        = true;
 static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
-static const bool  playMode                   = false;
+static const bool  playMode                   = true;
 
 
 App::App(const GApp::Settings& settings) : GApp(settings) {
@@ -51,6 +51,10 @@ void App::onInit() {
     m_outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
     m_hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
     m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
+    
+    if (playMode) {
+        m_fireSound = Sound::create(System::findDataFile("sound/42108__marcuslee__Laser_Wrath_6.wav"));
+    }
 
     loadViewModel();
     setReticle(m_reticleIndex);
@@ -139,6 +143,13 @@ bool App::onEvent(const GEvent& event) {
     // if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) { ... return true; }
     // if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == 'p')) { ... return true; }
 
+    if ((event.type == GEventType::MOUSE_BUTTON_DOWN) && playMode) {
+        // Fire
+
+        // This can be modified to be a 3D sound and to track the laser itself
+        m_fireSound->play();
+    }
+
     return false;
 }
 
@@ -226,7 +237,11 @@ void App::onCleanup() {
 G3D_START_AT_MAIN();
 
 int main(int argc, const char* argv[]) {
-    initGLG3D(G3DSpecification());
+    {
+        G3DSpecification spec;
+        spec.audio = playMode;
+        initGLG3D(spec);
+    }
 
     (void)argc; (void)argv;
     GApp::Settings settings(argc, argv);
