@@ -148,22 +148,40 @@ void App::makeGUI() {
     developerWindow->cameraControlWindow->setVisible(! playMode);
     developerWindow->videoRecordDialog->setEnabled(true);
 
-    debugPane->setNewChildSize(280.0f, -1.0f, 62.0f);
+    debugPane->setNewChildSize(250.0f, -1.0f, 70.0f);
     debugPane->beginRow(); {
         debugPane->addCheckBox("Hitscan", &m_hitScan);
-        debugPane->addCheckBox("Show Hitscan", &m_renderHitscan);
+        debugPane->addCheckBox("Show Laser", &m_renderHitscan);
         debugPane->addCheckBox("Weapon", &m_renderViewModel);
         debugPane->addCheckBox("HUD", &m_renderHud);
         debugPane->addCheckBox("FPS", &m_renderFPS);
-        debugPane->addNumberBox("Input Lag", Pointer<float>(
-            [&](){ return userInput->artificialLatency() * 1000.0f; },
-            [&](float ms) { userInput->setArtificialLatency(ms * 0.001f); }), "ms", GuiTheme::LINEAR_SLIDER, 0.0f, 120.0f, 0.5f);
+        static int frames = 0;
+        GuiControl* c = nullptr;
+        
+        c = debugPane->addNumberBox("Framerate", Pointer<float>(
+            [&]() { return 1.0f / realTimeTargetDuration(); },
+            [&](float f) {
+              // convert to seconds from fps
+              f = 1.0f / f;
+              const float current = realTimeTargetDuration(); 
+              if (abs(f - current) > 1e-5f) {
+                  // Only set when there is a change, otherwise the simulation's deltas are confused.
+                  setFrameDuration(f, -200); 
+              }}), "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f); c->moveBy(50, 0);
+            
+        c = debugPane->addNumberBox("Input Lag", &frames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->setEnabled(false); c->moveBy(50, 0);
+        c = debugPane->addNumberBox("Display Lag", &m_displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->moveBy(50, 0);
         debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1)->moveBy(50, 0);
         debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(50, 0);
     } debugPane->endRow();
 
     debugWindow->pack();
     debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+}
+
+
+void App::setDisplayLatencyFrames(int f) {
+    m_displayLagFrames = f;
 }
 
 
@@ -183,6 +201,37 @@ void App::onAI() {
 void App::onNetwork() {
     GApp::onNetwork();
     // Poll net messages here
+}
+
+
+void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
+    if (m_displayLagFrames > 0) {
+        // Need one more frame in the queue than we have frames of delay, to hold the current frame
+        if (m_ldrDelayBufferQueue.size() <= m_displayLagFrames) {
+            // Allocate new textures
+            for (int i = m_displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
+                m_ldrDelayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
+            }
+            debugAssert(m_ldrDelayBufferQueue.size() == m_displayLagFrames + 1);
+        }
+
+        // When the display lag changes, we must be sure to be within range
+        m_currentDelayBufferIndex = min(m_displayLagFrames, m_currentDelayBufferIndex);
+
+        rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
+    }
+
+    GApp::onGraphics3D(rd, surface);
+
+    if (m_displayLagFrames > 0) {
+        // Display the delayed frame
+        rd->popState();
+        rd->push2D(); {
+            // Advance the pointer to the next, which is also the oldest frame
+            m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (m_displayLagFrames + 1);
+            Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrDelayBufferQueue[m_currentDelayBufferIndex]->texture(0), Sampler::buffer());
+        } rd->pop2D();
+    }
 }
 
 

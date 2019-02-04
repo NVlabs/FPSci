@@ -43,6 +43,8 @@ protected:
     /** Coordinate frame of the weapon, updated in onPose() */
     CFrame                          m_weaponFrame;
 
+    int                             m_displayLagFrames = 0;
+
     /** Used to detect GUI changes to m_reticleIndex */
     int                             m_lastReticleLoaded = -1;
     int                             m_reticleIndex = 0;
@@ -56,6 +58,10 @@ protected:
     bool                            m_hitScan = true;
 
     int                             m_lastUniqueID = 0;
+
+    /** When m_displayLagFrames > 0, 3D frames are delayed in this queue */
+    Array<shared_ptr<Framebuffer>>  m_ldrDelayBufferQueue;
+    int                             m_currentDelayBufferIndex = 0;
 
     /** Called from onInit */
     void makeGUI();
@@ -79,6 +85,12 @@ public:
     /** Call to set the 3D scene brightness. Default is 1.0. */
     void setSceneBrightness(float b);
 
+    void setDisplayLatencyFrames(int f);
+
+    int displayLatencyFrames() const {
+        return m_displayLagFrames;
+    }
+
     virtual void onInit() override;
     virtual void onAI() override;
     virtual void onNetwork() override;
@@ -86,6 +98,7 @@ public:
     virtual void onPose(Array<shared_ptr<Surface> >& posed3D, Array<shared_ptr<Surface2D> >& posed2D) override;
     virtual void onAfterLoadScene(const Any& any, const String& sceneName) override;
     virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& surface2D) override;
+    virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) override;
     virtual bool onEvent(const GEvent& e) override;
     virtual void onUserInput(UserInput* ui) override;
     virtual void onCleanup() override;
