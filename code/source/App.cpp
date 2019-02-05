@@ -23,7 +23,7 @@ double GetCPUTime() // unit is second
 }
 
 // Set to false when just editing content
-static const bool playMode = true;
+static const bool playMode = false;
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. 
 static const bool  unlockFramerate = true;
@@ -95,8 +95,11 @@ void App::onInit() {
 	loadScene("eSports Simple Hallway");
 
 	initPsychophysicsLib();
-	spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
-	spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
+    // Need to call once for the first frame to set the camera parameters.
+    initTrialAnimation();
+
+	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
+	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
 	if (playMode) {
 		// Force into FPS mode
@@ -110,10 +113,11 @@ void App::onInit() {
 shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale) {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + 10), 0, m_targetModelArray.length() - 1);
 
-	const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
-	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(),
-		Any::parse(format("combine(orbit(0, 0.1), CFrame::fromXYZYPRDegrees(%f, %f, %f))", position.x, position.y, position.z)));
-	target->setTrack(track);
+	const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], position);
+    // Don't set a track. We'll take care of the positioning after creation
+	//const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(),
+	//	Any::parse(format("combine(orbit(0, 0.1), CFrame::fromXYZYPRDegrees(%f, %f, %f))", position.x, position.y, position.z)));
+	//target->setTrack(track);
 	target->setShouldBeSaved(false);
 	m_targetArray.append(target);
 	scene()->insert(target);
@@ -187,11 +191,11 @@ void App::makeGUI() {
 		GuiControl* c = nullptr;
 
 		c = debugPane->addNumberBox("Framerate", Pointer<float>(
-			[&]() { return 1.0f / realTimeTargetDuration(); },
+			[&]() { return 1.0f / (float)realTimeTargetDuration(); },
 			[&](float f) {
 			// convert to seconds from fps
 			f = 1.0f / f;
-			const float current = realTimeTargetDuration();
+			const float current = (float)realTimeTargetDuration();
 			if (abs(f - current) > 1e-5f) {
 				// Only set when there is a change, otherwise the simulation's deltas are confused.
 				setFrameDuration(f, -200);
@@ -517,13 +521,15 @@ void App::initPsychophysicsLib() {
 
 	// reset viewport to look straight ahead.
 	// TODO: restore
-	//resetView();
+	resetView();
 }
 
 void App::resetView() {
 	// reset view direction (look front!)
+    const shared_ptr<Camera>& camera = activeCamera();
 	//activeCamera()->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
-	activeCamera()->lookAt(Point3(0, 0, -1));
+    // Account for the camera translation to ensure correct look vector
+	camera->lookAt(camera->frame().translation + Point3(0, 0, -1));
 	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 	//fpm->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
 	fpm->lookAt(Point3(0,0,-1));
@@ -539,10 +545,12 @@ void App::initTrialAnimation() {
 	}
 
 	// initialize target location based on the initial displacement values
-	m_motionFrame = CFrame::fromXYZYPRDegrees(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    // Not reference: we don't want it to change after the first call.
+    static const Point3 initialSpawnPos = activeCamera()->frame().translation + Point3(-m_spawnDistance,1.0f,0.0f);
+	m_motionFrame = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
 	m_motionFrame.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
 	m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::rollDegrees(ex.renderParams.initialDisplacement.x)).approxCoordinateFrame();
-	m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-ex.renderParams.initialDisplacement.y)).approxCoordinateFrame();
+    m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-ex.renderParams.initialDisplacement.y)).approxCoordinateFrame();
 
 	// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
 	float randomAngleDegree = Random::common().uniform() * 360;
@@ -592,7 +600,7 @@ void App::updateTrialState()
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > ex.renderParams.taskDuration) | (m_targetHealth <= 0))
+		if ((stateElapsedTime > ex.renderParams.taskDuration) || (m_targetHealth <= 0))
 		{
 			newState = PresentationState::feedback;
 		}
@@ -611,13 +619,12 @@ void App::updateTrialState()
 			if (m_targetHealth <= 0)
 			{
 				informTrialSuccess();
-				initTrialAnimation();
 			}
 			else
 			{
 				informTrialFailure();
-				initTrialAnimation();
 			}
+            initTrialAnimation();
 		}
 		else newState = currentState;
 	}
@@ -637,7 +644,7 @@ void App::updateAnimation(RealTime framePeriod)
 	// 2. Check if motionChange is required (happens only during 'task' state with a designated level of chance).
 	if (m_presentationState == PresentationState::task)
 	{
-		float motionChangeChancePerFrame = ex.renderParams.motionChangeChance * framePeriod;
+		float motionChangeChancePerFrame = ex.renderParams.motionChangeChance * (float)framePeriod * 0.1f;
 		if (Random::common().uniform() < motionChangeChancePerFrame)
 		{
 			// If yes, rotate target coordinate frame by random (0~360) angle in roll direction
@@ -647,10 +654,24 @@ void App::updateAnimation(RealTime framePeriod)
 	}
 
 	// 3. update target location (happens only during 'task' and 'feedback' states).
-	if ((m_presentationState == PresentationState::task) | (m_presentationState == PresentationState::feedback))
+	if ((m_presentationState == PresentationState::task) || (m_presentationState == PresentationState::feedback))
 	{
-		float rotationAngleDegree = framePeriod * ex.renderParams.speed;
-		m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-rotationAngleDegree)).approxCoordinateFrame();
+		float rotationAngleDegree = (float)framePeriod * ex.renderParams.speed;
+
+        // Attempts to bound the target within visible space.
+        //float currentYaw;
+        //float ignore;
+        //m_motionFrame.getXYZYPRDegrees(ignore, ignore, ignore, currentYaw, ignore, ignore);
+        //static int reverse = 1;
+        //const float change = abs(currentYaw - rotationAngleDegree);
+        //// If we are headed in the wrong direction, reverse the yaw.
+        //if (change > m_yawBound && change > abs(currentYaw)) {
+        //    reverse *= -1;
+        //}
+        //m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-rotationAngleDegree * reverse)).approxCoordinateFrame();
+
+        m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-rotationAngleDegree)).approxCoordinateFrame();
+
 	}
 
 	// 4. Update tunnel and target colors
@@ -677,11 +698,19 @@ void App::updateAnimation(RealTime framePeriod)
 	}
 
 	// 5. Clear m_TargetArray. Append an object with m_targetLocation if necessary ('task' and 'feedback' states).
-	//Point3 t_pos = m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-	//m_targetArray.resize(0, false);
-	//if ((m_presentationState == PresentationState::task) | (m_presentationState == PresentationState::feedback))
-	//{
-	//	spawnTarget(t_pos, 1.0f);
-	//}
+    Point3 t_pos = m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+    
+	if ((m_presentationState == PresentationState::task) | (m_presentationState == PresentationState::feedback))
+	{
+        // Don't spawn a new target every frame
+        if (m_targetArray.size() == 0) {
+            spawnTarget(t_pos, 0.5f);
+        }
+        else {
+            // TODO: don't hardcode assumption of a single target
+            m_targetArray[0]->setFrame(t_pos);
+        }
+
+	}
 }
 

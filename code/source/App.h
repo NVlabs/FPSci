@@ -115,10 +115,14 @@ public:
 	virtual void onUserInput(UserInput* ui) override;
 	virtual void onCleanup() override;
 
-    const float                     m_targetDistance = 30.0f;
+    const float                     m_targetDistance = 1.5f;
+    const float                     m_spawnDistance = 4.0f;
     const float                     m_projectileSpeed = 150.0f; // meters per second
 	const float                     m_projectileShotPeriod = 0.3f; // minimum time between two repeated shots
     const float                     m_projectileSize = 0.5f;
+
+    //Attempts to bound target within visible space
+    //const float                     m_yawBound = 5.0f;
 	
 	// hardware setting
 	struct ScreenSetting
