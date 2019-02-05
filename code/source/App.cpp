@@ -23,7 +23,7 @@ double GetCPUTime() // unit is second
 }
 
 // Set to false when just editing content
-static const bool playMode = false;
+static const bool playMode = true;
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. 
 static const bool  unlockFramerate = true;
@@ -95,8 +95,8 @@ void App::onInit() {
 	loadScene("eSports Simple Hallway");
 
 	initPsychophysicsLib();
-	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
-	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
+	spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
+	spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
 	if (playMode) {
 		// Force into FPS mode
@@ -393,22 +393,49 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 }
 
 void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& surface2D) {
-    Surface2D::sortAndRender(rd, surface2D);
+ //   Surface2D::sortAndRender(rd, surface2D);
 
-    // Faster than the full stats widget
-	std::string expDebugStr = "%d fps ";
-	expDebugStr += ex.getDebugStr(); // debugging message
-    debugFont->draw2D(rd, format(expDebugStr.c_str(), iRound(renderDevice->stats().smoothFrameRate)), Point2(10,10), 12.0f, Color3::yellow());
+ //   // Faster than the full stats widget
+	//std::string expDebugStr = "%d fps ";
+	//expDebugStr += ex.getDebugStr(); // debugging message
+ //   debugFont->draw2D(rd, format(expDebugStr.c_str(), iRound(renderDevice->stats().smoothFrameRate)), Point2(10,10), 12.0f, Color3::yellow());
 
-    // Display DONE when complete
-    if (ex.isExperimentDone()) {
-        static const shared_ptr<Texture> doneTexture = Texture::fromFile("done.png");
-        rd->push2D(); {
-            const float scale = rd->viewport().width() / 3840.0f;
-            rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-            Draw::rect2D(doneTexture->rect2DBounds() * scale + (rd->viewport().wh() - doneTexture->vector2Bounds() * scale) / 2.0f, rd, Color3::white(), doneTexture);
-        } rd->pop2D();
-    }
+ //   // Display DONE when complete
+ //   if (ex.isExperimentDone()) {
+ //       static const shared_ptr<Texture> doneTexture = Texture::fromFile("done.png");
+ //       rd->push2D(); {
+ //           const float scale = rd->viewport().width() / 3840.0f;
+ //           rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+ //           Draw::rect2D(doneTexture->rect2DBounds() * scale + (rd->viewport().wh() - doneTexture->vector2Bounds() * scale) / 2.0f, rd, Color3::white(), doneTexture);
+ //       } rd->pop2D();
+ //   }
+		// Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
+
+	rd->push2D(); {
+		const float scale = rd->viewport().width() / 1920.0f;
+		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+
+		// Reticle
+		Draw::rect2D((m_reticleTexture->rect2DBounds() * scale - m_reticleTexture->vector2Bounds() * scale / 2.0f) / 4.0f + rd->viewport().wh() / 2.0f, rd, Color3::white(), m_reticleTexture);
+
+		if (m_renderHud) {
+			const Point2 hudCenter(rd->viewport().width() / 2.0f, m_hudTexture->height() * scale * 0.48f);
+			Draw::rect2D((m_hudTexture->rect2DBounds() * scale - m_hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_hudTexture);
+			m_hudFont->draw2D(rd, "1:36", hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+			m_hudFont->draw2D(rd, "86%", hudCenter + Vector2(7, -1), scale * 30, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+			m_hudFont->draw2D(rd, "2080", hudCenter + Vector2(125, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		}
+
+		// FPS display (faster than the full stats widget)
+		if (m_renderFPS) {
+			m_outputFont->draw2D(rd, format("%d measured / %d requested fps",
+				iRound(renderDevice->stats().smoothFrameRate),
+				window()->settings().refreshRate),
+				(Point2(36, 24) * scale).floor(), floor(28.0f * scale), Color3::yellow());
+		}
+	} rd->pop2D();
+
+	Surface2D::sortAndRender(rd, surface2D);
 }
 
 void App::setReticle(int r) {
@@ -489,16 +516,17 @@ void App::initPsychophysicsLib() {
 	m_reticleColor = Color3::white();
 
 	// reset viewport to look straight ahead.
-	resetView();
+	// TODO: restore
+	//resetView();
 }
 
 void App::resetView() {
 	// reset view direction (look front!)
-	activeCamera()->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
-	//activeCamera()->lookAt(Point3(0, 0, -1));
+	//activeCamera()->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
+	activeCamera()->lookAt(Point3(0, 0, -1));
 	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-	fpm->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
-	//fpm->lookAt(Point3(0,0,-1));
+	//fpm->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
+	fpm->lookAt(Point3(0,0,-1));
 }
 
 void App::initTrialAnimation() {
@@ -649,11 +677,11 @@ void App::updateAnimation(RealTime framePeriod)
 	}
 
 	// 5. Clear m_TargetArray. Append an object with m_targetLocation if necessary ('task' and 'feedback' states).
-	Point3 t_pos = m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-	m_targetArray.resize(0, false);
-	if ((m_presentationState == PresentationState::task) | (m_presentationState == PresentationState::feedback))
-	{
-		spawnTarget(t_pos, 1.0f);
-	}
+	//Point3 t_pos = m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+	//m_targetArray.resize(0, false);
+	//if ((m_presentationState == PresentationState::task) | (m_presentationState == PresentationState::feedback))
+	//{
+	//	spawnTarget(t_pos, 1.0f);
+	//}
 }
 

@@ -62,9 +62,9 @@ protected:
 	int                             m_reticleIndex = 0;
 	float                           m_sceneBrightness = 1.0f;
 	bool                            m_renderViewModel = true;
-	bool                            m_renderHud = true;
+	bool                            m_renderHud = false;
 	bool                            m_renderFPS = true;
-	bool                            m_renderHitscan = true;
+	bool                            m_renderHitscan = false;
 
 	/** Projectile if false         */
 	bool                            m_hitScan = true;
