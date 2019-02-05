@@ -1,0 +1,248 @@
+
+/* -*- c++ -*- */
+{ 
+    defaultCamera = "defaultCamera"; 
+    description = ""; 
+    entities = { 
+        building = VisibleEntity { 
+            canCauseCollisions = true; 
+            canChange = false; 
+            castsShadows = false; 
+            mass = 1; 
+            model = "buildingModel"; 
+        }; 
+        
+        defaultCamera = Camera { 
+            canChange = false; 
+            depthOfFieldSettings = DepthOfFieldSettings { 
+                enabled = false; 
+                farBlurRadiusFraction = 0.006; 
+                farBlurryPlaneZ = -33.2498; 
+                farSharpPlaneZ = -7.04668; 
+                focusPlaneZ = -10; 
+                lensRadius = 0.01; 
+                model = "ARTIST"; 
+                nearBlurRadiusFraction = 0.003; 
+                nearBlurryPlaneZ = -0.1; 
+                nearSharpPlaneZ = -3.28801; 
+                reducedResolutionFactor = 1; 
+            }; 
+            
+            filmSettings = FilmSettings { 
+                antialiasingEnabled = true; 
+                antialiasingFilterRadius = 0; 
+                antialiasingHighQuality = true; 
+                bloomRadiusFraction = 0.009; 
+                bloomStrength = 0.5; 
+                debugZoom = 1; 
+                effectsEnabled = true; 
+                gamma = 2.2; 
+                sensitivity = 1; 
+                temporalAntialiasingEnabled = false; 
+                toneCurve = Spline { 
+                    control = ( 0, 0.0787234, 0.306383, 0.75532, 0.92 ); 
+                    extrapolationMode = "LINEAR"; 
+                    finalInterval = -1; 
+                    interpolationMode = "CUBIC"; 
+                    time = ( 0, 0.169565, 0.339131, 0.752174, 1 ); 
+                }; 
+                
+                vignetteBottomStrength = 0.05; 
+                vignetteSizeFraction = 0.17; 
+                vignetteTopStrength = 0.5; 
+            }; 
+            
+            frame = CFrame::fromXYZYPRDegrees(47.523, -2.3549, -0.35916, 87.025, 3.163, 0 ); 
+            mass = 1; 
+            motionBlurSettings = MotionBlurSettings { 
+                enabled = false; 
+                exposureFraction = 0.75; 
+                maxBlurDiameterFraction = 0.1; 
+                numSamples = 15; 
+            }; 
+            
+            overridePixelOffset = true; 
+            projection = Projection { 
+                farPlaneZ = -150; 
+                fovDegrees = 60; 
+                fovDirection = "VERTICAL"; 
+                nearPlaneZ = -0.1; 
+                pixelOffset = Vector2(0, 0 ); 
+            }; 
+            
+            visualizationScale = 1; 
+        }; 
+        
+        skybox = Skybox { 
+            mass = 1; 
+            texture = Texture::Specification { 
+                encoding = Texture::Encoding { 
+                    readMultiplyFirst = 2; 
+                }; 
+                
+                filename = "cubemap/islands/islands_*.jpg"; 
+            }; 
+            
+        }; 
+
+        sun = Light { 
+            attenuation = ( 0, 0, 1 ); 
+            bulbPower = Power3(200000, 180000, 130000 ); 
+            canCauseCollisions = true; 
+            canChange = false; 
+            enabled = true; 
+            frame = CFrame::fromXYZYPRDegrees(36.941, 84.394, -47.555, 179.84, -62.154, 0 ); 
+            mass = 1; 
+            producesDirectIllumination = true; 
+            producesIndirectIllumination = true; 
+            rectangular = true; 
+            shadowMapBias = 0.05; 
+            shadowMapSize = Vector2int16(2048, 2048 ); 
+            shadowsEnabled = true; 
+            spotHalfAngleDegrees = 10; 
+            type = "SPOT"; 
+        }; 
+                
+    }; 
+    
+    lightingEnvironment = LightingEnvironment { 
+        ambientOcclusionSettings = AmbientOcclusionSettings { 
+            bias = 0.0760417; 
+            blurRadius = 2; 
+            blurStepSize = 2; 
+            depthPeelSeparationHint = 0.02; 
+            edgeSharpness = 1; 
+            enabled = true; 
+            highQualityBlur = true; 
+            intensity = 1.5; 
+            monotonicallyDecreasingBilateralWeights = false; 
+            numSamples = 8; 
+            packBlurKeys = false; 
+            radius = 0.5; 
+            temporalFilterSettings = TemporalFilter::Settings { 
+                falloffEndDistance = 0.07; 
+                falloffStartDistance = 0.05; 
+                hysteresis = 0.98; 
+            }; 
+            
+            temporallyVarySamples = true; 
+            useDepthPeelBuffer = false; 
+            useNormalBuffer = true; 
+            useNormalsInBlur = true; 
+            zStorage = "HALF"; 
+        }; 
+        
+        environmentMap = Texture::Specification { 
+            /*
+            encoding = Texture::Encoding { 
+                readMultiplyFirst = 3; 
+                format = "SRGB8"
+            };             
+            filename = "cubemap/hourglass/hourglass_*.jpg"; 
+            */
+            encoding = Texture::Encoding { 
+            readMultiplyFirst = 1.7; 
+                format = "SRGB8"
+            };     
+            preprocess = Texture::Preprocess { gammaAdjust = 0.8; };
+            filename = "cubemap/sponza/sponza-*.png"; 
+        }; 
+        
+    }; 
+    
+    models = { 
+      
+
+        buildingModel = ArticulatedModel::Specification { 
+            alphaFilter = "BINARY"; 
+            cleanGeometrySettings = CleanGeometrySettings { 
+                allowVertexMerging = true; 
+                forceVertexMerging = true; 
+            }; 
+            
+            filename = "model/atcs/atcs.pk3/maps/atcs.bsp"; 
+            preprocess = { 
+                setMaterial("eq2_bmtl_02_384b-LM0" ,Color3(1)); 
+                setMaterial("G3D::Texture::white-LM0", Color3(1) ); 
+                setMaterial("eq2_bmtl_05-LM0",  Color3(1)); 
+                setMaterial("eq2_trimv_12b-LM0", Color3(1)); 
+                setMaterial("eq2_trimv_11-LM0", "LowContrastChecker.UniversalMaterial.Any"); 
+                setMaterial("eq2_trimv_04-LM0", "LowContrastChecker.UniversalMaterial.Any"); 
+                setMaterial("eq2_trimh_03cc-LM0", Color3(1) ); 
+                setMaterial("eq2_trimv_00-LM0", "LowContrastChecker.UniversalMaterial.Any"); 
+                setMaterial("eq2_bmtl_03_blue-LM0","LowContrastChecker.UniversalMaterial.Any" ); 
+                setMaterial("eq2_fgrate_01-LM0", "LowContrastChecker.UniversalMaterial.Any" ); 
+                setMaterial("eq2_bmtl_02-LM0", "LowContrastChecker.UniversalMaterial.Any" ); 
+                setMaterial("eq2_trimv_05-LM0", "LowContrastChecker.UniversalMaterial.Any" ); 
+
+                setMaterial("eq2_bmtl_03-LM0", "LowContrastChecker.UniversalMaterial.Any" ); 
+                setMaterial("eq2_bmtl_02_384-LM0", "LowContrastChecker.UniversalMaterial.Any" ); 
+                setMaterial("eq2_bmtl_04-LM0", "LowContrastChecker.UniversalMaterial.Any" ); 
+                setMaterial("eq2_bmtl-LM0", "LowContrastChecker.UniversalMaterial.Any" ); 
+                setMaterial("eq2_grate_01-LM0", "LowContrastChecker.UniversalMaterial.Any" ); 
+                setMaterial("eq2_trimh_01-LM0", "LowContrastChecker.UniversalMaterial.Any" ); 
+                setMaterial("eq2_bmtl_01-LM0", "LowContrastChecker.UniversalMaterial.Any" ); 
+
+                
+                removeMesh("eq2_fbase-LM0");
+                removeMesh("eq2_trimv_mini-LM0");
+                removeMesh("eq2_bounce-LM0");
+
+                setMaterial("eq2_trimv_05b-LM0", Color3(1));
+                setMaterial("eq2_trimv_10b-LM0", Color3(1));
+                setMaterial("eq2_trimv_mini02-LM0", Color3(1) ); 
+                setMaterial("eq2_bmtl_02up-LM0", Color3(1) ); 
+                setMaterial("eq2_trimv_mini02b-LM0", Color3(1));
+                setMaterial("eq2_trimv_01b-LM0", Color3(1));
+
+                setMaterial("eq2_trimv_11d-LM0", Color3(1));
+                setMaterial("eq2_trimv_11d_blue-LM0", Color3(1));
+                setMaterial("eq2_trimv_11d_red-LM0", Color3(1));
+
+                removeMesh("rust_2-LM0" ); 
+                removeMesh("cubelight_32_blue_s_20k-LM0"); 
+                setMaterial("eq2_trimh_03c-LM0", Color3(1));
+                setMaterial("eq2_trim_02-LM0", Color3(1));
+                setMaterial("eq2_stepside_01-LM0", Color3(1));
+                removeMesh("cubelight_32_red_s_15k-LM0");
+                setMaterial("eq2_bmtl_03_red-LM0", "LowContrastChecker.UniversalMaterial.Any");
+                removeMesh("bulb_red_s-LM0");
+
+                setMaterial("eq2_trimv_09b-LM0", "LowContrastChecker.UniversalMaterial.Any");
+                setMaterial("eq2_floor_06b-LM0", "LowContrastChecker.UniversalMaterial.Any");
+                setMaterial("eq2_bigmet_01-LM0", "LowContrastChecker.UniversalMaterial.Any");
+                setMaterial("eq2_floor_05-LM0", UniversalMaterial::Specification { 
+                        glossy = Color4(0, 0, 0, 0 ); 
+                        lambertian = Texture::Specification {
+                            filename = "low-contrast-checker-huge-1024x1024.png";
+                            encoding = Color3(0.25,0.18,0.09); 
+                        };
+                    } ); 
+                setMaterial("eq2_floor_04-LM0", UniversalMaterial::Specification { 
+                    glossy = Color4(0, 0, 0, 0 ); 
+                lambertian = Texture::Specification {
+                    filename = "low-contrast-checker-huge-1024x1024.png";
+                encoding = Color3(0.25,0.18,0.09); 
+                };
+                    } ); 
+                
+                setMaterial("rockground-LM0", UniversalMaterial::Specification { 
+                    glossy = Color4(0, 0, 0, 0 ); 
+                lambertian = Texture::Specification {
+                    filename = "low-contrast-checker-huge-1024x1024.png";
+                encoding = Color3(0.25,0.18,0.09); 
+                };
+                    } ); 
+                setMaterial("cubelight_32_blue_s_15k-LM0", Color3(1));
+
+                mergeAll("ALL", "ALL");
+            }; 
+            
+            scale = 1; 
+            stripLightMaps = true; 
+        }; 
+        
+    }; 
+    
+    name = "eSports Simple Hallway"; 
+} 

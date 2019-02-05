@@ -1,0 +1,4 @@
+UniversalMaterial::Specification {
+    lambertian = "low-contrast-checker-huge-1024x1024.png";
+    glossy = Color4(0,0,0,0);
+}

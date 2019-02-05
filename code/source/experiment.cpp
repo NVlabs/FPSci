@@ -214,6 +214,14 @@ namespace Psychophysics
 		}
 	}
 
+	bool EccentricityExperiment::isExperimentDone()
+	{
+		if (fsm) {
+			if (fsm->currState == Psychophysics::FSM::State::SHUTDOWN) return true;
+		}
+		return false;
+	}
+
 	void EccentricityExperiment::printDebugInfo()
 	{
 		std::cout << "STATE : " << fsm->currState << std::endl;
@@ -225,14 +233,19 @@ namespace Psychophysics
 
 	std::string EccentricityExperiment::getDebugStr()
 	{
-		std::string debugInfo;
-		debugInfo += "STATE : " + std::to_string(fsm->currState) + ' ';
-		debugInfo += "MCS NUM : " + std::to_string(currStimVariableNum) + ' ';
-		debugInfo += "INITIAL DISPLACEMENT : " + std::to_string(renderParams.initialDisplacement.x)
-			+ ' ' + std::to_string(renderParams.initialDisplacement.y) + ' ';
-		debugInfo += "VISUAL SIZE : " + std::to_string(renderParams.visualSize) + ' ';
-		debugInfo += "STIMVAL : " + std::to_string(StimVariableVec[currStimVariableNum]->currStimVal) + ' ';
-		return debugInfo;
+		if (!fsm) {
+			return "";
+		}
+		else {
+			std::string debugInfo;
+			debugInfo += "STATE : " + std::to_string(fsm->currState) + ' ';
+			debugInfo += "MCS NUM : " + std::to_string(currStimVariableNum) + ' ';
+			debugInfo += "INITIAL DISPLACEMENT : " + std::to_string(renderParams.initialDisplacement.x)
+				+ ' ' + std::to_string(renderParams.initialDisplacement.y) + ' ';
+			debugInfo += "VISUAL SIZE : " + std::to_string(renderParams.visualSize) + ' ';
+			debugInfo += "STIMVAL : " + std::to_string(StimVariableVec[currStimVariableNum]->currStimVal) + ' ';
+			return debugInfo;
+		}
 	}
 
 }

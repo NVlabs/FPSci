@@ -104,8 +104,10 @@ namespace Psychophysics
 		void init(std::string subjectID, std::string expVersion, int sessionNum, std::string savePath, bool trainingMode) override;
 
 		FSM::State getFSMState() override { return fsm->currState; };
+		bool isExperimentDone();
 
 		void startTimer() override { fsm->startTimer(); };
+		float getTime() { int t = fsm->elapsedTimeMS(); return ((float)t) / 1000.0f; };
 
 		void printDebugInfo();
 
