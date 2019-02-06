@@ -12,7 +12,7 @@ Progress tracking sheet (only accessible to developers): https://docs.google.com
     - ~~**Can we change frame rates without re-executing the file?**~~ Yes
 - **Reaction time experiment**
     - **Implement waiting time based on the truncated exponential distribution** Joohwan
-    - **Pilot run it on various frame rates. Make sure data make sense.**
+    - **Pilot run it on various frame rates. Make sure data make sense.** Joohwan
     - **Improve interface to encourage optimal performance (shortest latency)**
 - **Characterize various frame rates in terms of click-photon latency values** Joohwan
 - **Targeting experiment**
