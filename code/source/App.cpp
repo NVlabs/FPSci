@@ -439,7 +439,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& surface2D
 			rd->clear();
 			Draw::rect2D(rd->viewport(), rd, Color3::blue());
 		}
-		else if (ex.expName == "TargettingExperiment") {
+		else if (ex.expName == "TargetingExperiment") {
 			const float scale = rd->viewport().width() / 1920.0f;
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 

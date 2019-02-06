@@ -1,9 +1,9 @@
-#include "TargettingExperiment.h"
+#include "TargetingExperiment.h"
 
 namespace Psychophysics
 {
 
-	void TargettingExperiment::updateRenderParamsForCurrentTrial()
+	void TargetingExperiment::updateRenderParamsForCurrentTrial()
 	{
 		// get new render params from StimVariable
 		renderParams.initialDisplacement.x = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "initialDisplacementDirection"));
@@ -19,7 +19,7 @@ namespace Psychophysics
 		renderParams.frameRate = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "frameRate"));
 	}
 
-	void TargettingExperiment::init(std::string subjectID, std::string expVersion, int sessionNum, std::string dbLoc, bool trainingModeIn)
+	void TargetingExperiment::init(std::string subjectID, std::string expVersion, int sessionNum, std::string dbLoc, bool trainingModeIn)
 	{
 		// turn on training mode
 		trainingMode = trainingModeIn;
@@ -159,7 +159,7 @@ namespace Psychophysics
 	}
 
 
-	void TargettingExperiment::updateHelper(const std::string& keyInput, const FSM::State& pastState)
+	void TargetingExperiment::updateHelper(const std::string& keyInput, const FSM::State& pastState)
 	{
 		// go through the list of randomly shuffled staircases until you find one incomplete
 		//std::vector<int> stRandIx = randShuffle((int)StimVariableVec.size() - 1);
@@ -186,7 +186,7 @@ namespace Psychophysics
 		}
 	}
 
-	bool TargettingExperiment::isExperimentDone()
+	bool TargetingExperiment::isExperimentDone()
 	{
 		if (fsm) {
 			if (fsm->currState == Psychophysics::FSM::State::SHUTDOWN) return true;
@@ -194,7 +194,7 @@ namespace Psychophysics
 		return false;
 	}
 
-	void TargettingExperiment::printDebugInfo()
+	void TargetingExperiment::printDebugInfo()
 	{
 		std::cout << "STATE : " << fsm->currState << std::endl;
 		std::cout << "MCS NUM : " << currStimVariableNum << std::endl;
@@ -203,7 +203,7 @@ namespace Psychophysics
 		std::cout << "STIMVAL : " << StimVariableVec[currStimVariableNum]->currStimVal << std::endl;
 	}
 
-	std::string TargettingExperiment::getDebugStr()
+	std::string TargetingExperiment::getDebugStr()
 	{
 		if (!fsm) {
 			return "";

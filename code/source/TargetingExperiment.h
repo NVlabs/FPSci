@@ -4,7 +4,7 @@
 
 namespace Psychophysics
 {
-	class TargettingExperiment : public Experiment
+	class TargetingExperiment : public Experiment
 	{
 		/*
 		This is an example experiment
@@ -99,7 +99,7 @@ namespace Psychophysics
 		};
 		RRP renderParams;
 
-		std::string expName = "TargettingExperiment";
+		std::string expName = "TargetingExperiment";
 
 		/////// REQUIRED FUNCTIONS ///////
 		void init(std::string subjectID, std::string expVersion, int sessionNum, std::string savePath, bool trainingMode) override;

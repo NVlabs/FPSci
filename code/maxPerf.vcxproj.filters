@@ -24,7 +24,7 @@
     <ClInclude Include="source\ReactionExperiment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\TargettingExperiment.h">
+    <ClInclude Include="source\TargetingExperiment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -35,7 +35,7 @@
     <ClCompile Include="source\ReactionExperiment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\TargettingExperiment.cpp">
+    <ClCompile Include="source\TargetingExperiment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
