@@ -26,7 +26,7 @@ double GetCPUTime() // unit is second
 static const bool playMode = false;
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. 
-static const bool  unlockFramerate = true;
+static const bool  unlockFramerate = false;
 
 // Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
 // which allows the application to submit asynchronously with vsync
@@ -37,6 +37,8 @@ const float App::TARGET_MODEL_ARRAY_SCALING = 0.4f;
 
 //static const float verticalFieldOfViewDegrees = 90; // deg
 static const float horizontalFieldOfViewDegrees = 103; // deg
+
+static const bool measureClickPhotonLatency = true;
 
 // JBS: TODO: Refactor these as experiment variables
 //========================================================================
@@ -233,39 +235,39 @@ void App::onNetwork() {
 
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
-	// TODO: restore
-	if (true) {
+	if (ex.expName == "ReactionExperiment") {
 		if (submitToDisplayMode() == SubmitToDisplayMode::MAXIMIZE_THROUGHPUT) {
 			swapBuffers();
 		}
-		return;
 	}
-	if (m_displayLagFrames > 0) {
-		// Need one more frame in the queue than we have frames of delay, to hold the current frame
-		if (m_ldrDelayBufferQueue.size() <= m_displayLagFrames) {
-			// Allocate new textures
-			for (int i = m_displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
-				m_ldrDelayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
+	else {
+		if (m_displayLagFrames > 0) {
+			// Need one more frame in the queue than we have frames of delay, to hold the current frame
+			if (m_ldrDelayBufferQueue.size() <= m_displayLagFrames) {
+				// Allocate new textures
+				for (int i = m_displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
+					m_ldrDelayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
+				}
+				debugAssert(m_ldrDelayBufferQueue.size() == m_displayLagFrames + 1);
 			}
-			debugAssert(m_ldrDelayBufferQueue.size() == m_displayLagFrames + 1);
+
+			// When the display lag changes, we must be sure to be within range
+			m_currentDelayBufferIndex = min(m_displayLagFrames, m_currentDelayBufferIndex);
+
+			rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
 		}
 
-		// When the display lag changes, we must be sure to be within range
-		m_currentDelayBufferIndex = min(m_displayLagFrames, m_currentDelayBufferIndex);
+		GApp::onGraphics3D(rd, surface);
 
-		rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
-	}
-
-	GApp::onGraphics3D(rd, surface);
-
-	if (m_displayLagFrames > 0) {
-		// Display the delayed frame
-		rd->popState();
-		rd->push2D(); {
-			// Advance the pointer to the next, which is also the oldest frame
-			m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (m_displayLagFrames + 1);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrDelayBufferQueue[m_currentDelayBufferIndex]->texture(0), Sampler::buffer());
-		} rd->pop2D();
+		if (m_displayLagFrames > 0) {
+			// Display the delayed frame
+			rd->popState();
+			rd->push2D(); {
+				// Advance the pointer to the next, which is also the oldest frame
+				m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (m_displayLagFrames + 1);
+				Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrDelayBufferQueue[m_currentDelayBufferIndex]->texture(0), Sampler::buffer());
+			} rd->pop2D();
+		}
 	}
 }
 
@@ -433,11 +435,11 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& surface2D
 
 	rd->push2D(); {
 
-		if (true) {
+		if (ex.expName == "ReactionExperiment") {
 			rd->clear();
 			Draw::rect2D(rd->viewport(), rd, Color3::blue());
 		}
-		else {
+		else if (ex.expName == "TargettingExperiment") {
 			const float scale = rd->viewport().width() / 1920.0f;
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
@@ -460,8 +462,11 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& surface2D
 					(Point2(36, 24) * scale).floor(), floor(28.0f * scale), Color3::yellow());
 			}
 
-			Color3 cornerColor = (m_buttonUp) ? Color3::black() : Color3::white();
-			Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
+			if (measureClickPhotonLatency) {
+				Color3 cornerColor = (m_buttonUp) ? Color3::black() : Color3::white();
+				//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
+				Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.8f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
+			}
 		}
 	} rd->pop2D();
 
@@ -532,9 +537,6 @@ void App::initPsychophysicsLib() {
 	// start cpu timer.
 	StartCPUTimer();
 
-	ex.setFrameRate(targetFrameRate);
-	ex.setWeaponType(weaponType);
-	ex.setNumFrameDelay(numFrameDelay);
 	ex.init(subjectID, expVersion, 0, datafile, false);
 
 	// required initial response to start an experiment.
@@ -570,6 +572,10 @@ void App::initTrialAnimation() {
 		m_tunnelColor = Color3::black(); // remove tunnel
 		m_reticleColor = Color3::black(); // remove reticle
 	}
+
+	// set frame rate
+	float dt = 1.0f / ex.renderParams.frameRate;
+	setFrameDuration(dt);
 
 	// initialize target location based on the initial displacement values
     // Not reference: we don't want it to change after the first call.

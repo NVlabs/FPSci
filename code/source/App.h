@@ -10,7 +10,8 @@
  */
 #pragma once
 #include <G3D/G3D.h>
-#include "experiment.h"
+#include "ReactionExperiment.h"
+#include "TargettingExperiment.h"
 #include "ExperimentSettingsList.h"
 
 // An enum that tracks presentation state within a trial. Duration defined in experiment.h
@@ -150,7 +151,7 @@ protected:
 	double                          m_t_lastProjectileShot = -inf();
 
 public:
-	Psychophysics::EccentricityExperiment ex;
+	Psychophysics::TargettingExperiment ex;
 
 	void initTrialAnimation();
 	void resetView();

@@ -18,10 +18,13 @@
     <ClInclude Include="source\App.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\experiment.h">
+    <ClInclude Include="source\ExperimentSettingsList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\ExperimentSettingsList.h">
+    <ClInclude Include="source\ReactionExperiment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TargettingExperiment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -29,7 +32,10 @@
     <ClCompile Include="source\App.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\experiment.cpp">
+    <ClCompile Include="source\ReactionExperiment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TargettingExperiment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,53 +1,18 @@
-#include "experiment.h"
+#include "ReactionExperiment.h"
 
 namespace Psychophysics
 {
-	//template<>
-	//std::vector<G3D::Vector2> genCombos(std::vector<G3D::Vector2> v, int repeats, bool shuffle) {
-	//	std::vector<std::vector<double>> temp_v;
-	//	for (int i = 0; i < v.size(); ++i) {
-	//		temp_v.push_back(std::vector<double> {v[i].x, v[i].y});
-	//	}
-	//	std::vector<std::vector<double>> temp_v_combos = genCombos(temp_v, repeats, shuffle);
-	//	std::vector<G3D::Vector2> v_combos;
-	//	for (int i = 0; i < temp_v_combos.size(); ++i) {
-	//		v_combos.push_back(G3D::Vector2(temp_v_combos[i][0], temp_v_combos[i][1]));
-	//	}
 
-	//	return v_combos;
-	//}
-
-	void EccentricityExperiment::updateRenderParamsForCurrentTrial()
+	void ReactionExperiment::updateRenderParamsForCurrentTrial()
 	{
 		// get new render params from StimVariable
-		renderParams.initialDisplacement.x = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "initialDisplacementDirection"));
-		renderParams.initialDisplacement.y = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "initialDisplacementDistance"));
-		renderParams.visualSize = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "visualSize"));
-		renderParams.taskDuration = StimVariableVec[currStimVariableNum]->currStimVal;
-		renderParams.speed = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "speed"));
-		renderParams.motionChangeChance = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "motionChangeChance"));
 		renderParams.readyDuration = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "readyDuration"));
-		renderParams.feedbackDuration = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "feedbackDuration"));
-		renderParams.weaponType = queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "weaponType");
-		renderParams.weaponStrength = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "weaponStrength"));
+		renderParams.meanWaitDuration = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "meanWaitDuration"));
+		renderParams.intensity = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "intensity"));
+		renderParams.frameRate = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "frameRate"));
 	}
 
-	void EccentricityExperiment::setFrameRate(float fr)
-	{
-		m_conditionParams.frameRate = fr;
-	}
-
-	void EccentricityExperiment::setWeaponType(std::string wt)
-	{
-		m_conditionParams.weaponType = wt;
-	}
-
-	void EccentricityExperiment::setNumFrameDelay(int fd)
-	{
-		m_conditionParams.numFrameDelay = fd;
-	}
-
-	void EccentricityExperiment::init(std::string subjectID, std::string expVersion, int sessionNum, std::string dbLoc, bool trainingModeIn)
+	void ReactionExperiment::init(std::string subjectID, std::string expVersion, int sessionNum, std::string dbLoc, bool trainingModeIn)
 	{
 		// turn on training mode
 		trainingMode = trainingModeIn;
@@ -112,7 +77,7 @@ namespace Psychophysics
 
 
 		/////// Stim Managers ///////
-		int numStimVariables = (int)m_conditionParams.initialDisplacements.size() * (int)m_conditionParams.visualSizes.size();
+		int numStimVariables = (int)m_conditionParams.intensities.size();
 
 		// create the stimulus params table
 		// additional parameters can be added here if you have multiple staircases
@@ -122,62 +87,38 @@ namespace Psychophysics
 			{ "expID", "integer", "NOT NULL" },
 			{ "name", "text", "NOT NULL" },
 			{ "maxTrials", "integer" },
-			{ "stimLevels", "text" },
-			{ "initialDisplacementDirection", "real" },
-			{ "initialDisplacementDistance", "real" },
-			{ "visualSize", "real" },
-			{ "speed", "real" },
-			{ "motionChangeChance", "real" },
+			{ "stimLevels", "text" }, // intensity
 			{ "readyDuration", "real" },
-			{ "feedbackDuration", "real" },
-			{ "weaponType", "text" },
-			{ "weaponStrength", "real" },
+			{ "meanWaitDuration", "real" },
 			{ "frameRate", "real" },
-			{ "numFrameDelay", "real" },
 		};
 		createTableInDB(db, "stimParams", stimParamsColumns);
-
 
 		int stimID;
 		std::vector<std::string> stimParamsValues;
 
-		// go through each StimVariable
-		std::vector<G3D::Vector2> initialDisplacementCombos = genCombos(m_conditionParams.initialDisplacements, (int)m_conditionParams.visualSizes.size(), true);
-		std::vector<float> visualSizeCombos = genCombos(m_conditionParams.visualSizes, (int)m_conditionParams.initialDisplacements.size(), false);
-
 		for (int si = 0; si < numStimVariables; si++)
 		{
-
-			float initialDisplacementDirection = initialDisplacementCombos[si].x;
-			float initialDisplacementDistance = initialDisplacementCombos[si].y;
-			float visualSize = visualSizeCombos[si];
+			double intensity = m_conditionParams.intensities[si];
 
 			// populate the stimulus params table
 			std::vector<std::string> stimParamsValues = {
 				std::to_string(expID),
-				addQuotes(vec2str(std::vector<std::string>{ "initialDisplacementDirection: ", std::to_string(initialDisplacementDirection),
-															", initialDisplacementDistance: ", std::to_string(initialDisplacementDistance),
-															", visualSize: ", std::to_string(visualSize) }, " ")),
+				addQuotes(vec2str(std::vector<std::string>{ "intensity: ", std::to_string(intensity),
+															", readyDuration: ", std::to_string(m_conditionParams.readyDuration),
+															", meanWaitDuration: ", std::to_string(m_conditionParams.meanWaitDuration) }, " ")),
 				std::to_string(m_conditionParams.trialCount),
-				addQuotes(vec2str(m_conditionParams.taskDurationLevels, ",")),
-				std::to_string(initialDisplacementDirection),
-				std::to_string(initialDisplacementDistance),
-				std::to_string(visualSize),
-				std::to_string(m_conditionParams.speed),
-				std::to_string(m_conditionParams.motionChangeChance),
+				addQuotes(vec2str(m_conditionParams.intensities, ",")),
 				std::to_string(m_conditionParams.readyDuration),
-				std::to_string(m_conditionParams.feedbackDuration),
-				addQuotes(m_conditionParams.weaponType),
-				std::to_string(m_conditionParams.weaponStrength),
+				std::to_string(m_conditionParams.meanWaitDuration),
 				std::to_string(m_conditionParams.frameRate),
-				std::to_string(m_conditionParams.numFrameDelay),
 			};
 			assert(stimParamsValues.size() == stimParamsColumns.size(), "Incorrect number of arguments for insert to stimParams table.\n");
 			stimID = insertIntoDB(db, "stimParams", stimParamsValues);
 
 			// initialize the staircase with its id numbers
 			StimVariableVec.emplace_back(std::make_shared<MCS_Stim>());
-			std::dynamic_pointer_cast<MCS_Stim>(StimVariableVec[si])->init(expID, stimID, m_conditionParams.taskDurationLevels, m_conditionParams.trialCount);
+			std::dynamic_pointer_cast<MCS_Stim>(StimVariableVec[si])->init(expID, stimID, m_conditionParams.intensities, m_conditionParams.trialCount);
 		}
 
 		// once all stim managers have been added, pick one to start
@@ -187,7 +128,7 @@ namespace Psychophysics
 	}
 
 
-	void EccentricityExperiment::updateHelper(const std::string& keyInput, const FSM::State& pastState)
+	void ReactionExperiment::updateHelper(const std::string& keyInput, const FSM::State& pastState)
 	{
 		// go through the list of randomly shuffled staircases until you find one incomplete
 		//std::vector<int> stRandIx = randShuffle((int)StimVariableVec.size() - 1);
@@ -214,7 +155,7 @@ namespace Psychophysics
 		}
 	}
 
-	bool EccentricityExperiment::isExperimentDone()
+	bool ReactionExperiment::isExperimentDone()
 	{
 		if (fsm) {
 			if (fsm->currState == Psychophysics::FSM::State::SHUTDOWN) return true;
@@ -222,16 +163,16 @@ namespace Psychophysics
 		return false;
 	}
 
-	void EccentricityExperiment::printDebugInfo()
+	void ReactionExperiment::printDebugInfo()
 	{
 		std::cout << "STATE : " << fsm->currState << std::endl;
 		std::cout << "MCS NUM : " << currStimVariableNum << std::endl;
-		std::cout << "INITIAL DISPLACEMENT : " << renderParams.initialDisplacement.x << renderParams.initialDisplacement.y << std::endl;
-		std::cout << "VISUAL SIZE : " << renderParams.visualSize << std::endl;
-		std::cout << "STIMVAL : " << StimVariableVec[currStimVariableNum]->currStimVal << std::endl;
+		std::cout << "READY DURATION : " << renderParams.readyDuration << std::endl;
+		std::cout << "MEAN WAIT DURATION : " << renderParams.meanWaitDuration << std::endl;
+		std::cout << "STIMVAL (INTENSITY) : " << StimVariableVec[currStimVariableNum]->currStimVal << std::endl;
 	}
 
-	std::string EccentricityExperiment::getDebugStr()
+	std::string ReactionExperiment::getDebugStr()
 	{
 		if (!fsm) {
 			return "";
@@ -240,10 +181,9 @@ namespace Psychophysics
 			std::string debugInfo;
 			debugInfo += "STATE : " + std::to_string(fsm->currState) + ' ';
 			debugInfo += "MCS NUM : " + std::to_string(currStimVariableNum) + ' ';
-			debugInfo += "INITIAL DISPLACEMENT : " + std::to_string(renderParams.initialDisplacement.x)
-				+ ' ' + std::to_string(renderParams.initialDisplacement.y) + ' ';
-			debugInfo += "VISUAL SIZE : " + std::to_string(renderParams.visualSize) + ' ';
-			debugInfo += "STIMVAL : " + std::to_string(StimVariableVec[currStimVariableNum]->currStimVal) + ' ';
+			debugInfo += "READY DURATION : " + std::to_string(renderParams.readyDuration) + ' ';
+			debugInfo += "MEAN WAIT DURATION : " + std::to_string(renderParams.meanWaitDuration) + ' ';
+			debugInfo += "STIMVAL (INTENSITY) : " + std::to_string(StimVariableVec[currStimVariableNum]->currStimVal) + ' ';
 			return debugInfo;
 		}
 	}

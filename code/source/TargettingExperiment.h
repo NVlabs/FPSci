@@ -4,7 +4,7 @@
 
 namespace Psychophysics
 {
-	class EccentricityExperiment : public Experiment
+	class TargettingExperiment : public Experiment
 	{
 		/*
 		This is an example experiment
@@ -60,7 +60,7 @@ namespace Psychophysics
 				initialDisplacements = temp_initialDisplacements;
 
 				std::vector<float> temp_visualSizes = { // in visual angles
-					1.f,
+					0.2f,
 				};
 				visualSizes = temp_visualSizes;
 
@@ -69,13 +69,14 @@ namespace Psychophysics
 				taskDurationLevels = temp_taskDurationLevels;
 
 				speed = 0.0f;
-				motionChangeChance = 1.5f;
+				motionChangeChance = 0.0f;
 				trialCount = 5;
 				readyDuration = 0.5;
 				feedbackDuration = 0.0;
 
 				//weaponType = "tracking"; // set by the app.
 				weaponStrength = 1.f;
+				frameRate = 240.f;
 			}
 		} m_conditionParams;
 
@@ -94,13 +95,13 @@ namespace Psychophysics
 			std::string weaponType;
 			float weaponStrength;
 			std::string sceneType;
+			float frameRate;
 		};
 		RRP renderParams;
 
+		std::string expName = "TargettingExperiment";
+
 		/////// REQUIRED FUNCTIONS ///////
-		void setFrameRate(float fr);
-		void setWeaponType(std::string wt);
-		void setNumFrameDelay(int fd);
 		void init(std::string subjectID, std::string expVersion, int sessionNum, std::string savePath, bool trainingMode) override;
 
 		FSM::State getFSMState() override { return fsm->currState; };
