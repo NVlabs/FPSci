@@ -46,7 +46,7 @@ void App::onInit() {
     } else {
         dt = 1.0f / float(window()->settings().refreshRate);
     }
-    setFrameDuration(dt);
+    setFrameDuration(dt, GApp::REAL_TIME);
     setSubmitToDisplayMode(SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);    
     showRenderingStats      = false;
     makeGUI();
@@ -77,12 +77,45 @@ void App::onInit() {
 }
 
 
+void App::spawnRandomTarget() {
+    Random& rng = Random::threadCommon();
+
+    bool done = false;
+    int tries = 0;
+
+    // Construct a reference frame
+    // Remove the vertical component
+    Vector3 Z = -m_debugCamera->frame().lookVector();
+    Z.y = 0.0f;
+    Z = Z.direction();
+    Vector3 Y = Vector3::unitY();
+    Vector3 X = Y.cross(Z);
+
+    do {
+
+        // Make a random vector in front of the player in a narrow field of view
+        Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
+
+        // Make sure the spawn location is visible
+        Ray ray = Ray::fromOriginAndDirection(m_debugCamera->frame().translation, dir);
+        float distance = finf();
+        scene()->intersect(ray, distance);
+
+        if ((distance > 2.0f) && (distance < finf())) {
+            spawnTarget(ray.origin() + ray.direction() * rng.uniform(2.0f, distance - 1.0f), rng.uniform(0.1f, 1.5f));
+            done = true;
+        }
+        ++tries;
+    } while (! done && tries < 100);
+}
+
+
 shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale) {
     const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + 10), 0, m_targetModelArray.length() - 1);    
     
     const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
     const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(),
-        Any::parse(format("combine(orbit(0, 0.1), CFrame::fromXYZYPRDegrees(%f, %f, %f))", position.x, position.y, position.z)));
+        Any::parse(format("combine(orbit(0, 1), CFrame::fromXYZYPRDegrees(%f, %f, %f))", position.x, position.y, position.z)));
     target->setTrack(track);
     target->setShouldBeSaved(false);
     m_targetArray.append(target);
@@ -148,7 +181,8 @@ void App::makeGUI() {
     developerWindow->cameraControlWindow->setVisible(! playMode);
     developerWindow->videoRecordDialog->setEnabled(true);
 
-    debugPane->setNewChildSize(250.0f, -1.0f, 70.0f);
+    debugPane->setNewChildSize(230.0f, -1.0f, 70.0f);
+    const float SLIDER_SPACING = 35;
     debugPane->beginRow(); {
         debugPane->addCheckBox("Hitscan", &m_hitScan);
         debugPane->addCheckBox("Show Laser", &m_renderHitscan);
@@ -157,22 +191,24 @@ void App::makeGUI() {
         debugPane->addCheckBox("FPS", &m_renderFPS);
         static int frames = 0;
         GuiControl* c = nullptr;
+
+        debugPane->addButton("Spawn", this, &App::spawnRandomTarget);
         
         c = debugPane->addNumberBox("Framerate", Pointer<float>(
             [&]() { return 1.0f / realTimeTargetDuration(); },
             [&](float f) {
               // convert to seconds from fps
               f = 1.0f / f;
-              const float current = realTimeTargetDuration(); 
+              const float current = (float)realTimeTargetDuration(); 
               if (abs(f - current) > 1e-5f) {
                   // Only set when there is a change, otherwise the simulation's deltas are confused.
-                  setFrameDuration(f, -200); 
-              }}), "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f); c->moveBy(50, 0);
+                  setFrameDuration(f, GApp::REAL_TIME); 
+              }}), "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f); c->moveBy(SLIDER_SPACING, 0);
             
-        c = debugPane->addNumberBox("Input Lag", &frames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->setEnabled(false); c->moveBy(50, 0);
-        c = debugPane->addNumberBox("Display Lag", &m_displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->moveBy(50, 0);
-        debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1)->moveBy(50, 0);
-        debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(50, 0);
+        c = debugPane->addNumberBox("Input Lag", &frames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->setEnabled(false); c->moveBy(SLIDER_SPACING, 0);
+        c = debugPane->addNumberBox("Display Lag", &m_displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->moveBy(SLIDER_SPACING, 0);
+        debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1)->moveBy(SLIDER_SPACING, 0);
+        debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(SLIDER_SPACING, 0);
     } debugPane->endRow();
 
     debugWindow->pack();

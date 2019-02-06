@@ -80,6 +80,10 @@ public:
         setReticle((m_reticleIndex + 1) % numReticles); 
     }
 
+    /** Creates a random target in front of the player */
+    void spawnRandomTarget();
+
+    /** Creates a spinning target */
     shared_ptr<VisibleEntity> spawnTarget(const Point3& position, float scale);
 
     /** Call to set the 3D scene brightness. Default is 1.0. */
