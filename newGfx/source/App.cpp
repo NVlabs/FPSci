@@ -20,7 +20,7 @@ static const bool  variableRefreshRate        = true;
 static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
-static const bool  playMode                   = true;
+static const bool  playMode                   = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -288,7 +288,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
             --p;
         } else {
             // Animate
-            projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * 1.0f);
+            projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * 0.6f);
         }
     }
 
