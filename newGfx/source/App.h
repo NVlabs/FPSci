@@ -20,6 +20,8 @@ public:
 class App : public GApp {
 protected:
     static const float TARGET_MODEL_ARRAY_SCALING;
+    /** Length of the history queue for m_frameDurationQueue */
+    static const int MAX_HISTORY_TIMING_FRAMES = 360;
     const int                       numReticles = 55;
 
     shared_ptr<GFont>               m_outputFont;
@@ -39,6 +41,9 @@ protected:
     Array<shared_ptr<VisibleEntity>> m_targetArray;
 
     Array<Projectile>               m_projectileArray;
+
+    /** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
+    Queue<float>                    m_frameDurationQueue;
 
     /** Coordinate frame of the weapon, updated in onPose() */
     CFrame                          m_weaponFrame;

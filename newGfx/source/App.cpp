@@ -20,7 +20,7 @@ static const bool  variableRefreshRate        = true;
 static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
-static const bool  playMode                   = false;
+static const bool  playMode                   = true;
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -195,7 +195,7 @@ void App::makeGUI() {
         debugPane->addButton("Spawn", this, &App::spawnRandomTarget);
         
         c = debugPane->addNumberBox("Framerate", Pointer<float>(
-            [&]() { return 1.0f / realTimeTargetDuration(); },
+            [&]() { return 1.0f / float(realTimeTargetDuration()); },
             [&](float f) {
               // convert to seconds from fps
               f = 1.0f / f;
@@ -408,7 +408,23 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 
 
 void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& posed2D) {
-    // Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
+    // Track the instantaneous frame duration (no smoothing) in a circular queue
+    if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
+        m_frameDurationQueue.dequeue();
+    }
+    {
+        const float f = rd->stats().frameRate;
+        const float t = 1.0f / f;
+        m_frameDurationQueue.enqueue(t);
+    }
+
+    float recentMin = finf();
+    float recentMax = -finf();
+    for (int i = 0; i < m_frameDurationQueue.length(); ++i) {
+        const float t = m_frameDurationQueue[i];
+        recentMin = min(recentMin, t);
+        recentMax = max(recentMax, t);
+    }
 
     rd->push2D(); {
         const float scale = rd->viewport().width() / 1920.0f;
@@ -427,12 +443,22 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& posed2D)
 
         // FPS display (faster than the full stats widget)
         if (m_renderFPS) {
-            m_outputFont->draw2D(rd, format("%d measured / %d requested fps", 
-                iRound(renderDevice->stats().smoothFrameRate), 
-                window()->settings().refreshRate), 
-                (Point2(36, 24) * scale).floor(), floor(28.0f * scale), Color3::yellow());
+            String msg;
+            
+            if (window()->settings().refreshRate > 0) {
+                msg = format("%d measured / %d requested fps", 
+                    iRound(renderDevice->stats().smoothFrameRate), 
+                    window()->settings().refreshRate);
+            } else {
+                msg = format("%d fps", iRound(renderDevice->stats().smoothFrameRate));
+            }
+
+            msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
+
+            m_outputFont->draw2D(rd, msg, (Point2(30, 28) * scale).floor(), floor(20.0f * scale), Color3::yellow());
         }
     } rd->pop2D();
+
 
     Surface2D::sortAndRender(rd, posed2D);
 }
