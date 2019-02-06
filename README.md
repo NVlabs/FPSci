@@ -24,6 +24,7 @@ Progress tracking sheet (only accessible to developers): https://docs.google.com
         - **2. User enter into mouse adjusting mode, and adjust mouse sensitivity using hot keys or UI.**
         - **3. Include it in the settings file, and becomes effective as the file drop-downed.**
         - **SUGGESTED [Ben]: Import mouse settings from a local file/runtime argument instead of having the user enter them into code/a text box.**
+        - **Many games have anisotropic sensitivity for horizontal and vertical mouse motion. Add this.**
 - SUGGESTED [Ben]: Add an (optional?) visual indicator for the target if it ever goes off-screen (don't think this should happen, but would be good to include)
 - Go through current code structure and re-org it if necessary.
 - Independent control of latency for input / presentation (currently we only have presentation): Morgan implemented it in G3D
