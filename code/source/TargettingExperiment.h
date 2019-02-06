@@ -59,8 +59,8 @@ namespace Psychophysics
 				};
 				initialDisplacements = temp_initialDisplacements;
 
-				std::vector<float> temp_visualSizes = { // in visual angles
-					0.2f,
+				std::vector<float> temp_visualSizes = { // in an arbitrary unit at 1 m distance in the code.
+					0.01f,
 				};
 				visualSizes = temp_visualSizes;
 
@@ -76,7 +76,7 @@ namespace Psychophysics
 
 				//weaponType = "tracking"; // set by the app.
 				weaponStrength = 1.f;
-				frameRate = 240.f;
+				frameRate = 60.f;
 			}
 		} m_conditionParams;
 

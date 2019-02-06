@@ -736,15 +736,17 @@ void App::updateAnimation(RealTime framePeriod)
     
 	if ((m_presentationState == PresentationState::task) | (m_presentationState == PresentationState::feedback))
 	{
-        // Don't spawn a new target every frame
-        if (m_targetArray.size() == 0) {
-            spawnTarget(t_pos, 0.01f);
-        }
-        else {
-            // TODO: don't hardcode assumption of a single target
-            m_targetArray[0]->setFrame(t_pos);
-        }
-
+		// draw target if still alive.
+		if (m_targetHealth > 0.f) {
+			// Don't spawn a new target every frame
+			if (m_targetArray.size() == 0) {
+				spawnTarget(t_pos, ex.renderParams.visualSize);
+			}
+			else {
+				// TODO: don't hardcode assumption of a single target
+				m_targetArray[0]->setFrame(t_pos);
+			}
+		}
 	}
 }
 
