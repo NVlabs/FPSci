@@ -59,12 +59,13 @@ protected:
 
 	/** Used to detect GUI changes to m_reticleIndex */
 	int                             m_lastReticleLoaded = -1;
-	int                             m_reticleIndex = 0;
+	int                             m_reticleIndex = 41;
 	float                           m_sceneBrightness = 1.0f;
-	bool                            m_renderViewModel = true;
+	bool                            m_renderViewModel = false;
 	bool                            m_renderHud = false;
 	bool                            m_renderFPS = true;
 	bool                            m_renderHitscan = false;
+	bool							m_buttonUp = true;
 
 	/** Projectile if false         */
 	bool                            m_hitScan = true;
@@ -115,9 +116,9 @@ public:
 	virtual void onUserInput(UserInput* ui) override;
 	virtual void onCleanup() override;
 
-    const float                     m_targetDistance = 1.5f;
-    const float                     m_spawnDistance = 4.0f;
-    const float                     m_projectileSpeed = 150.0f; // meters per second
+    const float                     m_targetDistance = 1.0f;
+    const float                     m_spawnDistance = 0.0f;
+    const float                     m_projectileSpeed = 0.0f; // meters per second
 	const float                     m_projectileShotPeriod = 0.3f; // minimum time between two repeated shots
     const float                     m_projectileSize = 0.5f;
 

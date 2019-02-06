@@ -33,7 +33,7 @@ static const bool  unlockFramerate = true;
 // without tearing.
 static const bool  variableRefreshRate = true;
 
-const float App::TARGET_MODEL_ARRAY_SCALING = 0.1f;
+const float App::TARGET_MODEL_ARRAY_SCALING = 0.4f;
 
 //static const float verticalFieldOfViewDegrees = 90; // deg
 static const float horizontalFieldOfViewDegrees = 103; // deg
@@ -232,6 +232,14 @@ void App::onNetwork() {
 }
 
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
+
+	// TODO: restore
+	if (true) {
+		if (submitToDisplayMode() == SubmitToDisplayMode::MAXIMIZE_THROUGHPUT) {
+			swapBuffers();
+		}
+		return;
+	}
 	if (m_displayLagFrames > 0) {
 		// Need one more frame in the queue than we have frames of delay, to hold the current frame
 		if (m_ldrDelayBufferQueue.size() <= m_displayLagFrames) {
@@ -311,54 +319,62 @@ void App::onUserInput(UserInput* ui) {
 	(void)ui;
 
 
-	if ((playMode || m_debugController->enabled()) && ui->keyPressed(GKey::LEFT_MOUSE)) {
-		// Fire
-		Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
+	if (playMode || m_debugController->enabled()) {
+		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
+			// Fire
+			Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
 
-		if (m_hitScan) {
-			const Ray& ray = m_debugCamera->frame().lookRay();
+			m_buttonUp = false;
 
-			float closest = finf();
-			int closestIndex = -1;
-			for (int t = 0; t < m_targetArray.size(); ++t) {
-				if (m_targetArray[t]->intersect(ray, closest)) {
-					closestIndex = t;
+			if (m_hitScan) {
+				const Ray& ray = m_debugCamera->frame().lookRay();
+
+				float closest = finf();
+				int closestIndex = -1;
+				for (int t = 0; t < m_targetArray.size(); ++t) {
+					if (m_targetArray[t]->intersect(ray, closest)) {
+						closestIndex = t;
+					}
+				}
+
+				if (closestIndex >= 0) {
+					destroyTarget(closestIndex);
+					aimPoint = ray.origin() + ray.direction() * closest;
+					m_targetHealth -= ex.renderParams.weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
 				}
 			}
 
-			if (closestIndex >= 0) {
-				destroyTarget(closestIndex);
-				aimPoint = ray.origin() + ray.direction() * closest;
-				m_targetHealth -= ex.renderParams.weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
+			// Create the laser
+			if (m_renderHitscan) {
+				CFrame laserStartFrame = m_weaponFrame;
+				laserStartFrame.translation += laserStartFrame.upVector() * 0.1f;
+
+				// Adjust for the discrepancy between where the gun is and where the player is looking
+				laserStartFrame.lookAt(aimPoint);
+
+				laserStartFrame.translation += laserStartFrame.lookVector() * 2.0f;
+				const shared_ptr<VisibleEntity>& laser = VisibleEntity::create(format("laser%03d", ++m_lastUniqueID), scene().get(), m_laserModel, laserStartFrame);
+				laser->setShouldBeSaved(false);
+				laser->setCanCauseCollisions(false);
+				laser->setCastsShadows(false);
+				/*
+				const shared_ptr<Entity::Track>& track = Entity::Track::create(laser.get(), scene().get(),
+					Any::parse(format("%s", laserStartFrame.toXYZYPRDegreesString().c_str())));
+				laser->setTrack(track);
+				*/
+				m_projectileArray.push(Projectile(laser, System::time() + 1.0f));
+				scene()->insert(laser);
+			}
+
+			if (playMode) {
+				m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
 			}
 		}
-
-		// Create the laser
-		if (m_renderHitscan) {
-			CFrame laserStartFrame = m_weaponFrame;
-			laserStartFrame.translation += laserStartFrame.upVector() * 0.1f;
-
-			// Adjust for the discrepancy between where the gun is and where the player is looking
-			laserStartFrame.lookAt(aimPoint);
-
-			laserStartFrame.translation += laserStartFrame.lookVector() * 2.0f;
-			const shared_ptr<VisibleEntity>& laser = VisibleEntity::create(format("laser%03d", ++m_lastUniqueID), scene().get(), m_laserModel, laserStartFrame);
-			laser->setShouldBeSaved(false);
-			laser->setCanCauseCollisions(false);
-			laser->setCastsShadows(false);
-			/*
-			const shared_ptr<Entity::Track>& track = Entity::Track::create(laser.get(), scene().get(),
-				Any::parse(format("%s", laserStartFrame.toXYZYPRDegreesString().c_str())));
-			laser->setTrack(track);
-			*/
-			m_projectileArray.push(Projectile(laser, System::time() + 1.0f));
-			scene()->insert(laser);
-		}
-
-		if (playMode) {
-			m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
+		if (ui->keyReleased(GKey::LEFT_MOUSE)) {
+			m_buttonUp = true;
 		}
 	}
+
 
 	if (m_lastReticleLoaded != m_reticleIndex) {
 		// Slider was used to change the reticle
@@ -416,29 +432,41 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& surface2D
 		// Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
 
 	rd->push2D(); {
-		const float scale = rd->viewport().width() / 1920.0f;
-		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
-		// Reticle
-		Draw::rect2D((m_reticleTexture->rect2DBounds() * scale - m_reticleTexture->vector2Bounds() * scale / 2.0f) / 4.0f + rd->viewport().wh() / 2.0f, rd, Color3::white(), m_reticleTexture);
-
-		if (m_renderHud) {
-			const Point2 hudCenter(rd->viewport().width() / 2.0f, m_hudTexture->height() * scale * 0.48f);
-			Draw::rect2D((m_hudTexture->rect2DBounds() * scale - m_hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_hudTexture);
-			m_hudFont->draw2D(rd, "1:36", hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-			m_hudFont->draw2D(rd, "86%", hudCenter + Vector2(7, -1), scale * 30, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-			m_hudFont->draw2D(rd, "2080", hudCenter + Vector2(125, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		if (true) {
+			rd->clear();
+			Draw::rect2D(rd->viewport(), rd, Color3::blue());
 		}
+		else {
+			const float scale = rd->viewport().width() / 1920.0f;
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
-		// FPS display (faster than the full stats widget)
-		if (m_renderFPS) {
-			m_outputFont->draw2D(rd, format("%d measured / %d requested fps",
-				iRound(renderDevice->stats().smoothFrameRate),
-				window()->settings().refreshRate),
-				(Point2(36, 24) * scale).floor(), floor(28.0f * scale), Color3::yellow());
+			// Reticle
+			Draw::rect2D((m_reticleTexture->rect2DBounds() * scale - m_reticleTexture->vector2Bounds() * scale / 2.0f) / 8.0f + rd->viewport().wh() / 2.0f, rd, Color3::green(), m_reticleTexture);
+
+			if (m_renderHud) {
+				const Point2 hudCenter(rd->viewport().width() / 2.0f, m_hudTexture->height() * scale * 0.48f);
+				Draw::rect2D((m_hudTexture->rect2DBounds() * scale - m_hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_hudTexture);
+				m_hudFont->draw2D(rd, "1:36", hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+				m_hudFont->draw2D(rd, "86%", hudCenter + Vector2(7, -1), scale * 30, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+				m_hudFont->draw2D(rd, "2080", hudCenter + Vector2(125, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+			}
+
+			// FPS display (faster than the full stats widget)
+			if (m_renderFPS) {
+				m_outputFont->draw2D(rd, format("%d measured / %d requested fps",
+					iRound(renderDevice->stats().smoothFrameRate),
+					window()->settings().refreshRate),
+					(Point2(36, 24) * scale).floor(), floor(28.0f * scale), Color3::yellow());
+			}
+
+			Color3 cornerColor = (m_buttonUp) ? Color3::black() : Color3::white();
+			Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
 		}
 	} rd->pop2D();
 
+	//MIght not need this on the reaction trial
+	// This is rendering the GUI. Can remove if desired.
 	Surface2D::sortAndRender(rd, surface2D);
 }
 
@@ -521,7 +549,6 @@ void App::initPsychophysicsLib() {
 
 	// reset viewport to look straight ahead.
 	// TODO: restore
-	resetView();
 }
 
 void App::resetView() {
@@ -529,7 +556,7 @@ void App::resetView() {
     const shared_ptr<Camera>& camera = activeCamera();
 	//activeCamera()->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
     // Account for the camera translation to ensure correct look vector
-	camera->lookAt(camera->frame().translation + Point3(0, 0, -1));
+	//camera->lookAt(camera->frame().translation + Point3(0, 0, -1));
 	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 	//fpm->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
 	fpm->lookAt(Point3(0,0,-1));
@@ -546,7 +573,7 @@ void App::initTrialAnimation() {
 
 	// initialize target location based on the initial displacement values
     // Not reference: we don't want it to change after the first call.
-    static const Point3 initialSpawnPos = activeCamera()->frame().translation + Point3(-m_spawnDistance,1.0f,0.0f);
+    static const Point3 initialSpawnPos = activeCamera()->frame().translation + Point3(-m_spawnDistance,0.0f,0.0f);
 	m_motionFrame = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
 	m_motionFrame.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
 	m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::rollDegrees(ex.renderParams.initialDisplacement.x)).approxCoordinateFrame();
@@ -558,6 +585,8 @@ void App::initTrialAnimation() {
 
 	// Full health for the target
 	m_targetHealth = 1.f;
+
+	resetView();
 }
 
 void App::informTrialSuccess()
@@ -585,7 +614,7 @@ void App::updateTrialState()
 		if (stateElapsedTime > ex.renderParams.readyDuration)
 		{
 			// turn on mouse interaction
-			dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator())->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
+			//dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator())->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
 
 			// G3D expects mouse sensitivity in radians
 			// we're converting from mouseDPI and centimeters/360 which explains
@@ -613,7 +642,6 @@ void App::updateTrialState()
 			newState = PresentationState::ready;
 			// turn off mouse interaction
 			dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator())->setTurnRate(0.0);
-			resetView();
 
 			// Communicate with psychophysics library at this point
 			if (m_targetHealth <= 0)
@@ -704,7 +732,7 @@ void App::updateAnimation(RealTime framePeriod)
 	{
         // Don't spawn a new target every frame
         if (m_targetArray.size() == 0) {
-            spawnTarget(t_pos, 0.5f);
+            spawnTarget(t_pos, 0.01f);
         }
         else {
             // TODO: don't hardcode assumption of a single target
