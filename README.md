@@ -11,13 +11,13 @@ Progress tracking sheet (only accessible to developers): https://docs.google.com
 - **Avoid re-compiling whenever experimental condition changes. Possibly we can exploit the drag-drop feature of G3D, using an input file.**
     - ~~**Can we change frame rates without re-executing the file?**~~ Yes
 - **Reaction time experiment**
-    - **Implement waiting time based on the truncated exponential distribution**
+    - **Implement waiting time based on the truncated exponential distribution** Joohwan
     - **Pilot run it on various frame rates. Make sure data make sense.**
     - **Improve interface to encourage optimal performance (shortest latency)**
-- **Characterize various frame rates in terms of click-photon latency values**
-- **Make sure all experiments run correctly (complete analysis of one pilot run, verify the data make sense)**
+- **Characterize various frame rates in terms of click-photon latency values** Joohwan
 - **Targeting experiment**
-    - **Disable view reset. Ready state ends when user clicks on the center target**
+    - **Disable view reset. Ready state ends when user clicks on the center target** Joohwan
+    - **Pilot run, verify data make sense** Joohwan
 - **Support for input device configuration**
     - **Start with mouse. Options.**
         - **1. We enter the 360 distance in a text box.**
