@@ -8,26 +8,29 @@ Set up an environment variable as the following (note that we are not distributi
  
 ## TODO (bold face for more urgent)
 Progress tracking sheet (only accessible to developers): https://docs.google.com/spreadsheets/d/1rxkRC-GVi-nCIIElz8XpO-7lhCwv9De2x2wF_ZM9Vnk/edit?usp=sharing
-- **Try out staircase design**
 - **Avoid re-compiling whenever experimental condition changes. Possibly we can exploit the drag-drop feature of G3D, using an input file.**
     - ~~**Can we change frame rates without re-executing the file?**~~ Yes
+- **Reaction time experiment**
+    - **Implement waiting time based on the truncated exponential distribution** Joohwan
+    - **Pilot run it on various frame rates. Make sure data make sense.**
+    - **Improve interface to encourage optimal performance (shortest latency)**
+- **Characterize various frame rates in terms of click-photon latency values** Joohwan
+- **Targeting experiment**
+    - **Disable view reset. Ready state ends when user clicks on the center target** Joohwan
+    - **Pilot run, verify data make sense** Joohwan
 - **Support for input device configuration**
     - **Start with mouse. Options.**
         - **1. We enter the 360 distance in a text box.**
         - **2. User enter into mouse adjusting mode, and adjust mouse sensitivity using hot keys or UI.**
         - **3. Include it in the settings file, and becomes effective as the file drop-downed.**
         - **SUGGESTED [Ben]: Import mouse settings from a local file/runtime argument instead of having the user enter them into code/a text box.**
-- **First few seconds exhibit severe frame dropping when frame rate changes. Fix!**
-    - **SUGGESTED [Ben]: Start execution in splash screen rather than in 1st trial of experiment (require user to click to start the first trial, could avoid issues w/ frame dropping at the start)**
-- **Independent control of latency for input / presentation (currently we only have presentation): Morgan implemented it in G3D**
-- **Integrate the more modern version of G3D engine**
-- **Go through current code structure and re-org it if necessary.**
-- **SUGGESTED [Ben]: Fix the first trial so that object does not spawn in center of screen**
-- **SUGGESTED [Ben]: Add an (optional?) visual indicator for the target if it ever goes off-screen (don't think this should happen, but would be good to include)**
+        - **Many games have anisotropic sensitivity for horizontal and vertical mouse motion. Add this.**
+- SUGGESTED [Ben]: Add an (optional?) visual indicator for the target if it ever goes off-screen (don't think this should happen, but would be good to include)
+- Go through current code structure and re-org it if necessary.
+- Independent control of latency for input / presentation (currently we only have presentation): Morgan implemented it in G3D
+    - First check it whether it is indeed necessary.
 - Improve projectile animation (we first need to discuss 'how')
 - Time to add latency measuring tools!
-- Add object scaling.
-- Implement scoreboard. What to display as score must be configurable by the experimenter or input configuration.
 - Full record of target motion
     - Analyze motion characteristics and subjects performance, infer difficulty level from the data (Ben)
         - Come up w/ some basic metrics that summarize path smoothness (i.e. integrated jerk magnitude)
