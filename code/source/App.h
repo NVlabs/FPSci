@@ -32,6 +32,8 @@ public:
 class App : public GApp {
 protected:
 	static const float TARGET_MODEL_ARRAY_SCALING;
+	/** Length of the history queue for m_frameDurationQueue */
+	static const int MAX_HISTORY_TIMING_FRAMES = 360;
 	const int                       numReticles = 55;
 
 	shared_ptr<GFont>               m_outputFont;
@@ -47,6 +49,9 @@ protected:
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
 
+	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
+	Queue<float>                    m_frameDurationQueue;
+
 	/** Coordinate frame of the weapon, updated in onPose() */
 	CFrame                          m_weaponFrame;
 	int                             m_displayLagFrames = 0;
@@ -60,6 +65,9 @@ protected:
 	bool                            m_renderFPS = true;
 	bool                            m_renderHitscan = false;
 	bool							m_buttonUp = true;
+
+	/** Set to true to lower rendering quality to increase performance. */
+	bool                            m_emergencyTurbo = false;
 
 	/** Projectile if false         */
 	bool                            m_hitScan = true;
@@ -94,7 +102,11 @@ public:
 		setReticle((m_reticleIndex + 1) % numReticles);
 	}
 
-	shared_ptr<VisibleEntity> spawnTarget(const Point3& position, float scale);
+	/** Creates a random target in front of the player */
+	void spawnRandomTarget();
+
+	/** Creates a spinning target */
+	shared_ptr<VisibleEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true);
 
 	/** Call to set the 3D scene brightness. Default is 1.0. */
 	void setSceneBrightness(float b);
@@ -117,6 +129,7 @@ public:
 	virtual void onUserInput(UserInput* ui) override;
 	virtual void onCleanup() override;
 
+	// variables for experiments
     const float                     m_targetDistance = 1.0f;
     const float                     m_spawnDistance = 0.0f;
     const float                     m_projectileSpeed = 0.0f; // meters per second
