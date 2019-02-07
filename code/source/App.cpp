@@ -106,7 +106,10 @@ void App::onInit() {
 
 	loadModels();
 	setReticle(m_reticleIndex);
-	loadScene("eSports Simple Hallway");
+	
+	if (ex->expName == "TargetingExperiment") {
+		loadScene("Loading Targeting Experiment...");
+	}
 
 	initPsychophysicsLib();
     // Need to call once for the first frame to set the camera parameters.
