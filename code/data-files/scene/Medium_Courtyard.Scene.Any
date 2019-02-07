@@ -116,7 +116,7 @@
             highQualityBlur = true; 
             intensity = 1.20833; 
             monotonicallyDecreasingBilateralWeights = false; 
-            numSamples = 8; 
+            numSamples = 6; 
             packBlurKeys = false; 
             radius = 1.5; 
             temporalFilterSettings = TemporalFilter::Settings { 
