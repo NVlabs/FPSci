@@ -1,6 +1,9 @@
 #pragma once
 #include <G3D/G3D.h>
+#include "App.h"
 #include "psychophysics.h"
+
+class App;
 
 namespace Psychophysics
 {
@@ -80,7 +83,15 @@ namespace Psychophysics
 			}
 		} m_conditionParams;
 
+		App* m_app;
+		//shared_ptr<App> m_app;
+
 	public:
+		TargetingExperiment(App* app) : Experiment() {
+			expName = "TargetingExperiment";
+			m_app = app;
+		};
+
 		/////// RENDER-RELEVANT PARAMS ///////
 		struct RRP
 		{
@@ -99,21 +110,25 @@ namespace Psychophysics
 		};
 		RRP renderParams;
 
-		std::string expName = "TargetingExperiment";
-
 		/////// REQUIRED FUNCTIONS ///////
 		void init(std::string subjectID, std::string expVersion, int sessionNum, std::string savePath, bool trainingMode) override;
 
 		FSM::State getFSMState() override { return fsm->currState; };
-		bool isExperimentDone();
 
 		void startTimer() override { fsm->startTimer(); };
-		float getTime() { int t = fsm->elapsedTimeMS(); return ((float)t) / 1000.0f; };
+		float getTime() override { int t = fsm->elapsedTimeMS(); return ((float)t) / 1000.0f; };
 
 		void printDebugInfo();
 
 		std::string getDebugStr();
 
 		void updateRenderParamsForCurrentTrial();
+
+		/////// ANIMATION AND PRESENTATION STATE HANDLING ///////
+		void initTrialAnimation();
+
+		void updatePresentationState();
+
+		void updateAnimation(RealTime framePeriod);
 	};
 }

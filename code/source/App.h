@@ -47,15 +47,8 @@ protected:
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
 
-	/** Array of all targets in the scene */
-	Array<shared_ptr<VisibleEntity>> m_targetArray;
-
-	Array<Projectile>               m_projectileArray;
-
 	/** Coordinate frame of the weapon, updated in onPose() */
 	CFrame                          m_weaponFrame;
-	CFrame                          m_motionFrame; // object at 10 m away in -z direction in this coordinate frame
-
 	int                             m_displayLagFrames = 0;
 
 	/** Used to detect GUI changes to m_reticleIndex */
@@ -85,6 +78,13 @@ protected:
 public:
 
 	App(const GApp::Settings& settings = GApp::Settings());
+
+	/** Array of all targets in the scene */
+	Array<shared_ptr<VisibleEntity>> m_targetArray;
+	Array<Projectile>               m_projectileArray;
+
+	/** To control target motion */
+	CFrame                          m_motionFrame; // object at 10 m away in -z direction in this coordinate frame
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
@@ -151,17 +151,17 @@ protected:
 	double                          m_t_lastProjectileShot = -inf();
 
 public:
-	Psychophysics::TargetingExperiment ex;
+	//Psychophysics::TargetingExperiment ex;
+	//Psychophysics::ReactionExperiment ex;
+	shared_ptr<Psychophysics::Experiment> ex;
 
-	void initTrialAnimation();
+
 	void resetView();
 	void processUserInput(const GEvent& e);
 	void initPsychophysicsLib();
 
-	void updateAnimation(RealTime framePeriod);
 	void informTrialSuccess();
 	void informTrialFailure();
-	void updateTrialState();
 };
 
 // The 'old' way of animation

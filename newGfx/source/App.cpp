@@ -7,10 +7,10 @@
     Set your monitor's desktop refresh rate (e.g., in the NVIDIA Control Panel)
     to the highest rate that it supports before running this program.
    */
-static const float targetFrameRate            = 1000; // Hz
+static const float targetFrameRate            = 360; // Hz
 
 /** Enable this to see maximum CPU/GPU rate when not limited by the monitor. */
-static const bool  unlockFramerate            = true;
+static const bool  unlockFramerate            = false;
 
 /* Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
    which allows the application to submit asynchronously with vsync
@@ -20,7 +20,7 @@ static const bool  variableRefreshRate        = true;
 static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
-static const bool  playMode                   = false;
+static const bool  playMode                   = true;
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -64,14 +64,14 @@ void App::onInit() {
     setReticle(m_reticleIndex);
     loadScene("eSports Simple Hallway");
 
-    spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
-    spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
+    //spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
+    //spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
     if (playMode) {
         // Force into FPS mode
         const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
-        fpm->setMoveRate(0.0);
+        fpm->setMoveRate(1.0);
     }
 
 }
