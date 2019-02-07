@@ -108,7 +108,7 @@ void App::onInit() {
 	setReticle(m_reticleIndex);
 	
 	if (ex->expName == "TargetingExperiment") {
-		loadScene("Loading Targeting Experiment...");
+		loadScene("eSports Simple Hallway");
 	}
 
 	initPsychophysicsLib();

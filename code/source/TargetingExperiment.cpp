@@ -246,7 +246,6 @@ namespace Psychophysics
 	void TargetingExperiment::updatePresentationState()
 	{
 		// This updates presentation state and also deals with data collection when each trial ends.
-		// Hence the name 'updateTrialState' as opposed to 'updatePresentationState' because it is a bit more than just updating presentation state.
 		PresentationState currentState = m_app->m_presentationState;
 		PresentationState newState;
 		double stateElapsedTime = (double)getTime();

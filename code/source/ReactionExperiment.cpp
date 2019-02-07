@@ -200,7 +200,6 @@ namespace Psychophysics
 	void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 	{
 		// This updates presentation state and also deals with data collection when each trial ends.
-		// Hence the name 'updateTrialState' as opposed to 'updatePresentationState' because it is a bit more than just updating presentation state.
 		PresentationState currentState = m_app->m_presentationState;
 		PresentationState newState;
 		double stateElapsedTime = (double)getTime();
@@ -217,6 +216,7 @@ namespace Psychophysics
 			{
 				startTimer(); // starting timer so that we get unrealistically small number for failed trials.
 				m_app->informTrialFailure();
+				m_feedbackMessage = "Failure: Responded too quickly.";
 				newState = PresentationState::feedback;
 			}
 			else { // keep waiting.
@@ -228,6 +228,7 @@ namespace Psychophysics
 			if (m_reacted)
 			{
 				m_app->informTrialSuccess();
+				m_feedbackMessage = std::to_string(int(stateElapsedTime * 1000)) + " msec";
 				newState = PresentationState::feedback;
 			}
 			else newState = currentState;
@@ -263,7 +264,8 @@ namespace Psychophysics
 			m_stimColor = Color3::green() * renderParams.intensity;
 		}
 		else if (m_app->m_presentationState == PresentationState::feedback) {
-			m_stimColor = Color3::black();
+			m_stimColor = Color3::white() * 0.3;
+			m_app->drawMessage(m_feedbackMessage.c_str());
 		}
 	}
 }
