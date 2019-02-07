@@ -71,8 +71,8 @@ namespace Psychophysics
 				std::vector<double> temp_taskDurationLevels = { 100 }; // basically, infinite amount of time.
 				taskDurationLevels = temp_taskDurationLevels;
 
-				speed = 0.0f;
-				motionChangeChance = 0.0f;
+				speed = 10.0f;
+				motionChangeChance = 1.0f;
 				trialCount = 5;
 				readyDuration = 0.5;
 				feedbackDuration = 0.0;

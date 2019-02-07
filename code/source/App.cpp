@@ -23,7 +23,7 @@ double GetCPUTime() // unit is second
 }
 
 // Set to false when just editing content
-static const bool playMode = true;
+static const bool playMode = false;
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. 
 static const bool  unlockFramerate = false;

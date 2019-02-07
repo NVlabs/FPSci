@@ -230,17 +230,22 @@ namespace Psychophysics
 		static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_app->m_spawnDistance, 0.0f, 0.0f);
 		m_app->m_motionFrame = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
 		m_app->m_motionFrame.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(renderParams.initialDisplacement.x)).approxCoordinateFrame();
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-renderParams.initialDisplacement.y)).approxCoordinateFrame();
 
-		// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
-		float randomAngleDegree = G3D::Random::common().uniform() * 360;
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
+        // In task state, spawn a test target
+        if (m_app->m_presentationState == PresentationState::task) {
+            m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(renderParams.initialDisplacement.x)).approxCoordinateFrame();
+            m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-renderParams.initialDisplacement.y)).approxCoordinateFrame();
+
+            // Apply roll rotation by a random amount (random angle in degree from 0 to 360)
+            float randomAngleDegree = G3D::Random::common().uniform() * 360;
+            m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
+        }
 
 		// Full health for the target
 		m_app->m_targetHealth = 1.f;
 
-		m_app->resetView();
+        // Don't reset the view. Wait for the subject to center on the ready target.
+		//m_app->resetView();
 	}
 
 	void TargetingExperiment::updatePresentationState()
@@ -250,15 +255,18 @@ namespace Psychophysics
 		PresentationState newState;
 		double stateElapsedTime = (double)getTime();
 
+        newState = currentState;
 		if (currentState == PresentationState::ready)
 		{
 			if (stateElapsedTime > renderParams.readyDuration)
 			{
-				startTimer();
+                // We hit the ready target that was spawned.
+                if (m_app->m_targetHealth <= 0) {
+                    startTimer();
 
-				newState = PresentationState::task;
+                    newState = PresentationState::task;
+                }
 			}
-			else newState = currentState;
 		}
 		else if (currentState == PresentationState::task)
 		{
@@ -275,7 +283,6 @@ namespace Psychophysics
 				}
 				newState = PresentationState::feedback;
 			}
-			else newState = currentState;
 		}
 		else if (currentState == PresentationState::feedback)
 		{
@@ -289,13 +296,16 @@ namespace Psychophysics
 					initTrialAnimation();
 				}
 			}
-			else newState = currentState;
 		}
 
 		if (currentState != newState)
 		{ // handle state transition.
 			startTimer();
 			m_app->m_presentationState = newState;
+            //If we switched to task, call initTrialAnimation to handle new trial
+            if (newState == PresentationState::task) {
+                initTrialAnimation();
+            }
 		}
 	}
 
@@ -340,7 +350,16 @@ namespace Psychophysics
 		// 4. Update tunnel and target colors
 		if (m_app->m_presentationState == PresentationState::ready)
 		{
-			// will color the tunnel when that becomes available.
+            if (m_app->m_targetHealth > 0)
+            {
+                m_app->m_targetColor = Color3::red().pow(2.0f);
+            }
+            else
+            {
+                m_app->m_targetColor = Color3::green().pow(2.0f);
+                // If the target is dead, empty the projectiles
+                m_app->m_projectileArray.fastClear();
+            }
 		}
 		else if (m_app->m_presentationState == PresentationState::task)
 		{
@@ -363,20 +382,17 @@ namespace Psychophysics
 		// 5. Clear m_TargetArray. Append an object with m_targetLocation if necessary ('task' and 'feedback' states).
 		Point3 t_pos = m_app->m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance));
 
-		if ((m_app->m_presentationState == PresentationState::task) | (m_app->m_presentationState == PresentationState::feedback))
-		{
-			// draw target if still alive.
-			if (m_app->m_targetHealth > 0.f) {
-				// Don't spawn a new target every frame
-				if (m_app->m_targetArray.size() == 0) {
-					m_app->spawnTarget(t_pos, renderParams.visualSize);
-				}
-				else {
-					// TODO: don't hardcode assumption of a single target
-					m_app->m_targetArray[0]->setFrame(t_pos);
-				}
-			}
-		}
+
+        if (m_app->m_targetHealth > 0.f) {
+            // Don't spawn a new target every frame
+            if (m_app->m_targetArray.size() == 0) {
+                m_app->spawnTarget(t_pos, renderParams.visualSize);
+            }
+            else {
+                // TODO: don't hardcode assumption of a single target
+                m_app->m_targetArray[0]->setFrame(t_pos);
+            }
+        }
 	}
 
 }
