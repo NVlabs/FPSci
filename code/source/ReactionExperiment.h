@@ -26,17 +26,19 @@ namespace Psychophysics
 
 			ConditionParams()
 			{
-				trialCount = 10;
-				intensities = { 0.5f, 1.0f };
+				trialCount = 1;
+				intensities = { 0.4f, 1.0f };
 				minimumForeperiod = 1.5;
-				meanWaitDuration = 1.0;
-				feedbackDuration = 0.5;
+				meanWaitDuration = 0.5;
+				feedbackDuration = 1.0;
 				frameRate = 240.f;
 			}
 		} m_conditionParams;
 
 		App* m_app;
 		//shared_ptr<App> m_app;
+
+		std::string m_feedbackMessage;
 
 	public:
 		ReactionExperiment(App* app) : Experiment() {
