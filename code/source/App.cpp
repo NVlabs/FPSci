@@ -47,7 +47,7 @@ static const float targetFrameRate = 1440.0f; // hz
 static const std::string subjectID = "JK"; // your name
 const int numFrameDelay = 0;
 static const std::string expState = "real"; // training or real
-static const std::string taskType = "reaction"; // reaction or targeting
+static const std::string taskType = "targeting"; // reaction or targeting
 static const std::string appendingDescription = "ver1";
 //========================================================================
 
