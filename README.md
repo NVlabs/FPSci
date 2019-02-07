@@ -5,6 +5,10 @@
 Set up an environment variable as the following (note that we are not distributing it yet!)
 - name: PSYCHOPHYSICS
 - value: the root folder of psychophysics-lib
+
+## G3D dependencies
+
+You need some data files from the `research` and `game` subdirectories of G3D so you can't just checkout the `common` subdirectory.
  
 ## TODO (bold face for more urgent)
 Progress tracking sheet (only accessible to developers): https://docs.google.com/spreadsheets/d/1rxkRC-GVi-nCIIElz8XpO-7lhCwv9De2x2wF_ZM9Vnk/edit?usp=sharing
