@@ -20,6 +20,8 @@ public:
 class App : public GApp {
 protected:
     static const float TARGET_MODEL_ARRAY_SCALING;
+    /** Length of the history queue for m_frameDurationQueue */
+    static const int MAX_HISTORY_TIMING_FRAMES = 360;
     const int                       numReticles = 55;
 
     shared_ptr<GFont>               m_outputFont;
@@ -40,6 +42,9 @@ protected:
 
     Array<Projectile>               m_projectileArray;
 
+    /** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
+    Queue<float>                    m_frameDurationQueue;
+
     /** Coordinate frame of the weapon, updated in onPose() */
     CFrame                          m_weaponFrame;
 
@@ -53,6 +58,9 @@ protected:
     bool                            m_renderHud = true;
     bool                            m_renderFPS = true;
     bool                            m_renderHitscan = true;
+
+    /** Set to true to lower rendering quality to increase performance. */
+    bool                            m_emergencyTurbo = false;
 
     /** Projectile if false         */
     bool                            m_hitScan = true;
@@ -80,7 +88,11 @@ public:
         setReticle((m_reticleIndex + 1) % numReticles); 
     }
 
-    shared_ptr<VisibleEntity> spawnTarget(const Point3& position, float scale);
+    /** Creates a random target in front of the player */
+    void spawnRandomTarget();
+
+    /** Creates a spinning target */
+    shared_ptr<VisibleEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true);
 
     /** Call to set the 3D scene brightness. Default is 1.0. */
     void setSceneBrightness(float b);

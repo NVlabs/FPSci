@@ -1,7 +1,6 @@
 /** \file App.cpp */
 #include "App.h"
 
-
 /** Set this variable to a value in frames per second (Hz) to lock a specific rate.
     
     Set your monitor's desktop refresh rate (e.g., in the NVIDIA Control Panel)
@@ -46,7 +45,7 @@ void App::onInit() {
     } else {
         dt = 1.0f / float(window()->settings().refreshRate);
     }
-    setFrameDuration(dt);
+    setFrameDuration(dt, GApp::REAL_TIME);
     setSubmitToDisplayMode(SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);    
     showRenderingStats      = false;
     makeGUI();
@@ -64,8 +63,8 @@ void App::onInit() {
     setReticle(m_reticleIndex);
     loadScene("eSports Simple Hallway");
 
-    //spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
-    //spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
+    spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
+    spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f, false);
 
     if (playMode) {
         // Force into FPS mode
@@ -77,12 +76,47 @@ void App::onInit() {
 }
 
 
-shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale) {
+void App::spawnRandomTarget() {
+    Random& rng = Random::threadCommon();
+
+    bool done = false;
+    int tries = 0;
+
+    // Construct a reference frame
+    // Remove the vertical component
+    Vector3 Z = -m_debugCamera->frame().lookVector();
+    Z.y = 0.0f;
+    Z = Z.direction();
+    Vector3 Y = Vector3::unitY();
+    Vector3 X = Y.cross(Z);
+
+    do {
+
+        // Make a random vector in front of the player in a narrow field of view
+        Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
+
+        // Make sure the spawn location is visible
+        Ray ray = Ray::fromOriginAndDirection(m_debugCamera->frame().translation, dir);
+        float distance = finf();
+        scene()->intersect(ray, distance);
+
+        if ((distance > 2.0f) && (distance < finf())) {
+            spawnTarget(ray.origin() + ray.direction() * rng.uniform(2.0f, distance - 1.0f), rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f);
+            done = true;
+        }
+        ++tries;
+    } while (! done && tries < 100);
+}
+
+
+shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft) {
     const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + 10), 0, m_targetModelArray.length() - 1);    
     
     const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
-    const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(),
-        Any::parse(format("combine(orbit(0, 0.1), CFrame::fromXYZYPRDegrees(%f, %f, %f))", position.x, position.y, position.z)));
+
+    String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
+
+    const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
     target->setTrack(track);
     target->setShouldBeSaved(false);
     m_targetArray.append(target);
@@ -96,7 +130,7 @@ void App::loadModels() {
         filename = "model/sniper/sniper.obj";
         preprocess = {
             transformGeometry(all(), Matrix4::yawDegrees(90));
-        transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
+            transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
         };
         scale = 0.25;
     });
@@ -148,31 +182,35 @@ void App::makeGUI() {
     developerWindow->cameraControlWindow->setVisible(! playMode);
     developerWindow->videoRecordDialog->setEnabled(true);
 
-    debugPane->setNewChildSize(250.0f, -1.0f, 70.0f);
+    const float SLIDER_SPACING = 35;
     debugPane->beginRow(); {
         debugPane->addCheckBox("Hitscan", &m_hitScan);
         debugPane->addCheckBox("Show Laser", &m_renderHitscan);
         debugPane->addCheckBox("Weapon", &m_renderViewModel);
         debugPane->addCheckBox("HUD", &m_renderHud);
         debugPane->addCheckBox("FPS", &m_renderFPS);
+        debugPane->addCheckBox("Turbo", &m_emergencyTurbo);
         static int frames = 0;
         GuiControl* c = nullptr;
-        
+
+        debugPane->addButton("Spawn", this, &App::spawnRandomTarget);
+        debugPane->setNewChildSize(230.0f, -1.0f, 70.0f);
+
         c = debugPane->addNumberBox("Framerate", Pointer<float>(
-            [&]() { return 1.0f / realTimeTargetDuration(); },
+            [&]() { return 1.0f / float(realTimeTargetDuration()); },
             [&](float f) {
               // convert to seconds from fps
               f = 1.0f / f;
-              const float current = realTimeTargetDuration(); 
+              const float current = (float)realTimeTargetDuration(); 
               if (abs(f - current) > 1e-5f) {
                   // Only set when there is a change, otherwise the simulation's deltas are confused.
-                  setFrameDuration(f, -200); 
-              }}), "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f); c->moveBy(50, 0);
+                  setFrameDuration(f, GApp::REAL_TIME); 
+              }}), "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f); c->moveBy(SLIDER_SPACING, 0);
             
-        c = debugPane->addNumberBox("Input Lag", &frames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->setEnabled(false); c->moveBy(50, 0);
-        c = debugPane->addNumberBox("Display Lag", &m_displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->moveBy(50, 0);
-        debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1)->moveBy(50, 0);
-        debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(50, 0);
+        c = debugPane->addNumberBox("Input Lag", &frames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->setEnabled(false); c->moveBy(SLIDER_SPACING, 0);
+        c = debugPane->addNumberBox("Display Lag", &m_displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->moveBy(SLIDER_SPACING, 0);
+        debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1)->moveBy(SLIDER_SPACING, 0);
+        debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(SLIDER_SPACING, 0);
     } debugPane->endRow();
 
     debugWindow->pack();
@@ -221,6 +259,10 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
         rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
     }
 
+    scene()->lightingEnvironment().ambientOcclusionSettings.enabled = ! m_emergencyTurbo;
+    m_debugCamera->filmSettings().setAntialiasingEnabled(! m_emergencyTurbo);
+    m_debugCamera->filmSettings().setBloomStrength(m_emergencyTurbo ? 0.0f : 0.5f);
+
     GApp::onGraphics3D(rd, surface);
 
     if (m_displayLagFrames > 0) {
@@ -252,7 +294,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
             --p;
         } else {
             // Animate
-            projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * 1.0f);
+            projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * 0.6f);
         }
     }
 
@@ -372,7 +414,23 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 
 
 void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& posed2D) {
-    // Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
+    // Track the instantaneous frame duration (no smoothing) in a circular queue
+    if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
+        m_frameDurationQueue.dequeue();
+    }
+    {
+        const float f = rd->stats().frameRate;
+        const float t = 1.0f / f;
+        m_frameDurationQueue.enqueue(t);
+    }
+
+    float recentMin = finf();
+    float recentMax = -finf();
+    for (int i = 0; i < m_frameDurationQueue.length(); ++i) {
+        const float t = m_frameDurationQueue[i];
+        recentMin = min(recentMin, t);
+        recentMax = max(recentMax, t);
+    }
 
     rd->push2D(); {
         const float scale = rd->viewport().width() / 1920.0f;
@@ -381,7 +439,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& posed2D)
         // Reticle
         Draw::rect2D((m_reticleTexture->rect2DBounds() * scale - m_reticleTexture->vector2Bounds() * scale / 2.0f) / 4.0f + rd->viewport().wh() / 2.0f, rd, Color3::white(), m_reticleTexture);
 
-        if (m_renderHud) {
+        if (m_renderHud && ! m_emergencyTurbo) {
             const Point2 hudCenter(rd->viewport().width() / 2.0f, m_hudTexture->height() * scale * 0.48f);
             Draw::rect2D((m_hudTexture->rect2DBounds() * scale - m_hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_hudTexture);
             m_hudFont->draw2D(rd, "1:36", hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
@@ -391,12 +449,22 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& posed2D)
 
         // FPS display (faster than the full stats widget)
         if (m_renderFPS) {
-            m_outputFont->draw2D(rd, format("%d measured / %d requested fps", 
-                iRound(renderDevice->stats().smoothFrameRate), 
-                window()->settings().refreshRate), 
-                (Point2(36, 24) * scale).floor(), floor(28.0f * scale), Color3::yellow());
+            String msg;
+            
+            if (window()->settings().refreshRate > 0) {
+                msg = format("%d measured / %d requested fps", 
+                    iRound(renderDevice->stats().smoothFrameRate), 
+                    window()->settings().refreshRate);
+            } else {
+                msg = format("%d fps", iRound(renderDevice->stats().smoothFrameRate));
+            }
+
+            msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
+
+            m_outputFont->draw2D(rd, msg, (Point2(30, 28) * scale).floor(), floor(20.0f * scale), Color3::yellow());
         }
     } rd->pop2D();
+
 
     Surface2D::sortAndRender(rd, posed2D);
 }

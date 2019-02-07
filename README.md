@@ -10,14 +10,15 @@ Set up an environment variable as the following (note that we are not distributi
 Progress tracking sheet (only accessible to developers): https://docs.google.com/spreadsheets/d/1rxkRC-GVi-nCIIElz8XpO-7lhCwv9De2x2wF_ZM9Vnk/edit?usp=sharing
 - **Avoid re-compiling whenever experimental condition changes. Possibly we can exploit the drag-drop feature of G3D, using an input file.**
     - ~~**Can we change frame rates without re-executing the file?**~~ Yes
-- **Reaction time experiment**
-    - **Implement waiting time based on the truncated exponential distribution** Joohwan
-    - **Pilot run it on various frame rates. Make sure data make sense.**
-    - **Improve interface to encourage optimal performance (shortest latency)**
+- **Implementation**
+    - **Reaction experiment**
+        - **On-screen feedback message, success or failure of a trial + performance (latency) if success**
+    - **Targeting experiment**
+        - **Disable view reset. Ready state ends when user clicks on the center target**
+        - **View change seems to be quantized**
 - **Characterize various frame rates in terms of click-photon latency values** Joohwan
-- **Targeting experiment**
-    - **Disable view reset. Ready state ends when user clicks on the center target** Joohwan
-    - **Pilot run, verify data make sense** Joohwan
+- **Pilot run both experiments, analyze, make sure data make sense.** Joohwan
+- **Integrate Morgan's latest change in abstract-fps2** Joohwan
 - **Support for input device configuration**
     - **Start with mouse. Options.**
         - **1. We enter the 360 distance in a text box.**
