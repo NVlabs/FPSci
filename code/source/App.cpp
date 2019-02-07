@@ -44,7 +44,6 @@ static const bool measureClickPhotonLatency = true;
 //========================================================================
 // variables related to experimental condition and record.
 static const float targetFrameRate = 360; // hz
-static const std::string subjectID = "JK"; // your name
 const int numFrameDelay = 0;
 static const std::string expMode = "training"; // training or real
 static const std::string taskType = "reaction"; // reaction or targeting
@@ -67,6 +66,14 @@ App::App(const GApp::Settings& settings) : GApp(settings) {
 
 void App::onInit() {
 	GApp::onInit();
+
+    // load settings from file
+    UserConfig u(Any::fromFile(System::findDataFile("userconfig.Any")));
+    m_cmp360 = u.cmp360;
+    m_mouseDPI = u.mouseDPI;
+    m_subjectID = u.subjectID;
+    // debug print
+    debugPrintf("User: %s, DPI: %f, cmp360 %f\n", m_subjectID, m_mouseDPI, m_cmp360);
 
 	float dt = 0;
 
@@ -662,7 +669,7 @@ void App::initPsychophysicsLib() {
 	StartCPUTimer();
 
 	std::string datafileName = taskType + "_" + expMode + "_" + appendingDescription + ".db";
-	ex->init(subjectID, expMode, 0, datafileName, expMode == "training");
+	ex->init(m_subjectID.c_str(), expMode, 0, datafileName, expMode == "training");
 
 	// required initial response to start an experiment.
 	ex->startTimer();
