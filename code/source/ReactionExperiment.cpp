@@ -18,6 +18,9 @@ namespace Psychophysics
 		// turn on training mode
 		trainingMode = trainingModeIn;
 
+		// initialize presentation state
+		m_app->m_presentationState = PresentationState::ready;
+
 		/////// Create Database ///////
 		// create or open existing database at save location
 		if (sqlite3_open(dbLoc.c_str(), &db) != SQLITE_OK) {
@@ -181,14 +184,6 @@ namespace Psychophysics
 		}
 	}
 
-	void ReactionExperiment::initTrialAnimation() {
-		// close the app if experiment ended.
-		if (isExperimentDone())
-		{
-			m_app->m_presentationState = PresentationState::complete; // end of experiment
-		}
-	}
-
 	void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 	{
 		// This updates presentation state and also deals with data collection when each trial ends.
@@ -235,7 +230,6 @@ namespace Psychophysics
 				}
 				else {
 					newState = PresentationState::ready;
-					initTrialAnimation();
 				}
 			}
 			else newState = currentState;

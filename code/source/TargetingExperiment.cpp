@@ -24,6 +24,10 @@ namespace Psychophysics
 		// turn on training mode
 		trainingMode = trainingModeIn;
 
+		// initialize presentation state
+		m_app->m_presentationState = PresentationState::feedback;
+		initTargetAnimation();
+
 		/////// Create Database ///////
 		// create or open existing database at save location
 		if (sqlite3_open(dbLoc.c_str(), &db) != SQLITE_OK) {
@@ -212,22 +216,14 @@ namespace Psychophysics
 		}
 	}
 
-	void TargetingExperiment::initTrialAnimation() {
-		// close the app if experiment ended.
-		if (isExperimentDone())
-		{
-			m_app->m_presentationState = PresentationState::complete; // end of experiment
-			m_app->m_tunnelColor = Color3::black(); // remove tunnel
-			m_app->m_reticleColor = Color3::black(); // remove reticle
-		}
-
+	void TargetingExperiment::initTargetAnimation() {
 		// initialize target location based on the initial displacement values
 		// Not reference: we don't want it to change after the first call.
 		static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_app->m_spawnDistance, 0.0f, 0.0f);
 		m_app->m_motionFrame = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
 		m_app->m_motionFrame.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
 
-        // In task state, spawn a test target
+        // In task state, spawn a test target. Otherwise spawn a target at straight ahead.
         if (m_app->m_presentationState == PresentationState::task) {
             m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(renderParams.initialDisplacement.x)).approxCoordinateFrame();
             m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-renderParams.initialDisplacement.y)).approxCoordinateFrame();
@@ -256,12 +252,7 @@ namespace Psychophysics
 		{
 			if (stateElapsedTime > renderParams.readyDuration)
 			{
-                // We hit the ready target that was spawned.
-                if (m_app->m_targetHealth <= 0) {
-                    startTimer();
-
-                    newState = PresentationState::task;
-                }
+                newState = PresentationState::task;
 			}
 		}
 		else if (currentState == PresentationState::task)
@@ -277,20 +268,22 @@ namespace Psychophysics
 				{
 					m_app->informTrialFailure();
 				}
-				m_latency = stateElapsedTime;
+				if (trainingMode) {
+					m_feedbackMessage = std::to_string(int(stateElapsedTime * 1000)) + " ms!";
+				}
 				newState = PresentationState::feedback;
 			}
 		}
 		else if (currentState == PresentationState::feedback)
 		{
-			if (stateElapsedTime > renderParams.feedbackDuration)
+			if ((stateElapsedTime > renderParams.feedbackDuration) && (m_app->m_targetHealth <= 0))
 			{
+				m_feedbackMessage = "";
 				if (isExperimentDone()) {
 					newState = PresentationState::complete;
 				}
 				else {
 					newState = PresentationState::ready;
-					initTrialAnimation();
 				}
 			}
 		}
@@ -302,9 +295,9 @@ namespace Psychophysics
 		{ // handle state transition.
 			startTimer();
 			m_app->m_presentationState = newState;
-            //If we switched to task, call initTrialAnimation to handle new trial
-            if (newState == PresentationState::task) {
-                initTrialAnimation();
+            //If we switched to task, call initTargetAnimation to handle new trial
+            if ((newState == PresentationState::task) || (newState == PresentationState::feedback)) {
+                initTargetAnimation();
             }
 		}
 	}
@@ -327,7 +320,7 @@ namespace Psychophysics
 		}
 
 		// 3. update target location (happens only during 'task' and 'feedback' states).
-		if ((m_app->m_presentationState == PresentationState::task) || (m_app->m_presentationState == PresentationState::feedback))
+		if (m_app->m_presentationState == PresentationState::task)
 		{
 			float rotationAngleDegree = (float)framePeriod * renderParams.speed;
 
@@ -350,7 +343,6 @@ namespace Psychophysics
 		// 4. Update tunnel and target colors
 		if (m_app->m_presentationState == PresentationState::ready)
 		{
-			m_feedbackMessage = "";
 			if (m_app->m_targetHealth > 0)
             {
                 m_app->m_targetColor = Color3::red().pow(2.0f);
@@ -377,10 +369,6 @@ namespace Psychophysics
 				m_app->m_targetColor = Color3::green().pow(2.0f);
 				// If the target is dead, empty the projectiles
 				m_app->m_projectileArray.fastClear();
-
-				if (trainingMode) {
-					m_feedbackMessage = std::to_string(int(m_latency * 1000)) + " ms!";
-				}
 			}
 		}
 		else if (m_app->m_presentationState == PresentationState::complete) {

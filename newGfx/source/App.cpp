@@ -6,7 +6,7 @@
     Set your monitor's desktop refresh rate (e.g., in the NVIDIA Control Panel)
     to the highest rate that it supports before running this program.
    */
-static const float targetFrameRate            = 360; // Hz
+static const float targetFrameRate            = 240; // Hz
 
 /** Enable this to see maximum CPU/GPU rate when not limited by the monitor. */
 static const bool  unlockFramerate            = false;

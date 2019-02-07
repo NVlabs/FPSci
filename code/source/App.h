@@ -67,7 +67,7 @@ protected:
 	bool							m_buttonUp = true;
 
 	/** Set to true to lower rendering quality to increase performance. */
-	bool                            m_emergencyTurbo = false;
+	bool                            m_emergencyTurbo = true;
 
 	/** Projectile if false         */
 	bool                            m_hitScan = true;

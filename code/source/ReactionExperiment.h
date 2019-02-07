@@ -77,8 +77,6 @@ namespace Psychophysics
 		void updateRenderParamsForCurrentTrial();
 
 		/////// ANIMATION AND PRESENTATION STATE HANDLING ///////
-		void initTrialAnimation();
-
 		void updatePresentationState(RealTime framePeriod);
 
 		void updateAnimation(RealTime framePeriod);

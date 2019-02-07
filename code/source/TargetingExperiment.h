@@ -125,9 +125,8 @@ namespace Psychophysics
 
 		/////// ANIMATION AND PRESENTATION STATE HANDLING ///////
 		std::string m_feedbackMessage = "";
-		float m_latency;
 
-		void initTrialAnimation();
+		void initTargetAnimation();
 
 		void updatePresentationState();
 

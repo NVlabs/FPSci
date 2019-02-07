@@ -43,20 +43,13 @@ static const bool measureClickPhotonLatency = true;
 // JBS: TODO: Refactor these as experiment variables
 //========================================================================
 // variables related to experimental condition and record.
-static const float targetFrameRate = 360.0f; // hz
+static const float targetFrameRate = 240; // hz
 static const std::string subjectID = "JK"; // your name
 const int numFrameDelay = 0;
 static const std::string expMode = "training"; // training or real
 static const std::string taskType = "targeting"; // reaction or targeting
 static const std::string appendingDescription = "ver1";
 //========================================================================
-
-/** Make objects fade towards black with distance as a depth cue */
-
-static float distanceDarken(const float csZ) {
-    const float t = max(0.0f, abs(csZ) - 10.0f);
-    return exp(-t * 0.1f);
-}
 
 App::App(const GApp::Settings& settings) : GApp(settings) {
 	// TODO: make method that changes definition of ex, and have constructor call that
@@ -114,11 +107,9 @@ void App::onInit() {
 	initPsychophysicsLib();
     // Need to call once for the first frame to set the camera parameters.
 	if (ex->expName == "ReactionExperiment") {
-		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->initTrialAnimation();
 		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->setFrameRate(targetFrameRate);
 	}
 	else if (ex->expName == "TargetingExperiment") {
-		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->initTrialAnimation();
 		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->setFrameRate(targetFrameRate);
 	}
 
@@ -672,7 +663,6 @@ void App::initPsychophysicsLib() {
 	ex->update("Spc");
 
 	// initializing member variables that are related to the experiment.
-	m_presentationState = PresentationState::ready;
 	m_targetHealth = 1.0f;
 	m_isTrackingOn = false;
 	m_reticleColor = Color3::white();
