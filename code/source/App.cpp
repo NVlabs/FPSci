@@ -43,11 +43,11 @@ static const bool measureClickPhotonLatency = true;
 // JBS: TODO: Refactor these as experiment variables
 //========================================================================
 // variables related to experimental condition and record.
-static const float targetFrameRate = 240; // hz
+static const float targetFrameRate = 360; // hz
 static const std::string subjectID = "JK"; // your name
 const int numFrameDelay = 0;
 static const std::string expMode = "training"; // training or real
-static const std::string taskType = "targeting"; // reaction or targeting
+static const std::string taskType = "reaction"; // reaction or targeting
 static const std::string appendingDescription = "ver1";
 //========================================================================
 
@@ -532,6 +532,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 		if (ex->expName == "ReactionExperiment") {
 			rd->clear();
+			const float scale = rd->viewport().width() / 1920.0f;
 			Draw::rect2D(rd->viewport(), rd, dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->m_stimColor);
 
 			// Click to photon latency measuring corner box
@@ -539,6 +540,11 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 				Color3 cornerColor = (m_buttonUp) ? Color3::black() : Color3::white();
 				//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
 				Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.8f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
+			}
+
+			if (!dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->m_feedbackMessage.empty()) {
+				m_outputFont->draw2D(rd, dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->m_feedbackMessage.c_str(),
+					(Point2((float)window()->width() / 2 - 40, (float)window()->height() / 2 + 20) * scale).floor(), floor(20.0f * scale), Color3::yellow());
 			}
 		}
 		else if (ex->expName == "TargetingExperiment") {

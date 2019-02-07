@@ -26,7 +26,7 @@ namespace Psychophysics
 
 			ConditionParams()
 			{
-				trialCount = 1;
+				trialCount = 100;
 				intensities = { 0.4f, 1.0f };
 				minimumForeperiod = 1.5;
 				meanWaitDuration = 0.5;
@@ -36,8 +36,6 @@ namespace Psychophysics
 
 		App* m_app;
 		//shared_ptr<App> m_app;
-
-		std::string m_feedbackMessage;
 
 	public:
 		ReactionExperiment(App* app) : Experiment() {
@@ -77,6 +75,8 @@ namespace Psychophysics
 		void updateRenderParamsForCurrentTrial();
 
 		/////// ANIMATION AND PRESENTATION STATE HANDLING ///////
+		std::string m_feedbackMessage = "";
+
 		void updatePresentationState(RealTime framePeriod);
 
 		void updateAnimation(RealTime framePeriod);

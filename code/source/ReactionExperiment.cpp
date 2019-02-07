@@ -226,9 +226,11 @@ namespace Psychophysics
 			{
 				m_reacted = false;
 				if (isExperimentDone()) {
+					m_feedbackMessage = "Experiment complete. Thanks!";
 					newState = PresentationState::complete;
 				}
 				else {
+					m_feedbackMessage = "";
 					newState = PresentationState::ready;
 				}
 			}
@@ -259,13 +261,9 @@ namespace Psychophysics
 		}
 		else if (m_app->m_presentationState == PresentationState::feedback) {
 			m_stimColor = Color3::white() * 0.3;
-			if (trainingMode) {
-				m_app->drawMessage(m_feedbackMessage.c_str());
-			}
 		}
 		else if (m_app->m_presentationState == PresentationState::complete) {
 			m_stimColor = Color3::white() * 0.2;
-			m_app->drawMessage("Experiment Completed. Thanks!");
 		}
 	}
 

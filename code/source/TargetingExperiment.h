@@ -73,7 +73,7 @@ namespace Psychophysics
 
 				speed = 0.0f;
 				motionChangeChance = 0.0f;
-				trialCount = 1;
+				trialCount = 100;
 				readyDuration = 0.5;
 				feedbackDuration = 1.0;
 
