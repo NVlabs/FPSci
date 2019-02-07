@@ -59,6 +59,9 @@ protected:
     bool                            m_renderFPS = true;
     bool                            m_renderHitscan = true;
 
+    /** Set to true to lower rendering quality to increase performance. */
+    bool                            m_emergencyTurbo = false;
+
     /** Projectile if false         */
     bool                            m_hitScan = true;
 

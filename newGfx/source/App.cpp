@@ -1,7 +1,6 @@
 /** \file App.cpp */
 #include "App.h"
 
-
 /** Set this variable to a value in frames per second (Hz) to lock a specific rate.
     
     Set your monitor's desktop refresh rate (e.g., in the NVIDIA Control Panel)
@@ -20,7 +19,7 @@ static const bool  variableRefreshRate        = true;
 static const float horizontalFieldOfViewDegrees = 90; // deg
 
 /** Set to false when debugging */
-static const bool  playMode                   = false;
+static const bool  playMode                   = true;
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -131,7 +130,7 @@ void App::loadModels() {
         filename = "model/sniper/sniper.obj";
         preprocess = {
             transformGeometry(all(), Matrix4::yawDegrees(90));
-        transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
+            transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
         };
         scale = 0.25;
     });
@@ -183,7 +182,6 @@ void App::makeGUI() {
     developerWindow->cameraControlWindow->setVisible(! playMode);
     developerWindow->videoRecordDialog->setEnabled(true);
 
-    debugPane->setNewChildSize(230.0f, -1.0f, 70.0f);
     const float SLIDER_SPACING = 35;
     debugPane->beginRow(); {
         debugPane->addCheckBox("Hitscan", &m_hitScan);
@@ -191,11 +189,13 @@ void App::makeGUI() {
         debugPane->addCheckBox("Weapon", &m_renderViewModel);
         debugPane->addCheckBox("HUD", &m_renderHud);
         debugPane->addCheckBox("FPS", &m_renderFPS);
+        debugPane->addCheckBox("Turbo", &m_emergencyTurbo);
         static int frames = 0;
         GuiControl* c = nullptr;
 
         debugPane->addButton("Spawn", this, &App::spawnRandomTarget);
-        
+        debugPane->setNewChildSize(230.0f, -1.0f, 70.0f);
+
         c = debugPane->addNumberBox("Framerate", Pointer<float>(
             [&]() { return 1.0f / float(realTimeTargetDuration()); },
             [&](float f) {
@@ -258,6 +258,10 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
         rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
     }
+
+    scene()->lightingEnvironment().ambientOcclusionSettings.enabled = ! m_emergencyTurbo;
+    m_debugCamera->filmSettings().setAntialiasingEnabled(! m_emergencyTurbo);
+    m_debugCamera->filmSettings().setBloomStrength(m_emergencyTurbo ? 0.0f : 0.5f);
 
     GApp::onGraphics3D(rd, surface);
 
@@ -435,7 +439,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& posed2D)
         // Reticle
         Draw::rect2D((m_reticleTexture->rect2DBounds() * scale - m_reticleTexture->vector2Bounds() * scale / 2.0f) / 4.0f + rd->viewport().wh() / 2.0f, rd, Color3::white(), m_reticleTexture);
 
-        if (m_renderHud) {
+        if (m_renderHud && ! m_emergencyTurbo) {
             const Point2 hudCenter(rd->viewport().width() / 2.0f, m_hudTexture->height() * scale * 0.48f);
             Draw::rect2D((m_hudTexture->rect2DBounds() * scale - m_hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_hudTexture);
             m_hudFont->draw2D(rd, "1:36", hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
