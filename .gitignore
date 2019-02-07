@@ -6,3 +6,7 @@ code/data-files/log.txt
 code/data-files/*.db
 code/data-files/*.csv
 code/data-files/*.pdn
+newGfx/.vs
+newGfx/x64
+newGfx/data-files/g3d-license.txt
+newGfx/data-files/log.txt
