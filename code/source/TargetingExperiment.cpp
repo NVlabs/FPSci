@@ -264,16 +264,6 @@ namespace Psychophysics
 		{
 			if ((stateElapsedTime > renderParams.taskDuration) || (m_app->m_targetHealth <= 0))
 			{
-				newState = PresentationState::feedback;
-			}
-			else newState = currentState;
-		}
-		else if (currentState == PresentationState::feedback)
-		{
-			if (stateElapsedTime > renderParams.feedbackDuration)
-			{
-				newState = PresentationState::ready;
-
 				// Communicate with psychophysics library at this point
 				if (m_app->m_targetHealth <= 0)
 				{
@@ -283,7 +273,21 @@ namespace Psychophysics
 				{
 					m_app->informTrialFailure();
 				}
-				initTrialAnimation();
+				newState = PresentationState::feedback;
+			}
+			else newState = currentState;
+		}
+		else if (currentState == PresentationState::feedback)
+		{
+			if (stateElapsedTime > renderParams.feedbackDuration)
+			{
+				if (isExperimentDone()) {
+					newState = PresentationState::complete;
+				}
+				else {
+					newState = PresentationState::ready;
+					initTrialAnimation();
+				}
 			}
 			else newState = currentState;
 		}

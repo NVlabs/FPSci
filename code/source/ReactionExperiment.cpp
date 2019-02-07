@@ -238,8 +238,13 @@ namespace Psychophysics
 			if (stateElapsedTime > renderParams.feedbackDuration)
 			{
 				m_reacted = false;
-				newState = PresentationState::ready;
-				initTrialAnimation();
+				if (isExperimentDone()) {
+					newState = PresentationState::complete;
+				}
+				else {
+					newState = PresentationState::ready;
+					initTrialAnimation();
+				}
 			}
 			else newState = currentState;
 		}
