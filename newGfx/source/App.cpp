@@ -65,7 +65,7 @@ void App::onInit() {
     loadScene("eSports Simple Hallway");
 
     spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
-    spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
+    spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f, false);
 
     if (playMode) {
         // Force into FPS mode
@@ -102,7 +102,7 @@ void App::spawnRandomTarget() {
         scene()->intersect(ray, distance);
 
         if ((distance > 2.0f) && (distance < finf())) {
-            spawnTarget(ray.origin() + ray.direction() * rng.uniform(2.0f, distance - 1.0f), rng.uniform(0.1f, 1.5f));
+            spawnTarget(ray.origin() + ray.direction() * rng.uniform(2.0f, distance - 1.0f), rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f);
             done = true;
         }
         ++tries;
@@ -110,12 +110,14 @@ void App::spawnRandomTarget() {
 }
 
 
-shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale) {
+shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft) {
     const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + 10), 0, m_targetModelArray.length() - 1);    
     
     const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
-    const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(),
-        Any::parse(format("combine(orbit(0, 1), CFrame::fromXYZYPRDegrees(%f, %f, %f))", position.x, position.y, position.z)));
+
+    String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
+
+    const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
     target->setTrack(track);
     target->setShouldBeSaved(false);
     m_targetArray.append(target);
