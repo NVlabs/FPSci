@@ -270,7 +270,9 @@ namespace Psychophysics
 		}
 		else if (m_app->m_presentationState == PresentationState::feedback) {
 			m_stimColor = Color3::white() * 0.3;
-			m_app->drawMessage(m_feedbackMessage.c_str());
+			if (trainingMode) {
+				m_app->drawMessage(m_feedbackMessage.c_str());
+			}
 		}
 		else if (m_app->m_presentationState == PresentationState::complete) {
 			m_stimColor = Color3::white() * 0.2;

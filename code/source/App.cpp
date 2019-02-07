@@ -23,7 +23,7 @@ double GetCPUTime() // unit is second
 }
 
 // Set to false when just editing content
-static const bool playMode = false;
+static const bool playMode = true;
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. 
 static const bool  unlockFramerate = false;
@@ -46,7 +46,7 @@ static const bool measureClickPhotonLatency = true;
 static const float targetFrameRate = 360.0f; // hz
 static const std::string subjectID = "JK"; // your name
 const int numFrameDelay = 0;
-static const std::string expState = "real"; // training or real
+static const std::string expMode = "training"; // training or real
 static const std::string taskType = "reaction"; // reaction or targeting
 static const std::string appendingDescription = "ver1";
 //========================================================================
@@ -587,6 +587,11 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 				//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
 				Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.8f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
 			}
+
+			if (!dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->m_feedbackMessage.empty()) {
+				m_outputFont->draw2D(rd, dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->m_feedbackMessage.c_str(),
+					(Point2((float)window()->width() / 2 - 40, (float)window()->height() / 2 + 20) * scale).floor(), floor(20.0f * scale), Color3::yellow());
+			}
 		}
 	} rd->pop2D();
 
@@ -657,8 +662,8 @@ void App::initPsychophysicsLib() {
 	// start cpu timer.
 	StartCPUTimer();
 
-	std::string datafileName = taskType + "_" + expState + "_" + appendingDescription + ".db";
-	ex->init(subjectID, expState, 0, datafileName, false);
+	std::string datafileName = taskType + "_" + expMode + "_" + appendingDescription + ".db";
+	ex->init(subjectID, expMode, 0, datafileName, expMode == "training");
 
 	// required initial response to start an experiment.
 	ex->startTimer();

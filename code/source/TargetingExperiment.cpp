@@ -281,6 +281,7 @@ namespace Psychophysics
 				{
 					m_app->informTrialFailure();
 				}
+				m_latency = stateElapsedTime;
 				newState = PresentationState::feedback;
 			}
 		}
@@ -296,6 +297,9 @@ namespace Psychophysics
 					initTrialAnimation();
 				}
 			}
+		}
+		else {
+			newState = currentState;
 		}
 
 		if (currentState != newState)
@@ -350,7 +354,8 @@ namespace Psychophysics
 		// 4. Update tunnel and target colors
 		if (m_app->m_presentationState == PresentationState::ready)
 		{
-            if (m_app->m_targetHealth > 0)
+			m_feedbackMessage = "";
+			if (m_app->m_targetHealth > 0)
             {
                 m_app->m_targetColor = Color3::red().pow(2.0f);
             }
@@ -376,7 +381,14 @@ namespace Psychophysics
 				m_app->m_targetColor = Color3::green().pow(2.0f);
 				// If the target is dead, empty the projectiles
 				m_app->m_projectileArray.fastClear();
+
+				if (trainingMode) {
+					m_feedbackMessage = std::to_string(int(m_latency * 1000)) + " ms!";
+				}
 			}
+		}
+		else if (m_app->m_presentationState == PresentationState::complete) {
+			m_app->drawMessage("Experiment Completed. Thanks!");
 		}
 
 		// 5. Clear m_TargetArray. Append an object with m_targetLocation if necessary ('task' and 'feedback' states).

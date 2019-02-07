@@ -71,11 +71,11 @@ namespace Psychophysics
 				std::vector<double> temp_taskDurationLevels = { 100 }; // basically, infinite amount of time.
 				taskDurationLevels = temp_taskDurationLevels;
 
-				speed = 10.0f;
-				motionChangeChance = 1.0f;
-				trialCount = 5;
+				speed = 0.0f;
+				motionChangeChance = 0.0f;
+				trialCount = 1;
 				readyDuration = 0.5;
-				feedbackDuration = 0.0;
+				feedbackDuration = 1.0;
 
 				//weaponType = "tracking"; // set by the app.
 				weaponStrength = 1.f;
@@ -125,6 +125,9 @@ namespace Psychophysics
 		void updateRenderParamsForCurrentTrial();
 
 		/////// ANIMATION AND PRESENTATION STATE HANDLING ///////
+		std::string m_feedbackMessage = "";
+		float m_latency;
+
 		void initTrialAnimation();
 
 		void updatePresentationState();
