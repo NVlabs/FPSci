@@ -18,7 +18,7 @@ Progress tracking sheet (only accessible to developers): https://docs.google.com
         - ~~**View change seems to be quantized**~~. This happens when the mouse sensitivity isn't set, which happens when playmode is disabled.
 - **Characterize various frame rates in terms of click-photon latency values** Joohwan
 - **Pilot run both experiments, analyze, make sure data make sense.** Joohwan
-- **Integrate Morgan's latest change in abstract-fps2** Joohwan
+- ~~**Integrate Morgan's latest change in abstract-fps2**~~ Joohwan
 - **Support for input device configuration**
     - **Start with mouse. Options.**
         - **1. We enter the 360 distance in a text box.**
