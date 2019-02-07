@@ -154,9 +154,11 @@ public:
 	Color3                          m_targetColor;
 	Color3                          m_reticleColor;
 	bool                            m_isTrackingOn; // true if down AND weapon type is tracking, false otherwise.
+
+    // the following will come from a settings file. These are sensible defaults
     double                          m_mouseDPI = 2400.0; // normal mice are 800.0. Gaming mice go up to 12000.0. Josef's G502 is set to 2400.0
     double                          m_cmp360 = 12.75; // Joohwan set this to ~12.75, Josef prefers ~9.25
-    ExperimentSettingsList          m_experimentSettingsList;
+    String                          m_subjectID = "JK"; // will be overwritten
 
 protected:
 	double                          m_t_lastAnimationUpdate;

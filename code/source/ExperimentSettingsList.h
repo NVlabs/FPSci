@@ -2,6 +2,34 @@
 
 #include <G3D/G3D.h>
 
+class UserConfig {
+public:
+    String subjectID;
+    double mouseDPI;
+    double cmp360;
+    UserConfig() : subjectID("anon"), mouseDPI(2400.0), cmp360(12.75) {}
+
+    UserConfig(const Any& any) {
+        int settingsVersion; // used to allow different version numbers to be loaded differently
+        AnyTableReader reader(any);
+        reader.getIfPresent("settingsVersion", settingsVersion);
+
+        switch (settingsVersion) {
+        case 1:
+            reader.getIfPresent("subjectID", subjectID);
+            reader.getIfPresent("mouseDPI", mouseDPI);
+            reader.getIfPresent("cmp360", cmp360);
+        default:
+            debugPrintf("Settings version '%d' not recognized.\n", settingsVersion);
+            break;
+        }
+        // fine to have extra entries not read
+        //reader.verifyDone();
+    }
+};
+
+
+// until we figure out the design for multiple experiments, the following is not used
 class ExperimentSettings {
 public:
     String weaponType;
