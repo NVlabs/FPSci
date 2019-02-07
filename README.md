@@ -12,9 +12,9 @@ Progress tracking sheet (only accessible to developers): https://docs.google.com
     - ~~**Can we change frame rates without re-executing the file?**~~ Yes
 - **Implementation**
     - **Reaction experiment**
-        - **On-screen feedback message, success or failure of a trial + performance (latency) if success**
+        - ~~**On-screen feedback message, success or failure of a trial + performance (latency) if success**~~
     - **Targeting experiment**
-        - **Disable view reset. Ready state ends when user clicks on the center target**
+        - ~~**Disable view reset. Ready state ends when user clicks on the center target**~~
         - ~~**View change seems to be quantized**~~. This happens when the mouse sensitivity isn't set, which happens when playmode is disabled.
 - **Characterize various frame rates in terms of click-photon latency values** Joohwan
 - **Pilot run both experiments, analyze, make sure data make sense.** Joohwan
