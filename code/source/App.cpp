@@ -43,11 +43,11 @@ static const bool measureClickPhotonLatency = true;
 // JBS: TODO: Refactor these as experiment variables
 //========================================================================
 // variables related to experimental condition and record.
-static const float targetFrameRate = 360; // hz
+static const float targetFrameRate = 30; // hz
 static const std::string subjectID = "JK"; // your name
 const int numFrameDelay = 0;
 static const std::string expMode = "training"; // training or real
-static const std::string taskType = "reaction"; // reaction or targeting
+static const std::string taskType = "targeting"; // reaction or targeting
 static const std::string appendingDescription = "ver1";
 //========================================================================
 
