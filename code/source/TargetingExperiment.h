@@ -79,7 +79,6 @@ namespace Psychophysics
 
 				//weaponType = "tracking"; // set by the app.
 				weaponStrength = 1.f;
-				frameRate = 360.f;
 			}
 		} m_conditionParams;
 
@@ -133,5 +132,7 @@ namespace Psychophysics
 		void updatePresentationState();
 
 		void updateAnimation(RealTime framePeriod);
+
+		void setFrameRate(float fr);
 	};
 }

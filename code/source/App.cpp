@@ -47,7 +47,7 @@ static const float targetFrameRate = 360.0f; // hz
 static const std::string subjectID = "JK"; // your name
 const int numFrameDelay = 0;
 static const std::string expMode = "training"; // training or real
-static const std::string taskType = "reaction"; // reaction or targeting
+static const std::string taskType = "targeting"; // reaction or targeting
 static const std::string appendingDescription = "ver1";
 //========================================================================
 
@@ -115,9 +115,11 @@ void App::onInit() {
     // Need to call once for the first frame to set the camera parameters.
 	if (ex->expName == "ReactionExperiment") {
 		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->initTrialAnimation();
+		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->setFrameRate(targetFrameRate);
 	}
 	else if (ex->expName == "TargetingExperiment") {
 		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->initTrialAnimation();
+		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->setFrameRate(targetFrameRate);
 	}
 
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);

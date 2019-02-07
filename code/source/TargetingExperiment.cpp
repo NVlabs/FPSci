@@ -221,10 +221,6 @@ namespace Psychophysics
 			m_app->m_reticleColor = Color3::black(); // remove reticle
 		}
 
-		// set frame rate
-		float dt = 1.0f / renderParams.frameRate;
-		m_app->setFrameDuration(dt);
-
 		// initialize target location based on the initial displacement values
 		// Not reference: we don't want it to change after the first call.
 		static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_app->m_spawnDistance, 0.0f, 0.0f);
@@ -407,5 +403,8 @@ namespace Psychophysics
         }
 	}
 
+	void TargetingExperiment::setFrameRate(float fr) {
+		m_conditionParams.frameRate = fr;
+	}
 }
 

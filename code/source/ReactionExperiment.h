@@ -31,7 +31,6 @@ namespace Psychophysics
 				minimumForeperiod = 1.5;
 				meanWaitDuration = 0.5;
 				feedbackDuration = 1.0;
-				frameRate = 240.f;
 			}
 		} m_conditionParams;
 
@@ -83,5 +82,7 @@ namespace Psychophysics
 		void updatePresentationState(RealTime framePeriod);
 
 		void updateAnimation(RealTime framePeriod);
+
+		void setFrameRate(float fr);
 	};
 }

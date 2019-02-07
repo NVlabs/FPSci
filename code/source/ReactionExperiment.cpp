@@ -187,11 +187,6 @@ namespace Psychophysics
 		{
 			m_app->m_presentationState = PresentationState::complete; // end of experiment
 		}
-
-		// set frame rate
-		float dt = 1.0f / renderParams.frameRate;
-		m_app->setFrameDuration(dt);
-
 	}
 
 	void ReactionExperiment::updatePresentationState(RealTime framePeriod)
@@ -278,5 +273,9 @@ namespace Psychophysics
 			m_stimColor = Color3::white() * 0.2;
 			m_app->drawMessage("Experiment Completed. Thanks!");
 		}
+	}
+
+	void ReactionExperiment::setFrameRate(float fr) {
+		m_conditionParams.frameRate = fr;
 	}
 }
