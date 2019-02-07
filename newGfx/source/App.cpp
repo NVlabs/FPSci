@@ -6,12 +6,12 @@
     Set your monitor's desktop refresh rate (e.g., in the NVIDIA Control Panel)
     to the highest rate that it supports before running this program.
    */
-static const float targetFrameRate            = 1000; // Hz
+static const float targetFrameRate            = 360; // Hz
 
 /** Enable this to see maximum CPU/GPU rate when not limited by the monitor. */
 static const bool  unlockFramerate            = true;
 
-/* Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
+/* Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync,
    which allows the application to submit asynchronously with vsync
    without tearing. */
 static const bool  variableRefreshRate        = true;
@@ -46,7 +46,10 @@ void App::onInit() {
         dt = 1.0f / float(window()->settings().refreshRate);
     }
     setFrameDuration(dt, GApp::REAL_TIME);
-    setSubmitToDisplayMode(SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);    
+    setSubmitToDisplayMode(
+        //SubmitToDisplayMode::MINIMIZE_LATENCY);
+        SubmitToDisplayMode::BALANCE);
+        //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);    
     showRenderingStats      = false;
     makeGUI();
     developerWindow->videoRecordDialog->setCaptureGui(true);
