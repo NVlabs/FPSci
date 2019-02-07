@@ -9,7 +9,7 @@
 static const float targetFrameRate            = 360; // Hz
 
 /** Enable this to see maximum CPU/GPU rate when not limited by the monitor. */
-static const bool  unlockFramerate            = true;
+static const bool  unlockFramerate            = false;
 
 /* Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync,
    which allows the application to submit asynchronously with vsync
@@ -73,7 +73,7 @@ void App::onInit() {
         // Force into FPS mode
         const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
-        fpm->setMoveRate(0.0);
+        fpm->setMoveRate(1.0);
     }
 
 }

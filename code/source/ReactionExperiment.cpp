@@ -6,9 +6,10 @@ namespace Psychophysics
 	void ReactionExperiment::updateRenderParamsForCurrentTrial()
 	{
 		// get new render params from StimVariable
-		renderParams.readyDuration = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "readyDuration"));
+		renderParams.minimumForeperiod = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "minimumForeperiod"));
 		renderParams.meanWaitDuration = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "meanWaitDuration"));
-		renderParams.intensity = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "intensity"));
+		renderParams.feedbackDuration = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "feedbackDuration"));
+		renderParams.intensity = StimVariableVec[currStimVariableNum]->currStimVal;
 		renderParams.frameRate = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "frameRate"));
 	}
 
@@ -88,8 +89,9 @@ namespace Psychophysics
 			{ "name", "text", "NOT NULL" },
 			{ "maxTrials", "integer" },
 			{ "stimLevels", "text" }, // intensity
-			{ "readyDuration", "real" },
+			{ "minimumForeperiod", "real" },
 			{ "meanWaitDuration", "real" },
+			{ "feedbackDuration", "real" },
 			{ "frameRate", "real" },
 		};
 		createTableInDB(db, "stimParams", stimParamsColumns);
@@ -105,12 +107,14 @@ namespace Psychophysics
 			std::vector<std::string> stimParamsValues = {
 				std::to_string(expID),
 				addQuotes(vec2str(std::vector<std::string>{ "intensity: ", std::to_string(intensity),
-															", readyDuration: ", std::to_string(m_conditionParams.readyDuration),
-															", meanWaitDuration: ", std::to_string(m_conditionParams.meanWaitDuration) }, " ")),
+															", minimumForeperiod: ", std::to_string(m_conditionParams.minimumForeperiod),
+															", meanWaitDuration: ", std::to_string(m_conditionParams.meanWaitDuration),
+															", feedbackDuration: ", std::to_string(m_conditionParams.feedbackDuration) }, " ")),
 				std::to_string(m_conditionParams.trialCount),
 				addQuotes(vec2str(m_conditionParams.intensities, ",")),
-				std::to_string(m_conditionParams.readyDuration),
+				std::to_string(m_conditionParams.minimumForeperiod),
 				std::to_string(m_conditionParams.meanWaitDuration),
+				std::to_string(m_conditionParams.feedbackDuration),
 				std::to_string(m_conditionParams.frameRate),
 			};
 			assert(stimParamsValues.size() == stimParamsColumns.size(), "Incorrect number of arguments for insert to stimParams table.\n");
@@ -155,19 +159,11 @@ namespace Psychophysics
 		}
 	}
 
-	bool ReactionExperiment::isExperimentDone()
-	{
-		if (fsm) {
-			if (fsm->currState == Psychophysics::FSM::State::SHUTDOWN) return true;
-		}
-		return false;
-	}
-
 	void ReactionExperiment::printDebugInfo()
 	{
 		std::cout << "STATE : " << fsm->currState << std::endl;
 		std::cout << "MCS NUM : " << currStimVariableNum << std::endl;
-		std::cout << "READY DURATION : " << renderParams.readyDuration << std::endl;
+		std::cout << "READY DURATION : " << renderParams.minimumForeperiod << std::endl;
 		std::cout << "MEAN WAIT DURATION : " << renderParams.meanWaitDuration << std::endl;
 		std::cout << "STIMVAL (INTENSITY) : " << StimVariableVec[currStimVariableNum]->currStimVal << std::endl;
 	}
@@ -181,11 +177,93 @@ namespace Psychophysics
 			std::string debugInfo;
 			debugInfo += "STATE : " + std::to_string(fsm->currState) + ' ';
 			debugInfo += "MCS NUM : " + std::to_string(currStimVariableNum) + ' ';
-			debugInfo += "READY DURATION : " + std::to_string(renderParams.readyDuration) + ' ';
+			debugInfo += "READY DURATION : " + std::to_string(renderParams.minimumForeperiod) + ' ';
 			debugInfo += "MEAN WAIT DURATION : " + std::to_string(renderParams.meanWaitDuration) + ' ';
 			debugInfo += "STIMVAL (INTENSITY) : " + std::to_string(StimVariableVec[currStimVariableNum]->currStimVal) + ' ';
 			return debugInfo;
 		}
 	}
 
+	void ReactionExperiment::initTrialAnimation() {
+		// close the app if experiment ended.
+		if (isExperimentDone())
+		{
+			m_app->m_presentationState = PresentationState::complete; // end of experiment
+		}
+
+		// set frame rate
+		float dt = 1.0f / renderParams.frameRate;
+		m_app->setFrameDuration(dt);
+
+	}
+
+	void ReactionExperiment::updatePresentationState(RealTime framePeriod)
+	{
+		// This updates presentation state and also deals with data collection when each trial ends.
+		// Hence the name 'updateTrialState' as opposed to 'updatePresentationState' because it is a bit more than just updating presentation state.
+		PresentationState currentState = m_app->m_presentationState;
+		PresentationState newState;
+		double stateElapsedTime = (double)getTime();
+
+		if (currentState == PresentationState::ready)
+		{
+			// start task if waited longer than minimum foreperiod AND the probabilistic condition is met (Nickerson & Burhnham 1969, Response times with nonaging foreperiods).
+			float taskStartChancePerFrame = (1.0 / renderParams.meanWaitDuration) * (float)framePeriod;
+			if ((stateElapsedTime > renderParams.minimumForeperiod) && (G3D::Random::common().uniform() < taskStartChancePerFrame))
+			{
+				newState = PresentationState::task;
+			}
+			else if (m_reacted) // stimulus not shown yet, but responded already -> an immediate trial failure.
+			{
+				startTimer(); // starting timer so that we get unrealistically small number for failed trials.
+				m_app->informTrialFailure();
+				newState = PresentationState::feedback;
+			}
+			else { // keep waiting.
+				newState = currentState;
+			}
+		}
+		else if (currentState == PresentationState::task)
+		{
+			if (m_reacted)
+			{
+				m_app->informTrialSuccess();
+				newState = PresentationState::feedback;
+			}
+			else newState = currentState;
+		}
+		else if (currentState == PresentationState::feedback)
+		{
+			if (stateElapsedTime > renderParams.feedbackDuration)
+			{
+				m_reacted = false;
+				newState = PresentationState::ready;
+				initTrialAnimation();
+			}
+			else newState = currentState;
+		}
+
+		if (currentState != newState)
+		{ // handle state transition.
+			startTimer();
+			m_app->m_presentationState = newState;
+		}
+	}
+
+	void ReactionExperiment::updateAnimation(RealTime framePeriod)
+	{
+		// 1. Update presentation state and send task performance to psychophysics library.
+		updatePresentationState(framePeriod);
+
+		// 2. Assign the background color for 2D graphics
+		if (m_app->m_presentationState == PresentationState::ready) {
+			m_stimColor = Color3::red() * renderParams.intensity;
+		}
+		else if (m_app->m_presentationState == PresentationState::task) {
+			m_stimColor = Color3::green() * renderParams.intensity;
+		}
+		else if (m_app->m_presentationState == PresentationState::feedback) {
+			m_stimColor = Color3::black();
+		}
+	}
 }

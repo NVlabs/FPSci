@@ -1,11 +1,15 @@
 #pragma once
 #include <G3D/G3D.h>
+#include "App.h"
 #include "psychophysics.h"
+
+class App;
 
 namespace Psychophysics
 {
 	class ReactionExperiment : public Experiment
 	{
+
 	protected:
 		virtual void updateHelper(const std::string& keyInput, const FSM::State& pastState) override;
 
@@ -15,48 +19,67 @@ namespace Psychophysics
 		public:
 			int trialCount; // how many trials per condition?
 			std::vector<double> intensities;  // normalized intensity from 0 to 1
-			double readyDuration; // 'be ready' duration in sec.
-			double meanWaitDuration; // mean wait duration in sec.
+			double minimumForeperiod; // minimum foreperiod in sec.
+			double meanWaitDuration; // mean wait duration after the minimum foreperiod in sec.
+			double feedbackDuration;
 			float frameRate;
 
 			ConditionParams()
 			{
 				trialCount = 10;
-				intensities = { 0.2f, 1.0f };
-				readyDuration = 0.5;
-				meanWaitDuration = 0.0;
+				intensities = { 0.5f, 1.0f };
+				minimumForeperiod = 1.5;
+				meanWaitDuration = 1.0;
+				feedbackDuration = 0.5;
 				frameRate = 240.f;
 			}
 		} m_conditionParams;
 
+		App* m_app;
+		//shared_ptr<App> m_app;
+
 	public:
+		ReactionExperiment(App* app) : Experiment() {
+			expName = "ReactionExperiment";
+			m_app = app;
+		};
+
 		/////// RENDER-RELEVANT PARAMS ///////
 		struct RRP
 		{
 			// these will be updated per trial and sent to the shader
 			double intensity;
-			double readyDuration;
+			double minimumForeperiod;
 			double meanWaitDuration;
+			double feedbackDuration;
 			std::string sceneType;
 			float frameRate;
 		};
 		RRP renderParams;
 
-		std::string expName = "ReactionExperiment";
+		/////// Experiment-related variables ///////
+		bool m_reacted = false;
+		Color3 m_stimColor = Color3::white();
 
 		/////// REQUIRED FUNCTIONS ///////
 		void init(std::string subjectID, std::string expVersion, int sessionNum, std::string savePath, bool trainingMode) override;
 
 		FSM::State getFSMState() override { return fsm->currState; };
-		bool isExperimentDone();
 
 		void startTimer() override { fsm->startTimer(); };
-		float getTime() { int t = fsm->elapsedTimeMS(); return ((float)t) / 1000.0f; };
+		float getTime() override { int t = fsm->elapsedTimeMS(); return ((float)t) / 1000.0f; };
 
 		void printDebugInfo();
 
 		std::string getDebugStr();
 
 		void updateRenderParamsForCurrentTrial();
+
+		/////// ANIMATION AND PRESENTATION STATE HANDLING ///////
+		void initTrialAnimation();
+
+		void updatePresentationState(RealTime framePeriod);
+
+		void updateAnimation(RealTime framePeriod);
 	};
 }

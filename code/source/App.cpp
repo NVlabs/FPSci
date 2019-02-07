@@ -43,14 +43,13 @@ static const bool measureClickPhotonLatency = true;
 // JBS: TODO: Refactor these as experiment variables
 //========================================================================
 // variables related to experimental condition and record.
-static const std::string weaponType = "tracking"; // hitscan or tracking
 static const float targetFrameRate = 1440.0f; // hz
 static const std::string subjectID = "JK"; // your name
 const int numFrameDelay = 0;
-static const std::string expVersion = "real"; // training or real
+static const std::string expState = "real"; // training or real
+static const std::string taskType = "reaction"; // reaction or targeting
+static const std::string appendingDescription = "ver1";
 //========================================================================
-
-static const std::string datafile = "ver2.db";
 
 /** Make objects fade towards black with distance as a depth cue */
 
@@ -60,6 +59,16 @@ static float distanceDarken(const float csZ) {
 }
 
 App::App(const GApp::Settings& settings) : GApp(settings) {
+	// TODO: make method that changes definition of ex, and have constructor call that
+	// method to set default experiment
+	// TODO: app pointer is not a memory-managed pointer.
+	if (taskType == "reaction") {
+		ex = std::make_shared<Psychophysics::ReactionExperiment>(this);
+	}
+	else if (taskType == "targeting") {
+		ex = std::make_shared<Psychophysics::TargetingExperiment>(this);
+	}
+
 }
 
 
@@ -98,7 +107,12 @@ void App::onInit() {
 
 	initPsychophysicsLib();
     // Need to call once for the first frame to set the camera parameters.
-    initTrialAnimation();
+	if (ex->expName == "ReactionExperiment") {
+		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->initTrialAnimation();
+	}
+	else if (ex->expName == "TargetingExperiment") {
+		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->initTrialAnimation();
+	}
 
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
@@ -108,6 +122,12 @@ void App::onInit() {
 		const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 		fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
 		fpm->setMoveRate(0.0);
+
+		// G3D expects mouse sensitivity in radians
+		// we're converting from mouseDPI and centimeters/360 which explains
+		// the screen resolution (dots), cm->in factor (2.54) and 2PI
+		double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_cmp360 * m_mouseDPI);
+		fpm->setTurnRate(mouseSensitivity);
 	}
 
 }
@@ -235,7 +255,7 @@ void App::onNetwork() {
 
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
-	if (ex.expName == "ReactionExperiment") {
+	if (ex->expName == "ReactionExperiment") {
 		if (submitToDisplayMode() == SubmitToDisplayMode::MAXIMIZE_THROUGHPUT) {
 			swapBuffers();
 		}
@@ -272,7 +292,13 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 }
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
-	updateAnimation(rdt);
+	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
+	if (ex->expName == "ReactionExperiment") {
+		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->updateAnimation(rdt);
+	}
+	else if (ex->expName == "TargetingExperiment") {
+		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->updateAnimation(rdt);
+	}
 
 	GApp::onSimulation(rdt, sdt, idt);
 
@@ -323,53 +349,59 @@ void App::onUserInput(UserInput* ui) {
 
 	if (playMode || m_debugController->enabled()) {
 		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
-			// Fire
-			Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
+			if (ex->expName == "ReactionExperiment") {
+				// set reacted to true
+				dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->m_reacted = true;
+			}
+			else if (ex->expName == "TargetingExperiment") {
+				// Fire
+				Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
 
-			m_buttonUp = false;
+				m_buttonUp = false;
 
-			if (m_hitScan) {
-				const Ray& ray = m_debugCamera->frame().lookRay();
+				if (m_hitScan) {
+					const Ray& ray = m_debugCamera->frame().lookRay();
 
-				float closest = finf();
-				int closestIndex = -1;
-				for (int t = 0; t < m_targetArray.size(); ++t) {
-					if (m_targetArray[t]->intersect(ray, closest)) {
-						closestIndex = t;
+					float closest = finf();
+					int closestIndex = -1;
+					for (int t = 0; t < m_targetArray.size(); ++t) {
+						if (m_targetArray[t]->intersect(ray, closest)) {
+							closestIndex = t;
+						}
+					}
+
+					if (closestIndex >= 0) {
+						destroyTarget(closestIndex);
+						aimPoint = ray.origin() + ray.direction() * closest;
+						m_targetHealth -= dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->renderParams.weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
 					}
 				}
 
-				if (closestIndex >= 0) {
-					destroyTarget(closestIndex);
-					aimPoint = ray.origin() + ray.direction() * closest;
-					m_targetHealth -= ex.renderParams.weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
+				// Create the laser
+				if (m_renderHitscan) {
+					CFrame laserStartFrame = m_weaponFrame;
+					laserStartFrame.translation += laserStartFrame.upVector() * 0.1f;
+
+					// Adjust for the discrepancy between where the gun is and where the player is looking
+					laserStartFrame.lookAt(aimPoint);
+
+					laserStartFrame.translation += laserStartFrame.lookVector() * 2.0f;
+					const shared_ptr<VisibleEntity>& laser = VisibleEntity::create(format("laser%03d", ++m_lastUniqueID), scene().get(), m_laserModel, laserStartFrame);
+					laser->setShouldBeSaved(false);
+					laser->setCanCauseCollisions(false);
+					laser->setCastsShadows(false);
+					/*
+					const shared_ptr<Entity::Track>& track = Entity::Track::create(laser.get(), scene().get(),
+						Any::parse(format("%s", laserStartFrame.toXYZYPRDegreesString().c_str())));
+					laser->setTrack(track);
+					*/
+					m_projectileArray.push(Projectile(laser, System::time() + 1.0f));
+					scene()->insert(laser);
 				}
-			}
 
-			// Create the laser
-			if (m_renderHitscan) {
-				CFrame laserStartFrame = m_weaponFrame;
-				laserStartFrame.translation += laserStartFrame.upVector() * 0.1f;
-
-				// Adjust for the discrepancy between where the gun is and where the player is looking
-				laserStartFrame.lookAt(aimPoint);
-
-				laserStartFrame.translation += laserStartFrame.lookVector() * 2.0f;
-				const shared_ptr<VisibleEntity>& laser = VisibleEntity::create(format("laser%03d", ++m_lastUniqueID), scene().get(), m_laserModel, laserStartFrame);
-				laser->setShouldBeSaved(false);
-				laser->setCanCauseCollisions(false);
-				laser->setCastsShadows(false);
-				/*
-				const shared_ptr<Entity::Track>& track = Entity::Track::create(laser.get(), scene().get(),
-					Any::parse(format("%s", laserStartFrame.toXYZYPRDegreesString().c_str())));
-				laser->setTrack(track);
-				*/
-				m_projectileArray.push(Projectile(laser, System::time() + 1.0f));
-				scene()->insert(laser);
-			}
-
-			if (playMode) {
-				m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
+				if (playMode) {
+					m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
+				}
 			}
 		}
 		if (ui->keyReleased(GKey::LEFT_MOUSE)) {
@@ -419,11 +451,11 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& surface2D
 
  //   // Faster than the full stats widget
 	//std::string expDebugStr = "%d fps ";
-	//expDebugStr += ex.getDebugStr(); // debugging message
+	//expDebugStr += ex->getDebugStr(); // debugging message
  //   debugFont->draw2D(rd, format(expDebugStr.c_str(), iRound(renderDevice->stats().smoothFrameRate)), Point2(10,10), 12.0f, Color3::yellow());
 
  //   // Display DONE when complete
- //   if (ex.isExperimentDone()) {
+ //   if (ex->isExperimentDone()) {
  //       static const shared_ptr<Texture> doneTexture = Texture::fromFile("done.png");
  //       rd->push2D(); {
  //           const float scale = rd->viewport().width() / 3840.0f;
@@ -435,11 +467,11 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& surface2D
 
 	rd->push2D(); {
 
-		if (ex.expName == "ReactionExperiment") {
+		if (ex->expName == "ReactionExperiment") {
 			rd->clear();
-			Draw::rect2D(rd->viewport(), rd, Color3::blue());
+			Draw::rect2D(rd->viewport(), rd, dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->m_stimColor);
 		}
-		else if (ex.expName == "TargetingExperiment") {
+		else if (ex->expName == "TargetingExperiment") {
 			const float scale = rd->viewport().width() / 1920.0f;
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
@@ -537,11 +569,12 @@ void App::initPsychophysicsLib() {
 	// start cpu timer.
 	StartCPUTimer();
 
-	ex.init(subjectID, expVersion, 0, datafile, false);
+	std::string datafileName = taskType + "_" + expState + "_" + appendingDescription + ".db";
+	ex->init(subjectID, expState, 0, datafileName, false);
 
 	// required initial response to start an experiment.
-	ex.startTimer();
-	ex.update("Spc");
+	ex->startTimer();
+	ex->update("Spc");
 
 	// initializing member variables that are related to the experiment.
 	m_presentationState = PresentationState::ready;
@@ -564,189 +597,17 @@ void App::resetView() {
 	fpm->lookAt(Point3(0,0,-1));
 }
 
-void App::initTrialAnimation() {
-	// close the app if experiment ended.
-	if (ex.isExperimentDone())
-	{
-		m_presentationState = PresentationState::complete; // end of experiment
-		m_tunnelColor = Color3::black(); // remove tunnel
-		m_reticleColor = Color3::black(); // remove reticle
-	}
-
-	// set frame rate
-	float dt = 1.0f / ex.renderParams.frameRate;
-	setFrameDuration(dt);
-
-	// initialize target location based on the initial displacement values
-    // Not reference: we don't want it to change after the first call.
-    static const Point3 initialSpawnPos = activeCamera()->frame().translation + Point3(-m_spawnDistance,0.0f,0.0f);
-	m_motionFrame = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
-	m_motionFrame.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
-	m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::rollDegrees(ex.renderParams.initialDisplacement.x)).approxCoordinateFrame();
-    m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-ex.renderParams.initialDisplacement.y)).approxCoordinateFrame();
-
-	// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
-	float randomAngleDegree = Random::common().uniform() * 360;
-	m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
-
-	// Full health for the target
-	m_targetHealth = 1.f;
-
-	resetView();
-}
-
 void App::informTrialSuccess()
 {
-	ex.update("Spc"); // needed to stop stimulus presentation of this trial
-	ex.update("1"); // success
+	ex->update("Spc"); // needed to stop stimulus presentation of this trial
+	ex->update("1"); // success
 }
 
 void App::informTrialFailure()
 {
-	ex.update("Spc"); // needed to stop stimulus presentation of this trial
-	ex.update("2"); // failure
+	ex->update("Spc"); // needed to stop stimulus presentation of this trial
+	ex->update("2"); // failure
 }
 
-void App::updateTrialState()
-{
-	// This updates presentation state and also deals with data collection when each trial ends.
-	// Hence the name 'updateTrialState' as opposed to 'updatePresentationState' because it is a bit more than just updating presentation state.
-	PresentationState currentState = m_presentationState;
-	PresentationState newState;
-	double stateElapsedTime = (double)ex.getTime();
 
-	if (currentState == PresentationState::ready)
-	{
-		if (stateElapsedTime > ex.renderParams.readyDuration)
-		{
-			// turn on mouse interaction
-			//dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator())->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
-
-			// G3D expects mouse sensitivity in radians
-			// we're converting from mouseDPI and centimeters/360 which explains
-			// the screen resolution (dots), cm->in factor (2.54) and 2PI
-			double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_cmp360 * m_mouseDPI);
-			dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator())->setTurnRate(mouseSensitivity);
-			ex.startTimer();
-
-			newState = PresentationState::task;
-		}
-		else newState = currentState;
-	}
-	else if (currentState == PresentationState::task)
-	{
-		if ((stateElapsedTime > ex.renderParams.taskDuration) || (m_targetHealth <= 0))
-		{
-			newState = PresentationState::feedback;
-		}
-		else newState = currentState;
-	}
-	else if (currentState == PresentationState::feedback)
-	{
-		if (stateElapsedTime > ex.renderParams.feedbackDuration)
-		{
-			newState = PresentationState::ready;
-			// turn off mouse interaction
-			dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator())->setTurnRate(0.0);
-
-			// Communicate with psychophysics library at this point
-			if (m_targetHealth <= 0)
-			{
-				informTrialSuccess();
-			}
-			else
-			{
-				informTrialFailure();
-			}
-            initTrialAnimation();
-		}
-		else newState = currentState;
-	}
-
-	if (currentState != newState)
-	{ // handle state transition.
-		ex.startTimer();
-		m_presentationState = newState;
-	}
-}
-
-void App::updateAnimation(RealTime framePeriod)
-{
-	// 1. Update presentation state and send task performance to psychophysics library.
-	updateTrialState();
-
-	// 2. Check if motionChange is required (happens only during 'task' state with a designated level of chance).
-	if (m_presentationState == PresentationState::task)
-	{
-		float motionChangeChancePerFrame = ex.renderParams.motionChangeChance * (float)framePeriod * 0.1f;
-		if (Random::common().uniform() < motionChangeChancePerFrame)
-		{
-			// If yes, rotate target coordinate frame by random (0~360) angle in roll direction
-			float randomAngleDegree = Random::common().uniform() * 360;
-			m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
-		}
-	}
-
-	// 3. update target location (happens only during 'task' and 'feedback' states).
-	if ((m_presentationState == PresentationState::task) || (m_presentationState == PresentationState::feedback))
-	{
-		float rotationAngleDegree = (float)framePeriod * ex.renderParams.speed;
-
-        // Attempts to bound the target within visible space.
-        //float currentYaw;
-        //float ignore;
-        //m_motionFrame.getXYZYPRDegrees(ignore, ignore, ignore, currentYaw, ignore, ignore);
-        //static int reverse = 1;
-        //const float change = abs(currentYaw - rotationAngleDegree);
-        //// If we are headed in the wrong direction, reverse the yaw.
-        //if (change > m_yawBound && change > abs(currentYaw)) {
-        //    reverse *= -1;
-        //}
-        //m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-rotationAngleDegree * reverse)).approxCoordinateFrame();
-
-        m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-rotationAngleDegree)).approxCoordinateFrame();
-
-	}
-
-	// 4. Update tunnel and target colors
-	if (m_presentationState == PresentationState::ready)
-	{
-		// will color the tunnel when that becomes available.
-	}
-	else if (m_presentationState == PresentationState::task)
-	{
-		m_targetColor = m_targetHealth * Color3::cyan().pow(2.0f) + (1.0f - m_targetHealth) * Color3::brown().pow(2.0f);
-	}
-	else if (m_presentationState == PresentationState::feedback)
-	{
-		if (m_targetHealth > 0)
-		{
-			m_targetColor = Color3::red().pow(2.0f);
-		}
-		else
-		{
-			m_targetColor = Color3::green().pow(2.0f);
-			// If the target is dead, empty the projectiles
-			m_projectileArray.fastClear();
-		}
-	}
-
-	// 5. Clear m_TargetArray. Append an object with m_targetLocation if necessary ('task' and 'feedback' states).
-    Point3 t_pos = m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-    
-	if ((m_presentationState == PresentationState::task) | (m_presentationState == PresentationState::feedback))
-	{
-		// draw target if still alive.
-		if (m_targetHealth > 0.f) {
-			// Don't spawn a new target every frame
-			if (m_targetArray.size() == 0) {
-				spawnTarget(t_pos, ex.renderParams.visualSize);
-			}
-			else {
-				// TODO: don't hardcode assumption of a single target
-				m_targetArray[0]->setFrame(t_pos);
-			}
-		}
-	}
-}
-
+// QUESTION: This might be better suited to be in Experiment classes?

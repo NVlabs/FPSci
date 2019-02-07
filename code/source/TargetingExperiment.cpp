@@ -186,14 +186,6 @@ namespace Psychophysics
 		}
 	}
 
-	bool TargetingExperiment::isExperimentDone()
-	{
-		if (fsm) {
-			if (fsm->currState == Psychophysics::FSM::State::SHUTDOWN) return true;
-		}
-		return false;
-	}
-
 	void TargetingExperiment::printDebugInfo()
 	{
 		std::cout << "STATE : " << fsm->currState << std::endl;
@@ -220,4 +212,169 @@ namespace Psychophysics
 		}
 	}
 
+	void TargetingExperiment::initTrialAnimation() {
+		// close the app if experiment ended.
+		if (isExperimentDone())
+		{
+			m_app->m_presentationState = PresentationState::complete; // end of experiment
+			m_app->m_tunnelColor = Color3::black(); // remove tunnel
+			m_app->m_reticleColor = Color3::black(); // remove reticle
+		}
+
+		// set frame rate
+		float dt = 1.0f / renderParams.frameRate;
+		m_app->setFrameDuration(dt);
+
+		// initialize target location based on the initial displacement values
+		// Not reference: we don't want it to change after the first call.
+		static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_app->m_spawnDistance, 0.0f, 0.0f);
+		m_app->m_motionFrame = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
+		m_app->m_motionFrame.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
+		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(renderParams.initialDisplacement.x)).approxCoordinateFrame();
+		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-renderParams.initialDisplacement.y)).approxCoordinateFrame();
+
+		// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
+		float randomAngleDegree = G3D::Random::common().uniform() * 360;
+		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
+
+		// Full health for the target
+		m_app->m_targetHealth = 1.f;
+
+		m_app->resetView();
+	}
+
+	void TargetingExperiment::updatePresentationState()
+	{
+		// This updates presentation state and also deals with data collection when each trial ends.
+		// Hence the name 'updateTrialState' as opposed to 'updatePresentationState' because it is a bit more than just updating presentation state.
+		PresentationState currentState = m_app->m_presentationState;
+		PresentationState newState;
+		double stateElapsedTime = (double)getTime();
+
+		if (currentState == PresentationState::ready)
+		{
+			if (stateElapsedTime > renderParams.readyDuration)
+			{
+				startTimer();
+
+				newState = PresentationState::task;
+			}
+			else newState = currentState;
+		}
+		else if (currentState == PresentationState::task)
+		{
+			if ((stateElapsedTime > renderParams.taskDuration) || (m_app->m_targetHealth <= 0))
+			{
+				newState = PresentationState::feedback;
+			}
+			else newState = currentState;
+		}
+		else if (currentState == PresentationState::feedback)
+		{
+			if (stateElapsedTime > renderParams.feedbackDuration)
+			{
+				newState = PresentationState::ready;
+
+				// Communicate with psychophysics library at this point
+				if (m_app->m_targetHealth <= 0)
+				{
+					m_app->informTrialSuccess();
+				}
+				else
+				{
+					m_app->informTrialFailure();
+				}
+				initTrialAnimation();
+			}
+			else newState = currentState;
+		}
+
+		if (currentState != newState)
+		{ // handle state transition.
+			startTimer();
+			m_app->m_presentationState = newState;
+		}
+	}
+
+	void TargetingExperiment::updateAnimation(RealTime framePeriod)
+	{
+		// 1. Update presentation state and send task performance to psychophysics library.
+		updatePresentationState();
+
+		// 2. Check if motionChange is required (happens only during 'task' state with a designated level of chance).
+		if (m_app->m_presentationState == PresentationState::task)
+		{
+			float motionChangeChancePerFrame = renderParams.motionChangeChance * (float)framePeriod;
+			if (G3D::Random::common().uniform() < motionChangeChancePerFrame)
+			{
+				// If yes, rotate target coordinate frame by random (0~360) angle in roll direction
+				float randomAngleDegree = G3D::Random::common().uniform() * 360;
+				m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
+			}
+		}
+
+		// 3. update target location (happens only during 'task' and 'feedback' states).
+		if ((m_app->m_presentationState == PresentationState::task) || (m_app->m_presentationState == PresentationState::feedback))
+		{
+			float rotationAngleDegree = (float)framePeriod * renderParams.speed;
+
+			// Attempts to bound the target within visible space.
+			//float currentYaw;
+			//float ignore;
+			//m_motionFrame.getXYZYPRDegrees(ignore, ignore, ignore, currentYaw, ignore, ignore);
+			//static int reverse = 1;
+			//const float change = abs(currentYaw - rotationAngleDegree);
+			//// If we are headed in the wrong direction, reverse the yaw.
+			//if (change > m_yawBound && change > abs(currentYaw)) {
+			//    reverse *= -1;
+			//}
+			//m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-rotationAngleDegree * reverse)).approxCoordinateFrame();
+
+			m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-rotationAngleDegree)).approxCoordinateFrame();
+
+		}
+
+		// 4. Update tunnel and target colors
+		if (m_app->m_presentationState == PresentationState::ready)
+		{
+			// will color the tunnel when that becomes available.
+		}
+		else if (m_app->m_presentationState == PresentationState::task)
+		{
+			m_app->m_targetColor = m_app->m_targetHealth * Color3::cyan().pow(2.0f) + (1.0f - m_app->m_targetHealth) * Color3::brown().pow(2.0f);
+		}
+		else if (m_app->m_presentationState == PresentationState::feedback)
+		{
+			if (m_app->m_targetHealth > 0)
+			{
+				m_app->m_targetColor = Color3::red().pow(2.0f);
+			}
+			else
+			{
+				m_app->m_targetColor = Color3::green().pow(2.0f);
+				// If the target is dead, empty the projectiles
+				m_app->m_projectileArray.fastClear();
+			}
+		}
+
+		// 5. Clear m_TargetArray. Append an object with m_targetLocation if necessary ('task' and 'feedback' states).
+		Point3 t_pos = m_app->m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance));
+
+		if ((m_app->m_presentationState == PresentationState::task) | (m_app->m_presentationState == PresentationState::feedback))
+		{
+			// draw target if still alive.
+			if (m_app->m_targetHealth > 0.f) {
+				// Don't spawn a new target every frame
+				if (m_app->m_targetArray.size() == 0) {
+					m_app->spawnTarget(t_pos, renderParams.visualSize);
+				}
+				else {
+					// TODO: don't hardcode assumption of a single target
+					m_app->m_targetArray[0]->setFrame(t_pos);
+				}
+			}
+		}
+	}
+
 }
+
