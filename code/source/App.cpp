@@ -47,7 +47,7 @@ static const float targetFrameRate = 360.0f; // hz
 static const std::string subjectID = "JK"; // your name
 const int numFrameDelay = 0;
 static const std::string expState = "real"; // training or real
-static const std::string taskType = "targeting"; // reaction or targeting
+static const std::string taskType = "reaction"; // reaction or targeting
 static const std::string appendingDescription = "ver1";
 //========================================================================
 
@@ -506,15 +506,15 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 	//expDebugStr += ex->getDebugStr(); // debugging message
  //   debugFont->draw2D(rd, format(expDebugStr.c_str(), iRound(renderDevice->stats().smoothFrameRate)), Point2(10,10), 12.0f, Color3::yellow());
 
- //   // Display DONE when complete
- //   if (ex->isExperimentDone()) {
- //       static const shared_ptr<Texture> doneTexture = Texture::fromFile("done.png");
- //       rd->push2D(); {
- //           const float scale = rd->viewport().width() / 3840.0f;
- //           rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
- //           Draw::rect2D(doneTexture->rect2DBounds() * scale + (rd->viewport().wh() - doneTexture->vector2Bounds() * scale) / 2.0f, rd, Color3::white(), doneTexture);
- //       } rd->pop2D();
- //   }
+    //// Display DONE when complete
+    //if (ex->isExperimentDone()) {
+    //    static const shared_ptr<Texture> doneTexture = Texture::fromFile("done.png");
+    //    rd->push2D(); {
+    //        const float scale = rd->viewport().width() / 3840.0f;
+    //        rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+    //        Draw::rect2D(doneTexture->rect2DBounds() * scale + (rd->viewport().wh() - doneTexture->vector2Bounds() * scale) / 2.0f, rd, Color3::white(), doneTexture);
+    //    } rd->pop2D();
+    //}
 		// Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
 
 	// Track the instantaneous frame duration (no smoothing) in a circular queue

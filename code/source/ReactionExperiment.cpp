@@ -78,7 +78,7 @@ namespace Psychophysics
 
 
 		/////// Stim Managers ///////
-		int numStimVariables = (int)m_conditionParams.intensities.size();
+		int numStimVariables = 1; // currently there is only one condition (flat color) with multiple intensity levels. We may increase number of scene types (conditions)
 
 		// create the stimulus params table
 		// additional parameters can be added here if you have multiple staircases
@@ -101,13 +101,10 @@ namespace Psychophysics
 
 		for (int si = 0; si < numStimVariables; si++)
 		{
-			double intensity = m_conditionParams.intensities[si];
-
 			// populate the stimulus params table
 			std::vector<std::string> stimParamsValues = {
 				std::to_string(expID),
-				addQuotes(vec2str(std::vector<std::string>{ "intensity: ", std::to_string(intensity),
-															", minimumForeperiod: ", std::to_string(m_conditionParams.minimumForeperiod),
+				addQuotes(vec2str(std::vector<std::string>{ "minimumForeperiod: ", std::to_string(m_conditionParams.minimumForeperiod),
 															", meanWaitDuration: ", std::to_string(m_conditionParams.meanWaitDuration),
 															", feedbackDuration: ", std::to_string(m_conditionParams.feedbackDuration) }, " ")),
 				std::to_string(m_conditionParams.trialCount),
@@ -248,6 +245,9 @@ namespace Psychophysics
 			}
 			else newState = currentState;
 		}
+		else {
+			newState = currentState;
+		}
 
 		if (currentState != newState)
 		{ // handle state transition.
@@ -271,6 +271,10 @@ namespace Psychophysics
 		else if (m_app->m_presentationState == PresentationState::feedback) {
 			m_stimColor = Color3::white() * 0.3;
 			m_app->drawMessage(m_feedbackMessage.c_str());
+		}
+		else if (m_app->m_presentationState == PresentationState::complete) {
+			m_stimColor = Color3::white() * 0.2;
+			m_app->drawMessage("Experiment Completed. Thanks!");
 		}
 	}
 }
