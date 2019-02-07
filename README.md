@@ -12,7 +12,7 @@ Progress tracking sheet (only accessible to developers): https://docs.google.com
     - ~~**Can we change frame rates without re-executing the file?**~~ Yes
 - **Implementation**
     - **Targeting experiment**
-        - Change color of center object to blue
+        - **Change color of center object to blue**
 - **Characterize various frame rates in terms of click-photon latency values** Joohwan
 - **Pilot run both experiments, analyze, make sure data make sense.** Joohwan
 - **Support for input device configuration**
