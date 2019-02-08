@@ -11,7 +11,7 @@ namespace Psychophysics
 		renderParams.visualSize = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "visualSize"));
 		renderParams.taskDuration = StimVariableVec[currStimVariableNum]->currStimVal;
 		renderParams.speed = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "speed"));
-		renderParams.motionChangeChance = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "motionChangeChance"));
+		renderParams.motionChangePeriod = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "motionChangePeriod"));
 		renderParams.readyDuration = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "readyDuration"));
 		renderParams.feedbackDuration = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "feedbackDuration"));
 		renderParams.weaponType = queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "weaponType");
@@ -25,8 +25,8 @@ namespace Psychophysics
 		trainingMode = trainingModeIn;
 
 		// initialize presentation state
-		m_app->m_presentationState = PresentationState::feedback;
-		initTargetAnimation();
+		m_app->m_presentationState = PresentationState::initial;
+		m_feedbackMessage = "Aim at the target and shoot!";
 
 		/////// Create Database ///////
 		// create or open existing database at save location
@@ -34,6 +34,20 @@ namespace Psychophysics
 			fprintf(stderr, "Error: could not open database\n");
 		}
 
+		// apply changes depending on experiment version
+		if (expVersion == "SimpleMotion")
+		{
+			m_conditionParams.speed = 6.0f;
+		}
+		else if (expVersion == "ComplexMotion")
+		{
+			m_conditionParams.speed = 6.0f;
+			m_conditionParams.motionChangePeriod = 0.4f;
+		}
+
+		if (trainingMode) { // shorter experiment if training
+			m_conditionParams.trialCount = m_conditionParams.trialCount / 3;
+		}
 
 		/////// FSM ///////
 		bool waitForKeypress = true;
@@ -103,7 +117,7 @@ namespace Psychophysics
 			{ "initialDisplacementDistance", "real" },
 			{ "visualSize", "real" },
 			{ "speed", "real" },
-			{ "motionChangeChance", "real" },
+			{ "motionChangePeriod", "real" },
 			{ "readyDuration", "real" },
 			{ "feedbackDuration", "real" },
 			{ "weaponType", "text" },
@@ -140,7 +154,7 @@ namespace Psychophysics
 				std::to_string(initialDisplacementDistance),
 				std::to_string(visualSize),
 				std::to_string(m_conditionParams.speed),
-				std::to_string(m_conditionParams.motionChangeChance),
+				std::to_string(m_conditionParams.motionChangePeriod),
 				std::to_string(m_conditionParams.readyDuration),
 				std::to_string(m_conditionParams.feedbackDuration),
 				addQuotes(m_conditionParams.weaponType),
@@ -248,10 +262,20 @@ namespace Psychophysics
 		double stateElapsedTime = (double)getTime();
 
         newState = currentState;
-		if (currentState == PresentationState::ready)
+
+		if (currentState == PresentationState::initial)
+		{
+			if (!m_app->m_buttonUp)
+			{
+				m_feedbackMessage = "";
+				newState = PresentationState::feedback;
+			}
+		}
+		else if (currentState == PresentationState::ready)
 		{
 			if (stateElapsedTime > renderParams.readyDuration)
 			{
+				m_lastMotionChangeAt = 0;
                 newState = PresentationState::task;
 			}
 		}
@@ -310,10 +334,10 @@ namespace Psychophysics
 		// 2. Check if motionChange is required (happens only during 'task' state with a designated level of chance).
 		if (m_app->m_presentationState == PresentationState::task)
 		{
-			float motionChangeChancePerFrame = renderParams.motionChangeChance * (float)framePeriod;
-			if (G3D::Random::common().uniform() < motionChangeChancePerFrame)
+			if (getTime() > m_lastMotionChangeAt + renderParams.motionChangePeriod)
 			{
 				// If yes, rotate target coordinate frame by random (0~360) angle in roll direction
+				m_lastMotionChangeAt = getTime();
 				float randomAngleDegree = G3D::Random::common().uniform() * 360;
 				m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
 			}
@@ -362,7 +386,7 @@ namespace Psychophysics
 		{
 			if (m_app->m_targetHealth > 0)
 			{
-				m_app->m_targetColor = Color3::red().pow(2.0f);
+				m_app->m_targetColor = Color3::green().pow(2.0f);
 			}
 			else
 			{

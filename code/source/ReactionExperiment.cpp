@@ -19,7 +19,12 @@ namespace Psychophysics
 		trainingMode = trainingModeIn;
 
 		// initialize presentation state
-		m_app->m_presentationState = PresentationState::ready;
+		m_app->m_presentationState = PresentationState::initial;
+		m_feedbackMessage = "Reaction test. Click when green!";
+
+		if (trainingMode) { // shorter experiment if training
+			m_conditionParams.trialCount = m_conditionParams.trialCount / 3;
+		}
 
 		/////// Create Database ///////
 		// create or open existing database at save location
@@ -115,7 +120,7 @@ namespace Psychophysics
 				std::to_string(m_conditionParams.minimumForeperiod),
 				std::to_string(m_conditionParams.meanWaitDuration),
 				std::to_string(m_conditionParams.feedbackDuration),
-				std::to_string(m_conditionParams.frameRate),
+				std::to_string(float(m_conditionParams.frameRate)),
 			};
 			assert(stimParamsValues.size() == stimParamsColumns.size(), "Incorrect number of arguments for insert to stimParams table.\n");
 			stimID = insertIntoDB(db, "stimParams", stimParamsValues);
@@ -191,10 +196,21 @@ namespace Psychophysics
 		PresentationState newState;
 		double stateElapsedTime = (double)getTime();
 
-		if (currentState == PresentationState::ready)
+		if (currentState == PresentationState::initial)
+		{
+			if (m_reacted)
+			{
+				m_feedbackMessage = "";
+				newState = PresentationState::feedback;
+			}
+			else { // keep waiting.
+				newState = currentState;
+			}
+		}
+		else if (currentState == PresentationState::ready)
 		{
 			// start task if waited longer than minimum foreperiod AND the probabilistic condition is met (Nickerson & Burhnham 1969, Response times with nonaging foreperiods).
-			float taskStartChancePerFrame = (1.0 / renderParams.meanWaitDuration) * (float)framePeriod;
+			float taskStartChancePerFrame = (1.0f / (float)renderParams.meanWaitDuration) * (float)framePeriod;
 			if ((stateElapsedTime > renderParams.minimumForeperiod) && (G3D::Random::common().uniform() < taskStartChancePerFrame))
 			{
 				newState = PresentationState::task;
@@ -214,8 +230,19 @@ namespace Psychophysics
 		{
 			if (m_reacted)
 			{
-				m_app->informTrialSuccess();
-				m_feedbackMessage = std::to_string(int(stateElapsedTime * 1000)) + " msec";
+				if (stateElapsedTime > 0.1) {
+					m_app->informTrialSuccess();
+					if (trainingMode) {
+						m_feedbackMessage = std::to_string(int(stateElapsedTime * 1000)) + " msec";
+					}
+					else {
+						m_feedbackMessage = "Success!";
+					}
+				}
+				else {
+					m_app->informTrialFailure();
+					m_feedbackMessage = "Failure: Responded too quickly.";
+				}
 				newState = PresentationState::feedback;
 			}
 			else newState = currentState;
@@ -253,17 +280,20 @@ namespace Psychophysics
 		updatePresentationState(framePeriod);
 
 		// 2. Assign the background color for 2D graphics
-		if (m_app->m_presentationState == PresentationState::ready) {
-			m_stimColor = Color3::red() * renderParams.intensity;
+		if (m_app->m_presentationState == PresentationState::initial) {
+			m_stimColor = Color3::white() * 0.3f;
+		}
+		else if (m_app->m_presentationState == PresentationState::ready) {
+			m_stimColor = Color3::red() * (float)renderParams.intensity;
 		}
 		else if (m_app->m_presentationState == PresentationState::task) {
-			m_stimColor = Color3::green() * renderParams.intensity;
+			m_stimColor = Color3::green() * (float)renderParams.intensity;
 		}
 		else if (m_app->m_presentationState == PresentationState::feedback) {
-			m_stimColor = Color3::white() * 0.3;
+			m_stimColor = Color3::white() * 0.3f;
 		}
 		else if (m_app->m_presentationState == PresentationState::complete) {
-			m_stimColor = Color3::white() * 0.2;
+			m_stimColor = Color3::white() * 0.2f;
 		}
 	}
 

@@ -26,7 +26,7 @@ namespace Psychophysics
 
 			ConditionParams()
 			{
-				trialCount = 100;
+				trialCount = 20;
 				intensities = { 0.4f, 1.0f };
 				minimumForeperiod = 1.5;
 				meanWaitDuration = 0.5;

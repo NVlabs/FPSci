@@ -18,7 +18,7 @@
 // ready: ready scene that happens before beginning of a task.
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
-enum PresentationState { ready, task, feedback , complete };
+enum PresentationState { initial, ready, task, feedback , complete };
 
 class Projectile {
 public:
@@ -32,6 +32,7 @@ public:
 class App : public GApp {
 protected:
 	static const float TARGET_MODEL_ARRAY_SCALING;
+	static const float TARGET_MODEL_ARRAY_OFFSET;
 	/** Length of the history queue for m_frameDurationQueue */
 	static const int MAX_HISTORY_TIMING_FRAMES = 360;
 	const int                       numReticles = 55;
@@ -62,9 +63,8 @@ protected:
 	float                           m_sceneBrightness = 1.0f;
 	bool                            m_renderViewModel = false;
 	bool                            m_renderHud = false;
-	bool                            m_renderFPS = true;
+	bool                            m_renderFPS = false;
 	bool                            m_renderHitscan = false;
-	bool							m_buttonUp = true;
 
 	/** Set to true to lower rendering quality to increase performance. */
 	bool                            m_emergencyTurbo = true;
@@ -159,6 +159,12 @@ public:
     double                          m_mouseDPI = 2400.0; // normal mice are 800.0. Gaming mice go up to 12000.0. Josef's G502 is set to 2400.0
     double                          m_cmp360 = 12.75; // Joohwan set this to ~12.75, Josef prefers ~9.25
     String                          m_subjectID = "JK"; // will be overwritten
+	float							m_targetFrameRate = 360; // hz
+	String                          m_expVersion = "static";
+	String							m_expMode = "training"; // training or real
+	String							m_taskType = "reaction"; // reaction or targeting
+	String							m_appendingDescription = "ver1";
+	//const int numFrameDelay = 0;
 
 protected:
 	double                          m_t_lastAnimationUpdate;
@@ -168,8 +174,8 @@ protected:
 public:
 	//Psychophysics::TargetingExperiment ex;
 	//Psychophysics::ReactionExperiment ex;
-	shared_ptr<Psychophysics::Experiment> ex;
-
+	shared_ptr<Psychophysics::Experiment> m_ex = nullptr;
+	bool							m_buttonUp = true;
 
 	void resetView();
 	void processUserInput(const GEvent& e);

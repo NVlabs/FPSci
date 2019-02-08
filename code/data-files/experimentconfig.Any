@@ -1,0 +1,8 @@
+{
+    "targetFrameRate" : 240,
+    "settingsVersion" : 1,
+    "taskType" : "targeting",
+    "expMode" : "training",
+    "expVersion" : "SimpleMotion",
+    "appendingDescription" : "2019Feb09_UCB_CSGO"
+}
