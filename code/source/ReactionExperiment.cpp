@@ -201,7 +201,7 @@ namespace Psychophysics
 			if (m_reacted)
 			{
 				m_feedbackMessage = "";
-				newState = PresentationState::ready;
+				newState = PresentationState::feedback;
 			}
 			else { // keep waiting.
 				newState = currentState;
