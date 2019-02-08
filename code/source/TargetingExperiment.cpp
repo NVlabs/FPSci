@@ -25,8 +25,8 @@ namespace Psychophysics
 		trainingMode = trainingModeIn;
 
 		// initialize presentation state
-		m_app->m_presentationState = PresentationState::feedback;
-		initTargetAnimation();
+		m_app->m_presentationState = PresentationState::initial;
+		m_feedbackMessage = "Aim at the target and shoot!";
 
 		/////// Create Database ///////
 		// create or open existing database at save location
@@ -248,7 +248,16 @@ namespace Psychophysics
 		double stateElapsedTime = (double)getTime();
 
         newState = currentState;
-		if (currentState == PresentationState::ready)
+
+		if (currentState == PresentationState::initial)
+		{
+			if (!m_app->m_buttonUp)
+			{
+				m_feedbackMessage = "";
+				newState = PresentationState::feedback;
+			}
+		}
+		else if (currentState == PresentationState::ready)
 		{
 			if (stateElapsedTime > renderParams.readyDuration)
 			{

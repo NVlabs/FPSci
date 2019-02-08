@@ -2,6 +2,6 @@
     "settingsVersion" : 1,
     "targetFrameRate" : 360,
     "expMode" : "training",
-    "taskType" : "reaction",
+    "taskType" : "targeting",
     "appendingDescription" : "ver1"
 }

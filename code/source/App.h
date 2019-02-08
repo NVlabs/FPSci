@@ -18,7 +18,7 @@
 // ready: ready scene that happens before beginning of a task.
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
-enum PresentationState { ready, task, feedback , complete };
+enum PresentationState { initial, ready, task, feedback , complete };
 
 class Projectile {
 public:
@@ -64,7 +64,6 @@ protected:
 	bool                            m_renderHud = false;
 	bool                            m_renderFPS = true;
 	bool                            m_renderHitscan = false;
-	bool							m_buttonUp = true;
 
 	/** Set to true to lower rendering quality to increase performance. */
 	bool                            m_emergencyTurbo = true;
@@ -174,7 +173,7 @@ public:
 	//Psychophysics::TargetingExperiment ex;
 	//Psychophysics::ReactionExperiment ex;
 	shared_ptr<Psychophysics::Experiment> m_ex = nullptr;
-
+	bool							m_buttonUp = true;
 
 	void resetView();
 	void processUserInput(const GEvent& e);

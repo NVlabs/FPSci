@@ -19,7 +19,8 @@ namespace Psychophysics
 		trainingMode = trainingModeIn;
 
 		// initialize presentation state
-		m_app->m_presentationState = PresentationState::ready;
+		m_app->m_presentationState = PresentationState::initial;
+		m_feedbackMessage = "Reaction test. Click when green!";
 
 		/////// Create Database ///////
 		// create or open existing database at save location
@@ -191,7 +192,15 @@ namespace Psychophysics
 		PresentationState newState;
 		double stateElapsedTime = (double)getTime();
 
-		if (currentState == PresentationState::ready)
+		if (currentState == PresentationState::initial)
+		{
+			if (!m_app->m_buttonUp)
+			{
+				m_feedbackMessage = "";
+				newState = PresentationState::ready;
+			}
+		}
+		else if (currentState == PresentationState::ready)
 		{
 			// start task if waited longer than minimum foreperiod AND the probabilistic condition is met (Nickerson & Burhnham 1969, Response times with nonaging foreperiods).
 			float taskStartChancePerFrame = (1.0f / (float)renderParams.meanWaitDuration) * (float)framePeriod;
