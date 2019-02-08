@@ -230,12 +230,18 @@ namespace Psychophysics
 		{
 			if (m_reacted)
 			{
-				m_app->informTrialSuccess();
-				if (trainingMode) {
-					m_feedbackMessage = std::to_string(int(stateElapsedTime * 1000)) + " msec";
+				if (stateElapsedTime > 0.1) {
+					m_app->informTrialSuccess();
+					if (trainingMode) {
+						m_feedbackMessage = std::to_string(int(stateElapsedTime * 1000)) + " msec";
+					}
+					else {
+						m_feedbackMessage = "Success!";
+					}
 				}
 				else {
-					m_feedbackMessage = "Success!";
+					m_app->informTrialFailure();
+					m_feedbackMessage = "Failure: Responded too quickly.";
 				}
 				newState = PresentationState::feedback;
 			}
