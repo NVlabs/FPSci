@@ -17,4 +17,4 @@ There are two files that control the experiment settings, `userconfig.Any` and `
 
 `userconfig.Any` contains settings that pertain to the user, such as the `subjectID`, `mouseDPI` and `cmp360` settings. One way to set this up effectively is to have a settings file per user and switch between them as you switch users.
 
-`experimentconfig.Any` allows you to set up the various experiment settings, including `targetFrameRate`, `expMode`, `taskType` and `appendingDescription`. More details can be found in [code/data-files/experimentConfigReadme.md](). It is recommended to set up a list of experimental settings you would like to run ahead of time, and switch between them when executing.
+`experimentconfig.Any` allows you to set up the various experiment settings, including `targetFrameRate`, `expMode`, `taskType` and `appendingDescription`. More details can be found in [experimentConfigReadme.md](../blob/code/data-files/experimentConfigReadme.md). It is recommended to set up a list of experimental settings you would like to run ahead of time, and switch between them when executing.
