@@ -12,7 +12,7 @@
 #include <G3D/G3D.h>
 #include "ReactionExperiment.h"
 #include "TargetingExperiment.h"
-#include "ExperimentSettingsList.h"
+#include "ExperimentConfig.h"
 
 // An enum that tracks presentation state within a trial. Duration defined in experiment.h
 // ready: ready scene that happens before beginning of a task.

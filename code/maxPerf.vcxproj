@@ -133,7 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="source\App.h" />
-    <ClInclude Include="source\ExperimentSettingsList.h" />
+    <ClInclude Include="source\ExperimentConfig.h" />
     <ClInclude Include="source\ReactionExperiment.h" />
     <ClInclude Include="source\TargetingExperiment.h" />
   </ItemGroup>
