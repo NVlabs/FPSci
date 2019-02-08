@@ -77,7 +77,7 @@ namespace Psychophysics
 
 				speed = 0.0f;
 				motionChangePeriod = 100000.f; // some large number
-				trialCount = 6;
+				trialCount = 10;
 				readyDuration = 0.5;
 				feedbackDuration = 1.0;
 

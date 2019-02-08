@@ -1,6 +1,6 @@
 {
     "settingsVersion" : 1,
-    "targetFrameRate" : 360,
+    "targetFrameRate" : 120,
     "taskType" : "targeting",
     "expMode" : "real",
     "expVersion" : "ComplexMotion",

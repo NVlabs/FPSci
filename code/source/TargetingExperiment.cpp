@@ -46,7 +46,7 @@ namespace Psychophysics
 		}
 
 		if (trainingMode) { // shorter experiment if training
-			m_conditionParams.trialCount = m_conditionParams.trialCount / 2;
+			m_conditionParams.trialCount = m_conditionParams.trialCount / 3;
 		}
 
 		/////// FSM ///////
