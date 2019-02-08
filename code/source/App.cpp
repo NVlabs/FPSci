@@ -33,7 +33,8 @@ static const bool  unlockFramerate = false;
 // without tearing.
 static const bool  variableRefreshRate = true;
 
-const float App::TARGET_MODEL_ARRAY_SCALING = 0.4f;
+const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
+const float App::TARGET_MODEL_ARRAY_OFFSET = 30;
 
 //static const float verticalFieldOfViewDegrees = 90; // deg
 static const float horizontalFieldOfViewDegrees = 103; // deg
@@ -183,7 +184,7 @@ void App::spawnRandomTarget() {
 
 
 shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft) {
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + 10), 0, m_targetModelArray.length() - 1);
+	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
 
 	const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
 	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
@@ -223,7 +224,7 @@ void App::loadModels() {
 	m_laserModel = ArticulatedModel::create(laserSpec, "laserModel");
 
 	for (int i = 0; i <= 20; ++i) {
-		const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - 10.0f);
+		const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
 		m_targetModelArray.push(ArticulatedModel::create(Any::parse(format(STR(ArticulatedModel::Specification{
 			filename = "ifs/d12.ifs";
 			cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings {

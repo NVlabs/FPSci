@@ -32,6 +32,7 @@ public:
 class App : public GApp {
 protected:
 	static const float TARGET_MODEL_ARRAY_SCALING;
+	static const float TARGET_MODEL_ARRAY_OFFSET;
 	/** Length of the history queue for m_frameDurationQueue */
 	static const int MAX_HISTORY_TIMING_FRAMES = 360;
 	const int                       numReticles = 55;

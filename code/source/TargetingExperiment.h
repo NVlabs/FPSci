@@ -38,7 +38,7 @@ namespace Psychophysics
 			//std::vector<double> timeLimitLevels; // time limit in a trial
 
 			float speed; // speed of motion expressed as visual angle (in degrees) per sec.
-			float motionChangeChance; // probability of motion direction change expressed as probability per sec.
+			float motionChangePeriod; // probability of motion direction change expressed as probability per sec.
 			double readyDuration; // 'be ready' duration in sec.
 			double feedbackDuration; // feedback duration in sec.
 			std::vector<double> taskDurationLevels; // time limit in performing the task
@@ -53,21 +53,21 @@ namespace Psychophysics
 				// TODO: Could we do the following in-place for the member variables of m_conditionParams?
 				std::vector<G3D::Vector2> temp_initialDisplacements{ // in visual angles
 					//G3D::Vector2(0.0f, 0.0f),
-					G3D::Vector2(0.0f, 3.0f),
-					//G3D::Vector2(0.0f, 6.0f),
+					//G3D::Vector2(0.0f, 3.0f),
+					G3D::Vector2(0.0f, 5.0f),
 					G3D::Vector2(0.0f, 10.0f),
 					//G3D::Vector2(0.0f, 14.0f),
-					G3D::Vector2(0.0f, 20.0f),
-					G3D::Vector2(180.0f, 3.0f),
-					//G3D::Vector2(180.0f, 6.0f),
+					G3D::Vector2(0.0f, 15.0f),
+					//G3D::Vector2(180.0f, 3.0f),
+					G3D::Vector2(180.0f, 5.0f),
 					G3D::Vector2(180.0f, 10.0f),
 					//G3D::Vector2(180.0f, 14.0f),
-					G3D::Vector2(180.0f, 20.0f),
+					G3D::Vector2(180.0f, 15.0f),
 				};
 				initialDisplacements = temp_initialDisplacements;
 
 				std::vector<float> temp_visualSizes = { // in an arbitrary unit at 1 m distance in the code.
-					0.01f,
+					0.02f,
 				};
 				visualSizes = temp_visualSizes;
 
@@ -76,7 +76,7 @@ namespace Psychophysics
 				taskDurationLevels = temp_taskDurationLevels;
 
 				speed = 0.0f;
-				motionChangeChance = 0.0f;
+				motionChangePeriod = G3D::finf();
 				trialCount = 10;
 				readyDuration = 0.5;
 				feedbackDuration = 1.0;
@@ -88,6 +88,7 @@ namespace Psychophysics
 
 		App* m_app;
 		//shared_ptr<App> m_app;
+		float m_lastMotionChangeAt = -G3D::finf();
 
 	public:
 		TargetingExperiment(App* app) : Experiment() {
@@ -105,7 +106,7 @@ namespace Psychophysics
 			double readyDuration;
 			double feedbackDuration;
 			float speed;
-			float motionChangeChance;
+			float motionChangePeriod;
 			std::string weaponType;
 			float weaponStrength;
 			std::string sceneType;

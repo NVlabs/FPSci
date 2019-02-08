@@ -11,7 +11,7 @@ namespace Psychophysics
 		renderParams.visualSize = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "visualSize"));
 		renderParams.taskDuration = StimVariableVec[currStimVariableNum]->currStimVal;
 		renderParams.speed = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "speed"));
-		renderParams.motionChangeChance = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "motionChangeChance"));
+		renderParams.motionChangePeriod = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "motionChangePeriod"));
 		renderParams.readyDuration = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "readyDuration"));
 		renderParams.feedbackDuration = std::stof(queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "feedbackDuration"));
 		renderParams.weaponType = queryStimDB(db, StimVariableVec[currStimVariableNum]->StimVariableID, "weaponType");
@@ -37,12 +37,12 @@ namespace Psychophysics
 		// apply changes depending on experiment version
 		if (expVersion == "SimpleMotion")
 		{
-			m_conditionParams.speed = 10.0f;
+			m_conditionParams.speed = 6.0f;
 		}
 		else if (expVersion == "ComplexMotion")
 		{
-			m_conditionParams.speed = 10.0f;
-			m_conditionParams.motionChangeChance = 1.5f;
+			m_conditionParams.speed = 6.0f;
+			m_conditionParams.motionChangePeriod = 0.4f;
 		}
 
 		/////// FSM ///////
@@ -113,7 +113,7 @@ namespace Psychophysics
 			{ "initialDisplacementDistance", "real" },
 			{ "visualSize", "real" },
 			{ "speed", "real" },
-			{ "motionChangeChance", "real" },
+			{ "motionChangePeriod", "real" },
 			{ "readyDuration", "real" },
 			{ "feedbackDuration", "real" },
 			{ "weaponType", "text" },
@@ -150,7 +150,7 @@ namespace Psychophysics
 				std::to_string(initialDisplacementDistance),
 				std::to_string(visualSize),
 				std::to_string(m_conditionParams.speed),
-				std::to_string(m_conditionParams.motionChangeChance),
+				std::to_string(m_conditionParams.motionChangePeriod),
 				std::to_string(m_conditionParams.readyDuration),
 				std::to_string(m_conditionParams.feedbackDuration),
 				addQuotes(m_conditionParams.weaponType),
@@ -271,6 +271,7 @@ namespace Psychophysics
 		{
 			if (stateElapsedTime > renderParams.readyDuration)
 			{
+				m_lastMotionChangeAt = 0;
                 newState = PresentationState::task;
 			}
 		}
@@ -329,10 +330,10 @@ namespace Psychophysics
 		// 2. Check if motionChange is required (happens only during 'task' state with a designated level of chance).
 		if (m_app->m_presentationState == PresentationState::task)
 		{
-			float motionChangeChancePerFrame = renderParams.motionChangeChance * (float)framePeriod;
-			if (G3D::Random::common().uniform() < motionChangeChancePerFrame)
+			if (getTime() > m_lastMotionChangeAt + renderParams.motionChangePeriod)
 			{
 				// If yes, rotate target coordinate frame by random (0~360) angle in roll direction
+				m_lastMotionChangeAt = getTime();
 				float randomAngleDegree = G3D::Random::common().uniform() * 360;
 				m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
 			}
