@@ -82,9 +82,11 @@ void App::onInit() {
 	// TODO: app pointer is not a memory-managed pointer.
 	if (m_taskType == "reaction") {
 		m_ex = std::make_shared<Psychophysics::ReactionExperiment>(this);
+		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->setFrameRate(m_targetFrameRate);
 	}
 	else if (m_taskType == "targeting") {
 		m_ex = std::make_shared<Psychophysics::TargetingExperiment>(this);
+		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->setFrameRate(m_targetFrameRate);
 	}
 
 	float dt = 0;
@@ -124,13 +126,6 @@ void App::onInit() {
 	}
 
 	initPsychophysicsLib();
-    // Need to call once for the first frame to set the camera parameters.
-	if (m_ex->expName == "ReactionExperiment") {
-		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->setFrameRate(m_targetFrameRate);
-	}
-	else if (m_ex->expName == "TargetingExperiment") {
-		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->setFrameRate(m_targetFrameRate);
-	}
 
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);

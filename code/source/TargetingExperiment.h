@@ -83,6 +83,7 @@ namespace Psychophysics
 
 				//weaponType = "tracking"; // set by the app.
 				weaponStrength = 1.f;
+				numFrameDelay = 0;
 			}
 		} m_conditionParams;
 

@@ -120,7 +120,7 @@ namespace Psychophysics
 				std::to_string(m_conditionParams.minimumForeperiod),
 				std::to_string(m_conditionParams.meanWaitDuration),
 				std::to_string(m_conditionParams.feedbackDuration),
-				std::to_string(m_conditionParams.frameRate),
+				std::to_string(float(m_conditionParams.frameRate)),
 			};
 			assert(stimParamsValues.size() == stimParamsColumns.size(), "Incorrect number of arguments for insert to stimParams table.\n");
 			stimID = insertIntoDB(db, "stimParams", stimParamsValues);

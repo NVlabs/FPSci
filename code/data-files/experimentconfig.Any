@@ -1,8 +1,8 @@
 {
+    "targetFrameRate" : 240,
     "settingsVersion" : 1,
-    "targetFrameRate" : 360,
-    "taskType" : "reaction",
+    "taskType" : "targeting",
     "expMode" : "training",
-    "expVersion" : "ComplexMotion",
+    "expVersion" : "SimpleMotion",
     "appendingDescription" : "ver1"
 }
