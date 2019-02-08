@@ -43,23 +43,17 @@ static const bool measureClickPhotonLatency = true;
 // JBS: TODO: Refactor these as experiment variables
 //========================================================================
 // variables related to experimental condition and record.
-static const float targetFrameRate = 360; // hz
-const int numFrameDelay = 0;
-static const std::string expMode = "training"; // training or real
-static const std::string taskType = "targeting"; // reaction or targeting
-static const std::string appendingDescription = "ver1";
+//static const float targetFrameRate = 360; // hz
+//const int numFrameDelay = 0;
+//static const std::string expMode = "training"; // training or real
+//static const std::string taskType = "reaction"; // reaction or targeting
+//static const std::string appendingDescription = "ver1";
 //========================================================================
 
 App::App(const GApp::Settings& settings) : GApp(settings) {
 	// TODO: make method that changes definition of ex, and have constructor call that
 	// method to set default experiment
-	// TODO: app pointer is not a memory-managed pointer.
-	if (taskType == "reaction") {
-		ex = std::make_shared<Psychophysics::ReactionExperiment>(this);
-	}
-	else if (taskType == "targeting") {
-		ex = std::make_shared<Psychophysics::TargetingExperiment>(this);
-	}
+	// JBS: moved experiment definition to `onInit()`
 
 }
 
@@ -74,6 +68,22 @@ void App::onInit() {
     m_subjectID = u.subjectID;
     // debug print
     debugPrintf("User: %s, DPI: %f, cmp360 %f\n", m_subjectID, m_mouseDPI, m_cmp360);
+	ExperimentConfig e(Any::fromFile(System::findDataFile("experimentconfig.Any")));
+	m_targetFrameRate = e.targetFrameRate;
+	m_expMode = e.expMode;
+	m_taskType = e.taskType;
+	m_appendingDescription = e.appendingDescription;
+	// debug print
+	debugPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
+		m_targetFrameRate, m_expMode, m_taskType, m_appendingDescription);
+
+	// TODO: app pointer is not a memory-managed pointer.
+	if (m_taskType == "reaction") {
+		m_ex = std::make_shared<Psychophysics::ReactionExperiment>(this);
+	}
+	else if (m_taskType == "targeting") {
+		m_ex = std::make_shared<Psychophysics::TargetingExperiment>(this);
+	}
 
 	float dt = 0;
 
@@ -82,7 +92,7 @@ void App::onInit() {
 		dt = 1.0f / 8192.0f;
 	}
 	else if (variableRefreshRate) {
-		dt = 1.0f / targetFrameRate;
+		dt = 1.0f / m_targetFrameRate;
 	}
 	else {
 		dt = 1.0f / float(window()->settings().refreshRate);
@@ -107,17 +117,17 @@ void App::onInit() {
 	loadModels();
 	setReticle(m_reticleIndex);
 	
-	if (ex->expName == "TargetingExperiment") {
+	if (m_ex->expName == "TargetingExperiment") {
 		loadScene("eSports Simple Hallway");
 	}
 
 	initPsychophysicsLib();
     // Need to call once for the first frame to set the camera parameters.
-	if (ex->expName == "ReactionExperiment") {
-		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->setFrameRate(targetFrameRate);
+	if (m_ex->expName == "ReactionExperiment") {
+		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->setFrameRate(m_targetFrameRate);
 	}
-	else if (ex->expName == "TargetingExperiment") {
-		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->setFrameRate(targetFrameRate);
+	else if (m_ex->expName == "TargetingExperiment") {
+		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->setFrameRate(m_targetFrameRate);
 	}
 
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
@@ -303,7 +313,7 @@ void App::onNetwork() {
 
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
-	if (ex->expName == "ReactionExperiment") {
+	if (m_ex->expName == "ReactionExperiment") {
 		if (submitToDisplayMode() == SubmitToDisplayMode::MAXIMIZE_THROUGHPUT) {
 			swapBuffers();
 		}
@@ -345,11 +355,11 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
-	if (ex->expName == "ReactionExperiment") {
-		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->updateAnimation(rdt);
+	if (m_ex->expName == "ReactionExperiment") {
+		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->updateAnimation(rdt);
 	}
-	else if (ex->expName == "TargetingExperiment") {
-		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->updateAnimation(rdt);
+	else if (m_ex->expName == "TargetingExperiment") {
+		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->updateAnimation(rdt);
 	}
 
 	GApp::onSimulation(rdt, sdt, idt);
@@ -403,12 +413,12 @@ void App::onUserInput(UserInput* ui) {
 		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
 			m_buttonUp = false;
 
-			if (ex->expName == "ReactionExperiment") {
+			if (m_ex->expName == "ReactionExperiment") {
 				// set reacted to true
-				dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->m_reacted = true;
+				dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_reacted = true;
 
 			}
-			else if (ex->expName == "TargetingExperiment") {
+			else if (m_ex->expName == "TargetingExperiment") {
 				// Fire
 				Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
 
@@ -426,7 +436,7 @@ void App::onUserInput(UserInput* ui) {
 					if (closestIndex >= 0) {
 						destroyTarget(closestIndex);
 						aimPoint = ray.origin() + ray.direction() * closest;
-						m_targetHealth -= dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->renderParams.weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
+						m_targetHealth -= dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->renderParams.weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
 					}
 				}
 
@@ -537,10 +547,10 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 	rd->push2D(); {
 
-		if (ex->expName == "ReactionExperiment") {
+		if (m_ex->expName == "ReactionExperiment") {
 			rd->clear();
 			const float scale = rd->viewport().width() / 1920.0f;
-			Draw::rect2D(rd->viewport(), rd, dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->m_stimColor);
+			Draw::rect2D(rd->viewport(), rd, dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_stimColor);
 
 			// Click to photon latency measuring corner box
 			if (measureClickPhotonLatency) {
@@ -549,12 +559,12 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 				Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.8f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
 			}
 
-			if (!dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->m_feedbackMessage.empty()) {
-				m_outputFont->draw2D(rd, dynamic_pointer_cast<Psychophysics::ReactionExperiment>(ex)->m_feedbackMessage.c_str(),
+			if (!dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_feedbackMessage.empty()) {
+				m_outputFont->draw2D(rd, dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_feedbackMessage.c_str(),
 					(Point2((float)window()->width() / 2 - 40, (float)window()->height() / 2 + 20) * scale).floor(), floor(20.0f * scale), Color3::yellow());
 			}
 		}
-		else if (ex->expName == "TargetingExperiment") {
+		else if (m_ex->expName == "TargetingExperiment") {
 			const float scale = rd->viewport().width() / 1920.0f;
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
@@ -594,8 +604,8 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 				Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.8f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
 			}
 
-			if (!dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->m_feedbackMessage.empty()) {
-				m_outputFont->draw2D(rd, dynamic_pointer_cast<Psychophysics::TargetingExperiment>(ex)->m_feedbackMessage.c_str(),
+			if (!dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->m_feedbackMessage.empty()) {
+				m_outputFont->draw2D(rd, dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->m_feedbackMessage.c_str(),
 					(Point2((float)window()->width() / 2 - 40, (float)window()->height() / 2 + 20) * scale).floor(), floor(20.0f * scale), Color3::yellow());
 			}
 		}
@@ -668,12 +678,12 @@ void App::initPsychophysicsLib() {
 	// start cpu timer.
 	StartCPUTimer();
 
-	std::string datafileName = taskType + "_" + expMode + "_" + appendingDescription + ".db";
-	ex->init(m_subjectID.c_str(), expMode, 0, datafileName, expMode == "training");
+	String datafileName = m_taskType + "_" + m_expMode + "_" + m_appendingDescription + ".db";
+	m_ex->init(m_subjectID.c_str(), m_expMode.c_str(), 0, datafileName.c_str(), m_expMode == "training");
 
 	// required initial response to start an experiment.
-	ex->startTimer();
-	ex->update("Spc");
+	m_ex->startTimer();
+	m_ex->update("Spc");
 
 	// initializing member variables that are related to the experiment.
 	m_targetHealth = 1.0f;
@@ -697,14 +707,14 @@ void App::resetView() {
 
 void App::informTrialSuccess()
 {
-	ex->update("Spc"); // needed to stop stimulus presentation of this trial
-	ex->update("1"); // success
+	m_ex->update("Spc"); // needed to stop stimulus presentation of this trial
+	m_ex->update("1"); // success
 }
 
 void App::informTrialFailure()
 {
-	ex->update("Spc"); // needed to stop stimulus presentation of this trial
-	ex->update("2"); // failure
+	m_ex->update("Spc"); // needed to stop stimulus presentation of this trial
+	m_ex->update("2"); // failure
 }
 
 

@@ -159,6 +159,11 @@ public:
     double                          m_mouseDPI = 2400.0; // normal mice are 800.0. Gaming mice go up to 12000.0. Josef's G502 is set to 2400.0
     double                          m_cmp360 = 12.75; // Joohwan set this to ~12.75, Josef prefers ~9.25
     String                          m_subjectID = "JK"; // will be overwritten
+	float							m_targetFrameRate = 360; // hz
+	String							m_expMode = "training"; // training or real
+	String							m_taskType = "reaction"; // reaction or targeting
+	String							m_appendingDescription = "ver1";
+	//const int numFrameDelay = 0;
 
 protected:
 	double                          m_t_lastAnimationUpdate;
@@ -168,7 +173,7 @@ protected:
 public:
 	//Psychophysics::TargetingExperiment ex;
 	//Psychophysics::ReactionExperiment ex;
-	shared_ptr<Psychophysics::Experiment> ex;
+	shared_ptr<Psychophysics::Experiment> m_ex = nullptr;
 
 
 	void resetView();

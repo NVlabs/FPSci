@@ -19,13 +19,44 @@ public:
             reader.getIfPresent("subjectID", subjectID);
             reader.getIfPresent("mouseDPI", mouseDPI);
             reader.getIfPresent("cmp360", cmp360);
+			break;
         default:
-            debugPrintf("Settings version '%d' not recognized.\n", settingsVersion);
+            debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
             break;
         }
         // fine to have extra entries not read
         //reader.verifyDone();
     }
+};
+
+class ExperimentConfig {
+public:
+	float	targetFrameRate; // hz
+	String	expMode; // training or real
+	String	taskType; // reaction or targeting
+	String	appendingDescription;
+
+	ExperimentConfig() : targetFrameRate(360.0f), expMode("training"), taskType("reaction"), appendingDescription("ver1") {}
+
+	ExperimentConfig(const Any& any) {
+		int settingsVersion; // used to allow different version numbers to be loaded differently
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("targetFrameRate", targetFrameRate);
+			reader.getIfPresent("expMode", expMode);
+			reader.getIfPresent("taskType", taskType);
+			reader.getIfPresent("appendingDescription", appendingDescription);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);
+			break;
+		}
+		// fine to have extra entries not read
+		//reader.verifyDone();
+	}
 };
 
 

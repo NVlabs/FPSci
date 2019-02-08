@@ -1,0 +1,7 @@
+{
+    "settingsVersion" : 1,
+    "targetFrameRate" : 360,
+    "expMode" : "training",
+    "taskType" : "reaction",
+    "appendingDescription" : "ver1"
+}

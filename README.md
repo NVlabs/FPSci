@@ -5,7 +5,11 @@
 Set up an environment variable as the following (note that we are not distributing it yet!)
 - name: PSYCHOPHYSICS
 - value: the root folder of psychophysics-lib
- 
+
+## G3D dependencies
+
+You need some data files from the `research` and `game` subdirectories of G3D so you can't just checkout the `common` subdirectory.
+
 ## TODO (bold face for more urgent)
 Progress tracking sheet (only accessible to developers): https://docs.google.com/spreadsheets/d/1rxkRC-GVi-nCIIElz8XpO-7lhCwv9De2x2wF_ZM9Vnk/edit?usp=sharing
 - **Avoid re-compiling whenever experimental condition changes. Possibly we can exploit the drag-drop feature of G3D, using an input file.**
@@ -34,6 +38,15 @@ Progress tracking sheet (only accessible to developers): https://docs.google.com
         - Look more closely at the motion of the target object just before/during the mouse down event
 
 ## Instructions for running the experiment
+
+There are two files that control the experiment settings, `userconfig.Any` and `experimentconfig.Any`. When you start the application, files with these names must be present in the data path. The standard location during development is the `data-files` directory.
+
+`userconfig.Any` contains settings that pertain to the user, such as the `subjectID`, `mouseDPI` and `cmp360` settings. One way to set this up effectively is to have a settings file per user and switch between them as you switch users.
+
+`experimentconfig.Any` allows you to set up the various experiment settings, including `targetFrameRate`, `expMode`, `taskType` and `appendingDescription`. It is recommended to set up a list of experimental settings you would like to run ahead of time, and switch between them when executing.
+
+## Old instructions
+These instructions are kept for now as a record of our first experiment. They are no longer relevant for top of tree
 
 You are trying to hit the target as quickly as possible. There is no penalty for missing a shot.
 

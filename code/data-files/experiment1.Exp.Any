@@ -1,4 +1,5 @@
 {
+    // Note that as of February 7, 2019, this file is not currently used. Look at the other .Any files instead
     "settingsVersion" : 1,
     "promptString" : "Josef - H60 H240 H120",
     "subjectID" : "JS",

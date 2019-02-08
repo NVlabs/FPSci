@@ -194,7 +194,7 @@ namespace Psychophysics
 		if (currentState == PresentationState::ready)
 		{
 			// start task if waited longer than minimum foreperiod AND the probabilistic condition is met (Nickerson & Burhnham 1969, Response times with nonaging foreperiods).
-			float taskStartChancePerFrame = (1.0 / renderParams.meanWaitDuration) * (float)framePeriod;
+			float taskStartChancePerFrame = (1.0f / (float)renderParams.meanWaitDuration) * (float)framePeriod;
 			if ((stateElapsedTime > renderParams.minimumForeperiod) && (G3D::Random::common().uniform() < taskStartChancePerFrame))
 			{
 				newState = PresentationState::task;
@@ -254,16 +254,16 @@ namespace Psychophysics
 
 		// 2. Assign the background color for 2D graphics
 		if (m_app->m_presentationState == PresentationState::ready) {
-			m_stimColor = Color3::red() * renderParams.intensity;
+			m_stimColor = Color3::red() * (float)renderParams.intensity;
 		}
 		else if (m_app->m_presentationState == PresentationState::task) {
-			m_stimColor = Color3::green() * renderParams.intensity;
+			m_stimColor = Color3::green() * (float)renderParams.intensity;
 		}
 		else if (m_app->m_presentationState == PresentationState::feedback) {
-			m_stimColor = Color3::white() * 0.3;
+			m_stimColor = Color3::white() * 0.3f;
 		}
 		else if (m_app->m_presentationState == PresentationState::complete) {
-			m_stimColor = Color3::white() * 0.2;
+			m_stimColor = Color3::white() * 0.2f;
 		}
 	}
 
