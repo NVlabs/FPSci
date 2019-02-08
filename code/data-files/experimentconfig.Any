@@ -2,7 +2,7 @@
     "settingsVersion" : 1,
     "targetFrameRate" : 120,
     "taskType" : "reaction",
-    "expMode" : "training",
+    "expMode" : "real",
     "expVersion" : "",
     "appendingDescription" : "ver1"
 }
