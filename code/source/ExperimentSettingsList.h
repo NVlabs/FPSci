@@ -19,6 +19,7 @@ public:
             reader.getIfPresent("subjectID", subjectID);
             reader.getIfPresent("mouseDPI", mouseDPI);
             reader.getIfPresent("cmp360", cmp360);
+			break;
         default:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
             break;
@@ -48,6 +49,7 @@ public:
 			reader.getIfPresent("expMode", expMode);
 			reader.getIfPresent("taskType", taskType);
 			reader.getIfPresent("appendingDescription", appendingDescription);
+			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);
 			break;
