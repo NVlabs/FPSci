@@ -1,6 +1,6 @@
 {
     "settingsVersion" : 1,
-    "targetFrameRate" : 120,
+    "targetFrameRate" : 240,
     "taskType" : "reaction",
     "expMode" : "real",
     "expVersion" : "",

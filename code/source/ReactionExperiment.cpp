@@ -219,9 +219,7 @@ namespace Psychophysics
 			{
 				startTimer(); // starting timer so that we get unrealistically small number for failed trials.
 				m_app->informTrialFailure();
-				if (trainingMode) {
-					m_feedbackMessage = "Failure: Responded too quickly.";
-				}
+				m_feedbackMessage = "Failure: Responded too quickly.";
 				newState = PresentationState::feedback;
 			}
 			else { // keep waiting.
@@ -235,6 +233,9 @@ namespace Psychophysics
 				m_app->informTrialSuccess();
 				if (trainingMode) {
 					m_feedbackMessage = std::to_string(int(stateElapsedTime * 1000)) + " msec";
+				}
+				else {
+					m_feedbackMessage = "Success!";
 				}
 				newState = PresentationState::feedback;
 			}
