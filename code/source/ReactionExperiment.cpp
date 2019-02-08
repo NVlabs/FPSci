@@ -22,6 +22,10 @@ namespace Psychophysics
 		m_app->m_presentationState = PresentationState::initial;
 		m_feedbackMessage = "Reaction test. Click when green!";
 
+		if (trainingMode) { // shorter experiment if training
+			m_conditionParams.trialCount = m_conditionParams.trialCount / 3;
+		}
+
 		/////// Create Database ///////
 		// create or open existing database at save location
 		if (sqlite3_open(dbLoc.c_str(), &db) != SQLITE_OK) {

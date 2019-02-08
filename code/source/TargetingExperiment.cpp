@@ -45,6 +45,10 @@ namespace Psychophysics
 			m_conditionParams.motionChangePeriod = 0.4f;
 		}
 
+		if (trainingMode) { // shorter experiment if training
+			m_conditionParams.trialCount = m_conditionParams.trialCount / 3;
+		}
+
 		/////// FSM ///////
 		bool waitForKeypress = true;
 		bool blockDesign = false;
