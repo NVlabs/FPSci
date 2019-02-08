@@ -76,7 +76,7 @@ namespace Psychophysics
 				taskDurationLevels = temp_taskDurationLevels;
 
 				speed = 0.0f;
-				motionChangePeriod = G3D::finf();
+				motionChangePeriod = 100000.f; // some large number
 				trialCount = 10;
 				readyDuration = 0.5;
 				feedbackDuration = 1.0;
@@ -88,7 +88,7 @@ namespace Psychophysics
 
 		App* m_app;
 		//shared_ptr<App> m_app;
-		float m_lastMotionChangeAt = -G3D::finf();
+		float m_lastMotionChangeAt = -100000.f; // some large number;
 
 	public:
 		TargetingExperiment(App* app) : Experiment() {

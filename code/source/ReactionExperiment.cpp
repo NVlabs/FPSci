@@ -198,10 +198,13 @@ namespace Psychophysics
 
 		if (currentState == PresentationState::initial)
 		{
-			if (!m_app->m_buttonUp)
+			if (m_reacted)
 			{
 				m_feedbackMessage = "";
 				newState = PresentationState::ready;
+			}
+			else { // keep waiting.
+				newState = currentState;
 			}
 		}
 		else if (currentState == PresentationState::ready)
@@ -266,7 +269,10 @@ namespace Psychophysics
 		updatePresentationState(framePeriod);
 
 		// 2. Assign the background color for 2D graphics
-		if (m_app->m_presentationState == PresentationState::ready) {
+		if (m_app->m_presentationState == PresentationState::initial) {
+			m_stimColor = Color3::white() * 0.3f;
+		}
+		else if (m_app->m_presentationState == PresentationState::ready) {
 			m_stimColor = Color3::red() * (float)renderParams.intensity;
 		}
 		else if (m_app->m_presentationState == PresentationState::task) {
