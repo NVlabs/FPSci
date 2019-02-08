@@ -34,6 +34,16 @@ namespace Psychophysics
 			fprintf(stderr, "Error: could not open database\n");
 		}
 
+		// apply changes depending on experiment version
+		if (expVersion == "SimpleMotion")
+		{
+			m_conditionParams.speed = 10.0f;
+		}
+		else if (expVersion == "ComplexMotion")
+		{
+			m_conditionParams.speed = 10.0f;
+			m_conditionParams.motionChangeChance = 1.5f;
+		}
 
 		/////// FSM ///////
 		bool waitForKeypress = true;
@@ -371,7 +381,7 @@ namespace Psychophysics
 		{
 			if (m_app->m_targetHealth > 0)
 			{
-				m_app->m_targetColor = Color3::red().pow(2.0f);
+				m_app->m_targetColor = Color3::green().pow(2.0f);
 			}
 			else
 			{

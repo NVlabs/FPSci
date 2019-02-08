@@ -34,9 +34,10 @@ public:
 	float	targetFrameRate; // hz
 	String	expMode; // training or real
 	String	taskType; // reaction or targeting
+	String  expVersion;
 	String	appendingDescription;
 
-	ExperimentConfig() : targetFrameRate(360.0f), expMode("training"), taskType("reaction"), appendingDescription("ver1") {}
+	ExperimentConfig() : targetFrameRate(360.0f), expMode("training"), taskType("reaction"), expVersion("static"), appendingDescription("ver1") {}
 
 	ExperimentConfig(const Any& any) {
 		int settingsVersion; // used to allow different version numbers to be loaded differently
@@ -48,6 +49,7 @@ public:
 			reader.getIfPresent("targetFrameRate", targetFrameRate);
 			reader.getIfPresent("expMode", expMode);
 			reader.getIfPresent("taskType", taskType);
+			reader.getIfPresent("expVersion", expVersion);
 			reader.getIfPresent("appendingDescription", appendingDescription);
 			break;
 		default:

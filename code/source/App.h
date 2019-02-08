@@ -62,7 +62,7 @@ protected:
 	float                           m_sceneBrightness = 1.0f;
 	bool                            m_renderViewModel = false;
 	bool                            m_renderHud = false;
-	bool                            m_renderFPS = true;
+	bool                            m_renderFPS = false;
 	bool                            m_renderHitscan = false;
 
 	/** Set to true to lower rendering quality to increase performance. */
@@ -159,6 +159,7 @@ public:
     double                          m_cmp360 = 12.75; // Joohwan set this to ~12.75, Josef prefers ~9.25
     String                          m_subjectID = "JK"; // will be overwritten
 	float							m_targetFrameRate = 360; // hz
+	String                          m_expVersion = "static";
 	String							m_expMode = "training"; // training or real
 	String							m_taskType = "reaction"; // reaction or targeting
 	String							m_appendingDescription = "ver1";

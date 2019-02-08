@@ -71,6 +71,7 @@ void App::onInit() {
 	ExperimentConfig e(Any::fromFile(System::findDataFile("experimentconfig.Any")));
 	m_targetFrameRate = e.targetFrameRate;
 	m_expMode = e.expMode;
+	m_expVersion = e.expVersion;
 	m_taskType = e.taskType;
 	m_appendingDescription = e.appendingDescription;
 	// debug print
@@ -185,7 +186,6 @@ shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale, 
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + 10), 0, m_targetModelArray.length() - 1);
 
 	const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
-
 	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
 
 	// Don't set a track. We'll take care of the positioning after creation
@@ -673,13 +673,13 @@ int main(int argc, const char* argv[]) {
 
 
 
-////////////////////////////////////////// old, experiment-related funcitons //////////////////////////
+////////////////////////////////////////// experiment-related funcitons //////////////////////////
 void App::initPsychophysicsLib() {
 	// start cpu timer.
 	StartCPUTimer();
 
-	String datafileName = m_taskType + "_" + m_expMode + "_" + m_appendingDescription + ".db";
-	m_ex->init(m_subjectID.c_str(), m_expMode.c_str(), 0, datafileName.c_str(), m_expMode == "training");
+	String datafileName = m_taskType + "_" + m_expVersion + "_" + m_expMode + "_" + m_appendingDescription + ".db";
+	m_ex->init(m_subjectID.c_str(), m_expVersion.c_str(), 0, datafileName.c_str(), m_expMode == "training");
 
 	// required initial response to start an experiment.
 	m_ex->startTimer();

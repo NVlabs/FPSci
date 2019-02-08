@@ -53,12 +53,16 @@ namespace Psychophysics
 				// TODO: Could we do the following in-place for the member variables of m_conditionParams?
 				std::vector<G3D::Vector2> temp_initialDisplacements{ // in visual angles
 					//G3D::Vector2(0.0f, 0.0f),
-					G3D::Vector2(-45.0f, 15.0f),
+					G3D::Vector2(0.0f, 3.0f),
+					//G3D::Vector2(0.0f, 6.0f),
+					G3D::Vector2(0.0f, 10.0f),
+					//G3D::Vector2(0.0f, 14.0f),
 					G3D::Vector2(0.0f, 20.0f),
-					G3D::Vector2(45.0f, 15.0f),
-					G3D::Vector2(135.0f, 15.0f),
+					G3D::Vector2(180.0f, 3.0f),
+					//G3D::Vector2(180.0f, 6.0f),
+					G3D::Vector2(180.0f, 10.0f),
+					//G3D::Vector2(180.0f, 14.0f),
 					G3D::Vector2(180.0f, 20.0f),
-					G3D::Vector2(225.0f, 15.0f),
 				};
 				initialDisplacements = temp_initialDisplacements;
 
@@ -73,7 +77,7 @@ namespace Psychophysics
 
 				speed = 0.0f;
 				motionChangeChance = 0.0f;
-				trialCount = 100;
+				trialCount = 10;
 				readyDuration = 0.5;
 				feedbackDuration = 1.0;
 
