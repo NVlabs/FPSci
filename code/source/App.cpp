@@ -674,7 +674,7 @@ void App::initPsychophysicsLib() {
 	// start cpu timer.
 	StartCPUTimer();
 
-	String datafileName = m_taskType + "_" + m_expVersion + "_" + m_expMode + "_" + m_appendingDescription + ".db";
+	String datafileName = m_taskType + "_" + m_expMode + "_" + m_appendingDescription + ".db";
 	m_ex->init(m_subjectID.c_str(), m_expVersion.c_str(), 0, datafileName.c_str(), m_expMode == "training");
 
 	// required initial response to start an experiment.
