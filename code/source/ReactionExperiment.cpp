@@ -23,7 +23,7 @@ namespace Psychophysics
 		m_feedbackMessage = "Reaction test. Click when green!";
 
 		if (trainingMode) { // shorter experiment if training
-			m_conditionParams.trialCount = m_conditionParams.trialCount / 3;
+			m_conditionParams.trialCount = m_conditionParams.trialCount / 2;
 		}
 
 		/////// Create Database ///////

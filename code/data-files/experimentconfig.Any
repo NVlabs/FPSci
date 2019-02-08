@@ -1,8 +1,8 @@
 {
     "settingsVersion" : 1,
-    "targetFrameRate" : 240,
-    "taskType" : "reaction",
+    "targetFrameRate" : 360,
+    "taskType" : "targeting",
     "expMode" : "real",
-    "expVersion" : "",
+    "expVersion" : "ComplexMotion",
     "appendingDescription" : "ver1"
 }
