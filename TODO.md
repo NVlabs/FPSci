@@ -1,7 +1,6 @@
 This is a list of TODO items from the old version of the readme.
 
 ## TODO (bold face for more urgent)
-Progress tracking sheet (only accessible to developers): https://docs.google.com/spreadsheets/d/1rxkRC-GVi-nCIIElz8XpO-7lhCwv9De2x2wF_ZM9Vnk/edit?usp=sharing
 - **Avoid re-compiling whenever experimental condition changes. Possibly we can exploit the drag-drop feature of G3D, using an input file.**
     - ~~**Can we change frame rates without re-executing the file?**~~ Yes
 - **Implementation**
