@@ -2,7 +2,7 @@
 #include "App.h"
 
 // Set to false when just editing content
-static const bool playMode = true;
+static const bool playMode = false;
 
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. (true = disable software vsync)
@@ -131,7 +131,6 @@ void App::spawnRandomTarget() {
 	Vector3 X = Y.cross(Z);
 
 	do {
-
 		// Make a random vector in front of the player in a narrow field of view
 		Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
 
@@ -141,7 +140,8 @@ void App::spawnRandomTarget() {
 		scene()->intersect(ray, distance);
 
 		if ((distance > 2.0f) && (distance < finf())) {
-			spawnTarget(ray.origin() + ray.direction() * rng.uniform(2.0f, distance - 1.0f), rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f);
+			spawnTarget(ray.origin() + ray.direction() * rng.uniform(2.0f, distance - 1.0f), rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
+                Color3::wheelRandom());
 			done = true;
 		}
 		++tries;
@@ -149,16 +149,28 @@ void App::spawnRandomTarget() {
 }
 
 
-shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft) {
+shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color) {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
 
 	const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
-	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
 
+    UniversalMaterial::Specification materialSpecification;
+    materialSpecification.setLambertian(Texture::Specification(color));
+    materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+    materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+
+    const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+    amPose->materialTable.set("mesh", UniversalMaterial::create(materialSpecification));
+    target->setPose(amPose);
+
+    /*
 	// Don't set a track. We'll take care of the positioning after creation
-	//const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
-	//target->setTrack(track);
-	target->setShouldBeSaved(false);
+    String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
+	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
+	target->setTrack(track);
+    */
+	
+    target->setShouldBeSaved(false);
 	m_targetArray.append(target);
 	scene()->insert(target);
 	return target;
