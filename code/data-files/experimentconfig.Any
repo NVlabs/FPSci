@@ -4,5 +4,6 @@
     "taskType" : "targeting",//"reaction",
     "expMode" : "training",
     "expVersion" : "Static ",
-    "appendingDescription" : "2019Feb21_LatencyTest"
+    "appendingDescription" : "2019Feb21_LatencyTest",
+    "sceneName" : "eSports Simple Hallway"
 }

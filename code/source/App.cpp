@@ -43,30 +43,21 @@ void App::onInit() {
 	GApp::onInit();
 
     // load settings from file
-    UserConfig u(Any::fromFile(System::findDataFile("userconfig.Any")));
-    m_cmp360 = u.cmp360;
-    m_mouseDPI = u.mouseDPI;
-    m_subjectID = u.subjectID;
+    m_user = Any::fromFile(System::findDataFile("userconfig.Any"));
     // debug print
-    debugPrintf("User: %s, DPI: %f, cmp360 %f\n", m_subjectID, m_mouseDPI, m_cmp360);
-	ExperimentConfig e(Any::fromFile(System::findDataFile("experimentconfig.Any")));
-	m_targetFrameRate = e.targetFrameRate;
-	m_expMode = e.expMode;
-	m_expVersion = e.expVersion;
-	m_taskType = e.taskType;
-	m_appendingDescription = e.appendingDescription;
-	// debug print
-	debugPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
-		m_targetFrameRate, m_expMode, m_taskType, m_appendingDescription);
+    logPrintf("User: %s, DPI: %f, cmp360 %f\n", m_user.subjectID, m_user.mouseDPI, m_user.cmp360);
+	m_experimentConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
 
-	// TODO: app pointer is not a memory-managed pointer.
-	if (m_taskType == "reaction") {
+	// debug print
+	logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
+		m_experimentConfig.targetFrameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
+
+	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = std::make_shared<Psychophysics::ReactionExperiment>(this);
-		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->setFrameRate(m_targetFrameRate);
-	}
-	else if (m_taskType == "targeting") {
+		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->setFrameRate(m_experimentConfig.targetFrameRate);
+	} else if (m_experimentConfig.taskType == "targeting") {
 		m_ex = std::make_shared<Psychophysics::TargetingExperiment>(this);
-		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->setFrameRate(m_targetFrameRate);
+		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->setFrameRate(m_experimentConfig.targetFrameRate);
 	}
 
 	float dt = 0;
@@ -74,18 +65,18 @@ void App::onInit() {
 	if (unlockFramerate) {
 		// Set a maximum *finite* frame rate
 		dt = 1.0f / 8192.0f;
-	}
-	else if (variableRefreshRate) {
-		dt = 1.0f / m_targetFrameRate;
-	}
-	else {
+	} else if (variableRefreshRate) {
+		dt = 1.0f / m_experimentConfig.targetFrameRate;
+	} else {
 		dt = 1.0f / float(window()->settings().refreshRate);
 	}
+
 	setFrameDuration(dt, GApp::REAL_TIME);
 	setSubmitToDisplayMode(
 		//SubmitToDisplayMode::MINIMIZE_LATENCY);
 		SubmitToDisplayMode::BALANCE);
-	//SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);    
+	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
+
 	showRenderingStats = false;
 	makeGUI();
 	developerWindow->videoRecordDialog->setCaptureGui(true);
@@ -102,7 +93,7 @@ void App::onInit() {
 	setReticle(m_reticleIndex);
 	
 	if (m_ex->expName == "TargetingExperiment") {
-		loadScene("eSports Simple Hallway");
+		loadScene(m_experimentConfig.sceneName);
 	}
 
 	initPsychophysicsLib();
@@ -119,7 +110,7 @@ void App::onInit() {
 		// G3D expects mouse sensitivity in radians
 		// we're converting from mouseDPI and centimeters/360 which explains
 		// the screen resolution (dots), cm->in factor (2.54) and 2PI
-		double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_cmp360 * m_mouseDPI);
+		const double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_user.cmp360 * m_user.mouseDPI);
 		fpm->setTurnRate(mouseSensitivity);
 	}
 
@@ -173,6 +164,7 @@ shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale, 
 	return target;
 }
 
+
 void App::loadModels() {
 	const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
 		filename = "model/sniper/sniper.obj";
@@ -223,7 +215,6 @@ void App::loadModels() {
 }
 
 
-
 void App::makeGUI() {
 	debugWindow->setVisible(!playMode);
 	developerWindow->setVisible(!playMode);
@@ -271,21 +262,25 @@ void App::setDisplayLatencyFrames(int f) {
 	m_displayLagFrames = f;
 }
 
+
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	m_debugCamera->setFieldOfView(horizontalFieldOfViewDegrees * units::degrees(), FOVDirection::HORIZONTAL);
 	setSceneBrightness(m_sceneBrightness);
 	setActiveCamera(m_debugCamera);
 }
 
+
 void App::onAI() {
 	GApp::onAI();
 	// Add non-simulation game logic and AI code here
 }
 
+
 void App::onNetwork() {
 	GApp::onNetwork();
 	// Poll net messages here
 }
+
 
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
@@ -297,6 +292,7 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
         return;
 	}
     
+
     if (m_displayLagFrames > 0) {
 		// Need one more frame in the queue than we have frames of delay, to hold the current frame
 		if (m_ldrDelayBufferQueue.size() <= m_displayLagFrames) {
@@ -313,8 +309,8 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 		rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
 	}
 
-	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !m_emergencyTurbo;
-	m_debugCamera->filmSettings().setAntialiasingEnabled(!m_emergencyTurbo);
+	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = ! m_emergencyTurbo;
+	m_debugCamera->filmSettings().setAntialiasingEnabled(! m_emergencyTurbo);
 	m_debugCamera->filmSettings().setBloomStrength(m_emergencyTurbo ? 0.0f : 0.5f);
 
 	GApp::onGraphics3D(rd, surface);
@@ -652,8 +648,8 @@ int main(int argc, const char* argv[]) {
 
 ////////////////////////////////////////// experiment-related funcitons //////////////////////////
 void App::initPsychophysicsLib() {
-	String datafileName = m_taskType + "_" + m_expMode + "_" + m_appendingDescription + ".db";
-	m_ex->init(m_subjectID.c_str(), m_expVersion.c_str(), 0, datafileName.c_str(), m_expMode == "training");
+	String datafileName = m_experimentConfig.taskType + "_" + m_experimentConfig.expMode + "_" + m_experimentConfig.appendingDescription + ".db";
+	m_ex->init(m_user.subjectID.c_str(), m_experimentConfig.expVersion.c_str(), 0, datafileName.c_str(), m_experimentConfig.expMode == "training");
 
 	// required initial response to start an experiment.
 	m_ex->startTimer();
@@ -668,6 +664,7 @@ void App::initPsychophysicsLib() {
 	// TODO: restore
 }
 
+
 void App::resetView() {
 	// reset view direction (look front!)
     const shared_ptr<Camera>& camera = activeCamera();
@@ -679,14 +676,13 @@ void App::resetView() {
 	fpm->lookAt(Point3(0,0,-1));
 }
 
-void App::informTrialSuccess()
-{
+
+void App::informTrialSuccess() {
 	m_ex->update("Spc"); // needed to stop stimulus presentation of this trial
 	m_ex->update("1"); // success
 }
 
-void App::informTrialFailure()
-{
+void App::informTrialFailure() {
 	m_ex->update("Spc"); // needed to stop stimulus presentation of this trial
 	m_ex->update("2"); // failure
 }
