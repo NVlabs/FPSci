@@ -18,13 +18,13 @@
     <ClInclude Include="source\App.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\ExperimentSettingsList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="source\ReactionExperiment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="source\TargetingExperiment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ExperimentConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
