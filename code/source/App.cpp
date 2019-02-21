@@ -90,7 +90,6 @@ void App::onInit() {
 	}
 
 	float dt = 0;
-
 	if (unlockFramerate) {
 		// Set a maximum *finite* frame rate
 		dt = 1.0f / 8192.0f;
@@ -141,6 +140,13 @@ void App::onInit() {
 		// the screen resolution (dots), cm->in factor (2.54) and 2PI
 		double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_cmp360 * m_mouseDPI);
 		fpm->setTurnRate(mouseSensitivity);
+	}
+	else {
+		// fix mouse sensitivity for developer mode
+		const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+		double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_cmp360 * m_mouseDPI);
+		fpm->setTurnRate(mouseSensitivity);
+
 	}
 
 }

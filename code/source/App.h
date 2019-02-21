@@ -150,7 +150,6 @@ public:
 	} m_screenSetting;
 	enum PresentationState          m_presentationState; // which sequence are we in?
 	float                           m_targetHealth; // 1 if never hit, 0 if hit. Binary for instant hit weapon, but tracking weapon will continuously reduce it.
-	Color3                          m_tunnelColor;
 	Color3                          m_targetColor;
 	Color3                          m_reticleColor;
 	bool                            m_isTrackingOn; // true if down AND weapon type is tracking, false otherwise.
@@ -160,9 +159,9 @@ public:
     double                          m_cmp360 = 12.75; // Joohwan set this to ~12.75, Josef prefers ~9.25
     String                          m_subjectID = "JK"; // will be overwritten
 	float							m_targetFrameRate = 360; // hz
-	String                          m_expVersion = "static";
+	String                          m_expVersion = "static"; // type of target motion
 	String							m_expMode = "training"; // training or real
-	String							m_taskType = "reaction"; // reaction or targeting
+	String							m_taskType = "reaction"; // reaction or viewcontrol or cursorcontrol  (old: targeting)
 	String							m_appendingDescription = "ver1";
 	//const int numFrameDelay = 0;
 
@@ -178,7 +177,6 @@ public:
 	bool							m_buttonUp = true;
 
 	void resetView();
-	void processUserInput(const GEvent& e);
 	void initPsychophysicsLib();
 
 	void informTrialSuccess();
