@@ -3,9 +3,10 @@
 
 // Set to false when just editing content
 static const bool playMode = true;
+
 // Enable this to see maximum CPU/GPU rate when not limited
-// by the monitor. 
-static const bool  unlockFramerate = false;
+// by the monitor. (true = disable software vsync)
+static const bool  unlockFramerate = true;
 
 // Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
 // which allows the application to submit asynchronously with vsync
@@ -289,42 +290,43 @@ void App::onNetwork() {
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
 	if (m_ex->expName == "ReactionExperiment") {
-		if (submitToDisplayMode() == SubmitToDisplayMode::MAXIMIZE_THROUGHPUT) {
-			swapBuffers();
-		}
+        // No 3D rendering in this case
+        if ((submitToDisplayMode() == SubmitToDisplayMode::MAXIMIZE_THROUGHPUT) && (! rd->swapBuffersAutomatically())) {
+            swapBuffers();
+        }
+        return;
 	}
-	else {
-		if (m_displayLagFrames > 0) {
-			// Need one more frame in the queue than we have frames of delay, to hold the current frame
-			if (m_ldrDelayBufferQueue.size() <= m_displayLagFrames) {
-				// Allocate new textures
-				for (int i = m_displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
-					m_ldrDelayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
-				}
-				debugAssert(m_ldrDelayBufferQueue.size() == m_displayLagFrames + 1);
+    
+    if (m_displayLagFrames > 0) {
+		// Need one more frame in the queue than we have frames of delay, to hold the current frame
+		if (m_ldrDelayBufferQueue.size() <= m_displayLagFrames) {
+			// Allocate new textures
+			for (int i = m_displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
+				m_ldrDelayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
 			}
-
-			// When the display lag changes, we must be sure to be within range
-			m_currentDelayBufferIndex = min(m_displayLagFrames, m_currentDelayBufferIndex);
-
-			rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
+			debugAssert(m_ldrDelayBufferQueue.size() == m_displayLagFrames + 1);
 		}
 
-		scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !m_emergencyTurbo;
-		m_debugCamera->filmSettings().setAntialiasingEnabled(!m_emergencyTurbo);
-		m_debugCamera->filmSettings().setBloomStrength(m_emergencyTurbo ? 0.0f : 0.5f);
+		// When the display lag changes, we must be sure to be within range
+		m_currentDelayBufferIndex = min(m_displayLagFrames, m_currentDelayBufferIndex);
 
-		GApp::onGraphics3D(rd, surface);
+		rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
+	}
 
-		if (m_displayLagFrames > 0) {
-			// Display the delayed frame
-			rd->popState();
-			rd->push2D(); {
-				// Advance the pointer to the next, which is also the oldest frame
-				m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (m_displayLagFrames + 1);
-				Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrDelayBufferQueue[m_currentDelayBufferIndex]->texture(0), Sampler::buffer());
-			} rd->pop2D();
-		}
+	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !m_emergencyTurbo;
+	m_debugCamera->filmSettings().setAntialiasingEnabled(!m_emergencyTurbo);
+	m_debugCamera->filmSettings().setBloomStrength(m_emergencyTurbo ? 0.0f : 0.5f);
+
+	GApp::onGraphics3D(rd, surface);
+
+	if (m_displayLagFrames > 0) {
+		// Display the delayed frame
+		rd->popState();
+		rd->push2D(); {
+			// Advance the pointer to the next, which is also the oldest frame
+			m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (m_displayLagFrames + 1);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrDelayBufferQueue[m_currentDelayBufferIndex]->texture(0), Sampler::buffer());
+		} rd->pop2D();
 	}
 }
 
@@ -529,7 +531,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 			// Click to photon latency measuring corner box
 			if (measureClickPhotonLatency) {
-				Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2 : Color3::white() * 0.8;
+				Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
 				//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
 				Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
 			}
