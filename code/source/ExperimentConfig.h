@@ -36,8 +36,9 @@ public:
 	String	taskType; // reaction or targeting
 	String  expVersion;
 	String	appendingDescription;
+    String  sceneName;
 
-	ExperimentConfig() : targetFrameRate(360.0f), expMode("training"), taskType("reaction"), expVersion("static"), appendingDescription("ver1") {}
+	ExperimentConfig() : targetFrameRate(360.0f), expMode("training"), taskType("reaction"), expVersion("static"), appendingDescription("ver1"), sceneName("eSports Simple Hallway") {}
 
 	ExperimentConfig(const Any& any) {
 		int settingsVersion; // used to allow different version numbers to be loaded differently
@@ -51,6 +52,7 @@ public:
 			reader.getIfPresent("taskType", taskType);
 			reader.getIfPresent("expVersion", expVersion);
 			reader.getIfPresent("appendingDescription", appendingDescription);
+			reader.getIfPresent("sceneName", sceneName);            
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);

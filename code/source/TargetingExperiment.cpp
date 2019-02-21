@@ -93,7 +93,7 @@ namespace Psychophysics
 			addQuotes(getKeyString(keyYes)),
 			addQuotes(getKeyString(keyNo))
 		};
-		assert(expParamsValues.size() == expParamsColumns.size()); // need to match the sizes
+		debugAssertM(expParamsValues.size() == expParamsColumns.size(), "Incorrect number of arguments for insert to expParams table.\n");
 		int expID = insertIntoDB(db, "expParams", expParamsValues);
 
 
@@ -162,7 +162,7 @@ namespace Psychophysics
 				std::to_string(m_conditionParams.frameRate),
 				std::to_string(m_conditionParams.numFrameDelay),
 			};
-			assert(stimParamsValues.size() == stimParamsColumns.size()); // need to match the sizes
+			debugAssertM(stimParamsValues.size() == stimParamsColumns.size(), "Incorrect number of arguments for insert to stimParams table.\n");
 			stimID = insertIntoDB(db, "stimParams", stimParamsValues);
 
 			// initialize the staircase with its id numbers
