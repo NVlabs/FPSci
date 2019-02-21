@@ -1,8 +1,8 @@
 {
-    "targetFrameRate" : 240,
+    "targetFrameRate" : 360,
     "settingsVersion" : 1,
-    "taskType" : "targeting",
+    "taskType" : "reaction",
     "expMode" : "training",
-    "expVersion" : "SimpleMotion",
-    "appendingDescription" : "2019Feb09_UCB_CSGO"
+    "expVersion" : "Static ",
+    "appendingDescription" : "2019Feb21_LatencyTest"
 }

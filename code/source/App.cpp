@@ -39,7 +39,7 @@ const float App::TARGET_MODEL_ARRAY_OFFSET = 30;
 //static const float verticalFieldOfViewDegrees = 90; // deg
 static const float horizontalFieldOfViewDegrees = 103; // deg
 
-static const bool measureClickPhotonLatency = false;
+static const bool measureClickPhotonLatency = true;
 
 // JBS: TODO: Refactor these as experiment variables
 //========================================================================
@@ -550,9 +550,9 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 			// Click to photon latency measuring corner box
 			if (measureClickPhotonLatency) {
-				Color3 cornerColor = (m_buttonUp) ? Color3::black() : Color3::white();
+				Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2 : Color3::white() * 0.8;
 				//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
-				Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.8f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
+				Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
 			}
 
 			if (!dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_feedbackMessage.empty()) {
