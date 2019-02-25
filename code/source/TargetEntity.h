@@ -1,6 +1,11 @@
 #pragma once
 #include <G3D/G3D.h>
 
+class SpherePath {
+public:
+
+};
+
 class TargetEntity : public VisibleEntity {
 protected:
 
