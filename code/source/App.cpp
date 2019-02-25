@@ -1,5 +1,6 @@
 /** \file App.cpp */
 #include "App.h"
+#include "TargetEntity.h"
 
 // Set to false when just editing content
 static const bool playMode = false;
@@ -41,6 +42,8 @@ App::App(const GApp::Settings& settings) : GApp(settings) {
 
 void App::onInit() {
 	GApp::onInit();
+
+    scene()->registerEntitySubclass("TargetEntity", &TargetEntity::create);
 
     // load settings from file
     m_user = Any::fromFile(System::findDataFile("userconfig.Any"));
