@@ -24,8 +24,8 @@ public:
     static shared_ptr<TargetEntity> create 
     (const String&                  name,
      Scene*                         scene,
-     const CFrame&                  position,
-     const shared_ptr<Model>&       model);
+     const shared_ptr<Model>&       model,
+     const CFrame&                  position);
 
     /** Converts the current VisibleEntity to an Any.  Subclasses should
         modify at least the name of the Table returned by the base class, which will be "Entity"

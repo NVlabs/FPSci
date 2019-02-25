@@ -157,10 +157,10 @@ void App::spawnRandomTarget() {
 }
 
 
-shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color) {
+shared_ptr<TargetEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color) {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
 
-	const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
 
     UniversalMaterial::Specification materialSpecification;
     materialSpecification.setLambertian(Texture::Specification(color));
