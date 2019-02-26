@@ -25,8 +25,8 @@ shared_ptr<Entity> TargetEntity::create
 shared_ptr<TargetEntity> TargetEntity::create 
 (const String&                           name,
  Scene*                                  scene,
- const CFrame&                           position,
- const shared_ptr<Model>&                model) {
+ const shared_ptr<Model>&                model,
+ const CFrame&                           position) {
 
     // Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
     const shared_ptr<TargetEntity>& targetEntity = createShared<TargetEntity>();
