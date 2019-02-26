@@ -40,6 +40,7 @@ public:
 
 	ExperimentConfig() : targetFrameRate(360.0f), expMode("training"), taskType("reaction"), expVersion("static"), appendingDescription("ver1"), sceneName("eSports Simple Hallway") {}
 
+
 	ExperimentConfig(const Any& any) {
 		int settingsVersion; // used to allow different version numbers to be loaded differently
 		AnyTableReader reader(any);

@@ -49,6 +49,21 @@ void TargetEntity::init() {
 }
 
 
+void TargetEntity::setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter) {
+    m_destinationPoints.fastClear();
+    if (destinationArray.size() > 0) {
+        const float distance = (destinationArray[0] - orbitCenter).length();
+
+        // Insert all points, ensuring that they maintain a constant radius about the
+        for (const Point3& P : destinationArray) {
+            m_destinationPoints.pushBack((P - orbitCenter).direction() * distance + orbitCenter);
+        }
+    }
+
+    m_orbitCenter = orbitCenter;
+}
+
+
 Any TargetEntity::toAny(const bool forceAll) const {
     Any a = VisibleEntity::toAny(forceAll);
     a.setName("TargetEntity");
@@ -69,6 +84,6 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     simulatePose(absoluteTime, deltaTime);
 
     if (deltaTime > 0) {
-        // TODO
+        // TODO: Morgan
     }
 }

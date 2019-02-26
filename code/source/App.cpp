@@ -171,6 +171,7 @@ shared_ptr<TargetEntity> App::spawnTarget(const Point3& position, float scale, b
     amPose->materialTable.set("mesh", UniversalMaterial::create(materialSpecification));
     target->setPose(amPose);
 
+    target->setFrame(position);
     /*
 	// Don't set a track. We'll take care of the positioning after creation
     String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
