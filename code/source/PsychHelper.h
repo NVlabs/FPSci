@@ -28,21 +28,11 @@
 #pragma once
 
 #include "SingleThresholdMeasurement.h"
+#include "App.h"
 #include <map>
 
 namespace AbstractFPS
 {
-	/** Description of an experiment: Any information that could be useful
-		in future, in case an experiment grows while piloting or when
-		between-experiment analysis becomes necessary later.
-	*/
-	struct ExperimentDescription
-	{
-		std::string mName;
-		std::map<std::string, float> mParamList;
-		std::map<std::string, std::string> mDescList;
-	};
-
 	/** A class representing a psychophysical experiment
 	*/
 	class Experiment
@@ -59,13 +49,13 @@ namespace AbstractFPS
 			but is strongly recommended because it could be useful in many cases.
 			\param[in] newExpDesc New experiment description
 		*/
-		void describeExperiment(ExperimentDescription newExpDesc);
+		void describeExperiment(Descriptor newExpDesc);
 
 		/** Add condition
 			\param[in] newConditionParam New condition
 			\param[in] newExpParam New experiment design parameter
 		*/
-		void addCondition(ConditionParameter newConditionParam, ExperimentalDesignParameter newExpParam);
+		void addCondition(Descriptor newConditionParam, PsychophysicsDesignParameter newExpParam);
 
 		/** Generates result file, populate it with description and record field names.
 		*/
@@ -77,7 +67,7 @@ namespace AbstractFPS
 
 		/** Get current condtion parameter
 		*/
-		ConditionParameter getConditionParam();
+		Descriptor getConditionParam();
 
 		/** Get stimulus level for current trial
 		*/
@@ -96,6 +86,18 @@ namespace AbstractFPS
 		*/
 		void clear();
 
+		/** Virtual graphics-related functions.
+		*/
+		virtual void onInit() = 0;
+
+		virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) = 0;
+
+		virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) = 0;
+
+		virtual void onUserInput(UserInput* ui) = 0;
+
+		virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) = 0;
+
 	private:
 
 		std::vector<std::string> mConditionParamNames;
@@ -107,6 +109,10 @@ namespace AbstractFPS
 		int32_t mCurrentConditionIndex;
 		int32_t mTrialCount = 0;
 
-		ExperimentDescription mExpDesc;
+		/** Description of an experiment: Any information that could be useful
+			in future, in case an experiment grows while piloting or when
+			between-experiment analysis becomes necessary later.
+		*/
+		Descriptor mExpDesc;
 	};
 }

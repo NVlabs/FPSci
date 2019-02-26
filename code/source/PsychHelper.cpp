@@ -32,13 +32,13 @@
 
 namespace AbstractFPS
 {
-	void Experiment::describeExperiment(ExperimentDescription newExpDesc)
+	void Experiment::describeExperiment(Descriptor newExpDesc)
 	{
 		// store the given description
 		mExpDesc = newExpDesc;
 	}
 
-	void Experiment::addCondition(ConditionParameter newConditionParam, ExperimentalDesignParameter newExpParam)
+	void Experiment::addCondition(Descriptor newConditionParam, PsychophysicsDesignParameter newExpParam)
 	{
 		SingleThresholdMeasurement m;
 		m.initMeasurement(newConditionParam, newExpParam);
@@ -65,13 +65,13 @@ namespace AbstractFPS
 		char tmCharArray[17];
 		std::strftime(tmCharArray, sizeof(tmCharArray), "%Y%m%d_%H%M%S", &tmbuf);
 		std::string timeStr(tmCharArray);
-		mResultFileName = mExpDesc.mName + "_" + timeStr + ".db"; // we may include subject name here.
+		mResultFileName = mExpDesc.mDescList["experimentName"] + "/" + mExpDesc.mDescList["subjectID"] + "_" + timeStr + ".db"; // we may include subject name here.
 
 		// create the result file
 		std::ofstream ResultFile(mResultFileName);
 		// add descriptions about the experiment.
 		// On the first row goes the description. TODO: replace these with sqlite commands
-		ResultFile << mExpDesc.mName.c_str() << std::endl;
+		ResultFile << mExpDesc.mDescList["experimentName"].c_str() << std::endl;
 
 		 // On the second row goes all the constant parameters
 		for (auto keyval : mExpDesc.mParamList)
@@ -126,7 +126,7 @@ namespace AbstractFPS
 		std::cout << "Next chosen staircase is: " << mCurrentConditionIndex << '\n';
 	}
 
-	ConditionParameter Experiment::getConditionParam()
+	Descriptor Experiment::getConditionParam()
 	{
 		return mMeasurements[mCurrentConditionIndex].getConditionParam();
 	}
@@ -197,6 +197,6 @@ namespace AbstractFPS
 		mCurrentConditionIndex = 0;
 		mTrialCount = 0;
 
-		mExpDesc = ExperimentDescription();
+		mExpDesc = Descriptor();
 	}
 }

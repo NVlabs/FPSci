@@ -55,14 +55,6 @@ void App::onInit() {
 	logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
 		m_experimentConfig.targetFrameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
 
-	if (m_experimentConfig.taskType == "reaction") {
-		m_ex = std::make_shared<Psychophysics::ReactionExperiment>(this);
-		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->setFrameRate(m_experimentConfig.targetFrameRate);
-	} else if (m_experimentConfig.taskType == "targeting") {
-		m_ex = std::make_shared<Psychophysics::TargetingExperiment>(this);
-		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->setFrameRate(m_experimentConfig.targetFrameRate);
-	}
-
 	float dt = 0;
 	if (unlockFramerate) {
 		// Set a maximum *finite* frame rate
@@ -93,12 +85,13 @@ void App::onInit() {
 
 	loadModels();
 	setReticle(m_reticleIndex);
-	
-	if (m_ex->expName == "TargetingExperiment") {
-		loadScene(m_experimentConfig.sceneName);
-	}
 
-	initPsychophysicsLib();
+	if (m_experimentConfig.taskType == "reaction") {
+		onInit_reactionExperiment();
+	}
+	else if (m_experimentConfig.taskType == "targeting") {
+		onInit_targetingExperiment();
+	}
 
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);

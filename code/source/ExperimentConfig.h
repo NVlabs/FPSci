@@ -2,6 +2,23 @@
 
 #include <G3D/G3D.h>
 
+class Session {
+public:
+	float targetFrameRate = 0;
+	int trials = 0;
+
+	Session() {}
+	Session(const Any& any) {
+		AnyTableReader r(any);
+		r.getIfPresent("targetFrameRate", targetFrameRate);
+		r.getIfPresent("trials", trials);
+	}
+};
+
+// Morgan's sample
+//Array<Session> sessionArray;
+//r.getIfPresent("sessions", sessionArray);
+
 class UserConfig {
 public:
     String subjectID;

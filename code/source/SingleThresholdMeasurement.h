@@ -42,7 +42,7 @@ namespace AbstractFPS
 	/** Struct for experimental design parameters: Contains all parameters for both
 		Staircase and Method of Constant Stimuli.
 	*/
-	struct ExperimentalDesignParameter
+	struct PsychophysicsDesignParameter
 	{
 		PsychophysicsMethod mMeasuringMethod; // 0 = General staircase, 1 = Staircase with pre-determined stimLevels, 2 = Method of Constant Stimuli
 		bool mIsDefault;
@@ -53,11 +53,12 @@ namespace AbstractFPS
 		std::vector<int32_t> mMaxTrialCounts; // for Method of Constant Stimuli
 	};
 
-	/** Struct representing condition parameter
+	/** Struct for condition parameter or experiment description
 	*/
-	struct ConditionParameter
+	struct Descriptor
 	{
-		std::map<std::string, float>mParamList;
+		std::map<std::string, float> mParamList;
+		std::map<std::string, std::string> mDescList;
 	};
 
 	/** Response struct
@@ -77,7 +78,7 @@ namespace AbstractFPS
 
 		/** Initialize measurement
 		*/
-		void initMeasurement(ConditionParameter initConditionParam, ExperimentalDesignParameter initExpParam); // return true if successfully initialized, false if not
+		void initMeasurement(Descriptor initConditionParam, PsychophysicsDesignParameter initExpParam); // return true if successfully initialized, false if not
 
 		/** Get current level
 		*/
@@ -85,7 +86,7 @@ namespace AbstractFPS
 
 		/** Get current condition parameter
 		*/
-		ConditionParameter getConditionParam();
+		Descriptor getConditionParam();
 
 		/** Process response
 			\param[in] response response to process
@@ -100,7 +101,7 @@ namespace AbstractFPS
 		*/
 		bool isComplete();
 
-		ExperimentalDesignParameter mExpParam;
+		PsychophysicsDesignParameter mPsyParam;
 		std::vector<Response> mResponses;
 		float mCurrentLevel; // universal for both general SC and MCS
 		float mLevelStepSize; // for general SC only
@@ -108,7 +109,7 @@ namespace AbstractFPS
 		int32_t mUpCount, mDownCount, mCurrentDirection, mReversalCount, mLimitHitCount; // for SC only
 		std::vector<int32_t> mTrialCounts; // for MCS only
 											// description of condition for the current measurement
-		ConditionParameter mConditionParam;
+		Descriptor mConditionParam;
 
 		bool mIsInitialized = false;
 	};

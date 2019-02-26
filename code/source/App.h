@@ -10,9 +10,8 @@
  */
 #pragma once
 #include <G3D/G3D.h>
-#include "ReactionExperiment.h"
-#include "TargetingExperiment.h"
 #include "ExperimentConfig.h"
+#include "Experiment.h"
 
 class TargetEntity;
 
@@ -51,9 +50,6 @@ protected:
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
-
-    UserConfig                      m_user;
-    ExperimentConfig                m_experimentConfig;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
 	Queue<float>                    m_frameDurationQueue;
@@ -95,6 +91,10 @@ public:
 	/** Array of all targets in the scene */
 	Array<shared_ptr<VisibleEntity>> m_targetArray;
 	Array<Projectile>               m_projectileArray;
+
+	/** Parameter configurations */
+	UserConfig                      m_user;
+	ExperimentConfig                m_experimentConfig;
 
 	/** To control target motion */
 	CFrame                          m_motionFrame; // object at 10 m away in -z direction in this coordinate frame
@@ -166,9 +166,6 @@ protected:
 	double                          m_t_lastProjectileShot = -inf();
 
 public:
-	//Psychophysics::TargetingExperiment ex;
-	//Psychophysics::ReactionExperiment ex;
-	shared_ptr<Psychophysics::Experiment> m_ex = nullptr;
 	bool							m_buttonUp = true;
 
 	void resetView();
@@ -176,6 +173,7 @@ public:
 
 	void informTrialSuccess();
 	void informTrialFailure();
+
 };
 
 // The 'old' way of animation
