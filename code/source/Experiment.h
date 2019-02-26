@@ -49,6 +49,12 @@ namespace AbstractFPS
 	{
 	public:
 
+		/////////////////////////// initialization ///////////////////////////
+		// Step 1. Describe an experiment.
+		// Step 2. Add all the conditions you want.
+		// Step 3. Initialize experiment.
+		//////////////////////////////////////////////////////////////////////
+
 		/** Provide experiment description: This is not a mandatory step for initialization,
 			but is strongly recommended because it could be useful in many cases.
 			\param[in] newExpDesc New experiment description
@@ -61,19 +67,23 @@ namespace AbstractFPS
 		*/
 		void addCondition(ConditionParameter newConditionParam, ExperimentalDesignParameter newExpParam);
 
+		/** Generates result file, populate it with description and record field names.
+		*/
+		void initExperiment();
+
 		/** Pick next condition
 		*/
 		void chooseNextCondition();
 
 		/** Get current condtion parameter
 		*/
-		ConditionParameter getConditionParamForCurrentCondition();
+		ConditionParameter getConditionParam();
 
-		/** Get level for current trial
+		/** Get stimulus level for current trial
 		*/
-		float getLevelForCurrentTrial();
+		float getStimLevel();
 
-		/** Process user response
+		/** Process user response and record it in the result file.
 			\param[in] response Integer indicating user response
 		*/
 		void processResponse(int32_t response);
@@ -81,14 +91,6 @@ namespace AbstractFPS
 		/** Check whether experiment is complete
 		*/
 		bool isComplete();
-
-		/** Returns name of result file used
-		*/
-		std::string generateResultFilename(std::string prefix);
-
-		/** Write the result into a result file with a unique name
-		*/
-		void printResult(std::string subjectInitials);
 
 		/** Reset the experiment state
 		*/
@@ -101,6 +103,7 @@ namespace AbstractFPS
 		std::vector<SingleThresholdMeasurement> mMeasurements;
 		std::vector<std::string> mRecordFieldNames;
 		std::vector<std::vector <float>> mRecordFieldValues;
+		std::string mResultFileName;
 		int32_t mCurrentConditionIndex;
 		int32_t mTrialCount = 0;
 

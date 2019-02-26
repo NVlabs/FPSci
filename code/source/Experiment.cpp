@@ -34,6 +34,7 @@ namespace AbstractFPS
 {
 	void Experiment::describeExperiment(ExperimentDescription newExpDesc)
 	{
+		// store the given description
 		mExpDesc = newExpDesc;
 	}
 
@@ -52,6 +53,50 @@ namespace AbstractFPS
 			}
 			mRecordFieldNames.push_back("stimLevel");
 			mRecordFieldNames.push_back("response");
+		}
+	}
+
+	void Experiment::initExperiment()
+	{
+		// generate a unique file name
+		time_t t = std::time(nullptr);
+		std::tm tmbuf;
+		localtime_s(&tmbuf, &t);
+		char tmCharArray[17];
+		std::strftime(tmCharArray, sizeof(tmCharArray), "%Y%m%d_%H%M%S", &tmbuf);
+		std::string timeStr(tmCharArray);
+		mResultFileName = mExpDesc.mName + "_" + timeStr + ".db"; // we may include subject name here.
+
+		// create the result file
+		std::ofstream ResultFile(mResultFileName);
+		// add descriptions about the experiment.
+		// On the first row goes the description. TODO: replace these with sqlite commands
+		ResultFile << mExpDesc.mName.c_str() << std::endl;
+
+		 // On the second row goes all the constant parameters
+		for (auto keyval : mExpDesc.mParamList)
+		{
+		    ResultFile << keyval.first.c_str() << ":" << keyval.second << ";";
+		}
+		for (auto keyval : mExpDesc.mDescList)
+		{
+		    ResultFile << keyval.first.c_str() << ":" << keyval.second.c_str() << ";";
+		}
+		ResultFile << std::endl;
+		ResultFile.close();
+
+		// Write field names in the third row.
+		for (int32_t i = 0; i < (int32_t)mRecordFieldNames.size(); i++)
+		{
+			ResultFile << mRecordFieldNames[i].c_str();
+			if (i < (int32_t)mRecordFieldNames.size() - 1)
+			{
+				ResultFile << ',';
+			}
+			else
+			{
+				ResultFile << std::endl;
+			}
 		}
 	}
 
@@ -81,12 +126,12 @@ namespace AbstractFPS
 		std::cout << "Next chosen staircase is: " << mCurrentConditionIndex << '\n';
 	}
 
-	ConditionParameter Experiment::getConditionParamForCurrentCondition()
+	ConditionParameter Experiment::getConditionParam()
 	{
 		return mMeasurements[mCurrentConditionIndex].getConditionParam();
 	}
 
-	float Experiment::getLevelForCurrentTrial()
+	float Experiment::getStimLevel()
 	{
 		return mMeasurements[mCurrentConditionIndex].getCurrentLevel();
 	}
@@ -97,16 +142,35 @@ namespace AbstractFPS
 		// Recording...
 		std::vector<float> newRecord;
 		newRecord.push_back((float)mCurrentConditionIndex);
-		for (auto keyval : getConditionParamForCurrentCondition().mParamList)
+		for (auto keyval : getConditionParam().mParamList)
 		{
 			newRecord.push_back(keyval.second);
 		}
-		newRecord.push_back(getLevelForCurrentTrial());
+		newRecord.push_back(getStimLevel());
 		newRecord.push_back((float)response);
-		mRecordFieldValues.push_back(newRecord);
+		mRecordFieldValues.push_back(newRecord); // TODO: make sure this is not necessary and remove.
 		// now process the response
 		mMeasurements[mCurrentConditionIndex].processResponse(response);
 		mTrialCount++;
+
+		// create an ofstream out of result file name.
+		std::ofstream ResultFile(mResultFileName);
+		// store the result for the last trial.
+		// TODO: replace it with sqlite command later.
+		// Write down all the field values
+		for (int32_t j = 0; j < (int32_t)newRecord.size(); j++)
+		{
+			ResultFile << newRecord[j];
+			if (j < (int32_t)newRecord.size() - 1)
+			{
+				ResultFile << ',';
+			}
+			else
+			{
+				ResultFile << std::endl;
+			}
+		}
+		ResultFile.close();
 	}
 
 	bool Experiment::isComplete() // did the experiment end?
@@ -123,71 +187,6 @@ namespace AbstractFPS
 		return allMeasurementComplete;
 	}
 
-	std::string Experiment::generateResultFilename(std::string prefix)
-	{
-		// subject name.. later this should be received as an input
-		// make a unique file name
-		time_t t = std::time(nullptr);
-		std::tm tmbuf;
-		localtime_s(&tmbuf, &t);
-		char tmCharArray[17];
-		std::strftime(tmCharArray, sizeof(tmCharArray), "%Y%m%d_%H%M%S", &tmbuf);
-		std::string timeStr(tmCharArray);
-		std::string fileNameStr = "UserStudy_" + prefix + "_" + timeStr + ".csv";
-
-		return fileNameStr;
-	}
-
-	void Experiment::printResult(std::string prefix) // write the result into a result file with a unique name
-	{
-
-		std::ofstream ResultFile(generateResultFilename(prefix));
-		// // On the first row goes the description.
-		// ResultFile << mExpDesc.mName.c_str() << std::endl;
-
-		// // On the second row goes all the constant parameters
-		//for (auto keyval : mExpDesc.mParamList)
-		//{
-		//    ResultFile << keyval.first.c_str() << ":" << keyval.second << ";";
-		//}
-		//for (auto keyval : mExpDesc.mDescList)
-		//{
-		//    ResultFile << keyval.first.c_str() << ":" << keyval.second.c_str() << ";";
-		//}
-		//ResultFile << std::endl;
-
-		// Write field names in the third row.
-		for (int32_t i = 0; i < (int32_t)mRecordFieldNames.size(); i++)
-		{
-			ResultFile << mRecordFieldNames[i].c_str();
-			if (i < (int32_t)mRecordFieldNames.size() - 1)
-			{
-				ResultFile << ',';
-			}
-			else
-			{
-				ResultFile << std::endl;
-			}
-		}
-		// Write down all the field values
-		for (int32_t i = 0; i < (int32_t)mRecordFieldValues.size(); i++)
-		{
-			for (int32_t j = 0; j < (int32_t)mRecordFieldValues[i].size(); j++)
-			{
-				ResultFile << mRecordFieldValues[i][j];
-				if (j < (int32_t)mRecordFieldValues[i].size() - 1)
-				{
-					ResultFile << ',';
-				}
-				else
-				{
-					ResultFile << std::endl;
-				}
-			}
-		}
-		ResultFile.close();
-	}
-
 	void Experiment::clear()
 	{
 		mConditionParamNames.clear();
@@ -200,5 +199,4 @@ namespace AbstractFPS
 
 		mExpDesc = ExperimentDescription();
 	}
-
 }

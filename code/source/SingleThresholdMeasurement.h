@@ -65,7 +65,7 @@ namespace AbstractFPS
 	struct Response
 	{
 		float mStimLevel;
-		int32_t mResponse; // 1 = correct, 0 = wrong
+		int32_t mResponse; // 1 = signal level too high, 0 = signal level too low
 		int32_t mReversalCount; // for debugging
 	};
 

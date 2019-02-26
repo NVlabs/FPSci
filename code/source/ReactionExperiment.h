@@ -1,11 +1,11 @@
 #pragma once
 #include <G3D/G3D.h>
 #include "App.h"
-#include "psychophysics.h"
+#include "Experiment.h"
 
 class App;
 
-namespace Psychophysics
+namespace AbstractFPS
 {
 	class ReactionExperiment : public Experiment
 	{

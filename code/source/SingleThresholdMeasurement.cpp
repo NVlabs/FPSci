@@ -173,7 +173,7 @@ namespace AbstractFPS
 		// select next stim level based on measuring strategy (SC or MCS)
 		if (mExpParam.mMeasuringMethod == DiscreteStaircase) // SC. Count reversals and select next stim level.
 		{
-			if (mResponses.back().mResponse == 0) // incorrect response
+			if (mResponses.back().mResponse == 0) // telling 'signal level too low!', attempting to go up.
 			{
 				mUpCount++; // increment up count by one
 				mDownCount = 0; // reset down count
@@ -208,7 +208,7 @@ namespace AbstractFPS
 				}
 				std::cout << "Processed a response that was incorrect. Reversal count is: " << mReversalCount << "\n";
 			}
-			else // correct response
+			else // telling 'signal level too high!', attempting to go down.
 			{
 				mDownCount++; // increment down count by one
 				mUpCount = 0; // reset up count
@@ -247,7 +247,7 @@ namespace AbstractFPS
 		}
 		else if (mExpParam.mMeasuringMethod == BucketStaircase) // SC with pre-determined stimLevels
 		{
-			if (mResponses.back().mResponse == 0) // incorrect response
+			if (mResponses.back().mResponse == 0) // telling 'signal level too low!', attempting to go up.
 			{
 				mUpCount++; // increment up count by one
 				mDownCount = 0; // reset down count
@@ -283,7 +283,7 @@ namespace AbstractFPS
 				mCurrentLevel = mExpParam.mStimLevels[mCurrentIndex];
 				std::cout << "Processed a response that was incorrect. Reversal count is: " << mReversalCount << "\n";
 			}
-			else // correct response
+			else // telling 'signal level too high!', attempting to go down.
 			{
 				mDownCount++; // increment down count by one
 				mUpCount = 0; // reset up count
