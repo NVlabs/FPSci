@@ -136,16 +136,22 @@
     <ClInclude Include="source\ExperimentConfig.h" />
     <ClInclude Include="source\ReactionExperiment.h" />
     <ClInclude Include="source\sqlHelpers.h" />
+    <ClInclude Include="source\TargetEntity.h" />
     <ClInclude Include="source\TargetingExperiment.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp" />
     <ClCompile Include="source\ReactionExperiment.cpp" />
     <ClCompile Include="source\sqlHelpers.cpp" />
+    <ClCompile Include="source\TargetEntity.cpp" />
     <ClCompile Include="source\TargetingExperiment.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resources.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="data-files\experimentconfig.Any" />
+    <None Include="data-files\userconfig.Any" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

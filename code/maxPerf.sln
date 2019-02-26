@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.28010.2050
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "maxPerf", "maxPerf.vcxproj", "{D0B15FD1-8D51-4033-B19F-477FAAF59787}"
+	ProjectSection(ProjectDependencies) = postProject
+		{81473515-ED3C-425E-908F-53D6DD25DEBC} = {81473515-ED3C-425E-908F-53D6DD25DEBC}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "psychophysics-lib", "%PSYCHOPHYSICS%\psychophysics-lib\psychophysics-lib.vcxproj", "{81473515-ED3C-425E-908F-53D6DD25DEBC}"
 EndProject

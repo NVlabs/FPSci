@@ -1,13 +1,12 @@
 /** \file App.cpp */
 #include "App.h"
-
-double PCFreq = 0.0;
-__int64 CounterStart = 0;
+#include "TargetEntity.h"
 
 // Set to false when just editing content
-static const bool playMode = true;
+static const bool playMode = false;
+
 // Enable this to see maximum CPU/GPU rate when not limited
-// by the monitor. 
+// by the monitor. (true = disable software vsync)
 static const bool  unlockFramerate = true;
 
 // Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
@@ -44,50 +43,42 @@ App::App(const GApp::Settings& settings) : GApp(settings) {
 void App::onInit() {
 	GApp::onInit();
 
-    // load settings from file
-    UserConfig u(Any::fromFile(System::findDataFile("userconfig.Any")));
-    m_cmp360 = u.cmp360;
-    m_mouseDPI = u.mouseDPI;
-    m_subjectID = u.subjectID;
-    // debug print
-    debugPrintf("User: %s, DPI: %f, cmp360 %f\n", m_subjectID, m_mouseDPI, m_cmp360);
-	ExperimentConfig e(Any::fromFile(System::findDataFile("experimentconfig.Any")));
-	m_targetFrameRate = e.targetFrameRate;
-	m_expMode = e.expMode;
-	m_expVersion = e.expVersion;
-	m_taskType = e.taskType;
-	m_appendingDescription = e.appendingDescription;
-	// debug print
-	debugPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
-		m_targetFrameRate, m_expMode, m_taskType, m_appendingDescription);
+    scene()->registerEntitySubclass("TargetEntity", &TargetEntity::create);
 
-	// TODO: app pointer is not a memory-managed pointer.
-	if (m_taskType == "reaction") {
+    // load settings from file
+    m_user = Any::fromFile(System::findDataFile("userconfig.Any"));
+    // debug print
+    logPrintf("User: %s, DPI: %f, cmp360 %f\n", m_user.subjectID, m_user.mouseDPI, m_user.cmp360);
+	m_experimentConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
+
+	// debug print
+	logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
+		m_experimentConfig.targetFrameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
+
+	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = std::make_shared<Psychophysics::ReactionExperiment>(this);
-		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->setFrameRate(m_targetFrameRate);
-	}
-	else if (m_taskType == "targeting") {
+		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->setFrameRate(m_experimentConfig.targetFrameRate);
+	} else if (m_experimentConfig.taskType == "targeting") {
 		m_ex = std::make_shared<Psychophysics::TargetingExperiment>(this);
-		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->setFrameRate(m_targetFrameRate);
+		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->setFrameRate(m_experimentConfig.targetFrameRate);
 	}
 
 	float dt = 0;
-
 	if (unlockFramerate) {
 		// Set a maximum *finite* frame rate
 		dt = 1.0f / 8192.0f;
-	}
-	else if (variableRefreshRate) {
-		dt = 1.0f / m_targetFrameRate;
-	}
-	else {
+	} else if (variableRefreshRate) {
+		dt = 1.0f / m_experimentConfig.targetFrameRate;
+	} else {
 		dt = 1.0f / float(window()->settings().refreshRate);
 	}
+
 	setFrameDuration(dt, GApp::REAL_TIME);
 	setSubmitToDisplayMode(
 		//SubmitToDisplayMode::MINIMIZE_LATENCY);
 		SubmitToDisplayMode::BALANCE);
-	//SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);    
+	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
+
 	showRenderingStats = false;
 	makeGUI();
 	developerWindow->videoRecordDialog->setCaptureGui(true);
@@ -104,7 +95,7 @@ void App::onInit() {
 	setReticle(m_reticleIndex);
 	
 	if (m_ex->expName == "TargetingExperiment") {
-		loadScene("eSports Simple Hallway");
+		loadScene(m_experimentConfig.sceneName);
 	}
 
 	initPsychophysicsLib();
@@ -121,7 +112,13 @@ void App::onInit() {
 		// G3D expects mouse sensitivity in radians
 		// we're converting from mouseDPI and centimeters/360 which explains
 		// the screen resolution (dots), cm->in factor (2.54) and 2PI
-		double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_cmp360 * m_mouseDPI);
+		const double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_user.cmp360 * m_user.mouseDPI);
+		fpm->setTurnRate(mouseSensitivity);
+	}
+	else {
+		// fix mouse sensitivity for developer mode
+		const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+		double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_user.cmp360 * m_user.mouseDPI);
 		fpm->setTurnRate(mouseSensitivity);
 	}
 
@@ -142,7 +139,6 @@ void App::spawnRandomTarget() {
 	Vector3 X = Y.cross(Z);
 
 	do {
-
 		// Make a random vector in front of the player in a narrow field of view
 		Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
 
@@ -152,7 +148,8 @@ void App::spawnRandomTarget() {
 		scene()->intersect(ray, distance);
 
 		if ((distance > 2.0f) && (distance < finf())) {
-			spawnTarget(ray.origin() + ray.direction() * rng.uniform(2.0f, distance - 1.0f), rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f);
+			spawnTarget(ray.origin() + ray.direction() * rng.uniform(2.0f, distance - 1.0f), rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
+                Color3::wheelRandom());
 			done = true;
 		}
 		++tries;
@@ -160,20 +157,33 @@ void App::spawnRandomTarget() {
 }
 
 
-shared_ptr<VisibleEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft) {
+shared_ptr<TargetEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color) {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
 
-	const shared_ptr<VisibleEntity>& target = VisibleEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
-	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
 
+    UniversalMaterial::Specification materialSpecification;
+    materialSpecification.setLambertian(Texture::Specification(color));
+    materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+    materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+
+    const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+    amPose->materialTable.set("mesh", UniversalMaterial::create(materialSpecification));
+    target->setPose(amPose);
+
+    /*
 	// Don't set a track. We'll take care of the positioning after creation
-	//const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
-	//target->setTrack(track);
-	target->setShouldBeSaved(false);
+    String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
+	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
+	target->setTrack(track);
+    */
+	
+    target->setShouldBeSaved(false);
 	m_targetArray.append(target);
 	scene()->insert(target);
 	return target;
 }
+
 
 void App::loadModels() {
 	const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
@@ -225,7 +235,6 @@ void App::loadModels() {
 }
 
 
-
 void App::makeGUI() {
 	debugWindow->setVisible(!playMode);
 	developerWindow->setVisible(!playMode);
@@ -273,61 +282,67 @@ void App::setDisplayLatencyFrames(int f) {
 	m_displayLagFrames = f;
 }
 
+
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	m_debugCamera->setFieldOfView(horizontalFieldOfViewDegrees * units::degrees(), FOVDirection::HORIZONTAL);
 	setSceneBrightness(m_sceneBrightness);
 	setActiveCamera(m_debugCamera);
 }
 
+
 void App::onAI() {
 	GApp::onAI();
 	// Add non-simulation game logic and AI code here
 }
+
 
 void App::onNetwork() {
 	GApp::onNetwork();
 	// Poll net messages here
 }
 
+
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
 	if (m_ex->expName == "ReactionExperiment") {
-		if (submitToDisplayMode() == SubmitToDisplayMode::MAXIMIZE_THROUGHPUT) {
-			swapBuffers();
-		}
+        // No 3D rendering in this case
+        if ((submitToDisplayMode() == SubmitToDisplayMode::MAXIMIZE_THROUGHPUT) && (! rd->swapBuffersAutomatically())) {
+            swapBuffers();
+        }
+        return;
 	}
-	else {
-		if (m_displayLagFrames > 0) {
-			// Need one more frame in the queue than we have frames of delay, to hold the current frame
-			if (m_ldrDelayBufferQueue.size() <= m_displayLagFrames) {
-				// Allocate new textures
-				for (int i = m_displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
-					m_ldrDelayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
-				}
-				debugAssert(m_ldrDelayBufferQueue.size() == m_displayLagFrames + 1);
+    
+
+    if (m_displayLagFrames > 0) {
+		// Need one more frame in the queue than we have frames of delay, to hold the current frame
+		if (m_ldrDelayBufferQueue.size() <= m_displayLagFrames) {
+			// Allocate new textures
+			for (int i = m_displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
+				m_ldrDelayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
 			}
-
-			// When the display lag changes, we must be sure to be within range
-			m_currentDelayBufferIndex = min(m_displayLagFrames, m_currentDelayBufferIndex);
-
-			rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
+			debugAssert(m_ldrDelayBufferQueue.size() == m_displayLagFrames + 1);
 		}
 
-		scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !m_emergencyTurbo;
-		m_debugCamera->filmSettings().setAntialiasingEnabled(!m_emergencyTurbo);
-		m_debugCamera->filmSettings().setBloomStrength(m_emergencyTurbo ? 0.0f : 0.5f);
+		// When the display lag changes, we must be sure to be within range
+		m_currentDelayBufferIndex = min(m_displayLagFrames, m_currentDelayBufferIndex);
 
-		GApp::onGraphics3D(rd, surface);
+		rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
+	}
 
-		if (m_displayLagFrames > 0) {
-			// Display the delayed frame
-			rd->popState();
-			rd->push2D(); {
-				// Advance the pointer to the next, which is also the oldest frame
-				m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (m_displayLagFrames + 1);
-				Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrDelayBufferQueue[m_currentDelayBufferIndex]->texture(0), Sampler::buffer());
-			} rd->pop2D();
-		}
+	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = ! m_emergencyTurbo;
+	m_debugCamera->filmSettings().setAntialiasingEnabled(! m_emergencyTurbo);
+	m_debugCamera->filmSettings().setBloomStrength(m_emergencyTurbo ? 0.0f : 0.5f);
+
+	GApp::onGraphics3D(rd, surface);
+
+	if (m_displayLagFrames > 0) {
+		// Display the delayed frame
+		rd->popState();
+		rd->push2D(); {
+			// Advance the pointer to the next, which is also the oldest frame
+			m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (m_displayLagFrames + 1);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrDelayBufferQueue[m_currentDelayBufferIndex]->texture(0), Sampler::buffer());
+		} rd->pop2D();
 	}
 }
 
@@ -532,7 +547,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 			// Click to photon latency measuring corner box
 			if (measureClickPhotonLatency) {
-				Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2 : Color3::white() * 0.8;
+				Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
 				//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
 				Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
 			}
@@ -653,8 +668,8 @@ int main(int argc, const char* argv[]) {
 
 ////////////////////////////////////////// experiment-related funcitons //////////////////////////
 void App::initPsychophysicsLib() {
-	String datafileName = m_taskType + "_" + m_expMode + "_" + m_appendingDescription + ".db";
-	m_ex->init(m_subjectID.c_str(), m_expVersion.c_str(), 0, datafileName.c_str(), m_expMode == "training");
+	String datafileName = m_experimentConfig.taskType + "_" + m_experimentConfig.expMode + "_" + m_experimentConfig.appendingDescription + ".db";
+	m_ex->init(m_user.subjectID.c_str(), m_experimentConfig.expVersion.c_str(), 0, datafileName.c_str(), m_experimentConfig.expMode == "training");
 
 	// required initial response to start an experiment.
 	m_ex->startTimer();
@@ -669,6 +684,7 @@ void App::initPsychophysicsLib() {
 	// TODO: restore
 }
 
+
 void App::resetView() {
 	// reset view direction (look front!)
     const shared_ptr<Camera>& camera = activeCamera();
@@ -680,14 +696,13 @@ void App::resetView() {
 	fpm->lookAt(Point3(0,0,-1));
 }
 
-void App::informTrialSuccess()
-{
+
+void App::informTrialSuccess() {
 	m_ex->update("Spc"); // needed to stop stimulus presentation of this trial
 	m_ex->update("1"); // success
 }
 
-void App::informTrialFailure()
-{
+void App::informTrialFailure() {
 	m_ex->update("Spc"); // needed to stop stimulus presentation of this trial
 	m_ex->update("2"); // failure
 }

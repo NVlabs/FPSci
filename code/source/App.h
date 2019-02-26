@@ -14,6 +14,8 @@
 #include "TargetingExperiment.h"
 #include "ExperimentConfig.h"
 
+class TargetEntity;
+
 // An enum that tracks presentation state within a trial. Duration defined in experiment.h
 // ready: ready scene that happens before beginning of a task.
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
@@ -50,6 +52,9 @@ protected:
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
 
+    UserConfig                      m_user;
+    ExperimentConfig                m_experimentConfig;
+
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
 	Queue<float>                    m_frameDurationQueue;
 
@@ -67,7 +72,7 @@ protected:
 	bool                            m_renderHitscan = false;
 
 	/** Set to true to lower rendering quality to increase performance. */
-	bool                            m_emergencyTurbo = true;
+	bool                            m_emergencyTurbo = false;
 
 	/** Projectile if false         */
 	bool                            m_hitScan = true;
@@ -106,7 +111,7 @@ public:
 	void spawnRandomTarget();
 
 	/** Creates a spinning target */
-	shared_ptr<VisibleEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true);
+	shared_ptr<TargetEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red());
 
 	/** Call to set the 3D scene brightness. Default is 1.0. */
 	void setSceneBrightness(float b);
@@ -150,21 +155,10 @@ public:
 	} m_screenSetting;
 	enum PresentationState          m_presentationState; // which sequence are we in?
 	float                           m_targetHealth; // 1 if never hit, 0 if hit. Binary for instant hit weapon, but tracking weapon will continuously reduce it.
-	Color3                          m_tunnelColor;
 	Color3                          m_targetColor;
 	Color3                          m_reticleColor;
 	bool                            m_isTrackingOn; // true if down AND weapon type is tracking, false otherwise.
 
-    // the following will come from a settings file. These are sensible defaults
-    double                          m_mouseDPI = 2400.0; // normal mice are 800.0. Gaming mice go up to 12000.0. Josef's G502 is set to 2400.0
-    double                          m_cmp360 = 12.75; // Joohwan set this to ~12.75, Josef prefers ~9.25
-    String                          m_subjectID = "JK"; // will be overwritten
-	float							m_targetFrameRate = 360; // hz
-	String                          m_expVersion = "static";
-	String							m_expMode = "training"; // training or real
-	String							m_taskType = "reaction"; // reaction or targeting
-	String							m_appendingDescription = "ver1";
-	//const int numFrameDelay = 0;
 
 protected:
 	double                          m_t_lastAnimationUpdate;
@@ -178,7 +172,6 @@ public:
 	bool							m_buttonUp = true;
 
 	void resetView();
-	void processUserInput(const GEvent& e);
 	void initPsychophysicsLib();
 
 	void informTrialSuccess();

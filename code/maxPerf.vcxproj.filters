@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Config Files">
+      <UniqueIdentifier>{650a3750-20f3-4ac3-9338-6652eaca5463}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\App.h">
@@ -30,6 +33,9 @@
     <ClInclude Include="source\sqlHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="source\TargetEntity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp">
@@ -44,10 +50,21 @@
     <ClCompile Include="source\sqlHelpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="source\TargetEntity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resources.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="data-files\experimentconfig.Any">
+      <Filter>Config Files</Filter>
+    </None>
+    <None Include="data-files\userconfig.Any">
+      <Filter>Config Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
