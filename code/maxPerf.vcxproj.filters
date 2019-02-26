@@ -36,6 +36,12 @@
     <ClInclude Include="source\TargetEntity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Experiment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleThresholdMeasurement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp">
@@ -51,6 +57,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\TargetEntity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Experiment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SingleThresholdMeasurement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

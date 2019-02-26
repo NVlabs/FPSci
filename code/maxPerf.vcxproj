@@ -132,6 +132,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Experiment.h" />
+    <ClInclude Include="SingleThresholdMeasurement.h" />
     <ClInclude Include="source\App.h" />
     <ClInclude Include="source\ExperimentConfig.h" />
     <ClInclude Include="source\ReactionExperiment.h" />
@@ -140,6 +142,8 @@
     <ClInclude Include="source\TargetingExperiment.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Experiment.cpp" />
+    <ClCompile Include="SingleThresholdMeasurement.cpp" />
     <ClCompile Include="source\App.cpp" />
     <ClCompile Include="source\ReactionExperiment.cpp" />
     <ClCompile Include="source\sqlHelpers.cpp" />
