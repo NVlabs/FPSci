@@ -2,6 +2,7 @@
 #include <G3D/G3D.h>
 #include "App.h"
 #include "psychophysics.h"
+#include "sqlHelpers.h"
 
 class App;
 

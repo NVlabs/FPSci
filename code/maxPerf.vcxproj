@@ -135,11 +135,13 @@
     <ClInclude Include="source\App.h" />
     <ClInclude Include="source\ExperimentConfig.h" />
     <ClInclude Include="source\ReactionExperiment.h" />
+    <ClInclude Include="source\sqlHelpers.h" />
     <ClInclude Include="source\TargetingExperiment.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp" />
     <ClCompile Include="source\ReactionExperiment.cpp" />
+    <ClCompile Include="source\sqlHelpers.cpp" />
     <ClCompile Include="source\TargetingExperiment.cpp" />
   </ItemGroup>
   <ItemGroup>

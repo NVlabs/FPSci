@@ -4,29 +4,11 @@
 double PCFreq = 0.0;
 __int64 CounterStart = 0;
 
-void StartCPUTimer()
-{
-	LARGE_INTEGER li;
-	if (!QueryPerformanceFrequency(&li))
-		std::cout << "QueryPerformanceFrequency failed!\n";
-
-	PCFreq = double(li.QuadPart);
-
-	QueryPerformanceCounter(&li);
-	CounterStart = li.QuadPart;
-}
-double GetCPUTime() // unit is second
-{
-	LARGE_INTEGER li;
-	QueryPerformanceCounter(&li);
-	return double(li.QuadPart - CounterStart) / PCFreq;
-}
-
 // Set to false when just editing content
 static const bool playMode = true;
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. 
-static const bool  unlockFramerate = false;
+static const bool  unlockFramerate = true;
 
 // Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
 // which allows the application to submit asynchronously with vsync
@@ -671,9 +653,6 @@ int main(int argc, const char* argv[]) {
 
 ////////////////////////////////////////// experiment-related funcitons //////////////////////////
 void App::initPsychophysicsLib() {
-	// start cpu timer.
-	StartCPUTimer();
-
 	String datafileName = m_taskType + "_" + m_expMode + "_" + m_appendingDescription + ".db";
 	m_ex->init(m_subjectID.c_str(), m_expVersion.c_str(), 0, datafileName.c_str(), m_expMode == "training");
 
