@@ -24,9 +24,6 @@
     <ClInclude Include="source\ReactionExperiment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\TargetingExperiment.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="source\ExperimentConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -42,15 +39,15 @@
     <ClInclude Include="source\PsychHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="source\TargetExperiment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\ReactionExperiment.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TargetingExperiment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\sqlHelpers.cpp">
@@ -63,6 +60,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\PsychHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TargetExperiment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
