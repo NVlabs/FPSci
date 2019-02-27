@@ -86,18 +86,6 @@ namespace AbstractFPS
 		*/
 		void clear();
 
-		/** Virtual graphics-related functions.
-		*/
-		virtual void onInit() = 0;
-
-		virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) = 0;
-
-		virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) = 0;
-
-		virtual void onUserInput(UserInput* ui) = 0;
-
-		virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) = 0;
-
 	private:
 
 		std::vector<std::string> mConditionParamNames;
@@ -114,5 +102,22 @@ namespace AbstractFPS
 			between-experiment analysis becomes necessary later.
 		*/
 		Descriptor mExpDesc;
+	};
+
+	class Experiment : public ReferenceCountedObject {
+	protected:
+		App* m_app;
+		PsychHelper m_psych;
+
+	public:
+		Experiment(App* app) : ReferenceCountedObject() {
+			m_app = app;
+		}
+
+		virtual void onInit() = 0;
+		virtual void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface) = 0;
+		virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) = 0;
+		virtual void onUserInput(UserInput * ui) = 0;
+		virtual void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D) = 0;
 	};
 }

@@ -1,24 +1,17 @@
 #pragma once
 #include <G3D/G3D.h>
-#include "PsychHelper.h"
+#include "Experiment.h"
 #include "App.h"
 
 class App;
 
 namespace AbstractFPS
 {
-	class TargetExperiment : public ReferenceCountedObject
+	class TargetExperiment : public Experiment
 	{
-	protected:
-		App* m_app;
-
 	public:
 		static shared_ptr<TargetExperiment> create() {
 			return createShared<TargetExperiment>();
-		}
-
-		TargetExperiment(App* app) : ReferenceCountedObject() {
-			m_app = app;
 		}
 
 		void onInit();

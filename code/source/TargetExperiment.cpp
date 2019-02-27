@@ -5,8 +5,9 @@ namespace AbstractFPS
 {
 	void TargetExperiment::onInit() {
 		// Perform the three steps of starting a psychophysics experiment instance: describe, add conditions, init.
+		// TODO: possibly this can go into the base class Experiment.
 		// Step 1. Describe.
-		clear();
+		m_psych.clear();
 		AbstractFPS::Descriptor desc;
 		desc.mDescList.insert(std::pair<std::string, std::string>("experimentName", "TargetExperiment"));
 		// TODO: There must be a simpler way.
@@ -17,7 +18,7 @@ namespace AbstractFPS
 		desc.mDescList.insert(std::pair<std::string, std::string>("sceneName", m_app->m_experimentConfig.sceneName.c_str()));
 		desc.mDescList.insert(std::pair<std::string, std::string>("appendingDescription", m_app->m_experimentConfig.appendingDescription.c_str()));
 		desc.mParamList.insert(std::pair<std::string, float>("targetFrameRate", m_app->m_experimentConfig.targetFrameRate));
-		describeExperiment(desc);
+		m_psych.describeExperiment(desc);
 
 		// Step 2. Add conditions.
 

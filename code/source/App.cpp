@@ -86,13 +86,6 @@ void App::onInit() {
 	loadModels();
 	setReticle(m_reticleIndex);
 
-	if (m_experimentConfig.taskType == "reaction") {
-		onInit_reactionExperiment();
-	}
-	else if (m_experimentConfig.taskType == "targeting") {
-		onInit_targetingExperiment();
-	}
-
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
@@ -115,6 +108,16 @@ void App::onInit() {
 		fpm->setTurnRate(mouseSensitivity);
 	}
 
+	// Initialize the experiment.
+	if (m_experimentConfig.taskType == "reaction") {
+		m_ex = std::make_shared<AbstractFPS::ReactionExperiment>(this);
+	}
+	else if (m_experimentConfig.taskType == "targeting") {
+		m_ex = std::make_shared<AbstractFPS::TargetExperiment>(this);
+	}
+
+	// TODO: Remove the following by invoking a call back.
+	m_ex->onInit();
 }
 
 void App::spawnRandomTarget() {
@@ -657,27 +660,6 @@ int main(int argc, const char* argv[]) {
 	return App(settings).run();
 }
 
-
-
-////////////////////////////////////////// experiment-related funcitons //////////////////////////
-void App::initPsychophysicsLib() {
-	String datafileName = m_experimentConfig.taskType + "_" + m_experimentConfig.expMode + "_" + m_experimentConfig.appendingDescription + ".db";
-	m_ex->init(m_user.subjectID.c_str(), m_experimentConfig.expVersion.c_str(), 0, datafileName.c_str(), m_experimentConfig.expMode == "training");
-
-	// required initial response to start an experiment.
-	m_ex->startTimer();
-	m_ex->update("Spc");
-
-	// initializing member variables that are related to the experiment.
-	m_targetHealth = 1.0f;
-	m_isTrackingOn = false;
-	m_reticleColor = Color3::white();
-
-	// reset viewport to look straight ahead.
-	// TODO: restore
-}
-
-
 void App::resetView() {
 	// reset view direction (look front!)
     const shared_ptr<Camera>& camera = activeCamera();
@@ -689,16 +671,3 @@ void App::resetView() {
 	fpm->lookAt(Point3(0,0,-1));
 }
 
-
-void App::informTrialSuccess() {
-	m_ex->update("Spc"); // needed to stop stimulus presentation of this trial
-	m_ex->update("1"); // success
-}
-
-void App::informTrialFailure() {
-	m_ex->update("Spc"); // needed to stop stimulus presentation of this trial
-	m_ex->update("2"); // failure
-}
-
-
-// QUESTION: This might be better suited to be in Experiment classes?

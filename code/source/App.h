@@ -11,7 +11,9 @@
 #pragma once
 #include <G3D/G3D.h>
 #include "ExperimentConfig.h"
-#include "PsychHelper.h"
+#include "Experiment.h"
+#include "TargetExperiment.h"
+#include "ReactionExperiment.h"
 
 class TargetEntity;
 
@@ -95,6 +97,9 @@ public:
 	/** Parameter configurations */
 	UserConfig                      m_user;
 	ExperimentConfig                m_experimentConfig;
+
+	/** Pointer to Experiment class */
+	shared_ptr<AbstractFPS::Experiment> m_ex = nullptr;
 
 	/** To control target motion */
 	CFrame                          m_motionFrame; // object at 10 m away in -z direction in this coordinate frame
