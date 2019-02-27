@@ -14,6 +14,21 @@
 #include "Experiment.h"
 #include "TargetExperiment.h"
 #include "ReactionExperiment.h"
+#include <chrono>
+
+// TODO: This has to be replaced with G3D timer.
+class Timer
+{
+public:
+	std::chrono::steady_clock::time_point startTime;
+	void startTimer() { startTime = std::chrono::steady_clock::now(); };
+	float getTime()
+	{
+		auto now = std::chrono::steady_clock::now();
+		int t = std::chrono::duration_cast<std::chrono::duration<int, std::milli>>(now - startTime).count();
+		return ((float)t) / 1000.0f;
+	};
+};
 
 class TargetEntity;
 
@@ -97,6 +112,9 @@ public:
 	/** Parameter configurations */
 	UserConfig                      m_user;
 	ExperimentConfig                m_experimentConfig;
+
+	//TODO: Remove it when we are using G3D timer
+	Timer timer;
 
 	/** Pointer to Experiment class */
 	shared_ptr<AbstractFPS::Experiment> m_ex = nullptr;

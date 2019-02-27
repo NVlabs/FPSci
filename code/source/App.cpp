@@ -300,15 +300,6 @@ void App::onNetwork() {
 
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
-	if (m_ex->expName == "ReactionExperiment") {
-        // No 3D rendering in this case
-        if ((submitToDisplayMode() == SubmitToDisplayMode::MAXIMIZE_THROUGHPUT) && (! rd->swapBuffersAutomatically())) {
-            swapBuffers();
-        }
-        return;
-	}
-    
-
     if (m_displayLagFrames > 0) {
 		// Need one more frame in the queue than we have frames of delay, to hold the current frame
 		if (m_ldrDelayBufferQueue.size() <= m_displayLagFrames) {
@@ -344,12 +335,7 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
-	if (m_ex->expName == "ReactionExperiment") {
-		dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->updateAnimation(rdt);
-	}
-	else if (m_ex->expName == "TargetingExperiment") {
-		dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->updateAnimation(rdt);
-	}
+	m_ex->onSimulation(rdt, sdt, idt);
 
 	GApp::onSimulation(rdt, sdt, idt);
 

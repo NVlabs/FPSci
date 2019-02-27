@@ -1,7 +1,7 @@
 {
 	ReactionExperiment:
 	{
-		commonParameters : // Common setting.
+		parameters : // All parameters must be initialized here. Values will be overwritten by conditions.
 		{
 			intensities : [0.4, 1.0],
 			minimumForeperiod : 1.5,
@@ -10,7 +10,7 @@
 			trialCount : 10,
 			targetFrameRate : 5000
 		}
-		sessionParameters : // Adds to or overwrites the setting defined in common.
+		sessions : // Overwrites the default values in parameters.
 		{
 			training60 : 
 			{
@@ -52,11 +52,11 @@
 	},
 	TargetExperiment:
 	{
-		commonParameters : // Common setting.
+		parameters : // All parameters must be initialized here. Values will be overwritten by conditions.
 		{
 		    sceneName : "eSports Simple Hallway"
 		    initialDisplacements : [Point2(0.0, -15.0), Point2(0.0, -10.0), Point2(0.0, -5.0), Point2(0.0, 5.0), Point2(0.0, 10.0), Point2(0.0, 15.0)],
-			visualSizes : [0.02],
+			visualSizes : 0.02,
 			speed : 0.0,
 			motionChangePeriod : 100000000.0, // large duration for a constant motion
 			readyDuration : 0.5
@@ -64,7 +64,7 @@
 			trialCount : 10,
 			targetFrameRate : 5000
 		}
-		sessionParameters : // Adds to or overwrites the setting defined in common.
+		sessions : // Overwrites the default values in parameters.
 		{
 			trainingStatic60 : 
 			{

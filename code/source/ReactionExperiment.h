@@ -14,6 +14,13 @@ namespace AbstractFPS
 			return createShared<ReactionExperiment>();
 		}
 
+		/** Variables specific to this experiment */
+		Color3 m_stimColor = Color3::white();
+
+		/** Functions specific to this experiment */
+		void updatePresentationState(RealTime framePeriod);
+
+		/** To be replaced with call back functions */
 		void onInit();
 
 		void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface);

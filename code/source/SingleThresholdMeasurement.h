@@ -55,10 +55,18 @@ namespace AbstractFPS
 
 	/** Struct for condition parameter or experiment description
 	*/
-	struct Descriptor
+	struct Param
 	{
-		std::map<std::string, float> mParamList;
-		std::map<std::string, std::string> mDescList;
+		std::map<std::string, float> val;
+		std::map<std::string, std::string> str;
+		// TODO: check the following.
+		Param() { val = std::map<std::string, float>(); str = std::map<std::string, std::string>(); }
+		void add(std::string s, float f) {
+			val.insert(std::pair<std::string, float>(s, f));
+		}
+		void add(std::string str_key, std::string str_val) {
+			str.insert(std::pair<std::string, std::string>(str_key, str_val));
+		}
 	};
 
 	/** Response struct
@@ -78,7 +86,7 @@ namespace AbstractFPS
 
 		/** Initialize measurement
 		*/
-		void initMeasurement(Descriptor initConditionParam, PsychophysicsDesignParameter initExpParam); // return true if successfully initialized, false if not
+		void initMeasurement(Param initConditionParam, PsychophysicsDesignParameter initExpParam); // return true if successfully initialized, false if not
 
 		/** Get current level
 		*/
@@ -86,7 +94,7 @@ namespace AbstractFPS
 
 		/** Get current condition parameter
 		*/
-		Descriptor getConditionParam();
+		Param getParam();
 
 		/** Process response
 			\param[in] response response to process
@@ -109,7 +117,7 @@ namespace AbstractFPS
 		int32_t mUpCount, mDownCount, mCurrentDirection, mReversalCount, mLimitHitCount; // for SC only
 		std::vector<int32_t> mTrialCounts; // for MCS only
 											// description of condition for the current measurement
-		Descriptor mConditionParam;
+		Param mParam;
 
 		bool mIsInitialized = false;
 	};

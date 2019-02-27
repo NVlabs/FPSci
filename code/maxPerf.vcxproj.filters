@@ -36,10 +36,10 @@
     <ClInclude Include="source\SingleThresholdMeasurement.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\PsychHelper.h">
+    <ClInclude Include="source\TargetExperiment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\TargetExperiment.h">
+    <ClInclude Include="source\Experiment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -59,10 +59,10 @@
     <ClCompile Include="source\SingleThresholdMeasurement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\PsychHelper.cpp">
+    <ClCompile Include="source\TargetExperiment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\TargetExperiment.cpp">
+    <ClCompile Include="source\Experiment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -32,28 +32,25 @@
 
 namespace AbstractFPS
 {
-	void PsychHelper::describeExperiment(Descriptor newExpDesc)
+	void PsychHelper::describeExperiment(Param newExpDesc)
 	{
-		// store the given description
-		mExpDesc = newExpDesc;
+		// Appending exp descriptions.
+		// NOTE: Appending rather than copying because we may have pre-propulated useful info (e.g. exp name).
+		for (auto keyval : newExpDesc.val)
+		{
+			mExpDesc.add(keyval.first, keyval.second);
+		}
+		for (auto keyval : newExpDesc.str)
+		{
+			mExpDesc.add(keyval.first, keyval.second);
+		}
 	}
 
-	void PsychHelper::addCondition(Descriptor newConditionParam, PsychophysicsDesignParameter newExpParam)
+	void PsychHelper::addCondition(Param newConditionParam, PsychophysicsDesignParameter newExpParam)
 	{
 		SingleThresholdMeasurement m;
 		m.initMeasurement(newConditionParam, newExpParam);
 		mMeasurements.push_back(m);
-		// initialize mRecordFieldNames if it was not defined already.
-		if ((int32_t)mRecordFieldNames.size() == 0)
-		{
-			mRecordFieldNames.push_back("staircaseID");
-			for (auto keyval : newConditionParam.mParamList)
-			{
-				mRecordFieldNames.push_back(keyval.first);
-			}
-			mRecordFieldNames.push_back("stimLevel");
-			mRecordFieldNames.push_back("response");
-		}
 	}
 
 	void PsychHelper::initExperiment()
@@ -65,39 +62,39 @@ namespace AbstractFPS
 		char tmCharArray[17];
 		std::strftime(tmCharArray, sizeof(tmCharArray), "%Y%m%d_%H%M%S", &tmbuf);
 		std::string timeStr(tmCharArray);
-		mResultFileName = mExpDesc.mDescList["experimentName"] + "/" + mExpDesc.mDescList["subjectID"] + "_" + timeStr + ".db"; // we may include subject name here.
+		mResultFileName = mExpDesc.str["experimentName"] + "/" + mExpDesc.str["subjectID"] + "_" + timeStr + ".db"; // we may include subject name here.
+		std::ofstream resultFile(mResultFileName);
 
-		// create the result file
-		std::ofstream ResultFile(mResultFileName);
-		// add descriptions about the experiment.
-		// On the first row goes the description. TODO: replace these with sqlite commands
-		ResultFile << mExpDesc.mDescList["experimentName"].c_str() << std::endl;
+		//// add descriptions about the experiment.
+		//// On the first row goes the description. TODO: replace these with sqlite commands
+		//resultFile << mExpDesc.str["experimentName"].c_str() << std::endl;
 
-		 // On the second row goes all the constant parameters
-		for (auto keyval : mExpDesc.mParamList)
-		{
-		    ResultFile << keyval.first.c_str() << ":" << keyval.second << ";";
-		}
-		for (auto keyval : mExpDesc.mDescList)
-		{
-		    ResultFile << keyval.first.c_str() << ":" << keyval.second.c_str() << ";";
-		}
-		ResultFile << std::endl;
-		ResultFile.close();
+		// // On the second row goes all the constant parameters
+		//for (auto keyval : mExpDesc.val)
+		//{
+		//    resultFile << keyval.first.c_str() << ":" << keyval.second << ";";
+		//}
+		//for (auto keyval : mExpDesc.str)
+		//{
+		//    resultFile << keyval.first.c_str() << ":" << keyval.second.c_str() << ";";
+		//}
+		//resultFile << std::endl;
 
 		// Write field names in the third row.
 		for (int32_t i = 0; i < (int32_t)mRecordFieldNames.size(); i++)
 		{
-			ResultFile << mRecordFieldNames[i].c_str();
-			if (i < (int32_t)mRecordFieldNames.size() - 1)
+			resultFile << "staircaseID" << ",";
+			for (auto keyval : getParam().val)
 			{
-				ResultFile << ',';
+				resultFile << keyval.first << ",";
 			}
-			else
+			for (auto keyval : getParam().str)
 			{
-				ResultFile << std::endl;
+				resultFile << keyval.first << ",";
 			}
+			resultFile << "stimLevel" << "," << "response" << std::endl;
 		}
+		resultFile.close();
 	}
 
 	void PsychHelper::chooseNextCondition()
@@ -126,9 +123,9 @@ namespace AbstractFPS
 		std::cout << "Next chosen staircase is: " << mCurrentConditionIndex << '\n';
 	}
 
-	Descriptor PsychHelper::getConditionParam()
+	Param PsychHelper::getParam()
 	{
-		return mMeasurements[mCurrentConditionIndex].getConditionParam();
+		return mMeasurements[mCurrentConditionIndex].getParam();
 	}
 
 	float PsychHelper::getStimLevel()
@@ -138,39 +135,24 @@ namespace AbstractFPS
 
 	void PsychHelper::processResponse(int32_t response)
 	{
-		// First record the condition and response and then process the response.
-		// Recording...
-		std::vector<float> newRecord;
-		newRecord.push_back((float)mCurrentConditionIndex);
-		for (auto keyval : getConditionParam().mParamList)
+		// Record the condition and response in the output file.
+		// TODO: replace it with sqlite command later.
+		std::ofstream resultFile(mResultFileName);
+		resultFile << mCurrentConditionIndex << ",";
+		for (auto keyval : getParam().val)
 		{
-			newRecord.push_back(keyval.second);
+			resultFile << keyval.second << ",";
 		}
-		newRecord.push_back(getStimLevel());
-		newRecord.push_back((float)response);
-		mRecordFieldValues.push_back(newRecord); // TODO: make sure this is not necessary and remove.
-		// now process the response
+		for (auto keyval : getParam().str)
+		{
+			resultFile << keyval.second << ",";
+		}
+		resultFile << getStimLevel() << "," << response << std::endl;
+		resultFile.close();
+
+		// Process the response.
 		mMeasurements[mCurrentConditionIndex].processResponse(response);
 		mTrialCount++;
-
-		// create an ofstream out of result file name.
-		std::ofstream ResultFile(mResultFileName);
-		// store the result for the last trial.
-		// TODO: replace it with sqlite command later.
-		// Write down all the field values
-		for (int32_t j = 0; j < (int32_t)newRecord.size(); j++)
-		{
-			ResultFile << newRecord[j];
-			if (j < (int32_t)newRecord.size() - 1)
-			{
-				ResultFile << ',';
-			}
-			else
-			{
-				ResultFile << std::endl;
-			}
-		}
-		ResultFile.close();
 	}
 
 	bool PsychHelper::isComplete() // did the experiment end?
@@ -196,7 +178,5 @@ namespace AbstractFPS
 		mRecordFieldValues.clear();
 		mCurrentConditionIndex = 0;
 		mTrialCount = 0;
-
-		mExpDesc = Descriptor();
 	}
 }

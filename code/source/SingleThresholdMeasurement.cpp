@@ -29,7 +29,7 @@
 
 namespace AbstractFPS
 {
-	void SingleThresholdMeasurement::initMeasurement(Descriptor initConditionParam, PsychophysicsDesignParameter initExpParam) // return true if successfully initialized, false if not
+	void SingleThresholdMeasurement::initMeasurement(Param initConditionParam, PsychophysicsDesignParameter initExpParam) // return true if successfully initialized, false if not
 	{
 		if (mIsInitialized)
 		{
@@ -38,7 +38,7 @@ namespace AbstractFPS
 		else
 		{
 			mPsyParam = initExpParam;
-			mConditionParam = initConditionParam;
+			mParam = initConditionParam;
 			if (mPsyParam.mMeasuringMethod == DiscreteStaircase)
 			{
 				if (mPsyParam.mIsDefault) // only mMinLevel, mMaxLevel, mMinLevelStepSize were defined
@@ -153,9 +153,9 @@ namespace AbstractFPS
 		return mCurrentLevel;
 	}
 
-	Descriptor SingleThresholdMeasurement::getConditionParam()
+	Param SingleThresholdMeasurement::getParam()
 	{
-		return mConditionParam;
+		return mParam;
 	}
 
 	void SingleThresholdMeasurement::processResponse(int32_t response)

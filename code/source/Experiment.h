@@ -49,13 +49,13 @@ namespace AbstractFPS
 			but is strongly recommended because it could be useful in many cases.
 			\param[in] newExpDesc New experiment description
 		*/
-		void describeExperiment(Descriptor newExpDesc);
+		void describeExperiment(Param newExpDesc);
 
 		/** Add condition
 			\param[in] newConditionParam New condition
 			\param[in] newExpParam New experiment design parameter
 		*/
-		void addCondition(Descriptor newConditionParam, PsychophysicsDesignParameter newExpParam);
+		void addCondition(Param newConditionParam, PsychophysicsDesignParameter newExpParam);
 
 		/** Generates result file, populate it with description and record field names.
 		*/
@@ -67,7 +67,7 @@ namespace AbstractFPS
 
 		/** Get current condtion parameter
 		*/
-		Descriptor getConditionParam();
+		Param getParam();
 
 		/** Get stimulus level for current trial
 		*/
@@ -101,7 +101,7 @@ namespace AbstractFPS
 			in future, in case an experiment grows while piloting or when
 			between-experiment analysis becomes necessary later.
 		*/
-		Descriptor mExpDesc;
+		Param mExpDesc;
 	};
 
 	class Experiment : public ReferenceCountedObject {
