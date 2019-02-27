@@ -35,7 +35,7 @@ namespace AbstractFPS
 {
 	/** A class representing a psychophysical experiment
 	*/
-	class Experiment
+	class PsychHelper
 	{
 	public:
 

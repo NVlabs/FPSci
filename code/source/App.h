@@ -11,7 +11,7 @@
 #pragma once
 #include <G3D/G3D.h>
 #include "ExperimentConfig.h"
-#include "Experiment.h"
+#include "PsychHelper.h"
 
 class TargetEntity;
 

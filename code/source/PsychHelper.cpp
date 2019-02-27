@@ -25,20 +25,20 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
-#include "Experiment.h"
+#include "PsychHelper.h"
 #include <fstream>
 #include <ctime>
 //#include <time.h>
 
 namespace AbstractFPS
 {
-	void Experiment::describeExperiment(Descriptor newExpDesc)
+	void PsychHelper::describeExperiment(Descriptor newExpDesc)
 	{
 		// store the given description
 		mExpDesc = newExpDesc;
 	}
 
-	void Experiment::addCondition(Descriptor newConditionParam, PsychophysicsDesignParameter newExpParam)
+	void PsychHelper::addCondition(Descriptor newConditionParam, PsychophysicsDesignParameter newExpParam)
 	{
 		SingleThresholdMeasurement m;
 		m.initMeasurement(newConditionParam, newExpParam);
@@ -56,7 +56,7 @@ namespace AbstractFPS
 		}
 	}
 
-	void Experiment::initExperiment()
+	void PsychHelper::initExperiment()
 	{
 		// generate a unique file name
 		time_t t = std::time(nullptr);
@@ -100,7 +100,7 @@ namespace AbstractFPS
 		}
 	}
 
-	void Experiment::chooseNextCondition()
+	void PsychHelper::chooseNextCondition()
 	{
 		// Choose any staircase whose progress ratio is minimum
 		float minimumProgressRatio = 1;
@@ -126,17 +126,17 @@ namespace AbstractFPS
 		std::cout << "Next chosen staircase is: " << mCurrentConditionIndex << '\n';
 	}
 
-	Descriptor Experiment::getConditionParam()
+	Descriptor PsychHelper::getConditionParam()
 	{
 		return mMeasurements[mCurrentConditionIndex].getConditionParam();
 	}
 
-	float Experiment::getStimLevel()
+	float PsychHelper::getStimLevel()
 	{
 		return mMeasurements[mCurrentConditionIndex].getCurrentLevel();
 	}
 
-	void Experiment::processResponse(int32_t response)
+	void PsychHelper::processResponse(int32_t response)
 	{
 		// First record the condition and response and then process the response.
 		// Recording...
@@ -173,7 +173,7 @@ namespace AbstractFPS
 		ResultFile.close();
 	}
 
-	bool Experiment::isComplete() // did the experiment end?
+	bool PsychHelper::isComplete() // did the experiment end?
 	{
 		bool allMeasurementComplete = true;
 		for (int32_t i = 0; i < (int32_t)mMeasurements.size(); i++)
@@ -187,7 +187,7 @@ namespace AbstractFPS
 		return allMeasurementComplete;
 	}
 
-	void Experiment::clear()
+	void PsychHelper::clear()
 	{
 		mConditionParamNames.clear();
 		mConditionParamValues.clear();

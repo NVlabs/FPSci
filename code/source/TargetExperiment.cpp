@@ -1,14 +1,14 @@
-#include "TargetingExperiment.h"
+#include "TargetExperiment.h"
 #include "App.h"
 
 namespace AbstractFPS
 {
-	void TargetingExperiment::onInit() {
+	void TargetExperiment::onInit() {
 		// Perform the three steps of starting a psychophysics experiment instance: describe, add conditions, init.
 		// Step 1. Describe.
 		clear();
 		AbstractFPS::Descriptor desc;
-		desc.mDescList.insert(std::pair<std::string, std::string>("experimentName", "TargetingExperiment"));
+		desc.mDescList.insert(std::pair<std::string, std::string>("experimentName", "TargetExperiment"));
 		// TODO: There must be a simpler way.
 		desc.mDescList.insert(std::pair<std::string, std::string>("expMode", m_app->m_experimentConfig.expMode.c_str()));
 		desc.mDescList.insert(std::pair<std::string, std::string>("subjectID", m_app->m_user.subjectID.c_str()));
@@ -25,22 +25,22 @@ namespace AbstractFPS
 		m_app->loadScene(m_app->m_experimentConfig.sceneName);
 	}
 
-	void TargetingExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)
+	void TargetExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)
 	{
 
 	}
 
-	void TargetingExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
+	void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	{
 
 	}
 
-	void TargetingExperiment::onUserInput(UserInput* ui)
+	void TargetExperiment::onUserInput(UserInput* ui)
 	{
 
 	}
 
-	void TargetingExperiment::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D)
+	void TargetExperiment::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D)
 	{
 
 	}
