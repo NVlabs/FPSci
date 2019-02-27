@@ -26,26 +26,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 #include "Experiment.h"
-#include <fstream>
-#include <ctime>
-//#include <time.h>
 
 namespace AbstractFPS
 {
-	void PsychHelper::describeExperiment(Param newExpDesc)
-	{
-		// Appending exp descriptions.
-		// NOTE: Appending rather than copying because we may have pre-propulated useful info (e.g. exp name).
-		for (auto keyval : newExpDesc.val)
-		{
-			mExpDesc.add(keyval.first, keyval.second);
-		}
-		for (auto keyval : newExpDesc.str)
-		{
-			mExpDesc.add(keyval.first, keyval.second);
-		}
-	}
-
 	void PsychHelper::addCondition(Param newConditionParam, PsychophysicsDesignParameter newExpParam)
 	{
 		SingleThresholdMeasurement m;
@@ -55,16 +38,6 @@ namespace AbstractFPS
 
 	void PsychHelper::initExperiment()
 	{
-		// generate a unique file name
-		time_t t = std::time(nullptr);
-		std::tm tmbuf;
-		localtime_s(&tmbuf, &t);
-		char tmCharArray[17];
-		std::strftime(tmCharArray, sizeof(tmCharArray), "%Y%m%d_%H%M%S", &tmbuf);
-		std::string timeStr(tmCharArray);
-		mResultFileName = mExpDesc.str["experimentName"] + "/" + mExpDesc.str["subjectID"] + "_" + timeStr + ".db"; // we may include subject name here.
-		std::ofstream resultFile(mResultFileName);
-
 		//// add descriptions about the experiment.
 		//// On the first row goes the description. TODO: replace these with sqlite commands
 		//resultFile << mExpDesc.str["experimentName"].c_str() << std::endl;

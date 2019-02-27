@@ -4,22 +4,7 @@
 namespace AbstractFPS
 {
 	void ReactionExperiment::onInit() {
-		// Perform the three steps of starting a psychophysics experiment instance: describe, add conditions, init.
-		// Step 1. Describe.
-		m_psych.clear();
-		AbstractFPS::Param desc;
-		desc.add("experimentName","ReactionExperiment");
-		// TODO: There must be a simpler way.
-		desc.add("expMode", m_app->m_experimentConfig.expMode.c_str());
-		desc.add("subjectID", m_app->m_user.subjectID.c_str());
-		desc.add("taskType", m_app->m_experimentConfig.taskType.c_str());
-		// expVersion not needed
-		// sceneName not needed
-		desc.add("appendingDescription", m_app->m_experimentConfig.appendingDescription.c_str());
-		desc.add("targetFrameRate", m_app->m_experimentConfig.targetFrameRate);
-		m_psych.describeExperiment(desc);
-
-		// Step 2. Add conditions.
+		// Add conditions.
 	}
 
 	void ReactionExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)
@@ -148,6 +133,21 @@ namespace AbstractFPS
 	}
 
 	void ReactionExperiment::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D)
+	{
+
+	}
+
+	void ReactionExperiment::createResultFile()
+	{
+
+	}
+
+	void ReactionExperiment::recordTrialResponse()
+	{
+
+	}
+
+	void ReactionExperiment::closeResultFile()
 	{
 
 	}

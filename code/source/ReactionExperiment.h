@@ -30,5 +30,11 @@ namespace AbstractFPS
 		void onUserInput(UserInput * ui);
 
 		void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D);
+
+		void createResultFile();
+
+		void recordTrialResponse();
+
+		void closeResultFile();
 	};
 }

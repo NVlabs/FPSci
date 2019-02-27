@@ -29,7 +29,20 @@
 
 #include "SingleThresholdMeasurement.h"
 #include "App.h"
+#include <ctime>
 #include <map>
+
+// utility function for generating a unique timestamp.
+std::string genUniqueTimestamp() {
+	time_t t = std::time(nullptr);
+	std::tm tmbuf;
+	localtime_s(&tmbuf, &t);
+	char tmCharArray[17];
+	std::strftime(tmCharArray, sizeof(tmCharArray), "%Y%m%d_%H%M%S", &tmbuf);
+	std::string timeStr(tmCharArray);
+	return timeStr;
+}
+
 
 namespace AbstractFPS
 {
@@ -40,16 +53,8 @@ namespace AbstractFPS
 	public:
 
 		/////////////////////////// initialization ///////////////////////////
-		// Step 1. Describe an experiment.
-		// Step 2. Add all the conditions you want.
-		// Step 3. Initialize experiment.
+		// Add all the conditions you want.
 		//////////////////////////////////////////////////////////////////////
-
-		/** Provide experiment description: This is not a mandatory step for initialization,
-			but is strongly recommended because it could be useful in many cases.
-			\param[in] newExpDesc New experiment description
-		*/
-		void describeExperiment(Param newExpDesc);
 
 		/** Add condition
 			\param[in] newConditionParam New condition
@@ -86,14 +91,7 @@ namespace AbstractFPS
 		*/
 		void clear();
 
-	private:
-
-		std::vector<std::string> mConditionParamNames;
-		std::vector<float> mConditionParamValues;
 		std::vector<SingleThresholdMeasurement> mMeasurements;
-		std::vector<std::string> mRecordFieldNames;
-		std::vector<std::vector <float>> mRecordFieldValues;
-		std::string mResultFileName;
 		int32_t mCurrentConditionIndex;
 		int32_t mTrialCount = 0;
 
@@ -102,14 +100,16 @@ namespace AbstractFPS
 			between-experiment analysis becomes necessary later.
 		*/
 		Param mExpDesc;
+
+	private:
 	};
 
 	class Experiment : public ReferenceCountedObject {
 	protected:
+	public:
 		App* m_app;
 		PsychHelper m_psych;
 
-	public:
 		Experiment(App* app) : ReferenceCountedObject() {
 			m_app = app;
 		}
@@ -119,5 +119,12 @@ namespace AbstractFPS
 		virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) = 0;
 		virtual void onUserInput(UserInput * ui) = 0;
 		virtual void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D) = 0;
+
+		/** result recording */
+		virtual void createResultFile() = 0;
+		virtual void recordTrialResponse() = 0;
+		virtual void closeResultFile() = 0;
+
+		std::string mResultFileName;
 	};
 }
