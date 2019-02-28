@@ -206,7 +206,8 @@ namespace AbstractFPS
 					}
 					mUpCount = 0; // reset up count
 				}
-				std::cout << "Processed a response that was incorrect. Reversal count is: " << mReversalCount << "\n";
+				// TODO: How to print log messages?
+				//std::cout << "Processed a response that was incorrect. Reversal count is: " << mReversalCount << "\n";
 			}
 			else // telling 'signal level too high!', attempting to go down.
 			{
@@ -241,7 +242,8 @@ namespace AbstractFPS
 					}
 					mDownCount = 0; // reset down count
 				}
-				std::cout << "Processed a response that was correct. Reversal count is: " << mReversalCount << "\n";
+				// TODO: How to print log messages?
+				//std::cout << "Processed a response that was correct. Reversal count is: " << mReversalCount << "\n";
 
 			}
 		}
@@ -281,7 +283,8 @@ namespace AbstractFPS
 					mUpCount = 0; // reset up count
 				}
 				mCurrentLevel = mPsyParam.mStimLevels[mCurrentIndex];
-				std::cout << "Processed a response that was incorrect. Reversal count is: " << mReversalCount << "\n";
+				// TODO: How to print log messages?
+				//std::cout << "Processed a response that was incorrect. Reversal count is: " << mReversalCount << "\n";
 			}
 			else // telling 'signal level too high!', attempting to go down.
 			{
@@ -317,7 +320,8 @@ namespace AbstractFPS
 					mDownCount = 0; // reset down count
 				}
 				mCurrentLevel = mPsyParam.mStimLevels[mCurrentIndex];
-				std::cout << "Processed a response that was correct. Reversal count is: " << mReversalCount << "\n";
+				// TODO: How to print log messages?
+				//std::cout << "Processed a response that was correct. Reversal count is: " << mReversalCount << "\n";
 			}
 		}
 		else if (mPsyParam.mMeasuringMethod == MethodOfConstantStimuli) // MCS. Count numTrials and select next stim level.
@@ -351,7 +355,8 @@ namespace AbstractFPS
 			// Now choose any one from validIndex
 			int32_t chosenIndex = validIndex[rand() % (int32_t)validIndex.size()];
 			mCurrentLevel = mPsyParam.mStimLevels[chosenIndex];
-			std::cout << "Next chosen MCS stim level is: " << mCurrentLevel << '\n';
+			// TODO: How to print log messages?
+			//std::cout << "Next chosen MCS stim level is: " << mCurrentLevel << '\n';
 		}
 	}
 

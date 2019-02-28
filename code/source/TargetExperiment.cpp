@@ -33,15 +33,8 @@ namespace AbstractFPS
 	}
 
 	void TargetExperiment::onInit() {
-		// Define psychophysical method. Method of Constant Stimuli.
-
-		// Add conditions.
-
 		// load the experiment background scene.
 		m_app->loadScene(m_app->m_experimentConfig.sceneName);
-
-		// Other initializations...
-		//////////////////////////////////////////////
 
 		// initialize presentation states
 		m_app->m_presentationState = PresentationState::initial;
@@ -325,7 +318,8 @@ namespace AbstractFPS
 		{
 			resultFile << keyval.first << ",";
 		}
-		resultFile << "stimLevel" << "," << "response" << "," << "elapsedTime" << std::endl;
+		//resultFile << "stimLevel" << ","; // normally we would need this but not now.
+		resultFile << "response" << "," << "elapsedTime" << std::endl;
 
 		// close the file
 		resultFile.close();
@@ -344,6 +338,7 @@ namespace AbstractFPS
 		{
 			resultFile << keyval.second << ",";
 		}
+		//resultFile << m_psych.getStimLevel() << ","; // normally we would need this but not now.
 		resultFile << m_psych.getStimLevel() << "," << m_response << "," << m_taskExecutionTime << std::endl;
 		resultFile.close();
 	}

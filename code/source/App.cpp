@@ -396,7 +396,7 @@ void App::fire() {
 		if (closestIndex >= 0) {
 			destroyTarget(closestIndex);
 			aimPoint = ray.origin() + ray.direction() * closest;
-			m_targetHealth -= dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->renderParams.weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
+			m_targetHealth -= 1; // TODO: health point should be tracked by Target Entity class (not existing yet).
 		}
 	}
 
@@ -433,64 +433,10 @@ void App::onUserInput(UserInput* ui) {
 
 
 	if (playMode || m_debugController->enabled()) {
-		//m_ex->onUserInput(ui);
+		m_ex->onUserInput(ui);
 
 		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
 			m_buttonUp = false;
-
-			if (m_ex->expName == "ReactionExperiment") {
-				// set reacted to true
-				dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_reacted = true;
-
-			}
-			else if (m_ex->expName == "TargetingExperiment") {
-				// Fire
-				Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
-
-				if (m_hitScan) {
-					const Ray& ray = m_debugCamera->frame().lookRay();
-
-					float closest = finf();
-					int closestIndex = -1;
-					for (int t = 0; t < m_targetArray.size(); ++t) {
-						if (m_targetArray[t]->intersect(ray, closest)) {
-							closestIndex = t;
-						}
-					}
-
-					if (closestIndex >= 0) {
-						destroyTarget(closestIndex);
-						aimPoint = ray.origin() + ray.direction() * closest;
-						m_targetHealth -= dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->renderParams.weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
-					}
-				}
-
-				// Create the laser
-				if (m_renderHitscan) {
-					CFrame laserStartFrame = m_weaponFrame;
-					laserStartFrame.translation += laserStartFrame.upVector() * 0.1f;
-
-					// Adjust for the discrepancy between where the gun is and where the player is looking
-					laserStartFrame.lookAt(aimPoint);
-
-					laserStartFrame.translation += laserStartFrame.lookVector() * 2.0f;
-					const shared_ptr<VisibleEntity>& laser = VisibleEntity::create(format("laser%03d", ++m_lastUniqueID), scene().get(), m_laserModel, laserStartFrame);
-					laser->setShouldBeSaved(false);
-					laser->setCanCauseCollisions(false);
-					laser->setCastsShadows(false);
-					/*
-					const shared_ptr<Entity::Track>& track = Entity::Track::create(laser.get(), scene().get(),
-						Any::parse(format("%s", laserStartFrame.toXYZYPRDegreesString().c_str())));
-					laser->setTrack(track);
-					*/
-					m_projectileArray.push(Projectile(laser, System::time() + 1.0f));
-					scene()->insert(laser);
-				}
-
-				if (playMode) {
-					m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
-				}
-			}
 		}
 		if (ui->keyReleased(GKey::LEFT_MOUSE)) {
 			m_buttonUp = true;
@@ -571,8 +517,10 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 	}
 
 	rd->push2D(); {
-		// TODO: Is this the right place to call it? Not sure with the frame delay mechanism being around.
+		// TODO: Is this the right place to call it?
 		m_ex->onGraphics2D(rd, posed2D);
+
+		const float scale = rd->viewport().width() / 1920.0f;
 
 		// FPS display (faster than the full stats widget)
 		if (m_renderFPS) {
@@ -597,18 +545,6 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
 			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
 			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
-		}
-
-
-		if (m_ex->expName == "ReactionExperiment") {
-			rd->clear();
-			const float scale = rd->viewport().width() / 1920.0f;
-			Draw::rect2D(rd->viewport(), rd, dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_stimColor);
-
-			if (!dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_feedbackMessage.empty()) {
-				m_outputFont->draw2D(rd, dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_feedbackMessage.c_str(),
-					(Point2((float)window()->width() / 2 - 40, (float)window()->height() / 2 + 20) * scale).floor(), floor(20.0f * scale), Color3::yellow());
-			}
 		}
 	} rd->pop2D();
 

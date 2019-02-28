@@ -33,10 +33,16 @@ namespace AbstractFPS
 
 		void createResultFile();
 
-		void recordTrialResponse(int32_t response);
+		void recordTrialResponse();
 
 		void closeResultFile();
 
 		void initPsychHelper();
+
+		float m_taskExecutionTime;
+		int m_response;
+
+		bool m_reacted = false;
+		String m_feedbackMessage;
 	};
 }

@@ -54,6 +54,7 @@ public:
 	String  expVersion;
 	String	appendingDescription;
 	int     trialCount;
+	float   taskDuration;
 	Array<Point2> initialDisplacements;
 
 	////////////// TargetExperiment ////////////////
@@ -62,13 +63,15 @@ public:
 	//String  motionType; // Static, SimpleMotion, ComplexMotion
 	float   readyDuration; // sec
 	float   feedbackDuration;
-	float   taskDuration;
 	float   speed;
 	float   motionChangePeriod;
 	float   visualSize;
 	////////////// TargetExperiment ////////////////
 
 	////////////// ReactionExperiment ////////////////
+	float meanWaitDuration;
+	float minimumForeperiod;
+	Array<float> intensities;
 	////////////// ReactionExperiment ////////////////
 
 	ExperimentConfig() : targetFrameRate(360.0f), expMode("training"), taskType("reaction"), expVersion("static"), appendingDescription("ver1"), sceneName("eSports Simple Hallway") {}
