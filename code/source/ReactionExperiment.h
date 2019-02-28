@@ -9,13 +9,15 @@ namespace AbstractFPS
 {
 	class ReactionExperiment : public Experiment
 	{
-	public:
-		//static shared_ptr<ReactionExperiment> create() {
-		//	return createShared<ReactionExperiment>();
-		//}
+	protected:
+		bool m_reacted = false;
 
-		ReactionExperiment(App* app) : Experiment() {
-			m_app = app;
+		ReactionExperiment(App* app) : Experiment(app) {
+		}
+
+	public:
+		static shared_ptr<ReactionExperiment> create(App* app) {
+			return createShared<ReactionExperiment>(app);
 		}
 
 		/** Variables specific to this experiment */
@@ -42,12 +44,5 @@ namespace AbstractFPS
 		void closeResultFile();
 
 		void initPsychHelper();
-
-		float m_taskExecutionTime;
-		int m_response;
-
-		bool m_reacted = false;
-		String m_feedbackMessage;
-		App* m_app;
 	};
 }

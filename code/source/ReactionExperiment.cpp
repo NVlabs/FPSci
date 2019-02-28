@@ -1,5 +1,8 @@
 #include "ReactionExperiment.h"
 #include "App.h"
+#include <iostream>
+#include <fstream>
+#include <map>
 
 namespace AbstractFPS
 {
@@ -47,11 +50,11 @@ namespace AbstractFPS
 			m_app->m_experimentConfig.trialCount = m_app->m_experimentConfig.trialCount / 3;
 		}
 
-		// create the result file based on experimental configuration.
-		createResultFile();
-
 		// initialize PsychHelper based on the configuration.
 		initPsychHelper();
+
+		// create the result file based on experimental configuration.
+		createResultFile();
 	}
 
 	void ReactionExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)
@@ -94,7 +97,10 @@ namespace AbstractFPS
 			}
 			else if (m_reacted) // stimulus not shown yet, but responded already -> an immediate trial failure.
 			{
-				m_app->informTrialFailure();
+				m_taskExecutionTime = stateElapsedTime;
+				m_response = 0; // 1 means success, 0 means failure.
+				recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
+				m_psych.processResponse(m_response); // process response.
 				m_feedbackMessage = "Failure: Responded too quickly.";
 				newState = PresentationState::feedback;
 			}
@@ -108,7 +114,9 @@ namespace AbstractFPS
 			{
 				if (stateElapsedTime > 0.1) {
 					m_taskExecutionTime = stateElapsedTime;
-					m_app->informTrialSuccess();
+					m_response = 1; // 1 means success, 0 means failure.
+					recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
+					m_psych.processResponse(m_response); // process response.
 					if (m_app->m_experimentConfig.expMode == "training") {
 						m_feedbackMessage = String(int(m_taskExecutionTime * 1000)) + " msec";
 					}
@@ -117,7 +125,10 @@ namespace AbstractFPS
 					}
 				}
 				else {
-					m_app->informTrialFailure();
+					m_taskExecutionTime = stateElapsedTime;
+					m_response = 0; // 1 means success, 0 means failure.
+					recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
+					m_psych.processResponse(m_response); // process response.
 					m_feedbackMessage = "Failure: Responded too quickly.";
 				}
 				newState = PresentationState::feedback;

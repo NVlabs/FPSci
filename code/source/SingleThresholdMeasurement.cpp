@@ -334,7 +334,6 @@ namespace AbstractFPS
 				if (mPsyParam.mStimLevels[i] == mCurrentLevel)
 				{
 					mTrialCounts[i]++;
-					break;
 				}
 				float pr = (float)mTrialCounts[i] / (float)mPsyParam.mMaxTrialCounts[i];
 				if (pr < minimumProgressRatio)

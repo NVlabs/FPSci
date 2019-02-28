@@ -27,23 +27,15 @@
 ***************************************************************************/
 #pragma once
 
+#include <G3D/G3D.h>
 #include "SingleThresholdMeasurement.h"
-#include "App.h"
 #include <ctime>
-#include <iostream>
-#include <fstream>
-#include <map>
 
+class App;
+
+// TODO: Replace with the G3D timestamp uses.
 // utility function for generating a unique timestamp.
-std::string genUniqueTimestamp() {
-	time_t t = std::time(nullptr);
-	std::tm tmbuf;
-	localtime_s(&tmbuf, &t);
-	char tmCharArray[17];
-	std::strftime(tmCharArray, sizeof(tmCharArray), "%Y%m%d_%H%M%S", &tmbuf);
-	std::string timeStr(tmCharArray);
-	return timeStr;
-}
+std::string genUniqueTimestamp();
 
 namespace AbstractFPS
 {
@@ -101,10 +93,18 @@ namespace AbstractFPS
 	private:
 	};
 
-	//class Experiment : public ReferenceCountedObject {
-	class Experiment {
+	class Experiment : public ReferenceCountedObject {
+	//class Experiment {
 	protected:
+		float m_taskExecutionTime;
+		int m_response;
+
+		String m_feedbackMessage;
+
+		Experiment(App* app) :m_app(app) {};
+
 	public:
+
 		PsychHelper m_psych;
 
 		//Experiment() : ReferenceCountedObject() {
@@ -125,5 +125,6 @@ namespace AbstractFPS
 		virtual void initPsychHelper() = 0;
 
 		std::string mResultFileName;
+		App* m_app;
 	};
 }

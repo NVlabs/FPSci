@@ -1,7 +1,7 @@
 {
     "targetFrameRate" : 5000,//360,
     "settingsVersion" : 1,
-    "taskType" : "targeting",//"reaction",
+    "taskType" : "reaction",//"reaction",
     "expMode" : "training",
     "expVersion" : "Static ",
     "appendingDescription" : "2019Feb21_LatencyTest",

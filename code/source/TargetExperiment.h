@@ -9,13 +9,15 @@ namespace AbstractFPS
 {
 	class TargetExperiment : public Experiment
 	{
-	public:
-		//static shared_ptr<TargetExperiment> create() {
-		//	return createShared<TargetExperiment>();
-		//}
+	protected:
+		float m_lastMotionChangeAt;
 
-		TargetExperiment(App* app) : Experiment() {
-			m_app = app;
+		TargetExperiment(App* app) : Experiment(app) {
+		}
+
+	public:
+		static shared_ptr<TargetExperiment> create(App* app) {
+			return createShared<TargetExperiment>(app);
 		}
 
 		void initTargetAnimation();
@@ -39,12 +41,5 @@ namespace AbstractFPS
 		void closeResultFile();
 
 		void initPsychHelper();
-
-		float m_taskExecutionTime;
-		int m_response;
-
-		String m_feedbackMessage;
-		float m_lastMotionChangeAt;
-		App *m_app;
 	};
 }

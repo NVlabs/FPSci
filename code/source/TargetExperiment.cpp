@@ -1,5 +1,8 @@
 #include "TargetExperiment.h"
 #include "App.h"
+#include <iostream>
+#include <fstream>
+#include <map>
 
 namespace AbstractFPS
 {
@@ -72,11 +75,11 @@ namespace AbstractFPS
 			m_app->m_experimentConfig.trialCount = m_app->m_experimentConfig.trialCount / 3;
 		}
 
-		// create the result file based on experimental configuration.
-		createResultFile();
-
 		// initialize PsychHelper based on the configuration.
 		initPsychHelper();
+
+		// create the result file based on experimental configuration.
+		createResultFile();
 	}
 
 	void TargetExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)

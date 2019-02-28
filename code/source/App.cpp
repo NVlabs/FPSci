@@ -110,10 +110,10 @@ void App::onInit() {
 
 	// Initialize the experiment.
 	if (m_experimentConfig.taskType == "reaction") {
-		m_ex = std::make_shared<AbstractFPS::ReactionExperiment>(this);
+		m_ex = AbstractFPS::ReactionExperiment::create(this);
 	}
 	else if (m_experimentConfig.taskType == "targeting") {
-		m_ex = std::make_shared<AbstractFPS::TargetExperiment>(this);
+		m_ex = AbstractFPS::TargetExperiment::create(this);
 	}
 
 	// TODO: Remove the following by invoking a call back.
