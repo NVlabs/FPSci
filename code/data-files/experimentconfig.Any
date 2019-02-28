@@ -1,5 +1,5 @@
 {
-    "targetFrameRate" : 5000,//360,
+    "targetFrameRate" : 240,//5000,//360,
     "settingsVersion" : 1,
     "taskType" : "reaction",//"reaction",
     "expMode" : "training",

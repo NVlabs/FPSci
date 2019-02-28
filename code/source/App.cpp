@@ -6,8 +6,8 @@
 static const bool playMode = false;
 
 // Enable this to see maximum CPU/GPU rate when not limited
-// by the monitor. (true = disable software vsync)
-static const bool  unlockFramerate = true;
+// by the monitor. (true = target infinite frame rate)
+static const bool  unlockFramerate = false;
 
 // Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
 // which allows the application to submit asynchronously with vsync
@@ -144,8 +144,23 @@ void App::spawnRandomTarget() {
 		scene()->intersect(ray, distance);
 
 		if ((distance > 2.0f) && (distance < finf())) {
-			spawnTarget(ray.origin() + ray.direction() * rng.uniform(2.0f, distance - 1.0f), rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
-                Color3::wheelRandom());
+            distance = rng.uniform(2.0f, distance - 1.0f);
+			const shared_ptr<TargetEntity>& target =
+                spawnTarget(ray.origin() + ray.direction() * distance, 
+                    rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
+                    Color3::wheelRandom());
+
+            // Choose some destination locations
+            const Point3& center = ray.origin();
+            Array<Point3> destinationArray;
+            destinationArray.push(target->frame().translation);
+            for (int i = 0; i < 20; ++i) {
+        		const Vector3& dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
+                destinationArray.push(center + dir * distance);
+            }
+            target->setSpeed(2.0f); // m/s
+            target->setDestinations(destinationArray, center);
+
 			done = true;
 		}
 		++tries;
@@ -167,6 +182,7 @@ shared_ptr<TargetEntity> App::spawnTarget(const Point3& position, float scale, b
     amPose->materialTable.set("mesh", UniversalMaterial::create(materialSpecification));
     target->setPose(amPose);
 
+    target->setFrame(position);
     /*
 	// Don't set a track. We'll take care of the positioning after creation
     String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
@@ -589,7 +605,9 @@ int main(int argc, const char* argv[]) {
 	}
 	settings.window.fullScreen = playMode;
 	settings.window.resizable = !settings.window.fullScreen;
-	settings.window.asynchronous = unlockFramerate;
+
+    // V-sync off always
+	settings.window.asynchronous = true;
 	settings.window.caption = "NVIDIA Abstract FPS";
 	settings.window.refreshRate = -1;
 	settings.window.defaultIconFilename = "icon.png";

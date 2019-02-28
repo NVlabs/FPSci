@@ -1,13 +1,18 @@
 #pragma once
 #include <G3D/G3D.h>
 
-class SpherePath {
-public:
-
-};
 
 class TargetEntity : public VisibleEntity {
 protected:
+
+    /** World-space speed in meters/second */
+    float                           m_speed = 2.0f;
+    Point3                          m_orbitCenter;
+
+    /** The target will move through these points along arcs around
+        m_orbitCenter at m_speed. As each point is hit, it is
+        removed from the queue.*/
+    Queue<Point3>                   m_destinationPoints;
 
     TargetEntity() {}
 
@@ -16,6 +21,13 @@ protected:
     void init();
 
 public:
+
+    void setSpeed(float s) {
+        m_speed = s;    
+    }
+
+    /** Destinations must be no more than 170 degrees apart to avoid ambiguity in movement direction */
+    void setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter);
 
     /** For deserialization from Any / loading from file */
     static shared_ptr<Entity> create 
