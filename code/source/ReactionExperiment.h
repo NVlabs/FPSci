@@ -10,8 +10,12 @@ namespace AbstractFPS
 	class ReactionExperiment : public Experiment
 	{
 	public:
-		static shared_ptr<ReactionExperiment> create() {
-			return createShared<ReactionExperiment>();
+		//static shared_ptr<ReactionExperiment> create() {
+		//	return createShared<ReactionExperiment>();
+		//}
+
+		ReactionExperiment(App* app) : Experiment() {
+			m_app = app;
 		}
 
 		/** Variables specific to this experiment */
@@ -44,5 +48,6 @@ namespace AbstractFPS
 
 		bool m_reacted = false;
 		String m_feedbackMessage;
+		App* m_app;
 	};
 }

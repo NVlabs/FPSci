@@ -45,7 +45,6 @@ std::string genUniqueTimestamp() {
 	return timeStr;
 }
 
-
 namespace AbstractFPS
 {
 	/** A class representing a psychophysical experiment
@@ -102,15 +101,14 @@ namespace AbstractFPS
 	private:
 	};
 
-	class Experiment : public ReferenceCountedObject {
+	//class Experiment : public ReferenceCountedObject {
+	class Experiment {
 	protected:
 	public:
-		App* m_app;
 		PsychHelper m_psych;
 
-		Experiment(App* app) : ReferenceCountedObject() {
-			m_app = app;
-		}
+		//Experiment() : ReferenceCountedObject() {
+		//}
 
 		virtual void onInit() = 0;
 		virtual void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface) = 0;

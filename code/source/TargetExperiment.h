@@ -10,8 +10,12 @@ namespace AbstractFPS
 	class TargetExperiment : public Experiment
 	{
 	public:
-		static shared_ptr<TargetExperiment> create() {
-			return createShared<TargetExperiment>();
+		//static shared_ptr<TargetExperiment> create() {
+		//	return createShared<TargetExperiment>();
+		//}
+
+		TargetExperiment(App* app) : Experiment() {
+			m_app = app;
 		}
 
 		void initTargetAnimation();
@@ -41,5 +45,6 @@ namespace AbstractFPS
 
 		String m_feedbackMessage;
 		float m_lastMotionChangeAt;
+		App *m_app;
 	};
 }
