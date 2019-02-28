@@ -53,7 +53,23 @@ public:
 	String	taskType; // reaction or targeting
 	String  expVersion;
 	String	appendingDescription;
-    String  sceneName;
+	int     trialCount;
+	Array<Point2> initialDisplacements;
+
+	////////////// TargetExperiment ////////////////
+	String  sceneName;
+	// TODO: expVersion is duplicate of motionType. Decide what to do with expVersion and motionType.
+	//String  motionType; // Static, SimpleMotion, ComplexMotion
+	float   readyDuration; // sec
+	float   feedbackDuration;
+	float   taskDuration;
+	float   speed;
+	float   motionChangePeriod;
+	float   visualSize;
+	////////////// TargetExperiment ////////////////
+
+	////////////// ReactionExperiment ////////////////
+	////////////// ReactionExperiment ////////////////
 
 	ExperimentConfig() : targetFrameRate(360.0f), expMode("training"), taskType("reaction"), expVersion("static"), appendingDescription("ver1"), sceneName("eSports Simple Hallway") {}
 

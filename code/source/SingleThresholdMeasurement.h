@@ -28,7 +28,6 @@
 #pragma once
 
 #include <time.h>
-#include <iostream>
 #include <vector>
 #include <map>
 #include <stdint.h>

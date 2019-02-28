@@ -55,10 +55,10 @@ protected:
 	static const int MAX_HISTORY_TIMING_FRAMES = 360;
 	const int                       numReticles = 55;
 
-	shared_ptr<GFont>               m_outputFont;
-	shared_ptr<GFont>               m_hudFont;
-	shared_ptr<Texture>             m_reticleTexture;
-	shared_ptr<Texture>             m_hudTexture;
+	//shared_ptr<GFont>               m_outputFont;
+	//shared_ptr<GFont>               m_hudFont;
+	//shared_ptr<Texture>             m_reticleTexture;
+	//shared_ptr<Texture>             m_hudTexture;
 	shared_ptr<ArticulatedModel>    m_viewModel;
 	shared_ptr<Sound>               m_fireSound;
 	shared_ptr<Sound>               m_explosionSound;
@@ -80,12 +80,12 @@ protected:
 	int                             m_reticleIndex = 41;
 	float                           m_sceneBrightness = 1.0f;
 	bool                            m_renderViewModel = false;
-	bool                            m_renderHud = false;
+	//bool                            m_renderHud = false;
 	bool                            m_renderFPS = false;
 	bool                            m_renderHitscan = false;
 
 	/** Set to true to lower rendering quality to increase performance. */
-	bool                            m_emergencyTurbo = false;
+	//bool                            m_emergencyTurbo = false;
 
 	/** Projectile if false         */
 	bool                            m_hitScan = true;
@@ -102,6 +102,14 @@ protected:
 	void destroyTarget(int index);
 
 public:
+	/* Moving from proctected so that Experiment classes can use it. */
+	shared_ptr<GFont>               m_outputFont;
+	shared_ptr<GFont>               m_hudFont;
+	shared_ptr<Texture>             m_reticleTexture;
+	shared_ptr<Texture>             m_hudTexture;
+	bool                            m_renderHud = false;
+	bool                            m_emergencyTurbo = false;
+
 
 	App(const GApp::Settings& settings = GApp::Settings());
 
@@ -141,6 +149,9 @@ public:
 
 	void setDisplayLatencyFrames(int f);
 
+	/** Fire the weapon */
+	void fire();
+
 	int displayLatencyFrames() const {
 		return m_displayLagFrames;
 	}
@@ -177,9 +188,10 @@ public:
 		Vector2 screenSize = resolution * pixelSize;
 	} m_screenSetting;
 	enum PresentationState          m_presentationState; // which sequence are we in?
-	float                           m_targetHealth; // 1 if never hit, 0 if hit. Binary for instant hit weapon, but tracking weapon will continuously reduce it.
 	Color3                          m_targetColor;
 	Color3                          m_reticleColor;
+	// TODO: m_targetHealth is only relevant to TargetingExperiment.
+	float						    m_targetHealth; // 1 if never hit, 0 if hit. Binary for instant hit weapon, but tracking weapon will continuously reduce it.
 	bool                            m_isTrackingOn; // true if down AND weapon type is tracking, false otherwise.
 
 

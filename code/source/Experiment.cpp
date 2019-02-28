@@ -29,45 +29,11 @@
 
 namespace AbstractFPS
 {
-	void PsychHelper::addCondition(Param newConditionParam, PsychophysicsDesignParameter newExpParam)
+	void PsychHelper::addCondition(Param newConditionParam, PsychophysicsDesignParameter newPsychParam)
 	{
 		SingleThresholdMeasurement m;
-		m.initMeasurement(newConditionParam, newExpParam);
+		m.initMeasurement(newConditionParam, newPsychParam);
 		mMeasurements.push_back(m);
-	}
-
-	void PsychHelper::initExperiment()
-	{
-		//// add descriptions about the experiment.
-		//// On the first row goes the description. TODO: replace these with sqlite commands
-		//resultFile << mExpDesc.str["experimentName"].c_str() << std::endl;
-
-		// // On the second row goes all the constant parameters
-		//for (auto keyval : mExpDesc.val)
-		//{
-		//    resultFile << keyval.first.c_str() << ":" << keyval.second << ";";
-		//}
-		//for (auto keyval : mExpDesc.str)
-		//{
-		//    resultFile << keyval.first.c_str() << ":" << keyval.second.c_str() << ";";
-		//}
-		//resultFile << std::endl;
-
-		// Write field names in the third row.
-		for (int32_t i = 0; i < (int32_t)mRecordFieldNames.size(); i++)
-		{
-			resultFile << "staircaseID" << ",";
-			for (auto keyval : getParam().val)
-			{
-				resultFile << keyval.first << ",";
-			}
-			for (auto keyval : getParam().str)
-			{
-				resultFile << keyval.first << ",";
-			}
-			resultFile << "stimLevel" << "," << "response" << std::endl;
-		}
-		resultFile.close();
 	}
 
 	void PsychHelper::chooseNextCondition()
@@ -108,21 +74,6 @@ namespace AbstractFPS
 
 	void PsychHelper::processResponse(int32_t response)
 	{
-		// Record the condition and response in the output file.
-		// TODO: replace it with sqlite command later.
-		std::ofstream resultFile(mResultFileName);
-		resultFile << mCurrentConditionIndex << ",";
-		for (auto keyval : getParam().val)
-		{
-			resultFile << keyval.second << ",";
-		}
-		for (auto keyval : getParam().str)
-		{
-			resultFile << keyval.second << ",";
-		}
-		resultFile << getStimLevel() << "," << response << std::endl;
-		resultFile.close();
-
 		// Process the response.
 		mMeasurements[mCurrentConditionIndex].processResponse(response);
 		mTrialCount++;
@@ -143,12 +94,8 @@ namespace AbstractFPS
 	}
 
 	void PsychHelper::clear()
-	{
-		mConditionParamNames.clear();
-		mConditionParamValues.clear();
+	{ // probably not necessary?
 		mMeasurements.clear();
-		mRecordFieldNames.clear();
-		mRecordFieldValues.clear();
 		mCurrentConditionIndex = 0;
 		mTrialCount = 0;
 	}

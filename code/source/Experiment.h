@@ -30,6 +30,8 @@
 #include "SingleThresholdMeasurement.h"
 #include "App.h"
 #include <ctime>
+#include <iostream>
+#include <fstream>
 #include <map>
 
 // utility function for generating a unique timestamp.
@@ -61,10 +63,6 @@ namespace AbstractFPS
 			\param[in] newExpParam New experiment design parameter
 		*/
 		void addCondition(Param newConditionParam, PsychophysicsDesignParameter newExpParam);
-
-		/** Generates result file, populate it with description and record field names.
-		*/
-		void initExperiment();
 
 		/** Pick next condition
 		*/
@@ -124,6 +122,9 @@ namespace AbstractFPS
 		virtual void createResultFile() = 0;
 		virtual void recordTrialResponse() = 0;
 		virtual void closeResultFile() = 0;
+
+		/** PsychHelper-related */
+		virtual void initPsychHelper() = 0;
 
 		std::string mResultFileName;
 	};

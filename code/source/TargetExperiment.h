@@ -14,6 +14,10 @@ namespace AbstractFPS
 			return createShared<TargetExperiment>();
 		}
 
+		void initTargetAnimation();
+
+		void updatePresentationState();
+
 		void onInit();
 
 		void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface);
@@ -29,5 +33,13 @@ namespace AbstractFPS
 		void recordTrialResponse();
 
 		void closeResultFile();
+
+		void initPsychHelper();
+
+		float m_taskExecutionTime;
+		int m_response;
+
+		String m_feedbackMessage;
+		float m_lastMotionChangeAt;
 	};
 }

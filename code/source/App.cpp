@@ -379,12 +379,62 @@ bool App::onEvent(const GEvent& event) {
 	return false;
 }
 
+void App::fire() {
+	Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
+
+	if (m_hitScan) {
+		const Ray& ray = m_debugCamera->frame().lookRay();
+
+		float closest = finf();
+		int closestIndex = -1;
+		for (int t = 0; t < m_targetArray.size(); ++t) {
+			if (m_targetArray[t]->intersect(ray, closest)) {
+				closestIndex = t;
+			}
+		}
+
+		if (closestIndex >= 0) {
+			destroyTarget(closestIndex);
+			aimPoint = ray.origin() + ray.direction() * closest;
+			m_targetHealth -= dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->renderParams.weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
+		}
+	}
+
+	// Create the laser
+	if (m_renderHitscan) {
+		CFrame laserStartFrame = m_weaponFrame;
+		laserStartFrame.translation += laserStartFrame.upVector() * 0.1f;
+
+		// Adjust for the discrepancy between where the gun is and where the player is looking
+		laserStartFrame.lookAt(aimPoint);
+
+		laserStartFrame.translation += laserStartFrame.lookVector() * 2.0f;
+		const shared_ptr<VisibleEntity>& laser = VisibleEntity::create(format("laser%03d", ++m_lastUniqueID), scene().get(), m_laserModel, laserStartFrame);
+		laser->setShouldBeSaved(false);
+		laser->setCanCauseCollisions(false);
+		laser->setCastsShadows(false);
+		/*
+		const shared_ptr<Entity::Track>& track = Entity::Track::create(laser.get(), scene().get(),
+			Any::parse(format("%s", laserStartFrame.toXYZYPRDegreesString().c_str())));
+		laser->setTrack(track);
+		*/
+		m_projectileArray.push(Projectile(laser, System::time() + 1.0f));
+		scene()->insert(laser);
+	}
+
+	if (playMode) {
+		m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
+	}
+}
+
 void App::onUserInput(UserInput* ui) {
 	GApp::onUserInput(ui);
 	(void)ui;
 
 
 	if (playMode || m_debugController->enabled()) {
+		//m_ex->onUserInput(ui);
+
 		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
 			m_buttonUp = false;
 
@@ -521,66 +571,42 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 	}
 
 	rd->push2D(); {
+		// TODO: Is this the right place to call it? Not sure with the frame delay mechanism being around.
+		m_ex->onGraphics2D(rd, posed2D);
+
+		// FPS display (faster than the full stats widget)
+		if (m_renderFPS) {
+			String msg;
+
+			if (window()->settings().refreshRate > 0) {
+				msg = format("%d measured / %d requested fps",
+					iRound(renderDevice->stats().smoothFrameRate),
+					window()->settings().refreshRate);
+			}
+			else {
+				msg = format("%d fps", iRound(renderDevice->stats().smoothFrameRate));
+			}
+
+			msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
+
+			m_outputFont->draw2D(rd, msg, (Point2(30, 28) * scale).floor(), floor(20.0f * scale), Color3::yellow());
+		}
+
+		// Click to photon latency measuring corner box
+		if (measureClickPhotonLatency) {
+			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
+			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
+			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
+		}
+
 
 		if (m_ex->expName == "ReactionExperiment") {
 			rd->clear();
 			const float scale = rd->viewport().width() / 1920.0f;
 			Draw::rect2D(rd->viewport(), rd, dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_stimColor);
 
-			// Click to photon latency measuring corner box
-			if (measureClickPhotonLatency) {
-				Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
-				//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
-				Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
-			}
-
 			if (!dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_feedbackMessage.empty()) {
 				m_outputFont->draw2D(rd, dynamic_pointer_cast<Psychophysics::ReactionExperiment>(m_ex)->m_feedbackMessage.c_str(),
-					(Point2((float)window()->width() / 2 - 40, (float)window()->height() / 2 + 20) * scale).floor(), floor(20.0f * scale), Color3::yellow());
-			}
-		}
-		else if (m_ex->expName == "TargetingExperiment") {
-			const float scale = rd->viewport().width() / 1920.0f;
-			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-
-			// Reticle
-			Draw::rect2D((m_reticleTexture->rect2DBounds() * scale - m_reticleTexture->vector2Bounds() * scale / 2.0f) / 8.0f + rd->viewport().wh() / 2.0f, rd, Color3::green(), m_reticleTexture);
-
-			if (m_renderHud && !m_emergencyTurbo) {
-				const Point2 hudCenter(rd->viewport().width() / 2.0f, m_hudTexture->height() * scale * 0.48f);
-				Draw::rect2D((m_hudTexture->rect2DBounds() * scale - m_hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_hudTexture);
-				m_hudFont->draw2D(rd, "1:36", hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-				m_hudFont->draw2D(rd, "86%", hudCenter + Vector2(7, -1), scale * 30, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-				m_hudFont->draw2D(rd, "2080", hudCenter + Vector2(125, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-			}
-
-			// FPS display (faster than the full stats widget)
-			if (m_renderFPS) {
-				String msg;
-
-				if (window()->settings().refreshRate > 0) {
-					msg = format("%d measured / %d requested fps",
-						iRound(renderDevice->stats().smoothFrameRate),
-						window()->settings().refreshRate);
-				}
-				else {
-					msg = format("%d fps", iRound(renderDevice->stats().smoothFrameRate));
-				}
-
-				msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
-
-				m_outputFont->draw2D(rd, msg, (Point2(30, 28) * scale).floor(), floor(20.0f * scale), Color3::yellow());
-			}
-
-			// Click to photon latency measuring corner box
-			if (measureClickPhotonLatency) {
-				Color3 cornerColor = (m_buttonUp) ? Color3::black() : Color3::white();
-				//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
-				Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.8f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
-			}
-
-			if (!dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->m_feedbackMessage.empty()) {
-				m_outputFont->draw2D(rd, dynamic_pointer_cast<Psychophysics::TargetingExperiment>(m_ex)->m_feedbackMessage.c_str(),
 					(Point2((float)window()->width() / 2 - 40, (float)window()->height() / 2 + 20) * scale).floor(), floor(20.0f * scale), Color3::yellow());
 			}
 		}

@@ -3,6 +3,11 @@
 
 namespace AbstractFPS
 {
+	void ReactionExperiment::initPsychHelper()
+	{
+
+	}
+
 	void ReactionExperiment::onInit() {
 		// Add conditions.
 	}
