@@ -6,8 +6,8 @@
 static const bool playMode = false;
 
 // Enable this to see maximum CPU/GPU rate when not limited
-// by the monitor. (true = disable software vsync)
-static const bool  unlockFramerate = true;
+// by the monitor. (true = target infinite frame rate)
+static const bool  unlockFramerate = false;
 
 // Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
 // which allows the application to submit asynchronously with vsync
@@ -660,7 +660,9 @@ int main(int argc, const char* argv[]) {
 	}
 	settings.window.fullScreen = playMode;
 	settings.window.resizable = !settings.window.fullScreen;
-	settings.window.asynchronous = unlockFramerate;
+
+    // V-sync off always
+	settings.window.asynchronous = true;
 	settings.window.caption = "NVIDIA Abstract FPS";
 	settings.window.refreshRate = -1;
 	settings.window.defaultIconFilename = "icon.png";

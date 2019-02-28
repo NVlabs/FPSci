@@ -130,10 +130,8 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
             // Transform to spherical coordinates in the plane of the arc
             const Vector3& U = currentVector;
             const Vector3& V = (destinationVector - currentVector * projection).direction();
-
-            const float newAngle = destinationAngle + angleChange;
-
-            m_frame.translation = m_orbitCenter + (cos(newAngle) * U + sin(newAngle) * V) * radius;
+            
+            m_frame.translation = m_orbitCenter + (cos(angleChange) * U + sin(angleChange) * V) * radius;
         }
     }
 }
