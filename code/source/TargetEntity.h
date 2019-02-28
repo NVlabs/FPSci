@@ -26,6 +26,7 @@ public:
         m_speed = s;    
     }
 
+    /** Destinations must be no more than 170 degrees apart to avoid ambiguity in movement direction */
     void setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter);
 
     /** For deserialization from Any / loading from file */
