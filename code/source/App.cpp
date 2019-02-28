@@ -158,10 +158,11 @@ void App::spawnRandomTarget() {
             const Point3& center = ray.origin();
             Array<Point3> destinationArray;
             destinationArray.push(target->frame().translation);
-            for (int i = 0; i < 10; ++i) {
+            for (int i = 0; i < 20; ++i) {
         		const Vector3& dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
                 destinationArray.push(center + dir * distance);
             }
+            target->setSpeed(2.0f); // m/s
             target->setDestinations(destinationArray, center);
 
 			done = true;
