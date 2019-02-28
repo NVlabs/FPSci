@@ -6,7 +6,7 @@ class TargetEntity : public VisibleEntity {
 protected:
 
     /** World-space speed in meters/second */
-    float                           m_speed = 10.0f;
+    float                           m_speed = 1.0f;
     Point3                          m_orbitCenter;
 
     /** The target will move through these points along arcs around

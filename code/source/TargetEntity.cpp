@@ -90,14 +90,15 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
     simulatePose(absoluteTime, deltaTime);
 
-    if ((deltaTime > 0) && ! m_destinationPoints.empty()) {
-        if ((m_frame.translation - m_destinationPoints[0]).length() < 0.01f) {
-            // Retire this destination. Our steps are so small and we're about to
-            // change direction, so don't bother using the rest of the time interval on
-            // the next point.
+    while ((deltaTime > 0.000001f) && ! m_destinationPoints.empty()) {
+        if ((m_frame.translation - m_destinationPoints[0]).length() < 0.001f) {
+            // Retire this destination. We are almost at the destination (linear and geodesic distances 
+            // are the same when small), and the following math will be numerically imprecise if we
+            // use such a close destination.
+            m_destinationPoints.popFront();
         } else {
-            const Point3& destinationPoint = m_destinationPoints[0];
-            const Point3& currentPoint = m_frame.translation;
+            const Point3 destinationPoint = m_destinationPoints[0];
+            const Point3 currentPoint = m_frame.translation;
 
             // Transform to directions
             const float radius = (destinationPoint - m_orbitCenter).length();
@@ -109,8 +110,22 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
             const float projection = currentVector.dot(destinationVector);
             const float destinationAngle = G3D::acos(projection);
 
-            const float angularSpeed = m_speed / (2.0f * pif() * radius);
-            const float angleChange = min(destinationAngle, angularSpeed * deltaTime);
+            // [radians/s] = [m/s] / [m/radians]
+            const float angularSpeed = m_speed / radius;
+
+            // [rad] = [rad/s] * [s] 
+            float angleChange = angularSpeed * deltaTime;
+            
+            if (angleChange > destinationAngle) {
+                // We'll reach the destination before the time step ends.
+                // Record how much time was consumed by this step.
+                deltaTime -= destinationAngle / angularSpeed;
+                angleChange = destinationAngle;
+                m_destinationPoints.popFront();
+            } else {
+                // Consumed the entire time step
+                deltaTime = 0;
+            }
 
             // Transform to spherical coordinates in the plane of the arc
             const Vector3& U = currentVector;
@@ -118,7 +133,7 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
             const float newAngle = destinationAngle + angleChange;
 
-            m_frame.translation = m_orbitCenter + cos(newAngle) * U + sin(newAngle) * V;            
+            m_frame.translation = m_orbitCenter + (cos(newAngle) * U + sin(newAngle) * V) * radius;
         }
     }
 }

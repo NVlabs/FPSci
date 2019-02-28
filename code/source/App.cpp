@@ -148,8 +148,22 @@ void App::spawnRandomTarget() {
 		scene()->intersect(ray, distance);
 
 		if ((distance > 2.0f) && (distance < finf())) {
-			spawnTarget(ray.origin() + ray.direction() * rng.uniform(2.0f, distance - 1.0f), rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
-                Color3::wheelRandom());
+            distance = rng.uniform(2.0f, distance - 1.0f);
+			const shared_ptr<TargetEntity>& target =
+                spawnTarget(ray.origin() + ray.direction() * distance, 
+                    rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
+                    Color3::wheelRandom());
+
+            // Choose some destination locations
+            const Point3& center = ray.origin();
+            Array<Point3> destinationArray;
+            destinationArray.push(target->frame().translation);
+            for (int i = 0; i < 10; ++i) {
+        		const Vector3& dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
+                destinationArray.push(center + dir * distance);
+            }
+            target->setDestinations(destinationArray, center);
+
 			done = true;
 		}
 		++tries;
