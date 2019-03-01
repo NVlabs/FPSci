@@ -42,7 +42,7 @@ namespace AbstractFPS
 		m_app->m_experimentConfig.meanWaitDuration = 0.5;
 		m_app->m_experimentConfig.taskDuration = 100000.0;
 		m_app->m_experimentConfig.minimumForeperiod = 1.5;
-		m_app->m_experimentConfig.trialCount = 3;
+		m_app->m_experimentConfig.trialCount = 20;
 		m_app->m_experimentConfig.intensities.append(0.4);
 		m_app->m_experimentConfig.intensities.append(1.0);
 
