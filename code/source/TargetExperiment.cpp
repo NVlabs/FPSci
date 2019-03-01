@@ -160,7 +160,7 @@ void TargetExperiment::updatePresentationState()
 		if (stateElapsedTime > m_app->m_experimentConfig.readyDuration)
 		{
 			m_lastMotionChangeAt = 0;
-			m_app->m_targetColor = Color3::red();
+			m_app->m_targetColor = Color3::green();
 			newState = PresentationState::task;
 		}
 	}
@@ -175,7 +175,7 @@ void TargetExperiment::updatePresentationState()
 			if (m_app->m_experimentConfig.expMode == "training") {
 				m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
 			}
-			m_app->m_targetColor = Color3::green();
+			m_app->m_targetColor = Color3::red();
 			newState = PresentationState::feedback;
 		}
 	}

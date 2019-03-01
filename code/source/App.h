@@ -188,7 +188,7 @@ public:
 		Vector2 screenSize = resolution * pixelSize;
 	} m_screenSetting;
 	enum PresentationState          m_presentationState; // which sequence are we in?
-	Color3                          m_targetColor = Color3::green();
+	Color3                          m_targetColor = Color3::red();
 	Color3                          m_reticleColor;
 	// TODO: m_targetHealth is only relevant to TargetExperiment.
 	float						    m_targetHealth; // 1 if never hit, 0 if hit. Binary for instant hit weapon, but tracking weapon will continuously reduce it.
