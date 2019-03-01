@@ -44,6 +44,9 @@ namespace AbstractFPS
 	class PsychHelper
 	{
 	public:
+		PsychHelper() {
+			srand(time(NULL));
+		}
 
 		/////////////////////////// initialization ///////////////////////////
 		// Add all the conditions you want.

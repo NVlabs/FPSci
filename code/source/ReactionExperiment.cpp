@@ -42,6 +42,7 @@ namespace AbstractFPS
 		m_app->m_experimentConfig.meanWaitDuration = 0.5;
 		m_app->m_experimentConfig.taskDuration = 100000.0;
 		m_app->m_experimentConfig.minimumForeperiod = 1.5;
+		m_app->m_experimentConfig.trialCount = 3;
 		m_app->m_experimentConfig.intensities.append(0.4);
 		m_app->m_experimentConfig.intensities.append(1.0);
 
@@ -118,7 +119,7 @@ namespace AbstractFPS
 					recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 					m_psych.processResponse(m_response); // process response.
 					if (m_app->m_experimentConfig.expMode == "training") {
-						m_feedbackMessage = String(int(m_taskExecutionTime * 1000)) + " msec";
+						m_feedbackMessage = format("%d ms", (int)(m_taskExecutionTime * 1000));
 					}
 					else {
 						m_feedbackMessage = "Success!";
@@ -146,6 +147,7 @@ namespace AbstractFPS
 				}
 				else {
 					m_feedbackMessage = "";
+					m_psych.chooseNextCondition();
 					newState = PresentationState::ready;
 				}
 			}
@@ -209,7 +211,7 @@ namespace AbstractFPS
 	{
 		// create a unique file name
 		String timeStr(genUniqueTimestamp());
-		mResultFileName = (m_app->m_experimentConfig.taskType + "/" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str(); // we may include subject name here.
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str(); // we may include subject name here.
 
 		// create the file
 		std::ofstream resultFile;
@@ -235,7 +237,7 @@ namespace AbstractFPS
 	void ReactionExperiment::recordTrialResponse()
 	{
 		// TODO: replace it with sqlite command later.
-		std::ofstream resultFile(mResultFileName);
+		std::ofstream resultFile(mResultFileName, std::ios_base::app);
 		resultFile << m_psych.mCurrentConditionIndex << ",";
 		for (auto keyval : m_psych.getParam().val)
 		{

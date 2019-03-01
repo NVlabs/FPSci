@@ -52,7 +52,6 @@ namespace AbstractFPS
 	{
 		// Choose any staircase whose progress ratio is minimum
 		float minimumProgressRatio = 1;
-		std::vector<int32_t> validIndex;
 		// Find minimum progress ratio
 		for (int32_t i = 0; i < (int32_t)mMeasurements.size(); i++)
 		{
@@ -62,6 +61,7 @@ namespace AbstractFPS
 			}
 		}
 		// Make a vector with all the measurement cells with minimum progress ratio
+		std::vector<int32_t> validIndex;
 		for (int32_t i = 0; i < (int32_t)mMeasurements.size(); i++)
 		{
 			if (mMeasurements[i].getProgressRatio() == minimumProgressRatio)

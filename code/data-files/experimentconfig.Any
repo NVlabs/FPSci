@@ -1,9 +1,9 @@
 {
-    "targetFrameRate" : 240,//5000,//360,
+    "targetFrameRate" : 60,//5000,//360,
     "settingsVersion" : 1,
     "taskType" : "reaction",//"reaction",
     "expMode" : "training",
-    "expVersion" : "Static ",
-    "appendingDescription" : "2019Feb21_LatencyTest",
+    "expVersion" : "ComplexMotion",
+    "appendingDescription" : "2019Feb28_debugging",
     "sceneName" : "eSports Simple Hallway"
 }

@@ -108,16 +108,16 @@ namespace AbstractFPS
 					perturbation = randomSign * (rand() % mPsyParam.mInitIndexRandomRange);
 				}
 				// set initial stim level
-				mCurrentIndex = mPsyParam.mInitIndex + perturbation;
-				if (mCurrentIndex < 0)
+				mCurrentStimIndex = mPsyParam.mInitIndex + perturbation;
+				if (mCurrentStimIndex < 0)
 				{
-					mCurrentIndex = 0;
+					mCurrentStimIndex = 0;
 				}
-				else if (mCurrentIndex >= (int32_t)mPsyParam.mStimLevels.size())
+				else if (mCurrentStimIndex >= (int32_t)mPsyParam.mStimLevels.size())
 				{
-					mCurrentIndex = (int32_t)mPsyParam.mStimLevels.size() - 1;
+					mCurrentStimIndex = (int32_t)mPsyParam.mStimLevels.size() - 1;
 				}
-				mCurrentLevel = mPsyParam.mStimLevels[mCurrentIndex];
+				mCurrentLevel = mPsyParam.mStimLevels[mCurrentStimIndex];
 				// Initialize all other necessary values
 				mIndexStepSize = mPsyParam.mInitIndexStepSize;
 				mUpCount = 0;
@@ -265,10 +265,10 @@ namespace AbstractFPS
 						}
 					}
 					mCurrentDirection = 1;
-					mCurrentIndex = mCurrentIndex + mCurrentDirection * mIndexStepSize; // move one step up.
-					if (mCurrentIndex >= (int32_t)mPsyParam.mStimLevels.size())
+					mCurrentStimIndex = mCurrentStimIndex + mCurrentDirection * mIndexStepSize; // move one step up.
+					if (mCurrentStimIndex >= (int32_t)mPsyParam.mStimLevels.size())
 					{
-						mCurrentIndex = (int32_t)mPsyParam.mStimLevels.size() - 1;
+						mCurrentStimIndex = (int32_t)mPsyParam.mStimLevels.size() - 1;
 						mLimitHitCount++;
 						if (mLimitHitCount >= mPsyParam.mMaxLimitHitCount)
 						{
@@ -282,7 +282,7 @@ namespace AbstractFPS
 					}
 					mUpCount = 0; // reset up count
 				}
-				mCurrentLevel = mPsyParam.mStimLevels[mCurrentIndex];
+				mCurrentLevel = mPsyParam.mStimLevels[mCurrentStimIndex];
 				// TODO: How to print log messages?
 				//std::cout << "Processed a response that was incorrect. Reversal count is: " << mReversalCount << "\n";
 			}
@@ -302,10 +302,10 @@ namespace AbstractFPS
 						}
 					}
 					mCurrentDirection = -1;
-					mCurrentIndex = mCurrentIndex + mCurrentDirection * mIndexStepSize; // move one step down.
-					if (mCurrentIndex < 0)
+					mCurrentStimIndex = mCurrentStimIndex + mCurrentDirection * mIndexStepSize; // move one step down.
+					if (mCurrentStimIndex < 0)
 					{
-						mCurrentIndex = 0;
+						mCurrentStimIndex = 0;
 						mLimitHitCount++;
 						if (mLimitHitCount >= mPsyParam.mMaxLimitHitCount)
 						{
@@ -319,7 +319,7 @@ namespace AbstractFPS
 					}
 					mDownCount = 0; // reset down count
 				}
-				mCurrentLevel = mPsyParam.mStimLevels[mCurrentIndex];
+				mCurrentLevel = mPsyParam.mStimLevels[mCurrentStimIndex];
 				// TODO: How to print log messages?
 				//std::cout << "Processed a response that was correct. Reversal count is: " << mReversalCount << "\n";
 			}
@@ -331,7 +331,7 @@ namespace AbstractFPS
 			float minimumProgressRatio = 1;
 			for (int32_t i = 0; i < (int32_t)mTrialCounts.size(); i++)
 			{
-				if (mPsyParam.mStimLevels[i] == mCurrentLevel)
+				if (i == mCurrentStimIndex)
 				{
 					mTrialCounts[i]++;
 				}
@@ -352,8 +352,8 @@ namespace AbstractFPS
 				}
 			}
 			// Now choose any one from validIndex
-			int32_t chosenIndex = validIndex[rand() % (int32_t)validIndex.size()];
-			mCurrentLevel = mPsyParam.mStimLevels[chosenIndex];
+			mCurrentStimIndex = validIndex[rand() % (int32_t)validIndex.size()];
+			mCurrentLevel = mPsyParam.mStimLevels[mCurrentStimIndex];
 			// TODO: How to print log messages?
 			//std::cout << "Next chosen MCS stim level is: " << mCurrentLevel << '\n';
 		}

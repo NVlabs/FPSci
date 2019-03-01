@@ -24,8 +24,8 @@ namespace AbstractFPS
 		{
 			// insert all the values potentially useful for analysis.
 			Param p;
-			p.add("initialDisplacementX", d.x);
-			p.add("initialDisplacementY", d.y);
+			p.add("initialDisplacementYaw", d.y);
+			p.add("initialDisplacementRoll", d.x);
 			p.add("targetFrameRate", m_app->m_experimentConfig.targetFrameRate);
 			p.add("visualSize", m_app->m_experimentConfig.visualSize);
 			p.add("motionChangePeriod", m_app->m_experimentConfig.motionChangePeriod);
@@ -96,8 +96,8 @@ namespace AbstractFPS
 
 		// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 		if (m_app->m_presentationState == PresentationState::task) {
-			m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(m_psych.getParam().val["initialDisplacementX"])).approxCoordinateFrame();
-			m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(m_psych.getParam().val["initialDisplacementY"])).approxCoordinateFrame();
+			m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(m_psych.getParam().val["initialDisplacementRoll"])).approxCoordinateFrame();
+			m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(m_psych.getParam().val["initialDisplacementYaw"])).approxCoordinateFrame();
 
 			// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
 			float randomAngleDegree = G3D::Random::common().uniform() * 360;
@@ -146,7 +146,7 @@ namespace AbstractFPS
 				recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 				m_psych.processResponse(m_response); // process response.
 				if (m_app->m_experimentConfig.expMode == "training") {
-					m_feedbackMessage = String(m_taskExecutionTime) + " ms!";
+					m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
 				}
 				newState = PresentationState::feedback;
 			}
@@ -155,11 +155,12 @@ namespace AbstractFPS
 		{
 			if ((stateElapsedTime > m_app->m_experimentConfig.feedbackDuration) && (m_app->m_targetHealth <= 0))
 			{
-				m_feedbackMessage = "";
 				if (m_psych.isComplete()) {
+					m_feedbackMessage = "Experiment complete. Thanks!";
 					newState = PresentationState::complete;
 				}
 				else {
+					m_feedbackMessage = "";
 					m_psych.chooseNextCondition();
 					newState = PresentationState::ready;
 				}
@@ -305,7 +306,7 @@ namespace AbstractFPS
 	{
 		// create a unique file name
 		String timeStr(genUniqueTimestamp());
-		mResultFileName = (m_app->m_experimentConfig.taskType + "/" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str(); // we may include subject name here.
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str(); // we may include subject name here.
 																																
 		// create the file
 		std::ofstream resultFile;
@@ -331,7 +332,7 @@ namespace AbstractFPS
 	void TargetExperiment::recordTrialResponse()
 	{
 		// TODO: replace it with sqlite command later.
-		std::ofstream resultFile(mResultFileName);
+		std::ofstream resultFile(mResultFileName, std::ios_base::app);
 		resultFile << m_psych.mCurrentConditionIndex << ",";
 		for (auto keyval : m_psych.getParam().val)
 		{
@@ -342,7 +343,7 @@ namespace AbstractFPS
 			resultFile << keyval.second << ",";
 		}
 		//resultFile << m_psych.getStimLevel() << ","; // normally we would need this but not now.
-		resultFile << m_psych.getStimLevel() << "," << m_response << "," << m_taskExecutionTime << std::endl;
+		resultFile << m_response << "," << m_taskExecutionTime << std::endl;
 		resultFile.close();
 	}
 
