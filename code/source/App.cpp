@@ -65,6 +65,9 @@ void App::onInit() {
 		dt = 1.0f / float(window()->settings().refreshRate);
 	}
 
+	// apply frame lag
+	setDisplayLatencyFrames(m_experimentConfig.targetFrameLag);
+
 	setFrameDuration(dt, GApp::REAL_TIME);
 	setSubmitToDisplayMode(
 		//SubmitToDisplayMode::MINIMIZE_LATENCY);

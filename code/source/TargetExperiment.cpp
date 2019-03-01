@@ -27,6 +27,7 @@ namespace AbstractFPS
 			p.add("initialDisplacementYaw", d.y);
 			p.add("initialDisplacementRoll", d.x);
 			p.add("targetFrameRate", m_app->m_experimentConfig.targetFrameRate);
+			p.add("targetFrameLag", m_app->m_experimentConfig.targetFrameLag);
 			p.add("visualSize", m_app->m_experimentConfig.visualSize);
 			p.add("motionChangePeriod", m_app->m_experimentConfig.motionChangePeriod);
 			p.add("speed", m_app->m_experimentConfig.speed);
@@ -80,9 +81,6 @@ namespace AbstractFPS
 
 		// create the result file based on experimental configuration.
 		createResultFile();
-
-		// test display lag.
-		m_app->setDisplayLatencyFrames(20);
 	}
 
 	void TargetExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)

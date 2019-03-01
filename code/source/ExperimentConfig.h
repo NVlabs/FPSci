@@ -49,6 +49,7 @@ public:
 class ExperimentConfig {
 public:
 	float	targetFrameRate; // hz
+	int     targetFrameLag; // integer
 	String	expMode; // training or real
 	String	taskType; // reaction or target
 	String  expVersion;
@@ -85,6 +86,7 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("targetFrameRate", targetFrameRate);
+			reader.getIfPresent("targetFrameLag", targetFrameLag);
 			reader.getIfPresent("expMode", expMode);
 			reader.getIfPresent("taskType", taskType);
 			reader.getIfPresent("expVersion", expVersion);

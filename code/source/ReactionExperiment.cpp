@@ -26,6 +26,7 @@ namespace AbstractFPS
 			Param p;
 			p.add("intensity", i);
 			p.add("targetFrameRate", m_app->m_experimentConfig.targetFrameRate);
+			p.add("targetFrameLag", m_app->m_experimentConfig.targetFrameLag);
 			// soon we need to add frame delay as well.
 			m_psych.addCondition(p, psychParam);
 		}
