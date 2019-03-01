@@ -45,7 +45,7 @@ namespace AbstractFPS
 	{
 	public:
 		PsychHelper() {
-			srand(time(NULL));
+			srand((unsigned int)time(NULL));
 		}
 
 		/////////////////////////// initialization ///////////////////////////

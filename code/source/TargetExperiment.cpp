@@ -27,7 +27,7 @@ namespace AbstractFPS
 			p.add("initialDisplacementYaw", d.y);
 			p.add("initialDisplacementRoll", d.x);
 			p.add("targetFrameRate", m_app->m_experimentConfig.targetFrameRate);
-			p.add("targetFrameLag", m_app->m_experimentConfig.targetFrameLag);
+			p.add("targetFrameLag", (float)m_app->m_experimentConfig.targetFrameLag);
 			p.add("visualSize", m_app->m_experimentConfig.visualSize);
 			p.add("motionChangePeriod", m_app->m_experimentConfig.motionChangePeriod);
 			p.add("speed", m_app->m_experimentConfig.speed);
@@ -52,7 +52,7 @@ namespace AbstractFPS
 		m_app->m_experimentConfig.taskDuration = 100000.0;
 		m_app->m_experimentConfig.speed = 0.0;
 		m_app->m_experimentConfig.trialCount = 10;
-		m_app->m_experimentConfig.visualSize = 0.02;
+		m_app->m_experimentConfig.visualSize = 0.02f;
 		m_app->m_experimentConfig.initialDisplacements.append(Point2(0.0f, -15.0f));
 		m_app->m_experimentConfig.initialDisplacements.append(Point2(0.0f, -10.0f));
 		m_app->m_experimentConfig.initialDisplacements.append(Point2(0.0f, -5.0f));
@@ -118,7 +118,7 @@ namespace AbstractFPS
 		// This updates presentation state and also deals with data collection when each trial ends.
 		PresentationState currentState = m_app->m_presentationState;
 		PresentationState newState;
-		double stateElapsedTime = (double)m_app->timer.getTime();
+		float stateElapsedTime = m_app->timer.getTime();
 
 		newState = currentState;
 

@@ -26,7 +26,7 @@ namespace AbstractFPS
 			Param p;
 			p.add("intensity", i);
 			p.add("targetFrameRate", m_app->m_experimentConfig.targetFrameRate);
-			p.add("targetFrameLag", m_app->m_experimentConfig.targetFrameLag);
+			p.add("targetFrameLag", (float)m_app->m_experimentConfig.targetFrameLag);
 			// soon we need to add frame delay as well.
 			m_psych.addCondition(p, psychParam);
 		}
@@ -44,8 +44,8 @@ namespace AbstractFPS
 		m_app->m_experimentConfig.taskDuration = 100000.0;
 		m_app->m_experimentConfig.minimumForeperiod = 1.5;
 		m_app->m_experimentConfig.trialCount = 20;
-		m_app->m_experimentConfig.intensities.append(0.4);
-		m_app->m_experimentConfig.intensities.append(1.0);
+		m_app->m_experimentConfig.intensities.append(0.4f);
+		m_app->m_experimentConfig.intensities.append(1.0f);
 
 		if (m_app->m_experimentConfig.expMode == "training") { // shorter experiment if in training
 			// NOTE: maybe not a good idea with dedicated subject.
@@ -76,7 +76,7 @@ namespace AbstractFPS
 		// This updates presentation state and also deals with data collection when each trial ends.
 		PresentationState currentState = m_app->m_presentationState;
 		PresentationState newState;
-		double stateElapsedTime = (double)m_app->timer.getTime();
+		float stateElapsedTime = m_app->timer.getTime();
 
 		if (currentState == PresentationState::initial)
 		{
