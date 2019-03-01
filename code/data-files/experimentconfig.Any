@@ -1,10 +1,17 @@
 {
-    "targetFrameRate" : 360,//5000,//360,
     "settingsVersion" : 1,
-    "taskType" : "target",//"target","reaction",
+    "taskType" : "reaction",//"target","reaction",
     "expMode" : "training",
     "expVersion" : "Static",
-    "appendingDescription" : "2019Feb28_debugging",
+    "appendingDescription" : "2019Mar1_Pilot",
     "sceneName" : "eSports Simple Hallway",
-    "targetFrameLag" : 0 // integer
+    "targetFrameRate" : 60,
+    "targetFrameLag" : 0
+    //"targetFrameRate" : 120,
+    //"targetFrameLag" : 4
+    //"targetFrameRate" : 240,
+    //"targetFrameLag" : 11
+    //"targetFrameRate" : 360,
+    //"targetFrameLag" : 18
 }
+

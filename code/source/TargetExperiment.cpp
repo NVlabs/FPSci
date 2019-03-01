@@ -72,7 +72,7 @@ void TargetExperiment::onInit() {
 
 	if (m_app->m_experimentConfig.expMode == "training") { // shorter experiment if in training
 		// NOTE: maybe not a good idea with dedicated subject.
-		m_app->m_experimentConfig.trialCount = m_app->m_experimentConfig.trialCount / 3;
+		m_app->m_experimentConfig.trialCount = m_app->m_experimentConfig.trialCount;
 	}
 
 	// initialize PsychHelper based on the configuration.

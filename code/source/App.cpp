@@ -73,7 +73,7 @@ void App::onInit() {
 		//SubmitToDisplayMode::BALANCE);
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
 
-	showRenderingStats = true;
+	showRenderingStats = false;
 	makeGUI();
 	developerWindow->videoRecordDialog->setCaptureGui(true);
 	m_outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
