@@ -80,6 +80,9 @@ namespace AbstractFPS
 
 		// create the result file based on experimental configuration.
 		createResultFile();
+
+		// test display lag.
+		m_app->setDisplayLatencyFrames(20);
 	}
 
 	void TargetExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)

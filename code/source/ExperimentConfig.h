@@ -50,7 +50,7 @@ class ExperimentConfig {
 public:
 	float	targetFrameRate; // hz
 	String	expMode; // training or real
-	String	taskType; // reaction or targeting
+	String	taskType; // reaction or target
 	String  expVersion;
 	String	appendingDescription;
 	int     trialCount;

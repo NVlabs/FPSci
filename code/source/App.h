@@ -190,7 +190,7 @@ public:
 	enum PresentationState          m_presentationState; // which sequence are we in?
 	Color3                          m_targetColor;
 	Color3                          m_reticleColor;
-	// TODO: m_targetHealth is only relevant to TargetingExperiment.
+	// TODO: m_targetHealth is only relevant to TargetExperiment.
 	float						    m_targetHealth; // 1 if never hit, 0 if hit. Binary for instant hit weapon, but tracking weapon will continuously reduce it.
 	bool                            m_isTrackingOn; // true if down AND weapon type is tracking, false otherwise.
 

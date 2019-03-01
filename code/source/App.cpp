@@ -28,7 +28,7 @@ static const bool measureClickPhotonLatency = true;
 //static const float targetFrameRate = 360; // hz
 //const int numFrameDelay = 0;
 //static const std::string expMode = "training"; // training or real
-//static const std::string taskType = "reaction"; // reaction or targeting
+//static const std::string taskType = "reaction"; // reaction or target
 //static const std::string appendingDescription = "ver1";
 //========================================================================
 
@@ -112,7 +112,7 @@ void App::onInit() {
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = AbstractFPS::ReactionExperiment::create(this);
 	}
-	else if (m_experimentConfig.taskType == "targeting") {
+	else if (m_experimentConfig.taskType == "target") {
 		m_ex = AbstractFPS::TargetExperiment::create(this);
 	}
 

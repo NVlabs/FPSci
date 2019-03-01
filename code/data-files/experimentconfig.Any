@@ -1,7 +1,7 @@
 {
-    "targetFrameRate" : 60,//5000,//360,
+    "targetFrameRate" : 360,//5000,//360,
     "settingsVersion" : 1,
-    "taskType" : "reaction",//"reaction",
+    "taskType" : "target",//"target","reaction",
     "expMode" : "training",
     "expVersion" : "ComplexMotion",
     "appendingDescription" : "2019Feb28_debugging",
