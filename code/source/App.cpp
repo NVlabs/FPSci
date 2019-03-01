@@ -341,6 +341,17 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
 	GApp::onGraphics3D(rd, surface);
 
+	rd->push2D(); {
+		const float scale = rd->viewport().width() / 1920.0f;
+
+		// Click to photon latency measuring corner box
+		if (measureClickPhotonLatency) {
+			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
+			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
+			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
+		}
+	} rd->pop2D();
+
 	if (m_displayLagFrames > 0) {
 		// Display the delayed frame
 		rd->popState();
@@ -559,12 +570,12 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			m_outputFont->draw2D(rd, msg, (Point2(30, 28) * scale).floor(), floor(20.0f * scale), Color3::yellow());
 		}
 
-		// Click to photon latency measuring corner box
-		if (measureClickPhotonLatency) {
-			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
-			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
-			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
-		}
+		//// Click to photon latency measuring corner box
+		//if (measureClickPhotonLatency) {
+		//	Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
+		//	//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
+		//	Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
+		//}
 	} rd->pop2D();
 
 	//MIght not need this on the reaction trial

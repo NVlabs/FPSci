@@ -1,10 +1,10 @@
 {
-    "targetFrameRate" : 240,//5000,//360,
+    "targetFrameRate" : 30,//5000,//360,
     "settingsVersion" : 1,
     "taskType" : "target",//"target","reaction",
     "expMode" : "training",
-    "expVersion" : "ComplexMotion",
+    "expVersion" : "Static",
     "appendingDescription" : "2019Feb28_debugging",
     "sceneName" : "eSports Simple Hallway",
-    "targetFrameLag" : 10 // integer
+    "targetFrameLag" : 30 // integer
 }
