@@ -5,44 +5,41 @@
 
 class App;
 
-namespace AbstractFPS
+class ReactionExperiment : public Experiment
 {
-	class ReactionExperiment : public Experiment
-	{
-	protected:
-		bool m_reacted = false;
+protected:
+	bool m_reacted = false;
 
-		ReactionExperiment(App* app) : Experiment(app) {
-		}
+	ReactionExperiment(App* app) : Experiment(app) {
+	}
 
-	public:
-		static shared_ptr<ReactionExperiment> create(App* app) {
-			return createShared<ReactionExperiment>(app);
-		}
+public:
+	static shared_ptr<ReactionExperiment> create(App* app) {
+		return createShared<ReactionExperiment>(app);
+	}
 
-		/** Variables specific to this experiment */
-		Color3 m_stimColor = Color3::white();
+	/** Variables specific to this experiment */
+	Color3 m_stimColor = Color3::white();
 
-		/** Functions specific to this experiment */
-		void updatePresentationState(RealTime framePeriod);
+	/** Functions specific to this experiment */
+	void updatePresentationState(RealTime framePeriod);
 
-		/** To be replaced with call back functions */
-		void onInit();
+	/** To be replaced with call back functions */
+	void onInit();
 
-		void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface);
+	void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface);
 
-		void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
+	void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
 
-		void onUserInput(UserInput * ui);
+	void onUserInput(UserInput * ui);
 
-		void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D);
+	void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D);
 
-		void createResultFile();
+	void createResultFile();
 
-		void recordTrialResponse();
+	void recordTrialResponse();
 
-		void closeResultFile();
+	void closeResultFile();
 
-		void initPsychHelper();
-	};
-}
+	void initPsychHelper();
+};

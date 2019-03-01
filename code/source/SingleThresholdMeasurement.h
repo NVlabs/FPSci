@@ -32,94 +32,90 @@
 #include <map>
 #include <stdint.h>
 
-namespace AbstractFPS
+/** Psychophysics method types
+*/
+enum PsychophysicsMethod { DiscreteStaircase, BucketStaircase, MethodOfConstantStimuli };
+
+/** Struct for experimental design parameters: Contains all parameters for both
+	Staircase and Method of Constant Stimuli.
+*/
+struct PsychophysicsDesignParameter
 {
-	/** Psychophysics method types
+	PsychophysicsMethod mMeasuringMethod; // 0 = General staircase, 1 = Staircase with pre-determined stimLevels, 2 = Method of Constant Stimuli
+	bool mIsDefault;
+	float mInitLevel, mInitLevelRandomRange, mMinLevel, mMaxLevel, mInitLevelStepSize, mMinLevelStepSize; // for SC
+	int32_t mNumUp, mNumDown, mMaxReversals, mMaxTotalTrialCount, mMaxLimitHitCount; // for SC
+	int32_t mInitIndex, mInitIndexRandomRange, mInitIndexStepSize; // SC with pre-determined stimLevels. Some values are self-obvious (minIndexLevel = 0, maxIndexLevel = stimLevels.size(), minIndexStepSize = 1)
+	std::vector<float> mStimLevels; // for SC with pre-determined stimLevels or Method of Constant Stimuli
+	std::vector<int32_t> mMaxTrialCounts; // for Method of Constant Stimuli
+};
+
+/** Struct for condition parameter or experiment description
+*/
+struct Param
+{
+	std::map<std::string, float> val;
+	std::map<std::string, std::string> str;
+	// TODO: check the following.
+	Param() { val = std::map<std::string, float>(); str = std::map<std::string, std::string>(); }
+	void add(std::string s, float f) {
+		val.insert(std::pair<std::string, float>(s, f));
+	}
+	void add(std::string str_key, std::string str_val) {
+		str.insert(std::pair<std::string, std::string>(str_key, str_val));
+	}
+};
+
+/** Response struct
+*/
+struct Response
+{
+	float mStimLevel;
+	int32_t mResponse; // 1 = signal level too high, 0 = signal level too low
+	int32_t mReversalCount; // for debugging
+};
+
+/** Class to abstract single threshold measurement
+*/
+class SingleThresholdMeasurement
+{
+public:
+
+	/** Initialize measurement
 	*/
-	enum PsychophysicsMethod { DiscreteStaircase, BucketStaircase, MethodOfConstantStimuli };
+	void initMeasurement(Param initConditionParam, PsychophysicsDesignParameter initExpParam); // return true if successfully initialized, false if not
 
-	/** Struct for experimental design parameters: Contains all parameters for both
-		Staircase and Method of Constant Stimuli.
+	/** Get current level
 	*/
-	struct PsychophysicsDesignParameter
-	{
-		PsychophysicsMethod mMeasuringMethod; // 0 = General staircase, 1 = Staircase with pre-determined stimLevels, 2 = Method of Constant Stimuli
-		bool mIsDefault;
-		float mInitLevel, mInitLevelRandomRange, mMinLevel, mMaxLevel, mInitLevelStepSize, mMinLevelStepSize; // for SC
-		int32_t mNumUp, mNumDown, mMaxReversals, mMaxTotalTrialCount, mMaxLimitHitCount; // for SC
-		int32_t mInitIndex, mInitIndexRandomRange, mInitIndexStepSize; // SC with pre-determined stimLevels. Some values are self-obvious (minIndexLevel = 0, maxIndexLevel = stimLevels.size(), minIndexStepSize = 1)
-		std::vector<float> mStimLevels; // for SC with pre-determined stimLevels or Method of Constant Stimuli
-		std::vector<int32_t> mMaxTrialCounts; // for Method of Constant Stimuli
-	};
+	float getCurrentLevel();
 
-	/** Struct for condition parameter or experiment description
+	/** Get current condition parameter
 	*/
-	struct Param
-	{
-		std::map<std::string, float> val;
-		std::map<std::string, std::string> str;
-		// TODO: check the following.
-		Param() { val = std::map<std::string, float>(); str = std::map<std::string, std::string>(); }
-		void add(std::string s, float f) {
-			val.insert(std::pair<std::string, float>(s, f));
-		}
-		void add(std::string str_key, std::string str_val) {
-			str.insert(std::pair<std::string, std::string>(str_key, str_val));
-		}
-	};
+	Param getParam();
 
-	/** Response struct
+	/** Process response
+		\param[in] response response to process
 	*/
-	struct Response
-	{
-		float mStimLevel;
-		int32_t mResponse; // 1 = signal level too high, 0 = signal level too low
-		int32_t mReversalCount; // for debugging
-	};
+	void processResponse(int32_t response);
 
-	/** Class to abstract single threshold measurement
+	/** Get progress ratio
 	*/
-	class SingleThresholdMeasurement
-	{
-	public:
+	float getProgressRatio();
 
-		/** Initialize measurement
-		*/
-		void initMeasurement(Param initConditionParam, PsychophysicsDesignParameter initExpParam); // return true if successfully initialized, false if not
+	/** Checke whether measurement is complete
+	*/
+	bool isComplete();
 
-		/** Get current level
-		*/
-		float getCurrentLevel();
+	PsychophysicsDesignParameter mPsyParam;
+	std::vector<Response> mResponses;
+	float mCurrentLevel; // universal for both general SC and MCS
+	float mLevelStepSize; // for general SC only
+	int32_t mCurrentStimIndex, mIndexStepSize; // for SC with pre-determined stimulus levels
+	int32_t mUpCount, mDownCount, mCurrentDirection, mReversalCount, mLimitHitCount; // for SC only
+	std::vector<int32_t> mTrialCounts; // for MCS only
+										// description of condition for the current measurement
+	Param mParam;
 
-		/** Get current condition parameter
-		*/
-		Param getParam();
+	bool mIsInitialized = false;
+};
 
-		/** Process response
-			\param[in] response response to process
-		*/
-		void processResponse(int32_t response);
-
-		/** Get progress ratio
-		*/
-		float getProgressRatio();
-
-		/** Checke whether measurement is complete
-		*/
-		bool isComplete();
-
-		PsychophysicsDesignParameter mPsyParam;
-		std::vector<Response> mResponses;
-		float mCurrentLevel; // universal for both general SC and MCS
-		float mLevelStepSize; // for general SC only
-		int32_t mCurrentStimIndex, mIndexStepSize; // for SC with pre-determined stimulus levels
-		int32_t mUpCount, mDownCount, mCurrentDirection, mReversalCount, mLimitHitCount; // for SC only
-		std::vector<int32_t> mTrialCounts; // for MCS only
-											// description of condition for the current measurement
-		Param mParam;
-
-		bool mIsInitialized = false;
-	};
-
-
-}

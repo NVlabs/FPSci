@@ -5,41 +5,40 @@
 
 class App;
 
-namespace AbstractFPS
+class TargetExperiment : public Experiment
 {
-	class TargetExperiment : public Experiment
-	{
-	protected:
-		float m_lastMotionChangeAt;
+protected:
+	float m_lastMotionChangeAt;
 
-		TargetExperiment(App* app) : Experiment(app) {
-		}
+	TargetExperiment(App* app) : Experiment(app) {
+	}
 
-	public:
-		static shared_ptr<TargetExperiment> create(App* app) {
-			return createShared<TargetExperiment>(app);
-		}
+public:
+	static shared_ptr<TargetExperiment> create(App* app) {
+		return createShared<TargetExperiment>(app);
+	}
 
-		void initTargetAnimation();
+	/**creates a new target with randomized motion path and gives it to the app */
+	void createNewTarget();
+	void initTargetAnimation();
 
-		void updatePresentationState();
+	void updatePresentationState();
 
-		void onInit();
+	void onInit();
 
-		void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface);
+	void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface);
 
-		void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
+	void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
 
-		void onUserInput(UserInput * ui);
+	void onUserInput(UserInput * ui);
 
-		void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D);
+	void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D);
 
-		void createResultFile();
+	void createResultFile();
 
-		void recordTrialResponse();
+	void recordTrialResponse();
 
-		void closeResultFile();
+	void closeResultFile();
 
-		void initPsychHelper();
-	};
-}
+	void initPsychHelper();
+};

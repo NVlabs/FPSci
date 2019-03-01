@@ -125,7 +125,7 @@ public:
 	Timer timer;
 
 	/** Pointer to Experiment class */
-	shared_ptr<AbstractFPS::Experiment> m_ex;
+	shared_ptr<Experiment> m_ex;
 
 	/** To control target motion */
 	CFrame                          m_motionFrame; // object at 10 m away in -z direction in this coordinate frame

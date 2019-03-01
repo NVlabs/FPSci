@@ -55,6 +55,9 @@ void App::onInit() {
 	logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
 		m_experimentConfig.targetFrameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
 
+	// apply frame lag
+	setDisplayLatencyFrames(m_experimentConfig.targetFrameLag);
+
 	float dt = 0;
 	if (unlockFramerate) {
 		// Set a maximum *finite* frame rate
@@ -64,10 +67,6 @@ void App::onInit() {
 	} else {
 		dt = 1.0f / float(window()->settings().refreshRate);
 	}
-
-	// apply frame lag
-	setDisplayLatencyFrames(m_experimentConfig.targetFrameLag);
-
 	setFrameDuration(dt, GApp::REAL_TIME);
 	setSubmitToDisplayMode(
 		//SubmitToDisplayMode::MINIMIZE_LATENCY);
@@ -113,10 +112,10 @@ void App::onInit() {
 
 	// Initialize the experiment.
 	if (m_experimentConfig.taskType == "reaction") {
-		m_ex = AbstractFPS::ReactionExperiment::create(this);
+		m_ex = ReactionExperiment::create(this);
 	}
 	else if (m_experimentConfig.taskType == "target") {
-		m_ex = AbstractFPS::TargetExperiment::create(this);
+		m_ex = TargetExperiment::create(this);
 	}
 
 	// TODO: Remove the following by invoking a call back.

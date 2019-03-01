@@ -37,97 +37,94 @@ class App;
 // utility function for generating a unique timestamp.
 std::string genUniqueTimestamp();
 
-namespace AbstractFPS
+/** A class representing a psychophysical experiment
+*/
+class PsychHelper
 {
-	/** A class representing a psychophysical experiment
+public:
+	PsychHelper() {
+		srand((unsigned int)time(NULL));
+	}
+
+	/////////////////////////// initialization ///////////////////////////
+	// Add all the conditions you want.
+	//////////////////////////////////////////////////////////////////////
+
+	/** Add condition
+		\param[in] newConditionParam New condition
+		\param[in] newExpParam New experiment design parameter
 	*/
-	class PsychHelper
-	{
-	public:
-		PsychHelper() {
-			srand((unsigned int)time(NULL));
-		}
+	void addCondition(Param newConditionParam, PsychophysicsDesignParameter newExpParam);
 
-		/////////////////////////// initialization ///////////////////////////
-		// Add all the conditions you want.
-		//////////////////////////////////////////////////////////////////////
+	/** Pick next condition
+	*/
+	void chooseNextCondition();
 
-		/** Add condition
-			\param[in] newConditionParam New condition
-			\param[in] newExpParam New experiment design parameter
-		*/
-		void addCondition(Param newConditionParam, PsychophysicsDesignParameter newExpParam);
+	/** Get current condtion parameter
+	*/
+	Param getParam();
 
-		/** Pick next condition
-		*/
-		void chooseNextCondition();
+	/** Get stimulus level for current trial
+	*/
+	float getStimLevel();
 
-		/** Get current condtion parameter
-		*/
-		Param getParam();
+	/** Process user response and record it in the result file.
+		\param[in] response Integer indicating user response
+	*/
+	void processResponse(int32_t response);
 
-		/** Get stimulus level for current trial
-		*/
-		float getStimLevel();
+	/** Check whether experiment is complete
+	*/
+	bool isComplete();
 
-		/** Process user response and record it in the result file.
-			\param[in] response Integer indicating user response
-		*/
-		void processResponse(int32_t response);
+	/** Reset the experiment state
+	*/
+	void clear();
 
-		/** Check whether experiment is complete
-		*/
-		bool isComplete();
+	std::vector<SingleThresholdMeasurement> mMeasurements;
+	int32_t mCurrentConditionIndex;
+	int32_t mTrialCount = 0;
 
-		/** Reset the experiment state
-		*/
-		void clear();
+	/** Description of an experiment: Any information that could be useful
+		in future, in case an experiment grows while piloting or when
+		between-experiment analysis becomes necessary later.
+	*/
+	Param mExpDesc;
 
-		std::vector<SingleThresholdMeasurement> mMeasurements;
-		int32_t mCurrentConditionIndex;
-		int32_t mTrialCount = 0;
+private:
+};
 
-		/** Description of an experiment: Any information that could be useful
-			in future, in case an experiment grows while piloting or when
-			between-experiment analysis becomes necessary later.
-		*/
-		Param mExpDesc;
+class Experiment : public ReferenceCountedObject {
+//class Experiment {
+protected:
+	float m_taskExecutionTime;
+	int m_response;
 
-	private:
-	};
+	String m_feedbackMessage;
 
-	class Experiment : public ReferenceCountedObject {
-	//class Experiment {
-	protected:
-		float m_taskExecutionTime;
-		int m_response;
+	Experiment(App* app) :m_app(app) {};
 
-		String m_feedbackMessage;
+public:
 
-		Experiment(App* app) :m_app(app) {};
+	PsychHelper m_psych;
 
-	public:
+	//Experiment() : ReferenceCountedObject() {
+	//}
 
-		PsychHelper m_psych;
+	virtual void onInit() = 0;
+	virtual void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface) = 0;
+	virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) = 0;
+	virtual void onUserInput(UserInput * ui) = 0;
+	virtual void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D) = 0;
 
-		//Experiment() : ReferenceCountedObject() {
-		//}
+	/** result recording */
+	virtual void createResultFile() = 0;
+	virtual void recordTrialResponse() = 0;
+	virtual void closeResultFile() = 0;
 
-		virtual void onInit() = 0;
-		virtual void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface) = 0;
-		virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) = 0;
-		virtual void onUserInput(UserInput * ui) = 0;
-		virtual void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D) = 0;
+	/** PsychHelper-related */
+	virtual void initPsychHelper() = 0;
 
-		/** result recording */
-		virtual void createResultFile() = 0;
-		virtual void recordTrialResponse() = 0;
-		virtual void closeResultFile() = 0;
-
-		/** PsychHelper-related */
-		virtual void initPsychHelper() = 0;
-
-		std::string mResultFileName;
-		App* m_app;
-	};
-}
+	std::string mResultFileName;
+	App* m_app;
+};
