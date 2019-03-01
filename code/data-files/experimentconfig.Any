@@ -1,7 +1,7 @@
 {
     "settingsVersion" : 1,
     "taskType" : "reaction",//"target","reaction",
-    "expMode" : "training",
+    "expMode" : "real",
     "expVersion" : "Static",
     "appendingDescription" : "2019Mar1_Pilot",
     "sceneName" : "eSports Simple Hallway",

@@ -301,7 +301,12 @@ void TargetExperiment::createResultFile()
 {
 	// create a unique file name
 	String timeStr(genUniqueTimestamp());
-	mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str(); // we may include subject name here.
+	if (m_app->m_experimentConfig.expMode == "training") {
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.expMode + "_" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str(); // we may include subject name here.
+	}
+	else {
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str(); // we may include subject name here.
+	}
 																																
 	// create the file
 	std::ofstream resultFile;
