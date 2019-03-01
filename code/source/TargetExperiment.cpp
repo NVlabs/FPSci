@@ -160,6 +160,7 @@ void TargetExperiment::updatePresentationState()
 		if (stateElapsedTime > m_app->m_experimentConfig.readyDuration)
 		{
 			m_lastMotionChangeAt = 0;
+			m_app->m_targetColor = Color3::red();
 			newState = PresentationState::task;
 		}
 	}
@@ -174,6 +175,7 @@ void TargetExperiment::updatePresentationState()
 			if (m_app->m_experimentConfig.expMode == "training") {
 				m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
 			}
+			m_app->m_targetColor = Color3::green();
 			newState = PresentationState::feedback;
 		}
 	}
@@ -247,49 +249,14 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 
 	}
 
-	// 4. Update tunnel and target colors
-	if (m_app->m_presentationState == PresentationState::ready)
-	{
-		if (m_app->m_targetHealth > 0)
-		{
-			m_app->m_targetColor = Color3::red().pow(2.0f);
-		}
-		else
-		{
-			m_app->m_targetColor = Color3::green().pow(2.0f);
-			// If the target is dead, empty the projectiles
-			m_app->m_projectileArray.fastClear();
-		}
-	}
-	else if (m_app->m_presentationState == PresentationState::task)
-	{
-		m_app->m_targetColor = m_app->m_targetHealth * Color3::cyan().pow(2.0f) + (1.0f - m_app->m_targetHealth) * Color3::brown().pow(2.0f);
-	}
-	else if (m_app->m_presentationState == PresentationState::feedback)
-	{
-		if (m_app->m_targetHealth > 0)
-		{
-			m_app->m_targetColor = Color3::green().pow(2.0f);
-		}
-		else
-		{
-			m_app->m_targetColor = Color3::green().pow(2.0f);
-			// If the target is dead, empty the projectiles
-			m_app->m_projectileArray.fastClear();
-		}
-	}
-	else if (m_app->m_presentationState == PresentationState::complete) {
-		m_app->drawMessage("Experiment Completed. Thanks!");
-	}
-
-	// 5. Clear m_TargetArray. Append an object with m_targetLocation if necessary ('task' and 'feedback' states).
+	// 4. Clear m_TargetArray. Append an object with m_targetLocation if necessary ('task' and 'feedback' states).
 	Point3 t_pos = m_app->m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance));
 
 
 	if (m_app->m_targetHealth > 0.f) {
 		// Don't spawn a new target every frame
 		if (m_app->m_targetArray.size() == 0) {
-			m_app->spawnTarget(t_pos, m_app->m_experimentConfig.visualSize);
+			m_app->spawnTarget(t_pos, m_app->m_experimentConfig.visualSize, false, m_app->m_targetColor);
 		}
 		else {
 			// TODO: don't hardcode assumption of a single target

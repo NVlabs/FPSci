@@ -3,7 +3,7 @@
 #include "TargetEntity.h"
 
 // Set to false when just editing content
-static const bool playMode = true;
+static const bool playMode = false;
 
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. (true = target infinite frame rate)
@@ -69,11 +69,11 @@ void App::onInit() {
 	}
 	setFrameDuration(dt, GApp::REAL_TIME);
 	setSubmitToDisplayMode(
-		//SubmitToDisplayMode::MINIMIZE_LATENCY);
-		SubmitToDisplayMode::BALANCE);
+		SubmitToDisplayMode::MINIMIZE_LATENCY);
+		//SubmitToDisplayMode::BALANCE);
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
 
-	showRenderingStats = false;
+	showRenderingStats = true;
 	makeGUI();
 	developerWindow->videoRecordDialog->setCaptureGui(true);
 	m_outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
