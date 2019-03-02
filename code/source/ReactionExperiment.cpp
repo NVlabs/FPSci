@@ -194,7 +194,7 @@ void ReactionExperiment::onUserInput(UserInput* ui)
 	}
 }
 
-void ReactionExperiment::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D)
+void ReactionExperiment::onGraphics2D(RenderDevice* rd)
 {
 	rd->clear();
 	const float scale = rd->viewport().width() / 1920.0f;
@@ -210,7 +210,12 @@ void ReactionExperiment::createResultFile()
 {
 	// create a unique file name
 	String timeStr(genUniqueTimestamp());
-	mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str(); // we may include subject name here.
+	if (m_app->m_experimentConfig.expMode == "training") {
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.expMode + "_" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str();
+	}
+	else {
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str();
+	}
 
 	// create the file
 	std::ofstream resultFile;

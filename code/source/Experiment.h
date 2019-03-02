@@ -115,7 +115,8 @@ public:
 	virtual void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface) = 0;
 	virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) = 0;
 	virtual void onUserInput(UserInput * ui) = 0;
-	virtual void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D) = 0;
+	//virtual void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D) = 0;
+	virtual void onGraphics2D(RenderDevice * rd) = 0;
 
 	/** result recording */
 	virtual void createResultFile() = 0;

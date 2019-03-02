@@ -69,8 +69,8 @@ void App::onInit() {
 	}
 	setFrameDuration(dt, GApp::REAL_TIME);
 	setSubmitToDisplayMode(
-		SubmitToDisplayMode::MINIMIZE_LATENCY);
-		//SubmitToDisplayMode::BALANCE);
+		//SubmitToDisplayMode::MINIMIZE_LATENCY);
+		SubmitToDisplayMode::BALANCE);
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
 
 	showRenderingStats = false;
@@ -341,6 +341,9 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 	GApp::onGraphics3D(rd, surface);
 
 	rd->push2D(); {
+		// TODO: Is this the right place to call it?
+		m_ex->onGraphics2D(rd);
+
 		const float scale = rd->viewport().width() / 1920.0f;
 
 		// Click to photon latency measuring corner box
@@ -546,9 +549,6 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 	}
 
 	rd->push2D(); {
-		// TODO: Is this the right place to call it?
-		m_ex->onGraphics2D(rd, posed2D);
-
 		const float scale = rd->viewport().width() / 1920.0f;
 
 		// FPS display (faster than the full stats widget)

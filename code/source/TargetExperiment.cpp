@@ -273,7 +273,7 @@ void TargetExperiment::onUserInput(UserInput* ui)
 	}
 }
 
-void TargetExperiment::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D)
+void TargetExperiment::onGraphics2D(RenderDevice* rd)
 {
 	const float scale = rd->viewport().width() / 1920.0f;
 	rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
@@ -302,10 +302,10 @@ void TargetExperiment::createResultFile()
 	// create a unique file name
 	String timeStr(genUniqueTimestamp());
 	if (m_app->m_experimentConfig.expMode == "training") {
-		mResultFileName = ("result_data/" + m_app->m_experimentConfig.expMode + "_" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str(); // we may include subject name here.
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.expMode + "_" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str();
 	}
 	else {
-		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str(); // we may include subject name here.
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str();
 	}
 																																
 	// create the file
