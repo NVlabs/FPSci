@@ -6,6 +6,8 @@
 
 class App;
 
+enum PlayerAction { AIM, HIT, MISS };
+
 class TargetExperiment : public Experiment
 {
 protected:
@@ -41,6 +43,10 @@ public:
 	void processResponse();
 
 	void recordTrialResponse();
+
+	void recordTrajectories();
+
+	void recordPlayerAction(PlayerAction hm);
 
 	void closeResultFile();
 

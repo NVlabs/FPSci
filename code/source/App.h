@@ -204,6 +204,9 @@ public:
 	bool							m_buttonUp = true;
 
 	void resetView();
+	Point2 getViewDirection();
+	Point2 getTargetDirection();
+	Point2 getMouseMotion(); // TODO: how do we do this?
 };
 
 // The 'old' way of animation

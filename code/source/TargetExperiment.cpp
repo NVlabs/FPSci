@@ -267,6 +267,12 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 			m_app->m_targetArray[0]->setFrame(t_pos);
 		}
 	}
+
+	// record target trajectories, view direction trajectories, and mouse motion.
+	if (m_app->m_presentationState == PresentationState::task)
+	{
+		recordTrajectories();
+	}
 }
 
 void TargetExperiment::onUserInput(UserInput* ui)
@@ -274,6 +280,20 @@ void TargetExperiment::onUserInput(UserInput* ui)
 	// insert response and uncomment below. 
 	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
 		m_app->fire();
+		if (m_app->m_targetHealth == 0) {
+			// target eliminated, must be 'hit'.
+			if (m_app->m_presentationState == PresentationState::task)
+			{
+				recordPlayerAction(PlayerAction::HIT);
+			}
+		}
+		else {
+			// target still present, must be 'miss'.
+			if (m_app->m_presentationState == PresentationState::task)
+			{
+				recordPlayerAction(PlayerAction::MISS);
+			}
+		}
 	}
 }
 
@@ -379,21 +399,14 @@ void TargetExperiment::createResultFile()
 	};
 	createTableInDB(m_db, "Target_Trajectory", targetTrajectoryColumns);
 
-	// 5. View_Trajectory, only need to create the table.
+	// 5. Player_Action, only need to create the table.
 	std::vector<std::vector<std::string>> viewTrajectoryColumns = {
 			{ "time", "text" },
+			{ "event", "text" },
 			{ "position_az", "real" },
 			{ "position_el", "real" },
 	};
-	createTableInDB(m_db, "View_Trajectory", viewTrajectoryColumns);
-
-	// 6. Mouse_Motion, only need to create the table.
-	std::vector<std::vector<std::string>> mouseMotionColumns = {
-			{ "time", "text" },
-			{ "delta_x", "real" },
-			{ "delta_y", "real" },
-	};
-	createTableInDB(m_db, "Mouse_Motion", mouseMotionColumns);
+	createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
 }
 
 void TargetExperiment::recordTrialResponse()
@@ -405,6 +418,49 @@ void TargetExperiment::recordTrialResponse()
 		std::to_string(m_taskExecutionTime),
 	};
 	insertIntoDB(m_db, "Trials", trialValues);
+}
+
+void TargetExperiment::recordTrajectories()
+{
+	// recording target trajectories
+	Point2 dir = m_app->getViewDirection();
+	std::vector<std::string> targetTrajectoryValues = {
+		addQuotes(String("Time_ReplaceWithG3DString").c_str()),
+		std::to_string(dir.x),
+		std::to_string(dir.y),
+	};
+	insertIntoDB(m_db, "Target_Trajectory", targetTrajectoryValues);
+
+	// recording view direction trajectories
+	recordPlayerAction(PlayerAction::AIM);
+}
+
+void TargetExperiment::recordPlayerAction(PlayerAction hm)
+{
+	// specify action type
+	String s;
+	if (hm == PlayerAction::HIT) {
+		s = "hit";
+	}
+	else if (hm == PlayerAction::MISS) {
+		s = "miss";
+	}
+	else if (hm == PlayerAction::AIM) {
+		s = "aim";
+	}
+
+	// recording target trajectories
+	Point2 dir = m_app->getViewDirection();
+	std::vector<std::string> playerActionValues = {
+		addQuotes(String("Time_ReplaceWithG3DString").c_str()),
+		addQuotes(s.c_str()),
+		std::to_string(dir.x),
+		std::to_string(dir.y),
+	};
+
+	// recording view direction trajectories
+	insertIntoDB(m_db, "Player_Action", playerActionValues);
+
 }
 
 void TargetExperiment::closeResultFile()
