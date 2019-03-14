@@ -216,6 +216,11 @@ void ReactionExperiment::onGraphics2D(RenderDevice* rd)
 
 void ReactionExperiment::createResultFile()
 {
+	// generate folder result_data if it does not exist.
+	if (!FileSystem::isDirectory(String("result_data"))) {
+		FileSystem::createDirectory(String("result_data"));
+	}
+
 	// create a unique file name
 	String timeStr(genUniqueTimestamp());
 	if (m_app->m_experimentConfig.expMode == "training") {
@@ -272,8 +277,8 @@ void ReactionExperiment::createResultFile()
 	// 3. Trials, only need to create the table.
 	std::vector<std::vector<std::string>> trialColumns = {
 			{ "condition_ID", "integer" },
-			{ "start_time", "text" },
-			{ "end_time", "text" },
+			{ "start_time", "real" },
+			{ "end_time", "real" },
 			{ "task_execution_time", "real" },
 	};
 	createTableInDB(m_db, "Trials", trialColumns);

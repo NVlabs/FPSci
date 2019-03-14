@@ -323,6 +323,11 @@ void TargetExperiment::onGraphics2D(RenderDevice* rd)
 
 void TargetExperiment::createResultFile()
 {
+	// generate folder result_data if it does not exist.
+	if (!FileSystem::isDirectory(String("result_data"))) {
+		FileSystem::createDirectory(String("result_data"));
+	}
+
 	// create a unique file name
 	String timeStr(genUniqueTimestamp());
 	if (m_app->m_experimentConfig.expMode == "training") {
@@ -385,15 +390,15 @@ void TargetExperiment::createResultFile()
 	// 3. Trials, only need to create the table.
 	std::vector<std::vector<std::string>> trialColumns = {
 			{ "condition_ID", "integer" },
-			{ "start_time", "text" },
-			{ "end_time", "text" },
+			{ "start_time", "real" },
+			{ "end_time", "real" },
 			{ "task_execution_time", "real" },
 	};
 	createTableInDB(m_db, "Trials", trialColumns);
 
 	// 4. Target_Trajectory, only need to create the table.
 	std::vector<std::vector<std::string>> targetTrajectoryColumns = {
-			{ "time", "text" },
+			{ "time", "real" },
 			{ "position_az", "real" },
 			{ "position_el", "real" },
 	};
@@ -401,7 +406,7 @@ void TargetExperiment::createResultFile()
 
 	// 5. Player_Action, only need to create the table.
 	std::vector<std::vector<std::string>> viewTrajectoryColumns = {
-			{ "time", "text" },
+			{ "time", "real" },
 			{ "event", "text" },
 			{ "position_az", "real" },
 			{ "position_el", "real" },
@@ -425,7 +430,7 @@ void TargetExperiment::recordTrajectories()
 	// recording target trajectories
 	Point2 dir = m_app->getViewDirection();
 	std::vector<std::string> targetTrajectoryValues = {
-		addQuotes(String("Time_ReplaceWithG3DString").c_str()),
+		std::to_string(System::time()),
 		std::to_string(dir.x),
 		std::to_string(dir.y),
 	};
@@ -452,7 +457,7 @@ void TargetExperiment::recordPlayerAction(PlayerAction hm)
 	// recording target trajectories
 	Point2 dir = m_app->getViewDirection();
 	std::vector<std::string> playerActionValues = {
-		addQuotes(String("Time_ReplaceWithG3DString").c_str()),
+		std::to_string(System::time()),
 		addQuotes(s.c_str()),
 		std::to_string(dir.x),
 		std::to_string(dir.y),
