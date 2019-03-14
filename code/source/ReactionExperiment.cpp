@@ -104,6 +104,7 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 	// This updates presentation state and also deals with data collection when each trial ends.
 	PresentationState currentState = m_app->m_presentationState;
 	PresentationState newState;
+	float stateElapsedTime = m_app->timer.getTime();
 
 	if (currentState == PresentationState::initial)
 	{
@@ -120,7 +121,7 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 	{
 		// start task if waited longer than minimum foreperiod AND the probabilistic condition is met (Nickerson & Burhnham 1969, Response times with nonaging foreperiods).
 		float taskStartChancePerFrame = (1.0f / m_app->m_experimentConfig.meanWaitDuration) * (float)framePeriod;
-		if ((m_app->timer.getTime() > m_app->m_experimentConfig.minimumForeperiod) && (G3D::Random::common().uniform() < taskStartChancePerFrame))
+		if ((stateElapsedTime > m_app->m_experimentConfig.minimumForeperiod) && (G3D::Random::common().uniform() < taskStartChancePerFrame))
 		{
 			newState = PresentationState::task;
 		}
@@ -144,7 +145,7 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 	}
 	else if (currentState == PresentationState::feedback)
 	{
-		if (m_app->timer.getTime() > m_app->m_experimentConfig.feedbackDuration)
+		if (stateElapsedTime > m_app->m_experimentConfig.feedbackDuration)
 		{
 			m_reacted = false;
 			if (m_psych.isComplete()) {
@@ -244,7 +245,7 @@ void ReactionExperiment::createResultFile()
 		addQuotes(timeStr.c_str()),
 		addQuotes(m_app->m_user.subjectID.c_str())
 	};
-	insertIntoDB(m_db, "Experiments", expValues, "(time, subjectID)");
+	insertIntoDB(m_db, "Experiments", expValues);
 
 	// 2. Conditions
 	// create sqlite table
@@ -265,12 +266,11 @@ void ReactionExperiment::createResultFile()
 			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameLag"]),
 			std::to_string(m_psych.mMeasurements[i].getParam().val["intensity"]),
 		};
-		insertIntoDB(m_db, "Conditions", conditionValues, "(id, refresh_rate, added_frame_lag, intensity)");
+		insertIntoDB(m_db, "Conditions", conditionValues);
 	}
 
 	// 3. Trials, only need to create the table.
 	std::vector<std::vector<std::string>> trialColumns = {
-			{ "id", "integer", "PRIMARY KEY AUTOINCREMENT"}, // this makes id a key value and get auto-populated.
 			{ "condition_ID", "integer" },
 			{ "start_time", "text" },
 			{ "end_time", "text" },
@@ -287,7 +287,7 @@ void ReactionExperiment::recordTrialResponse()
 		addQuotes(String("endTime_ReplaceWithG3DString").c_str()),
 		std::to_string(m_taskExecutionTime),
 	};
-	insertIntoDB(m_db, "Trials", trialValues, "(condition_ID, start_time, end_time, task_execution_time)");
+	insertIntoDB(m_db, "Trials", trialValues);
 }
 
 void ReactionExperiment::closeResultFile()

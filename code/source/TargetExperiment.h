@@ -2,6 +2,7 @@
 #include <G3D/G3D.h>
 #include "Experiment.h"
 #include "App.h"
+#include "sqlHelpers.h"
 
 class App;
 
@@ -9,6 +10,7 @@ class TargetExperiment : public Experiment
 {
 protected:
 	float m_lastMotionChangeAt;
+	sqlite3* m_db = nullptr;
 
 	TargetExperiment(App* app) : Experiment(app) {
 	}
@@ -35,6 +37,8 @@ public:
 	void onGraphics2D(RenderDevice * rd);
 
 	void createResultFile();
+
+	void processResponse();
 
 	void recordTrialResponse();
 

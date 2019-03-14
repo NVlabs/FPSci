@@ -66,20 +66,13 @@ void createTableInDB(sqlite3* db, std::string tableName, std::vector<std::vector
 
 void insertIntoDB(sqlite3* db, std::string tableName, std::vector<std::string> values, std::string colNames) {
 	// Quotes must be added around text-type values (eg. "addQuotes(expVersion)")
-	// Note that ID does not need to be provided if being auto-incremented.
+	// Note that ID does not need to be provided unless PRIMARY KEY is set.
 
 	std::vector<std::vector<std::string>> records;
 
 	std::stringstream insertC;
 
-	if (colNames.size() > 1)
-	{
-		insertC << "INSERT INTO " << tableName << colNames << " VALUES(" << vec2str(values, ",") << ");";
-	}
-	else
-	{
-		insertC << "INSERT INTO " << tableName << " VALUES(null, " << vec2str(values, ",") << ");";
-	}
+	insertC << "INSERT INTO " << tableName << colNames << " VALUES(" << vec2str(values, ",") << ");";
 	sql_stmt(db, insertC.str().c_str());
 }
 
