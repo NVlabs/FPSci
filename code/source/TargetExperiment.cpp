@@ -137,6 +137,16 @@ void TargetExperiment::createNewTarget() {
 	target->setDestinations(destinationArray, center);
 }
 
+void TargetExperiment::processResponse()
+{
+	m_taskExecutionTime = m_app->timer.getTime();
+	m_response = (m_app->m_targetHealth <= 0) ? 1 : 0; // 1 means success, 0 means failure.
+	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
+	m_psych.processResponse(m_response); // process response.
+	if (m_app->m_experimentConfig.expMode == "training") {
+		m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
+	}
+}
 
 void TargetExperiment::updatePresentationState()
 {
@@ -168,13 +178,7 @@ void TargetExperiment::updatePresentationState()
 	{
 		if ((stateElapsedTime > m_app->m_experimentConfig.taskDuration) || (m_app->m_targetHealth <= 0))
 		{
-			m_taskExecutionTime = stateElapsedTime;
-			m_response = (m_app->m_targetHealth <= 0)? 1 : 0; // 1 means success, 0 means failure.
-			recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
-			m_psych.processResponse(m_response); // process response.
-			if (m_app->m_experimentConfig.expMode == "training") {
-				m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
-			}
+			processResponse();
 			m_app->m_targetColor = Color3::red().pow(2.0f);
 			newState = PresentationState::feedback;
 		}
@@ -302,52 +306,108 @@ void TargetExperiment::createResultFile()
 	// create a unique file name
 	String timeStr(genUniqueTimestamp());
 	if (m_app->m_experimentConfig.expMode == "training") {
-		mResultFileName = ("result_data/" + m_app->m_experimentConfig.expMode + "_" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str();
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.expMode + "_" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 	}
 	else {
-		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str();
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 	}
-																																
+
 	// create the file
-	std::ofstream resultFile;
-	resultFile.open(mResultFileName);
-
-	// write column names
-	resultFile << "staircaseID" << ",";
-	for (auto keyval : m_psych.getParam().val)
-	{
-		resultFile << keyval.first << ",";
+	if (sqlite3_open(mResultFileName.c_str(), &m_db)) {
+		// TODO: report error if failed.
 	}
-	for (auto keyval : m_psych.getParam().str)
-	{
-		resultFile << keyval.first << ",";
-	}
-	//resultFile << "stimLevel" << ","; // normally we would need this but not now.
-	resultFile << "response" << "," << "elapsedTime" << std::endl;
 
-	// close the file
-	resultFile.close();
+	// create tables inside the db file.
+	// 1. Experiment description (time and subject ID)
+	// create sqlite table
+	std::vector<std::vector<std::string>> expColumns = {
+		// format: column name, data type, sqlite modifier(s)
+			{ "time", "text", "NOT NULL" },
+			{ "subjectID", "text", "NOT NULL" },
+	};
+	createTableInDB(m_db, "Experiments", expColumns); // no need of Primary Key for this table.
+
+	// populate table
+	std::vector<std::string> expValues = {
+		addQuotes(timeStr.c_str()),
+		addQuotes(m_app->m_user.subjectID.c_str())
+	};
+	insertIntoDB(m_db, "Experiments", expValues);
+
+	// 2. Conditions
+	// create sqlite table
+	std::vector<std::vector<std::string>> conditionColumns = {
+			{ "id", "integer", "PRIMARY KEY"}, // this makes id a key value, requiring it to be unique for each row.
+			{ "refresh_rate", "real" },
+			{ "added_frame_lag", "real" },
+			{ "displacement_r", "real" },
+			{ "displacement_theta", "real" },
+			{ "speed", "real" },
+			{ "motion_change_period", "real" },
+	};
+	createTableInDB(m_db, "Conditions", conditionColumns); // Primary Key needed for this table.
+
+	// populate table
+	for (int i = 0; i < m_psych.mMeasurements.size(); ++i)
+	{
+		std::vector<std::string> conditionValues = {
+			std::to_string(i), // this index is uniquely and statically assigned to each SingleThresholdMeasurement.
+			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameRate"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameLag"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["initialDisplacementYaw"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["initialDisplacementRoll"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["speed"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["motionChangePeriod"]),
+		};
+		insertIntoDB(m_db, "Conditions", conditionValues);
+	}
+
+	// 3. Trials, only need to create the table.
+	std::vector<std::vector<std::string>> trialColumns = {
+			{ "condition_ID", "integer" },
+			{ "start_time", "text" },
+			{ "end_time", "text" },
+			{ "task_execution_time", "real" },
+	};
+	createTableInDB(m_db, "Trials", trialColumns);
+
+	// 4. Target_Trajectory, only need to create the table.
+	std::vector<std::vector<std::string>> targetTrajectoryColumns = {
+			{ "time", "text" },
+			{ "position_az", "real" },
+			{ "position_el", "real" },
+	};
+	createTableInDB(m_db, "Target_Trajectory", targetTrajectoryColumns);
+
+	// 5. View_Trajectory, only need to create the table.
+	std::vector<std::vector<std::string>> viewTrajectoryColumns = {
+			{ "time", "text" },
+			{ "position_az", "real" },
+			{ "position_el", "real" },
+	};
+	createTableInDB(m_db, "View_Trajectory", viewTrajectoryColumns);
+
+	// 6. Mouse_Motion, only need to create the table.
+	std::vector<std::vector<std::string>> mouseMotionColumns = {
+			{ "time", "text" },
+			{ "delta_x", "real" },
+			{ "delta_y", "real" },
+	};
+	createTableInDB(m_db, "Mouse_Motion", mouseMotionColumns);
 }
 
 void TargetExperiment::recordTrialResponse()
 {
-	// TODO: replace it with sqlite command later.
-	std::ofstream resultFile(mResultFileName, std::ios_base::app);
-	resultFile << m_psych.mCurrentConditionIndex << ",";
-	for (auto keyval : m_psych.getParam().val)
-	{
-		resultFile << keyval.second << ",";
-	}
-	for (auto keyval : m_psych.getParam().str)
-	{
-		resultFile << keyval.second << ",";
-	}
-	//resultFile << m_psych.getStimLevel() << ","; // normally we would need this but not now.
-	resultFile << m_response << "," << m_taskExecutionTime << std::endl;
-	resultFile.close();
+	std::vector<std::string> trialValues = {
+		std::to_string(m_psych.mCurrentConditionIndex),
+		addQuotes(String("StartTime_ReplaceWithG3DString").c_str()),
+		addQuotes(String("endTime_ReplaceWithG3DString").c_str()),
+		std::to_string(m_taskExecutionTime),
+	};
+	insertIntoDB(m_db, "Trials", trialValues);
 }
 
 void TargetExperiment::closeResultFile()
 {
-	// TODO: Decide whether we need this function.
+	sqlite3_close(m_db);
 }

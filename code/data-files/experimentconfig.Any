@@ -1,6 +1,6 @@
 {
     "settingsVersion" : 1,
-    "taskType" : "reaction",//"target","reaction",
+    "taskType" : "target",//"target","reaction",
     "expMode" : "real",
     "expVersion" : "ComplexMotion",
     "appendingDescription" : "2019Mar4_TalkPrep",

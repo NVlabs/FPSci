@@ -40,11 +40,11 @@ public:
 
 	void createResultFile();
 
+	void processResponse();
+
 	void recordTrialResponse();
 
 	void closeResultFile();
 
 	void initPsychHelper();
-
-	void processResponse();
 };
