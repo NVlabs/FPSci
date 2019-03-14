@@ -80,10 +80,9 @@ struct Response
 class SingleThresholdMeasurement
 {
 public:
-
 	/** Initialize measurement
 	*/
-	void initMeasurement(Param initConditionParam, PsychophysicsDesignParameter initExpParam); // return true if successfully initialized, false if not
+	SingleThresholdMeasurement(Param initConditionParam, PsychophysicsDesignParameter initExpParam);
 
 	/** Get current level
 	*/

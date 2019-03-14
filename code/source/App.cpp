@@ -20,7 +20,7 @@ const float App::TARGET_MODEL_ARRAY_OFFSET = 30;
 //static const float verticalFieldOfViewDegrees = 90; // deg
 static const float horizontalFieldOfViewDegrees = 103; // deg
 
-static const bool measureClickPhotonLatency = true;
+static const bool measureClickPhotonLatency = false;
 
 // JBS: TODO: Refactor these as experiment variables
 //========================================================================

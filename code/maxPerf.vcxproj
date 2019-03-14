@@ -70,11 +70,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(PSYCHOPHYSICS)\include;$(IncludePath);$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
+    <IncludePath>$(IncludePath);$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(g3d)\G3D10\build\lib</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(PSYCHOPHYSICS)\include;$(IncludePath);$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
+    <IncludePath>$(IncludePath);$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(g3d)\G3D10\build\lib</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -95,7 +95,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalOptions>/IGNORE:4217 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalLibraryDirectories>$(PSYCHOPHYSICS)\psychophysics-lib\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(PSYCHOPHYSICS)\psychophysics-lib\bin;;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;psychophysics-libd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

@@ -41,8 +41,7 @@ std::string genUniqueTimestamp() {
 
 void PsychHelper::addCondition(Param newConditionParam, PsychophysicsDesignParameter newPsychParam)
 {
-	SingleThresholdMeasurement m;
-	m.initMeasurement(newConditionParam, newPsychParam);
+	SingleThresholdMeasurement m(newConditionParam, newPsychParam);
 	mMeasurements.push_back(m);
 }
 

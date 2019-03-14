@@ -47,7 +47,8 @@ void createTableInDB(sqlite3* db, std::string tableName, std::vector<std::vector
 	// Do not use this command for the trialData table, that one is special!
 
 	std::stringstream createTableC;
-	createTableC << "CREATE TABLE IF NOT EXISTS " << tableName << " ( id integer PRIMARY KEY AUTOINCREMENT, ";
+	createTableC << "CREATE TABLE IF NOT EXISTS " << tableName << " ( ";
+
 	for (int i = 0; i < columns.size(); i++)
 	{
 		createTableC << vec2str(columns[i], " ");
@@ -63,8 +64,9 @@ void createTableInDB(sqlite3* db, std::string tableName, std::vector<std::vector
 	sql_stmt(db, createTableC.str().c_str());
 }
 
-int insertIntoDB(sqlite3* db, std::string tableName, std::vector<std::string> values, std::string colNames) {
+void insertIntoDB(sqlite3* db, std::string tableName, std::vector<std::string> values, std::string colNames) {
 	// Quotes must be added around text-type values (eg. "addQuotes(expVersion)")
+	// Note that ID does not need to be provided if being auto-incremented.
 
 	std::vector<std::vector<std::string>> records;
 
@@ -79,30 +81,24 @@ int insertIntoDB(sqlite3* db, std::string tableName, std::vector<std::string> va
 		insertC << "INSERT INTO " << tableName << " VALUES(null, " << vec2str(values, ",") << ");";
 	}
 	sql_stmt(db, insertC.str().c_str());
-
-	if (tableName != "trialData")
-	{
-		// get assigned id number
-		std::stringstream queryC;
-		queryC << "SELECT * FROM " << tableName << " WHERE id = (SELECT MAX(id) FROM " << tableName << ");";
-		records = select_stmt(db, queryC.str().c_str());
-		return std::stoi(records[0][0]);
-	}
-	else
-	{
-		return 0;
-	}
-
 }
 
-std::string queryStimDB(sqlite3* db, int stimID, std::string columnName)
+int getMaxID(sqlite3* db, std::string tableName)
 {
+	// get maximum of assigned id numbers.
 	std::stringstream queryC;
-	queryC << "SELECT " << columnName << " FROM stimParams WHERE id =" << std::to_string(stimID) << ";";
-	std::vector<std::vector<std::string>> records = select_stmt(db, queryC.str().c_str());
-	return records[0][0];
+	queryC << "SELECT * FROM " << tableName << " WHERE id = (SELECT MAX(id) FROM " << tableName << ");";
+	std::vector<std::vector<std::string>> records;
+	records = select_stmt(db, queryC.str().c_str());
+	return std::stoi(records[0][0]);
 }
 
+std::string addQuotes(std::string s)
+{
+	std::stringstream ss;
+	ss << "'" << s << "'";
+	return ss.str();
+}
 
 void createTrialDataTable(sqlite3* db)
 {
@@ -128,4 +124,3 @@ void createTrialDataTable(sqlite3* db)
 		"PRIMARY KEY(expID, stimID, trialID));";
 	sql_stmt(db, trialDataCreateC.c_str());
 }
-

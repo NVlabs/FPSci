@@ -2,6 +2,7 @@
 #include <G3D/G3D.h>
 #include "Experiment.h"
 #include "App.h"
+#include "sqlHelpers.h"
 
 class App;
 
@@ -9,6 +10,8 @@ class ReactionExperiment : public Experiment
 {
 protected:
 	bool m_reacted = false;
+	String m_trialStartTime, m_trialEndTime;
+	sqlite3* m_db = nullptr;
 
 	ReactionExperiment(App* app) : Experiment(app) {
 	}
@@ -42,4 +45,6 @@ public:
 	void closeResultFile();
 
 	void initPsychHelper();
+
+	void processResponse();
 };

@@ -27,123 +27,118 @@
 ***************************************************************************/
 #include "SingleThresholdMeasurement.h"
 
-void SingleThresholdMeasurement::initMeasurement(Param initConditionParam, PsychophysicsDesignParameter initExpParam) // return true if successfully initialized, false if not
+// NOTE: Make sure measurementID is a unique number given to each measurement in the experiment.
+SingleThresholdMeasurement::SingleThresholdMeasurement(Param initConditionParam, PsychophysicsDesignParameter initExpParam)
 {
-	if (mIsInitialized)
+	mPsyParam = initExpParam;
+	mParam = initConditionParam;
+	if (mPsyParam.mMeasuringMethod == DiscreteStaircase)
 	{
-		// already initialized: print out an error message
-	}
-	else
-	{
-		mPsyParam = initExpParam;
-		mParam = initConditionParam;
-		if (mPsyParam.mMeasuringMethod == DiscreteStaircase)
+		if (mPsyParam.mIsDefault) // only mMinLevel, mMaxLevel, mMinLevelStepSize were defined
 		{
-			if (mPsyParam.mIsDefault) // only mMinLevel, mMaxLevel, mMinLevelStepSize were defined
-			{
-				mPsyParam.mInitLevelRandomRange = 0; // no random change
-				mPsyParam.mInitLevel = mPsyParam.mMaxLevel; // start with the easiest
-				mPsyParam.mInitLevelStepSize = 4 * mPsyParam.mMinLevelStepSize;
-				mPsyParam.mNumUp = 1; // assuming 2AFC design, 1 up 2 down is standard
-				mPsyParam.mNumDown = 2;
-				mPsyParam.mMaxReversals = 50;
-				mPsyParam.mMaxTotalTrialCount = 150;
-				mPsyParam.mMaxLimitHitCount = 2;
-			}
-			// First, set the stimulus level perturbed within the initial random range
-			float perturbation;
-			if (mPsyParam.mMinLevelStepSize == 0)
-			{
-				perturbation = 0;
-			}
-			else
-			{
-				int32_t numMinSteps = (int32_t)(mPsyParam.mInitLevelRandomRange / mPsyParam.mMinLevelStepSize);
-				int32_t randomSign = 2 * (rand() % 2) - 1;
-				int32_t stepsForPerturbation = randomSign * (rand() % numMinSteps);
-				perturbation = stepsForPerturbation * mPsyParam.mMinLevelStepSize;
-			}
-			// set initial stim level
-			mCurrentLevel = mPsyParam.mInitLevel + perturbation;
-			if (mCurrentLevel < mPsyParam.mMinLevel)
-			{
-				mCurrentLevel = mPsyParam.mMinLevel;
-			}
-			else if (mCurrentLevel > mPsyParam.mMaxLevel)
-			{
-				mCurrentLevel = mPsyParam.mMaxLevel;
-			}
-			// Initialize all other necessary values
-			mLevelStepSize = mPsyParam.mInitLevelStepSize;
-			mUpCount = 0;
-			mDownCount = 0;
-			mCurrentDirection = 0;
-			mReversalCount = 0;
-			mLimitHitCount = 0;
+			mPsyParam.mInitLevelRandomRange = 0; // no random change
+			mPsyParam.mInitLevel = mPsyParam.mMaxLevel; // start with the easiest
+			mPsyParam.mInitLevelStepSize = 4 * mPsyParam.mMinLevelStepSize;
+			mPsyParam.mNumUp = 1; // assuming 2AFC design, 1 up 2 down is standard
+			mPsyParam.mNumDown = 2;
+			mPsyParam.mMaxReversals = 50;
+			mPsyParam.mMaxTotalTrialCount = 150;
+			mPsyParam.mMaxLimitHitCount = 2;
 		}
-		else if (mPsyParam.mMeasuringMethod == BucketStaircase) // SC with pre-determined stimLevels
+		// First, set the stimulus level perturbed within the initial random range
+		float perturbation;
+		if (mPsyParam.mMinLevelStepSize == 0)
 		{
-			if (mPsyParam.mIsDefault) // only stimLevels were defined
-			{
-				mPsyParam.mInitIndexRandomRange = 0; // no random change
-				mPsyParam.mInitIndex = (int32_t)mPsyParam.mStimLevels.size() - 1; // start with the easiest
-				mPsyParam.mInitIndexStepSize = 4;
-				mPsyParam.mNumUp = 1;
-				mPsyParam.mNumDown = 2;
-				mPsyParam.mMaxReversals = 15;
-				mPsyParam.mMaxTotalTrialCount = 50;
-				mPsyParam.mMaxLimitHitCount = 2;
-			}
-			// First, set the stimulus level perturbed within the initial random range
+			perturbation = 0;
+		}
+		else
+		{
+			int32_t numMinSteps = (int32_t)(mPsyParam.mInitLevelRandomRange / mPsyParam.mMinLevelStepSize);
 			int32_t randomSign = 2 * (rand() % 2) - 1;
-			int32_t perturbation;
-			if (mPsyParam.mInitIndexRandomRange == 0)
-			{
-				perturbation = 0;
-			}
-			else
-			{
-				perturbation = randomSign * (rand() % mPsyParam.mInitIndexRandomRange);
-			}
-			// set initial stim level
-			mCurrentStimIndex = mPsyParam.mInitIndex + perturbation;
-			if (mCurrentStimIndex < 0)
-			{
-				mCurrentStimIndex = 0;
-			}
-			else if (mCurrentStimIndex >= (int32_t)mPsyParam.mStimLevels.size())
-			{
-				mCurrentStimIndex = (int32_t)mPsyParam.mStimLevels.size() - 1;
-			}
-			mCurrentLevel = mPsyParam.mStimLevels[mCurrentStimIndex];
-			// Initialize all other necessary values
-			mIndexStepSize = mPsyParam.mInitIndexStepSize;
-			mUpCount = 0;
-			mDownCount = 0;
-			mCurrentDirection = 0;
-			mReversalCount = 0;
-			mLimitHitCount = 0;
+			int32_t stepsForPerturbation = randomSign * (rand() % numMinSteps);
+			perturbation = stepsForPerturbation * mPsyParam.mMinLevelStepSize;
 		}
-		else if (mPsyParam.mMeasuringMethod == MethodOfConstantStimuli) // MCS
+		// set initial stim level
+		mCurrentLevel = mPsyParam.mInitLevel + perturbation;
+		if (mCurrentLevel < mPsyParam.mMinLevel)
 		{
-			if (mPsyParam.mIsDefault) // only stimLevels were defined
-			{
-				int32_t trialCount = (int32_t)(200 / (int32_t)mPsyParam.mStimLevels.size()); // let's do ~200 trials per each condition
-				for (int32_t i = 0; i < (int32_t)mPsyParam.mStimLevels.size(); i++)
-				{
-					mPsyParam.mMaxTrialCounts.push_back(trialCount);
-				}
-			}
-			// Set initial stimulus level
-			mCurrentLevel = mPsyParam.mStimLevels[rand() % (int32_t)mPsyParam.mStimLevels.size()];
-			// Initialize all other necessary values
+			mCurrentLevel = mPsyParam.mMinLevel;
+		}
+		else if (mCurrentLevel > mPsyParam.mMaxLevel)
+		{
+			mCurrentLevel = mPsyParam.mMaxLevel;
+		}
+		// Initialize all other necessary values
+		mLevelStepSize = mPsyParam.mInitLevelStepSize;
+		mUpCount = 0;
+		mDownCount = 0;
+		mCurrentDirection = 0;
+		mReversalCount = 0;
+		mLimitHitCount = 0;
+	}
+	else if (mPsyParam.mMeasuringMethod == BucketStaircase) // SC with pre-determined stimLevels
+	{
+		if (mPsyParam.mIsDefault) // only stimLevels were defined
+		{
+			mPsyParam.mInitIndexRandomRange = 0; // no random change
+			mPsyParam.mInitIndex = (int32_t)mPsyParam.mStimLevels.size() - 1; // start with the easiest
+			mPsyParam.mInitIndexStepSize = 4;
+			mPsyParam.mNumUp = 1;
+			mPsyParam.mNumDown = 2;
+			mPsyParam.mMaxReversals = 15;
+			mPsyParam.mMaxTotalTrialCount = 50;
+			mPsyParam.mMaxLimitHitCount = 2;
+		}
+		// First, set the stimulus level perturbed within the initial random range
+		int32_t randomSign = 2 * (rand() % 2) - 1;
+		int32_t perturbation;
+		if (mPsyParam.mInitIndexRandomRange == 0)
+		{
+			perturbation = 0;
+		}
+		else
+		{
+			perturbation = randomSign * (rand() % mPsyParam.mInitIndexRandomRange);
+		}
+		// set initial stim level
+		mCurrentStimIndex = mPsyParam.mInitIndex + perturbation;
+		if (mCurrentStimIndex < 0)
+		{
+			mCurrentStimIndex = 0;
+		}
+		else if (mCurrentStimIndex >= (int32_t)mPsyParam.mStimLevels.size())
+		{
+			mCurrentStimIndex = (int32_t)mPsyParam.mStimLevels.size() - 1;
+		}
+		mCurrentLevel = mPsyParam.mStimLevels[mCurrentStimIndex];
+		// Initialize all other necessary values
+		mIndexStepSize = mPsyParam.mInitIndexStepSize;
+		mUpCount = 0;
+		mDownCount = 0;
+		mCurrentDirection = 0;
+		mReversalCount = 0;
+		mLimitHitCount = 0;
+	}
+	else if (mPsyParam.mMeasuringMethod == MethodOfConstantStimuli) // MCS
+	{
+		if (mPsyParam.mIsDefault) // only stimLevels were defined
+		{
+			int32_t trialCount = (int32_t)(200 / (int32_t)mPsyParam.mStimLevels.size()); // let's do ~200 trials per each condition
 			for (int32_t i = 0; i < (int32_t)mPsyParam.mStimLevels.size(); i++)
 			{
-				mTrialCounts.push_back(0);
+				mPsyParam.mMaxTrialCounts.push_back(trialCount);
 			}
 		}
-		mIsInitialized = true;
+		// Set initial stimulus level
+		mCurrentLevel = mPsyParam.mStimLevels[rand() % (int32_t)mPsyParam.mStimLevels.size()];
+		// Initialize all other necessary values
+		for (int32_t i = 0; i < (int32_t)mPsyParam.mStimLevels.size(); i++)
+		{
+			mTrialCounts.push_back(0);
+		}
 	}
+
+	mIsInitialized = true;
 }
 
 float SingleThresholdMeasurement::getCurrentLevel()

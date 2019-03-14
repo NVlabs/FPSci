@@ -69,12 +69,41 @@ void ReactionExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface
 	//return;
 }
 
+void ReactionExperiment::processResponse()
+{
+	m_taskExecutionTime = m_app->timer.getTime();
+	if (m_app->m_presentationState == PresentationState::ready) {
+		if (m_reacted) {
+			// responded too quickly
+			m_response = 0; // 1 means success, 0 means failure.
+			m_feedbackMessage = "Failure: Responded too quickly.";
+		}
+	}
+	else if (m_app->m_presentationState == PresentationState::task) {
+		if (m_taskExecutionTime < 0.1) { // still rejecting because response was too fast (impossible)
+			m_response = 0; // 1 means success, 0 means failure.
+			m_feedbackMessage = "Failure: Responded too quickly.";
+		}
+		else {
+			m_response = 1; // 1 means success, 0 means failure.
+			if (m_app->m_experimentConfig.expMode == "training") {
+				m_feedbackMessage = format("%d ms", (int)(m_taskExecutionTime * 1000));
+			}
+			else {
+				m_feedbackMessage = "Success!";
+			}
+		}
+	}
+
+	recordTrialResponse(); // NOTE: we need to record response first before processing it with PsychHelper.
+	m_psych.processResponse(m_response); // process response.
+}
+
 void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 {
 	// This updates presentation state and also deals with data collection when each trial ends.
 	PresentationState currentState = m_app->m_presentationState;
 	PresentationState newState;
-	float stateElapsedTime = m_app->timer.getTime();
 
 	if (currentState == PresentationState::initial)
 	{
@@ -91,17 +120,13 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 	{
 		// start task if waited longer than minimum foreperiod AND the probabilistic condition is met (Nickerson & Burhnham 1969, Response times with nonaging foreperiods).
 		float taskStartChancePerFrame = (1.0f / m_app->m_experimentConfig.meanWaitDuration) * (float)framePeriod;
-		if ((stateElapsedTime > m_app->m_experimentConfig.minimumForeperiod) && (G3D::Random::common().uniform() < taskStartChancePerFrame))
+		if ((m_app->timer.getTime() > m_app->m_experimentConfig.minimumForeperiod) && (G3D::Random::common().uniform() < taskStartChancePerFrame))
 		{
 			newState = PresentationState::task;
 		}
 		else if (m_reacted) // stimulus not shown yet, but responded already -> an immediate trial failure.
 		{
-			m_taskExecutionTime = stateElapsedTime;
-			m_response = 0; // 1 means success, 0 means failure.
-			recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
-			m_psych.processResponse(m_response); // process response.
-			m_feedbackMessage = "Failure: Responded too quickly.";
+			processResponse();
 			newState = PresentationState::feedback;
 		}
 		else { // keep waiting.
@@ -112,32 +137,14 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 	{
 		if (m_reacted)
 		{
-			if (stateElapsedTime > 0.1) {
-				m_taskExecutionTime = stateElapsedTime;
-				m_response = 1; // 1 means success, 0 means failure.
-				recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
-				m_psych.processResponse(m_response); // process response.
-				if (m_app->m_experimentConfig.expMode == "training") {
-					m_feedbackMessage = format("%d ms", (int)(m_taskExecutionTime * 1000));
-				}
-				else {
-					m_feedbackMessage = "Success!";
-				}
-			}
-			else {
-				m_taskExecutionTime = stateElapsedTime;
-				m_response = 0; // 1 means success, 0 means failure.
-				recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
-				m_psych.processResponse(m_response); // process response.
-				m_feedbackMessage = "Failure: Responded too quickly.";
-			}
+			processResponse();
 			newState = PresentationState::feedback;
 		}
 		else newState = currentState;
 	}
 	else if (currentState == PresentationState::feedback)
 	{
-		if (stateElapsedTime > m_app->m_experimentConfig.feedbackDuration)
+		if (m_app->timer.getTime() > m_app->m_experimentConfig.feedbackDuration)
 		{
 			m_reacted = false;
 			if (m_psych.isComplete()) {
@@ -211,53 +218,80 @@ void ReactionExperiment::createResultFile()
 	// create a unique file name
 	String timeStr(genUniqueTimestamp());
 	if (m_app->m_experimentConfig.expMode == "training") {
-		mResultFileName = ("result_data/" + m_app->m_experimentConfig.expMode + "_" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str();
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.expMode + "_" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 	}
 	else {
-		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".csv").c_str();
+		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 	}
 
 	// create the file
-	std::ofstream resultFile;
-	resultFile.open(mResultFileName);
-
-	// write column names
-	resultFile << "staircaseID" << ",";
-	for (auto keyval : m_psych.getParam().val)
-	{
-		resultFile << keyval.first << ",";
+	if (sqlite3_open(mResultFileName.c_str(), &m_db)) {
+		// TODO: report error if failed.
 	}
-	for (auto keyval : m_psych.getParam().str)
-	{
-		resultFile << keyval.first << ",";
-	}
-	//resultFile << "stimLevel" << ","; // normally we would need this but not now.
-	resultFile << "response" << "," << "elapsedTime" << std::endl;
 
-	// close the file
-	resultFile.close();
+	// create tables inside the db file.
+	// 1. Experiment description (time and subject ID)
+	// create sqlite table
+	std::vector<std::vector<std::string>> expColumns = {
+		// format: column name, data type, sqlite modifier(s)
+			{ "time", "text", "NOT NULL" },
+			{ "subjectID", "text", "NOT NULL" },
+	};
+	createTableInDB(m_db, "Experiments", expColumns); // no need of Primary Key for this table.
+
+	// populate table
+	std::vector<std::string> expValues = {
+		addQuotes(timeStr.c_str()),
+		addQuotes(m_app->m_user.subjectID.c_str())
+	};
+	insertIntoDB(m_db, "Experiments", expValues, "(time, subjectID)");
+
+	// 2. Conditions
+	// create sqlite table
+	std::vector<std::vector<std::string>> conditionColumns = {
+			{ "id", "integer", "PRIMARY KEY"}, // this makes id a key value, requiring it to be unique for each row.
+			{ "refresh_rate", "real" },
+			{ "added_frame_lag", "real" },
+			{ "intensity", "real" },
+	};
+	createTableInDB(m_db, "Conditions", conditionColumns); // Primary Key needed for this table.
+
+	// populate table
+	for (int i = 0; i < m_psych.mMeasurements.size(); ++i)
+	{
+		std::vector<std::string> conditionValues = {
+			std::to_string(i), // this index is uniquely and statically assigned to each SingleThresholdMeasurement.
+			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameRate"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameLag"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["intensity"]),
+		};
+		insertIntoDB(m_db, "Conditions", conditionValues, "(id, refresh_rate, added_frame_lag, intensity)");
+	}
+
+	// 3. Trials, only need to create the table.
+	std::vector<std::vector<std::string>> trialColumns = {
+			{ "id", "integer", "PRIMARY KEY AUTOINCREMENT"}, // this makes id a key value and get auto-populated.
+			{ "condition_ID", "integer" },
+			{ "start_time", "text" },
+			{ "end_time", "text" },
+			{ "task_execution_time", "real" },
+	};
+	createTableInDB(m_db, "Trials", trialColumns);
 }
 
 void ReactionExperiment::recordTrialResponse()
 {
-	// TODO: replace it with sqlite command later.
-	std::ofstream resultFile(mResultFileName, std::ios_base::app);
-	resultFile << m_psych.mCurrentConditionIndex << ",";
-	for (auto keyval : m_psych.getParam().val)
-	{
-		resultFile << keyval.second << ",";
-	}
-	for (auto keyval : m_psych.getParam().str)
-	{
-		resultFile << keyval.second << ",";
-	}
-	//resultFile << m_psych.getStimLevel() << ","; // normally we would need this but not now.
-	resultFile << m_response << "," << m_taskExecutionTime << std::endl;
-	resultFile.close();
+	std::vector<std::string> trialValues = {
+		std::to_string(m_psych.mCurrentConditionIndex),
+		addQuotes(String("StartTime_ReplaceWithG3DString").c_str()),
+		addQuotes(String("endTime_ReplaceWithG3DString").c_str()),
+		std::to_string(m_taskExecutionTime),
+	};
+	insertIntoDB(m_db, "Trials", trialValues, "(condition_ID, start_time, end_time, task_execution_time)");
 }
 
 void ReactionExperiment::closeResultFile()
 {
-
+	sqlite3_close(m_db);
 }
 
