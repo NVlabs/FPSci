@@ -13,8 +13,13 @@ class TargetExperiment : public Experiment
 protected:
 	double m_lastMotionChangeAt;
 	sqlite3* m_db = nullptr;
+	std::vector<std::vector<std::string>> m_playerActions;
+	std::vector<std::vector<std::string>> m_targetTrajectory;
 
 	TargetExperiment(App* app) : Experiment(app) {
+		// secure vector capacity large enough so as to avoid memory allocation time.
+		m_playerActions.reserve(5000);
+		m_targetTrajectory.reserve(5000);
 	}
 
 public:
@@ -44,9 +49,9 @@ public:
 
 	void recordTrialResponse();
 
-	void recordTrajectories();
+	void accumulateTrajectories();
 
-	void recordPlayerAction(PlayerAction hm);
+	void accumulatePlayerAction(PlayerAction hm);
 
 	void closeResultFile();
 

@@ -64,15 +64,31 @@ void createTableInDB(sqlite3* db, std::string tableName, std::vector<std::vector
 	sql_stmt(db, createTableC.str().c_str());
 }
 
-void insertIntoDB(sqlite3* db, std::string tableName, std::vector<std::string> values, std::string colNames) {
+void insertRowIntoDB(sqlite3* db, std::string tableName, std::vector<std::string> values, std::string colNames) {
 	// Quotes must be added around text-type values (eg. "addQuotes(expVersion)")
 	// Note that ID does not need to be provided unless PRIMARY KEY is set.
-
-	std::vector<std::vector<std::string>> records;
 
 	std::stringstream insertC;
 
 	insertC << "INSERT INTO " << tableName << colNames << " VALUES(" << vec2str(values, ",") << ");";
+	sql_stmt(db, insertC.str().c_str());
+}
+
+void insertRowsIntoDB(sqlite3* db, std::string tableName, std::vector<std::vector<std::string>> value_vector, std::string colNames) {
+	// Quotes must be added around text-type values (eg. "addQuotes(expVersion)")
+	// Note that ID does not need to be provided unless PRIMARY KEY is set.
+
+	std::stringstream insertC;
+	insertC << "INSERT INTO " << tableName << colNames << " VALUES ";
+	for (int i = 0; i < value_vector.size(); ++i) {
+		insertC << "(" << vec2str(value_vector[i], ", ") << ")";
+		if (i < value_vector.size() - 1) { // We have more rows coming after this row.
+			insertC << ","; 
+		}
+		else { // The last row of this insert operation. Terminate it with a semi-colon.
+			insertC << ";";
+		}
+	}
 	sql_stmt(db, insertC.str().c_str());
 }
 

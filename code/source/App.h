@@ -81,7 +81,7 @@ protected:
 	float                           m_sceneBrightness = 1.0f;
 	bool                            m_renderViewModel = false;
 	//bool                            m_renderHud = false;
-	bool                            m_renderFPS = false;
+	bool                            m_renderFPS = true;
 	bool                            m_renderHitscan = false;
 
 	/** Set to true to lower rendering quality to increase performance. */

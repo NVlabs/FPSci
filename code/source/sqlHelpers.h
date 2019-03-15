@@ -7,7 +7,8 @@
 
 
 void createTableInDB(sqlite3* db, std::string tableName, std::vector<std::vector<std::string>> columns);
-void insertIntoDB(sqlite3* db, std::string tableName, std::vector<std::string> values, std::string colNames = "");
+void insertRowIntoDB(sqlite3* db, std::string tableName, std::vector<std::string> values, std::string colNames = "");
+void insertRowsIntoDB(sqlite3* db, std::string tableName, std::vector<std::vector<std::string>> valueVector, std::string colNames = "");
 int getMaxID(sqlite3* db, std::string tableName);
 std::string addQuotes(std::string s);
 

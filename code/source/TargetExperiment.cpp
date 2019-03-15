@@ -275,7 +275,7 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	// record target trajectories, view direction trajectories, and mouse motion.
 	if (m_app->m_presentationState == PresentationState::task)
 	{
-		recordTrajectories();
+		accumulateTrajectories();
 	}
 }
 
@@ -288,14 +288,14 @@ void TargetExperiment::onUserInput(UserInput* ui)
 			// target eliminated, must be 'hit'.
 			if (m_app->m_presentationState == PresentationState::task)
 			{
-				recordPlayerAction(PlayerAction::HIT);
+				accumulatePlayerAction(PlayerAction::HIT);
 			}
 		}
 		else {
 			// target still present, must be 'miss'.
 			if (m_app->m_presentationState == PresentationState::task)
 			{
-				recordPlayerAction(PlayerAction::MISS);
+				accumulatePlayerAction(PlayerAction::MISS);
 			}
 		}
 	}
@@ -361,7 +361,7 @@ void TargetExperiment::createResultFile()
 		addQuotes(timeStr.c_str()),
 		addQuotes(m_app->m_user.subjectID.c_str())
 	};
-	insertIntoDB(m_db, "Experiments", expValues);
+	insertRowIntoDB(m_db, "Experiments", expValues);
 
 	// 2. Conditions
 	// create sqlite table
@@ -388,7 +388,7 @@ void TargetExperiment::createResultFile()
 			std::to_string(m_psych.mMeasurements[i].getParam().val["speed"]),
 			std::to_string(m_psych.mMeasurements[i].getParam().val["motionChangePeriod"]),
 		};
-		insertIntoDB(m_db, "Conditions", conditionValues);
+		insertRowIntoDB(m_db, "Conditions", conditionValues);
 	}
 
 	// 3. Trials, only need to create the table.
@@ -420,16 +420,25 @@ void TargetExperiment::createResultFile()
 
 void TargetExperiment::recordTrialResponse()
 {
+	// Trials table. Record trial start time, end time, and task completion time.
 	std::vector<std::string> trialValues = {
 		std::to_string(m_psych.mCurrentConditionIndex),
 		std::to_string(m_taskStartTime),
 		std::to_string(m_taskEndTime),
 		std::to_string(m_taskExecutionTime),
 	};
-	insertIntoDB(m_db, "Trials", trialValues);
+	insertRowIntoDB(m_db, "Trials", trialValues);
+
+	// Target_Trajectory table. Write down the recorded target trajectories.
+	insertRowsIntoDB(m_db, "Target_Trajectory", m_targetTrajectory);
+	m_targetTrajectory.clear();
+
+	// Player_Action table. Write down the recorded player actions.
+	insertRowsIntoDB(m_db, "Player_Action", m_playerActions);
+	m_playerActions.clear();
 }
 
-void TargetExperiment::recordTrajectories()
+void TargetExperiment::accumulateTrajectories()
 {
 	// recording target trajectories
 	Point2 dir = m_app->getTargetDirection();
@@ -438,13 +447,13 @@ void TargetExperiment::recordTrajectories()
 		std::to_string(dir.x),
 		std::to_string(dir.y),
 	};
-	insertIntoDB(m_db, "Target_Trajectory", targetTrajectoryValues);
+	m_targetTrajectory.push_back(targetTrajectoryValues);
 
 	// recording view direction trajectories
-	recordPlayerAction(PlayerAction::AIM);
+	accumulatePlayerAction(PlayerAction::AIM);
 }
 
-void TargetExperiment::recordPlayerAction(PlayerAction hm)
+void TargetExperiment::accumulatePlayerAction(PlayerAction hm)
 {
 	// specify action type
 	String s;
@@ -466,10 +475,7 @@ void TargetExperiment::recordPlayerAction(PlayerAction hm)
 		std::to_string(dir.x),
 		std::to_string(dir.y),
 	};
-
-	// recording view direction trajectories
-	insertIntoDB(m_db, "Player_Action", playerActionValues);
-
+	m_playerActions.push_back(playerActionValues);
 }
 
 void TargetExperiment::closeResultFile()

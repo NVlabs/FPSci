@@ -254,7 +254,7 @@ void ReactionExperiment::createResultFile()
 		addQuotes(timeStr.c_str()),
 		addQuotes(m_app->m_user.subjectID.c_str())
 	};
-	insertIntoDB(m_db, "Experiments", expValues);
+	insertRowIntoDB(m_db, "Experiments", expValues);
 
 	// 2. Conditions
 	// create sqlite table
@@ -275,7 +275,7 @@ void ReactionExperiment::createResultFile()
 			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameLag"]),
 			std::to_string(m_psych.mMeasurements[i].getParam().val["intensity"]),
 		};
-		insertIntoDB(m_db, "Conditions", conditionValues);
+		insertRowIntoDB(m_db, "Conditions", conditionValues);
 	}
 
 	// 3. Trials, only need to create the table.
@@ -296,7 +296,7 @@ void ReactionExperiment::recordTrialResponse()
 		std::to_string(m_taskEndTime),
 		std::to_string(m_taskExecutionTime),
 	};
-	insertIntoDB(m_db, "Trials", trialValues);
+	insertRowIntoDB(m_db, "Trials", trialValues);
 }
 
 void ReactionExperiment::closeResultFile()
