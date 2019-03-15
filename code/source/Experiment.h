@@ -97,10 +97,13 @@ private:
 class Experiment : public ReferenceCountedObject {
 //class Experiment {
 protected:
-	float m_taskExecutionTime;
+	double m_taskExecutionTime;
+	double m_taskStartTime;
+	double m_taskEndTime;
 	int m_response;
 
 	String m_feedbackMessage;
+	Stopwatch stopwatch;
 
 	Experiment(App* app) :m_app(app) {};
 

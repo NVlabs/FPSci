@@ -178,6 +178,7 @@ void TargetExperiment::updatePresentationState()
 	{
 		if ((stateElapsedTime > m_app->m_experimentConfig.taskDuration) || (m_app->m_targetHealth <= 0))
 		{
+			m_taskEndTime = System::time();
 			processResponse();
 			m_app->m_targetColor = Color3::red().pow(2.0f);
 			newState = PresentationState::feedback;
@@ -205,6 +206,9 @@ void TargetExperiment::updatePresentationState()
 	if (currentState != newState)
 	{ // handle state transition.
 		m_app->timer.startTimer();
+		if (newState == PresentationState::task) {
+			m_taskStartTime = System::time();
+		}
 		m_app->m_presentationState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
 		if ((newState == PresentationState::task) || (newState == PresentationState::feedback)) {
@@ -418,8 +422,8 @@ void TargetExperiment::recordTrialResponse()
 {
 	std::vector<std::string> trialValues = {
 		std::to_string(m_psych.mCurrentConditionIndex),
-		addQuotes(String("StartTime_ReplaceWithG3DString").c_str()),
-		addQuotes(String("endTime_ReplaceWithG3DString").c_str()),
+		std::to_string(m_taskStartTime),
+		std::to_string(m_taskEndTime),
 		std::to_string(m_taskExecutionTime),
 	};
 	insertIntoDB(m_db, "Trials", trialValues);
@@ -428,7 +432,7 @@ void TargetExperiment::recordTrialResponse()
 void TargetExperiment::recordTrajectories()
 {
 	// recording target trajectories
-	Point2 dir = m_app->getViewDirection();
+	Point2 dir = m_app->getTargetDirection();
 	std::vector<std::string> targetTrajectoryValues = {
 		std::to_string(System::time()),
 		std::to_string(dir.x),

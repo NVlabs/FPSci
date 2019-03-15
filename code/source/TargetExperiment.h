@@ -11,7 +11,7 @@ enum PlayerAction { AIM, HIT, MISS };
 class TargetExperiment : public Experiment
 {
 protected:
-	float m_lastMotionChangeAt;
+	double m_lastMotionChangeAt;
 	sqlite3* m_db = nullptr;
 
 	TargetExperiment(App* app) : Experiment(app) {
