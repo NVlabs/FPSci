@@ -91,22 +91,21 @@ void App::onInit() {
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
+    // G3D expects mouse sensitivity in radians
+    // we're converting from mouseDPI and centimeters/360 which explains
+    // the screen resolution (dots), cm->in factor (2.54) and 2PI
+    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_user.cmp360 * m_user.mouseDPI);
+    // additional correction factor based on few samples - TODO: need more careful setup to study this
+    mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
+    const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 	if (playMode) {
 		// Force into FPS mode
-		const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 		fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
 		fpm->setMoveRate(0.0);
-
-		// G3D expects mouse sensitivity in radians
-		// we're converting from mouseDPI and centimeters/360 which explains
-		// the screen resolution (dots), cm->in factor (2.54) and 2PI
-		const double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_user.cmp360 * m_user.mouseDPI);
 		fpm->setTurnRate(mouseSensitivity);
 	}
 	else {
 		// fix mouse sensitivity for developer mode
-		const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-		double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_user.cmp360 * m_user.mouseDPI);
 		fpm->setTurnRate(mouseSensitivity);
 	}
 
