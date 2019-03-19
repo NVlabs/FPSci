@@ -403,8 +403,9 @@ void TargetExperiment::createResultFile()
 	// 4. Target_Trajectory, only need to create the table.
 	std::vector<std::vector<std::string>> targetTrajectoryColumns = {
 			{ "time", "real" },
-			{ "position_az", "real" },
-			{ "position_el", "real" },
+			{ "position_x", "real" },
+			{ "position_y", "real" },
+			{ "position_z", "real" },
 	};
 	createTableInDB(m_db, "Target_Trajectory", targetTrajectoryColumns);
 
@@ -441,11 +442,12 @@ void TargetExperiment::recordTrialResponse()
 void TargetExperiment::accumulateTrajectories()
 {
 	// recording target trajectories
-	Point2 dir = m_app->getTargetDirection();
+	Point3 targetPosition = m_app->getTargetPosition();
 	std::vector<std::string> targetTrajectoryValues = {
 		std::to_string(System::time()),
-		std::to_string(dir.x),
-		std::to_string(dir.y),
+		std::to_string(targetPosition.x),
+		std::to_string(targetPosition.y),
+		std::to_string(targetPosition.z),
 	};
 	m_targetTrajectory.push_back(targetTrajectoryValues);
 

@@ -372,14 +372,11 @@ Point2 App::getViewDirection()
 	return Point2(az, el);
 }
 
-Point2 App::getTargetDirection()
-{   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.
+Point3 App::getTargetPosition()
+{   // returns the 3D position of the target measured w.r.t viewpoint
 	Point3 t_pos = m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 	Point3 target_cartesian = (t_pos - m_debugCamera->frame().translation);
-	target_cartesian = target_cartesian / target_cartesian.length();
-	float az = atan2(- target_cartesian.z, - target_cartesian.x) * 180 / pif();
-	float el = atan2(target_cartesian.y, sqrtf(target_cartesian.x * target_cartesian.x + target_cartesian.z * target_cartesian.z)) * 180 / pif();
-	return Point2(az, el);
+	return target_cartesian;
 }
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {

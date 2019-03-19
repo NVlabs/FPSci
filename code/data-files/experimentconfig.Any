@@ -2,8 +2,8 @@
     "settingsVersion" : 1,
     "taskType" : "target",//"target","reaction",
     "expMode" : "real",
-    "expVersion" : "ComplexMotion",
-    "appendingDescription" : "2019Mar4_TalkPrep",
+    "expVersion" : "SimpleMotion",
+    "appendingDescription" : "2019Mar15_KB_Test",
     "sceneName" : "eSports Simple Hallway",
     //"targetFrameRate" : 60,
     //"targetFrameLag" : 0
