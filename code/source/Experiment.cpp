@@ -101,11 +101,11 @@ bool PsychHelper::isComplete() // did the experiment end?
 	}
 	return allMeasurementComplete;
 }
-
-void PsychHelper::clear()
-{ // probably not necessary?
-	mMeasurements.clear();
-	mCurrentConditionIndex = 0;
-	mTrialCount = 0;
-}
+//
+//void PsychHelper::clear()
+//{ // probably not necessary?
+//	mMeasurements.clear();
+//	mCurrentConditionIndex = 0;
+//	mTrialCount = 0;
+//}
 

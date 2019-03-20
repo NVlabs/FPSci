@@ -79,10 +79,10 @@ public:
 
 	/** Reset the experiment state
 	*/
-	void clear();
+	//void clear();
 
 	std::vector<SingleThresholdMeasurement> mMeasurements;
-	int32_t mCurrentConditionIndex;
+	int32_t mCurrentConditionIndex = 0;
 	int32_t mTrialCount = 0;
 
 	/** Description of an experiment: Any information that could be useful
@@ -101,6 +101,7 @@ protected:
 	double m_taskStartTime;
 	double m_taskEndTime;
 	int m_response;
+	Param m_config; // All parameters common in the experiment.
 
 	String m_feedbackMessage;
 	Stopwatch stopwatch;

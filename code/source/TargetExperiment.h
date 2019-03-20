@@ -28,8 +28,9 @@ public:
 	}
 
 	/**creates a new target with randomized motion path and gives it to the app */
-	void createNewTarget();
 	void initTargetAnimation();
+
+	float randSign();
 
 	void updatePresentationState();
 

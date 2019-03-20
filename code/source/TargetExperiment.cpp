@@ -11,28 +11,30 @@ void TargetExperiment::initPsychHelper()
 	PsychophysicsDesignParameter psychParam;
 	psychParam.mMeasuringMethod = PsychophysicsMethod::MethodOfConstantStimuli;
 	psychParam.mIsDefault = false;
-	psychParam.mStimLevels.push_back(m_app->m_experimentConfig.taskDuration); // Shorter task is more difficult. However, we are currently doing unlimited time.
-	psychParam.mMaxTrialCounts.push_back(m_app->m_experimentConfig.trialCount);
-
-	// Initialize PsychHelper.
-	m_psych.clear(); // TODO: check whether necessary.
+	psychParam.mStimLevels.push_back(m_config.val["taskDuration"]); // Shorter task is more difficult. However, we are currently doing unlimited time.
+	psychParam.mMaxTrialCounts.push_back((int)m_config.val["trialCount"]);
 
 	// Add conditions, one per one initial displacement value.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
-	for (auto d : m_app->m_experimentConfig.initialDisplacements)
+	for (int i = 0; i < m_config.val_vec["speeds"].size(); ++i)
 	{
 		// insert all the values potentially useful for analysis.
 		Param p;
-		p.add("initialDisplacementYaw", d.y);
-		p.add("initialDisplacementRoll", d.x);
-		p.add("targetFrameRate", m_app->m_experimentConfig.targetFrameRate);
-		p.add("targetFrameLag", (float)m_app->m_experimentConfig.targetFrameLag);
-		p.add("visualSize", m_app->m_experimentConfig.visualSize);
-		p.add("motionChangePeriod", m_app->m_experimentConfig.motionChangePeriod);
-		p.add("speed", m_app->m_experimentConfig.speed);
+		p.add("minEccH", m_config.val["minEccH"]);
+		p.add("minEccV", m_config.val["minEccV"]);
+		p.add("maxEccH", m_config.val["maxEccH"]);
+		p.add("maxEccV", m_config.val["maxEccV"]);
+		p.add("targetFrameRate", m_config.val["targetFrameRate"]);
+		p.add("targetFrameLag", m_config.val["targetFrameLag"]);
+		p.add("visualSize", m_config.val["visualSize"]);
+		p.add("motionChangePeriod", m_config.val_vec["motionChangePeriods"][i]);
+		p.add("speed", m_config.val_vec["speeds"][i]);
 		// soon we need to add frame delay as well.
 		m_psych.addCondition(p, psychParam);
 	}
+
+	// call it once all conditions are defined.
+	m_psych.chooseNextCondition();
 }
 
 void TargetExperiment::onInit() {
@@ -45,35 +47,19 @@ void TargetExperiment::onInit() {
 
 	// default values
 	// TODO: This should all move into configuration file.
-	m_app->m_experimentConfig.feedbackDuration = 1.0;
-	m_app->m_experimentConfig.motionChangePeriod = 100000.0;
-	m_app->m_experimentConfig.readyDuration = 0.5;
-	m_app->m_experimentConfig.taskDuration = 100000.0;
-	m_app->m_experimentConfig.speed = 0.0;
-	m_app->m_experimentConfig.trialCount = 10;
-	m_app->m_experimentConfig.visualSize = 0.02f;
-	m_app->m_experimentConfig.initialDisplacements.append(Point2(0.0f, -15.0f));
-	m_app->m_experimentConfig.initialDisplacements.append(Point2(0.0f, -10.0f));
-	m_app->m_experimentConfig.initialDisplacements.append(Point2(0.0f, -5.0f));
-	m_app->m_experimentConfig.initialDisplacements.append(Point2(0.0f, 5.0f));
-	m_app->m_experimentConfig.initialDisplacements.append(Point2(0.0f, 10.0f));
-	m_app->m_experimentConfig.initialDisplacements.append(Point2(0.0f, 15.0f));
-
-	// apply changes depending on experiment version
-	if (m_app->m_experimentConfig.expVersion == "SimpleMotion")
-	{
-		m_app->m_experimentConfig.speed = 6.0f;
-	}
-	else if (m_app->m_experimentConfig.expVersion == "ComplexMotion")
-	{
-		m_app->m_experimentConfig.speed = 6.0f;
-		m_app->m_experimentConfig.motionChangePeriod = 0.4f;
-	}
-
-	if (m_app->m_experimentConfig.expMode == "training") { // shorter experiment if in training
-		// NOTE: maybe not a good idea with dedicated subject.
-		m_app->m_experimentConfig.trialCount = m_app->m_experimentConfig.trialCount;
-	}
+	m_config.add("targetFrameRate", m_app->m_experimentConfig.targetFrameRate);
+	m_config.add("targetFrameLag", m_app->m_experimentConfig.targetFrameLag);
+	m_config.add("feedbackDuration", 1.0f);
+	m_config.add("readyDuration", 0.5f);
+	m_config.add("taskDuration", 100000.0f);
+	m_config.add("trialCount", 200.f);
+	m_config.add("visualSize", 0.02f);
+	m_config.add("minEccH", 5.f);
+	m_config.add("maxEccH", 15.f);
+	m_config.add("minEccV", 0.f);
+	m_config.add("maxEccV", 1.f);
+	m_config.add("motionChangePeriods", std::vector<float>{100000.0, 100000.0, 0.5});
+	m_config.add("speeds", std::vector<float>{0.0, 6.f, 6.f});
 
 	// initialize PsychHelper based on the configuration.
 	initPsychHelper();
@@ -87,6 +73,15 @@ void TargetExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> 
 	// seems like nothing necessary?
 }
 
+float TargetExperiment::randSign() {
+	if (Random::common().uniform() > 0.5) {
+		return 1;
+	}
+	else {
+		return -1;
+	}
+}
+
 void TargetExperiment::initTargetAnimation() {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
@@ -96,12 +91,14 @@ void TargetExperiment::initTargetAnimation() {
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (m_app->m_presentationState == PresentationState::task) {
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(m_psych.getParam().val["initialDisplacementRoll"])).approxCoordinateFrame();
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(m_psych.getParam().val["initialDisplacementYaw"])).approxCoordinateFrame();
+		float rot_pitch = randSign() * Random::common().uniform(m_psych.getParam().val["minEccV"], m_psych.getParam().val["maxEccV"]);
+		float rot_yaw = randSign() * Random::common().uniform(m_psych.getParam().val["minEccH"], m_psych.getParam().val["maxEccH"]);
+		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
+		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
 
-		// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
-		float randomAngleDegree = G3D::Random::common().uniform() * 360;
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
+		//// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
+		//float randomAngleDegree = G3D::Random::common().uniform() * 360;
+		//m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
 	}
 
 	// Full health for the target
@@ -111,31 +108,6 @@ void TargetExperiment::initTargetAnimation() {
 	//m_app->resetView();
 }
 
-
-void TargetExperiment::createNewTarget() {
-	// determine starting position
-	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_app->m_spawnDistance, 0.0f, 0.0f);
-	m_app->m_motionFrame = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
-	m_app->m_motionFrame.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
-	Array<Point3> destinationArray;
-
-	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
-	if (m_app->m_presentationState == PresentationState::task) {
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(m_psych.getParam().val["initialDisplacementRoll"])).approxCoordinateFrame();
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(m_psych.getParam().val["initialDisplacementYaw"])).approxCoordinateFrame();
-
-		// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
-		float randomAngleDegree = G3D::Random::common().uniform() * 360;
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
-
-		// create list of motion positions TODO
-	}
-
-	// spawn target
-	const shared_ptr<TargetEntity>& target = m_app->spawnTarget(initialSpawnPos, 0.2f, false, Color3::purple());
-	const Point3 center = m_app->activeCamera()->frame().translation;
-	target->setDestinations(destinationArray, center);
-}
 
 void TargetExperiment::processResponse()
 {
@@ -167,7 +139,7 @@ void TargetExperiment::updatePresentationState()
 	}
 	else if (currentState == PresentationState::ready)
 	{
-		if (stateElapsedTime > m_app->m_experimentConfig.readyDuration)
+		if (stateElapsedTime > m_config.val["readyDuration"])
 		{
 			m_lastMotionChangeAt = 0;
 			m_app->m_targetColor = Color3::green().pow(2.0f);
@@ -176,7 +148,7 @@ void TargetExperiment::updatePresentationState()
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_app->m_experimentConfig.taskDuration) || (m_app->m_targetHealth <= 0))
+		if ((stateElapsedTime > m_config.val["taskDuration"]) || (m_app->m_targetHealth <= 0))
 		{
 			m_taskEndTime = System::time();
 			processResponse();
@@ -186,7 +158,7 @@ void TargetExperiment::updatePresentationState()
 	}
 	else if (currentState == PresentationState::feedback)
 	{
-		if ((stateElapsedTime > m_app->m_experimentConfig.feedbackDuration) && (m_app->m_targetHealth <= 0))
+		if ((stateElapsedTime > m_config.val["feedbackDuration"]) && (m_app->m_targetHealth <= 0))
 		{
 			if (m_psych.isComplete()) {
 				m_feedbackMessage = "Experiment complete. Thanks!";
@@ -213,8 +185,6 @@ void TargetExperiment::updatePresentationState()
 		//If we switched to task, call initTargetAnimation to handle new trial
 		if ((newState == PresentationState::task) || (newState == PresentationState::feedback)) {
 			initTargetAnimation();
-			// TODO spawn new target here
-			//createNewTarget();
 		}
 	}
 }
@@ -227,7 +197,7 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	// 2. Check if motionChange is required (happens only during 'task' state with a designated level of chance).
 	if (m_app->m_presentationState == PresentationState::task)
 	{
-		if (m_app->timer.getTime() > m_lastMotionChangeAt + m_app->m_experimentConfig.motionChangePeriod)
+		if (m_app->timer.getTime() > m_lastMotionChangeAt + m_psych.getParam().val["motionChangePeriod"])
 		{
 			// If yes, rotate target coordinate frame by random (0~360) angle in roll direction
 			m_lastMotionChangeAt = m_app->timer.getTime();
@@ -239,7 +209,7 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	// 3. update target location (happens only during 'task' and 'feedback' states).
 	if (m_app->m_presentationState == PresentationState::task)
 	{
-		float rotationAngleDegree = (float)rdt * m_app->m_experimentConfig.speed;
+		float rotationAngleDegree = (float)rdt * m_psych.getParam().val["speed"];
 
 		// Attempts to bound the target within visible space.
 		//float currentYaw;
@@ -264,7 +234,7 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	if (m_app->m_targetHealth > 0.f) {
 		// Don't spawn a new target every frame
 		if (m_app->m_targetArray.size() == 0) {
-			m_app->spawnTarget(t_pos, m_app->m_experimentConfig.visualSize, false, m_app->m_targetColor);
+			m_app->spawnTarget(t_pos, m_psych.getParam().val["visualSize"], false, m_app->m_targetColor);
 		}
 		else {
 			// TODO: don't hardcode assumption of a single target
@@ -369,8 +339,10 @@ void TargetExperiment::createResultFile()
 			{ "id", "integer", "PRIMARY KEY"}, // this makes id a key value, requiring it to be unique for each row.
 			{ "refresh_rate", "real" },
 			{ "added_frame_lag", "real" },
-			{ "displacement_r", "real" },
-			{ "displacement_theta", "real" },
+			{ "min_ecc_h", "real" },
+			{ "min_ecc_V", "real" },
+			{ "max_ecc_h", "real" },
+			{ "max_ecc_V", "real" },
 			{ "speed", "real" },
 			{ "motion_change_period", "real" },
 	};
@@ -383,8 +355,10 @@ void TargetExperiment::createResultFile()
 			std::to_string(i), // this index is uniquely and statically assigned to each SingleThresholdMeasurement.
 			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameRate"]),
 			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameLag"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["initialDisplacementYaw"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["initialDisplacementRoll"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["minEccH"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["minEccV"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["maxEccH"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["maxEccV"]),
 			std::to_string(m_psych.mMeasurements[i].getParam().val["speed"]),
 			std::to_string(m_psych.mMeasurements[i].getParam().val["motionChangePeriod"]),
 		};
