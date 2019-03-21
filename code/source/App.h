@@ -205,6 +205,7 @@ public:
 
 	void resetView();
 	Point2 getViewDirection();
+	Point2 getTargetDirection();
 	Point3 getTargetPosition();
 	Point2 getMouseMotion(); // TODO: how do we do this?
 };
