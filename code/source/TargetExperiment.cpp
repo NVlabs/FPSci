@@ -95,6 +95,7 @@ void TargetExperiment::initTargetAnimation() {
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (m_app->m_presentationState == PresentationState::task) {
+		m_speed = G3D::Random::common().uniform(m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"]);
 		float rot_pitch = randSign() * Random::common().uniform(m_psych.getParam().val["minEccV"], m_psych.getParam().val["maxEccV"]);
 		float rot_yaw = randSign() * Random::common().uniform(m_psych.getParam().val["minEccH"], m_psych.getParam().val["maxEccH"]);
 		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
@@ -103,6 +104,9 @@ void TargetExperiment::initTargetAnimation() {
 		// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
 		float randomAngleDegree = G3D::Random::common().uniform() * 360;
 		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
+	}
+	else {
+		m_speed = 0;
 	}
 
 	// Full health for the target
@@ -213,7 +217,7 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	// 3. update target location (happens only during 'task' and 'feedback' states).
 	if (m_app->m_presentationState == PresentationState::task)
 	{
-		float rotationAngleDegree = (float)rdt * G3D::Random::common().uniform(m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"]);
+		float rotationAngleDegree = (float)rdt * m_speed;
 
 		// Attempts to bound the target within visible space.
 		//float currentYaw;
