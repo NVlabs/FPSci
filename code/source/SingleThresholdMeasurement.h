@@ -56,13 +56,22 @@ struct Param
 {
 	std::map<std::string, float> val;
 	std::map<std::string, std::string> str;
-	// TODO: check the following.
-	Param() { val = std::map<std::string, float>(); str = std::map<std::string, std::string>(); }
+	std::map<std::string, std::vector<float>> val_vec;
+
 	void add(std::string s, float f) {
 		val.insert(std::pair<std::string, float>(s, f));
 	}
+	void add(std::string s, std::vector<float> v) {
+		val_vec.insert(std::pair<std::string, std::vector<float>>(s, v));
+	}
 	void add(std::string str_key, std::string str_val) {
 		str.insert(std::pair<std::string, std::string>(str_key, str_val));
+	}
+
+	Param() {
+		val = std::map<std::string, float>();
+		str = std::map<std::string, std::string>();
+		val_vec = std::map<std::string, std::vector<float>>();
 	}
 };
 
