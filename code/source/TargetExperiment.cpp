@@ -16,7 +16,7 @@ void TargetExperiment::initPsychHelper()
 
 	// Add conditions, one per one initial displacement value.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
-	for (int i = 0; i < m_config.val_vec["speeds"].size(); ++i)
+	for (int i = 0; i < m_config.val_vec["minSpeeds"].size(); ++i)
 	{
 		// insert all the values potentially useful for analysis.
 		Param p;
@@ -28,7 +28,8 @@ void TargetExperiment::initPsychHelper()
 		p.add("targetFrameLag", m_config.val["targetFrameLag"]);
 		p.add("visualSize", m_config.val["visualSize"]);
 		p.add("motionChangePeriod", m_config.val_vec["motionChangePeriods"][i]);
-		p.add("speed", m_config.val_vec["speeds"][i]);
+		p.add("minSpeed", m_config.val_vec["minSpeeds"][i]);
+		p.add("maxSpeed", m_config.val_vec["maxSpeeds"][i]);
 		// soon we need to add frame delay as well.
 		m_psych.addCondition(p, psychParam);
 	}
@@ -58,8 +59,11 @@ void TargetExperiment::onInit() {
 	m_config.add("maxEccH", 15.f);
 	m_config.add("minEccV", 0.f);
 	m_config.add("maxEccV", 1.f);
+	// The following three parameters must have the same number (N) of elements.
+	// They are to be joined by their indices to define N task conditions.
 	m_config.add("motionChangePeriods", std::vector<float>{100000.0, 100000.0, 0.5});
-	m_config.add("speeds", std::vector<float>{0.0, 6.f, 6.f});
+	m_config.add("minSpeeds", std::vector<float>{0.0, 8.f, 8.f});
+	m_config.add("maxSpeeds", std::vector<float>{0.0, 15.f, 15.f});
 
 	// initialize PsychHelper based on the configuration.
 	initPsychHelper();
@@ -96,9 +100,9 @@ void TargetExperiment::initTargetAnimation() {
 		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
 		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
 
-		//// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
-		//float randomAngleDegree = G3D::Random::common().uniform() * 360;
-		//m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
+		// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
+		float randomAngleDegree = G3D::Random::common().uniform() * 360;
+		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
 	}
 
 	// Full health for the target
@@ -209,7 +213,7 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	// 3. update target location (happens only during 'task' and 'feedback' states).
 	if (m_app->m_presentationState == PresentationState::task)
 	{
-		float rotationAngleDegree = (float)rdt * m_psych.getParam().val["speed"];
+		float rotationAngleDegree = (float)rdt * G3D::Random::common().uniform(m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"]);
 
 		// Attempts to bound the target within visible space.
 		//float currentYaw;
@@ -343,7 +347,8 @@ void TargetExperiment::createResultFile()
 			{ "min_ecc_V", "real" },
 			{ "max_ecc_h", "real" },
 			{ "max_ecc_V", "real" },
-			{ "speed", "real" },
+			{ "min_speed", "real" },
+			{ "max_speed", "real" },
 			{ "motion_change_period", "real" },
 	};
 	createTableInDB(m_db, "Conditions", conditionColumns); // Primary Key needed for this table.
@@ -359,7 +364,8 @@ void TargetExperiment::createResultFile()
 			std::to_string(m_psych.mMeasurements[i].getParam().val["minEccV"]),
 			std::to_string(m_psych.mMeasurements[i].getParam().val["maxEccH"]),
 			std::to_string(m_psych.mMeasurements[i].getParam().val["maxEccV"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["speed"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["minSpeed"]),
+			std::to_string(m_psych.mMeasurements[i].getParam().val["maxSpeed"]),
 			std::to_string(m_psych.mMeasurements[i].getParam().val["motionChangePeriod"]),
 		};
 		insertRowIntoDB(m_db, "Conditions", conditionValues);
