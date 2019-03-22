@@ -138,6 +138,14 @@ public:
 		setReticle((m_reticleIndex + 1) % numReticles);
 	}
 
+    /** Creates a random target with motion based on parameters 
+    @param motionDuration time in seconds to produce a motion path for
+    @param motionDecisionPeriod time in seconds when new motion direction is chosen
+    @param speed world-space velocity (m/s) of target
+    @param radius world-space distance to target
+    @param scale size of target TODO: is this radius or diameter in meters?*/
+    void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
+
 	/** Creates a random target in front of the player */
 	void spawnRandomTarget();
 
