@@ -8,7 +8,7 @@ When you check out G3D, you'll need some data files from the `research` and `gam
 
 ## Instructions for running the experiment
 
-There are two files that control the experiment settings, `userconfig.Any` and `experimentconfig.Any`. Samples of these files are provide in the `data-files` directory, but you should copy the `SAMPLEuserconfig.Any` to `userconfig.Any` and `SAMPLEexperimentconfig.Any` to `experimentconfig.Any` prior to running the application. When you start the application, files with these names must be present in the data path. The standard location during development is the `data-files` directory.
+There are two files that control the experiment settings, `userconfig.Any` and `experimentconfig.Any`. Samples of these files are provide in the `data-files` directory, so you can copy the `SAMPLEuserconfig.Any` to `userconfig.Any` and `SAMPLEexperimentconfig.Any` to `experimentconfig.Any` prior to running the application. The standard location during development is the `data-files` directory. If the application fails to find `userconfig.Any` and `experimentconfig.Any` when it loads, it will silently copy the two sample files and put the config files in the `data-files` directory.
 
 `userconfig.Any` contains settings that pertain to the user, such as the `subjectID`, `mouseDPI` and `cmp360` settings. One way to set this up effectively is to have a settings file per user and switch between them as you switch users.
 
