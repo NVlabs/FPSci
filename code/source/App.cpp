@@ -3,7 +3,7 @@
 #include "TargetEntity.h"
 
 // Set to false when just editing content
-static const bool playMode = true;
+static const bool playMode = false;
 
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. (true = target infinite frame rate)
@@ -45,12 +45,19 @@ void App::onInit() {
 
     scene()->registerEntitySubclass("TargetEntity", &TargetEntity::create);
 
-    // load settings from file
+    // load user setting from file
+	if (!FileSystem::exists("userconfig.Any")) { // if file not found, copy from the sample config file.
+		FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
+	}
     m_user = Any::fromFile(System::findDataFile("userconfig.Any"));
     // debug print
     logPrintf("User: %s, DPI: %f, cmp360 %f\n", m_user.subjectID, m_user.mouseDPI, m_user.cmp360);
-	m_experimentConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
 
+	// load experiment setting from file
+	if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
+		FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
+	}
+	m_experimentConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
 	// debug print
 	logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
 		m_experimentConfig.targetFrameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
