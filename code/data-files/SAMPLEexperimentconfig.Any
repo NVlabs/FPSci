@@ -1,3 +1,4 @@
+// copy this file to experimentconfig.Any before first run
 {
     "settingsVersion" : 1,
     "taskType" : "target",//"target","reaction",
