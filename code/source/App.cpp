@@ -121,7 +121,64 @@ void App::onInit() {
 	m_ex->onInit();
 }
 
+void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
+    Random& rng = Random::threadCommon();
+
+    // Construct a reference frame
+    // Remove the vertical component
+    Vector3 Z = -m_debugCamera->frame().lookVector();
+    debugPrintf("lookatZ = [%.4f, %.4f, %.4f]\n", Z.x, Z.y, Z.z);
+    debugPrintf("origin  = [%.4f, %.4f, %.4f]\n", m_debugCamera->frame().translation.x, m_debugCamera->frame().translation.y, m_debugCamera->frame().translation.z);
+    Z.y = 0.0f;
+    Z = Z.direction();
+    Vector3 Y = Vector3::unitY();
+    Vector3 X = Y.cross(Z);
+
+    // Make a random vector in front of the player in a narrow field of view
+    Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.5f, 0.5f)).direction();
+
+    // Ray from user/camera toward intended spawn location
+    Ray ray = Ray::fromOriginAndDirection(m_debugCamera->frame().translation, dir);
+
+    //distance = rng.uniform(2.0f, distance - 1.0f);
+    const shared_ptr<TargetEntity>& target =
+        spawnTarget(ray.origin() + ray.direction() * radius,
+            scale, false,
+            Color3::wheelRandom());
+
+    // Choose some destination locations based on speed and motionDuration
+    const Point3& center = ray.origin();
+    Array<Point3> destinationArray;
+    // [radians/s] = [m/s] / [m/radians]
+    float angularSpeed = speed / radius;
+    // [rad] = [rad/s] * [s] 
+    float angleChange = angularSpeed * motionDecisionPeriod;
+
+    destinationArray.push(target->frame().translation);
+    int tempInt = 0;
+    for (float motionTime = 0.0f; motionTime < motionDuration; motionTime += motionDecisionPeriod) {
+        // TODO: make angle change randomize correction, should be placed on circle around previous point
+        float pitch = 0.0f;
+        float yaw = tempInt++ % 2 == 0 ? angleChange : -angleChange;
+        //float yaw = rng.uniform(-angleChange, angleChange);
+        //float pitch = rng.uniform(-angleChange, angleChange);
+        const Vector3& dir = CFrame::fromXYZYPRRadians(0.0f, 0.0f, 0.0f, yaw, pitch, 0.0f).rotation * ray.direction();
+        ray.set(ray.origin(), dir);
+        destinationArray.push(center + dir * radius);
+    }
+    target->setSpeed(speed); // m/s
+    // debugging prints
+    for (Point3* p = destinationArray.begin(); p != destinationArray.end(); ++p) {
+        debugPrintf("[%.2f, %.2f, %.2f]\n", p->x, p->y, p->z);
+    }
+    target->setDestinations(destinationArray, center);
+}
+
 void App::spawnRandomTarget() {
+    // TODO: temporary shortcut
+    spawnParameterizedRandomTarget();
+    return;
+
 	Random& rng = Random::threadCommon();
 
 	bool done = false;
@@ -266,7 +323,7 @@ void App::makeGUI() {
 		static int frames = 0;
 		GuiControl* c = nullptr;
 
-		debugPane->addButton("Spawn", this, &App::spawnRandomTarget);
+        debugPane->addButton("Spawn", this, &App::spawnRandomTarget);
 		debugPane->setNewChildSize(230.0f, -1.0f, 70.0f);
 
 		c = debugPane->addNumberBox("Framerate", Pointer<float>(

@@ -7,6 +7,8 @@ code/data-files/*.db
 code/data-files/*.csv
 code/data-files/*.pdn
 code/data-files/result_data
+code/data-files/experimentconfig.Any
+code/data-files/userconfig.Any
 newGfx/.vs
 newGfx/x64
 newGfx/data-files/g3d-license.txt
