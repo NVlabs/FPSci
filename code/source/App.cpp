@@ -3,7 +3,7 @@
 #include "TargetEntity.h"
 
 // Set to false when just editing content
-static const bool playMode = false;
+static const bool playMode = true;
 
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. (true = target infinite frame rate)
@@ -413,7 +413,7 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 		if (measureClickPhotonLatency) {
 			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
 			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
-			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
+			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.925f, (float)window()->height() * 0.0f, (float)window()->width() * 0.075f, (float)window()->height() * 0.15f), rd, cornerColor);
 		}
 	} rd->pop2D();
 
