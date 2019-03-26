@@ -163,6 +163,9 @@ public:
 	int displayLatencyFrames() const {
 		return m_displayLagFrames;
 	}
+	
+	
+	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
 
 	virtual void onInit() override;
 	virtual void onAI() override;

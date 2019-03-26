@@ -21,6 +21,7 @@ const float App::TARGET_MODEL_ARRAY_OFFSET = 30;
 static const float horizontalFieldOfViewDegrees = 103; // deg
 
 static const bool measureClickPhotonLatency = true;
+static const bool testCustomProjection = false;
 
 // JBS: TODO: Refactor these as experiment variables
 //========================================================================
@@ -500,6 +501,29 @@ bool App::onEvent(const GEvent& event) {
 	return false;
 }
 
+
+void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
+	GApp::onPostProcessHDR3DEffects(rd);
+	
+	if (testCustomProjection) {
+		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
+		// latency queue copy
+			
+		// Copy the post-VFX HDR framebuffer
+		static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("temp distortion source", 256, 256, m_framebuffer->texture(0)->format()));
+		temp->resize(m_framebuffer->width(), m_framebuffer->height());
+		m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
+
+		rd->push2D(m_framebuffer); {
+			Args args;
+			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
+			args.setRect(rd->viewport());
+			LAUNCH_SHADER("shader/distort.pix", args);
+		} rd->pop2D();
+	}
+}
+
+
 void App::fire() {
 	Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
 
@@ -549,9 +573,26 @@ void App::fire() {
 }
 
 void App::onUserInput(UserInput* ui) {
+	//GApp::onUserInput(ui);
+	//(void)ui;
+
+	//if (playMode || m_debugController->enabled()) {
+	//	m_ex->onUserInput(ui);
+
+	//	uint8 mouseButtons;
+	//	GEvent event; //You’ll probably get g as a parameter if you’re calling this in App::onEvent
+	//	((GLFWWindow*)(event.osWindow()))->getMouseButtonState(mouseButtons);
+
+	//	if (mouseButtons) {
+	//		m_buttonUp = false;
+	//	}
+	//	else {
+	//		m_buttonUp = true;
+	//	}
+	//}
+
 	GApp::onUserInput(ui);
 	(void)ui;
-
 
 	if (playMode || m_debugController->enabled()) {
 		m_ex->onUserInput(ui);
@@ -563,7 +604,6 @@ void App::onUserInput(UserInput* ui) {
 			m_buttonUp = true;
 		}
 	}
-
 
 	if (m_lastReticleLoaded != m_reticleIndex) {
 		// Slider was used to change the reticle
