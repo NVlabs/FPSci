@@ -16,6 +16,9 @@
     <Filter Include="Config Files">
       <UniqueIdentifier>{650a3750-20f3-4ac3-9338-6652eaca5463}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shader Files">
+      <UniqueIdentifier>{c542b891-87fe-47ef-b6b0-5e39b70b2f65}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\App.h">
@@ -77,6 +80,9 @@
     </None>
     <None Include="data-files\userconfig.Any">
       <Filter>Config Files</Filter>
+    </None>
+    <None Include="data-files\shader\distort.pix">
+      <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>
 </Project>

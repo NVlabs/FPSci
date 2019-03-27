@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{D0B15FD1-8D51-4033-B19F-477FAAF59787}</ProjectGuid>
     <RootNamespace>maxPerf</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -153,6 +153,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="data-files\experimentconfig.Any" />
+    <None Include="data-files\shader\distort.pix" />
     <None Include="data-files\userconfig.Any" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

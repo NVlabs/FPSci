@@ -20,7 +20,8 @@ const float App::TARGET_MODEL_ARRAY_OFFSET = 30;
 //static const float verticalFieldOfViewDegrees = 90; // deg
 static const float horizontalFieldOfViewDegrees = 103; // deg
 
-static const bool measureClickPhotonLatency = false;
+static const bool measureClickPhotonLatency = true;
+static const bool testCustomProjection = false;
 
 // JBS: TODO: Refactor these as experiment variables
 //========================================================================
@@ -45,12 +46,19 @@ void App::onInit() {
 
     scene()->registerEntitySubclass("TargetEntity", &TargetEntity::create);
 
-    // load settings from file
+    // load user setting from file
+	if (!FileSystem::exists("userconfig.Any")) { // if file not found, copy from the sample config file.
+		FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
+	}
     m_user = Any::fromFile(System::findDataFile("userconfig.Any"));
     // debug print
     logPrintf("User: %s, DPI: %f, cmp360 %f\n", m_user.subjectID, m_user.mouseDPI, m_user.cmp360);
-	m_experimentConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
 
+	// load experiment setting from file
+	if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
+		FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
+	}
+	m_experimentConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
 	// debug print
 	logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
 		m_experimentConfig.targetFrameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
@@ -406,7 +414,7 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 		if (measureClickPhotonLatency) {
 			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
 			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
-			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
+			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.925f, (float)window()->height() * 0.0f, (float)window()->width() * 0.075f, (float)window()->height() * 0.15f), rd, cornerColor);
 		}
 	} rd->pop2D();
 
@@ -430,13 +438,21 @@ Point2 App::getViewDirection()
 }
 
 Point2 App::getTargetDirection()
-{   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.
+{
+	// returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.	{   // returns the 3D position of the target measured w.r.t viewpoint
 	Point3 t_pos = m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 	Point3 target_cartesian = (t_pos - m_debugCamera->frame().translation);
 	target_cartesian = target_cartesian / target_cartesian.length();
-	float az = atan2(- target_cartesian.z, - target_cartesian.x) * 180 / pif();
+	float az = atan2(-target_cartesian.z, -target_cartesian.x) * 180 / pif();
 	float el = atan2(target_cartesian.y, sqrtf(target_cartesian.x * target_cartesian.x + target_cartesian.z * target_cartesian.z)) * 180 / pif();
 	return Point2(az, el);
+}
+
+Point3 App::getTargetPosition()
+{   // returns the 3D position of the target measured w.r.t viewpoint
+	Point3 t_pos = m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+	Point3 target_cartesian = (t_pos - m_debugCamera->frame().translation);
+	return target_cartesian;
 }
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
@@ -484,6 +500,29 @@ bool App::onEvent(const GEvent& event) {
 
 	return false;
 }
+
+
+void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
+	GApp::onPostProcessHDR3DEffects(rd);
+	
+	if (testCustomProjection) {
+		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
+		// latency queue copy
+			
+		// Copy the post-VFX HDR framebuffer
+		static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("temp distortion source", 256, 256, m_framebuffer->texture(0)->format()));
+		temp->resize(m_framebuffer->width(), m_framebuffer->height());
+		m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
+
+		rd->push2D(m_framebuffer); {
+			Args args;
+			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
+			args.setRect(rd->viewport());
+			LAUNCH_SHADER("shader/distort.pix", args);
+		} rd->pop2D();
+	}
+}
+
 
 void App::fire() {
 	Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
@@ -534,9 +573,26 @@ void App::fire() {
 }
 
 void App::onUserInput(UserInput* ui) {
+	//GApp::onUserInput(ui);
+	//(void)ui;
+
+	//if (playMode || m_debugController->enabled()) {
+	//	m_ex->onUserInput(ui);
+
+	//	uint8 mouseButtons;
+	//	GEvent event; //You’ll probably get g as a parameter if you’re calling this in App::onEvent
+	//	((GLFWWindow*)(event.osWindow()))->getMouseButtonState(mouseButtons);
+
+	//	if (mouseButtons) {
+	//		m_buttonUp = false;
+	//	}
+	//	else {
+	//		m_buttonUp = true;
+	//	}
+	//}
+
 	GApp::onUserInput(ui);
 	(void)ui;
-
 
 	if (playMode || m_debugController->enabled()) {
 		m_ex->onUserInput(ui);
@@ -548,7 +604,6 @@ void App::onUserInput(UserInput* ui) {
 			m_buttonUp = true;
 		}
 	}
-
 
 	if (m_lastReticleLoaded != m_reticleIndex) {
 		// Slider was used to change the reticle

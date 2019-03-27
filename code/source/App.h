@@ -163,6 +163,9 @@ public:
 	int displayLatencyFrames() const {
 		return m_displayLagFrames;
 	}
+	
+	
+	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
 
 	virtual void onInit() override;
 	virtual void onAI() override;
@@ -214,6 +217,7 @@ public:
 	void resetView();
 	Point2 getViewDirection();
 	Point2 getTargetDirection();
+	Point3 getTargetPosition();
 	Point2 getMouseMotion(); // TODO: how do we do this?
 };
 
