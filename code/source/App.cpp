@@ -77,8 +77,8 @@ void App::onInit() {
 	}
 	setFrameDuration(dt, GApp::REAL_TIME);
 	setSubmitToDisplayMode(
-		//SubmitToDisplayMode::MINIMIZE_LATENCY);
-		SubmitToDisplayMode::BALANCE);
+		SubmitToDisplayMode::MINIMIZE_LATENCY);
+		//SubmitToDisplayMode::BALANCE);
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
 
 	showRenderingStats = false;
@@ -573,37 +573,33 @@ void App::fire() {
 }
 
 void App::onUserInput(UserInput* ui) {
-	//GApp::onUserInput(ui);
-	//(void)ui;
-
-	//if (playMode || m_debugController->enabled()) {
-	//	m_ex->onUserInput(ui);
-
-	//	uint8 mouseButtons;
-	//	GEvent event; //You’ll probably get g as a parameter if you’re calling this in App::onEvent
-	//	((GLFWWindow*)(event.osWindow()))->getMouseButtonState(mouseButtons);
-
-	//	if (mouseButtons) {
-	//		m_buttonUp = false;
-	//	}
-	//	else {
-	//		m_buttonUp = true;
-	//	}
-	//}
-
 	GApp::onUserInput(ui);
 	(void)ui;
 
 	if (playMode || m_debugController->enabled()) {
 		m_ex->onUserInput(ui);
 
-		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
+		uint8 mouseButtons;
+		((GLFWWindow*)(window()))->getMouseButtonState(mouseButtons);
+
+		if (mouseButtons) {
 			m_buttonUp = false;
 		}
-		if (ui->keyReleased(GKey::LEFT_MOUSE)) {
+		else {
 			m_buttonUp = true;
 		}
 	}
+
+	//if (playMode || m_debugController->enabled()) {
+	//	m_ex->onUserInput(ui);
+
+	//	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
+	//		m_buttonUp = false;
+	//	}
+	//	else {
+	//		m_buttonUp = true;
+	//	}
+	//}
 
 	if (m_lastReticleLoaded != m_reticleIndex) {
 		// Slider was used to change the reticle
