@@ -127,6 +127,10 @@ void App::onInit() {
 
 	// TODO: Remove the following by invoking a call back.
 	m_ex->onInit();
+
+	// initialize comport driver
+	DWORD errorMsg;
+	m_com.Open(2, errorMsg);
 }
 
 void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
@@ -414,7 +418,16 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 		if (measureClickPhotonLatency) {
 			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
 			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
-			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.925f, (float)window()->height() * 0.0f, (float)window()->width() * 0.075f, (float)window()->height() * 0.15f), rd, cornerColor);
+			//Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.925f, (float)window()->height() * 0.0f, (float)window()->width() * 0.075f, (float)window()->height() * 0.15f), rd, cornerColor);
+			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.0f, (float)window()->height() * 0.0f, (float)window()->width() * 0.15f, (float)window()->height() * 0.15f), rd, cornerColor);
+			if (m_buttonUp) {
+				//m_com.SetRts();
+				m_com.SetDtr();
+			}
+			else {
+				//m_com.ClearRts();
+				m_com.ClearDtr();
+			}
 		}
 	} rd->pop2D();
 
@@ -720,6 +733,8 @@ void App::setSceneBrightness(float b) {
 void App::onCleanup() {
 	// Called after the application loop ends.  Place a majority of cleanup code
 	// here instead of in the constructor so that exceptions can be caught.
+	DWORD errorMsg;
+	m_com.Close(errorMsg);
 }
 
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
