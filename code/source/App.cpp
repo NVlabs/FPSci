@@ -8,6 +8,7 @@ static const bool playMode = true;
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. (true = target infinite frame rate)
 static const bool  unlockFramerate = false;
+static const bool  useSerialPort = false;
 
 // Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
 // which allows the application to submit asynchronously with vsync
@@ -77,6 +78,7 @@ void App::onInit() {
 	}
 	setFrameDuration(dt, GApp::REAL_TIME);
 	setSubmitToDisplayMode(
+		//SubmitToDisplayMode::EXPLICIT);
 		SubmitToDisplayMode::MINIMIZE_LATENCY);
 		//SubmitToDisplayMode::BALANCE);
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
@@ -129,8 +131,11 @@ void App::onInit() {
 	m_ex->onInit();
 
 	// initialize comport driver
-	DWORD errorMsg;
-	m_com.Open(2, errorMsg);
+	if (useSerialPort) {
+		DWORD errorMsg;
+		m_com.Open(2, errorMsg);
+		int aa = 1;
+	}
 }
 
 void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
@@ -420,13 +425,17 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
 			//Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.925f, (float)window()->height() * 0.0f, (float)window()->width() * 0.075f, (float)window()->height() * 0.15f), rd, cornerColor);
 			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.0f, (float)window()->height() * 0.0f, (float)window()->width() * 0.15f, (float)window()->height() * 0.15f), rd, cornerColor);
-			if (m_buttonUp) {
-				//m_com.SetRts();
-				m_com.SetDtr();
-			}
-			else {
-				//m_com.ClearRts();
-				m_com.ClearDtr();
+			if (useSerialPort) {
+				if (m_buttonUp) {
+					m_com.SetRts();
+					int aa = 1;
+					//m_com.SetDtr();
+				}
+				else {
+					m_com.ClearRts();
+					int aa = 1;
+					//m_com.ClearDtr();
+				}
 			}
 		}
 	} rd->pop2D();
@@ -586,33 +595,38 @@ void App::fire() {
 }
 
 void App::onUserInput(UserInput* ui) {
+	//double waitTime = 1.0f / m_experimentConfig.targetFrameRate - 0.002;
+	//if (waitTime > 0) {
+	//	System::sleep(waitTime);
+	//}
+
 	GApp::onUserInput(ui);
 	(void)ui;
-
-	if (playMode || m_debugController->enabled()) {
-		m_ex->onUserInput(ui);
-
-		uint8 mouseButtons;
-		((GLFWWindow*)(window()))->getMouseButtonState(mouseButtons);
-
-		if (mouseButtons) {
-			m_buttonUp = false;
-		}
-		else {
-			m_buttonUp = true;
-		}
-	}
 
 	//if (playMode || m_debugController->enabled()) {
 	//	m_ex->onUserInput(ui);
 
-	//	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
+	//	uint8 mouseButtons;
+	//	((GLFWWindow*)(ui->window()))->getMouseButtonState(mouseButtons);
+
+	//	if (mouseButtons) {
 	//		m_buttonUp = false;
 	//	}
 	//	else {
 	//		m_buttonUp = true;
 	//	}
 	//}
+
+	if (playMode || m_debugController->enabled()) {
+		m_ex->onUserInput(ui);
+
+		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
+			m_buttonUp = false;
+		}
+		else {
+			m_buttonUp = true;
+		}
+	}
 
 	if (m_lastReticleLoaded != m_reticleIndex) {
 		// Slider was used to change the reticle
@@ -733,8 +747,10 @@ void App::setSceneBrightness(float b) {
 void App::onCleanup() {
 	// Called after the application loop ends.  Place a majority of cleanup code
 	// here instead of in the constructor so that exceptions can be caught.
-	DWORD errorMsg;
-	m_com.Close(errorMsg);
+	if (useSerialPort) {
+		DWORD errorMsg;
+		m_com.Close(errorMsg);
+	}
 }
 
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
