@@ -87,15 +87,20 @@ void App::onInit() {
 			trial.id, trial.motionChangePeriod, trial.minSpeed, trial.maxSpeed, trial.visualSize);
 	}
 
-	// Iterate through 
-
 	// Get next session
 	char nextSessionID[5];
-	String lastSession = m_user.completedSessions[m_user.completedSessions.size() - 1];
-	Random r;
 	char c;
+	Random r;
 	int lastSessIdx, nextSessionIdx;
-	sscanf(lastSession.c_str(), "%c%d", &c, &lastSessIdx);
+	int lastIdx = m_user.completedSessions.size() == 0 ? 0 : m_user.completedSessions.size() - 1;
+	if (m_user.completedSessions.size() > 0) {
+		String lastSession = m_user.completedSessions[lastIdx];
+		sscanf(lastSession.c_str(), "%c%d", &c, &lastSessIdx);
+	}
+	else {
+		c = 's';
+		lastSessIdx = -1;
+	}
 	if (m_expConfig.sessionOrder == "Serial") nextSessionIdx = lastSessIdx + 1;
 	else if (m_expConfig.sessionOrder == "Random") {
 		bool foundID = false;
