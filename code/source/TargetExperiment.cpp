@@ -40,7 +40,7 @@ void TargetExperiment::initPsychHelper()
 
 void TargetExperiment::onInit() {
 	// load the experiment background scene.
-	m_app->loadScene(m_app->m_experimentConfig.sceneName);
+	m_app->loadScene(m_app->m_expConfig.sceneName);
 
 	// initialize presentation states
 	m_app->m_presentationState = PresentationState::initial;
@@ -48,17 +48,17 @@ void TargetExperiment::onInit() {
 
 	// default values
 	// TODO: This should all move into configuration file.
-	m_config.add("targetFrameRate", m_app->m_experimentConfig.targetFrameRate);
-	m_config.add("targetFrameLag", m_app->m_experimentConfig.targetFrameLag);
-	m_config.add("feedbackDuration", 1.0f);
-	m_config.add("readyDuration", 0.5f);
-	m_config.add("taskDuration", 100000.0f);
+	m_config.add("targetFrameRate", m_app->m_expConfig.sessions[0].frameRate);
+	m_config.add("targetFrameLag", m_app->m_expConfig.sessions[0].frameDelay);
+	m_config.add("feedbackDuration", m_app->m_expConfig.feedbackDuration);
+	m_config.add("readyDuration", m_app->m_expConfig.readyDuration);
+	m_config.add("taskDuration", m_app->m_expConfig.taskDuration);
 	m_config.add("trialCount", 200.f);
-	m_config.add("visualSize", 0.02f);
-	m_config.add("minEccH", 5.f);
-	m_config.add("maxEccH", 15.f);
-	m_config.add("minEccV", 0.f);
-	m_config.add("maxEccV", 1.f);
+	m_config.add("visualSize", m_app->m_expConfig.trials[0].visualSize);
+	m_config.add("minEccH", m_app->m_expConfig.trials[0].minEccH);
+	m_config.add("maxEccH", m_app->m_expConfig.trials[0].maxEccH);
+	m_config.add("minEccV", m_app->m_expConfig.trials[0].minEccV);
+	m_config.add("maxEccV", m_app->m_expConfig.trials[0].maxEccV);
 	// The following three parameters must have the same number (N) of elements.
 	// They are to be joined by their indices to define N task conditions.
 	m_config.add("motionChangePeriods", std::vector<float>{100000.0, 100000.0, 0.5});
@@ -123,9 +123,9 @@ void TargetExperiment::processResponse()
 	m_response = (m_app->m_targetHealth <= 0) ? 1 : 0; // 1 means success, 0 means failure.
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 	m_psych.processResponse(m_response); // process response.
-	if (m_app->m_experimentConfig.expMode == "training") {
+	/*if (m_app->m_expConfig.expMode == "training") {
 		m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
-	}
+	}*/
 }
 
 void TargetExperiment::updatePresentationState()
@@ -312,12 +312,13 @@ void TargetExperiment::createResultFile()
 
 	// create a unique file name
 	String timeStr(genUniqueTimestamp());
-	if (m_app->m_experimentConfig.expMode == "training") {
-		mResultFileName = ("result_data/" + m_app->m_experimentConfig.expMode + "_" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
+	/*if (m_app->m_expConfig.expMode == "training") {
+		mResultFileName = ("result_data/" + m_app->m_expConfig.expMode + "_" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 	}
 	else {
-		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
-	}
+		mResultFileName = ("result_data/" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
+	}*/
+	mResultFileName = ("result_data/" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 
 	// create the file
 	if (sqlite3_open(mResultFileName.c_str(), &m_db)) {

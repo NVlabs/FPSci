@@ -3,7 +3,7 @@
 #include "TargetEntity.h"
 
 // Set to false when just editing content
-static const bool playMode = true;
+//static const bool playMode = true;
 
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. (true = target infinite frame rate)
@@ -44,34 +44,84 @@ App::App(const GApp::Settings& settings) : GApp(settings) {
 void App::onInit() {
 	GApp::onInit();
 
-    scene()->registerEntitySubclass("TargetEntity", &TargetEntity::create);
+	scene()->registerEntitySubclass("TargetEntity", &TargetEntity::create);
 
-    // load user setting from file
+	// load user setting from file
 	if (!FileSystem::exists("userconfig.Any")) { // if file not found, copy from the sample config file.
 		FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
 	}
-    m_user = Any::fromFile(System::findDataFile("userconfig.Any"));
-    // debug print
-    logPrintf("User: %s, DPI: %f, cmp360 %f\n", m_user.subjectID, m_user.mouseDPI, m_user.cmp360);
+	m_user = Any::fromFile(System::findDataFile("userconfig.Any"));
+	// debug print
+	logPrintf("User: %s, DPI: %f, cmp360 %f\n", m_user.subjectID, m_user.mouseDPI, m_user.cmp360);
 
 	// load experiment setting from file
 	if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
 		FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
 	}
-	m_experimentConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
+
+	m_expConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
 	// debug print
-	logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
-		m_experimentConfig.targetFrameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
+	//logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
+	//	m_experimentConfig.sessions["s1"].frameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
+
+	logPrintf("-------------------\nExperiment Config\n-------------------\nPlay Mode = %s\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\n",
+		(m_expConfig.playMode ? "true" : "false") , m_expConfig.taskType, m_expConfig.appendingDescription, m_expConfig.sceneName, m_expConfig.feedbackDuration, m_expConfig.readyDuration, m_expConfig.taskDuration);
+
+	// Iterate through sessions and print them
+	for (int i = 0; i < m_expConfig.sessions.size(); i++) {
+		SessionConfig sess = m_expConfig.sessions[i];
+		logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n\tSelection Order = %s\n",
+			sess.id, sess.frameRate, sess.frameDelay, sess.selectionOrder);
+		// Now iterate through each run
+		for (int j = 0; j < sess.trialRuns.size(); j++) {
+			TrialRuns trialRuns = sess.trialRuns[j];
+			logPrintf("\t\tTrial Run Config: ID = %s, Training Count = %d, Real Count = %d\n",
+				trialRuns.id, trialRuns.trainingCount, trialRuns.realCount);
+		}
+	}
+
+	// Iterate through trials and print them
+	for (int i = 0; i < m_expConfig.trials.size(); i++) {
+		TrialConfig trial = m_expConfig.trials[i];
+		logPrintf("\t-------------------\n\tTrial Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = %f\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = %f°\n",
+			trial.id, trial.motionChangePeriod, trial.minSpeed, trial.maxSpeed, trial.visualSize);
+	}
+
+	// Iterate through 
+
+	// Get next session
+	char nextSessionID[5];
+	String lastSession = m_user.completedSessions[m_user.completedSessions.size() - 1];
+	Random r;
+	char c;
+	int lastSessIdx, nextSessionIdx;
+	sscanf(lastSession.c_str(), "%c%d", &c, &lastSessIdx);
+	if (m_expConfig.sessionOrder == "Serial") nextSessionIdx = lastSessIdx + 1;
+	else if (m_expConfig.sessionOrder == "Random") {
+		bool foundID = false;
+		while (true) {
+			nextSessionIdx = r.integer(0, m_expConfig.sessions.length() - 1);
+			sprintf(nextSessionID, "%c%d", c, nextSessionIdx);
+			for (int i = 0; i < m_expConfig.sessions.size(); i++) {
+				if (strcmp(m_expConfig.sessions[i].id.c_str(), nextSessionID) != 0) foundID = true;
+				else break;
+			}
+			if (!foundID) break;
+		}
+		if (!foundID) printf("No session to run!");
+		sprintf(nextSessionID, "%c%d", c, nextSessionIdx);
+	}
+	logPrintf("Starting with session ID = %s\n", nextSessionID);
 
 	// apply frame lag
-	setDisplayLatencyFrames(m_experimentConfig.targetFrameLag);
+	setDisplayLatencyFrames(m_expConfig.sessions[nextSessionIdx].frameDelay);
 
 	float dt = 0;
 	if (unlockFramerate) {
 		// Set a maximum *finite* frame rate
 		dt = 1.0f / 8192.0f;
 	} else if (variableRefreshRate) {
-		dt = 1.0f / m_experimentConfig.targetFrameRate;
+		dt = 1.0f / m_expConfig.sessions[nextSessionIdx].frameRate;
 	} else {
 		dt = 1.0f / float(window()->settings().refreshRate);
 	}
@@ -88,7 +138,7 @@ void App::onInit() {
 	m_hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
 	m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
-	if (playMode) {
+	if (m_expConfig.playMode) {
 		m_fireSound = Sound::create(System::findDataFile("sound/42108__marcuslee__Laser_Wrath_6.wav"));
 		m_explosionSound = Sound::create(System::findDataFile("sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav"));
 	}
@@ -106,7 +156,7 @@ void App::onInit() {
     // additional correction factor based on few samples - TODO: need more careful setup to study this
     mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
     const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-	if (playMode) {
+	if (m_expConfig.playMode) {
 		// Force into FPS mode
 		fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
 		fpm->setMoveRate(0.0);
@@ -118,10 +168,10 @@ void App::onInit() {
 	}
 
 	// Initialize the experiment.
-	if (m_experimentConfig.taskType == "reaction") {
+	if (m_expConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
 	}
-	else if (m_experimentConfig.taskType == "target") {
+	else if (m_expConfig.taskType == "target") {
 		m_ex = TargetExperiment::create(this);
 	}
 
@@ -314,10 +364,10 @@ void App::loadModels() {
 
 
 void App::makeGUI() {
-	debugWindow->setVisible(!playMode);
-	developerWindow->setVisible(!playMode);
-	developerWindow->sceneEditorWindow->setVisible(!playMode);
-	developerWindow->cameraControlWindow->setVisible(!playMode);
+	debugWindow->setVisible(!m_expConfig.playMode);
+	developerWindow->setVisible(!m_expConfig.playMode);
+	developerWindow->sceneEditorWindow->setVisible(!m_expConfig.playMode);
+	developerWindow->cameraControlWindow->setVisible(!m_expConfig.playMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
 
 	const float SLIDER_SPACING = 35;
@@ -567,7 +617,7 @@ void App::fire() {
 		scene()->insert(laser);
 	}
 
-	if (playMode) {
+	if (m_expConfig.playMode) {
 		m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
 	}
 }
@@ -594,7 +644,7 @@ void App::onUserInput(UserInput* ui) {
 	GApp::onUserInput(ui);
 	(void)ui;
 
-	if (playMode || m_debugController->enabled()) {
+	if (m_expConfig.playMode || m_debugController->enabled()) {
 		m_ex->onUserInput(ui);
 
 		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
@@ -621,7 +671,7 @@ void App::destroyTarget(int index) {
 
 	scene()->removeEntity(target->name());
 
-	if (playMode) {
+	if (m_expConfig.playMode) {
 		// 3D audio
 		m_explosionSound->play(target->frame().translation, Vector3::zero(), 16.0f);
 	}
@@ -730,22 +780,25 @@ void App::onCleanup() {
 G3D_START_AT_MAIN();
 
 int main(int argc, const char* argv[]) {
+	
+	ExperimentConfig m_expConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
+	
 	{
 		G3DSpecification spec;
-		spec.audio = playMode;
+		spec.audio = m_expConfig.playMode;
 		initGLG3D(spec);
 	}
 
 	(void)argc; (void)argv;
 	GApp::Settings settings(argc, argv);
 
-	if (playMode) {
+	if (m_expConfig.playMode) {
 		settings.window.width = 1920; settings.window.height = 1080;
 	}
 	else {
 		settings.window.width = 1920; settings.window.height = 980;
 	}
-	settings.window.fullScreen = playMode;
+	settings.window.fullScreen = m_expConfig.playMode;
 	settings.window.resizable = !settings.window.fullScreen;
 
     // V-sync off always
