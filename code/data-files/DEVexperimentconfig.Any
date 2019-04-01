@@ -1,36 +1,42 @@
 {
-    playMode = True,
-	appendingDescription = "2019Mar21_Python_test",
-    sceneName = "eSports Simple Hallway", // maybe don’t need this? Or maybe this ends up belonging to individual trials
-    settingsVersion = 1,
-    taskType = "target",
-    sessions = [
-		{id = "s1", FrameDelay = 0, FrameRate = 60, SelectionOrder = "random",
-			trials = [{id="c1", trainingCount=10, realCount=40},
-            {id = "c2", trainingCount=10, realCount=40},
-            {id = "c3", trainingCount=10, realCount=40},
-            {id = "c4", trainingCount=10, realCount=40}]
-        },
-		{id = "s2", FrameDelay = 25, FrameRate = 120, SelectionOrder = "random",
-			trials = [{id="c5", trainingCount=10, realCount=40},
-            {id = "c6", trainingCount=10, realCount=40}]
-        }
+  // Information related to this file
+  settingsVersion : 1,                              // Used for parsing this file
+  
+  // General settings for the experiment
+  playMode : true,                                  // Debugging/development control flag
+  ppendingDescription= "2019Mar21_Python_test",     // Description of this file
+  sceneName : "eSports Simple Hallway",             // Maybe don’t need this? Or maybe this ends up belonging to individual trials
+  taskType : "target",                              // Task type, can be "target" or "reaction"           
+  feedbackDuration : 1.0,                           // Time allocated for providing user feedback
+  readyDuration : 0.5,                              // Time allocated for preparing for trial
+  taskDuration : 100000.0,                          // Maximum duration allowed for completion of the task
+  sessionOrder :"random",                           // Session ordering, can be "Random", "Serial"
+  
+  // Create a sessions table containing information related to sessions
+  sessions : [                                      
+    { id : "s1",                                                          // Session ID
+      FrameDelay : 0,                                                     // Session frame delay (in frames)
+      FrameRate : 60,                                                     // Session frame rate (in frames per second)
+      SelectionOrder : "random",                                          // Selection order for trials within this session
+      trials : [{id : "c1", trainingCount : 10, realCount : 40},          // Inidivual trial with ID, real and training counts
+               {id : "c2", trainingCount : 10, realCount : 40},
+               {id : "c3", trainingCount : 10, realCount : 40},
+               {id : "c4", trainingCount : 10, realCount : 40}]},
+    { id="s2",
+      FrameDelay : 25,
+      FrameRate : 120, 
+      SelectionOrder : "random",
+	  trials : [{id : "c5", trainingCount : 10, realCount : 40},
+                {id : "c6", trainingCount : 10, realCount : 40}]}
     ],
-    // TODO: Add more parameters, perhaps some of the following
-    // m_config.add("feedbackDuration", 1.0f);
-	// m_config.add("readyDuration", 0.5f);
-	// m_config.add("taskDuration", 100000.0f);
-	// m_config.add("trialCount", 200.f);
-	// m_config.add("visualSize", 0.02f);
-	// m_config.add("minEccH", 5.f);
-	// m_config.add("maxEccH", 15.f);
-	// m_config.add("minEccV", 0.f);
-	// m_config.add("maxEccV", 1.f);
-    trials = [{id = "c1", motionChangePeriod = 1000000, minSpeed = 0, maxSpeed = 0},
-            {id = "c2", motionChangePeriod = 1000000, minSpeed = 8, maxSpeed = 15},
-            {id = "c3", motionChangePeriod = 0.5, minSpeed = 8, maxSpeed = 15},
-            {id = "c4", motionChangePeriod = 0.5, minSpeed = 12, maxSpeed = 12},
-            {id = "c5", motionChangePeriod = 1.0, minSpeed = 10, maxSpeed = 10},
-            {id = "c6", motionChangePeriod = 0.5, minSpeed = 10, maxSpeed = 10}]
+    
+    
+  // Trial table (contains detailed target info for each trial)
+  trials : [{id : "c1", minSpeed : 0 , maxSpeed : 0 , visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 1000000},
+            {id : "c2", minSpeed : 8 , maxSpeed : 15, visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 1000000},
+            {id : "c3", minSpeed : 8 , maxSpeed : 15, visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 0.5},
+            {id : "c4", minSpeed : 12, maxSpeed : 12, visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 0.5},
+            {id : "c5", minSpeed : 10, maxSpeed : 10, visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 1.0},
+            {id : "c6", minSpeed : 10, maxSpeed : 10, visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 0.5}]
 }
     

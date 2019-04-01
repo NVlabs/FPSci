@@ -22,9 +22,10 @@ public:
 
 class UserConfig {
 public:
-    String subjectID;
-    double mouseDPI;
-    double cmp360;
+    String subjectID;					// Subject ID (as recorded in output DB)
+    double mouseDPI;					// Mouse DPI setting
+    double cmp360;						// Mouse sensitivity, reported as centimeters per 360°
+	Array<String> completedSessions;	// List of completed sessions for this user
     UserConfig() : subjectID("anon"), mouseDPI(2400.0), cmp360(12.75) {}
 
     UserConfig(const Any& any) {
@@ -37,6 +38,7 @@ public:
             reader.getIfPresent("subjectID", subjectID);
             reader.getIfPresent("mouseDPI", mouseDPI);
             reader.getIfPresent("cmp360", cmp360);
+			//reader.getIfPresent("completedSesssions", completedSessions);
 			break;
         default:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
@@ -54,9 +56,15 @@ public:
 	float motionChangePeriod;		// 
 	float minSpeed;					// Minimum (world space) speed
 	float maxSpeed;					// Maximum (world space) speed
+	float minEccH;					// Minimnum horizontal eccentricity
+	float maxEccH;					// Maximum horizontal eccentricity
+	float minEccV;					// Minimum vertical eccentricity
+	float maxEccV;					// Maximum vertical eccentricity
+	float visualSize;				// Visual size of the target (in degrees)
+
 	//shared_ptr<TargetEntity> target;			// Target entity to contain points (if loaded here)
 
-	TrialConfig(): motionChangePeriod(1.0), minSpeed(0), maxSpeed(5.5) {}
+	TrialConfig(): motionChangePeriod(1.0), minSpeed(0), maxSpeed(5.5), minEccH(5.0), maxEccH(15.0), minEccV(0.0), maxEccV(2.0), visualSize(0.02) {}
 
 	TrialConfig(const Any& any) {
 		int settingsVersion = 1;
@@ -68,6 +76,11 @@ public:
 			reader.get("id", id);
 			reader.getIfPresent("minSpeed", minSpeed);
 			reader.getIfPresent("maxSpeed", maxSpeed);
+			reader.getIfPresent("visualSize", visualSize);
+			reader.getIfPresent("minEccH", minEccH);
+			reader.getIfPresent("maxEccH", maxEccH);
+			reader.getIfPresent("minEccV", minEccV);
+			reader.getIfPresent("maxEccV", maxEccV);
 			//reader.getIfPresent("target", target);
 			break;
 		default:
@@ -142,11 +155,14 @@ public:
 	String	taskType;				// "Reaction" or "Target"
 	String	appendingDescription;	// Short text field for description
 	String  sceneName;				// For target experiment
+	float feedbackDuration;
+	float readyDuration;
+	float taskDuration;
 	Array<SessionConfig> sessions;		// Array of sessions
 	Array<TrialConfig> trials;			// Array of trial configs
-	String expMode = "training";
+	String sessionOrder;
 
-	ExperimentConfig() : playMode(true), taskType("reaction"), appendingDescription("ver1"), sceneName("eSports Simple Hallway") {}
+	ExperimentConfig() : playMode(true), taskType("reaction"), appendingDescription("ver1"), sceneName("eSports Simple Hallway"), sessionOrder("Random"), feedbackDuration(1.0), readyDuration(0.5), taskDuration(100000.0) {}
 	
 	ExperimentConfig(const Any& any) {
 		int settingsVersion = 1; // used to allow different version numbers to be loaded differently
@@ -161,6 +177,10 @@ public:
 			reader.getIfPresent("sceneName", sceneName);          
 			reader.getIfPresent("sessions", sessions);
 			reader.getIfPresent("trials", trials);
+			reader.getIfPresent("feedbackDuration", feedbackDuration);
+			reader.getIfPresent("readyDuration", readyDuration);
+			reader.getIfPresent("taskDuration", taskDuration);
+			reader.getIfPresent("sessionOrder", sessionOrder);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);
