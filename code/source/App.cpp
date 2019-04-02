@@ -119,14 +119,16 @@ void App::onInit() {
 	logPrintf("Starting with session ID = %s\n", nextSessionID);
 
 	// apply frame lag
-	setDisplayLatencyFrames(m_expConfig.sessions[nextSessionIdx].frameDelay);
+	// TODO: Apply correct session selection logic here
+	setDisplayLatencyFrames(m_expConfig.sessions[0].frameDelay);
 
 	float dt = 0;
 	if (unlockFramerate) {
 		// Set a maximum *finite* frame rate
 		dt = 1.0f / 8192.0f;
 	} else if (variableRefreshRate) {
-		dt = 1.0f / m_expConfig.sessions[nextSessionIdx].frameRate;
+		// TODO: Apply correct session selection logic here
+		dt = 1.0f / m_expConfig.sessions[0].frameRate;
 	} else {
 		dt = 1.0f / float(window()->settings().refreshRate);
 	}

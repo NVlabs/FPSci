@@ -48,6 +48,7 @@ void TargetExperiment::onInit() {
 
 	// default values
 	// TODO: This should all move into configuration file.
+	// TODO: Move over all [0]'s here to correct session/trial indexing
 	m_config.add("targetFrameRate", m_app->m_expConfig.sessions[0].frameRate);
 	m_config.add("targetFrameLag", m_app->m_expConfig.sessions[0].frameDelay);
 	m_config.add("feedbackDuration", m_app->m_expConfig.feedbackDuration);

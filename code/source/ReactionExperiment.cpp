@@ -37,6 +37,7 @@ void ReactionExperiment::onInit() {
 
 	// default values
 	// TODO: This should all move into configuration file.
+	// TODO: update this to use correct session selection logic
 	m_config.add("targetFrameRate", m_app->m_expConfig.sessions[0].frameRate);
 	m_config.add("targetFrameLag", m_app->m_expConfig.sessions[0].frameDelay);
 	m_config.add("feedbackDuration", m_app->m_expConfig.feedbackDuration);
