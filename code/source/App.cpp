@@ -87,37 +87,6 @@ void App::onInit() {
 			trial.id, trial.motionChangePeriod, trial.minSpeed, trial.maxSpeed, trial.visualSize);
 	}
 
-	// Get next session
-	char nextSessionID[5];
-	char c;
-	Random r;
-	int lastSessIdx, nextSessionIdx;
-	int lastIdx = m_user.completedSessions.size() == 0 ? 0 : m_user.completedSessions.size() - 1;
-	if (m_user.completedSessions.size() > 0) {
-		String lastSession = m_user.completedSessions[lastIdx];
-		sscanf(lastSession.c_str(), "%c%d", &c, &lastSessIdx);
-	}
-	else {
-		c = 's';
-		lastSessIdx = -1;
-	}
-	if (m_expConfig.sessionOrder == "Serial") nextSessionIdx = lastSessIdx + 1;
-	else if (m_expConfig.sessionOrder == "Random") {
-		bool foundID = false;
-		while (true) {
-			nextSessionIdx = r.integer(0, m_expConfig.sessions.length() - 1);
-			sprintf(nextSessionID, "%c%d", c, nextSessionIdx);
-			for (int i = 0; i < m_expConfig.sessions.size(); i++) {
-				if (strcmp(m_expConfig.sessions[i].id.c_str(), nextSessionID) != 0) foundID = true;
-				else break;
-			}
-			if (!foundID) break;
-		}
-		if (!foundID) printf("No session to run!");
-		sprintf(nextSessionID, "%c%d", c, nextSessionIdx);
-	}
-	logPrintf("Starting with session ID = %s\n", nextSessionID);
-
 	// apply frame lag
 	// TODO: Apply correct session selection logic here
 	setDisplayLatencyFrames(m_expConfig.sessions[0].frameDelay);
