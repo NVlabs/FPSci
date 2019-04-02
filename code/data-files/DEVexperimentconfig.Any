@@ -4,7 +4,7 @@
   
   // General settings for the experiment
   playMode : true,                                  // Debugging/development control flag
-  ppendingDescription= "2019Mar21_Python_test",     // Description of this file
+  appendingDescription= "2019Mar21_Python_test",     // Description of this file
   sceneName : "eSports Simple Hallway",             // Maybe don’t need this? Or maybe this ends up belonging to individual trials
   taskType : "target",                              // Task type, can be "target" or "reaction"           
   feedbackDuration : 1.0,                           // Time allocated for providing user feedback
