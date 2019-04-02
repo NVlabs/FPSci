@@ -131,6 +131,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="source\App.h" />
+    <ClInclude Include="source\ComPortDriver.h" />
     <ClInclude Include="source\Experiment.h" />
     <ClInclude Include="source\ExperimentConfig.h" />
     <ClInclude Include="source\ReactionExperiment.h" />
@@ -141,6 +142,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp" />
+    <ClCompile Include="source\ComPortDriver.cpp" />
     <ClCompile Include="source\Experiment.cpp" />
     <ClCompile Include="source\ReactionExperiment.cpp" />
     <ClCompile Include="source\SingleThresholdMeasurement.cpp" />

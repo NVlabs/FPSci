@@ -14,6 +14,7 @@
 #include "Experiment.h"
 #include "TargetExperiment.h"
 #include "ReactionExperiment.h"
+#include "ComPortDriver.h"
 #include <chrono>
 
 // TODO: This has to be replaced with G3D timer.
@@ -81,7 +82,7 @@ protected:
 	float                           m_sceneBrightness = 1.0f;
 	bool                            m_renderViewModel = false;
 	//bool                            m_renderHud = false;
-	bool                            m_renderFPS = true;
+	bool                            m_renderFPS = false;
 	bool                            m_renderHitscan = false;
 
 	/** Set to true to lower rendering quality to increase performance. */
@@ -96,10 +97,15 @@ protected:
 	Array<shared_ptr<Framebuffer>>  m_ldrDelayBufferQueue;
 	int                             m_currentDelayBufferIndex = 0;
 
+    shared_ptr<GuiWindow>           m_userSettingsWindow;
+    bool                            m_userSettingsMode = true;
+
 	/** Called from onInit */
 	void makeGUI();
 	void loadModels();
 	void destroyTarget(int index);
+
+	CComPortDriver m_com;
 
 public:
 	/* Moving from proctected so that Experiment classes can use it. */
@@ -156,6 +162,8 @@ public:
 	void setSceneBrightness(float b);
 
 	void setDisplayLatencyFrames(int f);
+    /** reads current user settings to update sensitivity in the controller */
+    void updateMouseSensitivity();
 
 	/** Fire the weapon */
 	void fire();

@@ -8,6 +8,7 @@
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. (true = target infinite frame rate)
 static const bool  unlockFramerate = false;
+static const bool  useSerialPort = false;
 
 // Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
 // which allows the application to submit asynchronously with vsync
@@ -83,7 +84,7 @@ void App::onInit() {
 	// Iterate through trials and print them
 	for (int i = 0; i < m_experimentConfig.trials.size(); i++) {
 		TrialConfig trial = m_experimentConfig.trials[i];
-		logPrintf("\t-------------------\n\tTrial Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = %f\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = %f°\n",
+		logPrintf("\t-------------------\n\tTrial Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = %f\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = %fï¿½\n",
 			trial.id, trial.motionChangePeriod, trial.minSpeed, trial.maxSpeed, trial.visualSize);
 	}
 
@@ -103,8 +104,9 @@ void App::onInit() {
 	}
 	setFrameDuration(dt, GApp::REAL_TIME);
 	setSubmitToDisplayMode(
-		//SubmitToDisplayMode::MINIMIZE_LATENCY);
-		SubmitToDisplayMode::BALANCE);
+		//SubmitToDisplayMode::EXPLICIT);
+		SubmitToDisplayMode::MINIMIZE_LATENCY);
+		//SubmitToDisplayMode::BALANCE);
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
 
 	showRenderingStats = false;
@@ -125,24 +127,8 @@ void App::onInit() {
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
-    // G3D expects mouse sensitivity in radians
-    // we're converting from mouseDPI and centimeters/360 which explains
-    // the screen resolution (dots), cm->in factor (2.54) and 2PI
-    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_user.cmp360 * m_user.mouseDPI);
-    // additional correction factor based on few samples - TODO: need more careful setup to study this
-    mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
-    const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-	if (m_experimentConfig.playMode) {
-		// Force into FPS mode
-		fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
-		fpm->setMoveRate(0.0);
-		fpm->setTurnRate(mouseSensitivity);
-	}
-	else {
-		// fix mouse sensitivity for developer mode
-		fpm->setTurnRate(mouseSensitivity);
-	}
-
+  updateMouseSensitivity();
+  
 	// Initialize the experiment.
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
@@ -153,6 +139,37 @@ void App::onInit() {
 
 	// TODO: Remove the following by invoking a call back.
 	m_ex->onInit();
+
+	// initialize comport driver
+	if (useSerialPort) {
+		DWORD errorMsg;
+		m_com.Open(2, errorMsg);
+		int aa = 1;
+	}
+}
+
+void App::updateMouseSensitivity() {
+    // G3D expects mouse sensitivity in radians
+    // we're converting from mouseDPI and centimeters/360 which explains
+    // the screen resolution (dots), cm->in factor (2.54) and 2PI
+    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_user.cmp360 * m_user.mouseDPI);
+    // additional correction factor based on few samples - TODO: need more careful setup to study this
+    mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
+    const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+    if (m_userSettingsMode || !m_experimentConfig.playMode) {
+        // set to 3rd person
+        fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
+    }
+    else {
+        // Force into FPS mode
+        fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
+        fpm->setMoveRate(0.0);
+    }
+    //if (playMode) {
+    //    // disable movement in play mode
+    //    fpm->setMoveRate(0.0);
+    //}
+    fpm->setTurnRate(mouseSensitivity);
 }
 
 void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
@@ -377,6 +394,16 @@ void App::makeGUI() {
 			debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(SLIDER_SPACING, 0);
 	} debugPane->endRow();
 
+    // set up user settings window
+    m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, 
+        Rect2D::xywh((float)window()->width() * 0.5f - 150.0f, (float)window()->height() * 0.5f - 50.0f, 300.0f, 100.0f));
+    addWidget(m_userSettingsWindow);
+    GuiPane* p = m_userSettingsWindow->pane();
+    p->addLabel(format("User ID: '%s'", m_user.subjectID));
+    p->addLabel(format("Mouse DPI: %f", m_user.mouseDPI));
+    p->addNumberBox("Mouse 360", &m_user.cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
+    m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
+
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 }
@@ -440,7 +467,20 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 		if (measureClickPhotonLatency) {
 			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
 			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
-			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.925f, (float)window()->height() * 0.0f, (float)window()->width() * 0.075f, (float)window()->height() * 0.15f), rd, cornerColor);
+			//Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.925f, (float)window()->height() * 0.0f, (float)window()->width() * 0.075f, (float)window()->height() * 0.15f), rd, cornerColor);
+			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.0f, (float)window()->height() * 0.0f, (float)window()->width() * 0.15f, (float)window()->height() * 0.15f), rd, cornerColor);
+			if (useSerialPort) {
+				if (m_buttonUp) {
+					m_com.SetRts();
+					int aa = 1;
+					//m_com.SetDtr();
+				}
+				else {
+					m_com.ClearRts();
+					int aa = 1;
+					//m_com.ClearDtr();
+				}
+			}
 		}
 	} rd->pop2D();
 
@@ -487,6 +527,11 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	GApp::onSimulation(rdt, sdt, idt);
 
+    // make sure mouse sensitivity is set right
+    if (m_userSettingsMode) {
+        updateMouseSensitivity();
+    }
+
 	const RealTime now = System::time();
 	for (int p = 0; p < m_projectileArray.size(); ++p) {
 		const Projectile& projectile = m_projectileArray[p];
@@ -523,6 +568,13 @@ bool App::onEvent(const GEvent& event) {
 	// if ((event.type == GEventType::GUI_ACTION) && (event.gui.control == m_button)) { ... return true; }
 	// if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) { ... return true; }
 	// if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == 'p')) { ... return true; }
+
+    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) {
+        m_userSettingsMode = !m_userSettingsMode;
+        m_userSettingsWindow->setVisible(m_userSettingsMode);
+        // switch to first or 3rd person mode
+        updateMouseSensitivity();
+    }
 
 	return false;
 }
@@ -599,15 +651,19 @@ void App::fire() {
 }
 
 void App::onUserInput(UserInput* ui) {
-	//GApp::onUserInput(ui);
-	//(void)ui;
+	//double waitTime = 1.0f / m_experimentConfig.targetFrameRate - 0.002;
+	//if (waitTime > 0) {
+	//	System::sleep(waitTime);
+	//}
+
+	GApp::onUserInput(ui);
+	(void)ui;
 
 	//if (playMode || m_debugController->enabled()) {
 	//	m_ex->onUserInput(ui);
 
 	//	uint8 mouseButtons;
-	//	GEvent event; //You’ll probably get g as a parameter if you’re calling this in App::onEvent
-	//	((GLFWWindow*)(event.osWindow()))->getMouseButtonState(mouseButtons);
+	//	((GLFWWindow*)(ui->window()))->getMouseButtonState(mouseButtons);
 
 	//	if (mouseButtons) {
 	//		m_buttonUp = false;
@@ -621,12 +677,13 @@ void App::onUserInput(UserInput* ui) {
 	(void)ui;
 
 	if (m_experimentConfig.playMode || m_debugController->enabled()) {
+
 		m_ex->onUserInput(ui);
 
 		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
 			m_buttonUp = false;
 		}
-		if (ui->keyReleased(GKey::LEFT_MOUSE)) {
+		else {
 			m_buttonUp = true;
 		}
 	}
@@ -750,6 +807,10 @@ void App::setSceneBrightness(float b) {
 void App::onCleanup() {
 	// Called after the application loop ends.  Place a majority of cleanup code
 	// here instead of in the constructor so that exceptions can be caught.
+	if (useSerialPort) {
+		DWORD errorMsg;
+		m_com.Close(errorMsg);
+	}
 }
 
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
