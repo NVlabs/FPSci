@@ -48,9 +48,8 @@ void TargetExperiment::onInit() {
 
 	// default values
 	// TODO: This should all move into configuration file.
-	// TODO: Move over all [0]'s here to correct session/trial indexing
-	m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[0].frameRate);
-	m_config.add("targetFrameLag", m_app->m_experimentConfig.sessions[0].frameDelay);
+	m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameRate);
+	m_config.add("targetFrameLag", m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameDelay);
 	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
 	m_config.add("readyDuration", m_app->m_experimentConfig.readyDuration);
 	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);

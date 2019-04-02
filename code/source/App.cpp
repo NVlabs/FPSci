@@ -89,16 +89,14 @@ void App::onInit() {
 	}
 
 	// apply frame lag
-	// TODO: Apply correct session selection logic here
-	setDisplayLatencyFrames(m_experimentConfig.sessions[0].frameDelay);
+	setDisplayLatencyFrames(m_experimentConfig.sessions[m_user.currentSession].frameDelay);
 
 	float dt = 0;
 	if (unlockFramerate) {
 		// Set a maximum *finite* frame rate
 		dt = 1.0f / 8192.0f;
 	} else if (variableRefreshRate) {
-		// TODO: Apply correct session selection logic here
-		dt = 1.0f / m_experimentConfig.sessions[0].frameRate;
+		dt = 1.0f / m_experimentConfig.sessions[m_user.currentSession].frameRate;
 	} else {
 		dt = 1.0f / float(window()->settings().refreshRate);
 	}
@@ -394,6 +392,13 @@ void App::makeGUI() {
 			debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(SLIDER_SPACING, 0);
 	} debugPane->endRow();
 
+
+	// Create list of session names
+	Array<String> sessionList = Array<String>();
+	for (int i = 0; i < m_experimentConfig.sessions.size(); i++) {
+		sessionList.append(m_experimentConfig.sessions[i].id);
+	}
+
     // set up user settings window
     m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, 
         Rect2D::xywh((float)window()->width() * 0.5f - 150.0f, (float)window()->height() * 0.5f - 50.0f, 300.0f, 100.0f));
@@ -402,6 +407,7 @@ void App::makeGUI() {
     p->addLabel(format("User ID: '%s'", m_user.subjectID));
     p->addLabel(format("Mouse DPI: %f", m_user.mouseDPI));
     p->addNumberBox("Mouse 360", &m_user.cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
+	p->addDropDownList("Session", sessionList, &m_user.currentSession);
     m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
 
 	debugWindow->pack();

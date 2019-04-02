@@ -37,9 +37,8 @@ void ReactionExperiment::onInit() {
 
 	// default values
 	// TODO: This should all move into configuration file.
-	// TODO: update this to use correct session selection logic
-	m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[0].frameRate);
-	m_config.add("targetFrameLag", m_app->m_experimentConfig.sessions[0].frameDelay);
+	m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameRate);
+	m_config.add("targetFrameLag", m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameDelay);
 	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
 	m_config.add("meanWaitDuration", m_app->m_experimentConfig.readyDuration);
 	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);

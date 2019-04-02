@@ -25,6 +25,7 @@ public:
     String subjectID;					// Subject ID (as recorded in output DB)
     double mouseDPI;					// Mouse DPI setting
     double cmp360;						// Mouse sensitivity, reported as centimeters per 360°
+	int currentSession;					// Currently selected session
 	Array<String> completedSessions;	// List of completed sessions for this user
     UserConfig() : subjectID("anon"), mouseDPI(2400.0), cmp360(12.75) {}
 
@@ -38,7 +39,7 @@ public:
             reader.getIfPresent("subjectID", subjectID);
             reader.getIfPresent("mouseDPI", mouseDPI);
             reader.getIfPresent("cmp360", cmp360);
-			//reader.getIfPresent("completedSesssions", completedSessions);
+			reader.getIfPresent("completedSesssions", completedSessions);
 			break;
         default:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
