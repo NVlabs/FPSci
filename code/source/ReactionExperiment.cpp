@@ -38,11 +38,11 @@ void ReactionExperiment::onInit() {
 	// default values
 	// TODO: This should all move into configuration file.
 	// TODO: update this to use correct session selection logic
-	m_config.add("targetFrameRate", m_app->m_expConfig.sessions[0].frameRate);
-	m_config.add("targetFrameLag", m_app->m_expConfig.sessions[0].frameDelay);
-	m_config.add("feedbackDuration", m_app->m_expConfig.feedbackDuration);
-	m_config.add("meanWaitDuration", m_app->m_expConfig.readyDuration);
-	m_config.add("taskDuration", m_app->m_expConfig.taskDuration);
+	m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[0].frameRate);
+	m_config.add("targetFrameLag", m_app->m_experimentConfig.sessions[0].frameDelay);
+	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
+	m_config.add("meanWaitDuration", m_app->m_experimentConfig.readyDuration);
+	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);
 	m_config.add("minimumForeperiod", 1.5f);
 	m_config.add("trialCount", 20);
 	m_config.add("intensities", std::vector<float>{0.4f, 1.0f});
@@ -230,7 +230,7 @@ void ReactionExperiment::createResultFile()
 	else {
 		mResultFileName = ("result_data/" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 	}*/
-	mResultFileName = ("result_data/" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
+	mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 
 	// create the file
 	if (sqlite3_open(mResultFileName.c_str(), &m_db)) {

@@ -119,7 +119,7 @@ public:
 
 	/** Parameter configurations */
 	UserConfig                      m_user;
-	ExperimentConfig                m_expConfig;
+	ExperimentConfig                m_experimentConfig;
 
 	//TODO: Remove it when we are using G3D timer
 	Timer timer;

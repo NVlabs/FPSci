@@ -40,7 +40,7 @@ void TargetExperiment::initPsychHelper()
 
 void TargetExperiment::onInit() {
 	// load the experiment background scene.
-	m_app->loadScene(m_app->m_expConfig.sceneName);
+	m_app->loadScene(m_app->m_experimentConfig.sceneName);
 
 	// initialize presentation states
 	m_app->m_presentationState = PresentationState::initial;
@@ -49,17 +49,17 @@ void TargetExperiment::onInit() {
 	// default values
 	// TODO: This should all move into configuration file.
 	// TODO: Move over all [0]'s here to correct session/trial indexing
-	m_config.add("targetFrameRate", m_app->m_expConfig.sessions[0].frameRate);
-	m_config.add("targetFrameLag", m_app->m_expConfig.sessions[0].frameDelay);
-	m_config.add("feedbackDuration", m_app->m_expConfig.feedbackDuration);
-	m_config.add("readyDuration", m_app->m_expConfig.readyDuration);
-	m_config.add("taskDuration", m_app->m_expConfig.taskDuration);
+	m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[0].frameRate);
+	m_config.add("targetFrameLag", m_app->m_experimentConfig.sessions[0].frameDelay);
+	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
+	m_config.add("readyDuration", m_app->m_experimentConfig.readyDuration);
+	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);
 	m_config.add("trialCount", 200.f);
-	m_config.add("visualSize", m_app->m_expConfig.trials[0].visualSize);
-	m_config.add("minEccH", m_app->m_expConfig.trials[0].minEccH);
-	m_config.add("maxEccH", m_app->m_expConfig.trials[0].maxEccH);
-	m_config.add("minEccV", m_app->m_expConfig.trials[0].minEccV);
-	m_config.add("maxEccV", m_app->m_expConfig.trials[0].maxEccV);
+	m_config.add("visualSize", m_app->m_experimentConfig.trials[0].visualSize);
+	m_config.add("minEccH", m_app->m_experimentConfig.trials[0].minEccH);
+	m_config.add("maxEccH", m_app->m_experimentConfig.trials[0].maxEccH);
+	m_config.add("minEccV", m_app->m_experimentConfig.trials[0].minEccV);
+	m_config.add("maxEccV", m_app->m_experimentConfig.trials[0].maxEccV);
 	// The following three parameters must have the same number (N) of elements.
 	// They are to be joined by their indices to define N task conditions.
 	m_config.add("motionChangePeriods", std::vector<float>{100000.0, 100000.0, 0.5});
@@ -319,7 +319,7 @@ void TargetExperiment::createResultFile()
 	else {
 		mResultFileName = ("result_data/" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 	}*/
-	mResultFileName = ("result_data/" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
+	mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 
 	// create the file
 	if (sqlite3_open(mResultFileName.c_str(), &m_db)) {
