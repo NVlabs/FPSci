@@ -41,6 +41,7 @@ shared_ptr<TargetEntity> TargetEntity::create
 
 
 void TargetEntity::init(AnyTableReader& propertyTable) {
+	//TODO: implement load from any file here...
     init();
 }
 

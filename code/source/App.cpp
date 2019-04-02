@@ -3,7 +3,7 @@
 #include "TargetEntity.h"
 
 // Set to false when just editing content
-static const bool playMode = true;
+//static const bool playMode = true;
 
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. (true = target infinite frame rate)
@@ -45,34 +45,60 @@ App::App(const GApp::Settings& settings) : GApp(settings) {
 void App::onInit() {
 	GApp::onInit();
 
-    scene()->registerEntitySubclass("TargetEntity", &TargetEntity::create);
+	scene()->registerEntitySubclass("TargetEntity", &TargetEntity::create);
 
-    // load user setting from file
+	// load user setting from file
 	if (!FileSystem::exists("userconfig.Any")) { // if file not found, copy from the sample config file.
 		FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
 	}
-    m_user = Any::fromFile(System::findDataFile("userconfig.Any"));
-    // debug print
-    logPrintf("User: %s, DPI: %f, cmp360 %f\n", m_user.subjectID, m_user.mouseDPI, m_user.cmp360);
+	m_user = Any::fromFile(System::findDataFile("userconfig.Any"));
+	// debug print
+	logPrintf("User: %s, DPI: %f, cmp360 %f\n", m_user.subjectID, m_user.mouseDPI, m_user.cmp360);
 
 	// load experiment setting from file
 	if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
 		FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
 	}
+
 	m_experimentConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
 	// debug print
-	logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
-		m_experimentConfig.targetFrameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
+	//logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
+	//	m_experimentConfig.sessions["s1"].frameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
+
+	logPrintf("-------------------\nExperiment Config\n-------------------\nPlay Mode = %s\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\n",
+		(m_experimentConfig.playMode ? "true" : "false") , m_experimentConfig.taskType, m_experimentConfig.appendingDescription, m_experimentConfig.sceneName, m_experimentConfig.feedbackDuration, m_experimentConfig.readyDuration, m_experimentConfig.taskDuration);
+
+	// Iterate through sessions and print them
+	for (int i = 0; i < m_experimentConfig.sessions.size(); i++) {
+		SessionConfig sess = m_experimentConfig.sessions[i];
+		logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n\tSelection Order = %s\n",
+			sess.id, sess.frameRate, sess.frameDelay, sess.selectionOrder);
+		// Now iterate through each run
+		for (int j = 0; j < sess.trialRuns.size(); j++) {
+			TrialRuns trialRuns = sess.trialRuns[j];
+			logPrintf("\t\tTrial Run Config: ID = %s, Training Count = %d, Real Count = %d\n",
+				trialRuns.id, trialRuns.trainingCount, trialRuns.realCount);
+		}
+	}
+
+	// Iterate through trials and print them
+	for (int i = 0; i < m_experimentConfig.trials.size(); i++) {
+		TrialConfig trial = m_experimentConfig.trials[i];
+		logPrintf("\t-------------------\n\tTrial Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = %f\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = %f�\n",
+			trial.id, trial.motionChangePeriod, trial.minSpeed, trial.maxSpeed, trial.visualSize);
+	}
 
 	// apply frame lag
-	setDisplayLatencyFrames(m_experimentConfig.targetFrameLag);
+	// TODO: Apply correct session selection logic here
+	setDisplayLatencyFrames(m_experimentConfig.sessions[0].frameDelay);
 
 	float dt = 0;
 	if (unlockFramerate) {
 		// Set a maximum *finite* frame rate
 		dt = 1.0f / 8192.0f;
 	} else if (variableRefreshRate) {
-		dt = 1.0f / m_experimentConfig.targetFrameRate;
+		// TODO: Apply correct session selection logic here
+		dt = 1.0f / m_experimentConfig.sessions[0].frameRate;
 	} else {
 		dt = 1.0f / float(window()->settings().refreshRate);
 	}
@@ -90,7 +116,7 @@ void App::onInit() {
 	m_hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
 	m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
-	if (playMode) {
+	if (m_experimentConfig.playMode) {
 		m_fireSound = Sound::create(System::findDataFile("sound/42108__marcuslee__Laser_Wrath_6.wav"));
 		m_explosionSound = Sound::create(System::findDataFile("sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav"));
 	}
@@ -101,8 +127,8 @@ void App::onInit() {
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
-    updateMouseSensitivity();
-
+  updateMouseSensitivity();
+  
 	// Initialize the experiment.
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
@@ -130,7 +156,7 @@ void App::updateMouseSensitivity() {
     // additional correction factor based on few samples - TODO: need more careful setup to study this
     mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
     const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-    if (m_userSettingsMode || !playMode) {
+    if (m_userSettingsMode || !m_experimentConfig.playMode) {
         // set to 3rd person
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
     }
@@ -331,10 +357,10 @@ void App::loadModels() {
 
 
 void App::makeGUI() {
-	debugWindow->setVisible(!playMode);
-	developerWindow->setVisible(!playMode);
-	developerWindow->sceneEditorWindow->setVisible(!playMode);
-	developerWindow->cameraControlWindow->setVisible(!playMode);
+	debugWindow->setVisible(!m_experimentConfig.playMode);
+	developerWindow->setVisible(!m_experimentConfig.playMode);
+	developerWindow->sceneEditorWindow->setVisible(!m_experimentConfig.playMode);
+	developerWindow->cameraControlWindow->setVisible(!m_experimentConfig.playMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
 
 	const float SLIDER_SPACING = 35;
@@ -619,7 +645,7 @@ void App::fire() {
 		scene()->insert(laser);
 	}
 
-	if (playMode) {
+	if (m_experimentConfig.playMode) {
 		m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
 	}
 }
@@ -647,7 +673,11 @@ void App::onUserInput(UserInput* ui) {
 	//	}
 	//}
 
-	if (playMode || m_debugController->enabled()) {
+	GApp::onUserInput(ui);
+	(void)ui;
+
+	if (m_experimentConfig.playMode || m_debugController->enabled()) {
+
 		m_ex->onUserInput(ui);
 
 		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
@@ -674,7 +704,7 @@ void App::destroyTarget(int index) {
 
 	scene()->removeEntity(target->name());
 
-	if (playMode) {
+	if (m_experimentConfig.playMode) {
 		// 3D audio
 		m_explosionSound->play(target->frame().translation, Vector3::zero(), 16.0f);
 	}
@@ -787,22 +817,25 @@ void App::onCleanup() {
 G3D_START_AT_MAIN();
 
 int main(int argc, const char* argv[]) {
+	
+	ExperimentConfig m_expConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
+	
 	{
 		G3DSpecification spec;
-		spec.audio = playMode;
+		spec.audio = m_expConfig.playMode;
 		initGLG3D(spec);
 	}
 
 	(void)argc; (void)argv;
 	GApp::Settings settings(argc, argv);
 
-	if (playMode) {
+	if (m_expConfig.playMode) {
 		settings.window.width = 1920; settings.window.height = 1080;
 	}
 	else {
 		settings.window.width = 1920; settings.window.height = 980;
 	}
-	settings.window.fullScreen = playMode;
+	settings.window.fullScreen = m_expConfig.playMode;
 	settings.window.resizable = !settings.window.fullScreen;
 
     // V-sync off always

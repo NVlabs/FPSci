@@ -37,11 +37,12 @@ void ReactionExperiment::onInit() {
 
 	// default values
 	// TODO: This should all move into configuration file.
-	m_config.add("targetFrameRate", m_config.val["targetFrameRate"]);
-	m_config.add("targetFrameLag", m_config.val["targetFrameLag"]);
-	m_config.add("feedbackDuration", 1.0f);
-	m_config.add("meanWaitDuration", 0.5f);
-	m_config.add("taskDuration", 100000.0f);
+	// TODO: update this to use correct session selection logic
+	m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[0].frameRate);
+	m_config.add("targetFrameLag", m_app->m_experimentConfig.sessions[0].frameDelay);
+	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
+	m_config.add("meanWaitDuration", m_app->m_experimentConfig.readyDuration);
+	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);
 	m_config.add("minimumForeperiod", 1.5f);
 	m_config.add("trialCount", 20);
 	m_config.add("intensities", std::vector<float>{0.4f, 1.0f});
@@ -83,12 +84,12 @@ void ReactionExperiment::processResponse()
 		}
 		else {
 			m_response = 1; // 1 means success, 0 means failure.
-			if (m_app->m_experimentConfig.expMode == "training") {
+			/*if (m_app->m_expConfig.expMode == "training") {
 				m_feedbackMessage = format("%d ms", (int)(m_taskExecutionTime * 1000));
 			}
 			else {
 				m_feedbackMessage = "Success!";
-			}
+			}*/
 		}
 	}
 
@@ -223,12 +224,13 @@ void ReactionExperiment::createResultFile()
 
 	// create a unique file name
 	String timeStr(genUniqueTimestamp());
-	if (m_app->m_experimentConfig.expMode == "training") {
-		mResultFileName = ("result_data/" + m_app->m_experimentConfig.expMode + "_" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
+	/*if (m_app->m_expConfig.expMode == "training") {
+		mResultFileName = ("result_data/" + m_app->m_expConfig.expMode + "_" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 	}
 	else {
-		mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
-	}
+		mResultFileName = ("result_data/" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
+	}*/
+	mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 
 	// create the file
 	if (sqlite3_open(mResultFileName.c_str(), &m_db)) {
