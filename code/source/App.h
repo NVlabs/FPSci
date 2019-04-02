@@ -97,6 +97,9 @@ protected:
 	Array<shared_ptr<Framebuffer>>  m_ldrDelayBufferQueue;
 	int                             m_currentDelayBufferIndex = 0;
 
+    shared_ptr<GuiWindow>           m_userSettingsWindow;
+    bool                            m_userSettingsMode = true;
+
 	/** Called from onInit */
 	void makeGUI();
 	void loadModels();
@@ -159,6 +162,8 @@ public:
 	void setSceneBrightness(float b);
 
 	void setDisplayLatencyFrames(int f);
+    /** reads current user settings to update sensitivity in the controller */
+    void updateMouseSensitivity();
 
 	/** Fire the weapon */
 	void fire();

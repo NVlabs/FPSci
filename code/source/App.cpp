@@ -101,23 +101,7 @@ void App::onInit() {
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
-    // G3D expects mouse sensitivity in radians
-    // we're converting from mouseDPI and centimeters/360 which explains
-    // the screen resolution (dots), cm->in factor (2.54) and 2PI
-    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_user.cmp360 * m_user.mouseDPI);
-    // additional correction factor based on few samples - TODO: need more careful setup to study this
-    mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
-    const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-	if (playMode) {
-		// Force into FPS mode
-		fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
-		fpm->setMoveRate(0.0);
-		fpm->setTurnRate(mouseSensitivity);
-	}
-	else {
-		// fix mouse sensitivity for developer mode
-		fpm->setTurnRate(mouseSensitivity);
-	}
+    updateMouseSensitivity();
 
 	// Initialize the experiment.
 	if (m_experimentConfig.taskType == "reaction") {
@@ -136,6 +120,30 @@ void App::onInit() {
 		m_com.Open(2, errorMsg);
 		int aa = 1;
 	}
+}
+
+void App::updateMouseSensitivity() {
+    // G3D expects mouse sensitivity in radians
+    // we're converting from mouseDPI and centimeters/360 which explains
+    // the screen resolution (dots), cm->in factor (2.54) and 2PI
+    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_user.cmp360 * m_user.mouseDPI);
+    // additional correction factor based on few samples - TODO: need more careful setup to study this
+    mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
+    const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+    if (m_userSettingsMode || !playMode) {
+        // set to 3rd person
+        fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
+    }
+    else {
+        // Force into FPS mode
+        fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
+        fpm->setMoveRate(0.0);
+    }
+    //if (playMode) {
+    //    // disable movement in play mode
+    //    fpm->setMoveRate(0.0);
+    //}
+    fpm->setTurnRate(mouseSensitivity);
 }
 
 void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
@@ -360,6 +368,16 @@ void App::makeGUI() {
 			debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(SLIDER_SPACING, 0);
 	} debugPane->endRow();
 
+    // set up user settings window
+    m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, 
+        Rect2D::xywh((float)window()->width() * 0.5f - 150.0f, (float)window()->height() * 0.5f - 50.0f, 300.0f, 100.0f));
+    addWidget(m_userSettingsWindow);
+    GuiPane* p = m_userSettingsWindow->pane();
+    p->addLabel(format("User ID: '%s'", m_user.subjectID));
+    p->addLabel(format("Mouse DPI: %f", m_user.mouseDPI));
+    p->addNumberBox("Mouse 360", &m_user.cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
+    m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
+
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 }
@@ -483,6 +501,11 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	GApp::onSimulation(rdt, sdt, idt);
 
+    // make sure mouse sensitivity is set right
+    if (m_userSettingsMode) {
+        updateMouseSensitivity();
+    }
+
 	const RealTime now = System::time();
 	for (int p = 0; p < m_projectileArray.size(); ++p) {
 		const Projectile& projectile = m_projectileArray[p];
@@ -519,6 +542,13 @@ bool App::onEvent(const GEvent& event) {
 	// if ((event.type == GEventType::GUI_ACTION) && (event.gui.control == m_button)) { ... return true; }
 	// if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) { ... return true; }
 	// if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == 'p')) { ... return true; }
+
+    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) {
+        m_userSettingsMode = !m_userSettingsMode;
+        m_userSettingsWindow->setVisible(m_userSettingsMode);
+        // switch to first or 3rd person mode
+        updateMouseSensitivity();
+    }
 
 	return false;
 }
