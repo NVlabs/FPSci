@@ -65,6 +65,7 @@ protected:
 	shared_ptr<Sound>               m_explosionSound;
 
 	shared_ptr<ArticulatedModel>    m_laserModel;
+	shared_ptr<ArticulatedModel>	m_decalModel;
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;

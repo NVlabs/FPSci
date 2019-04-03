@@ -202,6 +202,8 @@ public:
 	Array<SessionConfig> sessions;					// Array of sessions
 	Array<TrialConfig> trials;						// Array of trial configs
 	String sessionOrder = "Random";
+	bool decalsEnable = true;						// If bullet decals are on
+	bool muzzleFlashEnable = false;					// Muzzle flash
 
 	ExperimentConfig() {}
 	
@@ -222,6 +224,8 @@ public:
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("sessionOrder", sessionOrder);
+			reader.getIfPresent("decalsEnable", decalsEnable);
+			reader.getIfPresent("muzzleFlashEnable", muzzleFlashEnable);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);

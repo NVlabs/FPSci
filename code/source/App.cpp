@@ -413,6 +413,20 @@ void App::loadModels() {
 
 	m_laserModel = ArticulatedModel::create(laserSpec, "laserModel");
 
+	const static Any decalSpec = PARSE_ANY(ArticulatedModel::Specification{
+		filename = "ifs/square.ifs";
+		preprocess = {
+			transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
+			setMaterial(all(), UniversalMaterial::Specification{
+				lambertian = Texture::Specification {
+					filename = "bullet-decal-256x256.png";
+					encoding = Color3(1, 1, 1);
+				};
+			});
+		}; });
+
+	m_decalModel = ArticulatedModel::create(decalSpec, "decalModel");
+
 	for (int i = 0; i <= 20; ++i) {
 		const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
 		m_targetModelArray.push(ArticulatedModel::create(Any::parse(format(STR(ArticulatedModel::Specification{
@@ -737,6 +751,27 @@ void App::fire() {
 
 	if (m_experimentConfig.playMode) {
 		m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
+	}
+
+	if (m_experimentConfig.decalsEnable) {
+		// compute world intersection
+		const Ray& ray = m_debugCamera->frame().lookRay();
+		Model::HitInfo info;
+		float closest = finf();
+		scene()->intersect(ray, closest, false, {}, info);
+
+		// Find where to put the decal
+		CFrame decalFrame = m_debugCamera->frame();
+		decalFrame.translation += ray.direction() * (closest - 0.001f);
+		// TODO: Make it rotate to the surface normal. info.normal appears to be at inf...
+		//decalFrame.rotation = info.entity->frame().rotation;
+		//decalFrame.rotation = info.normal;
+
+		// add decal to scene
+		const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create("decal", scene().get(), m_decalModel, decalFrame);
+		scene()->insert(newDecal);
+		
+		// TODO: remove oldest decal if at max size
 	}
 }
 
