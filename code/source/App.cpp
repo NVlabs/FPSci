@@ -408,7 +408,7 @@ void App::makeGUI() {
         Rect2D::xywh((float)window()->width() * 0.5f - 150.0f, (float)window()->height() * 0.5f - 50.0f, 300.0f, 100.0f));
     addWidget(m_userSettingsWindow);
     GuiPane* p = m_userSettingsWindow->pane();
-    p->addLabel(format("User ID: '%s'", m_user.subjectID));
+	p->addTextBox("User ID", &m_user.subjectID);
     p->addLabel(format("Mouse DPI: %f", m_user.mouseDPI));
     p->addNumberBox("Mouse 360", &m_user.cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
 	p->addButton("Save User Config", this, &App::userSaveButtonPress);
