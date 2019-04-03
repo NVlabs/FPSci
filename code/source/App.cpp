@@ -352,13 +352,13 @@ shared_ptr<TargetEntity> App::spawnTarget(const Point3& position, float scale, b
 
 	const shared_ptr<TargetEntity>& target = TargetEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
 
-    UniversalMaterial::Specification materialSpecification;
-    materialSpecification.setLambertian(Texture::Specification(color));
-    materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-    materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+	UniversalMaterial::Specification materialSpecification;
+	materialSpecification.setLambertian(Texture::Specification(color));
+	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
 
-    const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-    amPose->materialTable.set("mesh", UniversalMaterial::create(materialSpecification));
+	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
     target->setPose(amPose);
 
     target->setFrame(position);
@@ -375,6 +375,18 @@ shared_ptr<TargetEntity> App::spawnTarget(const Point3& position, float scale, b
 	return target;
 }
 
+// old target uses ifs/d12.ifs below plus setting color with "mesh" above
+//UniversalMaterial::Specification materialSpecification;
+//materialSpecification.setLambertian(Texture::Specification(color));
+//materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+//materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+//
+//const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+//amPose->materialTable.set("mesh", UniversalMaterial::create(materialSpecification));
+//target->setPose(amPose);
+//
+//
+//filename = "ifs/d12.ifs";
 
 void App::loadModels() {
 	const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
@@ -404,7 +416,7 @@ void App::loadModels() {
 	for (int i = 0; i <= 20; ++i) {
 		const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
 		m_targetModelArray.push(ArticulatedModel::create(Any::parse(format(STR(ArticulatedModel::Specification{
-			filename = "ifs/d12.ifs";
+			filename = "model/target/target.obj";
 			cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings {
 				allowVertexMerging = true;
 				forceComputeNormals = false;
@@ -415,12 +427,6 @@ void App::loadModels() {
 				maxSmoothAngleDegrees = 0;
 			};
 			scale = %f;
-			preprocess = preprocess{
-				setMaterial(all(), UniversalMaterial::Specification {
-				emissive = Color3(0.7, 0, 0);
-				glossy = Color4(0.4, 0.2, 0.1, 0.8);
-				lambertian = Color3(1, 0.09, 0);
-				}) };
 			};), scale))));
 	}
 }
