@@ -161,6 +161,8 @@ public:
 	/** Call to set the 3D scene brightness. Default is 1.0. */
 	void setSceneBrightness(float b);
 
+	void userSaveButtonPress(void);
+
 	void setDisplayLatencyFrames(int f);
     /** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();

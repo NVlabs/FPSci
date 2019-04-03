@@ -38,9 +38,7 @@ App::App(const GApp::Settings& settings) : GApp(settings) {
 	// TODO: make method that changes definition of ex, and have constructor call that
 	// method to set default experiment
 	// JBS: moved experiment definition to `onInit()`
-
 }
-
 
 void App::onInit() {
 	GApp::onInit();
@@ -125,7 +123,7 @@ void App::onInit() {
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
-  updateMouseSensitivity();
+	updateMouseSensitivity();
   
 	// Initialize the experiment.
 	if (m_experimentConfig.taskType == "reaction") {
@@ -163,7 +161,7 @@ void App::updateMouseSensitivity() {
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
         fpm->setMoveRate(0.0);
     }
-    //if (playMode) {
+    //if (m_experimentConfig.playMode) {
     //    // disable movement in play mode
     //    fpm->setMoveRate(0.0);
     //}
@@ -413,11 +411,17 @@ void App::makeGUI() {
     p->addLabel(format("User ID: '%s'", m_user.subjectID));
     p->addLabel(format("Mouse DPI: %f", m_user.mouseDPI));
     p->addNumberBox("Mouse 360", &m_user.cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
+	p->addButton("Save User Config", this, &App::userSaveButtonPress);
 	p->addDropDownList("Session", sessionList, &m_user.currentSession);
     m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
 
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+}
+
+void App::userSaveButtonPress(void) {
+	Any a = Any(m_user);
+	a.save("userconfig.Any");
 }
 
 
@@ -671,7 +675,7 @@ void App::onUserInput(UserInput* ui) {
 	GApp::onUserInput(ui);
 	(void)ui;
 
-	//if (playMode || m_debugController->enabled()) {
+	//if (m_experimentConfig.playMode || m_debugController->enabled()) {
 	//	m_ex->onUserInput(ui);
 
 	//	uint8 mouseButtons;

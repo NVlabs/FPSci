@@ -48,6 +48,17 @@ public:
         // fine to have extra entries not read
         //reader.verifyDone();
     }
+
+	// Simple method for conversion to Any (writing output file)
+	Any toAny(const bool forceAll=true) const {
+		Any a(Any::TABLE);
+		a["settingsVersion"] = 1;							// Create a version 1 file
+		a["subjectID"] = subjectID;							// Include subject ID
+		a["mouseDPI"] = mouseDPI;							// Include mouse DPI
+		a["cmp360"] = cmp360;								// Include cm/360
+		a["completedSessions"] = completedSessions;			// Include completed sessions list
+		return a;
+	}
 };
 
 
