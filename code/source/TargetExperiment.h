@@ -16,6 +16,7 @@ protected:
 	std::vector<std::vector<std::string>> m_playerActions;
 	std::vector<std::vector<std::string>> m_targetTrajectory;
 	float m_speed = 0;
+	int m_clickCount = 0;
 
 	TargetExperiment(App* app) : Experiment(app) {
 		// secure vector capacity large enough so as to avoid memory allocation time.

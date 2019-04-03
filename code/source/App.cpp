@@ -594,6 +594,12 @@ void App::fire() {
 	}
 }
 
+void App::clearTargets() {
+	while (m_targetArray.size() > 0) {
+		destroyTarget(0);
+	}
+}
+
 void App::onUserInput(UserInput* ui) {
 	//double waitTime = 1.0f / m_experimentConfig.targetFrameRate - 0.002;
 	//if (waitTime > 0) {

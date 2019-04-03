@@ -86,7 +86,7 @@ protected:
 	bool                            m_renderHitscan = false;
 
 	/** Set to true to lower rendering quality to increase performance. */
-	//bool                            m_emergencyTurbo = false;
+	//bool                              m_emergencyTurbo = false;
 
 	/** Projectile if false         */
 	bool                            m_hitScan = true;
@@ -162,6 +162,9 @@ public:
 
 	/** Fire the weapon */
 	void fire();
+
+	/** clear all targets (used when clearing remaining targets at the end of a trial) */
+	void clearTargets();
 
 	int displayLatencyFrames() const {
 		return m_displayLagFrames;

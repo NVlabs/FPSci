@@ -51,8 +51,9 @@ void TargetExperiment::onInit() {
 	m_config.add("targetFrameRate", m_app->m_experimentConfig.targetFrameRate);
 	m_config.add("targetFrameLag", m_app->m_experimentConfig.targetFrameLag);
 	m_config.add("feedbackDuration", 1.0f);
-	m_config.add("readyDuration", 0.5f);
-	m_config.add("taskDuration", 100000.0f);
+	m_config.add("readyDuration", 0.0f);
+	m_config.add("taskDuration", 6.0f);
+	m_config.add("maxClick", 6);
 	m_config.add("trialCount", 200.f);
 	m_config.add("visualSize", 0.02f);
 	m_config.add("minEccH", 5.f);
@@ -111,6 +112,8 @@ void TargetExperiment::initTargetAnimation() {
 
 	// Full health for the target
 	m_app->m_targetHealth = 1.f;
+	// reset click counter
+	m_clickCount = 0;
 
 	// Don't reset the view. Wait for the subject to center on the ready target.
 	//m_app->resetView();
@@ -156,10 +159,11 @@ void TargetExperiment::updatePresentationState()
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_config.val["taskDuration"]) || (m_app->m_targetHealth <= 0))
+		if ((stateElapsedTime > m_config.val["taskDuration"]) || (m_app->m_targetHealth <= 0) || (m_clickCount == m_config.val["maxClick"]))
 		{
 			m_taskEndTime = System::time();
 			processResponse();
+			m_app->clearTargets(); // clear all remaining targets
 			m_app->m_targetColor = Color3::red().pow(2.0f);
 			newState = PresentationState::feedback;
 		}
@@ -240,7 +244,8 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 
 
 	if (m_app->m_targetHealth > 0.f) {
-		// Don't spawn a new target every frame
+	//if (m_app->m_presentationState == PresentationState::task) {
+			// Don't spawn a new target every frame
 		if (m_app->m_targetArray.size() == 0) {
 			m_app->spawnTarget(t_pos, m_psych.getParam().val["visualSize"], false, m_app->m_targetColor);
 		}
@@ -261,6 +266,8 @@ void TargetExperiment::onUserInput(UserInput* ui)
 {
 	// insert response and uncomment below. 
 	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
+		// count clicks
+		m_clickCount++;
 		m_app->fire();
 		if (m_app->m_targetHealth == 0) {
 			// target eliminated, must be 'hit'.
