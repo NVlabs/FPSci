@@ -22,12 +22,12 @@ public:
 
 class UserConfig {
 public:
-    String subjectID;					// Subject ID (as recorded in output DB)
-    double mouseDPI;					// Mouse DPI setting
-    double cmp360;						// Mouse sensitivity, reported as centimeters per 360°
-	int currentSession;					// Currently selected session
+    String subjectID = "anon";			// Subject ID (as recorded in output DB)
+    double mouseDPI = 800.0;			// Mouse DPI setting
+    double cmp360 = 12.75;				// Mouse sensitivity, reported as centimeters per 360°
+	int currentSession = 0;				// Currently selected session
 	Array<String> completedSessions;	// List of completed sessions for this user
-    UserConfig() : subjectID("anon"), mouseDPI(2400.0), cmp360(12.75) {}
+    UserConfig() {}
 
     UserConfig(const Any& any) {
         int settingsVersion; // used to allow different version numbers to be loaded differently
@@ -54,18 +54,18 @@ public:
 class TrialConfig {
 public:
 	String id;						// Trial ID to indentify affiliated trial runs
-	float motionChangePeriod;		// 
-	float minSpeed;					// Minimum (world space) speed
-	float maxSpeed;					// Maximum (world space) speed
-	float minEccH;					// Minimnum horizontal eccentricity
-	float maxEccH;					// Maximum horizontal eccentricity
-	float minEccV;					// Minimum vertical eccentricity
-	float maxEccV;					// Maximum vertical eccentricity
-	float visualSize;				// Visual size of the target (in degrees)
+	float motionChangePeriod = 1.0f;// 
+	float minSpeed = 0.0f;			// Minimum (world space) speed
+	float maxSpeed = 5.5f;			// Maximum (world space) speed
+	float minEccH = 5.0f;			// Minimnum horizontal eccentricity
+	float maxEccH = 15.0f;			// Maximum horizontal eccentricity
+	float minEccV = 0.0f;			// Minimum vertical eccentricity
+	float maxEccV = 2.0f;			// Maximum vertical eccentricity
+	float visualSize = 0.02f;		// Visual size of the target (in degrees)
 
 	//shared_ptr<TargetEntity> target;			// Target entity to contain points (if loaded here)
 
-	TrialConfig(): motionChangePeriod(1.0), minSpeed(0), maxSpeed(5.5), minEccH(5.0), maxEccH(15.0), minEccV(0.0), maxEccV(2.0), visualSize(0.02) {}
+	TrialConfig() {}
 
 	TrialConfig(const Any& any) {
 		int settingsVersion = 1;
@@ -95,10 +95,10 @@ public:
 class TrialRuns {
 public:
 	String id;						// Trial ID (look up against trial configs)
-	unsigned int trainingCount;		// Number of training trials to complete
-	unsigned int realCount;			// Number of real trials to complete
+	unsigned int trainingCount = 0;	// Number of training trials to complete
+	unsigned int realCount = 0;		// Number of real trials to complete
 
-	TrialRuns() : trainingCount(0), realCount(0) {}
+	TrialRuns() {}
 
 	TrialRuns(const Any& any) {
 		int settingsVersion = 1;
@@ -152,18 +152,18 @@ public:
 
 class ExperimentConfig {
 public:
-	bool playMode;					// Developer only feature for debugging/testing
-	String	taskType;				// "Reaction" or "Target"
-	String	appendingDescription;	// Short text field for description
-	String  sceneName;				// For target experiment
-	float feedbackDuration;
-	float readyDuration;
-	float taskDuration;
-	Array<SessionConfig> sessions;		// Array of sessions
-	Array<TrialConfig> trials;			// Array of trial configs
-	String sessionOrder;
+	bool playMode = true;							// Developer only feature for debugging/testing
+	String	taskType = "reaction";					// "Reaction" or "Target"
+	String	appendingDescription = "ver0";			// Short text field for description
+	String  sceneName = "eSports Simple Hallway";	// For target experiment
+	float feedbackDuration = 1.0f;
+	float readyDuration = 0.5f;
+	float taskDuration = 100000.0f;
+	Array<SessionConfig> sessions;					// Array of sessions
+	Array<TrialConfig> trials;						// Array of trial configs
+	String sessionOrder = "Random";
 
-	ExperimentConfig() : playMode(true), taskType("reaction"), appendingDescription("ver1"), sceneName("eSports Simple Hallway"), sessionOrder("Random"), feedbackDuration(1.0), readyDuration(0.5), taskDuration(100000.0) {}
+	ExperimentConfig() {}
 	
 	ExperimentConfig(const Any& any) {
 		int settingsVersion = 1; // used to allow different version numbers to be loaded differently
@@ -176,8 +176,8 @@ public:
 			reader.getIfPresent("taskType", taskType);
 			reader.getIfPresent("appendingDescription", appendingDescription);
 			reader.getIfPresent("sceneName", sceneName);          
-			reader.getIfPresent("sessions", sessions);
-			reader.getIfPresent("trials", trials);
+			reader.get("sessions", sessions);
+			reader.get("trials", trials);
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
