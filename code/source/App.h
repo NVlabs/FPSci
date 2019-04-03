@@ -164,7 +164,10 @@ public:
 	void userSaveButtonPress(void);
 
 	void setDisplayLatencyFrames(int f);
-    /** reads current user settings to update sensitivity in the controller */
+    
+	SystemConfig getSystemInfo(void);
+
+	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
 
 	/** Fire the weapon */

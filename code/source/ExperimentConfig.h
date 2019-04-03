@@ -16,6 +16,34 @@ public:
 	}
 };
 
+// This is a write-only structure to log information affiliated with a system
+class SystemConfig {
+public:
+	String cpuName;
+	int coreCount;
+	String gpuName;
+	long memCapacityMB;
+	String displayName;
+	int displayXRes;
+	int displayYRes;
+	int displayXSize;
+	int displayYSize;
+
+	Any toAny(const bool forceAll = true) const{
+		Any a(Any::TABLE);
+		a["CPU"] = cpuName;
+		a["GPU"] = gpuName;
+		a["CoreCount"] = coreCount;
+		a["MemoryCapacityMB"] = memCapacityMB;
+		a["DisplayName"] = displayName;
+		a["DisplayResXpx"] = displayXRes;
+		a["DisplayResYpx"] = displayYRes;
+		a["DisplaySizeXmm"] = displayXSize;
+		a["DisplaySizeYmm"] = displayYSize;
+		return a;
+	}
+};
+
 // Morgan's sample
 //Array<Session> sessionArray;
 //r.getIfPresent("sessions", sessionArray);
@@ -135,6 +163,7 @@ public:
 	String id;
 	float	frameRate;				// Target (goal) frame rate (in Hz)
 	unsigned int frameDelay;		// Integer frame delay (in frames)
+	unsigned int trialCount;		// Number of trials that have been run in this session?
 	String	selectionOrder;			// "Random", "Round Robbin", "In Order"
 	Array<TrialRuns> trialRuns;		// Table of trial runs
 

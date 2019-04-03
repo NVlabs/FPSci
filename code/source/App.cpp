@@ -86,6 +86,15 @@ void App::onInit() {
 			trial.id, trial.motionChangePeriod, trial.minSpeed, trial.maxSpeed, trial.visualSize);
 	}
 
+	// Get and save system configuration
+	SystemConfig sysConfig = getSystemInfo();
+	Any a = sysConfig.toAny();
+	a.save("systemconfig.Any");
+
+	// Print system info to log
+	logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)", 
+		sysConfig.cpuName, sysConfig.coreCount, sysConfig.memCapacityMB, sysConfig.gpuName, sysConfig.displayName, sysConfig.displayXRes, sysConfig.displayYRes, sysConfig.displayXSize, sysConfig.displayYSize);
+
 	// apply frame lag
 	setDisplayLatencyFrames(m_experimentConfig.sessions[m_user.currentSession].frameDelay);
 
@@ -142,6 +151,71 @@ void App::onInit() {
 		m_com.Open(2, errorMsg);
 		int aa = 1;
 	}
+}
+
+SystemConfig App::getSystemInfo(void) {
+	SystemConfig system;
+
+	// Get CPU name string
+	int cpuInfo[4] = { -1 };
+	unsigned nExIds, i = 0;
+	char cpuBrandString[0x40];
+	__cpuid(cpuInfo, 0x80000000);
+	nExIds = cpuInfo[0];
+	for (int i = 0x80000000; i <= nExIds; i++) {
+		__cpuid(cpuInfo, i);
+		// Interpret CPU brand string
+		switch (i) {
+		case 0x80000002:
+			memcpy(cpuBrandString, cpuInfo, sizeof(cpuInfo));
+			break;
+		case 0x80000003:
+			memcpy(cpuBrandString + 16, cpuInfo, sizeof(cpuInfo));
+			break;
+		case 0x80000004:
+			memcpy(cpuBrandString + 32, cpuInfo, sizeof(cpuInfo));
+			break;
+		default:
+			logPrintf("Couldn't get system info...\n");
+		}
+	}
+	system.cpuName = cpuBrandString;
+
+	// Get CPU core count
+	SYSTEM_INFO sysInfo;
+	GetSystemInfo(&sysInfo);
+	system.coreCount = sysInfo.dwNumberOfProcessors;
+
+	// Get memory size
+	MEMORYSTATUSEX statex;
+	statex.dwLength = sizeof(statex);
+	GlobalMemoryStatusEx(&statex);
+	system.memCapacityMB = statex.ullTotalPhys / (1024 * 1024);
+	
+	// Get GPU name string
+	String gpuVendor = String((char*)glGetString(GL_VENDOR)).append(" ");
+	String gpuRenderer = String((char*)glGetString(GL_RENDERER));
+	system.gpuName = gpuVendor.append(gpuRenderer);
+
+	// Get display information
+	DISPLAY_DEVICE dd;
+	int deviceIndex = 0;
+	int monitorIndex = 0;
+	EnumDisplayDevices(0, deviceIndex, &dd, 0);
+	std::string deviceName = dd.DeviceName;
+	EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
+	system.displayName = String(dd.DeviceString);
+	
+	system.displayXRes = GetSystemMetrics(SM_CXSCREEN);
+	system.displayYRes = GetSystemMetrics(SM_CYSCREEN);
+	
+	HWND const hwnd = 0;
+	HDC const hdc = GetDC(hwnd);
+	assert(hdc);
+	system.displayXSize = GetDeviceCaps(hdc, HORZSIZE);
+	system.displayYSize = GetDeviceCaps(hdc, VERTSIZE);
+
+	return system;
 }
 
 void App::updateMouseSensitivity() {
