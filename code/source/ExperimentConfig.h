@@ -202,8 +202,8 @@ public:
 	Array<SessionConfig> sessions;					// Array of sessions
 	Array<TargetConfig> targets;					// Array of trial configs
 	String sessionOrder = "Random";
-	bool decalsEnable = true;						// If bullet decals are on
-	bool muzzleFlashEnable = false;					// Muzzle flash
+	bool renderDecals = true;						// If bullet decals are on
+	bool renderMuzzleFlash = false;					// Muzzle flash
 
 	ExperimentConfig() {}
 	
@@ -217,15 +217,16 @@ public:
 			reader.getIfPresent("playMode", playMode);
 			reader.getIfPresent("taskType", taskType);
 			reader.getIfPresent("appendingDescription", appendingDescription);
-			reader.getIfPresent("sceneName", sceneName);          
+			reader.getIfPresent("sceneName", sceneName);
+			// todo if taskType == "target" and taskType == "reaction"
 			reader.get("sessions", sessions);
 			reader.get("targets", targets);
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("sessionOrder", sessionOrder);
-			reader.getIfPresent("decalsEnable", decalsEnable);
-			reader.getIfPresent("muzzleFlashEnable", muzzleFlashEnable);
+			reader.getIfPresent("renderDecals", renderDecals);
+			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);

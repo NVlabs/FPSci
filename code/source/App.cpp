@@ -757,7 +757,7 @@ void App::fire() {
 		m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
 	}
 
-	if (m_experimentConfig.decalsEnable && !hitTarget) {
+	if (m_experimentConfig.renderDecals && !hitTarget) {
 		// compute world intersection
 		const Ray& ray = m_debugCamera->frame().lookRay();
 		Model::HitInfo info;
@@ -777,7 +777,7 @@ void App::fire() {
 		}
 
 		// add decal to scene
-		const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create("decal", scene().get(), m_decalModel, decalFrame);
+		const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastUniqueID), scene().get(), m_decalModel, decalFrame);
 		scene()->insert(newDecal);
 		m_lastDecal = m_firstDecal;
 		m_firstDecal = newDecal;
