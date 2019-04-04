@@ -66,6 +66,8 @@ protected:
 
 	shared_ptr<ArticulatedModel>    m_laserModel;
 	shared_ptr<ArticulatedModel>	m_decalModel;
+	shared_ptr<VisibleEntity>		m_lastDecal;
+	shared_ptr<VisibleEntity>		m_firstDecal;
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;

@@ -762,16 +762,21 @@ void App::fire() {
 
 		// Find where to put the decal
 		CFrame decalFrame = m_debugCamera->frame();
-		decalFrame.translation += ray.direction() * (closest - 0.001f);
+		decalFrame.translation += ray.direction() * (closest - 0.01f);
 		// TODO: Make it rotate to the surface normal. info.normal appears to be at inf...
 		//decalFrame.rotation = info.entity->frame().rotation;
 		//decalFrame.rotation = info.normal;
 
+		// remove last decal if at max size
+		if (notNull(m_lastDecal)) {
+			scene()->remove(m_lastDecal);
+		}
+
 		// add decal to scene
 		const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create("decal", scene().get(), m_decalModel, decalFrame);
 		scene()->insert(newDecal);
-		
-		// TODO: remove oldest decal if at max size
+		m_lastDecal = m_firstDecal;
+		m_firstDecal = newDecal;
 	}
 }
 
