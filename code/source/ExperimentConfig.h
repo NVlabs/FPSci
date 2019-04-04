@@ -90,7 +90,7 @@ public:
 };
 
 
-class TrialConfig {
+class TargetConfig {
 public:
 	String id;						// Trial ID to indentify affiliated trial runs
 	float motionChangePeriod = 1.0f;// 
@@ -104,9 +104,9 @@ public:
 
 	//shared_ptr<TargetEntity> target;			// Target entity to contain points (if loaded here)
 
-	TrialConfig() {}
+	TargetConfig() {}
 
-	TrialConfig(const Any& any) {
+	TargetConfig(const Any& any) {
 		int settingsVersion = 1;
 		AnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
@@ -200,7 +200,7 @@ public:
 	float readyDuration = 0.5f;
 	float taskDuration = 100000.0f;
 	Array<SessionConfig> sessions;					// Array of sessions
-	Array<TrialConfig> trials;						// Array of trial configs
+	Array<TargetConfig> targets;					// Array of trial configs
 	String sessionOrder = "Random";
 	bool decalsEnable = true;						// If bullet decals are on
 	bool muzzleFlashEnable = false;					// Muzzle flash
@@ -219,7 +219,7 @@ public:
 			reader.getIfPresent("appendingDescription", appendingDescription);
 			reader.getIfPresent("sceneName", sceneName);          
 			reader.get("sessions", sessions);
-			reader.get("trials", trials);
+			reader.get("targets", targets);
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);

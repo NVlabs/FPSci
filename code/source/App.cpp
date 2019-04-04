@@ -80,9 +80,9 @@ void App::onInit() {
 	}
 
 	// Iterate through trials and print them
-	for (int i = 0; i < m_experimentConfig.trials.size(); i++) {
-		TrialConfig trial = m_experimentConfig.trials[i];
-		logPrintf("\t-------------------\n\tTrial Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = %f\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = %f�\n",
+	for (int i = 0; i < m_experimentConfig.targets.size(); i++) {
+		TargetConfig trial = m_experimentConfig.targets[i];
+		logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = %f\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = %f�\n",
 			trial.id, trial.motionChangePeriod, trial.minSpeed, trial.maxSpeed, trial.visualSize);
 	}
 
@@ -197,7 +197,7 @@ SystemConfig App::getSystemInfo(void) {
 	String gpuRenderer = String((char*)glGetString(GL_RENDERER));
 	system.gpuName = gpuVendor.append(gpuRenderer);
 
-	// Get display information
+	// Get display information (monitor name)
 	DISPLAY_DEVICE dd;
 	int deviceIndex = 0;
 	int monitorIndex = 0;
@@ -206,9 +206,11 @@ SystemConfig App::getSystemInfo(void) {
 	EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
 	system.displayName = String(dd.DeviceString);
 	
+	// Get screen resolution
 	system.displayXRes = GetSystemMetrics(SM_CXSCREEN);
 	system.displayYRes = GetSystemMetrics(SM_CYSCREEN);
 	
+	// Get display size
 	HWND const hwnd = 0;
 	HDC const hdc = GetDC(hwnd);
 	assert(hdc);

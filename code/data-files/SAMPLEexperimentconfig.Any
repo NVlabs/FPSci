@@ -45,7 +45,7 @@
     // c3 = change direction every 1/2 second
     // c4 = constant speed, changes direction, c5 and c6 similar
     // Trial table (contains detailed target info for each trial)
-    trials : [{id : "c1", minSpeed : 0 , maxSpeed : 0 , visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 1000000}, 
+    targets : [{id : "c1", minSpeed : 0 , maxSpeed : 0 , visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 1000000}, 
             {id : "c2", minSpeed : 8 , maxSpeed : 15, visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 1000000},
             {id : "c3", minSpeed : 8 , maxSpeed : 15, visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 0.5}]
 }
