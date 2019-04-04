@@ -162,7 +162,7 @@ SystemConfig App::getSystemInfo(void) {
 	char cpuBrandString[0x40];
 	__cpuid(cpuInfo, 0x80000000);
 	nExIds = cpuInfo[0];
-	for (int i = 0x80000000; i <= nExIds; i++) {
+	for (unsigned int i = 0x80000000; i <= nExIds; i++) {
 		__cpuid(cpuInfo, i);
 		// Interpret CPU brand string
 		switch (i) {
@@ -190,7 +190,7 @@ SystemConfig App::getSystemInfo(void) {
 	MEMORYSTATUSEX statex;
 	statex.dwLength = sizeof(statex);
 	GlobalMemoryStatusEx(&statex);
-	system.memCapacityMB = statex.ullTotalPhys / (1024 * 1024);
+	system.memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
 	
 	// Get GPU name string
 	String gpuVendor = String((char*)glGetString(GL_VENDOR)).append(" ");
