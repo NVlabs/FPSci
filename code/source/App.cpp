@@ -950,6 +950,11 @@ G3D_START_AT_MAIN();
 
 int main(int argc, const char* argv[]) {
 	
+	// load experiment setting from file
+	if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
+		FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
+	}
+
 	ExperimentConfig m_expConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
 	
 	{
