@@ -54,11 +54,11 @@ void TargetExperiment::onInit() {
 	m_config.add("readyDuration", m_app->m_experimentConfig.readyDuration);
 	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);
 	m_config.add("trialCount", 200.f);
-	m_config.add("visualSize", m_app->m_experimentConfig.trials[0].visualSize);
-	m_config.add("minEccH", m_app->m_experimentConfig.trials[0].minEccH);
-	m_config.add("maxEccH", m_app->m_experimentConfig.trials[0].maxEccH);
-	m_config.add("minEccV", m_app->m_experimentConfig.trials[0].minEccV);
-	m_config.add("maxEccV", m_app->m_experimentConfig.trials[0].maxEccV);
+	m_config.add("visualSize", m_app->m_experimentConfig.targets[0].visualSize);
+	m_config.add("minEccH", m_app->m_experimentConfig.targets[0].minEccH);
+	m_config.add("maxEccH", m_app->m_experimentConfig.targets[0].maxEccH);
+	m_config.add("minEccV", m_app->m_experimentConfig.targets[0].minEccV);
+	m_config.add("maxEccV", m_app->m_experimentConfig.targets[0].maxEccV);
 	// The following three parameters must have the same number (N) of elements.
 	// They are to be joined by their indices to define N task conditions.
 	m_config.add("motionChangePeriods", std::vector<float>{100000.0, 100000.0, 0.5});
