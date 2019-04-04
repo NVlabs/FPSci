@@ -1,18 +1,52 @@
 // copy this file to experimentconfig.Any before first run
 {
-    "settingsVersion" : 1,
-    "taskType" : "target",//"target","reaction",
-    "expMode" : "real",
-    "expVersion" : "ComplexMotion",
-    "appendingDescription" : "2019Mar4_TalkPrep",
-    "sceneName" : "eSports Simple Hallway",
-    //"targetFrameRate" : 60,
-    //"targetFrameLag" : 0
-    //"targetFrameRate" : 120,
-    //"targetFrameLag" : 0//4
-    "targetFrameRate" : 240,
-    "targetFrameLag" : 0//11
-    //"targetFrameRate" : 360,
-    //"targetFrameLag" : 0//18
-}
+    // Information related to this file
+    settingsVersion : 1,                              // Used for parsing this file
 
+    // General settings for the experiment
+    playMode : true,                                  // Debugging/development control flag
+    appendingDescription= "default",    // Description of this file
+    sceneName : "eSports Simple Hallway",             // Maybe don’t need this? Or maybe this ends up belonging to individual trials
+    taskType : "target",                              // Task type, can be "target" or "reaction"           
+    feedbackDuration : 1.0,                           // Time allocated for providing user feedback
+    readyDuration : 0.5,                              // Time allocated for preparing for trial
+    taskDuration : 100000.0,                          // Maximum duration allowed for completion of the task
+    sessionOrder :"random",                           // Session ordering, can be "Random", "Serial"
+
+    // Create a sessions table containing information related to sessions
+    // These sessions attempt to have fixed latency with variable frame rate
+    // all run the same set of trial conditions
+    sessions : [                                      
+    { id : "s1",                                                            // Session ID
+        FrameDelay : 3,                                                     // Session frame delay (in frames)
+        FrameRate : 240,                                                    // Session frame rate (in frames per second)
+        SelectionOrder : "random",                                          // Selection order for trials within this session
+        trials : [{id : "c1", trainingCount : 10, realCount : 40},          // Inidivual trial with ID, real and training counts
+                {id : "c2", trainingCount : 10, realCount : 40},
+                {id : "c3", trainingCount : 10, realCount : 40}]},
+    { id="s2",
+        FrameDelay : 1,
+        FrameRate : 120, 
+        SelectionOrder : "random",
+        trials : [{id : "c1", trainingCount : 10, realCount : 40},
+                {id : "c2", trainingCount : 10, realCount : 40},
+                {id : "c3", trainingCount : 10, realCount : 40}]},
+    { id="s3",
+        FrameDelay : 0,
+        FrameRate : 60, 
+        SelectionOrder : "random",
+        trials : [{id : "c1", trainingCount : 10, realCount : 40},
+                {id : "c2", trainingCount : 10, realCount : 40},
+                {id : "c3", trainingCount : 10, realCount : 40}]}
+    ],
+
+    // c1 = stationary
+    // c2 = fixed direction
+    // c3 = change direction every 1/2 second
+    // c4 = constant speed, changes direction, c5 and c6 similar
+    // Trial table (contains detailed target info for each trial)
+    trials : [{id : "c1", minSpeed : 0 , maxSpeed : 0 , visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 1000000}, 
+            {id : "c2", minSpeed : 8 , maxSpeed : 15, visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 1000000},
+            {id : "c3", minSpeed : 8 , maxSpeed : 15, visualSize : 0.02, minEccH :  5.0, maxEccH : 15.0, minEccV : 0.0, maxEccV : 1.0, motionChangePeriod : 0.5}]
+}
+    

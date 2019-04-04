@@ -65,6 +65,9 @@ protected:
 	shared_ptr<Sound>               m_explosionSound;
 
 	shared_ptr<ArticulatedModel>    m_laserModel;
+	shared_ptr<ArticulatedModel>	m_decalModel;
+	shared_ptr<VisibleEntity>		m_lastDecal;
+	shared_ptr<VisibleEntity>		m_firstDecal;
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
@@ -161,8 +164,13 @@ public:
 	/** Call to set the 3D scene brightness. Default is 1.0. */
 	void setSceneBrightness(float b);
 
+	void userSaveButtonPress(void);
+
 	void setDisplayLatencyFrames(int f);
-    /** reads current user settings to update sensitivity in the controller */
+    
+	SystemConfig getSystemInfo(void);
+
+	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
 
 	/** Fire the weapon */

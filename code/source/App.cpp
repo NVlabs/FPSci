@@ -38,9 +38,7 @@ App::App(const GApp::Settings& settings) : GApp(settings) {
 	// TODO: make method that changes definition of ex, and have constructor call that
 	// method to set default experiment
 	// JBS: moved experiment definition to `onInit()`
-
 }
-
 
 void App::onInit() {
 	GApp::onInit();
@@ -88,6 +86,15 @@ void App::onInit() {
 			trial.id, trial.motionChangePeriod, trial.minSpeed, trial.maxSpeed, trial.visualSize);
 	}
 
+	// Get and save system configuration
+	SystemConfig sysConfig = getSystemInfo();
+	Any a = sysConfig.toAny();
+	a.save("systemconfig.Any");
+
+	// Print system info to log
+	logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)", 
+		sysConfig.cpuName, sysConfig.coreCount, sysConfig.memCapacityMB, sysConfig.gpuName, sysConfig.displayName, sysConfig.displayXRes, sysConfig.displayYRes, sysConfig.displayXSize, sysConfig.displayYSize);
+
 	// apply frame lag
 	setDisplayLatencyFrames(m_experimentConfig.sessions[m_user.currentSession].frameDelay);
 
@@ -125,7 +132,7 @@ void App::onInit() {
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
-  updateMouseSensitivity();
+	updateMouseSensitivity();
   
 	// Initialize the experiment.
 	if (m_experimentConfig.taskType == "reaction") {
@@ -146,6 +153,71 @@ void App::onInit() {
 	}
 }
 
+SystemConfig App::getSystemInfo(void) {
+	SystemConfig system;
+
+	// Get CPU name string
+	int cpuInfo[4] = { -1 };
+	unsigned nExIds, i = 0;
+	char cpuBrandString[0x40];
+	__cpuid(cpuInfo, 0x80000000);
+	nExIds = cpuInfo[0];
+	for (unsigned int i = 0x80000000; i <= nExIds; i++) {
+		__cpuid(cpuInfo, i);
+		// Interpret CPU brand string
+		switch (i) {
+		case 0x80000002:
+			memcpy(cpuBrandString, cpuInfo, sizeof(cpuInfo));
+			break;
+		case 0x80000003:
+			memcpy(cpuBrandString + 16, cpuInfo, sizeof(cpuInfo));
+			break;
+		case 0x80000004:
+			memcpy(cpuBrandString + 32, cpuInfo, sizeof(cpuInfo));
+			break;
+		default:
+			logPrintf("Couldn't get system info...\n");
+		}
+	}
+	system.cpuName = cpuBrandString;
+
+	// Get CPU core count
+	SYSTEM_INFO sysInfo;
+	GetSystemInfo(&sysInfo);
+	system.coreCount = sysInfo.dwNumberOfProcessors;
+
+	// Get memory size
+	MEMORYSTATUSEX statex;
+	statex.dwLength = sizeof(statex);
+	GlobalMemoryStatusEx(&statex);
+	system.memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
+	
+	// Get GPU name string
+	String gpuVendor = String((char*)glGetString(GL_VENDOR)).append(" ");
+	String gpuRenderer = String((char*)glGetString(GL_RENDERER));
+	system.gpuName = gpuVendor.append(gpuRenderer);
+
+	// Get display information
+	DISPLAY_DEVICE dd;
+	int deviceIndex = 0;
+	int monitorIndex = 0;
+	EnumDisplayDevices(0, deviceIndex, &dd, 0);
+	std::string deviceName = dd.DeviceName;
+	EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
+	system.displayName = String(dd.DeviceString);
+	
+	system.displayXRes = GetSystemMetrics(SM_CXSCREEN);
+	system.displayYRes = GetSystemMetrics(SM_CYSCREEN);
+	
+	HWND const hwnd = 0;
+	HDC const hdc = GetDC(hwnd);
+	assert(hdc);
+	system.displayXSize = GetDeviceCaps(hdc, HORZSIZE);
+	system.displayYSize = GetDeviceCaps(hdc, VERTSIZE);
+
+	return system;
+}
+
 void App::updateMouseSensitivity() {
     // G3D expects mouse sensitivity in radians
     // we're converting from mouseDPI and centimeters/360 which explains
@@ -163,7 +235,7 @@ void App::updateMouseSensitivity() {
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
         fpm->setMoveRate(0.0);
     }
-    //if (playMode) {
+    //if (m_experimentConfig.playMode) {
     //    // disable movement in play mode
     //    fpm->setMoveRate(0.0);
     //}
@@ -280,13 +352,13 @@ shared_ptr<TargetEntity> App::spawnTarget(const Point3& position, float scale, b
 
 	const shared_ptr<TargetEntity>& target = TargetEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
 
-    UniversalMaterial::Specification materialSpecification;
-    materialSpecification.setLambertian(Texture::Specification(color));
-    materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-    materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+	UniversalMaterial::Specification materialSpecification;
+	materialSpecification.setLambertian(Texture::Specification(color));
+	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
 
-    const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-    amPose->materialTable.set("mesh", UniversalMaterial::create(materialSpecification));
+	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
     target->setPose(amPose);
 
     target->setFrame(position);
@@ -303,6 +375,18 @@ shared_ptr<TargetEntity> App::spawnTarget(const Point3& position, float scale, b
 	return target;
 }
 
+// old target uses ifs/d12.ifs below plus setting color with "mesh" above
+//UniversalMaterial::Specification materialSpecification;
+//materialSpecification.setLambertian(Texture::Specification(color));
+//materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+//materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+//
+//const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+//amPose->materialTable.set("mesh", UniversalMaterial::create(materialSpecification));
+//target->setPose(amPose);
+//
+//
+//filename = "ifs/d12.ifs";
 
 void App::loadModels() {
 	const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
@@ -329,10 +413,24 @@ void App::loadModels() {
 
 	m_laserModel = ArticulatedModel::create(laserSpec, "laserModel");
 
+	const static Any decalSpec = PARSE_ANY(ArticulatedModel::Specification{
+		filename = "ifs/square.ifs";
+		preprocess = {
+			transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
+			setMaterial(all(), UniversalMaterial::Specification{
+				lambertian = Texture::Specification {
+					filename = "bullet-decal-256x256.png";
+					encoding = Color3(1, 1, 1);
+				};
+			});
+		}; });
+
+	m_decalModel = ArticulatedModel::create(decalSpec, "decalModel");
+
 	for (int i = 0; i <= 20; ++i) {
 		const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
 		m_targetModelArray.push(ArticulatedModel::create(Any::parse(format(STR(ArticulatedModel::Specification{
-			filename = "ifs/d12.ifs";
+			filename = "model/target/target.obj";
 			cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings {
 				allowVertexMerging = true;
 				forceComputeNormals = false;
@@ -343,12 +441,6 @@ void App::loadModels() {
 				maxSmoothAngleDegrees = 0;
 			};
 			scale = %f;
-			preprocess = preprocess{
-				setMaterial(all(), UniversalMaterial::Specification {
-				emissive = Color3(0.7, 0, 0);
-				glossy = Color4(0.4, 0.2, 0.1, 0.8);
-				lambertian = Color3(1, 0.09, 0);
-				}) };
 			};), scale))));
 	}
 }
@@ -404,14 +496,20 @@ void App::makeGUI() {
         Rect2D::xywh((float)window()->width() * 0.5f - 150.0f, (float)window()->height() * 0.5f - 50.0f, 300.0f, 100.0f));
     addWidget(m_userSettingsWindow);
     GuiPane* p = m_userSettingsWindow->pane();
-    p->addLabel(format("User ID: '%s'", m_user.subjectID));
+	p->addTextBox("User ID", &m_user.subjectID);
     p->addLabel(format("Mouse DPI: %f", m_user.mouseDPI));
     p->addNumberBox("Mouse 360", &m_user.cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
+	p->addButton("Save User Config", this, &App::userSaveButtonPress);
 	p->addDropDownList("Session", sessionList, &m_user.currentSession);
     m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
 
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+}
+
+void App::userSaveButtonPress(void) {
+	Any a = Any(m_user);
+	a.save("userconfig.Any");
 }
 
 
@@ -610,6 +708,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 void App::fire() {
 	Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
+	bool hitTarget = false;
 
 	if (m_hitScan) {
 		const Ray& ray = m_debugCamera->frame().lookRay();
@@ -626,6 +725,7 @@ void App::fire() {
 			destroyTarget(closestIndex);
 			aimPoint = ray.origin() + ray.direction() * closest;
 			m_targetHealth -= 1; // TODO: health point should be tracked by Target Entity class (not existing yet).
+			hitTarget = true;
 		}
 	}
 
@@ -654,6 +754,32 @@ void App::fire() {
 	if (m_experimentConfig.playMode) {
 		m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
 	}
+
+	if (m_experimentConfig.decalsEnable && !hitTarget) {
+		// compute world intersection
+		const Ray& ray = m_debugCamera->frame().lookRay();
+		Model::HitInfo info;
+		float closest = finf();
+		scene()->intersect(ray, closest, false, {}, info);
+
+		// Find where to put the decal
+		CFrame decalFrame = m_debugCamera->frame();
+		decalFrame.translation += ray.direction() * (closest - 0.01f);
+		// TODO: Make it rotate to the surface normal. info.normal appears to be at inf...
+		//decalFrame.rotation = info.entity->frame().rotation;
+		//decalFrame.rotation = info.normal;
+
+		// remove last decal if at max size
+		if (notNull(m_lastDecal)) {
+			scene()->remove(m_lastDecal);
+		}
+
+		// add decal to scene
+		const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create("decal", scene().get(), m_decalModel, decalFrame);
+		scene()->insert(newDecal);
+		m_lastDecal = m_firstDecal;
+		m_firstDecal = newDecal;
+	}
 }
 
 void App::clearTargets() {
@@ -671,7 +797,7 @@ void App::onUserInput(UserInput* ui) {
 	GApp::onUserInput(ui);
 	(void)ui;
 
-	//if (playMode || m_debugController->enabled()) {
+	//if (m_experimentConfig.playMode || m_debugController->enabled()) {
 	//	m_ex->onUserInput(ui);
 
 	//	uint8 mouseButtons;
@@ -830,6 +956,11 @@ G3D_START_AT_MAIN();
 
 int main(int argc, const char* argv[]) {
 	
+	// load experiment setting from file
+	if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
+		FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
+	}
+
 	ExperimentConfig m_expConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
 	
 	{

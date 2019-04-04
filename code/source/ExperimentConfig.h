@@ -16,18 +16,46 @@ public:
 	}
 };
 
+// This is a write-only structure to log information affiliated with a system
+class SystemConfig {
+public:
+	String cpuName;
+	int coreCount;
+	String gpuName;
+	long memCapacityMB;
+	String displayName;
+	int displayXRes;
+	int displayYRes;
+	int displayXSize;
+	int displayYSize;
+
+	Any toAny(const bool forceAll = true) const{
+		Any a(Any::TABLE);
+		a["CPU"] = cpuName;
+		a["GPU"] = gpuName;
+		a["CoreCount"] = coreCount;
+		a["MemoryCapacityMB"] = memCapacityMB;
+		a["DisplayName"] = displayName;
+		a["DisplayResXpx"] = displayXRes;
+		a["DisplayResYpx"] = displayYRes;
+		a["DisplaySizeXmm"] = displayXSize;
+		a["DisplaySizeYmm"] = displayYSize;
+		return a;
+	}
+};
+
 // Morgan's sample
 //Array<Session> sessionArray;
 //r.getIfPresent("sessions", sessionArray);
 
 class UserConfig {
 public:
-    String subjectID;					// Subject ID (as recorded in output DB)
-    double mouseDPI;					// Mouse DPI setting
-    double cmp360;						// Mouse sensitivity, reported as centimeters per 360°
-	int currentSession;					// Currently selected session
+    String subjectID = "anon";			// Subject ID (as recorded in output DB)
+    double mouseDPI = 800.0;			// Mouse DPI setting
+    double cmp360 = 12.75;				// Mouse sensitivity, reported as centimeters per 360°
+	int currentSession = 0;				// Currently selected session
 	Array<String> completedSessions;	// List of completed sessions for this user
-    UserConfig() : subjectID("anon"), mouseDPI(2400.0), cmp360(12.75) {}
+    UserConfig() {}
 
     UserConfig(const Any& any) {
         int settingsVersion; // used to allow different version numbers to be loaded differently
@@ -48,24 +76,35 @@ public:
         // fine to have extra entries not read
         //reader.verifyDone();
     }
+
+	// Simple method for conversion to Any (writing output file)
+	Any toAny(const bool forceAll=true) const {
+		Any a(Any::TABLE);
+		a["settingsVersion"] = 1;							// Create a version 1 file
+		a["subjectID"] = subjectID;							// Include subject ID
+		a["mouseDPI"] = mouseDPI;							// Include mouse DPI
+		a["cmp360"] = cmp360;								// Include cm/360
+		a["completedSessions"] = completedSessions;			// Include completed sessions list
+		return a;
+	}
 };
 
 
 class TrialConfig {
 public:
 	String id;						// Trial ID to indentify affiliated trial runs
-	float motionChangePeriod;		// 
-	float minSpeed;					// Minimum (world space) speed
-	float maxSpeed;					// Maximum (world space) speed
-	float minEccH;					// Minimnum horizontal eccentricity
-	float maxEccH;					// Maximum horizontal eccentricity
-	float minEccV;					// Minimum vertical eccentricity
-	float maxEccV;					// Maximum vertical eccentricity
-	float visualSize;				// Visual size of the target (in degrees)
+	float motionChangePeriod = 1.0f;// 
+	float minSpeed = 0.0f;			// Minimum (world space) speed
+	float maxSpeed = 5.5f;			// Maximum (world space) speed
+	float minEccH = 5.0f;			// Minimnum horizontal eccentricity
+	float maxEccH = 15.0f;			// Maximum horizontal eccentricity
+	float minEccV = 0.0f;			// Minimum vertical eccentricity
+	float maxEccV = 2.0f;			// Maximum vertical eccentricity
+	float visualSize = 0.02f;		// Visual size of the target (in degrees)
 
 	//shared_ptr<TargetEntity> target;			// Target entity to contain points (if loaded here)
 
-	TrialConfig(): motionChangePeriod(1.0), minSpeed(0), maxSpeed(5.5), minEccH(5.0), maxEccH(15.0), minEccV(0.0), maxEccV(2.0), visualSize(0.02) {}
+	TrialConfig() {}
 
 	TrialConfig(const Any& any) {
 		int settingsVersion = 1;
@@ -95,10 +134,10 @@ public:
 class TrialRuns {
 public:
 	String id;						// Trial ID (look up against trial configs)
-	unsigned int trainingCount;		// Number of training trials to complete
-	unsigned int realCount;			// Number of real trials to complete
+	unsigned int trainingCount = 0;	// Number of training trials to complete
+	unsigned int realCount = 0;		// Number of real trials to complete
 
-	TrialRuns() : trainingCount(0), realCount(0) {}
+	TrialRuns() {}
 
 	TrialRuns(const Any& any) {
 		int settingsVersion = 1;
@@ -124,6 +163,7 @@ public:
 	String id;
 	float	frameRate;				// Target (goal) frame rate (in Hz)
 	unsigned int frameDelay;		// Integer frame delay (in frames)
+	unsigned int trialCount;		// Number of trials that have been run in this session?
 	String	selectionOrder;			// "Random", "Round Robbin", "In Order"
 	Array<TrialRuns> trialRuns;		// Table of trial runs
 
@@ -152,18 +192,20 @@ public:
 
 class ExperimentConfig {
 public:
-	bool playMode;					// Developer only feature for debugging/testing
-	String	taskType;				// "Reaction" or "Target"
-	String	appendingDescription;	// Short text field for description
-	String  sceneName;				// For target experiment
-	float feedbackDuration;
-	float readyDuration;
-	float taskDuration;
-	Array<SessionConfig> sessions;		// Array of sessions
-	Array<TrialConfig> trials;			// Array of trial configs
-	String sessionOrder;
+	bool playMode = true;							// Developer only feature for debugging/testing
+	String	taskType = "reaction";					// "Reaction" or "Target"
+	String	appendingDescription = "ver0";			// Short text field for description
+	String  sceneName = "eSports Simple Hallway";	// For target experiment
+	float feedbackDuration = 1.0f;
+	float readyDuration = 0.5f;
+	float taskDuration = 100000.0f;
+	Array<SessionConfig> sessions;					// Array of sessions
+	Array<TrialConfig> trials;						// Array of trial configs
+	String sessionOrder = "Random";
+	bool decalsEnable = true;						// If bullet decals are on
+	bool muzzleFlashEnable = false;					// Muzzle flash
 
-	ExperimentConfig() : playMode(true), taskType("reaction"), appendingDescription("ver1"), sceneName("eSports Simple Hallway"), sessionOrder("Random"), feedbackDuration(1.0), readyDuration(0.5), taskDuration(100000.0) {}
+	ExperimentConfig() {}
 	
 	ExperimentConfig(const Any& any) {
 		int settingsVersion = 1; // used to allow different version numbers to be loaded differently
@@ -176,12 +218,14 @@ public:
 			reader.getIfPresent("taskType", taskType);
 			reader.getIfPresent("appendingDescription", appendingDescription);
 			reader.getIfPresent("sceneName", sceneName);          
-			reader.getIfPresent("sessions", sessions);
-			reader.getIfPresent("trials", trials);
+			reader.get("sessions", sessions);
+			reader.get("trials", trials);
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("sessionOrder", sessionOrder);
+			reader.getIfPresent("decalsEnable", decalsEnable);
+			reader.getIfPresent("muzzleFlashEnable", muzzleFlashEnable);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);

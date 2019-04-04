@@ -49,7 +49,7 @@ void TargetExperiment::onInit() {
 	// default values
 	// TODO: This should all move into configuration file.
 	m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameRate);
-	m_config.add("targetFrameLag", m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameDelay);
+	m_config.add("targetFrameLag", (float)m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameDelay);
 	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
 	m_config.add("readyDuration", m_app->m_experimentConfig.readyDuration);
 	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);
