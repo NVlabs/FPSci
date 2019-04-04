@@ -53,6 +53,7 @@ void TargetExperiment::onInit() {
 	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
 	m_config.add("readyDuration", m_app->m_experimentConfig.readyDuration);
 	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);
+	m_config.add("maxClick", 6);
 	m_config.add("trialCount", 200.f);
 	m_config.add("visualSize", m_app->m_experimentConfig.targets[0].visualSize);
 	m_config.add("minEccH", m_app->m_experimentConfig.targets[0].minEccH);
@@ -111,6 +112,8 @@ void TargetExperiment::initTargetAnimation() {
 
 	// Full health for the target
 	m_app->m_targetHealth = 1.f;
+	// reset click counter
+	m_clickCount = 0;
 
 	// Don't reset the view. Wait for the subject to center on the ready target.
 	//m_app->resetView();
@@ -156,10 +159,11 @@ void TargetExperiment::updatePresentationState()
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_config.val["taskDuration"]) || (m_app->m_targetHealth <= 0))
+		if ((stateElapsedTime > m_config.val["taskDuration"]) || (m_app->m_targetHealth <= 0) || (m_clickCount == m_config.val["maxClick"]))
 		{
 			m_taskEndTime = System::time();
 			processResponse();
+			m_app->clearTargets(); // clear all remaining targets
 			m_app->m_targetColor = Color3::red().pow(2.0f);
 			newState = PresentationState::feedback;
 		}
@@ -240,7 +244,8 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 
 
 	if (m_app->m_targetHealth > 0.f) {
-		// Don't spawn a new target every frame
+	//if (m_app->m_presentationState == PresentationState::task) {
+			// Don't spawn a new target every frame
 		if (m_app->m_targetArray.size() == 0) {
 			m_app->spawnTarget(t_pos, m_psych.getParam().val["visualSize"], false, m_app->m_targetColor);
 		}
@@ -261,6 +266,8 @@ void TargetExperiment::onUserInput(UserInput* ui)
 {
 	// insert response and uncomment below. 
 	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
+		// count clicks
+		m_clickCount++;
 		m_app->fire();
 		if (m_app->m_targetHealth == 0) {
 			// target eliminated, must be 'hit'.
