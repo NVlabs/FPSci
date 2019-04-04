@@ -63,8 +63,8 @@ void App::onInit() {
 	//logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
 	//	m_experimentConfig.sessions["s1"].frameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
 
-	logPrintf("-------------------\nExperiment Config\n-------------------\nPlay Mode = %s\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\n",
-		(m_experimentConfig.playMode ? "true" : "false") , m_experimentConfig.taskType, m_experimentConfig.appendingDescription, m_experimentConfig.sceneName, m_experimentConfig.feedbackDuration, m_experimentConfig.readyDuration, m_experimentConfig.taskDuration);
+	logPrintf("-------------------\nExperiment Config\n-------------------\nPlay Mode = %s\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
+		(m_experimentConfig.playMode ? "true" : "false") , m_experimentConfig.taskType, m_experimentConfig.appendingDescription, m_experimentConfig.sceneName, m_experimentConfig.feedbackDuration, m_experimentConfig.readyDuration, m_experimentConfig.taskDuration, m_experimentConfig.maxClicks);
 
 	// Iterate through sessions and print them
 	for (int i = 0; i < m_experimentConfig.sessions.size(); i++) {
@@ -81,9 +81,9 @@ void App::onInit() {
 
 	// Iterate through trials and print them
 	for (int i = 0; i < m_experimentConfig.targets.size(); i++) {
-		TargetConfig trial = m_experimentConfig.targets[i];
-		logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = %f\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = %f�\n",
-			trial.id, trial.motionChangePeriod, trial.minSpeed, trial.maxSpeed, trial.visualSize);
+		TargetConfig target = m_experimentConfig.targets[i];
+		logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tElevation Locked = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n",
+			target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.elevLocked ? "True":"False", target.jumpEnabled ? "True":"False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1]);
 	}
 
 	// Get and save system configuration

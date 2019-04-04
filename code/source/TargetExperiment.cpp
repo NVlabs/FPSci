@@ -53,13 +53,14 @@ void TargetExperiment::onInit() {
 	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
 	m_config.add("readyDuration", m_app->m_experimentConfig.readyDuration);
 	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);
-	m_config.add("maxClick", 6);
+	m_config.add("maxClick", m_app->m_experimentConfig.maxClicks);
 	m_config.add("trialCount", 200.f);
-	m_config.add("visualSize", m_app->m_experimentConfig.targets[0].visualSize);
-	m_config.add("minEccH", m_app->m_experimentConfig.targets[0].minEccH);
-	m_config.add("maxEccH", m_app->m_experimentConfig.targets[0].maxEccH);
-	m_config.add("minEccV", m_app->m_experimentConfig.targets[0].minEccV);
-	m_config.add("maxEccV", m_app->m_experimentConfig.targets[0].maxEccV);
+	// TODO: This is a hack, fix it to determine correct size based on max/min
+	m_config.add("visualSize", m_app->m_experimentConfig.targets[0].visualSize[0]);
+	m_config.add("minEccH", m_app->m_experimentConfig.targets[0].eccH[0]);
+	m_config.add("maxEccH", m_app->m_experimentConfig.targets[0].eccH[1]);
+	m_config.add("minEccV", m_app->m_experimentConfig.targets[0].eccV[0]);
+	m_config.add("maxEccV", m_app->m_experimentConfig.targets[0].eccV[1]);
 	// The following three parameters must have the same number (N) of elements.
 	// They are to be joined by their indices to define N task conditions.
 	m_config.add("motionChangePeriods", std::vector<float>{100000.0, 100000.0, 0.5});

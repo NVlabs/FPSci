@@ -52,7 +52,7 @@ class UserConfig {
 public:
     String subjectID = "anon";			// Subject ID (as recorded in output DB)
     double mouseDPI = 800.0;			// Mouse DPI setting
-    double cmp360 = 12.75;				// Mouse sensitivity, reported as centimeters per 360°
+    double cmp360 = 12.75;				// Mouse sensitivity, reported as centimeters per 360ï¿½
 	int currentSession = 0;				// Currently selected session
 	Array<String> completedSessions;	// List of completed sessions for this user
     UserConfig() {}
@@ -90,19 +90,45 @@ public:
 };
 
 
+class ReactionConfig {
+public:
+	float minimumForeperiod = 1.5f;							// Minimum time to wait before a reaction time transition
+	Array<float> intensities;								// List of intensities to test
+
+	ReactionConfig() : minimumForeperiod(1.5f) {}
+
+	ReactionConfig(const Any& any) {
+		int settingsVersion = 1;
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("minimumForeperiod", minimumForeperiod);
+			reader.getIfPresent("intensities", intensities);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in TrialConfig.\n", settingsVersion);
+			break;
+		}
+	}
+};
+
 class TargetConfig {
 public:
-	String id;						// Trial ID to indentify affiliated trial runs
-	float motionChangePeriod = 1.0f;// 
-	float minSpeed = 0.0f;			// Minimum (world space) speed
-	float maxSpeed = 5.5f;			// Maximum (world space) speed
-	float minEccH = 5.0f;			// Minimnum horizontal eccentricity
-	float maxEccH = 15.0f;			// Maximum horizontal eccentricity
-	float minEccV = 0.0f;			// Minimum vertical eccentricity
-	float maxEccV = 2.0f;			// Maximum vertical eccentricity
-	float visualSize = 0.02f;		// Visual size of the target (in degrees)
-
-	//shared_ptr<TargetEntity> target;			// Target entity to contain points (if loaded here)
+	String id;												// Trial ID to indentify affiliated trial runs
+	bool elevLocked;										// Elevation locking
+	float distance = 30.0f;									// Distance to the target
+	Array<float> motionChangePeriod = { 1.0f, 1.0f };		// Range of motion change period in seconds
+	Array<float> speed = { 0.0f, 5.5f };					// Range of angular velocities for target
+	Array<float> eccH = { 5.0f, 15.0f };					// Range of initial horizontal eccentricity
+	Array<float> eccV = { 0.0f, 2.0f };						// Range of initial vertical eccentricity
+	Array<float> visualSize = { 0.02f, 0.02f };				// Visual size of the target (in degrees)
+	bool jumpEnabled = false;
+	Array<float> jumpPeriod = { 2.0f, 2.0f };
+	Array<float> jumpSpeed = { 2.0f, 5.5f };
+	Array<float> accelGravity = { 9.8f, 9.8f };
+	//Array<Vector3> path;		// Unused, to dictate a motion path...
 
 	TargetConfig() {}
 
@@ -114,14 +140,16 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			reader.get("id", id);
-			reader.getIfPresent("minSpeed", minSpeed);
-			reader.getIfPresent("maxSpeed", maxSpeed);
+			reader.getIfPresent("elevationLocked", elevLocked);
+			reader.getIfPresent("distance", distance);
+			reader.getIfPresent("motionChangePeriod", motionChangePeriod);
+			reader.getIfPresent("speed", speed);
 			reader.getIfPresent("visualSize", visualSize);
-			reader.getIfPresent("minEccH", minEccH);
-			reader.getIfPresent("maxEccH", maxEccH);
-			reader.getIfPresent("minEccV", minEccV);
-			reader.getIfPresent("maxEccV", maxEccV);
-			//reader.getIfPresent("target", target);
+			reader.getIfPresent("eccH", eccH);
+			reader.getIfPresent("eccV", eccV);
+			reader.getIfPresent("jumpEnabled", jumpEnabled);
+			reader.getIfPresent("jumpSpeed", jumpSpeed);
+			reader.getIfPresent("accelGravity", accelGravity);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in TrialConfig.\n", settingsVersion);
@@ -133,9 +161,9 @@ public:
 
 class TrialRuns {
 public:
-	String id;						// Trial ID (look up against trial configs)
-	unsigned int trainingCount = 0;	// Number of training trials to complete
-	unsigned int realCount = 0;		// Number of real trials to complete
+	String id;								// Trial ID (look up against trial configs)
+	unsigned int trainingCount = 0;			// Number of training trials to complete
+	unsigned int realCount = 0;				// Number of real trials to complete
 
 	TrialRuns() {}
 
@@ -161,13 +189,12 @@ public:
 class SessionConfig {
 public:
 	String id;
-	float	frameRate;				// Target (goal) frame rate (in Hz)
-	unsigned int frameDelay;		// Integer frame delay (in frames)
-	unsigned int trialCount;		// Number of trials that have been run in this session?
-	String	selectionOrder;			// "Random", "Round Robbin", "In Order"
-	Array<TrialRuns> trialRuns;		// Table of trial runs
+	float	frameRate = 240.0f;					// Target (goal) frame rate (in Hz)
+	unsigned int frameDelay = 0;				// Integer frame delay (in frames)
+	String	selectionOrder = "random";			// "Random", "Round Robbin", "In Order"
+	Array<TrialRuns> trialRuns;					// Table of trial runs
 
-	SessionConfig() : frameRate(240.0f), frameDelay(0), selectionOrder("Random") {}
+	SessionConfig() : frameRate(240.0f), frameDelay(0), selectionOrder("random") {}
 
 	SessionConfig(const Any& any) {
 		int settingsVersion = 1;
@@ -199,9 +226,11 @@ public:
 	float feedbackDuration = 1.0f;
 	float readyDuration = 0.5f;
 	float taskDuration = 100000.0f;
+	int maxClicks = 10000;							// Maximum number of clicks to allow in a trial
 	Array<SessionConfig> sessions;					// Array of sessions
+	String sessionOrder = "random";					// Order in which to run sessions?
 	Array<TargetConfig> targets;					// Array of trial configs
-	String sessionOrder = "Random";
+	Array<ReactionConfig> reactions;				// Array of reaction configs
 	bool renderDecals = true;						// If bullet decals are on
 	bool renderMuzzleFlash = false;					// Muzzle flash
 
@@ -218,12 +247,13 @@ public:
 			reader.getIfPresent("taskType", taskType);
 			reader.getIfPresent("appendingDescription", appendingDescription);
 			reader.getIfPresent("sceneName", sceneName);
-			// todo if taskType == "target" and taskType == "reaction"
+			reader.getIfPresent("sessionOrder", sessionOrder);
 			reader.get("sessions", sessions);
 			reader.get("targets", targets);
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
+			reader.getIfPresent("maxClicks", maxClicks);
 			reader.getIfPresent("sessionOrder", sessionOrder);
 			reader.getIfPresent("renderDecals", renderDecals);
 			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);

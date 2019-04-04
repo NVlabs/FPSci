@@ -42,9 +42,9 @@ void ReactionExperiment::onInit() {
 	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
 	m_config.add("meanWaitDuration", m_app->m_experimentConfig.readyDuration);
 	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);
-	m_config.add("minimumForeperiod", 1.5f);
+	m_config.add("minimumForeperiod", m_app->m_experimentConfig.reactions[0].minimumForeperiod);
 	m_config.add("trialCount", 20);
-	m_config.add("intensities", std::vector<float>{0.4f, 1.0f});
+	m_config.add("intensities", (std::vector<float>)*m_app->m_experimentConfig.reactions[0].intensities.getCArray());
 
 	// initialize PsychHelper based on the configuration.
 	initPsychHelper();
