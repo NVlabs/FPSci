@@ -1,7 +1,7 @@
 // copy this file to userconfig.Any before first run
 {
     "settingsVersion" : 1,
-    "subjectID" : "JK",
+    "subjectID" : "enter ID",
     "mouseDPI" : 800,
     "cmp360" : 30
 }
