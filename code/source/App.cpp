@@ -708,6 +708,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 void App::fire() {
 	Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
+	bool hitTarget = false;
 
 	if (m_hitScan) {
 		const Ray& ray = m_debugCamera->frame().lookRay();
@@ -724,6 +725,7 @@ void App::fire() {
 			destroyTarget(closestIndex);
 			aimPoint = ray.origin() + ray.direction() * closest;
 			m_targetHealth -= 1; // TODO: health point should be tracked by Target Entity class (not existing yet).
+			hitTarget = true;
 		}
 	}
 
@@ -753,7 +755,7 @@ void App::fire() {
 		m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
 	}
 
-	if (m_experimentConfig.decalsEnable) {
+	if (m_experimentConfig.decalsEnable && !hitTarget) {
 		// compute world intersection
 		const Ray& ray = m_debugCamera->frame().lookRay();
 		Model::HitInfo info;
