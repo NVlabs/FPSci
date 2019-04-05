@@ -4,14 +4,14 @@
   "settingsVersion": 1, // Used for parsing this file
 
   // General settings for the experiment
-  "playMode": false, // Debugging/development control flag
-  "appendingDescription" : "default", // Description of this file
+  "playMode": true, // Debugging/development control flag
+  "appendingDescription": "default", // Description of this file
   "sceneName": "eSports Simple Hallway", // Maybe don’t need this? Or maybe this ends up belonging to individual trials
   "taskType": "target", // Task type, can be "target" or "reaction"
   "feedbackDuration": 1.0, // Time allocated for providing user feedback
-  "readyDuration": 0.0, // Time allocated for preparing for trial
-  "taskDuration": 6.0, // Maximum duration allowed for completion of the task
-  "maxClicks" :  6,
+  "readyDuration": 0.5, // Time allocated for preparing for trial
+  "taskDuration": 100000.0, // Maximum duration allowed for completion of the task
+  "maxClicks": 100,
   "sessionOrder": "random", // Session ordering, can be "Random", "Serial"
 
   // Create a sessions table containing information related to sessions
@@ -23,69 +23,18 @@
       "FrameDelay": 3, // Session frame delay (in frames)
       "FrameRate": 240, // Session frame rate (in frames per second)
       "SelectionOrder": "random", // Selection order for trials within this session
-      "trials": [
-        {
-          "id": "c1",
-          "trainingCount": 10,
-          "realCount": 40
-        }, // Inidivual trial with ID, real and training counts
-        {
-          "id": "c2",
-          "trainingCount": 10,
-          "realCount": 40
-        },
-        {
-          "id": "c3",
-          "trainingCount": 10,
-          "realCount": 40
-        }
-      ]
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "trials": [ "c1", "c2", "c3" ],
+      "trialCounts": [ 10, 10, 5 ]
     },
     {
-      "id":"s2",
-      "FrameDelay": 1,
-      "FrameRate": 120,
-      "SelectionOrder": "random",
-      "trials": [
-        {
-          "id": "c1",
-          "trainingCount": 10,
-          "realCount": 40
-        },
-        {
-          "id": "c2",
-          "trainingCount": 10,
-          "realCount": 40
-        },
-        {
-          "id": "c3",
-          "trainingCount": 10,
-          "realCount": 40
-        }
-      ]
-    },
-    {
-      "id" : "s3",
-      "FrameDelay": 0,
-      "FrameRate": 60,
-      "SelectionOrder": "random",
-      "trials": [
-        {
-          "id": "c1",
-          "trainingCount": 10,
-          "realCount": 40
-        },
-        {
-          "id": "c2",
-          "trainingCount": 10,
-          "realCount": 40
-        },
-        {
-          "id": "c3",
-          "trainingCount": 10,
-          "realCount": 40
-        }
-      ]
+      "id": "s2", // Session ID
+      "FrameDelay": 3, // Session frame delay (in frames)
+      "FrameRate": 240, // Session frame rate (in frames per second)
+      "SelectionOrder": "random", // Selection order for trials within this session
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "trials": [ "c1", "c2", "c3" ],
+      "trialCounts": [ 10, 10, 5 ]
     }
   ],
 
@@ -148,8 +97,10 @@
     {
       "id": "r1",
       "minimumForeperiod": 1.5,
-      "intensities": [0.4, 1.0]
+      "intensities": [ 0.4, 1.0 ],
+      "intensityCounts": [ 3, 10 ]
     }
   ]
 }
+
     

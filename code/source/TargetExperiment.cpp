@@ -10,12 +10,14 @@ void TargetExperiment::initPsychHelper()
 	// Add conditions, one per one initial displacement value.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
 	// Iterate over the sessions here and add a config for each
-	Array<Param> params = m_config.getTargetExpConditions();
+	Array<Param> params = m_config.getTargetExpConditions(m_app->m_user.currentSession);
 	for (auto p : params) {
 		// Define properties of psychophysical methods
 		PsychophysicsDesignParameter psychParam;
 		psychParam.mMeasuringMethod = PsychophysicsMethod::MethodOfConstantStimuli;
+		// Can we remove this?
 		psychParam.mIsDefault = false;
+		// We need something in mStimLevels to run psychphysics...
 		psychParam.mStimLevels.push_back(m_config.taskDuration);		// Shorter task is more difficult. However, we are currently doing unlimited time.
 		psychParam.mMaxTrialCounts.push_back(p.val["trialCount"]);		// Get the trial count from the parameters
 		m_psych.addCondition(p, psychParam);

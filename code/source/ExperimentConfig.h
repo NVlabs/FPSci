@@ -2,20 +2,6 @@
 
 #include <G3D/G3D.h>
 #include "SingleThresholdMeasurement.h"
-//#include "TargetEntity.h"
-
-class Session {
-public:
-	float targetFrameRate = 0;
-	int trials = 0;
-
-	Session() {}
-	Session(const Any& any) {
-		AnyTableReader r(any);
-		r.getIfPresent("targetFrameRate", targetFrameRate);
-		r.getIfPresent("trials", trials);
-	}
-};
 
 // This is a write-only structure to log information affiliated with a system
 class SystemConfig {
@@ -44,10 +30,6 @@ public:
 		return a;
 	}
 };
-
-// Morgan's sample
-//Array<Session> sessionArray;
-//r.getIfPresent("sessions", sessionArray);
 
 class UserConfig {
 public:
@@ -90,13 +72,12 @@ public:
 	}
 };
 
-
 class ReactionConfig {
 public:
 	String id;												// ID to refer to this reaction config from trial runs table
 	float minimumForeperiod = 1.5f;							// Minimum time to wait before a reaction time transition
-	Array<float> intensities;								// List of intensities to test
-	int trialsPerIntensity = 5;								// Trials per intensity
+	Array<float> intensities;								// Intensities
+	Array<int> intensityCounts;								// Count of each intensity
 
 	ReactionConfig() : minimumForeperiod(1.5f) {}
 
@@ -109,8 +90,8 @@ public:
 		case 1:
 			reader.getIfPresent("id", id);
 			reader.getIfPresent("minimumForeperiod", minimumForeperiod);
-			reader.getIfPresent("intensities", intensities);
-			reader.getIfPresent("trialsPerIntesity", trialsPerIntensity);
+			reader.get("intensities", intensities);
+			reader.get("intensityCounts", intensityCounts);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in TrialConfig.\n", settingsVersion);
@@ -164,40 +145,15 @@ public:
 	}
 };
 
-class TrialRuns {
-public:
-	String id;								// Trial ID (look up against trial configs)
-	unsigned int trainingCount = 0;			// Number of training trials to complete
-	unsigned int realCount = 0;				// Number of real trials to complete
-
-	TrialRuns() {}
-
-	TrialRuns(const Any& any) {
-		int settingsVersion = 1;
-		AnyTableReader reader(any);
-		reader.getIfPresent("settingsVersion", settingsVersion);
-
-		switch (settingsVersion) {
-		case 1:
-			reader.get("id", id);
-			reader.getIfPresent("trainingCount", trainingCount);
-			reader.getIfPresent("realCount", realCount);
-			break;
-		default:
-			debugPrintf("Settings version '%d' not recognized in TrialRuns.\n", settingsVersion);
-			break;
-		}
-		//reader.verifyDone();
-	}
-};
-
 class SessionConfig {
 public:
 	String id;
 	float	frameRate = 240.0f;					// Target (goal) frame rate (in Hz)
 	unsigned int frameDelay = 0;				// Integer frame delay (in frames)
+	String expMode = "training";				// String indicating whether session is training or real
 	String	selectionOrder = "random";			// "Random", "Round Robbin", "In Order"
-	Array<TrialRuns> trialRuns;					// Table of trial runs
+	Array<String> trials;
+	Array<int> trialCounts;
 
 	SessionConfig() : frameRate(240.0f), frameDelay(0), selectionOrder("random") {}
 
@@ -212,7 +168,9 @@ public:
 			reader.getIfPresent("FrameRate", frameRate);
 			reader.getIfPresent("FrameDelay", frameDelay);
 			reader.getIfPresent("SelectionOrder", selectionOrder);
-			reader.get("trials", trialRuns);
+			reader.getIfPresent("expMode", expMode);
+			reader.get("trials", trials);
+			reader.get("trialCounts", trialCounts);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -271,6 +229,13 @@ public:
 		//reader.verifyDone();
 	}
 
+	// Start of enumeration for task type
+	enum taskType {
+		reaction = 0,
+		target = 1
+	};
+	//const String taskTypes[2] = { "reaction", "target" };
+
 	// Get a list of session IDs from the session array
 	Array<String> getSessionIdArray(void) {
 		Array<String> ids;
@@ -280,19 +245,6 @@ public:
 		return ids;
 	}
 	
-	// Gets a list of target IDs from within a session
-	Array<String> getTargetsInSession(String session_id) {
-		Array<String> ids;
-		for (int i = 0; i < sessions.size(); i++) {			// Iterate through the sessions
-			if (!this->sessions[i].id.compare(session_id)) {		// Check for matching session id
-				for (int j = 0; j < sessions[i].trialRuns.size(); j++) {		// Iterate through the trial runs within this session
-					ids.append(sessions[i].trialRuns[j].id);
-				}
-			}
-		}
-		return ids;
-	}
-
 	// Get a pointer to a target config by ID
 	TargetConfig* getTargetConfigById(String id) {
 		for (int i = 0; i < targets.size(); i++) {
@@ -301,6 +253,7 @@ public:
 		return NULL;
 	}
 
+	// Get a pointer to a reaction config by ID
 	ReactionConfig* getReactionConfigById(String id) {
 		for (int i = 0; i < reactions.size(); i++) {
 			if (!reactions[i].id.compare(id)) return &reactions[i];
@@ -309,58 +262,39 @@ public:
 	}
 
 	// This is a kludge to quickly create experiment conditions w/ appropriate parameters
-	Array<Param> getTargetExpConditions(void) {
+	Array<Param> getTargetExpConditions(int sessionIndex) {
 		Array<Param> params;
-		for (int i = 0; i < sessions.size(); i++) {
-			for (int j = 0; j < sessions[i].trialRuns.size(); j++) {
-				// Append training trial
-				Param p;
-				p.add("minEccH", getTargetConfigById(sessions[i].trialRuns[j].id)->eccH[0]);
-				p.add("minEccV", getTargetConfigById(sessions[i].trialRuns[j].id)->eccV[0]);
-				p.add("maxEccH", getTargetConfigById(sessions[i].trialRuns[j].id)->eccH[1]);
-				p.add("maxEccV", getTargetConfigById(sessions[i].trialRuns[j].id)->eccV[1]);
-				p.add("targetFrameRate", sessions[i].frameRate);
-				p.add("targetFrameLag", sessions[i].frameDelay);
-				// TODO: implement visual size min/max and motion change period
-				p.add("visualSize", getTargetConfigById(sessions[i].trialRuns[j].id)->visualSize[0]);
-				p.add("motionChangePeriod", getTargetConfigById(sessions[i].trialRuns[j].id)->motionChangePeriod[0]);
-				p.add("minSpeed", getTargetConfigById(sessions[i].trialRuns[j].id)->speed[0]);
-				p.add("maxSpeed", getTargetConfigById(sessions[i].trialRuns[j].id)->speed[1]);
-				p.add("trialCount", sessions[i].trialRuns[j].trainingCount);
-				params.append(p);
-				
-				// Append real trial
-				p = Param();
-				p.add("minEccH", getTargetConfigById(sessions[i].trialRuns[j].id)->eccH[0]);
-				p.add("minEccV", getTargetConfigById(sessions[i].trialRuns[j].id)->eccV[0]);
-				p.add("maxEccH", getTargetConfigById(sessions[i].trialRuns[j].id)->eccH[1]);
-				p.add("maxEccV", getTargetConfigById(sessions[i].trialRuns[j].id)->eccV[1]);
-				p.add("targetFrameRate", sessions[i].frameRate);
-				p.add("targetFrameLag", sessions[i].frameDelay);
-				// TODO: implement visual size min/max and motion change period
-				p.add("visualSize", getTargetConfigById(sessions[i].trialRuns[j].id)->visualSize[0]);
-				p.add("motionChangePeriod", getTargetConfigById(sessions[i].trialRuns[j].id)->motionChangePeriod[0]);
-				p.add("minSpeed", getTargetConfigById(sessions[i].trialRuns[j].id)->speed[0]);
-				p.add("maxSpeed", getTargetConfigById(sessions[i].trialRuns[j].id)->speed[1]);
-				p.add("trialCount", sessions[i].trialRuns[j].realCount);
-				params.append(p);
-			}
+		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
+			String id = sessions[sessionIndex].trials[j];
+			// Append training trial
+			Param p;
+			p.add("minEccH", getTargetConfigById(id)->eccH[0]);
+			p.add("minEccV", getTargetConfigById(id)->eccV[0]);
+			p.add("maxEccH", getTargetConfigById(id)->eccH[1]);
+			p.add("maxEccV", getTargetConfigById(id)->eccV[1]);
+			p.add("targetFrameRate", sessions[sessionIndex].frameRate);
+			p.add("targetFrameLag", sessions[sessionIndex].frameDelay);
+			// TODO: implement visual size min/max and motion change period
+			p.add("visualSize", getTargetConfigById(id)->visualSize[0]);
+			p.add("motionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
+			p.add("minSpeed", getTargetConfigById(id)->speed[0]);
+			p.add("maxSpeed", getTargetConfigById(id)->speed[1]);
+			p.add("trialCount", sessions[sessionIndex].trialCounts[j]);
+			params.append(p);
 		}
 		return params;
 	}
 
-	Array<Param> getReactionExpConditions(void) {
+	Array<Param> getReactionExpConditions(int sessionIndex) {
 		Array<Param> params;
-		for (int i = 0; i < sessions.size(); i++) {
-			for (int j = 0; j < sessions[i].trialRuns.size(); j++) {
-				for (int k = 0; k < getReactionConfigById(sessions[i].trialRuns[j].id)->intensities.size(); k++) {
-					Param p;
-					p.add("intensity", getReactionConfigById(sessions[i].trialRuns[j].id)->intensities[k]);
-					p.add("targetFrameRate", sessions[i].frameRate);
-					p.add("targetFrameLag", sessions[i].frameDelay);
-					p.add("trialCount", getReactionConfigById(sessions[i].trialRuns[j].id)->trialsPerIntensity);
-					params.append(p);
-				}
+		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
+			for (float intensity : getReactionConfigById(sessions[sessionIndex].trials[j])->intensities) {
+				Param p;
+				p.add("intensity", intensity);
+				p.add("targetFrameRate", sessions[sessionIndex].frameRate);
+				p.add("targetFrameLag", sessions[sessionIndex].frameDelay);
+				p.add("trialCount", sessions[sessionIndex].trialCounts[j]);
+				params.append(p);
 			}
 		}
 		return params;

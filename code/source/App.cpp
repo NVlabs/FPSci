@@ -72,10 +72,9 @@ void App::onInit() {
 		logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n\tSelection Order = %s\n",
 			sess.id, sess.frameRate, sess.frameDelay, sess.selectionOrder);
 		// Now iterate through each run
-		for (int j = 0; j < sess.trialRuns.size(); j++) {
-			TrialRuns trialRuns = sess.trialRuns[j];
-			logPrintf("\t\tTrial Run Config: ID = %s, Training Count = %d, Real Count = %d\n",
-				trialRuns.id, trialRuns.trainingCount, trialRuns.realCount);
+		for (int j = 0; j < sess.trials.size(); j++) {
+			logPrintf("\t\tTrial Run Config: ID = %s, Count = %d\n",
+				sess.trials[j], sess.trialCounts[j]);
 		}
 	}
 
@@ -507,7 +506,6 @@ void App::userSaveButtonPress(void) {
 	Any a = Any(m_user);
 	a.save("userconfig.Any");
 }
-
 
 void App::setDisplayLatencyFrames(int f) {
 	m_displayLagFrames = f;

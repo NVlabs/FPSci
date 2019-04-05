@@ -8,7 +8,7 @@ void ReactionExperiment::initPsychHelper()
 {
 	// Add conditions, one per one intensity.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
-	Array<Param> params = m_config.getReactionExpConditions();
+	Array<Param> params = m_config.getReactionExpConditions(m_app->m_user.currentSession);
 	for (auto p : params) {
 		// Define properties of psychophysical methods
 		PsychophysicsDesignParameter psychParam;
