@@ -6,23 +6,16 @@
 
 void ReactionExperiment::initPsychHelper()
 {
-	// Define properties of psychophysical methods
-	PsychophysicsDesignParameter psychParam;
-	psychParam.mMeasuringMethod = PsychophysicsMethod::MethodOfConstantStimuli;
-	psychParam.mIsDefault = false;
-	psychParam.mStimLevels.push_back(m_config.val["taskDuration"]); // Shorter task is more difficult. However, we are currently doing unlimited time.
-	psychParam.mMaxTrialCounts.push_back((int)m_config.val["trialCount"]);
-
 	// Add conditions, one per one intensity.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
-	for (auto i : m_config.val_vec["intensities"])
-	{
-		// insert all the values potentially useful for analysis.
-		Param p;
-		p.add("intensity", i);
-		p.add("targetFrameRate", m_config.val["targetFrameRate"]);
-		p.add("targetFrameLag", m_config.val["targetFrameLag"]);
-		// soon we need to add frame delay as well.
+	Array<Param> params = m_config.getReactionExpConditions();
+	for (auto p : params) {
+		// Define properties of psychophysical methods
+		PsychophysicsDesignParameter psychParam;
+		psychParam.mMeasuringMethod = PsychophysicsMethod::MethodOfConstantStimuli;
+		psychParam.mIsDefault = false;
+		psychParam.mStimLevels.push_back(m_config.taskDuration);		// Shorter task is more difficult. However, we are currently doing unlimited time.
+		psychParam.mMaxTrialCounts.push_back(p.val["trialCount"]);		
 		m_psych.addCondition(p, psychParam);
 	}
 
@@ -36,15 +29,16 @@ void ReactionExperiment::onInit() {
 	m_feedbackMessage = "Reaction speed test. Click on green!";
 
 	// default values
+	m_config = m_app->m_experimentConfig;
 	// TODO: This should all move into configuration file.
-	m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameRate);
+	/*m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameRate);
 	m_config.add("targetFrameLag", (float)m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameDelay);
 	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
 	m_config.add("meanWaitDuration", m_app->m_experimentConfig.readyDuration);
 	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);
 	m_config.add("minimumForeperiod", m_app->m_experimentConfig.reactions[0].minimumForeperiod);
 	m_config.add("trialCount", 20);
-	m_config.add("intensities", (std::vector<float>)*m_app->m_experimentConfig.reactions[0].intensities.getCArray());
+	m_config.add("intensities", (std::vector<float>)*m_app->m_experimentConfig.reactions[0].intensities.getCArray());*/
 
 	// initialize PsychHelper based on the configuration.
 	initPsychHelper();
@@ -117,8 +111,8 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 	else if (currentState == PresentationState::ready)
 	{
 		// start task if waited longer than minimum foreperiod AND the probabilistic condition is met (Nickerson & Burhnham 1969, Response times with nonaging foreperiods).
-		float taskStartChancePerFrame = (1.0f / m_config.val["meanWaitDuration"]) * (float)framePeriod;
-		if ((stateElapsedTime > m_config.val["minimumForeperiod"]) && (G3D::Random::common().uniform() < taskStartChancePerFrame))
+		float taskStartChancePerFrame = (1.0f / m_config.readyDuration) * (float)framePeriod;
+		if ((stateElapsedTime > m_psych.getParam().val["minimumForeperiod"]) && (G3D::Random::common().uniform() < taskStartChancePerFrame))
 		{
 			newState = PresentationState::task;
 		}
@@ -142,7 +136,7 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 	}
 	else if (currentState == PresentationState::feedback)
 	{
-		if (stateElapsedTime > m_config.val["feedbackDuration"])
+		if (stateElapsedTime > m_config.feedbackDuration)
 		{
 			m_reacted = false;
 			if (m_psych.isComplete()) {

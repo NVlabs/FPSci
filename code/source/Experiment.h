@@ -29,6 +29,7 @@
 
 #include <G3D/G3D.h>
 #include "SingleThresholdMeasurement.h"
+#include "ExperimentConfig.h"
 #include <ctime>
 
 class App;
@@ -101,7 +102,7 @@ protected:
 	double m_taskStartTime;
 	double m_taskEndTime;
 	int m_response;
-	Param m_config; // All parameters common in the experiment.
+	//Param m_config; // All parameters common in the experiment.
 
 	String m_feedbackMessage;
 	Stopwatch stopwatch;
@@ -111,6 +112,7 @@ protected:
 public:
 
 	PsychHelper m_psych;
+	ExperimentConfig m_config;
 
 	//Experiment() : ReferenceCountedObject() {
 	//}

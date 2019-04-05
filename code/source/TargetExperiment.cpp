@@ -7,30 +7,17 @@
 
 void TargetExperiment::initPsychHelper()
 {
-	// Define properties of psychophysical methods
-	PsychophysicsDesignParameter psychParam;
-	psychParam.mMeasuringMethod = PsychophysicsMethod::MethodOfConstantStimuli;
-	psychParam.mIsDefault = false;
-	psychParam.mStimLevels.push_back(m_config.val["taskDuration"]); // Shorter task is more difficult. However, we are currently doing unlimited time.
-	psychParam.mMaxTrialCounts.push_back((int)m_config.val["trialCount"]);
-
 	// Add conditions, one per one initial displacement value.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
-	for (int i = 0; i < m_config.val_vec["minSpeeds"].size(); ++i)
-	{
-		// insert all the values potentially useful for analysis.
-		Param p;
-		p.add("minEccH", m_config.val["minEccH"]);
-		p.add("minEccV", m_config.val["minEccV"]);
-		p.add("maxEccH", m_config.val["maxEccH"]);
-		p.add("maxEccV", m_config.val["maxEccV"]);
-		p.add("targetFrameRate", m_config.val["targetFrameRate"]);
-		p.add("targetFrameLag", m_config.val["targetFrameLag"]);
-		p.add("visualSize", m_config.val["visualSize"]);
-		p.add("motionChangePeriod", m_config.val_vec["motionChangePeriods"][i]);
-		p.add("minSpeed", m_config.val_vec["minSpeeds"][i]);
-		p.add("maxSpeed", m_config.val_vec["maxSpeeds"][i]);
-		// soon we need to add frame delay as well.
+	// Iterate over the sessions here and add a config for each
+	Array<Param> params = m_config.getTargetExpConditions();
+	for (auto p : params) {
+		// Define properties of psychophysical methods
+		PsychophysicsDesignParameter psychParam;
+		psychParam.mMeasuringMethod = PsychophysicsMethod::MethodOfConstantStimuli;
+		psychParam.mIsDefault = false;
+		psychParam.mStimLevels.push_back(m_config.taskDuration);		// Shorter task is more difficult. However, we are currently doing unlimited time.
+		psychParam.mMaxTrialCounts.push_back(p.val["trialCount"]);		// Get the trial count from the parameters
 		m_psych.addCondition(p, psychParam);
 	}
 
@@ -46,26 +33,8 @@ void TargetExperiment::onInit() {
 	m_app->m_presentationState = PresentationState::initial;
 	m_feedbackMessage = "Aim at the target and shoot!";
 
-	// default values
-	// TODO: This should all move into configuration file.
-	m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameRate);
-	m_config.add("targetFrameLag", (float)m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameDelay);
-	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
-	m_config.add("readyDuration", m_app->m_experimentConfig.readyDuration);
-	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);
-	m_config.add("maxClick", m_app->m_experimentConfig.maxClicks);
-	m_config.add("trialCount", 200.f);
-	// TODO: This is a hack, fix it to determine correct size based on max/min
-	m_config.add("visualSize", m_app->m_experimentConfig.targets[0].visualSize[0]);
-	m_config.add("minEccH", m_app->m_experimentConfig.targets[0].eccH[0]);
-	m_config.add("maxEccH", m_app->m_experimentConfig.targets[0].eccH[1]);
-	m_config.add("minEccV", m_app->m_experimentConfig.targets[0].eccV[0]);
-	m_config.add("maxEccV", m_app->m_experimentConfig.targets[0].eccV[1]);
-	// The following three parameters must have the same number (N) of elements.
-	// They are to be joined by their indices to define N task conditions.
-	m_config.add("motionChangePeriods", std::vector<float>{100000.0, 100000.0, 0.5});
-	m_config.add("minSpeeds", std::vector<float>{0.0, 8.f, 8.f});
-	m_config.add("maxSpeeds", std::vector<float>{0.0, 15.f, 15.f});
+	// Setup config from app
+	m_config = m_app->m_experimentConfig;
 
 	// initialize PsychHelper based on the configuration.
 	initPsychHelper();
@@ -151,7 +120,7 @@ void TargetExperiment::updatePresentationState()
 	}
 	else if (currentState == PresentationState::ready)
 	{
-		if (stateElapsedTime > m_config.val["readyDuration"])
+		if (stateElapsedTime > m_config.readyDuration)
 		{
 			m_lastMotionChangeAt = 0;
 			m_app->m_targetColor = Color3::green().pow(2.0f);
@@ -160,7 +129,7 @@ void TargetExperiment::updatePresentationState()
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_config.val["taskDuration"]) || (m_app->m_targetHealth <= 0) || (m_clickCount == m_config.val["maxClick"]))
+		if ((stateElapsedTime > m_config.taskDuration) || (m_app->m_targetHealth <= 0) || (m_clickCount == m_config.maxClicks))
 		{
 			m_taskEndTime = System::time();
 			processResponse();
@@ -171,7 +140,7 @@ void TargetExperiment::updatePresentationState()
 	}
 	else if (currentState == PresentationState::feedback)
 	{
-		if ((stateElapsedTime > m_config.val["feedbackDuration"]) && (m_app->m_targetHealth <= 0))
+		if ((stateElapsedTime > m_config.feedbackDuration) && (m_app->m_targetHealth <= 0))
 		{
 			if (m_psych.isComplete()) {
 				m_feedbackMessage = "Experiment complete. Thanks!";

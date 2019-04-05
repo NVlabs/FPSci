@@ -487,12 +487,6 @@ void App::makeGUI() {
 	} debugPane->endRow();
 
 
-	// Create list of session names
-	Array<String> sessionList = Array<String>();
-	for (int i = 0; i < m_experimentConfig.sessions.size(); i++) {
-		sessionList.append(m_experimentConfig.sessions[i].id);
-	}
-
     // set up user settings window
     m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, 
         Rect2D::xywh((float)window()->width() * 0.5f - 150.0f, (float)window()->height() * 0.5f - 50.0f, 300.0f, 100.0f));
@@ -502,7 +496,7 @@ void App::makeGUI() {
     p->addLabel(format("Mouse DPI: %f", m_user.mouseDPI));
     p->addNumberBox("Mouse 360", &m_user.cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
 	p->addButton("Save User Config", this, &App::userSaveButtonPress);
-	p->addDropDownList("Session", sessionList, &m_user.currentSession);
+	p->addDropDownList("Session", m_experimentConfig.getSessionIdArray(), &m_user.currentSession);
     m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
 
 	debugWindow->pack();
