@@ -1,7 +1,8 @@
 // copy this file to userconfig.Any before first run
-{
-    "settingsVersion" : 1,
-    "subjectID" : "enter ID",
+{ 
+    "settingsVersion" : 1, 
+	"subjectID" : "enter ID", 
     "mouseDPI" : 800,
-    "cmp360" : 30
-}
+	"cmp360" : 30,
+	"completedSessions": []
+} 

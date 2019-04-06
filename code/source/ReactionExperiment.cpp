@@ -8,7 +8,7 @@ void ReactionExperiment::initPsychHelper()
 {
 	// Add conditions, one per one intensity.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
-	Array<Param> params = m_config.getReactionExpConditions(m_app->m_user.currentSession);
+	Array<Param> params = m_config.getReactionExpConditions(m_app->getCurrentSessionId());
 	for (auto p : params) {
 		// Define properties of psychophysical methods
 		PsychophysicsDesignParameter psychParam;
@@ -16,6 +16,7 @@ void ReactionExperiment::initPsychHelper()
 		psychParam.mIsDefault = false;
 		psychParam.mStimLevels.push_back(m_config.taskDuration);		// Shorter task is more difficult. However, we are currently doing unlimited time.
 		psychParam.mMaxTrialCounts.push_back(p.val["trialCount"]);		
+		p.add("session", m_app->getCurrentSessionId().c_str());
 		m_psych.addCondition(p, psychParam);
 	}
 
@@ -30,15 +31,6 @@ void ReactionExperiment::onInit() {
 
 	// default values
 	m_config = m_app->m_experimentConfig;
-	// TODO: This should all move into configuration file.
-	/*m_config.add("targetFrameRate", m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameRate);
-	m_config.add("targetFrameLag", (float)m_app->m_experimentConfig.sessions[m_app->m_user.currentSession].frameDelay);
-	m_config.add("feedbackDuration", m_app->m_experimentConfig.feedbackDuration);
-	m_config.add("meanWaitDuration", m_app->m_experimentConfig.readyDuration);
-	m_config.add("taskDuration", m_app->m_experimentConfig.taskDuration);
-	m_config.add("minimumForeperiod", m_app->m_experimentConfig.reactions[0].minimumForeperiod);
-	m_config.add("trialCount", 20);
-	m_config.add("intensities", (std::vector<float>)*m_app->m_experimentConfig.reactions[0].intensities.getCArray());*/
 
 	// initialize PsychHelper based on the configuration.
 	initPsychHelper();
@@ -140,8 +132,15 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 		{
 			m_reacted = false;
 			if (m_psych.isComplete()) {
-				m_feedbackMessage = "Experiment complete. Thanks!";
+				m_feedbackMessage = "Session complete. Thanks!";
 				newState = PresentationState::complete;
+				m_app->m_user.completedSessions.append(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
+				m_app->userSaveButtonPress();
+				Array<String> remaining = m_app->updateSessionDropDown();
+				if (remaining.size() > 0) {
+					//String nextSess = remaining.randomElement();				// Choose a random next session
+					//m_app->updateSession(nextSess);								// Update the session
+				}
 			}
 			else {
 				m_feedbackMessage = "";
@@ -272,6 +271,8 @@ void ReactionExperiment::createResultFile()
 	// 3. Trials, only need to create the table.
 	std::vector<std::vector<std::string>> trialColumns = {
 			{ "condition_ID", "integer" },
+			{ "session_ID", "text"},
+			{ "session_mode", "text"},
 			{ "start_time", "real" },
 			{ "end_time", "real" },
 			{ "task_execution_time", "real" },
@@ -281,8 +282,12 @@ void ReactionExperiment::createResultFile()
 
 void ReactionExperiment::recordTrialResponse()
 {
+	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
+
 	std::vector<std::string> trialValues = {
 		std::to_string(m_psych.mCurrentConditionIndex),
+		addQuotes(sess.c_str()),
+		addQuotes(m_config.getSessionConfigById(sess)->expMode.c_str()),
 		std::to_string(m_taskStartTime),
 		std::to_string(m_taskEndTime),
 		std::to_string(m_taskExecutionTime),

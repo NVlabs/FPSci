@@ -69,6 +69,8 @@ protected:
 	shared_ptr<VisibleEntity>		m_lastDecal;
 	shared_ptr<VisibleEntity>		m_firstDecal;
 
+	GuiDropDownList*				m_sessDropDown;
+
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
 
@@ -165,6 +167,14 @@ public:
 	void setSceneBrightness(float b);
 
 	void userSaveButtonPress(void);
+
+	Array<String> updateSessionDropDown(void);
+
+	String getCurrentSessionId(void);
+
+	void updateSessionPress(void);
+
+	void updateSession(String id);
 
 	void setDisplayLatencyFrames(int f);
     

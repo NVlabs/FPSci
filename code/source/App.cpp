@@ -46,26 +46,15 @@ void App::onInit() {
 	scene()->registerEntitySubclass("TargetEntity", &TargetEntity::create);
 
 	// load user setting from file
-	if (!FileSystem::exists("userconfig.Any")) { // if file not found, copy from the sample config file.
-		FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
-	}
-	m_user = Any::fromFile(System::findDataFile("userconfig.Any"));
+	m_user = UserConfig::getUserConfig();
 	// debug print
 	logPrintf("User: %s, DPI: %f, cmp360 %f\n", m_user.subjectID, m_user.mouseDPI, m_user.cmp360);
 
 	// load experiment setting from file
-	if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
-		FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
-	}
-
-	m_experimentConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
-	// debug print
-	//logPrintf("Target Framerate %f, expMode: %s, taskType: %s, appendingDescription: %s\n",
-	//	m_experimentConfig.sessions["s1"].frameRate, m_experimentConfig.expMode, m_experimentConfig.taskType, m_experimentConfig.appendingDescription);
-
+	m_experimentConfig = ExperimentConfig::getExperimentConfig();
+	// debug print	
 	logPrintf("-------------------\nExperiment Config\n-------------------\nPlay Mode = %s\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
 		(m_experimentConfig.playMode ? "true" : "false") , m_experimentConfig.taskType, m_experimentConfig.appendingDescription, m_experimentConfig.sceneName, m_experimentConfig.feedbackDuration, m_experimentConfig.readyDuration, m_experimentConfig.taskDuration, m_experimentConfig.maxClicks);
-
 	// Iterate through sessions and print them
 	for (int i = 0; i < m_experimentConfig.sessions.size(); i++) {
 		SessionConfig sess = m_experimentConfig.sessions[i];
@@ -77,7 +66,6 @@ void App::onInit() {
 				sess.trials[j], sess.trialCounts[j]);
 		}
 	}
-
 	// Iterate through trials and print them
 	for (int i = 0; i < m_experimentConfig.targets.size(); i++) {
 		TargetConfig target = m_experimentConfig.targets[i];
@@ -89,7 +77,6 @@ void App::onInit() {
 	SystemConfig sysConfig = getSystemInfo();
 	Any a = sysConfig.toAny();
 	a.save("systemconfig.Any");
-
 	// Print system info to log
 	logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)", 
 		sysConfig.cpuName, sysConfig.coreCount, sysConfig.memCapacityMB, sysConfig.gpuName, sysConfig.displayName, sysConfig.displayXRes, sysConfig.displayYRes, sysConfig.displayXSize, sysConfig.displayYSize);
@@ -132,7 +119,9 @@ void App::onInit() {
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
 	updateMouseSensitivity();
-  
+	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
+
+
 	// Initialize the experiment.
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
@@ -495,7 +484,8 @@ void App::makeGUI() {
     p->addLabel(format("Mouse DPI: %f", m_user.mouseDPI));
     p->addNumberBox("Mouse 360", &m_user.cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
 	p->addButton("Save User Config", this, &App::userSaveButtonPress);
-	p->addDropDownList("Session", m_experimentConfig.getSessionIdArray(), &m_user.currentSession);
+	m_sessDropDown = p->addDropDownList("Session", m_experimentConfig.getSessionIdArray(), &m_user.currentSession);
+	p->addButton("Update Session", this, &App::updateSessionPress);
     m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
 
 	debugWindow->pack();
@@ -503,14 +493,78 @@ void App::makeGUI() {
 }
 
 void App::userSaveButtonPress(void) {
+	// Save the any file
 	Any a = Any(m_user);
 	a.save("userconfig.Any");
+	// Print message to log
+	logPrintf("User file saved.");
+}
+
+Array<String> App::updateSessionDropDown(void) {
+	// Create updated session list
+	Array<String> sessList;
+	for (String sess : m_experimentConfig.getSessionIdArray()) {
+		if (!m_user.completedSessions.contains(sess)) {
+			sessList.append(sess);
+		}
+	}
+	if (sessList.size() == 0) sessList = m_experimentConfig.getSessionIdArray();		// Temporary, if all sessions are done repeat them
+	m_sessDropDown->setList(sessList);
+
+	// Print message to log
+	logPrintf("Updated session drop down to:\n");
+	for (String id : sessList) {
+		logPrintf("\t%s\n", id);
+	}
+
+	return sessList;
+}
+
+String App::getCurrentSessionId(void) {
+	return m_sessDropDown->get(m_user.currentSession);
+}
+
+void App::updateSessionPress(void) 
+{
+	updateSession(getCurrentSessionId());
+}
+
+void App::updateSession(String id) {
+	SessionConfig* sessConfig = m_experimentConfig.getSessionConfigById(id);
+
+	// Print message to log
+	logPrintf("User selected session: %s. Updating now...\n", id);
+
+	// apply frame lag
+	setDisplayLatencyFrames(sessConfig->frameDelay);
+
+	float dt = 0;
+	if (unlockFramerate) {
+		// Set a maximum *finite* frame rate
+		dt = 1.0f / 8192.0f;
+	}
+	else if (variableRefreshRate) {
+		dt = 1.0f / sessConfig->frameRate;
+	}
+	else {
+		dt = 1.0f / float(window()->settings().refreshRate);
+	}
+
+	// Initialize the experiment.
+	if (m_experimentConfig.taskType == "reaction") {
+		m_ex = ReactionExperiment::create(this);
+	}
+	else if (m_experimentConfig.taskType == "target") {
+		m_ex = TargetExperiment::create(this);
+	}
+
+	// TODO: Remove the following by invoking a call back.
+	m_ex->onInit();
 }
 
 void App::setDisplayLatencyFrames(int f) {
 	m_displayLagFrames = f;
 }
-
 
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	m_debugCamera->setFieldOfView(horizontalFieldOfViewDegrees * units::degrees(), FOVDirection::HORIZONTAL);

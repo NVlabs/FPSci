@@ -10,7 +10,7 @@ void TargetExperiment::initPsychHelper()
 	// Add conditions, one per one initial displacement value.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
 	// Iterate over the sessions here and add a config for each
-	Array<Param> params = m_config.getTargetExpConditions(m_app->m_user.currentSession);
+	Array<Param> params = m_config.getTargetExpConditions(m_app->getCurrentSessionId());
 	for (auto p : params) {
 		// Define properties of psychophysical methods
 		PsychophysicsDesignParameter psychParam;
@@ -20,6 +20,7 @@ void TargetExperiment::initPsychHelper()
 		// We need something in mStimLevels to run psychphysics...
 		psychParam.mStimLevels.push_back(m_config.taskDuration);		// Shorter task is more difficult. However, we are currently doing unlimited time.
 		psychParam.mMaxTrialCounts.push_back(p.val["trialCount"]);		// Get the trial count from the parameters
+		p.add("session", m_app->getCurrentSessionId().c_str());
 		m_psych.addCondition(p, psychParam);
 	}
 
@@ -145,8 +146,15 @@ void TargetExperiment::updatePresentationState()
 		if ((stateElapsedTime > m_config.feedbackDuration) && (m_app->m_targetHealth <= 0))
 		{
 			if (m_psych.isComplete()) {
-				m_feedbackMessage = "Experiment complete. Thanks!";
+				m_feedbackMessage = "Session complete. Thanks!";
 				newState = PresentationState::complete;
+				m_app->m_user.completedSessions.append(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
+				m_app->userSaveButtonPress();	// Press the save button for the user...
+				Array<String> remaining = m_app->updateSessionDropDown();
+				if (remaining.size() > 0) {
+					//String nextSess = remaining.randomElement();				// Choose a random next session
+					//m_app->updateSession(nextSess);								// Update the session
+				}
 			}
 			else {
 				m_feedbackMessage = "";
@@ -291,12 +299,6 @@ void TargetExperiment::createResultFile()
 
 	// create a unique file name
 	String timeStr(genUniqueTimestamp());
-	/*if (m_app->m_expConfig.expMode == "training") {
-		mResultFileName = ("result_data/" + m_app->m_expConfig.expMode + "_" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
-	}
-	else {
-		mResultFileName = ("result_data/" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
-	}*/
 	mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
 
 	// create the file
@@ -358,6 +360,8 @@ void TargetExperiment::createResultFile()
 	// 3. Trials, only need to create the table.
 	std::vector<std::vector<std::string>> trialColumns = {
 			{ "condition_ID", "integer" },
+			{ "session_ID", "text" },
+			{ "session_mode", "text" },
 			{ "start_time", "real" },
 			{ "end_time", "real" },
 			{ "task_execution_time", "real" },
@@ -385,12 +389,16 @@ void TargetExperiment::createResultFile()
 
 void TargetExperiment::recordTrialResponse()
 {
+	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
+
 	// Trials table. Record trial start time, end time, and task completion time.
 	std::vector<std::string> trialValues = {
 		std::to_string(m_psych.mCurrentConditionIndex),
+		addQuotes(sess.c_str()),
+		addQuotes(m_config.getSessionConfigById(sess)->expMode.c_str()),
 		std::to_string(m_taskStartTime),
 		std::to_string(m_taskEndTime),
-		std::to_string(m_taskExecutionTime),
+		std::to_string(m_taskExecutionTime)
 	};
 	insertRowIntoDB(m_db, "Trials", trialValues);
 

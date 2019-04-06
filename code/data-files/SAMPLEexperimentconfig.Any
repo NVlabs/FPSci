@@ -20,19 +20,37 @@
   "sessions": [
     {
       "id": "s1", // Session ID
-      "FrameDelay": 3, // Session frame delay (in frames)
-      "FrameRate": 240, // Session frame rate (in frames per second)
-      "SelectionOrder": "random", // Selection order for trials within this session
+      "frameDelay": 1, // Session frame delay (in frames)
+      "frameRate": 240, // Session frame rate (in frames per second)
+      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [ "c1", "c2", "c3" ],
-      "trialCounts": [ 10, 10, 5 ]
+      "trialCounts": [ 1, 1, 1 ]
     },
     {
-      "id": "s2", // Session ID
-      "FrameDelay": 3, // Session frame delay (in frames)
-      "FrameRate": 240, // Session frame rate (in frames per second)
-      "SelectionOrder": "random", // Selection order for trials within this session
-      "expMode": "real", // Experiment mode ("real" or "training")
+      "id": "s2", 
+      "frameDelay": 2,
+      "frameRate": 240, 
+      "selectionOrder": "random",
+      "expMode": "training",
+      "trials": [ "c1", "c2", "c3" ],
+      "trialCounts": [ 1, 1, 1 ]
+    },
+    {
+      "id": "s3", 
+      "frameDelay": 3,
+      "frameRate": 240, 
+      "selectionOrder": "random",
+      "expMode": "training", 
+      "trials": [ "c1", "c2", "c3" ],
+      "trialCounts": [ 1, 1, 1 ]
+    },
+    {
+      "id": "s4",
+      "frameDelay": 4, 
+      "frameRate": 120, 
+      "selectionOrder": "random", 
+      "expMode": "real",
       "trials": [ "c1", "c2", "c3" ],
       "trialCounts": [ 10, 10, 5 ]
     }

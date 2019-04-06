@@ -50,7 +50,7 @@ public:
             reader.getIfPresent("subjectID", subjectID);
             reader.getIfPresent("mouseDPI", mouseDPI);
             reader.getIfPresent("cmp360", cmp360);
-			reader.getIfPresent("completedSesssions", completedSessions);
+			reader.getIfPresent("completedSessions", completedSessions);
 			break;
         default:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
@@ -69,6 +69,15 @@ public:
 		a["cmp360"] = cmp360;								// Include cm/360
 		a["completedSessions"] = completedSessions;			// Include completed sessions list
 		return a;
+	}
+
+	// Simple rotine to get the user configuration from file
+	static Any getUserConfig(void) {
+		// load user setting from file
+		if (!FileSystem::exists("userconfig.Any")) { // if file not found, copy from the sample config file.
+			FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
+		}
+		return Any::fromFile(System::findDataFile("userconfig.Any"));
 	}
 };
 
@@ -103,7 +112,7 @@ public:
 class TargetConfig {
 public:
 	String id;												// Trial ID to indentify affiliated trial runs
-	bool elevLocked;										// Elevation locking
+	bool elevLocked = false;								// Elevation locking
 	float distance = 30.0f;									// Distance to the target
 	Array<float> motionChangePeriod = { 1.0f, 1.0f };		// Range of motion change period in seconds
 	Array<float> speed = { 0.0f, 5.5f };					// Range of angular velocities for target
@@ -165,9 +174,9 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("id", id);
-			reader.getIfPresent("FrameRate", frameRate);
-			reader.getIfPresent("FrameDelay", frameDelay);
-			reader.getIfPresent("SelectionOrder", selectionOrder);
+			reader.getIfPresent("frameRate", frameRate);
+			reader.getIfPresent("frameDelay", frameDelay);
+			reader.getIfPresent("selectionOrder", selectionOrder);
 			reader.getIfPresent("expMode", expMode);
 			reader.get("trials", trials);
 			reader.get("trialCounts", trialCounts);
@@ -244,6 +253,19 @@ public:
 		}
 		return ids;
 	}
+
+	SessionConfig* getSessionConfigById(String id) {
+		for (int i = 0; i < sessions.size(); i++) {
+			if (!sessions[i].id.compare(id)) return &sessions[i];
+		}
+		return NULL;
+	}
+
+	int getSessionIndex(String id) {
+		for (int i = 0; i < targets.size(); i++) {
+			if (!sessions[i].id.compare(id)) return i;
+		}
+	}
 	
 	// Get a pointer to a target config by ID
 	TargetConfig* getTargetConfigById(String id) {
@@ -259,6 +281,11 @@ public:
 			if (!reactions[i].id.compare(id)) return &reactions[i];
 		}
 		return NULL;
+	}
+
+	Array<Param> getTargetExpConditions(String id) {
+		int idx = getSessionIndex(id);
+		return getTargetExpConditions(idx);
 	}
 
 	// This is a kludge to quickly create experiment conditions w/ appropriate parameters
@@ -285,6 +312,11 @@ public:
 		return params;
 	}
 
+	Array<Param> getReactionExpConditions(String id) {
+		int idx = getSessionIndex(id);
+		return getReactionExpConditions(idx);
+	}
+
 	Array<Param> getReactionExpConditions(int sessionIndex) {
 		Array<Param> params;
 		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
@@ -298,5 +330,13 @@ public:
 			}
 		}
 		return params;
+	}
+
+	// Get the experiment config from file
+	static ExperimentConfig getExperimentConfig(void) {
+		if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
+			FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
+		}
+		return Any::fromFile(System::findDataFile("experimentconfig.Any"));
 	}
 };
