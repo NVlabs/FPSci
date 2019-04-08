@@ -186,13 +186,13 @@ SystemConfig App::getSystemInfo(void) {
 	system.gpuName = gpuVendor.append(gpuRenderer);
 
 	// Get display information (monitor name)
-	DISPLAY_DEVICE dd;
-	int deviceIndex = 0;
-	int monitorIndex = 0;
-	EnumDisplayDevices(0, deviceIndex, &dd, 0);
-	std::string deviceName = dd.DeviceName;
-	EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
-	system.displayName = String(dd.DeviceString);
+	//DISPLAY_DEVICE dd;
+	//int deviceIndex = 0;
+	//int monitorIndex = 0;
+	//EnumDisplayDevices(0, deviceIndex, &dd, 0);
+	//std::string deviceName = dd.DeviceName;
+	//EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
+	//system.displayName = String(dd.DeviceString);
 	
 	// Get screen resolution
 	system.displayXRes = GetSystemMetrics(SM_CXSCREEN);
@@ -609,33 +609,6 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
 	GApp::onGraphics3D(rd, surface);
 
-	rd->push2D(); {
-		// TODO: Is this the right place to call it?
-		m_ex->onGraphics2D(rd);
-
-		const float scale = rd->viewport().width() / 1920.0f;
-
-		// Click to photon latency measuring corner box
-		if (measureClickPhotonLatency) {
-			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
-			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
-			//Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.925f, (float)window()->height() * 0.0f, (float)window()->width() * 0.075f, (float)window()->height() * 0.15f), rd, cornerColor);
-			Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.0f, (float)window()->height() * 0.0f, (float)window()->width() * 0.15f, (float)window()->height() * 0.15f), rd, cornerColor);
-			if (useSerialPort) {
-				if (m_buttonUp) {
-					m_com.SetRts();
-					int aa = 1;
-					//m_com.SetDtr();
-				}
-				else {
-					m_com.ClearRts();
-					int aa = 1;
-					//m_com.ClearDtr();
-				}
-			}
-		}
-	} rd->pop2D();
-
 	if (m_displayLagFrames > 0) {
 		// Display the delayed frame
 		rd->popState();
@@ -734,7 +707,59 @@ bool App::onEvent(const GEvent& event) {
 
 void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 	GApp::onPostProcessHDR3DEffects(rd);
-	
+
+	rd->push2D(); {
+		// TODO: Is this the right place to call it?
+		m_ex->onGraphics2D(rd);
+
+		// Paint both sides by the width of latency measuring box.
+		Color3 blackColor = Color3::black();
+		Point2 latencyRect = Point2(0.09f, 0.1f);
+		Draw::rect2D(
+			Rect2D::xywh(
+				(float)m_framebuffer->width() * 0.0f,
+				(float)m_framebuffer->height() * 0.0f,
+				(float)m_framebuffer->width() * latencyRect.x,
+				(float)m_framebuffer->height()
+			), rd, blackColor
+		);
+		Draw::rect2D(
+			Rect2D::xywh(
+				(float)m_framebuffer->width() * (1.0f - latencyRect.x),
+				(float)m_framebuffer->height() * 0.0f,
+				(float)m_framebuffer->width() * latencyRect.x,
+				(float)m_framebuffer->height()
+			), rd, blackColor
+		);
+
+		// Click to photon latency measuring corner box
+		if (measureClickPhotonLatency) {
+			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
+			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
+			//Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.925f, (float)window()->height() * 0.0f, (float)window()->width() * 0.075f, (float)window()->height() * 0.15f), rd, cornerColor);
+			Draw::rect2D(
+				Rect2D::xywh(
+					(float)m_framebuffer->width() * (1.0f - latencyRect.x),
+					(float)m_framebuffer->height() * (0.5f - latencyRect.y / 2),
+					(float)m_framebuffer->width() * latencyRect.x,
+					(float)m_framebuffer->height() * latencyRect.y
+				), rd, cornerColor
+			);
+			if (useSerialPort) {
+				if (m_buttonUp) {
+					m_com.SetRts();
+					int aa = 1;
+					//m_com.SetDtr();
+				}
+				else {
+					m_com.ClearRts();
+					int aa = 1;
+					//m_com.ClearDtr();
+				}
+			}
+		}
+	} rd->pop2D();
+
 	if (testCustomProjection) {
 		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
 		// latency queue copy
