@@ -186,14 +186,15 @@ SystemConfig App::getSystemInfo(void) {
 	system.gpuName = gpuVendor.append(gpuRenderer);
 
 	// Get display information (monitor name)
-	DISPLAY_DEVICE dd;
+	/*DISPLAY_DEVICE dd;
 	int deviceIndex = 0;
 	int monitorIndex = 0;
 	EnumDisplayDevices(0, deviceIndex, &dd, 0);
 	std::string deviceName = dd.DeviceName;
 	EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
-	system.displayName = String(dd.DeviceString);
-	
+	system.displayName = String(dd.DeviceString);*/
+	system.displayName = String("TODO");
+
 	// Get screen resolution
 	system.displayXRes = GetSystemMetrics(SM_CXSCREEN);
 	system.displayYRes = GetSystemMetrics(SM_CYSCREEN);
