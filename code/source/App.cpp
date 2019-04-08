@@ -993,12 +993,6 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			m_outputFont->draw2D(rd, msg, (Point2(30, 28) * scale).floor(), floor(20.0f * scale), Color3::yellow());
 		}
 
-		//// Click to photon latency measuring corner box
-		//if (measureClickPhotonLatency) {
-		//	Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
-		//	//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
-		//	Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.9f, (float)window()->height() * 0.0f, (float)window()->width() * 0.1f, (float)window()->height() * 0.2f), rd, cornerColor);
-		//}
 	} rd->pop2D();
 
 	//MIght not need this on the reaction trial
@@ -1008,7 +1002,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 void App::setReticle(int r) {
 	m_lastReticleLoaded = m_reticleIndex = clamp(0, r, numReticles - 1);
-	m_reticleTexture = Texture::fromFile(System::findDataFile(format("gui/reticle/reticle-%03d.png", m_reticleIndex)));
+	m_reticleTexture = Texture::fromFile(System::findDataFile("gui/reticle.png"));
 }
 
 void App::setSceneBrightness(float b) {

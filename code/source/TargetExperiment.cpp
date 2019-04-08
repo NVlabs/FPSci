@@ -272,7 +272,10 @@ void TargetExperiment::onGraphics2D(RenderDevice* rd)
 	rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 	// Reticle
-	Draw::rect2D((m_app->m_reticleTexture->rect2DBounds() * scale - m_app->m_reticleTexture->vector2Bounds() * scale / 2.0f) / 8.0f + rd->viewport().wh() / 2.0f, rd, Color3::green(), m_app->m_reticleTexture);
+	Draw::rect2D(
+		(m_app->m_reticleTexture->rect2DBounds() * scale - m_app->m_reticleTexture->vector2Bounds() * scale / 2.0f) / 2.0f + rd->viewport().wh() / 2.0f,
+		rd, Color3::green(), m_app->m_reticleTexture
+	);
 
 	// TODO: Feels like the following variables should be members of TargetExperiment:
 	// m_renderHud, m_hudTexture, m_reticleTexture, ...
