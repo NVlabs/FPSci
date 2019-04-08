@@ -19,7 +19,7 @@ void TargetExperiment::initPsychHelper()
 		psychParam.mIsDefault = false;
 		// We need something in mStimLevels to run psychphysics...
 		psychParam.mStimLevels.push_back(m_config.taskDuration);		// Shorter task is more difficult. However, we are currently doing unlimited time.
-		psychParam.mMaxTrialCounts.push_back(p.val["trialCount"]);		// Get the trial count from the parameters
+		psychParam.mMaxTrialCounts.push_back((int)p.val["trialCount"]);		// Get the trial count from the parameters
 		p.add("session", m_app->getCurrentSessionId().c_str());
 		m_psych.addCondition(p, psychParam);
 	}

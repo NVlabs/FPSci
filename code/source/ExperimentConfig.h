@@ -265,6 +265,8 @@ public:
 		for (int i = 0; i < targets.size(); i++) {
 			if (!sessions[i].id.compare(id)) return i;
 		}
+        // wasn't found, probably will segfault
+        return -1;
 	}
 	
 	// Get a pointer to a target config by ID
@@ -300,13 +302,13 @@ public:
 			p.add("maxEccH", getTargetConfigById(id)->eccH[1]);
 			p.add("maxEccV", getTargetConfigById(id)->eccV[1]);
 			p.add("targetFrameRate", sessions[sessionIndex].frameRate);
-			p.add("targetFrameLag", sessions[sessionIndex].frameDelay);
+			p.add("targetFrameLag", (float)sessions[sessionIndex].frameDelay);
 			// TODO: implement visual size min/max and motion change period
 			p.add("visualSize", getTargetConfigById(id)->visualSize[0]);
 			p.add("motionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
 			p.add("minSpeed", getTargetConfigById(id)->speed[0]);
 			p.add("maxSpeed", getTargetConfigById(id)->speed[1]);
-			p.add("trialCount", sessions[sessionIndex].trialCounts[j]);
+			p.add("trialCount", (float)sessions[sessionIndex].trialCounts[j]);
 			params.append(p);
 		}
 		return params;
@@ -324,8 +326,8 @@ public:
 				Param p;
 				p.add("intensity", intensity);
 				p.add("targetFrameRate", sessions[sessionIndex].frameRate);
-				p.add("targetFrameLag", sessions[sessionIndex].frameDelay);
-				p.add("trialCount", sessions[sessionIndex].trialCounts[j]);
+				p.add("targetFrameLag", (float)sessions[sessionIndex].frameDelay);
+				p.add("trialCount", (float)sessions[sessionIndex].trialCounts[j]);
 				params.append(p);
 			}
 		}

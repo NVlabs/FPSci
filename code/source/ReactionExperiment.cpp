@@ -15,7 +15,7 @@ void ReactionExperiment::initPsychHelper()
 		psychParam.mMeasuringMethod = PsychophysicsMethod::MethodOfConstantStimuli;
 		psychParam.mIsDefault = false;
 		psychParam.mStimLevels.push_back(m_config.taskDuration);		// Shorter task is more difficult. However, we are currently doing unlimited time.
-		psychParam.mMaxTrialCounts.push_back(p.val["trialCount"]);		
+		psychParam.mMaxTrialCounts.push_back((int)p.val["trialCount"]);		
 		p.add("session", m_app->getCurrentSessionId().c_str());
 		m_psych.addCondition(p, psychParam);
 	}
