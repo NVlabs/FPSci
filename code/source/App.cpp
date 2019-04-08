@@ -16,7 +16,7 @@ static const bool  useSerialPort = false;
 static const bool  variableRefreshRate = true;
 
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
-const float App::TARGET_MODEL_ARRAY_OFFSET = 30;
+const float App::TARGET_MODEL_ARRAY_OFFSET = 40;
 
 //static const float verticalFieldOfViewDegrees = 90; // deg
 static const float horizontalFieldOfViewDegrees = 103; // deg

@@ -8,10 +8,10 @@
   "appendingDescription": "default", // Description of this file
   "sceneName": "eSports Simple Hallway", // Maybe don’t need this? Or maybe this ends up belonging to individual trials
   "taskType": "target", // Task type, can be "target" or "reaction"
-  "feedbackDuration": 1.0, // Time allocated for providing user feedback
-  "readyDuration": 0.5, // Time allocated for preparing for trial
-  "taskDuration": 100000.0, // Maximum duration allowed for completion of the task
-  "maxClicks": 100,
+  "feedbackDuration": 0.5, // Time allocated for providing user feedback
+  "readyDuration": 0.0, // Time allocated for preparing for trial
+  "taskDuration": 6.0, // Maximum duration allowed for completion of the task
+  "maxClicks": 10,
   "sessionOrder": "random", // Session ordering, can be "Random", "Serial"
 
   // Create a sessions table containing information related to sessions
@@ -53,6 +53,15 @@
       "expMode": "real",
       "trials": [ "c1", "c2", "c3" ],
       "trialCounts": [ 10, 10, 5 ]
+    },
+    {
+      "id": "debugging", // Session ID
+      "frameDelay": 1, // Session frame delay (in frames)
+      "frameRate": 240, // Session frame rate (in frames per second)
+      "selectionOrder": "random", // Selection order for trials within this session
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "trials": [ "debugging" ],
+      "trialCounts": [ 100 ]
     }
   ],
 
@@ -67,7 +76,7 @@
       "distance": 30,
       "elevationLocked": false,
       "speed": [ 0, 0 ],
-      "visualSize": [ 0.02, 0.02 ],
+      "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
       "motionChangePeriod": [ 1000000, 1000000 ],
@@ -78,7 +87,7 @@
       "distance": 30,
       "elevationLocked": false,
       "speed": [ 8, 15 ],
-      "visualSize": [ 0.02, 0.02 ],
+      "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
       "motionChangePeriod": [ 1000000, 1000000 ],
@@ -89,7 +98,7 @@
       "distance": 30,
       "elevationLocked": false,
       "speed": [ 8, 15 ],
-      "visualSize": [ 0.02, 0.02 ],
+      "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
       "motionChangePeriod": [ 0.5, 0.5 ],
@@ -100,7 +109,20 @@
       "distance": 30,
       "elevationLocked": true,
       "speed": [ 8, 15 ],
-      "visualSize": [ 0.02, 0.02 ],
+      "visualSize": [ 0.01, 0.01 ],
+      "eccH": [ 5.0, 15.0 ],
+      "eccV": [ 0.0, 1.0 ],
+      "motionChangePeriod": [ 0.5, 0.5 ],
+      "jumpEnabled": true,
+      "jumpPeriod": [ 1.0, 1.0 ],
+      "accelGravity": [ 9.8, 9.8 ]
+    },
+    {
+      "id": "debugging",
+      "distance": 30,
+      "elevationLocked": true,
+      "speed": [ 8, 15 ],
+      "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
       "motionChangePeriod": [ 0.5, 0.5 ],
