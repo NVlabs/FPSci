@@ -226,7 +226,6 @@ public:
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("maxClicks", maxClicks);
-			reader.getIfPresent("sessionOrder", sessionOrder);
 			reader.getIfPresent("renderDecals", renderDecals);
 			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
 			break;
