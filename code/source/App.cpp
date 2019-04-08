@@ -1050,7 +1050,7 @@ int main(int argc, const char* argv[]) {
 		settings.window.width = 1920; settings.window.height = 1080;
 	}
 	else {
-		settings.window.width = 1920; setdetings.window.height = 980;
+		settings.window.width = 1920; settings.window.height = 980;
 	}
 	settings.window.fullScreen = m_expConfig.playMode;
 	settings.window.resizable = !settings.window.fullScreen;
