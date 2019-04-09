@@ -75,7 +75,8 @@ protected:
 
 	GuiDropDownList*				m_sessDropDown;
 	GuiLabel*						m_mouseDPILabel;
-	GuiNumberBox<double>*			m_cm360NumberBox;
+	GuiLabel*						m_cm360Label;
+	//GuiNumberBox<double>*			m_cm360NumberBox;
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
@@ -190,6 +191,8 @@ public:
 	Array<String> getSessListForUser();
 
 	String getCurrentSessionId(void);
+
+	void markSessionComplete(String id);
 
 	shared_ptr<UserConfig> getCurrentUser(void);
 

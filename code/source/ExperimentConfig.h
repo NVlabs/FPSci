@@ -33,11 +33,11 @@ public:
 
 class UserConfig {
 public:
-    String id = "anon";			// Subject ID (as recorded in output DB)
-    double mouseDPI = 800.0;			// Mouse DPI setting
-    double cmp360 = 12.75;				// Mouse sensitivity, reported as centimeters per 360�
-	int currentSession = 0;				// Currently selected session
-	Array<String> completedSessions;	// List of completed sessions for this user
+    String id = "anon";						// Subject ID (as recorded in output DB)
+    double mouseDPI = 800.0;				// Mouse DPI setting
+    double cmp360 = 12.75;					// Mouse sensitivity, reported as centimeters per 360�
+	int currentSession = 0;					// Currently selected session
+	Array<String> completedSessions = {};	// List of completed sessions for this user
     UserConfig() {}
 
     UserConfig(const Any& any) {
@@ -71,12 +71,16 @@ public:
 		return a;
 	}
 
+	void addCompletedSession(String id) {
+		completedSessions.append(id);
+	}
+
 };
 
 class UserTable {
 public:
 	String currentUser = "None";
-	Array<UserConfig> users;
+	Array<UserConfig> users = {};
 
 	UserTable() {};
 
@@ -99,7 +103,7 @@ public:
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
 		a["settingsVersion"] = 1;						// Create a version 1 file
-		a["currentUser"] = currentUser;				// Include current subject ID
+		a["currentUser"] = currentUser;					// Include current subject ID
 		a["users"] = users;								// Include updated subject table
 		return a;
 	}

@@ -514,8 +514,9 @@ void App::makeGUI() {
     addWidget(m_userSettingsWindow);
     GuiPane* p = m_userSettingsWindow->pane();
 	p->addDropDownList("User ID", m_userTable.getIds(), &m_ddCurrentUser);
-	m_mouseDPILabel =  p->addLabel(format("Mouse DPI: %f", m_userTable.users[m_ddCurrentUser].mouseDPI));
-	m_cm360NumberBox = p->addNumberBox("Mouse 360", &m_userTable.users[m_ddCurrentUser].cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
+	m_mouseDPILabel =  p->addLabel(format("Mouse DPI: %f", getCurrentUser()->mouseDPI));
+	m_cm360Label = p->addLabel(format("cm/360°: %f", getCurrentUser()->cmp360));
+	//m_cm360NumberBox = p->addNumberBox("Mouse 360", &m_userTable.users[m_ddCurrentUser].cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
 	p->addButton("Save User Config", this, &App::userSaveButtonPress);
 	//p->addButton("Update User", this, &App::updateUser);
 	m_sessDropDown = p->addDropDownList("Session", m_experimentConfig.getSessionIdArray(), &m_ddCurrentSession);
@@ -563,6 +564,10 @@ Array<String> App::updateSessionDropDown(void) {
 
 String App::getCurrentSessionId(void) {
 	return m_sessDropDown->get(m_ddCurrentSession);
+}
+
+void App::markSessionComplete(String id) {
+	m_userTable.users[m_ddCurrentUser].addCompletedSession(id);
 }
 
 shared_ptr<UserConfig> App::getCurrentUser(void) {
@@ -706,7 +711,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	if (m_lastSeenUser != m_ddCurrentUser) {
 		m_mouseDPILabel->setCaption(format("Mouse DPI: %f", m_userTable.users[m_ddCurrentUser].mouseDPI));
-		m_cm360NumberBox->setCaption(format("%f", getCurrentUser()->cmp360));
+		m_cm360Label->setCaption(format("cm/360°: %f", getCurrentUser()->cmp360));
 		updateSessionDropDown();
 		m_lastSeenUser = m_ddCurrentUser;
 	}
