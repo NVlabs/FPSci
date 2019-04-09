@@ -477,7 +477,7 @@ void App::makeGUI() {
 
 
     // set up user settings window
-    m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, 
+    m_userSettingsWindow = GuiWindow::create("User Settings - press TAB to close", nullptr, 
         Rect2D::xywh((float)window()->width() * 0.5f - 150.0f, (float)window()->height() * 0.5f - 50.0f, 300.0f, 100.0f));
     addWidget(m_userSettingsWindow);
     GuiPane* p = m_userSettingsWindow->pane();
