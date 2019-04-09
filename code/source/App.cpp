@@ -877,7 +877,7 @@ void App::fire() {
 		const Ray& ray = m_debugCamera->frame().lookRay();
 		Model::HitInfo info;
 		float closest = finf();
-		scene()->intersect(ray, closest, false, {}, info);
+		scene()->intersect(ray, closest, false, {m_explosion, m_lastDecal, m_firstDecal}, info);
 
 		// Find where to put the decal
 		CFrame decalFrame = m_debugCamera->frame();
