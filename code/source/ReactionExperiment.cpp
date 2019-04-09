@@ -20,6 +20,9 @@ void ReactionExperiment::initPsychHelper()
 		m_psych.addCondition(p, psychParam);
 	}
 
+	// Update the logger w/ these conditions (IS THIS THE RIGHT PLACE TO DO THIS???)
+	m_app->m_logger->addConditions(m_psych.mMeasurements);
+
 	// call it once all conditions are defined.
 	m_psych.chooseNextCondition();
 }
@@ -29,14 +32,8 @@ void ReactionExperiment::onInit() {
 	m_app->m_presentationState = PresentationState::initial;
 	m_feedbackMessage = "Reaction speed test. Click on green!";
 
-	// default values
-	m_config = m_app->m_experimentConfig;
-
-	// initialize PsychHelper based on the configuration.
-	initPsychHelper();
-
-	// create the result file based on experimental configuration.
-	createResultFile();
+	m_config = m_app->m_experimentConfig;				// Get configuration
+	initPsychHelper();									// Initialize PsychHelper based on the configuration.
 }
 
 void ReactionExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)
@@ -207,79 +204,6 @@ void ReactionExperiment::onGraphics2D(RenderDevice* rd)
 	}
 }
 
-void ReactionExperiment::createResultFile()
-{
-	// generate folder result_data if it does not exist.
-	if (!FileSystem::isDirectory(String("result_data"))) {
-		FileSystem::createDirectory(String("result_data"));
-	}
-
-	// create a unique file name
-	String timeStr(genUniqueTimestamp());
-	/*if (m_app->m_expConfig.expMode == "training") {
-		mResultFileName = ("result_data/" + m_app->m_expConfig.expMode + "_" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
-	}
-	else {
-		mResultFileName = ("result_data/" + m_app->m_expConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
-	}*/
-	mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
-
-	// create the file
-	if (sqlite3_open(mResultFileName.c_str(), &m_db)) {
-		// TODO: report error if failed.
-	}
-
-	// create tables inside the db file.
-	// 1. Experiment description (time and subject ID)
-	// create sqlite table
-	std::vector<std::vector<std::string>> expColumns = {
-		// format: column name, data type, sqlite modifier(s)
-			{ "time", "text", "NOT NULL" },
-			{ "subjectID", "text", "NOT NULL" },
-	};
-	createTableInDB(m_db, "Experiments", expColumns); // no need of Primary Key for this table.
-
-	// populate table
-	std::vector<std::string> expValues = {
-		addQuotes(timeStr.c_str()),
-		addQuotes(m_app->m_user.subjectID.c_str())
-	};
-	insertRowIntoDB(m_db, "Experiments", expValues);
-
-	// 2. Conditions
-	// create sqlite table
-	std::vector<std::vector<std::string>> conditionColumns = {
-			{ "id", "integer", "PRIMARY KEY"}, // this makes id a key value, requiring it to be unique for each row.
-			{ "refresh_rate", "real" },
-			{ "added_frame_lag", "real" },
-			{ "intensity", "real" },
-	};
-	createTableInDB(m_db, "Conditions", conditionColumns); // Primary Key needed for this table.
-
-	// populate table
-	for (int i = 0; i < m_psych.mMeasurements.size(); ++i)
-	{
-		std::vector<std::string> conditionValues = {
-			std::to_string(i), // this index is uniquely and statically assigned to each SingleThresholdMeasurement.
-			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameRate"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameLag"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["intensity"]),
-		};
-		insertRowIntoDB(m_db, "Conditions", conditionValues);
-	}
-
-	// 3. Trials, only need to create the table.
-	std::vector<std::vector<std::string>> trialColumns = {
-			{ "condition_ID", "integer" },
-			{ "session_ID", "text"},
-			{ "session_mode", "text"},
-			{ "start_time", "real" },
-			{ "end_time", "real" },
-			{ "task_execution_time", "real" },
-	};
-	createTableInDB(m_db, "Trials", trialColumns);
-}
-
 void ReactionExperiment::recordTrialResponse()
 {
 	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
@@ -292,11 +216,5 @@ void ReactionExperiment::recordTrialResponse()
 		std::to_string(m_taskEndTime),
 		std::to_string(m_taskExecutionTime),
 	};
-	insertRowIntoDB(m_db, "Trials", trialValues);
+	m_app->m_logger->recordTrialResponse(trialValues);
 }
-
-void ReactionExperiment::closeResultFile()
-{
-	sqlite3_close(m_db);
-}
-

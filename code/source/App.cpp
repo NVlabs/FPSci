@@ -34,11 +34,11 @@ static const bool testCustomProjection = false;
 //static const std::string appendingDescription = "ver1";
 //========================================================================
 
-App::App(const GApp::Settings& settings) : GApp(settings) {
+/*App::App(const GApp::Settings& settings) : GApp(settings) {
 	// TODO: make method that changes definition of ex, and have constructor call that
 	// method to set default experiment
 	// JBS: moved experiment definition to `onInit()`
-}
+}*/
 
 void App::onInit() {
 	GApp::onInit();
@@ -47,31 +47,11 @@ void App::onInit() {
 
 	// load user setting from file
 	m_user = UserConfig::getUserConfig();
-	// debug print
 	logPrintf("User: %s, DPI: %f, cmp360 %f\n", m_user.subjectID, m_user.mouseDPI, m_user.cmp360);
 
 	// load experiment setting from file
 	m_experimentConfig = ExperimentConfig::getExperimentConfig();
-	// debug print	
-	logPrintf("-------------------\nExperiment Config\n-------------------\nPlay Mode = %s\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-		(m_experimentConfig.playMode ? "true" : "false") , m_experimentConfig.taskType, m_experimentConfig.appendingDescription, m_experimentConfig.sceneName, m_experimentConfig.feedbackDuration, m_experimentConfig.readyDuration, m_experimentConfig.taskDuration, m_experimentConfig.maxClicks);
-	// Iterate through sessions and print them
-	for (int i = 0; i < m_experimentConfig.sessions.size(); i++) {
-		SessionConfig sess = m_experimentConfig.sessions[i];
-		logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n\tSelection Order = %s\n",
-			sess.id, sess.frameRate, sess.frameDelay, sess.selectionOrder);
-		// Now iterate through each run
-		for (int j = 0; j < sess.trials.size(); j++) {
-			logPrintf("\t\tTrial Run Config: ID = %s, Count = %d\n",
-				sess.trials[j], sess.trialCounts[j]);
-		}
-	}
-	// Iterate through trials and print them
-	for (int i = 0; i < m_experimentConfig.targets.size(); i++) {
-		TargetConfig target = m_experimentConfig.targets[i];
-		logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tElevation Locked = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n",
-			target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.elevLocked ? "True":"False", target.jumpEnabled ? "True":"False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1]);
-	}
+	printExpConfigToLog();
 
 	// Get and save system configuration
 	SystemConfig sysConfig = getSystemInfo();
@@ -123,11 +103,17 @@ void App::onInit() {
 
 
 	// Initialize the experiment.
+	String filename = "result_data/" + m_experimentConfig.taskType + "_" + m_user.subjectID + "_" + Logger::genUniqueTimestamp() + ".db";
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
+		m_logger = ReactionLogger::create();
+		m_logger->createResultsFile(filename, m_user.subjectID);
 	}
 	else if (m_experimentConfig.taskType == "target") {
 		m_ex = TargetExperiment::create(this);
+		m_logger = TargetLogger::create();
+		m_logger->createResultsFile(filename, m_user.subjectID);
+		loadScene(m_experimentConfig.sceneName);									// load the experiment background scene (should we do this regardless?)
 	}
 
 	// TODO: Remove the following by invoking a call back.
@@ -138,6 +124,28 @@ void App::onInit() {
 		DWORD errorMsg;
 		m_com.Open(2, errorMsg);
 		int aa = 1;
+	}
+}
+
+void App::printExpConfigToLog() {
+	logPrintf("-------------------\nExperiment Config\n-------------------\nPlay Mode = %s\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
+		(m_experimentConfig.playMode ? "true" : "false"), m_experimentConfig.taskType, m_experimentConfig.appendingDescription, m_experimentConfig.sceneName, m_experimentConfig.feedbackDuration, m_experimentConfig.readyDuration, m_experimentConfig.taskDuration, m_experimentConfig.maxClicks);
+	// Iterate through sessions and print them
+	for (int i = 0; i < m_experimentConfig.sessions.size(); i++) {
+		SessionConfig sess = m_experimentConfig.sessions[i];
+		logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n\tSelection Order = %s\n",
+			sess.id, sess.frameRate, sess.frameDelay, sess.selectionOrder);
+		// Now iterate through each run
+		for (int j = 0; j < sess.trials.size(); j++) {
+			logPrintf("\t\tTrial Run Config: ID = %s, Count = %d\n",
+				sess.trials[j], sess.trialCounts[j]);
+		}
+	}
+	// Iterate through trials and print them
+	for (int i = 0; i < m_experimentConfig.targets.size(); i++) {
+		TargetConfig target = m_experimentConfig.targets[i];
+		logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tElevation Locked = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n",
+			target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.elevLocked ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1]);
 	}
 }
 

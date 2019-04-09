@@ -34,10 +34,6 @@
 
 class App;
 
-// TODO: Replace with the G3D timestamp uses.
-// utility function for generating a unique timestamp.
-std::string genUniqueTimestamp();
-
 /** A class representing a psychophysical experiment
 */
 class PsychHelper
@@ -125,9 +121,7 @@ public:
 	virtual void onGraphics2D(RenderDevice * rd) = 0;
 
 	/** result recording */
-	virtual void createResultFile() = 0;
 	virtual void recordTrialResponse() = 0;
-	virtual void closeResultFile() = 0;
 
 	/** PsychHelper-related */
 	virtual void initPsychHelper() = 0;

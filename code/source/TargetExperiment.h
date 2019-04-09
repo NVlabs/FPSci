@@ -12,7 +12,7 @@ class TargetExperiment : public Experiment
 {
 protected:
 	double m_lastMotionChangeAt;
-	sqlite3* m_db = nullptr;
+	
 	std::vector<std::vector<std::string>> m_playerActions;
 	std::vector<std::vector<std::string>> m_targetTrajectory;
 	float m_speed = 0;
@@ -46,8 +46,6 @@ public:
 
 	void onGraphics2D(RenderDevice * rd);
 
-	void createResultFile();
-
 	void processResponse();
 
 	void recordTrialResponse();
@@ -55,8 +53,6 @@ public:
 	void accumulateTrajectories();
 
 	void accumulatePlayerAction(PlayerAction hm);
-
-	void closeResultFile();
 
 	void initPsychHelper();
 };

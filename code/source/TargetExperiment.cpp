@@ -24,26 +24,20 @@ void TargetExperiment::initPsychHelper()
 		m_psych.addCondition(p, psychParam);
 	}
 
+	// Update the logger w/ these conditions (IS THIS THE RIGHT PLACE TO DO THIS???)
+	m_app->m_logger->addConditions(m_psych.mMeasurements);
+
 	// call it once all conditions are defined.
 	m_psych.chooseNextCondition();
 }
 
 void TargetExperiment::onInit() {
-	// load the experiment background scene.
-	m_app->loadScene(m_app->m_experimentConfig.sceneName);
-
-	// initialize presentation states
+	// Initialize presentation states
 	m_app->m_presentationState = PresentationState::initial;
 	m_feedbackMessage = "Aim at the target and shoot!";
-
-	// Setup config from app
-	m_config = m_app->m_experimentConfig;
-
-	// initialize PsychHelper based on the configuration.
-	initPsychHelper();
-
-	// create the result file based on experimental configuration.
-	createResultFile();
+	
+	m_config = m_app->m_experimentConfig;								// Setup config from app
+	initPsychHelper();													// Initialize PsychHelper based on the configuration.
 }
 
 void TargetExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)
@@ -293,103 +287,6 @@ void TargetExperiment::onGraphics2D(RenderDevice* rd)
 	}
 }
 
-void TargetExperiment::createResultFile()
-{
-	// generate folder result_data if it does not exist.
-	if (!FileSystem::isDirectory(String("result_data"))) {
-		FileSystem::createDirectory(String("result_data"));
-	}
-
-	// create a unique file name
-	String timeStr(genUniqueTimestamp());
-	mResultFileName = ("result_data/" + m_app->m_experimentConfig.taskType + "_" + m_app->m_user.subjectID + "_" + timeStr + ".db").c_str();
-
-	// create the file
-	if (sqlite3_open(mResultFileName.c_str(), &m_db)) {
-		// TODO: report error if failed.
-	}
-
-	// create tables inside the db file.
-	// 1. Experiment description (time and subject ID)
-	// create sqlite table
-	std::vector<std::vector<std::string>> expColumns = {
-		// format: column name, data type, sqlite modifier(s)
-			{ "time", "text", "NOT NULL" },
-			{ "subjectID", "text", "NOT NULL" },
-	};
-	createTableInDB(m_db, "Experiments", expColumns); // no need of Primary Key for this table.
-
-	// populate table
-	std::vector<std::string> expValues = {
-		addQuotes(timeStr.c_str()),
-		addQuotes(m_app->m_user.subjectID.c_str())
-	};
-	insertRowIntoDB(m_db, "Experiments", expValues);
-
-	// 2. Conditions
-	// create sqlite table
-	std::vector<std::vector<std::string>> conditionColumns = {
-			{ "id", "integer", "PRIMARY KEY"}, // this makes id a key value, requiring it to be unique for each row.
-			{ "refresh_rate", "real" },
-			{ "added_frame_lag", "real" },
-			{ "min_ecc_h", "real" },
-			{ "min_ecc_V", "real" },
-			{ "max_ecc_h", "real" },
-			{ "max_ecc_V", "real" },
-			{ "min_speed", "real" },
-			{ "max_speed", "real" },
-			{ "motion_change_period", "real" },
-	};
-	createTableInDB(m_db, "Conditions", conditionColumns); // Primary Key needed for this table.
-
-	// populate table
-	for (int i = 0; i < m_psych.mMeasurements.size(); ++i)
-	{
-		std::vector<std::string> conditionValues = {
-			std::to_string(i), // this index is uniquely and statically assigned to each SingleThresholdMeasurement.
-			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameRate"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["targetFrameLag"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["minEccH"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["minEccV"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["maxEccH"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["maxEccV"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["minSpeed"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["maxSpeed"]),
-			std::to_string(m_psych.mMeasurements[i].getParam().val["motionChangePeriod"]),
-		};
-		insertRowIntoDB(m_db, "Conditions", conditionValues);
-	}
-
-	// 3. Trials, only need to create the table.
-	std::vector<std::vector<std::string>> trialColumns = {
-			{ "condition_ID", "integer" },
-			{ "session_ID", "text" },
-			{ "session_mode", "text" },
-			{ "start_time", "real" },
-			{ "end_time", "real" },
-			{ "task_execution_time", "real" },
-	};
-	createTableInDB(m_db, "Trials", trialColumns);
-
-	// 4. Target_Trajectory, only need to create the table.
-	std::vector<std::vector<std::string>> targetTrajectoryColumns = {
-			{ "time", "real" },
-			{ "position_x", "real" },
-			{ "position_y", "real" },
-			{ "position_z", "real" },
-	};
-	createTableInDB(m_db, "Target_Trajectory", targetTrajectoryColumns);
-
-	// 5. Player_Action, only need to create the table.
-	std::vector<std::vector<std::string>> viewTrajectoryColumns = {
-			{ "time", "real" },
-			{ "event", "text" },
-			{ "position_az", "real" },
-			{ "position_el", "real" },
-	};
-	createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
-}
-
 void TargetExperiment::recordTrialResponse()
 {
 	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
@@ -403,14 +300,14 @@ void TargetExperiment::recordTrialResponse()
 		std::to_string(m_taskEndTime),
 		std::to_string(m_taskExecutionTime)
 	};
-	insertRowIntoDB(m_db, "Trials", trialValues);
+	m_app->m_logger->recordTrialResponse(trialValues);
 
 	// Target_Trajectory table. Write down the recorded target trajectories.
-	insertRowsIntoDB(m_db, "Target_Trajectory", m_targetTrajectory);
+	m_app->m_logger->recordTargetTrajectory(m_targetTrajectory);
 	m_targetTrajectory.clear();
 
 	// Player_Action table. Write down the recorded player actions.
-	insertRowsIntoDB(m_db, "Player_Action", m_playerActions);
+	m_app->m_logger->recordPlayerActions(m_playerActions);
 	m_playerActions.clear();
 }
 
@@ -453,9 +350,4 @@ void TargetExperiment::accumulatePlayerAction(PlayerAction hm)
 		std::to_string(dir.y),
 	};
 	m_playerActions.push_back(playerActionValues);
-}
-
-void TargetExperiment::closeResultFile()
-{
-	sqlite3_close(m_db);
 }
