@@ -34,11 +34,11 @@ static const bool testCustomProjection = false;
 //static const std::string appendingDescription = "ver1";
 //========================================================================
 
-/*App::App(const GApp::Settings& settings) : GApp(settings) {
+App::App(const GApp::Settings& settings) : GApp(settings) {
 	// TODO: make method that changes definition of ex, and have constructor call that
 	// method to set default experiment
 	// JBS: moved experiment definition to `onInit()`
-}*/
+}
 
 void App::onInit() {
 	GApp::onInit();

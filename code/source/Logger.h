@@ -1,5 +1,7 @@
 #pragma once
 #include <G3D/G3D.h>
+#include <ctime>
+#include "SingleThresholdMeasurement.h"
 #include "sqlHelpers.h"
 
 class Logger : public ReferenceCountedObject {
@@ -10,10 +12,10 @@ public:
 	void recordTrialResponse(std::vector<std::string> values);
 	void closeResultsFile(void);
 	static String genUniqueTimestamp();
-	virtual void addConditions(std::vector<SingleThresholdMeasurement> measurements);
-	virtual void createResultsFile(String filename, String subjectID);
-	virtual	void recordTargetTrajectory(std::vector<std::vector<std::string>> trajectory);
-	virtual void recordPlayerActions(std::vector<std::vector<std::string>> actions);
+	virtual void addConditions(std::vector<SingleThresholdMeasurement> measurements) {};
+	virtual void createResultsFile(String filename, String subjectID) {};
+	virtual	void recordTargetTrajectory(std::vector<std::vector<std::string>> trajectory) {};
+	virtual void recordPlayerActions(std::vector<std::vector<std::string>> actions) {};
 };
 
 class TargetLogger : public Logger
@@ -40,5 +42,6 @@ public:
 	}
 	void addConditions(std::vector<SingleThresholdMeasurement> measurements);
 	void createResultsFile(String filename, String subjectID);
-
+	void recordTargetTracjetory(std::vector<std::vector<std::string>> trajectory) {};
+	void recordPlayerActions(std::vector<std::vector<std::string>> trajectory) {};
 };

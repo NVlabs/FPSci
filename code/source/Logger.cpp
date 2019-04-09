@@ -1,7 +1,4 @@
-#include <ctime>
-#include "SingleThresholdMeasurement.h"
 #include "Logger.h"
-#include "sqlHelpers.h"
 
 // TODO: Replace with the G3D timestamp uses.
 // utility function for generating a unique timestamp.
