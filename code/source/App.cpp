@@ -826,7 +826,8 @@ void App::fire() {
 	}
 
 	if (m_experimentConfig.playMode) {
-		m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 3.0f);
+		m_fireSound->play(0.5f);
+		//m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 0.5f);
 	}
 
 	if (m_experimentConfig.renderDecals && !hitTarget) {
@@ -918,7 +919,8 @@ void App::destroyTarget(int index) {
 
 	if (m_experimentConfig.playMode) {
 		// 3D audio
-		m_explosionSound->play(target->frame().translation, Vector3::zero(), 16.0f);
+		m_explosionSound->play(10.0f);
+		//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
 	}
 }
 
