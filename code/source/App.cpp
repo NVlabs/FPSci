@@ -895,7 +895,7 @@ void App::onUserInput(UserInput* ui) {
 		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
 			m_buttonUp = false;
 		}
-		else {
+		if (ui->keyReleased(GKey::LEFT_MOUSE)) {
 			m_buttonUp = true;
 		}
 	}
