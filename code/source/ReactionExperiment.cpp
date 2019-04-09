@@ -131,7 +131,7 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 			if (m_psych.isComplete()) {
 				m_feedbackMessage = "Session complete. Thanks!";
 				newState = PresentationState::complete;
-				m_app->m_user.completedSessions.append(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
+				m_app->getCurrentUser()->completedSessions.append(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
 				m_app->userSaveButtonPress();
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() > 0) {

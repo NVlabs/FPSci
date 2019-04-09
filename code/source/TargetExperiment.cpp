@@ -142,7 +142,7 @@ void TargetExperiment::updatePresentationState()
 			if (m_psych.isComplete()) {
 				m_feedbackMessage = "Session complete. Thanks!";
 				newState = PresentationState::complete;
-				m_app->m_user.completedSessions.append(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
+				m_app->getCurrentUser()->completedSessions.append(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
 				m_app->userSaveButtonPress();	// Press the save button for the user...
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() > 0) {

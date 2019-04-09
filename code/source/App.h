@@ -71,6 +71,8 @@ protected:
 	shared_ptr<VisibleEntity>		m_firstDecal;
 
 	GuiDropDownList*				m_sessDropDown;
+	GuiLabel*						m_mouseDPILabel;
+	GuiNumberBox<double>*			m_cm360NumberBox;
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
@@ -91,6 +93,11 @@ protected:
 	bool                            m_renderFPS = false;
 	bool                            m_renderHitscan = false;
 
+	// Drop down selection writebacks
+	int								m_ddCurrentUser = 0;
+	int								m_lastSeenUser = 0;
+	int								m_ddCurrentSession = 0;
+
 	/** Set to true to lower rendering quality to increase performance. */
 	//bool                              m_emergencyTurbo = false;
 
@@ -110,7 +117,9 @@ protected:
 	void makeGUI();
 	void loadModels();
 	void destroyTarget(int index);
-	void printExpConfigToLog();
+	void printExpConfigToLog(ExperimentConfig config);
+	void printUserTableToLog(UserTable table);
+	void updateUser(void);
 
 	CComPortDriver m_com;
 
@@ -131,7 +140,7 @@ public:
 	Array<Projectile>               m_projectileArray;
 
 	/** Parameter configurations */
-	UserConfig                      m_user;
+	UserTable						m_userTable;
 	ExperimentConfig                m_experimentConfig;
 
 	//TODO: Remove it when we are using G3D timer
@@ -175,7 +184,11 @@ public:
 
 	Array<String> updateSessionDropDown(void);
 
+	Array<String> getSessListForUser();
+
 	String getCurrentSessionId(void);
+
+	shared_ptr<UserConfig> getCurrentUser(void);
 
 	void updateSessionPress(void);
 
