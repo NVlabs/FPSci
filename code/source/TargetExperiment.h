@@ -6,8 +6,6 @@
 
 class App;
 
-enum PlayerAction { AIM, HIT, MISS };
-
 class TargetExperiment : public Experiment
 {
 protected:
@@ -16,7 +14,6 @@ protected:
 	std::vector<std::vector<std::string>> m_playerActions;
 	std::vector<std::vector<std::string>> m_targetTrajectory;
 	float m_speed = 0;
-	int m_clickCount = 0;
 
 	TargetExperiment(App* app) : Experiment(app) {
 		// secure vector capacity large enough so as to avoid memory allocation time.
@@ -54,7 +51,9 @@ public:
 
 	void accumulateTrajectories();
 
-	void accumulatePlayerAction(PlayerAction hm);
+	/** queues action with given name to insert into database when trial completes 
+	@param action - one of "aim" "hit" and "miss" */
+	virtual void accumulatePlayerAction(String action) override;
 
 	void closeResultFile();
 

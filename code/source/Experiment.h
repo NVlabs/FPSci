@@ -103,6 +103,7 @@ protected:
 	double m_taskEndTime;
 	int m_response;
 	//Param m_config; // All parameters common in the experiment.
+	int m_clickCount = 0;
 
 	String m_feedbackMessage;
 	Stopwatch stopwatch;
@@ -128,6 +129,8 @@ public:
 	virtual void createResultFile() = 0;
 	virtual void recordTrialResponse() = 0;
 	virtual void closeResultFile() = 0;
+	virtual void accumulatePlayerAction(String action) {}
+	virtual void countClick() { m_clickCount++; }
 
 	/** PsychHelper-related */
 	virtual void initPsychHelper() = 0;

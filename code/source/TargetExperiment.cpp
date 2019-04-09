@@ -244,26 +244,7 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 
 void TargetExperiment::onUserInput(UserInput* ui)
 {
-	// insert response and uncomment below. 
-	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
-		// count clicks
-		m_clickCount++;
-		m_app->fire();
-		if (m_app->m_targetHealth == 0) {
-			// target eliminated, must be 'hit'.
-			if (m_app->m_presentationState == PresentationState::task)
-			{
-				accumulatePlayerAction(PlayerAction::HIT);
-			}
-		}
-		else {
-			// target still present, must be 'miss'.
-			if (m_app->m_presentationState == PresentationState::task)
-			{
-				accumulatePlayerAction(PlayerAction::MISS);
-			}
-		}
-	}
+	// nothing here, handled in App::onUserInput
 }
 
 void TargetExperiment::onGraphics2D(RenderDevice* rd)
@@ -427,28 +408,17 @@ void TargetExperiment::accumulateTrajectories()
 	m_targetTrajectory.push_back(targetTrajectoryValues);
 
 	// recording view direction trajectories
-	accumulatePlayerAction(PlayerAction::AIM);
+	accumulatePlayerAction("aim");
 }
 
-void TargetExperiment::accumulatePlayerAction(PlayerAction hm)
+void TargetExperiment::accumulatePlayerAction(String action)
 {
-	// specify action type
-	String s;
-	if (hm == PlayerAction::HIT) {
-		s = "hit";
-	}
-	else if (hm == PlayerAction::MISS) {
-		s = "miss";
-	}
-	else if (hm == PlayerAction::AIM) {
-		s = "aim";
-	}
-
 	// recording target trajectories
 	Point2 dir = m_app->getViewDirection();
 	std::vector<std::string> playerActionValues = {
 		std::to_string(System::time()),
-		addQuotes(s.c_str()),
+		// TODO: make this nicer
+		format("'%s'",action.c_str()).c_str(),
 		std::to_string(dir.x),
 		std::to_string(dir.y),
 	};
