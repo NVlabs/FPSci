@@ -188,7 +188,7 @@ public:
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
 
-	/** Fire the weapon */
+	/** Fire the weapon - hits targets, draws decals, starts explosions */
 	void fire();
 
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
