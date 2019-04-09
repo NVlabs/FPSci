@@ -434,6 +434,22 @@ void App::loadModels() {
 
 	m_decalModel = ArticulatedModel::create(decalSpec, "decalModel");
 
+	const static Any explosionSpec = PARSE_ANY(ArticulatedModel::Specification{
+		filename = "ifs/square.ifs";
+		preprocess = {
+			transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
+			//scaleAndOffsetTexCoord0(all(), 0.0769, 0);
+			setMaterial(all(), UniversalMaterial::Specification{
+				lambertian = Texture::Specification {
+					//filename = "explosion_01_strip13.png";
+					filename = "explosion_01.png";
+					encoding = Color3(1, 1, 1);
+				};
+			});
+		}; });
+
+	m_explosionModel = ArticulatedModel::create(explosionSpec, "explosionModel");
+
 	for (int i = 0; i <= 20; ++i) {
 		const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
 		m_targetModelArray.push(ArticulatedModel::create(Any::parse(format(STR(ArticulatedModel::Specification{
@@ -714,6 +730,15 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		}
 	}
 
+	// explosion animation
+	if (notNull(m_explosion) && m_explosionEndTime < now) {
+		scene()->remove(m_explosion);
+		m_explosion = nullptr;
+	}
+	else {
+		// could update animation here...
+	}
+
 	// Example GUI dynamic layout code.  Resize the debugWindow to fill
 	// the screen horizontally.
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
@@ -833,6 +858,15 @@ void App::fire() {
 		}
 
 		if (closestIndex >= 0) {
+			// create explosion animation
+			CFrame explosionFrame = m_targetArray[closestIndex]->frame();
+			explosionFrame.rotation = m_debugCamera->frame().rotation;
+			const shared_ptr<VisibleEntity>& newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModel, explosionFrame);
+			scene()->insert(newExplosion);
+			m_explosion = newExplosion;
+			m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
+
+			// destroy target
 			destroyTarget(closestIndex);
 			aimPoint = ray.origin() + ray.direction() * closest;
 			m_targetHealth -= 1; // TODO: health point should be tracked by Target Entity class (not existing yet).
@@ -872,7 +906,7 @@ void App::fire() {
 		const Ray& ray = m_debugCamera->frame().lookRay();
 		Model::HitInfo info;
 		float closest = finf();
-		scene()->intersect(ray, closest, false, {}, info);
+		scene()->intersect(ray, closest, false, {m_explosion, m_lastDecal, m_firstDecal}, info);
 
 		// Find where to put the decal
 		CFrame decalFrame = m_debugCamera->frame();

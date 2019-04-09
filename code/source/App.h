@@ -69,6 +69,9 @@ protected:
 	shared_ptr<ArticulatedModel>	m_decalModel;
 	shared_ptr<VisibleEntity>		m_lastDecal;
 	shared_ptr<VisibleEntity>		m_firstDecal;
+	shared_ptr<ArticulatedModel>	m_explosionModel;
+	shared_ptr<VisibleEntity>		m_explosion;
+	RealTime						m_explosionEndTime;
 
 	GuiDropDownList*				m_sessDropDown;
 	GuiLabel*						m_mouseDPILabel;
