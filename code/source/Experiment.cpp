@@ -27,18 +27,6 @@
 ***************************************************************************/
 #include "Experiment.h"
 
-// TODO: Replace with the G3D timestamp uses.
-// utility function for generating a unique timestamp.
-std::string genUniqueTimestamp() {
-	time_t t = std::time(nullptr);
-	std::tm tmbuf;
-	localtime_s(&tmbuf, &t);
-	char tmCharArray[17];
-	std::strftime(tmCharArray, sizeof(tmCharArray), "%Y%m%d_%H%M%S", &tmbuf);
-	std::string timeStr(tmCharArray);
-	return timeStr;
-}
-
 void PsychHelper::addCondition(Param newConditionParam, PsychophysicsDesignParameter newPsychParam)
 {
 	SingleThresholdMeasurement m(newConditionParam, newPsychParam);

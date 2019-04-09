@@ -10,7 +10,7 @@ class TargetExperiment : public Experiment
 {
 protected:
 	double m_lastMotionChangeAt;
-	sqlite3* m_db = nullptr;
+	
 	std::vector<std::vector<std::string>> m_playerActions;
 	std::vector<std::vector<std::string>> m_targetTrajectory;
 	float m_speed = 0;
@@ -43,8 +43,6 @@ public:
 
 	void onGraphics2D(RenderDevice * rd);
 
-	void createResultFile();
-
 	void processResponse();
 
 	void recordTrialResponse();
@@ -54,8 +52,6 @@ public:
 	/** queues action with given name to insert into database when trial completes 
 	@param action - one of "aim" "hit" and "miss" */
 	virtual void accumulatePlayerAction(String action) override;
-
-	void closeResultFile();
 
 	void initPsychHelper();
 };

@@ -15,6 +15,7 @@
 #include "TargetExperiment.h"
 #include "ReactionExperiment.h"
 #include "ComPortDriver.h"
+#include "Logger.h"
 #include <chrono>
 
 // TODO: This has to be replaced with G3D timer.
@@ -112,6 +113,7 @@ protected:
 	void makeGUI();
 	void loadModels();
 	void destroyTarget(int index);
+	void printExpConfigToLog();
 
 	CComPortDriver m_com;
 
@@ -140,6 +142,9 @@ public:
 
 	/** Pointer to Experiment class */
 	shared_ptr<Experiment> m_ex;
+
+	/** Pointer to Logger class */
+	shared_ptr<Logger> m_logger;				// Why can't we do what Joohwan did above for experiment?
 
 	/** To control target motion */
 	CFrame                          m_motionFrame; // object at 10 m away in -z direction in this coordinate frame

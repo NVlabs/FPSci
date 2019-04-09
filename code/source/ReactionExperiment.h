@@ -38,13 +38,9 @@ public:
 
 	void onGraphics2D(RenderDevice * rd);
 
-	void createResultFile();
-
 	void processResponse();
 
 	void recordTrialResponse();
-
-	void closeResultFile();
 
 	void initPsychHelper();
 };

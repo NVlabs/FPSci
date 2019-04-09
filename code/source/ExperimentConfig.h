@@ -154,6 +154,32 @@ public:
 	}
 };
 
+// Trial count class (optional for alternate TargetConfig/count table lookup)
+class TrialCount {
+public:
+	String id;
+	unsigned int count = 0;
+
+	TrialCount() {};
+
+	TrialCount(const Any& any) {
+		int settingsVersion = 1;
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.get("id", id);
+			reader.get("count", count);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
+			break;
+		}
+	}
+
+};
+
 class SessionConfig {
 public:
 	String id;
