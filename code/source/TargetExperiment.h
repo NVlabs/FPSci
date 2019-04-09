@@ -14,7 +14,6 @@ protected:
 	std::vector<std::vector<std::string>> m_playerActions;
 	std::vector<std::vector<std::string>> m_targetTrajectory;
 	float m_speed = 0;
-	int m_clickCount = 0;
 
 	TargetExperiment(App* app) : Experiment(app) {
 		// secure vector capacity large enough so as to avoid memory allocation time.
@@ -54,7 +53,7 @@ public:
 
 	/** queues action with given name to insert into database when trial completes 
 	@param action - one of "aim" "hit" and "miss" */
-	void accumulatePlayerAction(String action);
+	virtual void accumulatePlayerAction(String action) override;
 
 	void closeResultFile();
 
