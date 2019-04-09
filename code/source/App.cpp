@@ -138,7 +138,7 @@ void App::printExpConfigToLog() {
 		// Now iterate through each run
 		for (int j = 0; j < sess.trials.size(); j++) {
 			logPrintf("\t\tTrial Run Config: ID = %s, Count = %d\n",
-				sess.trials[j], sess.trialCounts[j]);
+				sess.trials[j].id, sess.trials[j].count);
 		}
 	}
 	// Iterate through trials and print them

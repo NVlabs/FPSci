@@ -177,7 +177,6 @@ public:
 			break;
 		}
 	}
-
 };
 
 class SessionConfig {
@@ -187,8 +186,7 @@ public:
 	unsigned int frameDelay = 0;				// Integer frame delay (in frames)
 	String expMode = "training";				// String indicating whether session is training or real
 	String	selectionOrder = "random";			// "Random", "Round Robbin", "In Order"
-	Array<String> trials;
-	Array<int> trialCounts;
+	Array<TrialCount> trials;
 
 	SessionConfig() : frameRate(240.0f), frameDelay(0), selectionOrder("random") {}
 
@@ -205,7 +203,6 @@ public:
 			reader.getIfPresent("selectionOrder", selectionOrder);
 			reader.getIfPresent("expMode", expMode);
 			reader.get("trials", trials);
-			reader.get("trialCounts", trialCounts);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -319,7 +316,7 @@ public:
 	Array<Param> getTargetExpConditions(int sessionIndex) {
 		Array<Param> params;
 		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
-			String id = sessions[sessionIndex].trials[j];
+			String id = sessions[sessionIndex].trials[j].id;
 			// Append training trial
 			Param p;
 			p.add("minEccH", getTargetConfigById(id)->eccH[0]);
@@ -333,7 +330,7 @@ public:
 			p.add("motionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
 			p.add("minSpeed", getTargetConfigById(id)->speed[0]);
 			p.add("maxSpeed", getTargetConfigById(id)->speed[1]);
-			p.add("trialCount", (float)sessions[sessionIndex].trialCounts[j]);
+			p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
 			params.append(p);
 		}
 		return params;
@@ -347,12 +344,12 @@ public:
 	Array<Param> getReactionExpConditions(int sessionIndex) {
 		Array<Param> params;
 		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
-			for (float intensity : getReactionConfigById(sessions[sessionIndex].trials[j])->intensities) {
+			for (float intensity : getReactionConfigById(sessions[sessionIndex].trials[j].id)->intensities) {
 				Param p;
 				p.add("intensity", intensity);
 				p.add("targetFrameRate", sessions[sessionIndex].frameRate);
 				p.add("targetFrameLag", (float)sessions[sessionIndex].frameDelay);
-				p.add("trialCount", (float)sessions[sessionIndex].trialCounts[j]);
+				p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
 				params.append(p);
 			}
 		}

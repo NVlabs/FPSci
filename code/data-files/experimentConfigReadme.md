@@ -18,8 +18,7 @@ There are a number of inputs to experiment config. The following is a descriptio
     * `SelectionOrder` describes the order of trial selection from the trial set
     * `trials` is a list of trials referencing the `trials` table above:
         * `id` is a short name for the trial to affiliate with the `targets` or `reactions` table below
-        * `trainingCount` provides the number of training trials in this session
-        * `realCount` provides the number of measured trials in this session
+        * `count` provides the number of trials in this session
 * `targets` this target config table contains more detailed constraints for path generation for targets:
     * `id` a short string to refer to this target information
     * `speed` is a vector indictating the minimum ([0]) and maximum ([1]) speeds in angular velocity (in deg/s)
