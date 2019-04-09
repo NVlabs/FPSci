@@ -863,41 +863,36 @@ void App::clearTargets() {
 }
 
 void App::onUserInput(UserInput* ui) {
-	//double waitTime = 1.0f / m_experimentConfig.targetFrameRate - 0.002;
-	//if (waitTime > 0) {
-	//	System::sleep(waitTime);
-	//}
-
 	GApp::onUserInput(ui);
 	(void)ui;
 
-	//if (m_experimentConfig.playMode || m_debugController->enabled()) {
-	//	m_ex->onUserInput(ui);
-
-	//	uint8 mouseButtons;
-	//	((GLFWWindow*)(ui->window()))->getMouseButtonState(mouseButtons);
-
-	//	if (mouseButtons) {
-	//		m_buttonUp = false;
-	//	}
-	//	else {
-	//		m_buttonUp = true;
-	//	}
-	//}
-
-	GApp::onUserInput(ui);
-	(void)ui;
-
-	if (m_experimentConfig.playMode || m_debugController->enabled()) {
-
-		m_ex->onUserInput(ui);
-
-		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
-			m_buttonUp = false;
+	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
+		// count clicks
+		m_ex->countClick();
+		// check for hit, add graphics, update target state
+		fire();
+		if (m_targetHealth == 0) {
+			// target eliminated, must be 'hit'.
+			if (m_presentationState == PresentationState::task)
+			{
+				m_ex->accumulatePlayerAction("hit");
+			}
 		}
 		else {
-			m_buttonUp = true;
+			// target still present, must be 'miss'.
+			if (m_presentationState == PresentationState::task)
+			{
+				m_ex->accumulatePlayerAction("miss");
+			}
 		}
+	}
+
+	// used for click-to-photon box
+	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
+		m_buttonUp = false;
+	}
+	else {
+		m_buttonUp = true;
 	}
 
 	if (m_lastReticleLoaded != m_reticleIndex) {

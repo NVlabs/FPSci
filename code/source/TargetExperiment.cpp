@@ -244,26 +244,7 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 
 void TargetExperiment::onUserInput(UserInput* ui)
 {
-	// insert response and uncomment below. 
-	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
-		// count clicks
-		m_clickCount++;
-		m_app->fire();
-		if (m_app->m_targetHealth == 0) {
-			// target eliminated, must be 'hit'.
-			if (m_app->m_presentationState == PresentationState::task)
-			{
-				accumulatePlayerAction("hit");
-			}
-		}
-		else {
-			// target still present, must be 'miss'.
-			if (m_app->m_presentationState == PresentationState::task)
-			{
-				accumulatePlayerAction("miss");
-			}
-		}
-	}
+	// nothing here, handled in App::onUserInput
 }
 
 void TargetExperiment::onGraphics2D(RenderDevice* rd)
