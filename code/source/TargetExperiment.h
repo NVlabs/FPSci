@@ -6,8 +6,6 @@
 
 class App;
 
-enum PlayerAction { AIM, HIT, MISS };
-
 class TargetExperiment : public Experiment
 {
 protected:
@@ -54,7 +52,9 @@ public:
 
 	void accumulateTrajectories();
 
-	void accumulatePlayerAction(PlayerAction hm);
+	/** queues action with given name to insert into database when trial completes 
+	@param action - one of "aim" "hit" and "miss" */
+	void accumulatePlayerAction(String action);
 
 	void closeResultFile();
 
