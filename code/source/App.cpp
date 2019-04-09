@@ -835,7 +835,7 @@ void App::fire() {
 			const shared_ptr<VisibleEntity>& newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModel, explosionFrame);
 			scene()->insert(newExplosion);
 			m_explosion = newExplosion;
-			m_explosionEndTime = System::time() + 0.5f; // make explosion end in 0.5 seconds
+			m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
 
 			// destroy target
 			destroyTarget(closestIndex);
