@@ -433,7 +433,8 @@ void App::loadModels() {
 			//scaleAndOffsetTexCoord0(all(), 0.0769, 0);
 			setMaterial(all(), UniversalMaterial::Specification{
 				lambertian = Texture::Specification {
-					filename = "explosion_01_strip13.png";
+					//filename = "explosion_01_strip13.png";
+					filename = "explosion_01.png";
 					encoding = Color3(1, 1, 1);
 				};
 			});
@@ -704,6 +705,9 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	if (notNull(m_explosion) && m_explosionEndTime < now) {
 		scene()->remove(m_explosion);
 		m_explosion = nullptr;
+	}
+	else {
+		// could update animation here...
 	}
 
 	// Example GUI dynamic layout code.  Resize the debugWindow to fill
