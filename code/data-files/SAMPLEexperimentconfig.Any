@@ -19,6 +19,17 @@
   // all run the same set of trial conditions
   "sessions": [
     {
+      "id": "debugging", // Session ID
+      "frameDelay": 1, // Session frame delay (in frames)
+      "frameRate": 240, // Session frame rate (in frames per second)
+      "selectionOrder": "random", // Selection order for trials within this session
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "trials": [
+        {"id": "c1","count": 10},
+        {"id": "c2","count": 10},
+        {"id": "c3","count": 10}]
+    },
+    {
       "id": "s1", // Session ID
       "frameDelay": 1, // Session frame delay (in frames)
       "frameRate": 240, // Session frame rate (in frames per second)
@@ -63,7 +74,7 @@
       "distance": 30,
       "elevationLocked": false,
       "speed": [ 0, 0 ],
-      "visualSize": [ 0.02, 0.02 ],
+      "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
       "motionChangePeriod": [ 1000000, 1000000 ],
@@ -74,7 +85,7 @@
       "distance": 30,
       "elevationLocked": false,
       "speed": [ 8, 15 ],
-      "visualSize": [ 0.02, 0.02 ],
+      "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
       "motionChangePeriod": [ 1000000, 1000000 ],
@@ -85,7 +96,7 @@
       "distance": 30,
       "elevationLocked": false,
       "speed": [ 8, 15 ],
-      "visualSize": [ 0.02, 0.02 ],
+      "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
       "motionChangePeriod": [ 0.5, 0.5 ],
@@ -96,7 +107,7 @@
       "distance": 30,
       "elevationLocked": true,
       "speed": [ 8, 15 ],
-      "visualSize": [ 0.02, 0.02 ],
+      "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
       "motionChangePeriod": [ 0.5, 0.5 ],
