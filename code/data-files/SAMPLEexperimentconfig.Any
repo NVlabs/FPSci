@@ -28,7 +28,7 @@
         {"id": "c1","count": 1},
         {"id": "c2","count": 1},
         {"id": "c3","count": 1}]
-    }
+    },
     {
       "id": "s2",
       "frameDelay": 2,
