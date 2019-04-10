@@ -190,11 +190,11 @@ public:
 
 	Array<String> getSessListForUser();
 
-	String getCurrentSessionId(void);
+	String getCurrSessId(void);
 
-	void markSessionComplete(String id);
+	void markSessComplete(String id);
 
-	shared_ptr<UserConfig> getCurrentUser(void);
+	shared_ptr<UserConfig> getCurrUser(void);
 
 	void updateSessionPress(void);
 

@@ -61,19 +61,19 @@ void App::onInit() {
 	logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)", 
 		sysConfig.cpuName, sysConfig.coreCount, sysConfig.memCapacityMB, sysConfig.gpuName, sysConfig.displayName, sysConfig.displayXRes, sysConfig.displayYRes, sysConfig.displayXSize, sysConfig.displayYSize);
 
-	// apply frame lag
-	setDisplayLatencyFrames(m_experimentConfig.sessions[m_ddCurrentSession].frameDelay);
+	// apply frame lag (moved into experiment files for control there)
+	//setDisplayLatencyFrames(m_experimentConfig.sessions[m_ddCurrentSession].frameDelay);
 
-	float dt = 0;
-	if (unlockFramerate) {
-		// Set a maximum *finite* frame rate
-		dt = 1.0f / 8192.0f;
-	} else if (variableRefreshRate) {
-		dt = 1.0f / m_experimentConfig.sessions[m_ddCurrentSession].frameRate;
-	} else {
-		dt = 1.0f / float(window()->settings().refreshRate);
-	}
-	setFrameDuration(dt, GApp::REAL_TIME);
+	//float dt = 0;
+	//if (unlockFramerate) {
+	//	// Set a maximum *finite* frame rate
+	//	dt = 1.0f / 8192.0f;
+	//} else if (variableRefreshRate) {
+	//	dt = 1.0f / m_experimentConfig.sessions[m_ddCurrentSession].frameRate;
+	//} else {
+	//	dt = 1.0f / float(window()->settings().refreshRate);
+	//}
+	//setFrameDuration(dt, GApp::REAL_TIME);
 	setSubmitToDisplayMode(
 		//SubmitToDisplayMode::EXPLICIT);
 		SubmitToDisplayMode::MINIMIZE_LATENCY);
@@ -102,7 +102,7 @@ void App::onInit() {
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
 
 
-	// Initialize the experiment.
+	// Initialize the experiment if the user has sessions available
 	String filename = "result_data/" + m_experimentConfig.taskType + "_" + m_userTable.currentUser + "_" + Logger::genUniqueTimestamp() + ".db";
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
@@ -514,8 +514,8 @@ void App::makeGUI() {
     addWidget(m_userSettingsWindow);
     GuiPane* p = m_userSettingsWindow->pane();
 	p->addDropDownList("User ID", m_userTable.getIds(), &m_ddCurrentUser);
-	m_mouseDPILabel =  p->addLabel(format("Mouse DPI: %f", getCurrentUser()->mouseDPI));
-	m_cm360Label = p->addLabel(format("cm/360°: %f", getCurrentUser()->cmp360));
+	m_mouseDPILabel =  p->addLabel(format("Mouse DPI: %f", getCurrUser()->mouseDPI));
+	m_cm360Label = p->addLabel(format("cm/360°: %f", getCurrUser()->cmp360));
 	//m_cm360NumberBox = p->addNumberBox("Mouse 360", &m_userTable.users[m_ddCurrentUser].cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
 	p->addButton("Save User Config", this, &App::userSaveButtonPress);
 	//p->addButton("Update User", this, &App::updateUser);
@@ -531,9 +531,8 @@ void App::userSaveButtonPress(void) {
 	// Save the any file
 	Any a = Any(m_userTable);
 	a.save("userconfig.Any");
-	// Print message to log
-	logPrintf("User table saved.");
-}
+	logPrintf("User table saved.");			// Print message to log
+}	
 
 void App::updateUser(void){
 	// TODO: Add anything we need here (i.e. new output file)
@@ -542,7 +541,7 @@ void App::updateUser(void){
 Array<String> App::getSessListForUser() {
 	Array<String> sessList;
 	for (String sess : m_experimentConfig.getSessionIdArray()) {
-		if (!getCurrentUser()->completedSessions.contains(sess)) sessList.append(sess);
+		if (!getCurrUser()->completedSessions.contains(sess)) sessList.append(sess);
 	}
 	return sessList;
 }
@@ -550,7 +549,7 @@ Array<String> App::getSessListForUser() {
 Array<String> App::updateSessionDropDown(void) {
 	// Create updated session list
 	Array<String> sessList = getSessListForUser();
-	if (sessList.size() == 0) sessList = m_experimentConfig.getSessionIdArray();		// Temporary, if all sessions are done repeat them
+	//if (sessList.size() == 0) sessList = m_experimentConfig.getSessionIdArray();		// Temporary, if all sessions are done repeat them
 	m_sessDropDown->setList(sessList);
 
 	// Print message to log
@@ -562,25 +561,27 @@ Array<String> App::updateSessionDropDown(void) {
 	return sessList;
 }
 
-String App::getCurrentSessionId(void) {
+String App::getCurrSessId(void) {
 	return m_sessDropDown->get(m_ddCurrentSession);
 }
 
-void App::markSessionComplete(String id) {
+void App::markSessComplete(String id) {
 	m_userTable.users[m_ddCurrentUser].addCompletedSession(id);
 }
 
-shared_ptr<UserConfig> App::getCurrentUser(void) {
+shared_ptr<UserConfig> App::getCurrUser(void) {
 	return std::make_shared<UserConfig>(m_userTable.users[m_ddCurrentUser]);
 }
 
-
-void App::updateSessionPress(void) 
-{
-	updateSession(getCurrentSessionId());
+void App::updateSessionPress(void) {
+	updateSession(getCurrSessId());
 }
 
 void App::updateSession(String id) {
+	if (id.empty()) {
+		// TODO: Decide if we need to do anything if no sessions are available here
+		return;
+	}
 	shared_ptr<SessionConfig> sessConfig = m_experimentConfig.getSessionConfigById(id);
 
 	// Print message to log
@@ -708,13 +709,6 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
     if (m_userSettingsMode) {
         updateMouseSensitivity();
     }
-
-	if (m_lastSeenUser != m_ddCurrentUser) {
-		m_mouseDPILabel->setCaption(format("Mouse DPI: %f", m_userTable.users[m_ddCurrentUser].mouseDPI));
-		m_cm360Label->setCaption(format("cm/360°: %f", getCurrentUser()->cmp360));
-		updateSessionDropDown();
-		m_lastSeenUser = m_ddCurrentUser;
-	}
 
 	const RealTime now = System::time();
 	for (int p = 0; p < m_projectileArray.size(); ++p) {
@@ -978,6 +972,14 @@ void App::onUserInput(UserInput* ui) {
 	}
 
 	m_debugCamera->filmSettings().setSensitivity(m_sceneBrightness);
+
+	// Check for change in user drop down
+	if (m_lastSeenUser != m_ddCurrentUser) {
+		m_mouseDPILabel->setCaption(format("Mouse DPI: %f", m_userTable.users[m_ddCurrentUser].mouseDPI));
+		m_cm360Label->setCaption(format("cm/360°: %f", getCurrUser()->cmp360));
+		updateSessionDropDown();
+		m_lastSeenUser = m_ddCurrentUser;
+	}
 
 }
 
