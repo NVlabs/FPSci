@@ -100,6 +100,7 @@ protected:
 	int m_response;
 	//Param m_config; // All parameters common in the experiment.
 	int m_clickCount = 0;
+	bool m_hasSession;
 
 	String m_feedbackMessage;
 	Stopwatch stopwatch;
@@ -130,7 +131,7 @@ public:
 	virtual void countClick() { m_clickCount++; }
 
 	/** PsychHelper-related */
-	virtual void initPsychHelper() = 0;
+	virtual bool initPsychHelper() = 0;
 
 	std::string mResultFileName;
 	App* m_app;

@@ -61,19 +61,6 @@ void App::onInit() {
 	logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)", 
 		sysConfig.cpuName, sysConfig.coreCount, sysConfig.memCapacityMB, sysConfig.gpuName, sysConfig.displayName, sysConfig.displayXRes, sysConfig.displayYRes, sysConfig.displayXSize, sysConfig.displayYSize);
 
-	// apply frame lag (moved into experiment files for control there)
-	//setDisplayLatencyFrames(m_experimentConfig.sessions[m_ddCurrentSession].frameDelay);
-
-	//float dt = 0;
-	//if (unlockFramerate) {
-	//	// Set a maximum *finite* frame rate
-	//	dt = 1.0f / 8192.0f;
-	//} else if (variableRefreshRate) {
-	//	dt = 1.0f / m_experimentConfig.sessions[m_ddCurrentSession].frameRate;
-	//} else {
-	//	dt = 1.0f / float(window()->settings().refreshRate);
-	//}
-	//setFrameDuration(dt, GApp::REAL_TIME);
 	setSubmitToDisplayMode(
 		//SubmitToDisplayMode::EXPLICIT);
 		SubmitToDisplayMode::MINIMIZE_LATENCY);
@@ -101,12 +88,6 @@ void App::onInit() {
 	updateMouseSensitivity();
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
 
-
-	// Initialize the experiment if the user has sessions available
-	if (m_remainingSess.size() == 0) {
-		m_presentationState = PresentationState::complete;
-		return; //?
-	}
 	String filename = "result_data/" + m_experimentConfig.taskType + "_" + m_userTable.currentUser + "_" + Logger::genUniqueTimestamp() + ".db";
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
@@ -118,9 +99,14 @@ void App::onInit() {
 		loadScene(m_experimentConfig.sceneName);									// load the experiment background scene (should we do this regardless?)
 	}
 
-	// Create the results file here (but how do we make sure user set up name?)
-	m_logger->createResultsFile(filename, m_userTable.currentUser);
-
+	// Don't create a results file for a user w/ no sessions left
+	if (m_remainingSess.size() == 0) {
+		logPrintf("No sessions remaining for selected user.");
+	}
+	else {
+		// Create the results file here (but how do we make sure user set up name?)
+		m_logger->createResultsFile(filename, m_userTable.currentUser);
+	}
 	// TODO: Remove the following by invoking a call back.
 	m_ex->onInit();
 
@@ -544,6 +530,7 @@ void App::updateUser(void){
 	m_mouseDPILabel->setCaption(format("Mouse DPI: %f", m_userTable.users[m_ddCurrentUser].mouseDPI));
 	m_cm360Label->setCaption(format("cm/360°: %f", getCurrUser()->cmp360));
 	updateSessionDropDown();
+	updateSessionPress();
 	// Check for change in user drop down
 	if (m_lastSeenUser != m_ddCurrentUser) {
 
@@ -591,36 +578,32 @@ void App::updateSessionPress(void) {
 }
 
 void App::updateSession(String id) {
-	if (id.empty()) {
-		// TODO: Decide if we need to do anything if no sessions are available here
-		return;
-	}
-	shared_ptr<SessionConfig> sessConfig = m_experimentConfig.getSessionConfigById(id);
+	if (!id.empty()) {
+		// Get the new session config
+		shared_ptr<SessionConfig> sessConfig = m_experimentConfig.getSessionConfigById(id);
 
-	// Print message to log
-	logPrintf("User selected session: %s. Updating now...\n", id);
+		// Print message to log
+		logPrintf("User selected session: %s. Updating now...\n", id);
 
-	// apply frame lag
-	setDisplayLatencyFrames(sessConfig->frameDelay);
+		// apply frame lag
+		setDisplayLatencyFrames(sessConfig->frameDelay);
 
-	float dt = 0;
-	if (unlockFramerate) {
-		// Set a maximum *finite* frame rate
-		dt = 1.0f / 8192.0f;
-	}
-	else if (variableRefreshRate) {
-		dt = 1.0f / sessConfig->frameRate;
-	}
-	else {
-		dt = 1.0f / float(window()->settings().refreshRate);
+		float dt = 0;
+		if (unlockFramerate) {
+			// Set a maximum *finite* frame rate
+			dt = 1.0f / 8192.0f;
+		}
+		else if (variableRefreshRate) {
+			dt = 1.0f / sessConfig->frameRate;
+		}
+		else {
+			dt = 1.0f / float(window()->settings().refreshRate);
+		}
+
+		// Update session drop-down selection
+		m_sessDropDown->setSelectedValue(id);
 	}
 
-	if (m_remainingSess.size() == 0) {
-		logPrintf("No sessions remaining for selected user.");
-		m_presentationState = PresentationState::complete;
-		m_ex->updatePresentationState();
-		return; //?
-	}
 	// Initialize the experiment.
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
@@ -628,9 +611,8 @@ void App::updateSession(String id) {
 	else if (m_experimentConfig.taskType == "target") {
 		m_ex = TargetExperiment::create(this);
 	}
-
-	// Update session drop-down selection
-	m_sessDropDown->setSelectedValue(id);
+	// Check for empty session drop down (no sessions left)
+	if (updateSessionDropDown().size() == 0) logPrintf("No sessions remaining for selected user.");
 
 	// TODO: Remove the following by invoking a call back.
 	m_ex->onInit();

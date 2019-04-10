@@ -58,5 +58,5 @@ public:
 	@param action - one of "aim" "hit" and "miss" */
 	virtual void accumulatePlayerAction(String action) override;
 
-	void initPsychHelper();
+	bool initPsychHelper();
 };
