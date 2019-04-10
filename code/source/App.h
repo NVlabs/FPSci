@@ -32,7 +32,7 @@ public:
 	};
 };
 
-class TargetEntity;
+class FlyingEntity;
 
 // An enum that tracks presentation state within a trial. Duration defined in experiment.h
 // ready: ready scene that happens before beginning of a task.
@@ -169,7 +169,7 @@ public:
 	void spawnRandomTarget();
 
 	/** Creates a spinning target */
-	shared_ptr<TargetEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red());
+	shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red());
 
 	/** Call to set the 3D scene brightness. Default is 1.0. */
 	void setSceneBrightness(float b);

@@ -1,6 +1,30 @@
 #include "TargetEntity.h"
 
-shared_ptr<Entity> TargetEntity::create 
+// Find an arbitrary vector perpendicular to and in equal length as inputV.
+// The sampling distribution is uniform along the circular line, the set of possible candidates of a perpendicular vector.,
+Point3 findPerpendicularVector(Point3 inputV) { // Note that the output vector has equal length as the input vector.
+	Point3 perpen;
+	while (true) {
+		Point3 r = Point3::random();
+		if (r.dot(inputV) > 0.1) { // avoid r being sharply aligned with the position vector
+			// calculate a perpendicular vector
+			perpen = r.cross(inputV.direction()) * inputV.length();
+			break;
+		}
+	}
+	return perpen;
+}
+
+// rotate the inputV toward destinationV by angle ang_deg.
+Point3 rotateToward(Point3 inputV, Point3 destinationV, float ang_deg) {
+	const float projection = inputV.direction().dot(destinationV.direction());
+	Point3 U = inputV.direction();
+	Point3 V = (destinationV.direction() - inputV * projection).direction();
+
+	return (cos(ang_deg * pif() / 180.0f) * U + sin(ang_deg * pif() / 180.0f) * V) * inputV.length();
+}
+
+shared_ptr<Entity> FlyingEntity::create 
     (const String&                  name,
      Scene*                         scene,
      AnyTableReader&                propertyTable,
@@ -8,49 +32,74 @@ shared_ptr<Entity> TargetEntity::create
      const Scene::LoadOptions&      loadOptions) {
 
     // Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
-    const shared_ptr<TargetEntity>& targetEntity = createShared<TargetEntity>();
+    const shared_ptr<FlyingEntity>& flyingEntity = createShared<FlyingEntity>();
 
     // Initialize each base class, which parses its own fields
-    targetEntity->Entity::init(name, scene, propertyTable);
-    targetEntity->VisibleEntity::init(propertyTable, modelTable);
-    targetEntity->TargetEntity::init(propertyTable);
+    flyingEntity->Entity::init(name, scene, propertyTable);
+    flyingEntity->VisibleEntity::init(propertyTable, modelTable);
+    flyingEntity->FlyingEntity::init(propertyTable);
 
     // Verify that all fields were read by the base classes
     propertyTable.verifyDone();
 
-    return targetEntity;
+    return flyingEntity;
 }
 
 
-shared_ptr<TargetEntity> TargetEntity::create 
+shared_ptr<FlyingEntity> FlyingEntity::create
 (const String&                           name,
- Scene*                                  scene,
- const shared_ptr<Model>&                model,
- const CFrame&                           position) {
+	Scene*                                  scene,
+	const shared_ptr<Model>&                model,
+	const CFrame&                           position) {
 
-    // Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
-    const shared_ptr<TargetEntity>& targetEntity = createShared<TargetEntity>();
+	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
+	const shared_ptr<FlyingEntity>& flyingEntity = createShared<FlyingEntity>();
 
-    // Initialize each base class, which parses its own fields
-    targetEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
-    targetEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-    targetEntity->TargetEntity::init();
- 
-    return targetEntity;
+	// Initialize each base class, which parses its own fields
+	flyingEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
+	flyingEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
+	flyingEntity->FlyingEntity::init();
+
+	return flyingEntity;
 }
 
 
-void TargetEntity::init(AnyTableReader& propertyTable) {
+shared_ptr<FlyingEntity> FlyingEntity::create
+(const String&                           name,
+	Scene*                                  scene,
+	const shared_ptr<Model>&                model,
+	const CFrame&                           position,
+	Array<float>                            speedRange,
+	Array<float>                            motionChangePeriodRange) {
+
+	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
+	const shared_ptr<FlyingEntity>& flyingEntity = createShared<FlyingEntity>();
+
+	// Initialize each base class, which parses its own fields
+	flyingEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
+	flyingEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
+	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange);
+
+	return flyingEntity;
+}
+
+
+void FlyingEntity::init(AnyTableReader& propertyTable) {
 	//TODO: implement load from any file here...
     init();
 }
 
 
-void TargetEntity::init() {
+void FlyingEntity::init() {
 }
 
 
-void TargetEntity::setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter) {
+void FlyingEntity::init(Array<float> speedRange, Array<float> motionChangePeriodRange) {
+	m_speedRange = speedRange;
+	m_motionChangePeriodRange = motionChangePeriodRange;
+}
+
+void FlyingEntity::setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter) {
     m_destinationPoints.fastClear();
     if (destinationArray.size() > 0) {
         const float distance = (destinationArray[0] - orbitCenter).length();
@@ -72,17 +121,17 @@ void TargetEntity::setDestinations(const Array<Point3>& destinationArray, const 
 }
 
 
-Any TargetEntity::toAny(const bool forceAll) const {
+Any FlyingEntity::toAny(const bool forceAll) const {
     Any a = VisibleEntity::toAny(forceAll);
-    a.setName("TargetEntity");
+    a.setName("FlyingEntity");
 
     // a["velocity"] = m_velocity;
 
     return a;
 }
-    
- 
-void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
+
+
+void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     // Do not call Entity::onSimulation; that will override with spline animation
 
     if (! (isNaN(deltaTime) || (deltaTime == 0))) {
@@ -91,7 +140,18 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
     simulatePose(absoluteTime, deltaTime);
 
-    while ((deltaTime > 0.000001f) && ! m_destinationPoints.empty()) {
+    while ((deltaTime > 0.000001f) && m_speed > 0.0f) {
+		if (m_destinationPoints.empty()) {
+			float motionChangePeriod = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
+			float speed = Random::common().uniform(m_speedRange[0], m_speedRange[1]);
+			float angularDistance = motionChangePeriod * speed;
+			
+			// find a vector perpendicular to the current position
+			Point3 perpen = findPerpendicularVector(m_frame.translation);
+			// rotate current position around perpen by the desired angular distance.
+			m_destinationPoints.pushBack(m_orbitCenter + rotateToward(m_frame.translation, perpen, angularDistance));
+		}
+
         if ((m_frame.translation - m_destinationPoints[0]).length() < 0.001f) {
             // Retire this destination. We are almost at the destination (linear and geodesic distances 
             // are the same when small), and the following math will be numerically imprecise if we

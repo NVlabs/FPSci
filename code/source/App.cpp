@@ -43,7 +43,7 @@ App::App(const GApp::Settings& settings) : GApp(settings) {
 void App::onInit() {
 	GApp::onInit();
 
-	scene()->registerEntitySubclass("TargetEntity", &TargetEntity::create);
+	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);
 
 	// load user setting from file
 	m_user = UserConfig::getUserConfig();
@@ -261,7 +261,7 @@ void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motion
     Ray ray = Ray::fromOriginAndDirection(m_debugCamera->frame().translation, dir);
 
     //distance = rng.uniform(2.0f, distance - 1.0f);
-    const shared_ptr<TargetEntity>& target =
+    const shared_ptr<FlyingEntity>& target =
         spawnTarget(ray.origin() + ray.direction() * radius,
             scale, false,
             Color3::wheelRandom());
@@ -323,7 +323,7 @@ void App::spawnRandomTarget() {
 
 		if ((distance > 2.0f) && (distance < finf())) {
             distance = rng.uniform(2.0f, distance - 1.0f);
-			const shared_ptr<TargetEntity>& target =
+			const shared_ptr<FlyingEntity>& target =
                 spawnTarget(ray.origin() + ray.direction() * distance, 
                     rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
                     Color3::wheelRandom());
@@ -346,10 +346,10 @@ void App::spawnRandomTarget() {
 }
 
 
-shared_ptr<TargetEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color) {
+shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color) {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
 
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
 
 	UniversalMaterial::Specification materialSpecification;
 	materialSpecification.setLambertian(Texture::Specification(color));
@@ -868,8 +868,14 @@ void App::fire() {
 	}
 
 	if (m_experimentConfig.playMode) {
-		m_fireSound->play(0.5f);
-		//m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 0.5f);
+		if (hitTarget) {
+			m_explosionSound->play(10.0f);
+			//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
+		}
+		else {
+			m_fireSound->play(0.5f);
+			//m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 0.5f);
+		}
 	}
 
 	if (m_experimentConfig.renderDecals && !hitTarget) {
@@ -953,12 +959,6 @@ void App::destroyTarget(int index) {
 	m_targetArray.fastRemove(index);
 
 	scene()->removeEntity(target->name());
-
-	if (m_experimentConfig.playMode) {
-		// 3D audio
-		m_explosionSound->play(10.0f);
-		//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
-	}
 }
 
 void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {
