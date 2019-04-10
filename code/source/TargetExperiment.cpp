@@ -268,7 +268,9 @@ void TargetExperiment::recordTrialResponse()
 void TargetExperiment::accumulateTrajectories()
 {
 	// recording target trajectories
-	Point3 targetPosition = m_app->m_targetArray[0]->frame().translation;
+	Point3 targetAbsolutePosition = m_app->m_targetArray[0]->frame().translation;
+	Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_app->m_spawnDistance, 0.0f, 0.0f);
+	Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
 
 	//// below for 2D direction calculation (azimuth and elevation)
 	//Point3 t = targetPosition.direction();
