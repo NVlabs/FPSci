@@ -3,10 +3,10 @@
     settingsVersion = 1; 
     users = ( 
         { 
-            cmp360 = 3; 
+            cmp360 = 30; 
             completedSessions = ( ); 
             id = "JK"; 
-            mouseDPI = 1; 
+            mouseDPI = 800; 
             settingsVersion = 1; 
         }, 
         { 
