@@ -80,6 +80,7 @@ protected:
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
+	Array<String> m_remainingSess;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
 	Queue<float>                    m_frameDurationQueue;

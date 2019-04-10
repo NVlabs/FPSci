@@ -103,6 +103,10 @@ void App::onInit() {
 
 
 	// Initialize the experiment if the user has sessions available
+	if (m_remainingSess.size() == 0) {
+		m_presentationState = PresentationState::complete;
+		return; //?
+	}
 	String filename = "result_data/" + m_experimentConfig.taskType + "_" + m_userTable.currentUser + "_" + Logger::genUniqueTimestamp() + ".db";
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
@@ -517,9 +521,11 @@ void App::makeGUI() {
 	m_mouseDPILabel =  p->addLabel(format("Mouse DPI: %f", getCurrUser()->mouseDPI));
 	m_cm360Label = p->addLabel(format("cm/360°: %f", getCurrUser()->cmp360));
 	//m_cm360NumberBox = p->addNumberBox("Mouse 360", &m_userTable.users[m_ddCurrentUser].cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
-	p->addButton("Save User Config", this, &App::userSaveButtonPress);
-	//p->addButton("Update User", this, &App::updateUser);
+	//p->addButton("Save User Config", this, &App::userSaveButtonPress);
+	p->addButton("Update User", this, &App::updateUser);
 	m_sessDropDown = p->addDropDownList("Session", m_experimentConfig.getSessionIdArray(), &m_ddCurrentSession);
+	Array<String> m_remainingSess;
+	m_remainingSess = updateSessionDropDown();
 	p->addButton("Update Session", this, &App::updateSessionPress);
     m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
 
@@ -535,7 +541,15 @@ void App::userSaveButtonPress(void) {
 }	
 
 void App::updateUser(void){
-	// TODO: Add anything we need here (i.e. new output file)
+	m_mouseDPILabel->setCaption(format("Mouse DPI: %f", m_userTable.users[m_ddCurrentUser].mouseDPI));
+	m_cm360Label->setCaption(format("cm/360°: %f", getCurrUser()->cmp360));
+	updateSessionDropDown();
+	// Check for change in user drop down
+	if (m_lastSeenUser != m_ddCurrentUser) {
+
+		if(m_remainingSess.size() > 0) updateSession(updateSessionDropDown().randomElement());
+		m_lastSeenUser = m_ddCurrentUser;
+	}
 }
 
 Array<String> App::getSessListForUser() {
@@ -548,17 +562,16 @@ Array<String> App::getSessListForUser() {
 
 Array<String> App::updateSessionDropDown(void) {
 	// Create updated session list
-	Array<String> sessList = getSessListForUser();
-	//if (sessList.size() == 0) sessList = m_experimentConfig.getSessionIdArray();		// Temporary, if all sessions are done repeat them
-	m_sessDropDown->setList(sessList);
+	m_remainingSess = getSessListForUser();
+	m_sessDropDown->setList(m_remainingSess);
 
 	// Print message to log
 	logPrintf("Updated session drop down to:\n");
-	for (String id : sessList) {
+	for (String id : m_remainingSess) {
 		logPrintf("\t%s\n", id);
 	}
 
-	return sessList;
+	return m_remainingSess;
 }
 
 String App::getCurrSessId(void) {
@@ -602,6 +615,12 @@ void App::updateSession(String id) {
 		dt = 1.0f / float(window()->settings().refreshRate);
 	}
 
+	if (m_remainingSess.size() == 0) {
+		logPrintf("No sessions remaining for selected user.");
+		m_presentationState = PresentationState::complete;
+		m_ex->updatePresentationState();
+		return; //?
+	}
 	// Initialize the experiment.
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
@@ -609,6 +628,9 @@ void App::updateSession(String id) {
 	else if (m_experimentConfig.taskType == "target") {
 		m_ex = TargetExperiment::create(this);
 	}
+
+	// Update session drop-down selection
+	m_sessDropDown->setSelectedValue(id);
 
 	// TODO: Remove the following by invoking a call back.
 	m_ex->onInit();
@@ -762,7 +784,6 @@ bool App::onEvent(const GEvent& event) {
         // switch to first or 3rd person mode
         updateMouseSensitivity();
     }
-
 	return false;
 }
 
@@ -972,14 +993,6 @@ void App::onUserInput(UserInput* ui) {
 	}
 
 	m_debugCamera->filmSettings().setSensitivity(m_sceneBrightness);
-
-	// Check for change in user drop down
-	if (m_lastSeenUser != m_ddCurrentUser) {
-		m_mouseDPILabel->setCaption(format("Mouse DPI: %f", m_userTable.users[m_ddCurrentUser].mouseDPI));
-		m_cm360Label->setCaption(format("cm/360°: %f", getCurrUser()->cmp360));
-		updateSessionDropDown();
-		m_lastSeenUser = m_ddCurrentUser;
-	}
 
 }
 
