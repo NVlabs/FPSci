@@ -159,8 +159,8 @@ void TargetExperiment::updatePresentationState()
 				m_app->userSaveButtonPress();	// Press the save button for the user...
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() > 0) {
-					//String nextSess = remaining.randomElement();				// Choose a random next session
-					//m_app->updateSession(nextSess);								// Update the session
+					String nextSess = remaining.randomElement();				// Choose a random next session
+					m_app->updateSession(nextSess);								// Update the session
 				}
 				else {
 					m_feedbackMessage = "All Sessions Complete!";

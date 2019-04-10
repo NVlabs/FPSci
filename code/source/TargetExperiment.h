@@ -26,6 +26,11 @@ public:
 		return createShared<TargetExperiment>(app);
 	}
 
+	static shared_ptr<TargetExperiment> create_empty(App* app) {
+		shared_ptr<TargetExperiment> texp = create(app);
+		texp->m_psych.mMeasurements = {};
+	}
+
 	/**creates a new target with randomized motion path and gives it to the app */
 	void initTargetAnimation();
 
