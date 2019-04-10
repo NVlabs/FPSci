@@ -1,8 +1,27 @@
-// copy this file to userconfig.Any before first run
 { 
-    "settingsVersion" : 1, 
-	"subjectID" : "enter ID", 
-    "mouseDPI" : 800,
-	"cmp360" : 30,
-	"completedSessions": []
+    currentUser = "BB"; 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            cmp360 = 3; 
+            completedSessions = ( ); 
+            id = "JK"; 
+            mouseDPI = 1; 
+            settingsVersion = 1; 
+        }, 
+        { 
+            cmp360 = 300; 
+            completedSessions = ( ); 
+            id = "JS"; 
+            mouseDPI = 800; 
+            settingsVersion = 1; 
+        }, 
+        { 
+            cmp360 = 30; 
+            completedSessions = ( ); 
+            id = "BB"; 
+            mouseDPI = 800; 
+            settingsVersion = 1; 
+        } ); 
+    
 } 

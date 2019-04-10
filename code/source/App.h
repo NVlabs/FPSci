@@ -74,9 +74,13 @@ protected:
 	RealTime						m_explosionEndTime;
 
 	GuiDropDownList*				m_sessDropDown;
+	GuiLabel*						m_mouseDPILabel;
+	GuiLabel*						m_cm360Label;
+	//GuiNumberBox<double>*			m_cm360NumberBox;
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
+	Array<String> m_remainingSess;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
 	Queue<float>                    m_frameDurationQueue;
@@ -93,6 +97,11 @@ protected:
 	//bool                            m_renderHud = false;
 	bool                            m_renderFPS = false;
 	bool                            m_renderHitscan = false;
+
+	// Drop down selection writebacks
+	int								m_ddCurrentUser = 0;
+	int								m_lastSeenUser = 0;
+	int								m_ddCurrentSession = 0;
 
 	/** Set to true to lower rendering quality to increase performance. */
 	//bool                              m_emergencyTurbo = false;
@@ -113,7 +122,9 @@ protected:
 	void makeGUI();
 	void loadModels();
 	void destroyTarget(int index);
-	void printExpConfigToLog();
+	void printExpConfigToLog(ExperimentConfig config);
+	void printUserTableToLog(UserTable table);
+	void updateUser(void);
 
 	CComPortDriver m_com;
 
@@ -134,7 +145,7 @@ public:
 	Array<Projectile>               m_projectileArray;
 
 	/** Parameter configurations */
-	UserConfig                      m_user;
+	UserTable						m_userTable;
 	ExperimentConfig                m_experimentConfig;
 
 	//TODO: Remove it when we are using G3D timer
@@ -188,7 +199,13 @@ public:
 
 	Array<String> updateSessionDropDown(void);
 
-	String getCurrentSessionId(void);
+	Array<String> getSessListForUser();
+
+	String getCurrSessId(void);
+
+	void markSessComplete(String id);
+
+	shared_ptr<UserConfig> getCurrUser(void);
 
 	void updateSessionPress(void);
 

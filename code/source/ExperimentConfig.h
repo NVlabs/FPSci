@@ -33,21 +33,21 @@ public:
 
 class UserConfig {
 public:
-    String subjectID = "anon";			// Subject ID (as recorded in output DB)
-    double mouseDPI = 800.0;			// Mouse DPI setting
-    double cmp360 = 12.75;				// Mouse sensitivity, reported as centimeters per 360�
-	int currentSession = 0;				// Currently selected session
-	Array<String> completedSessions;	// List of completed sessions for this user
+    String id = "anon";						// Subject ID (as recorded in output DB)
+    double mouseDPI = 800.0;				// Mouse DPI setting
+    double cmp360 = 12.75;					// Mouse sensitivity, reported as centimeters per 360�
+	int currentSession = 0;					// Currently selected session
+	Array<String> completedSessions = {};	// List of completed sessions for this user
     UserConfig() {}
 
     UserConfig(const Any& any) {
-        int settingsVersion; // used to allow different version numbers to be loaded differently
+        int settingsVersion = 1; // used to allow different version numbers to be loaded differently
         AnyTableReader reader(any);
         reader.getIfPresent("settingsVersion", settingsVersion);
 
         switch (settingsVersion) {
         case 1:
-            reader.getIfPresent("subjectID", subjectID);
+            reader.getIfPresent("id", id);
             reader.getIfPresent("mouseDPI", mouseDPI);
             reader.getIfPresent("cmp360", cmp360);
 			reader.getIfPresent("completedSessions", completedSessions);
@@ -64,15 +64,65 @@ public:
 	Any toAny(const bool forceAll=true) const {
 		Any a(Any::TABLE);
 		a["settingsVersion"] = 1;							// Create a version 1 file
-		a["subjectID"] = subjectID;							// Include subject ID
+		a["id"] = id;										// Include subject ID
 		a["mouseDPI"] = mouseDPI;							// Include mouse DPI
 		a["cmp360"] = cmp360;								// Include cm/360
 		a["completedSessions"] = completedSessions;			// Include completed sessions list
 		return a;
 	}
 
+	void addCompletedSession(String id) {
+		completedSessions.append(id);
+	}
+
+};
+
+class UserTable {
+public:
+	String currentUser = "None";
+	Array<UserConfig> users = {};
+
+	UserTable() {};
+
+	UserTable(const Any& any) {
+		int settingsVersion = 1;
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("currentUser", currentUser);
+			reader.get("users", users);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in UserTable.\n", settingsVersion);
+			break;
+		}
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["settingsVersion"] = 1;						// Create a version 1 file
+		a["currentUser"] = currentUser;					// Include current subject ID
+		a["users"] = users;								// Include updated subject table
+		return a;
+	}
+
+	shared_ptr<UserConfig> getUserById(String id) {
+		for (UserConfig user : users) {
+			if (!user.id.compare(id)) return std::make_shared<UserConfig>(user);
+		}
+		return nullptr;
+	}
+
+	Array<String> getIds() {
+		Array<String> ids;
+		for (UserConfig user : users) ids.append(user.id);
+		return ids;
+	}
+
 	// Simple rotine to get the user configuration from file
-	static Any getUserConfig(void) {
+	static Any getUserTable(void) {
 		// load user setting from file
 		if (!FileSystem::exists("userconfig.Any")) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
@@ -103,7 +153,7 @@ public:
 			reader.get("intensityCounts", intensityCounts);
 			break;
 		default:
-			debugPrintf("Settings version '%d' not recognized in TrialConfig.\n", settingsVersion);
+			debugPrintf("Settings version '%d' not recognized in ReactionConfig.\n", settingsVersion);
 			break;
 		}
 	}
@@ -147,7 +197,7 @@ public:
 			reader.getIfPresent("accelGravity", accelGravity);
 			break;
 		default:
-			debugPrintf("Settings version '%d' not recognized in TrialConfig.\n", settingsVersion);
+			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
 			break;
 		}
 		//reader.verifyDone();
@@ -177,7 +227,6 @@ public:
 			break;
 		}
 	}
-
 };
 
 class SessionConfig {
@@ -187,8 +236,7 @@ public:
 	unsigned int frameDelay = 0;				// Integer frame delay (in frames)
 	String expMode = "training";				// String indicating whether session is training or real
 	String	selectionOrder = "random";			// "Random", "Round Robbin", "In Order"
-	Array<String> trials;
-	Array<int> trialCounts;
+	Array<TrialCount> trials;
 
 	SessionConfig() : frameRate(240.0f), frameDelay(0), selectionOrder("random") {}
 
@@ -205,7 +253,6 @@ public:
 			reader.getIfPresent("selectionOrder", selectionOrder);
 			reader.getIfPresent("expMode", expMode);
 			reader.get("trials", trials);
-			reader.get("trialCounts", trialCounts);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -279,11 +326,11 @@ public:
 		return ids;
 	}
 
-	SessionConfig* getSessionConfigById(String id) {
+	shared_ptr<SessionConfig> getSessionConfigById(String id) {
 		for (int i = 0; i < sessions.size(); i++) {
-			if (!sessions[i].id.compare(id)) return &sessions[i];
+			if (!sessions[i].id.compare(id)) return std::make_shared<SessionConfig>(sessions[i]);
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	int getSessionIndex(String id) {
@@ -295,19 +342,19 @@ public:
 	}
 	
 	// Get a pointer to a target config by ID
-	TargetConfig* getTargetConfigById(String id) {
+	shared_ptr<TargetConfig> getTargetConfigById(String id) {
 		for (int i = 0; i < targets.size(); i++) {
-			if (!targets[i].id.compare(id)) return &targets[i];
+			if (!targets[i].id.compare(id)) return std::make_shared<TargetConfig>(targets[i]);
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	// Get a pointer to a reaction config by ID
-	ReactionConfig* getReactionConfigById(String id) {
+	shared_ptr<ReactionConfig> getReactionConfigById(String id) {
 		for (int i = 0; i < reactions.size(); i++) {
-			if (!reactions[i].id.compare(id)) return &reactions[i];
+			if (!reactions[i].id.compare(id)) return std::make_shared<ReactionConfig>(reactions[i]);
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	Array<Param> getTargetExpConditions(String id) {
@@ -319,7 +366,7 @@ public:
 	Array<Param> getTargetExpConditions(int sessionIndex) {
 		Array<Param> params;
 		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
-			String id = sessions[sessionIndex].trials[j];
+			String id = sessions[sessionIndex].trials[j].id;
 			// Append training trial
 			Param p;
 			p.add("minEccH", getTargetConfigById(id)->eccH[0]);
@@ -334,7 +381,7 @@ public:
 			p.add("maxMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
 			p.add("minSpeed", getTargetConfigById(id)->speed[0]);
 			p.add("maxSpeed", getTargetConfigById(id)->speed[1]);
-			p.add("trialCount", (float)sessions[sessionIndex].trialCounts[j]);
+			p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
 			params.append(p);
 		}
 		return params;
@@ -348,12 +395,12 @@ public:
 	Array<Param> getReactionExpConditions(int sessionIndex) {
 		Array<Param> params;
 		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
-			for (float intensity : getReactionConfigById(sessions[sessionIndex].trials[j])->intensities) {
+			for (float intensity : getReactionConfigById(sessions[sessionIndex].trials[j].id)->intensities) {
 				Param p;
 				p.add("intensity", intensity);
 				p.add("targetFrameRate", sessions[sessionIndex].frameRate);
 				p.add("targetFrameLag", (float)sessions[sessionIndex].frameDelay);
-				p.add("trialCount", (float)sessions[sessionIndex].trialCounts[j]);
+				p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
 				params.append(p);
 			}
 		}

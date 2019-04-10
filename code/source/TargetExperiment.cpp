@@ -5,12 +5,14 @@
 #include <fstream>
 #include <map>
 
-void TargetExperiment::initPsychHelper()
+bool TargetExperiment::initPsychHelper()
 {
 	// Add conditions, one per one initial displacement value.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
 	// Iterate over the sessions here and add a config for each
-	Array<Param> params = m_config.getTargetExpConditions(m_app->getCurrentSessionId());
+	shared_ptr<SessionConfig> sess = m_config.getSessionConfigById(m_app->getCurrSessId());
+	if (sess == nullptr) return false;
+	Array<Param> params = m_config.getTargetExpConditions(sess->id);
 	for (auto p : params) {
 		// Define properties of psychophysical methods
 		PsychophysicsDesignParameter psychParam;
@@ -20,7 +22,7 @@ void TargetExperiment::initPsychHelper()
 		// We need something in mStimLevels to run psychphysics...
 		psychParam.mStimLevels.push_back(m_config.taskDuration);		// Shorter task is more difficult. However, we are currently doing unlimited time.
 		psychParam.mMaxTrialCounts.push_back((int)p.val["trialCount"]);		// Get the trial count from the parameters
-		p.add("session", m_app->getCurrentSessionId().c_str());
+		p.add("session", m_app->getCurrSessId().c_str());
 		m_psych.addCondition(p, psychParam);
 	}
 
@@ -29,6 +31,7 @@ void TargetExperiment::initPsychHelper()
 
 	// call it once all conditions are defined.
 	m_psych.chooseNextCondition();
+	return true;
 }
 
 void TargetExperiment::onInit() {
@@ -36,8 +39,11 @@ void TargetExperiment::onInit() {
 	m_app->m_presentationState = PresentationState::initial;
 	m_feedbackMessage = "Aim at the target and shoot!";
 	
-	m_config = m_app->m_experimentConfig;								// Setup config from app
-	initPsychHelper();													// Initialize PsychHelper based on the configuration.
+	m_config = m_app->m_experimentConfig;									// Setup config from app
+	m_hasSession = initPsychHelper();
+	if (!m_hasSession) {												// Initialize PsychHelper based on the configuration.
+		m_app->m_presentationState = PresentationState::feedback;
+	}
 }
 
 void TargetExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)
@@ -164,13 +170,17 @@ void TargetExperiment::updatePresentationState()
 			if (m_psych.isComplete()) {
 				m_feedbackMessage = "Session complete. Thanks!";
 				newState = PresentationState::complete;
-				m_app->m_user.completedSessions.append(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
-				m_app->userSaveButtonPress();	// Press the save button for the user...
-				Array<String> remaining = m_app->updateSessionDropDown();
-				if (remaining.size() > 0) {
-					//String nextSess = remaining.randomElement();				// Choose a random next session
-					//m_app->updateSession(nextSess);								// Update the session
+				if (m_hasSession) {
+					m_app->markSessComplete(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
+					m_app->userSaveButtonPress();	// Press the save button for the user...
+					Array<String> remaining = m_app->updateSessionDropDown();
+					if (remaining.size() > 0) {
+						String nextSess = remaining.randomElement();				// Choose a random next session
+						m_app->updateSession(nextSess);								// Update the session
+					}
+					else m_feedbackMessage = "All Sessions Complete!";
 				}
+				else m_feedbackMessage = "All Sessions Complete!";
 			}
 			else {
 				m_feedbackMessage = "";

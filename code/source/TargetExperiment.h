@@ -25,6 +25,11 @@ public:
 		return createShared<TargetExperiment>(app);
 	}
 
+	static shared_ptr<TargetExperiment> create_empty(App* app) {
+		shared_ptr<TargetExperiment> texp = create(app);
+		texp->m_psych.mMeasurements = {};
+	}
+
 	/**creates a new target with randomized motion path and gives it to the app */
 	void initTargetAnimation();
 
@@ -52,5 +57,5 @@ public:
 	@param action - one of "aim" "hit" and "miss" */
 	virtual void accumulatePlayerAction(String action) override;
 
-	void initPsychHelper();
+	bool initPsychHelper();
 };

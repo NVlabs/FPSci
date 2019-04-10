@@ -4,19 +4,21 @@
 #include <fstream>
 #include <map>
 
-void ReactionExperiment::initPsychHelper()
+bool ReactionExperiment::initPsychHelper()
 {
 	// Add conditions, one per one intensity.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
-	Array<Param> params = m_config.getReactionExpConditions(m_app->getCurrentSessionId());
+	shared_ptr<SessionConfig> sess = m_config.getSessionConfigById(m_app->getCurrSessId());
+	if (sess == nullptr) return false;
+	Array<Param> params = m_config.getReactionExpConditions(sess->id);
 	for (auto p : params) {
 		// Define properties of psychophysical methods
 		PsychophysicsDesignParameter psychParam;
 		psychParam.mMeasuringMethod = PsychophysicsMethod::MethodOfConstantStimuli;
 		psychParam.mIsDefault = false;
 		psychParam.mStimLevels.push_back(m_config.taskDuration);		// Shorter task is more difficult. However, we are currently doing unlimited time.
-		psychParam.mMaxTrialCounts.push_back((int)p.val["trialCount"]);		
-		p.add("session", m_app->getCurrentSessionId().c_str());
+		psychParam.mMaxTrialCounts.push_back((int)p.val["trialCount"]);
+		p.add("session", m_app->getCurrSessId().c_str());
 		m_psych.addCondition(p, psychParam);
 	}
 
@@ -25,6 +27,7 @@ void ReactionExperiment::initPsychHelper()
 
 	// call it once all conditions are defined.
 	m_psych.chooseNextCondition();
+	return true;
 }
 
 void ReactionExperiment::onInit() {
@@ -33,7 +36,10 @@ void ReactionExperiment::onInit() {
 	m_feedbackMessage = "Reaction speed test. Click on green!";
 
 	m_config = m_app->m_experimentConfig;				// Get configuration
-	initPsychHelper();									// Initialize PsychHelper based on the configuration.
+	m_hasSession = initPsychHelper();					// Initialize PsychHelper based on the configuration.
+	if (!m_hasSession) {								// Check for invalid session (nothing to do)
+		m_app->m_presentationState = PresentationState::feedback;
+	}
 }
 
 void ReactionExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)
@@ -131,13 +137,17 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 			if (m_psych.isComplete()) {
 				m_feedbackMessage = "Session complete. Thanks!";
 				newState = PresentationState::complete;
-				m_app->m_user.completedSessions.append(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
-				m_app->userSaveButtonPress();
-				Array<String> remaining = m_app->updateSessionDropDown();
-				if (remaining.size() > 0) {
-					//String nextSess = remaining.randomElement();				// Choose a random next session
-					//m_app->updateSession(nextSess);								// Update the session
+				if (m_hasSession) {
+					m_app->getCurrUser()->completedSessions.append(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
+					m_app->userSaveButtonPress();
+					Array<String> remaining = m_app->updateSessionDropDown();
+					if (remaining.size() > 0) {
+						String nextSess = remaining.randomElement();				// Choose a random next session
+						m_app->updateSession(nextSess);								// Update the session
+					}
+					else m_feedbackMessage = "All Sessions Complete!";
 				}
+				else m_feedbackMessage = "All Sessions Complete!";
 			}
 			else {
 				m_feedbackMessage = "";

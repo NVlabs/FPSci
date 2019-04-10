@@ -100,6 +100,7 @@ protected:
 	int m_response;
 	//Param m_config; // All parameters common in the experiment.
 	int m_clickCount = 0;
+	bool m_hasSession;
 
 	String m_feedbackMessage;
 	Stopwatch stopwatch;
@@ -120,6 +121,9 @@ public:
 	virtual void onUserInput(UserInput * ui) = 0;
 	//virtual void onGraphics2D(RenderDevice * rd, Array<shared_ptr<Surface2D>>& posed2D) = 0;
 	virtual void onGraphics2D(RenderDevice * rd) = 0;
+	virtual void updatePresentationState(void) {};
+	virtual void updatePresentationState(RealTime framePeriod) {};
+
 
 	/** result recording */
 	virtual void recordTrialResponse() = 0;
@@ -127,7 +131,7 @@ public:
 	virtual void countClick() { m_clickCount++; }
 
 	/** PsychHelper-related */
-	virtual void initPsychHelper() = 0;
+	virtual bool initPsychHelper() = 0;
 
 	std::string mResultFileName;
 	App* m_app;

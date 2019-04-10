@@ -42,5 +42,5 @@ public:
 
 	void recordTrialResponse();
 
-	void initPsychHelper();
+	bool initPsychHelper();
 };
