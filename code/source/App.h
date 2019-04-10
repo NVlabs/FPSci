@@ -146,9 +146,6 @@ public:
 	/** Pointer to Logger class */
 	shared_ptr<Logger> m_logger;				// Why can't we do what Joohwan did above for experiment?
 
-	/** To control target motion */
-	CFrame                          m_motionFrame; // object at 10 m away in -z direction in this coordinate frame
-
 	/** Call to change the reticle. */
 	void setReticle(int r);
 
@@ -170,6 +167,19 @@ public:
 
 	/** Creates a spinning target */
 	shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red());
+
+	/** Creates a flying target */
+	shared_ptr<FlyingEntity> spawnFlyingTarget(
+		const Point3& position,
+		float scale,
+		const Color3& color,
+		Array<float> speedRange,
+		Array<float> motionChangePeriodRange,
+		Point3 orbitCenter
+	);
+
+	/** Creates a jumping target */
+	//shared_ptr<JumpingEntity> spawnJumpingTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red());
 
 	/** Call to set the 3D scene brightness. Default is 1.0. */
 	void setSceneBrightness(float b);
@@ -253,8 +263,6 @@ public:
 
 	void resetView();
 	Point2 getViewDirection();
-	Point2 getTargetDirection();
-	Point3 getTargetPosition();
 	Point2 getMouseMotion(); // TODO: how do we do this?
 };
 

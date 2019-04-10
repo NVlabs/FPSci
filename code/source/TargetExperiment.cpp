@@ -57,24 +57,46 @@ float TargetExperiment::randSign() {
 void TargetExperiment::initTargetAnimation() {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
+	float visualSize = G3D::Random().common().uniform(m_psych.getParam().val["minVisualSize"], m_psych.getParam().val["maxVisualSize"]);
+
 	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_app->m_spawnDistance, 0.0f, 0.0f);
-	m_app->m_motionFrame = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
-	m_app->m_motionFrame.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
+	CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
+	f.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (m_app->m_presentationState == PresentationState::task) {
-		m_speed = G3D::Random::common().uniform(m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"]);
 		float rot_pitch = randSign() * Random::common().uniform(m_psych.getParam().val["minEccV"], m_psych.getParam().val["maxEccV"]);
 		float rot_yaw = randSign() * Random::common().uniform(m_psych.getParam().val["minEccH"], m_psych.getParam().val["maxEccH"]);
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
+		f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
+		f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
 
-		// Apply roll rotation by a random amount (random angle in degree from 0 to 360)
-		float randomAngleDegree = G3D::Random::common().uniform() * 360;
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
+		m_app->spawnFlyingTarget(
+			f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
+			visualSize,
+			m_app->m_targetColor,
+			Array<float>{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
+			Array<float>{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"]},
+			initialSpawnPos
+		);
+		//m_app->spawnFlyingTarget(
+		//	f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
+		//	visualSize,
+		//	m_app->m_targetColor,
+		//	Array<float>{ 2.f, 2.f },
+		//	Array<float>{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"]},
+		//	initialSpawnPos
+		//);
 	}
 	else {
-		m_speed = 0;
+		Point3 targetPos = f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance));
+		m_app->spawnFlyingTarget(
+			f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
+			visualSize,
+			m_app->m_targetColor,
+			Array<float>{ 0.0f, 0.0f },
+			Array<float>{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"] },
+			initialSpawnPos
+		);
 	}
 
 	// Full health for the target
@@ -180,56 +202,7 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	// 1. Update presentation state and send task performance to psychophysics library.
 	updatePresentationState();
 
-	// 2. Check if motionChange is required (happens only during 'task' state with a designated level of chance).
-	if (m_app->m_presentationState == PresentationState::task)
-	{
-		if (m_app->timer.getTime() > m_lastMotionChangeAt + m_psych.getParam().val["motionChangePeriod"])
-		{
-			// If yes, rotate target coordinate frame by random (0~360) angle in roll direction
-			m_lastMotionChangeAt = m_app->timer.getTime();
-			float randomAngleDegree = G3D::Random::common().uniform() * 360;
-			m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::rollDegrees(randomAngleDegree)).approxCoordinateFrame();
-		}
-	}
-
-	// 3. update target location (happens only during 'task' and 'feedback' states).
-	if (m_app->m_presentationState == PresentationState::task)
-	{
-		float rotationAngleDegree = (float)rdt * m_speed;
-
-		// Attempts to bound the target within visible space.
-		//float currentYaw;
-		//float ignore;
-		//m_motionFrame.getXYZYPRDegrees(ignore, ignore, ignore, currentYaw, ignore, ignore);
-		//static int reverse = 1;
-		//const float change = abs(currentYaw - rotationAngleDegree);
-		//// If we are headed in the wrong direction, reverse the yaw.
-		//if (change > m_yawBound && change > abs(currentYaw)) {
-		//    reverse *= -1;
-		//}
-		//m_motionFrame = (m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-rotationAngleDegree * reverse)).approxCoordinateFrame();
-
-		m_app->m_motionFrame = (m_app->m_motionFrame.toMatrix4() * Matrix4::yawDegrees(-rotationAngleDegree)).approxCoordinateFrame();
-
-	}
-
-	// 4. Clear m_TargetArray. Append an object with m_targetLocation if necessary ('task' and 'feedback' states).
-	Point3 t_pos = m_app->m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance));
-
-
-	if (m_app->m_targetHealth > 0.f) {
-	//if (m_app->m_presentationState == PresentationState::task) {
-			// Don't spawn a new target every frame
-		if (m_app->m_targetArray.size() == 0) {
-			m_app->spawnTarget(t_pos, m_psych.getParam().val["visualSize"], false, m_app->m_targetColor);
-		}
-		else {
-			// TODO: don't hardcode assumption of a single target
-			m_app->m_targetArray[0]->setFrame(t_pos);
-		}
-	}
-
-	// record target trajectories, view direction trajectories, and mouse motion.
+	// 2. Record target trajectories, view direction trajectories, and mouse motion.
 	if (m_app->m_presentationState == PresentationState::task)
 	{
 		accumulateTrajectories();
@@ -295,7 +268,13 @@ void TargetExperiment::recordTrialResponse()
 void TargetExperiment::accumulateTrajectories()
 {
 	// recording target trajectories
-	Point3 targetPosition = m_app->getTargetPosition();
+	Point3 targetPosition = m_app->m_targetArray[0]->frame().translation;
+
+	//// below for 2D direction calculation (azimuth and elevation)
+	//Point3 t = targetPosition.direction();
+	//float az = atan2(-t.z, -t.x) * 180 / pif();
+	//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
+
 	std::vector<std::string> targetTrajectoryValues = {
 		std::to_string(System::time()),
 		std::to_string(targetPosition.x),

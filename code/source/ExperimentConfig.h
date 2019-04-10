@@ -328,9 +328,10 @@ public:
 			p.add("maxEccV", getTargetConfigById(id)->eccV[1]);
 			p.add("targetFrameRate", sessions[sessionIndex].frameRate);
 			p.add("targetFrameLag", (float)sessions[sessionIndex].frameDelay);
-			// TODO: implement visual size min/max and motion change period
-			p.add("visualSize", getTargetConfigById(id)->visualSize[0]);
-			p.add("motionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
+			p.add("minVisualSize", getTargetConfigById(id)->visualSize[0]);
+			p.add("maxVisualSize", getTargetConfigById(id)->visualSize[0]);
+			p.add("minMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
+			p.add("maxMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
 			p.add("minSpeed", getTargetConfigById(id)->speed[0]);
 			p.add("maxSpeed", getTargetConfigById(id)->speed[1]);
 			p.add("trialCount", (float)sessions[sessionIndex].trialCounts[j]);

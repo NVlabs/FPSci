@@ -70,7 +70,8 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	const shared_ptr<Model>&                model,
 	const CFrame&                           position,
 	Array<float>                            speedRange,
-	Array<float>                            motionChangePeriodRange) {
+	Array<float>                            motionChangePeriodRange,
+	Point3                                  orbitCenter) {
 
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
 	const shared_ptr<FlyingEntity>& flyingEntity = createShared<FlyingEntity>();
@@ -78,7 +79,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	// Initialize each base class, which parses its own fields
 	flyingEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
 	flyingEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange);
+	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, orbitCenter);
 
 	return flyingEntity;
 }
@@ -94,9 +95,15 @@ void FlyingEntity::init() {
 }
 
 
-void FlyingEntity::init(Array<float> speedRange, Array<float> motionChangePeriodRange) {
-	m_speedRange = speedRange;
+void FlyingEntity::init(Array<float> angularSpeedRange, Array<float> motionChangePeriodRange, Point3 orbitCenter) {
+	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
+	m_orbitCenter = orbitCenter;
+
+	const float radius = (m_frame.translation - m_orbitCenter).length();
+	float angularSpeed = G3D::Random().common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+	// [m/s] = [m/radians] * [radians/s]
+	m_speed = radius * (angularSpeed * pif() / 180.0f);
 }
 
 void FlyingEntity::setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter) {
@@ -130,7 +137,6 @@ Any FlyingEntity::toAny(const bool forceAll) const {
     return a;
 }
 
-
 void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     // Do not call Entity::onSimulation; that will override with spline animation
 
@@ -143,13 +149,22 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     while ((deltaTime > 0.000001f) && m_speed > 0.0f) {
 		if (m_destinationPoints.empty()) {
 			float motionChangePeriod = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
-			float speed = Random::common().uniform(m_speedRange[0], m_speedRange[1]);
-			float angularDistance = motionChangePeriod * speed;
-			
+			float angularSpeed = G3D::Random().common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+			float angularDistance = motionChangePeriod * angularSpeed;
+			angularDistance = angularDistance > 170.f ? 170.0f : angularDistance; // replace with 170 deg if larger than 170.
+
+			// [m/s] = [m/radians] * [radians/s]
+			const float radius = (m_frame.translation - m_orbitCenter).length();
+			m_speed = radius * (angularSpeed * pif() / 180.0f);
+
+			// relative position to orbit center
+			Point3 relPos = m_frame.translation - m_orbitCenter;
 			// find a vector perpendicular to the current position
-			Point3 perpen = findPerpendicularVector(m_frame.translation);
-			// rotate current position around perpen by the desired angular distance.
-			m_destinationPoints.pushBack(m_orbitCenter + rotateToward(m_frame.translation, perpen, angularDistance));
+			Point3 perpen = findPerpendicularVector(relPos);
+			// calculate destination point
+			Point3 dest = m_orbitCenter + rotateToward(relPos, perpen, angularDistance);
+			// add destination point.
+			m_destinationPoints.pushBack(dest);
 		}
 
         if ((m_frame.translation - m_destinationPoints[0]).length() < 0.001f) {

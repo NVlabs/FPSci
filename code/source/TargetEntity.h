@@ -10,7 +10,7 @@ protected:
 	Point3                          m_orbitCenter;
 
 	/** Properties defining target behavior */
-	Array<float>                    m_speedRange = Array<float>{ 0.0f, 4.0f };
+	Array<float>                    m_angularSpeedRange = Array<float>{ 0.0f, 4.0f };
 	Array<float>                    m_motionChangePeriodRange = Array<float>{ 10000.0f, 10000.0f };
 
     /** The target will move through these points along arcs around
@@ -23,7 +23,7 @@ protected:
 
 	void init();
 
-	void init(Array<float> speedRange, Array<float> motionChangePeriodRange);
+	void init(Array<float> angularSpeedRange, Array<float> motionChangePeriodRange, Point3 orbitCenter);
 
 public:
 
@@ -56,8 +56,9 @@ public:
 		Scene*                         scene,
 		const shared_ptr<Model>&       model,
 		const CFrame&                  position,
-		Array<float>                   m_speedRange,
-		Array<float>                   m_motionChangePeriodRange);
+		Array<float>                   speedRange,
+		Array<float>                   motionChangePeriodRange,
+		Point3                         orbitCenter);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
         modify at least the name of the Table returned by the base class, which will be "Entity"

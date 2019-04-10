@@ -358,17 +358,60 @@ shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, b
 
 	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
 	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-    target->setPose(amPose);
+	target->setPose(amPose);
 
-    target->setFrame(position);
-    /*
+	target->setFrame(position);
+	/*
 	// Don't set a track. We'll take care of the positioning after creation
-    String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
+	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
 	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
 	target->setTrack(track);
-    */
-	
-    target->setShouldBeSaved(false);
+	*/
+
+	target->setShouldBeSaved(false);
+	m_targetArray.append(target);
+	scene()->insert(target);
+	return target;
+}
+
+shared_ptr<FlyingEntity> App::spawnFlyingTarget(
+	const Point3& position,
+	float scale,
+	const Color3& color,
+	Array<float> speedRange,
+	Array<float> motionChangePeriodRange,
+	Point3 orbitCenter)
+{
+	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
+
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(
+		format("target%03d", ++m_lastUniqueID),
+		scene().get(),
+		m_targetModelArray[scaleIndex],
+		CFrame(),
+		speedRange,
+		motionChangePeriodRange,
+		orbitCenter
+	);
+
+	UniversalMaterial::Specification materialSpecification;
+	materialSpecification.setLambertian(Texture::Specification(color));
+	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+
+	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
+	target->setPose(amPose);
+
+	target->setFrame(position);
+	/*
+	// Don't set a track. We'll take care of the positioning after creation
+	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
+	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
+	target->setTrack(track);
+	*/
+
+	target->setShouldBeSaved(false);
 	m_targetArray.append(target);
 	scene()->insert(target);
 	return target;
@@ -651,24 +694,6 @@ Point2 App::getViewDirection()
 	float az = atan2(- view_cartesian.z, - view_cartesian.x) * 180 / pif();
 	float el = atan2(view_cartesian.y, sqrtf(view_cartesian.x * view_cartesian.x + view_cartesian.z * view_cartesian.z)) * 180 / pif();
 	return Point2(az, el);
-}
-
-Point2 App::getTargetDirection()
-{
-	// returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.	{   // returns the 3D position of the target measured w.r.t viewpoint
-	Point3 t_pos = m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-	Point3 target_cartesian = (t_pos - m_debugCamera->frame().translation);
-	target_cartesian = target_cartesian / target_cartesian.length();
-	float az = atan2(-target_cartesian.z, -target_cartesian.x) * 180 / pif();
-	float el = atan2(target_cartesian.y, sqrtf(target_cartesian.x * target_cartesian.x + target_cartesian.z * target_cartesian.z)) * 180 / pif();
-	return Point2(az, el);
-}
-
-Point3 App::getTargetPosition()
-{   // returns the 3D position of the target measured w.r.t viewpoint
-	Point3 t_pos = m_motionFrame.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-	Point3 target_cartesian = (t_pos - m_debugCamera->frame().translation);
-	return target_cartesian;
 }
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
