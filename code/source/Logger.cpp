@@ -15,8 +15,8 @@ String Logger::genUniqueTimestamp() {
 void TargetLogger::createResultsFile(String filename, String subjectID)
 {
 	// generate folder result_data if it does not exist.
-	if (!FileSystem::isDirectory(String("result_data"))) {
-		FileSystem::createDirectory(String("result_data"));
+	if (!FileSystem::isDirectory(String("../results"))) {
+		FileSystem::createDirectory(String("../results"));
 	}
 
 	// create a unique file name (can bring this back if desired)
@@ -120,8 +120,8 @@ void TargetLogger::addConditions(std::vector<SingleThresholdMeasurement> measure
 void ReactionLogger::createResultsFile(String filename, String subjectID)
 {
 	// generate folder result_data if it does not exist.
-	if (!FileSystem::isDirectory(String("result_data"))) {
-		FileSystem::createDirectory(String("result_data"));
+	if (!FileSystem::isDirectory(String("../results"))) {
+		FileSystem::createDirectory(String("../results"));
 	}
 
 	// create a unique file name

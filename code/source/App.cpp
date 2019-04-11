@@ -91,7 +91,7 @@ void App::onInit() {
 	updateMouseSensitivity();
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
 
-	String filename = "result_data/" + m_experimentConfig.taskType + "_" + m_userTable.currentUser + "_" + Logger::genUniqueTimestamp() + ".db";
+	String filename = "../results/" + m_experimentConfig.taskType + "_" + m_userTable.currentUser + "_" + Logger::genUniqueTimestamp() + ".db";
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
 		m_logger = ReactionLogger::create();
