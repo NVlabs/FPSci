@@ -18,7 +18,7 @@ TIMEOUT_S = 0.3                 # Timeout for serial port read (ideally longer t
 # Control Flags
 LOG_EVENT_DATA = True           # Control whether event data is logged to a .csv file (seperate from ADC data)
 LOG_ADC_DATA = True             # Control whether analog data is logged to a .csv file (seperate from event data)
-PLOT_DATA = True                # Control whether data is plotted
+PLOT_DATA = False                # Control whether data is plotted
 PRINT_TO_CONSOLE = True         # Control whether data is printed to the console
 
 CLICK_TO_PHOTON_THRESH_S = 0.3  # Maximum delay expected between click and photon
