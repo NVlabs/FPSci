@@ -106,7 +106,7 @@ protected:
 	Array<float>                    m_jumpPeriodRange;
 	Array<float>                    m_jumpSpeedRange;
 	Array<float>                    m_gravityRange;
-	float                           m_planarAcc = 3.f;
+	float                           m_planarAcc = 0.3f;
 
 	/** check first frame */
 	bool                            m_isFirstFrame = true;

@@ -325,6 +325,7 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	if (m_isFirstFrame) {
 		m_simulatedPos = m_frame.translation;
 		m_standingHeight = m_frame.translation.y;
+		m_isFirstFrame = false;
 	}
 
 	while (deltaTime > 0.000001f) {
@@ -378,8 +379,7 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		/// Update animated position.
 		// Project to the spherical surface, and update the frame translation vector.
 		Point3 relativePos = m_simulatedPos - m_orbitCenter;
-		//m_frame.translation = relativePos.direction() * m_orbitRadius + m_orbitCenter;
-		m_frame.translation = m_simulatedPos;
+		m_frame.translation = relativePos.direction() * m_orbitRadius + m_orbitCenter;
 
 		/// Update velocity
 		if (m_inJump) {
@@ -411,6 +411,7 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			if (m_inJump) { // finishing jump
 				m_simulatedPos.y = m_standingHeight; // hard-set to non-jumping height.
 				m_acc.y = 0; // remove gravity effect
+				m_speed.x = m_planarSpeedGoal; // instantly gain the running speed. (general behavior in games)
 				m_inJump = false;
 				m_jumpTimer = Random::common().uniform(m_jumpPeriodRange[0], m_jumpPeriodRange[1]);
 			}
