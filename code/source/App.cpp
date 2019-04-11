@@ -415,6 +415,55 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	return target;
 }
 
+shared_ptr<JumpingEntity> App::spawnJumpingTarget(
+	const Point3& position,
+	float scale,
+	const Color3& color,
+	Array<float> speedRange,
+	Array<float> motionChangePeriodRange,
+	Array<float> jumpPeriodRange,
+	Array<float> jumpSpeedRange,
+	Array<float> gravityRange,
+	Point3 orbitCenter)
+{
+	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
+
+	const shared_ptr<JumpingEntity>& target = JumpingEntity::create(
+		format("target%03d", ++m_lastUniqueID),
+		scene().get(),
+		m_targetModelArray[scaleIndex],
+		CFrame(),
+		speedRange,
+		motionChangePeriodRange,
+		jumpPeriodRange,
+		jumpSpeedRange,
+		gravityRange,
+		orbitCenter
+	);
+
+	UniversalMaterial::Specification materialSpecification;
+	materialSpecification.setLambertian(Texture::Specification(color));
+	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+
+	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
+	target->setPose(amPose);
+
+	target->setFrame(position);
+	/*
+	// Don't set a track. We'll take care of the positioning after creation
+	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
+	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
+	target->setTrack(track);
+	*/
+
+	target->setShouldBeSaved(false);
+	m_targetArray.append(target);
+	scene()->insert(target);
+	return target;
+}
+
 // old target uses ifs/d12.ifs below plus setting color with "mesh" above
 //UniversalMaterial::Specification materialSpecification;
 //materialSpecification.setLambertian(Texture::Specification(color));

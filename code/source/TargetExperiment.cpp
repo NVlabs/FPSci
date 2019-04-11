@@ -76,22 +76,29 @@ void TargetExperiment::initTargetAnimation() {
 		f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
 		f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
 
-		m_app->spawnFlyingTarget(
-			f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
-			visualSize,
-			m_app->m_targetColor,
-			Array<float>{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
-			Array<float>{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"]},
-			initialSpawnPos
-		);
-		//m_app->spawnFlyingTarget(
-		//	f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
-		//	visualSize,
-		//	m_app->m_targetColor,
-		//	Array<float>{ 2.f, 2.f },
-		//	Array<float>{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"]},
-		//	initialSpawnPos
-		//);
+		if (m_psych.getParam().val["jumpEnabled"]) {
+			m_app->spawnJumpingTarget(
+				f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
+				visualSize,
+				m_app->m_targetColor,
+				Array<float>{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
+				Array<float>{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"]},
+				Array<float>{ m_psych.getParam().val["minJumpPeriod"], m_psych.getParam().val["maxJumpPeriod"]},
+				Array<float>{ m_psych.getParam().val["minJumpSpeed"], m_psych.getParam().val["maxJumpSpeed"]},
+				Array<float>{ m_psych.getParam().val["minGravity"], m_psych.getParam().val["maxGravity"]},
+				initialSpawnPos
+			);
+		}
+		else {
+			m_app->spawnFlyingTarget(
+				f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
+				visualSize,
+				m_app->m_targetColor,
+				Array<float>{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
+				Array<float>{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"]},
+				initialSpawnPos
+			);
+		}
 	}
 	else {
 		Point3 targetPos = f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance));

@@ -33,6 +33,7 @@ public:
 };
 
 class FlyingEntity;
+class JumpingEntity;
 
 // An enum that tracks presentation state within a trial. Duration defined in experiment.h
 // ready: ready scene that happens before beginning of a task.
@@ -190,7 +191,17 @@ public:
 	);
 
 	/** Creates a jumping target */
-	//shared_ptr<JumpingEntity> spawnJumpingTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red());
+	shared_ptr<JumpingEntity> spawnJumpingTarget(
+		const Point3& position,
+		float scale,
+		const Color3& color,
+		Array<float> speedRange,
+		Array<float> motionChangePeriodRange,
+		Array<float> jumpPeriodRange,
+		Array<float> jumpSpeedRange,
+		Array<float> gravityRange,
+		Point3 orbitCenter
+	);
 
 	/** Call to set the 3D scene brightness. Default is 1.0. */
 	void setSceneBrightness(float b);

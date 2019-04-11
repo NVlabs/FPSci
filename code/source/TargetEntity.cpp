@@ -24,25 +24,25 @@ Point3 rotateToward(Point3 inputV, Point3 destinationV, float ang_deg) {
 	return (cos(ang_deg * pif() / 180.0f) * U + sin(ang_deg * pif() / 180.0f) * V) * inputV.length();
 }
 
-shared_ptr<Entity> FlyingEntity::create 
-    (const String&                  name,
-     Scene*                         scene,
-     AnyTableReader&                propertyTable,
-     const ModelTable&              modelTable,
-     const Scene::LoadOptions&      loadOptions) {
+shared_ptr<Entity> FlyingEntity::create
+(const String&                  name,
+	Scene*                         scene,
+	AnyTableReader&                propertyTable,
+	const ModelTable&              modelTable,
+	const Scene::LoadOptions&      loadOptions) {
 
-    // Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
-    const shared_ptr<FlyingEntity>& flyingEntity = createShared<FlyingEntity>();
+	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
+	const shared_ptr<FlyingEntity>& flyingEntity = createShared<FlyingEntity>();
 
-    // Initialize each base class, which parses its own fields
-    flyingEntity->Entity::init(name, scene, propertyTable);
-    flyingEntity->VisibleEntity::init(propertyTable, modelTable);
-    flyingEntity->FlyingEntity::init(propertyTable);
+	// Initialize each base class, which parses its own fields
+	flyingEntity->Entity::init(name, scene, propertyTable);
+	flyingEntity->VisibleEntity::init(propertyTable, modelTable);
+	flyingEntity->FlyingEntity::init(propertyTable);
 
-    // Verify that all fields were read by the base classes
-    propertyTable.verifyDone();
+	// Verify that all fields were read by the base classes
+	propertyTable.verifyDone();
 
-    return flyingEntity;
+	return flyingEntity;
 }
 
 
@@ -87,7 +87,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 
 void FlyingEntity::init(AnyTableReader& propertyTable) {
 	//TODO: implement load from any file here...
-    init();
+	init();
 }
 
 
@@ -107,46 +107,46 @@ void FlyingEntity::init(Array<float> angularSpeedRange, Array<float> motionChang
 }
 
 void FlyingEntity::setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter) {
-    m_destinationPoints.fastClear();
-    if (destinationArray.size() > 0) {
-        const float distance = (destinationArray[0] - orbitCenter).length();
+	m_destinationPoints.fastClear();
+	if (destinationArray.size() > 0) {
+		const float distance = (destinationArray[0] - orbitCenter).length();
 
-        // Insert all points, ensuring that they maintain a constant radius about the
-        Vector3 previousDirection = (destinationArray[0] - orbitCenter).direction();
-        for (const Point3& P : destinationArray) {
-            const Vector3& direction = (P - orbitCenter).direction();
-            m_destinationPoints.pushBack(direction * distance + orbitCenter);
+		// Insert all points, ensuring that they maintain a constant radius about the
+		Vector3 previousDirection = (destinationArray[0] - orbitCenter).direction();
+		for (const Point3& P : destinationArray) {
+			const Vector3& direction = (P - orbitCenter).direction();
+			m_destinationPoints.pushBack(direction * distance + orbitCenter);
 
-            alwaysAssertM(direction.dot(previousDirection) > cos(170 * units::degrees()),
-                "Destinations must be separated by no more than 170 degrees");
-            previousDirection = direction;
-        }
+			alwaysAssertM(direction.dot(previousDirection) > cos(170 * units::degrees()),
+				"Destinations must be separated by no more than 170 degrees");
+			previousDirection = direction;
+		}
 
-    }
+	}
 
-    m_orbitCenter = orbitCenter;
+	m_orbitCenter = orbitCenter;
 }
 
 
 Any FlyingEntity::toAny(const bool forceAll) const {
-    Any a = VisibleEntity::toAny(forceAll);
-    a.setName("FlyingEntity");
+	Any a = VisibleEntity::toAny(forceAll);
+	a.setName("FlyingEntity");
 
-    // a["velocity"] = m_velocity;
+	// a["velocity"] = m_velocity;
 
-    return a;
+	return a;
 }
 
 void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
-    // Do not call Entity::onSimulation; that will override with spline animation
+	// Do not call Entity::onSimulation; that will override with spline animation
 
-    if (! (isNaN(deltaTime) || (deltaTime == 0))) {
-        m_previousFrame = m_frame;
-    }
+	if (!(isNaN(deltaTime) || (deltaTime == 0))) {
+		m_previousFrame = m_frame;
+	}
 
-    simulatePose(absoluteTime, deltaTime);
+	simulatePose(absoluteTime, deltaTime);
 
-    while ((deltaTime > 0.000001f) && m_speed > 0.0f) {
+	while ((deltaTime > 0.000001f) && m_speed > 0.0f) {
 		if (m_destinationPoints.empty()) {
 			float motionChangePeriod = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
 			float angularSpeed = G3D::Random().common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
@@ -167,47 +167,221 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			m_destinationPoints.pushBack(dest);
 		}
 
-        if ((m_frame.translation - m_destinationPoints[0]).length() < 0.001f) {
-            // Retire this destination. We are almost at the destination (linear and geodesic distances 
-            // are the same when small), and the following math will be numerically imprecise if we
-            // use such a close destination.
-            m_destinationPoints.popFront();
-        } else {
-            const Point3 destinationPoint = m_destinationPoints[0];
-            const Point3 currentPoint = m_frame.translation;
+		if ((m_frame.translation - m_destinationPoints[0]).length() < 0.001f) {
+			// Retire this destination. We are almost at the destination (linear and geodesic distances 
+			// are the same when small), and the following math will be numerically imprecise if we
+			// use such a close destination.
+			m_destinationPoints.popFront();
+		}
+		else {
+			const Point3 destinationPoint = m_destinationPoints[0];
+			const Point3 currentPoint = m_frame.translation;
 
-            // Transform to directions
-            const float radius = (destinationPoint - m_orbitCenter).length();
-            const Vector3& destinationVector = (destinationPoint - m_orbitCenter).direction();
-            const Vector3& currentVector = (currentPoint - m_orbitCenter).direction();
+			// Transform to directions
+			const float radius = (destinationPoint - m_orbitCenter).length();
+			const Vector3& destinationVector = (destinationPoint - m_orbitCenter).direction();
+			const Vector3& currentVector = (currentPoint - m_orbitCenter).direction();
 
-            // The direction is always "from current to destination", so we can use acos here
-            // and not worry about it being unsigned.
-            const float projection = currentVector.dot(destinationVector);
-            const float destinationAngle = G3D::acos(projection);
+			// The direction is always "from current to destination", so we can use acos here
+			// and not worry about it being unsigned.
+			const float projection = currentVector.dot(destinationVector);
+			const float destinationAngle = G3D::acos(projection);
 
-            // [radians/s] = [m/s] / [m/radians]
-            const float angularSpeed = m_speed / radius;
+			// [radians/s] = [m/s] / [m/radians]
+			const float angularSpeed = m_speed / radius;
 
-            // [rad] = [rad/s] * [s] 
-            float angleChange = angularSpeed * deltaTime;
-            
-            if (angleChange > destinationAngle) {
-                // We'll reach the destination before the time step ends.
-                // Record how much time was consumed by this step.
-                deltaTime -= destinationAngle / angularSpeed;
-                angleChange = destinationAngle;
-                m_destinationPoints.popFront();
-            } else {
-                // Consumed the entire time step
-                deltaTime = 0;
-            }
+			// [rad] = [rad/s] * [s] 
+			float angleChange = angularSpeed * deltaTime;
 
-            // Transform to spherical coordinates in the plane of the arc
-            const Vector3& U = currentVector;
-            const Vector3& V = (destinationVector - currentVector * projection).direction();
-            
-            m_frame.translation = m_orbitCenter + (cos(angleChange) * U + sin(angleChange) * V) * radius;
-        }
-    }
+			if (angleChange > destinationAngle) {
+				// We'll reach the destination before the time step ends.
+				// Record how much time was consumed by this step.
+				deltaTime -= destinationAngle / angularSpeed;
+				angleChange = destinationAngle;
+				m_destinationPoints.popFront();
+			}
+			else {
+				// Consumed the entire time step
+				deltaTime = 0;
+			}
+
+			// Transform to spherical coordinates in the plane of the arc
+			const Vector3& U = currentVector;
+			const Vector3& V = (destinationVector - currentVector * projection).direction();
+
+			m_frame.translation = m_orbitCenter + (cos(angleChange) * U + sin(angleChange) * V) * radius;
+		}
+	}
 }
+
+
+shared_ptr<Entity> JumpingEntity::create
+(const String&                  name,
+	Scene*                         scene,
+	AnyTableReader&                propertyTable,
+	const ModelTable&              modelTable,
+	const Scene::LoadOptions&      loadOptions) {
+
+	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
+	const shared_ptr<JumpingEntity>& jumpingEntity = createShared<JumpingEntity>();
+
+	// Initialize each base class, which parses its own fields
+	jumpingEntity->Entity::init(name, scene, propertyTable);
+	jumpingEntity->VisibleEntity::init(propertyTable, modelTable);
+	jumpingEntity->JumpingEntity::init(propertyTable);
+
+	// Verify that all fields were read by the base classes
+	propertyTable.verifyDone();
+
+	return jumpingEntity;
+}
+
+
+shared_ptr<JumpingEntity> JumpingEntity::create
+(const String&                           name,
+	Scene*                                  scene,
+	const shared_ptr<Model>&                model,
+	const CFrame&                           position,
+	Array<float>                            angularSpeedRange,
+	Array<float>                            motionChangePeriodRange,
+	Array<float>                            jumpPeriodRange,
+	Array<float>                            jumpSpeedRange,
+	Array<float>                            gravityRange,
+	Point3                                  orbitCenter) {
+
+	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
+	const shared_ptr<JumpingEntity>& jumpingEntity = createShared<JumpingEntity>();
+
+	// Initialize each base class, which parses its own fields
+	jumpingEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
+	jumpingEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
+	jumpingEntity->JumpingEntity::init(
+		angularSpeedRange,
+		motionChangePeriodRange,
+		jumpPeriodRange,
+		jumpSpeedRange,
+		gravityRange,
+		orbitCenter);
+
+	return jumpingEntity;
+}
+
+
+void JumpingEntity::init(AnyTableReader& propertyTable) {
+	//TODO: implement load from any file here...
+	init();
+}
+
+
+void JumpingEntity::init() {
+}
+
+
+void JumpingEntity::init(
+	Array<float> angularSpeedRange,
+	Array<float> motionChangePeriodRange,
+	Array<float> jumpPeriodRange,
+	Array<float> jumpSpeedRange,
+	Array<float> gravityRange,
+	Point3 orbitCenter
+){
+	m_angularSpeedRange = angularSpeedRange;
+	m_motionChangePeriodRange = motionChangePeriodRange;
+	m_jumpPeriodRange = jumpPeriodRange;
+	m_jumpSpeedRange = jumpSpeedRange;
+	m_gravityRange = gravityRange;
+	m_orbitCenter = orbitCenter;
+
+	const float radius = (m_frame.translation - m_orbitCenter).length();
+	float angularSpeed = G3D::Random().common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+	// [m/s] = [m/radians] * [radians/s]
+	m_speed.x = radius * (angularSpeed * pif() / 180.0f);
+	m_speed.y = 0.0f;
+}
+
+Any JumpingEntity::toAny(const bool forceAll) const {
+	Any a = VisibleEntity::toAny(forceAll);
+	a.setName("JumpingEntity");
+
+	// a["velocity"] = m_velocity;
+
+	return a;
+}
+
+void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
+	// Do not call Entity::onSimulation; that will override with spline animation
+
+	//if (!(isNaN(deltaTime) || (deltaTime == 0))) {
+	//	m_previousFrame = m_frame;
+	//}
+
+	//simulatePose(absoluteTime, deltaTime);
+
+	//while ((deltaTime > 0.000001f) && m_speed > 0.0f) {
+	//	if (m_destinationPoints.empty()) {
+	//		float motionChangePeriod = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
+	//		float angularSpeed = G3D::Random().common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+	//		float angularDistance = motionChangePeriod * angularSpeed;
+	//		angularDistance = angularDistance > 170.f ? 170.0f : angularDistance; // replace with 170 deg if larger than 170.
+
+	//		// [m/s] = [m/radians] * [radians/s]
+	//		const float radius = (m_frame.translation - m_orbitCenter).length();
+	//		m_speed = radius * (angularSpeed * pif() / 180.0f);
+
+	//		// relative position to orbit center
+	//		Point3 relPos = m_frame.translation - m_orbitCenter;
+	//		// find a vector perpendicular to the current position
+	//		Point3 perpen = findPerpendicularVector(relPos);
+	//		// calculate destination point
+	//		Point3 dest = m_orbitCenter + rotateToward(relPos, perpen, angularDistance);
+	//		// add destination point.
+	//		m_destinationPoints.pushBack(dest);
+	//	}
+
+	//	if ((m_frame.translation - m_destinationPoints[0]).length() < 0.001f) {
+	//		// Retire this destination. We are almost at the destination (linear and geodesic distances 
+	//		// are the same when small), and the following math will be numerically imprecise if we
+	//		// use such a close destination.
+	//		m_destinationPoints.popFront();
+	//	}
+	//	else {
+	//		const Point3 destinationPoint = m_destinationPoints[0];
+	//		const Point3 currentPoint = m_frame.translation;
+
+	//		// Transform to directions
+	//		const float radius = (destinationPoint - m_orbitCenter).length();
+	//		const Vector3& destinationVector = (destinationPoint - m_orbitCenter).direction();
+	//		const Vector3& currentVector = (currentPoint - m_orbitCenter).direction();
+
+	//		// The direction is always "from current to destination", so we can use acos here
+	//		// and not worry about it being unsigned.
+	//		const float projection = currentVector.dot(destinationVector);
+	//		const float destinationAngle = G3D::acos(projection);
+
+	//		// [radians/s] = [m/s] / [m/radians]
+	//		const float angularSpeed = m_speed / radius;
+
+	//		// [rad] = [rad/s] * [s] 
+	//		float angleChange = angularSpeed * deltaTime;
+
+	//		if (angleChange > destinationAngle) {
+	//			// We'll reach the destination before the time step ends.
+	//			// Record how much time was consumed by this step.
+	//			deltaTime -= destinationAngle / angularSpeed;
+	//			angleChange = destinationAngle;
+	//			m_destinationPoints.popFront();
+	//		}
+	//		else {
+	//			// Consumed the entire time step
+	//			deltaTime = 0;
+	//		}
+
+	//		// Transform to spherical coordinates in the plane of the arc
+	//		const Vector3& U = currentVector;
+	//		const Vector3& V = (destinationVector - currentVector * projection).direction();
+
+	//		m_frame.translation = m_orbitCenter + (cos(angleChange) * U + sin(angleChange) * V) * radius;
+	//	}
+	//}
+}
+

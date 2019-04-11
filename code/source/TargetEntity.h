@@ -67,76 +67,91 @@ public:
     
     virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;
 };
-//
-//class JumpingEntity : public VisibleEntity {
-//protected:
-//
-//	// Motion is calculated in three steps.
-//	// 1. Spherical component that is horizontal motion only and precisely staying on the spherical surface.
-//	// 2. Jump component that target moves vertically following constant acceleration downward (gravity)
-//	// 3. If deviated from spherical surface (can be true in jumping cases), project toward orbit center to snap on the spherical surface.
-//
-//	/** Motion kinematics, x is spherical (horizontal) component and y is vertical (jump) component. */
-//	Point2                          m_speed;
-//
-//	/** Position is calculated as sphieral motion + jump. Animated position is after snapping to the spherical surface. */
-//	Point3                          m_animatedPosition;
-//
-//	/** Parameters reset every time motion change or jump happens */
-//	Point2                          m_targetSpeed;
-//	Point2                          m_acc;
-//
-//	/** Parameters constant during a trial */
-//	Point3                          m_orbitCenter;
-//
-//	/** variables for motion changes */
-//	float                           m_nextChangeIn;
-//
-//	/** Properties defining target behavior */
-//	Array<float>                    m_speedRange;
-//	Array<float>                    m_motionChangePeriodRange;
-//	Array<float>                    m_jumpPeriodRange;
-//	Array<float>                    m_jumpSpeedRange;
-//	Array<float>                    m_gravityRange;
-//
-//	JumpingEntity() {}
-//
-//	void init(AnyTableReader& propertyTable);
-//
-//	void init();
-//
-//public:
-//
-//	// TODO: After other implementations are complete.
-//	///** For deserialization from Any / loading from file */
-//	//static shared_ptr<Entity> create 
-//	//(const String&                  name,
-//	// Scene*                         scene,
-//	// AnyTableReader&                propertyTable,
-//	// const ModelTable&              modelTable,
-//	// const Scene::LoadOptions&      loadOptions);
-//
-//	/** For programmatic construction at runtime */
-//	static shared_ptr<JumpingEntity> create
-//	(const String&                  name,
-//		Scene*                         scene,
-//		const shared_ptr<Model>&       model,
-//		const CFrame&                  position);
-//
-//	/** Converts the current VisibleEntity to an Any.  Subclasses should
-//		modify at least the name of the Table returned by the base class, which will be "Entity"
-//		if not changed. */
-//	virtual Any toAny(const bool forceAll = false) const override;
-//
-//	virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;
-//
-//	void onSimulationPlannedSphereMotion(SimTime absoluteTime, SimTime deltaTime);
-//
-//	void onSimulationSphereMotion(SimTime absoluteTime, SimTime deltaTime);
-//
-//	void onSimulationJumpingMotion(SimTime absoluteTime, SimTime deltaTime);
-//
-//	void snapToSphere();
-//
-//	void changeDirection(float rollAngle);
-//};
+
+
+class JumpingEntity : public VisibleEntity {
+protected:
+
+	// Motion is calculated in three steps.
+	// 1. Spherical component that is horizontal motion only and precisely staying on the spherical surface.
+	// 2. Jump component that target moves vertically following constant acceleration downward (gravity)
+	// 3. If deviated from spherical surface (can be true in jumping cases), project toward orbit center to snap on the spherical surface.
+
+	/** Motion kinematic parameters, x is spherical (horizontal) component and y is vertical (jump) component. */
+	Point2                          m_speed;
+
+	/** Position is calculated as sphieral motion + jump. Animated position is after snapping to the spherical surface. */
+	Point3                          m_animatedPosition;
+
+	/** Parameters reset every time motion change or jump happens */
+	Point2                          m_speedGoal; // the speed value m_speed tries to approach.
+	Point2                          m_acc;
+
+	/** Parameters constant during a trial */
+	Point3                          m_orbitCenter;
+
+	/** variables for motion changes */
+	float                           m_nextChangeIn;
+
+	/** Properties defining target behavior */
+	Array<float>                    m_angularSpeedRange;
+	Array<float>                    m_motionChangePeriodRange;
+	Array<float>                    m_jumpPeriodRange;
+	Array<float>                    m_jumpSpeedRange;
+	Array<float>                    m_gravityRange;
+
+	JumpingEntity() {}
+
+	void init(AnyTableReader& propertyTable);
+
+	void init();
+
+	void init(
+		Array<float> angularSpeedRange,
+		Array<float> motionChangePeriodRange,
+		Array<float> jumpPeriodRange,
+		Array<float> jumpSpeedRange,
+		Array<float> gravityRange,
+		Point3 orbitCenter
+	);
+
+public:
+
+	/** For deserialization from Any / loading from file */
+	static shared_ptr<Entity> create 
+	(const String&                  name,
+	 Scene*                         scene,
+	 AnyTableReader&                propertyTable,
+	 const ModelTable&              modelTable,
+	 const Scene::LoadOptions&      loadOptions);
+
+	/** For programmatic construction at runtime */
+	static shared_ptr<JumpingEntity> create
+	(const String&                  name,
+		Scene*                         scene,
+		const shared_ptr<Model>&       model,
+		const CFrame&                  position,
+		Array<float>                   speedRange,
+		Array<float>                   motionChangePeriodRange,
+		Array<float>                   jumpPeriodRange,
+		Array<float>                   jumpSpeedRange,
+		Array<float>                   gravityRange,
+		Point3                         orbitCenter);
+
+	/** Converts the current VisibleEntity to an Any.  Subclasses should
+		modify at least the name of the Table returned by the base class, which will be "Entity"
+		if not changed. */
+	virtual Any toAny(const bool forceAll = false) const override;
+
+	virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;
+
+	void onSimulationPlannedSphereMotion(SimTime absoluteTime, SimTime deltaTime);
+
+	void onSimulationSphereMotion(SimTime absoluteTime, SimTime deltaTime);
+
+	void onSimulationJumpingMotion(SimTime absoluteTime, SimTime deltaTime);
+
+	void snapToSphere();
+
+	void changeDirection(float rollAngle);
+};
