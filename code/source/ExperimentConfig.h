@@ -235,7 +235,7 @@ public:
 	String id;
 	float	frameRate = 240.0f;					// Target (goal) frame rate (in Hz)
 	unsigned int frameDelay = 0;				// Integer frame delay (in frames)
-	String expMode = "training";				// String indicating whether session is training or real
+	String  expMode = "training";				// String indicating whether session is training or real
 	String	selectionOrder = "random";			// "Random", "Round Robbin", "In Order"
 	Array<TrialCount> trials;
 

@@ -127,9 +127,15 @@ void TargetExperiment::processResponse()
 	m_response = (m_app->m_targetHealth <= 0) ? 1 : 0; // 1 means success, 0 means failure.
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 	m_psych.processResponse(m_response); // process response.
-	/*if (m_app->m_expConfig.expMode == "training") {
-		m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
-	}*/
+	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
+	if (m_config.getSessionConfigById(sess)->expMode == "training") {
+		if (m_response == 1) {
+			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
+		}
+		else {
+			m_feedbackMessage = "Failure!";
+		}
+	}
 }
 
 void TargetExperiment::updatePresentationState()
@@ -253,7 +259,7 @@ void TargetExperiment::onGraphics2D(RenderDevice* rd)
 
 	if (!m_feedbackMessage.empty()) {
 		m_app->m_outputFont->draw2D(rd, m_feedbackMessage.c_str(),
-			(Point2((float)m_app->window()->width() / 2 - 40, (float)m_app->window()->height() / 2 + 20) * scale).floor(), floor(20.0f * scale), Color3::yellow());
+			(Point2((float)m_app->window()->width() / 2 - 40, (float)m_app->window()->height() / 2 + 40) * scale).floor(), floor(20.0f * scale), Color3::yellow());
 	}
 }
 
