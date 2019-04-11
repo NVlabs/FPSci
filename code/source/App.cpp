@@ -41,6 +41,9 @@ App::App(const GApp::Settings& settings) : GApp(settings) {
 }
 
 void App::onInit() {
+	// feed a random seed based on time.
+	Random::common().reset(time(0));
+
 	GApp::onInit();
 
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);
