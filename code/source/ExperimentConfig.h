@@ -194,6 +194,7 @@ public:
 			reader.getIfPresent("eccV", eccV);
 			reader.getIfPresent("jumpEnabled", jumpEnabled);
 			reader.getIfPresent("jumpSpeed", jumpSpeed);
+			reader.getIfPresent("jumpPeriod", jumpPeriod);
 			reader.getIfPresent("accelGravity", accelGravity);
 			break;
 		default:
@@ -381,7 +382,19 @@ public:
 			p.add("maxMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
 			p.add("minSpeed", getTargetConfigById(id)->speed[0]);
 			p.add("maxSpeed", getTargetConfigById(id)->speed[1]);
+			p.add("minJumpPeriod", getTargetConfigById(id)->jumpPeriod[0]);
+			p.add("maxJumpPeriod", getTargetConfigById(id)->jumpPeriod[1]);
+			p.add("minJumpSpeed", getTargetConfigById(id)->jumpSpeed[0]);
+			p.add("maxJumpSpeed", getTargetConfigById(id)->jumpSpeed[1]);
+			p.add("minGravity", getTargetConfigById(id)->accelGravity[0]);
+			p.add("maxGravity", getTargetConfigById(id)->accelGravity[1]);
 			p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
+			if (getTargetConfigById(id)->jumpEnabled) {
+				p.add("jumpEnabled", "true");
+			}
+			else {
+				p.add("jumpEnabled", "false");
+			}
 			params.append(p);
 		}
 		return params;

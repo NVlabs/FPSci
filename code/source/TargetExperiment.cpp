@@ -76,7 +76,7 @@ void TargetExperiment::initTargetAnimation() {
 		f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
 		f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
 
-		if (m_psych.getParam().val["jumpEnabled"]) {
+		if (String(m_psych.getParam().str["jumpEnabled"].c_str()) == "true") {
 			m_app->spawnJumpingTarget(
 				f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
 				visualSize,
@@ -101,7 +101,6 @@ void TargetExperiment::initTargetAnimation() {
 		}
 	}
 	else {
-		Point3 targetPos = f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance));
 		m_app->spawnFlyingTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
 			visualSize,

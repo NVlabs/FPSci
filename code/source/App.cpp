@@ -438,7 +438,8 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 		jumpPeriodRange,
 		jumpSpeedRange,
 		gravityRange,
-		orbitCenter
+		orbitCenter,
+		m_targetDistance
 	);
 
 	UniversalMaterial::Specification materialSpecification;

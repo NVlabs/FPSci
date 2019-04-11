@@ -25,9 +25,7 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "c1","count": 10},
-        {"id": "c2","count": 10},
-        {"id": "c3","count": 10}]
+        {"id": "c4","count": 10}]
     },
     {
       "id": "s1", // Session ID
@@ -106,13 +104,14 @@
       "id": "c4",
       "distance": 30,
       "elevationLocked": true,
-      "speed": [ 8, 15 ],
+      "speed": [ 15, 15 ],
       "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
       "motionChangePeriod": [ 0.5, 0.5 ],
       "jumpEnabled": true,
       "jumpPeriod": [ 1.0, 1.0 ],
+      "jumpSpeed": [ 4.9, 4.9 ],
       "accelGravity": [ 9.8, 9.8 ]
     }
   ],

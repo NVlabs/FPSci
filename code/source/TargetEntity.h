@@ -80,18 +80,25 @@ protected:
 	/** Motion kinematic parameters, x is spherical (horizontal) component and y is vertical (jump) component. */
 	Point2                          m_speed;
 
-	/** Position is calculated as sphieral motion + jump. Animated position is after snapping to the spherical surface. */
-	Point3                          m_animatedPosition;
+	/** Position is calculated as sphieral motion + jump.
+	Animation is done by projecting it toward the spherical surface. */
+	Point3                          m_simulatedPos;
 
 	/** Parameters reset every time motion change or jump happens */
-	Point2                          m_speedGoal; // the speed value m_speed tries to approach.
+	float                           m_planarSpeedGoal; // the speed value m_speed tries to approach.
 	Point2                          m_acc;
 
 	/** Parameters constant during a trial */
 	Point3                          m_orbitCenter;
+	float                           m_orbitRadius;
 
 	/** variables for motion changes */
-	float                           m_nextChangeIn;
+	float                           m_motionChangeTimer;
+	float                           m_jumpTimer;
+
+	/** jump state */
+	bool                            m_inJump;
+	float                           m_standingHeight;
 
 	/** Properties defining target behavior */
 	Array<float>                    m_angularSpeedRange;
@@ -99,6 +106,10 @@ protected:
 	Array<float>                    m_jumpPeriodRange;
 	Array<float>                    m_jumpSpeedRange;
 	Array<float>                    m_gravityRange;
+	float                           m_planarAcc = 3.f;
+
+	/** check first frame */
+	bool                            m_isFirstFrame = true;
 
 	JumpingEntity() {}
 
@@ -112,7 +123,8 @@ protected:
 		Array<float> jumpPeriodRange,
 		Array<float> jumpSpeedRange,
 		Array<float> gravityRange,
-		Point3 orbitCenter
+		Point3 orbitCenter,
+		float orbitRadius
 	);
 
 public:
@@ -136,7 +148,8 @@ public:
 		Array<float>                   jumpPeriodRange,
 		Array<float>                   jumpSpeedRange,
 		Array<float>                   gravityRange,
-		Point3                         orbitCenter);
+		Point3                         orbitCenter,
+		float                          orbitRadius);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
 		modify at least the name of the Table returned by the base class, which will be "Entity"
@@ -145,13 +158,4 @@ public:
 
 	virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;
 
-	void onSimulationPlannedSphereMotion(SimTime absoluteTime, SimTime deltaTime);
-
-	void onSimulationSphereMotion(SimTime absoluteTime, SimTime deltaTime);
-
-	void onSimulationJumpingMotion(SimTime absoluteTime, SimTime deltaTime);
-
-	void snapToSphere();
-
-	void changeDirection(float rollAngle);
 };

@@ -99,11 +99,6 @@ void FlyingEntity::init(Array<float> angularSpeedRange, Array<float> motionChang
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
 	m_orbitCenter = orbitCenter;
-
-	const float radius = (m_frame.translation - m_orbitCenter).length();
-	float angularSpeed = G3D::Random().common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
-	// [m/s] = [m/radians] * [radians/s]
-	m_speed = radius * (angularSpeed * pif() / 180.0f);
 }
 
 void FlyingEntity::setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter) {
@@ -140,16 +135,16 @@ Any FlyingEntity::toAny(const bool forceAll) const {
 void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	// Do not call Entity::onSimulation; that will override with spline animation
 
-	if (!(isNaN(deltaTime) || (deltaTime == 0))) {
+	if (!(isNaN(deltaTime) || (deltaTime == 0))) { // first frame?
 		m_previousFrame = m_frame;
 	}
 
 	simulatePose(absoluteTime, deltaTime);
 
-	while ((deltaTime > 0.000001f) && m_speed > 0.0f) {
+	while ((deltaTime > 0.000001f) && m_angularSpeedRange[0] > 0.0f) {
 		if (m_destinationPoints.empty()) {
 			float motionChangePeriod = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
-			float angularSpeed = G3D::Random().common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+			float angularSpeed = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
 			float angularDistance = motionChangePeriod * angularSpeed;
 			angularDistance = angularDistance > 170.f ? 170.0f : angularDistance; // replace with 170 deg if larger than 170.
 
@@ -247,7 +242,8 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 	Array<float>                            jumpPeriodRange,
 	Array<float>                            jumpSpeedRange,
 	Array<float>                            gravityRange,
-	Point3                                  orbitCenter) {
+	Point3                                  orbitCenter,
+	float                                   orbitRadius) {
 
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
 	const shared_ptr<JumpingEntity>& jumpingEntity = createShared<JumpingEntity>();
@@ -261,7 +257,8 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 		jumpPeriodRange,
 		jumpSpeedRange,
 		gravityRange,
-		orbitCenter);
+		orbitCenter,
+		orbitRadius);
 
 	return jumpingEntity;
 }
@@ -276,14 +273,14 @@ void JumpingEntity::init(AnyTableReader& propertyTable) {
 void JumpingEntity::init() {
 }
 
-
 void JumpingEntity::init(
 	Array<float> angularSpeedRange,
 	Array<float> motionChangePeriodRange,
 	Array<float> jumpPeriodRange,
 	Array<float> jumpSpeedRange,
 	Array<float> gravityRange,
-	Point3 orbitCenter
+	Point3 orbitCenter,
+	float orbitRadius
 ){
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
@@ -292,11 +289,19 @@ void JumpingEntity::init(
 	m_gravityRange = gravityRange;
 	m_orbitCenter = orbitCenter;
 
-	const float radius = (m_frame.translation - m_orbitCenter).length();
-	float angularSpeed = G3D::Random().common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+	m_orbitRadius = orbitRadius;
+	float angularSpeed = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+	m_planarSpeedGoal = m_orbitRadius * (angularSpeed * pif() / 180.0f);
+	if (Random::common().uniform() > 0.5f) {
+		m_planarSpeedGoal = -m_planarSpeedGoal;
+	}
 	// [m/s] = [m/radians] * [radians/s]
-	m_speed.x = radius * (angularSpeed * pif() / 180.0f);
+	m_speed.x = m_planarSpeedGoal;
 	m_speed.y = 0.0f;
+
+	m_inJump = false;
+	m_motionChangeTimer = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
+	m_jumpTimer = Random::common().uniform(m_jumpPeriodRange[0], m_jumpPeriodRange[1]);
 }
 
 Any JumpingEntity::toAny(const bool forceAll) const {
@@ -311,77 +316,116 @@ Any JumpingEntity::toAny(const bool forceAll) const {
 void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	// Do not call Entity::onSimulation; that will override with spline animation
 
-	//if (!(isNaN(deltaTime) || (deltaTime == 0))) {
-	//	m_previousFrame = m_frame;
-	//}
+	if (!(isNaN(deltaTime) || (deltaTime == 0))) {
+		m_previousFrame = m_frame;
+	}
 
-	//simulatePose(absoluteTime, deltaTime);
+	simulatePose(absoluteTime, deltaTime);
 
-	//while ((deltaTime > 0.000001f) && m_speed > 0.0f) {
-	//	if (m_destinationPoints.empty()) {
-	//		float motionChangePeriod = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
-	//		float angularSpeed = G3D::Random().common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
-	//		float angularDistance = motionChangePeriod * angularSpeed;
-	//		angularDistance = angularDistance > 170.f ? 170.0f : angularDistance; // replace with 170 deg if larger than 170.
+	if (m_isFirstFrame) {
+		m_simulatedPos = m_frame.translation;
+		m_standingHeight = m_frame.translation.y;
+	}
 
-	//		// [m/s] = [m/radians] * [radians/s]
-	//		const float radius = (m_frame.translation - m_orbitCenter).length();
-	//		m_speed = radius * (angularSpeed * pif() / 180.0f);
+	while (deltaTime > 0.000001f) {
+		/// Decide time step size for motion simulation.
+		// Calculate remaining time until next state change for motion and jump
+		float nextJumpStateChange;
+		if (m_inJump) {
+			// Find when the current jump ends from now. We need to solve a kinematic equation here.
+			// 0 = a * t ^ 2 + 2 * v * t + (y - y0)
+			// a: acceleration, t: time, v: velocity, y: height, y0: standing height (before jump started)
+			// The equation comes with one positive and one negative solution. Ignore negative (it's "when did the jump start?")
+			// The following is the positive solution. Note that a is negative (- g).
+			// t = - v / a - sqrt(v ^ 2 - ah + ah0) / a
+			nextJumpStateChange =
+				- m_speed.y / m_acc.y
+				- sqrtf(m_speed.y * m_speed.y - m_acc.y * m_simulatedPos.y + m_acc.y * m_standingHeight) / m_acc.y;
+			int aa = 1;
+		}
+		else {
+			nextJumpStateChange = m_jumpTimer;
+		}
+		// Decide time step size t where motion state is consistent.
+		float t = G3D::min(deltaTime, m_motionChangeTimer, nextJumpStateChange);
 
-	//		// relative position to orbit center
-	//		Point3 relPos = m_frame.translation - m_orbitCenter;
-	//		// find a vector perpendicular to the current position
-	//		Point3 perpen = findPerpendicularVector(relPos);
-	//		// calculate destination point
-	//		Point3 dest = m_orbitCenter + rotateToward(relPos, perpen, angularDistance);
-	//		// add destination point.
-	//		m_destinationPoints.pushBack(dest);
-	//	}
+		/// Update position, planar component
+		Point3 planar_center = Point3(m_orbitCenter.x, m_standingHeight, m_orbitCenter.z);
+		Point3 planar_pos = Point3(m_simulatedPos.x, m_standingHeight, m_simulatedPos.z); // purely rotation component of the position vector
+		float radius = (planar_pos - planar_center).length();
+		float d;
+		if (m_inJump) {
+			d = m_speed.x * t + m_acc.x * t * t / 2; // metric distance to travel.
+		}
+		else {
+			d = m_speed.x * t;
+		}
+		float angularDistance = d / radius; // unit is radian
+		// Calculate the position.
+		Point3 U = (planar_pos - planar_center).direction();
+		// Find a perpendicular vector toward the direction of rotation.
+		Point3 V;
+		V = U.cross(Point3(0.f, 1.f, 0.f));
+		Point3 o = m_orbitCenter + (cos(angularDistance) * U + sin(angularDistance) * V) * radius;
+		m_simulatedPos.x = o.x;
+		m_simulatedPos.z = o.z;
 
-	//	if ((m_frame.translation - m_destinationPoints[0]).length() < 0.001f) {
-	//		// Retire this destination. We are almost at the destination (linear and geodesic distances 
-	//		// are the same when small), and the following math will be numerically imprecise if we
-	//		// use such a close destination.
-	//		m_destinationPoints.popFront();
-	//	}
-	//	else {
-	//		const Point3 destinationPoint = m_destinationPoints[0];
-	//		const Point3 currentPoint = m_frame.translation;
+		/// Update position, jump component
+		if (m_inJump) {
+			m_simulatedPos.y = 0.5f * m_acc.y * t * t + m_speed.y * t + m_simulatedPos.y;
+		}
 
-	//		// Transform to directions
-	//		const float radius = (destinationPoint - m_orbitCenter).length();
-	//		const Vector3& destinationVector = (destinationPoint - m_orbitCenter).direction();
-	//		const Vector3& currentVector = (currentPoint - m_orbitCenter).direction();
+		/// Update animated position.
+		// Project to the spherical surface, and update the frame translation vector.
+		Point3 relativePos = m_simulatedPos - m_orbitCenter;
+		//m_frame.translation = relativePos.direction() * m_orbitRadius + m_orbitCenter;
+		m_frame.translation = m_simulatedPos;
 
-	//		// The direction is always "from current to destination", so we can use acos here
-	//		// and not worry about it being unsigned.
-	//		const float projection = currentVector.dot(destinationVector);
-	//		const float destinationAngle = G3D::acos(projection);
+		/// Update velocity
+		if (m_inJump) {
+			m_speed = m_speed + m_acc * t;
+			if ((m_planarSpeedGoal > 0 && m_speed.x > m_planarSpeedGoal) || (m_planarSpeedGoal < 0 && m_speed.x < m_planarSpeedGoal)) {
+				m_speed.x = m_planarSpeedGoal;
+			}
+		}
 
-	//		// [radians/s] = [m/s] / [m/radians]
-	//		const float angularSpeed = m_speed / radius;
+		/// Update motion state (includes updating acceleration)
+		if (t == m_motionChangeTimer) { // changing motion direction
+			float new_AngularSpeedGoal = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+			float new_planarSpeedGoal = m_orbitRadius * (new_AngularSpeedGoal * pif() / 180.0f);
+			// change direction
+			if (m_planarSpeedGoal > 0) {
+				new_planarSpeedGoal = -new_planarSpeedGoal;
+			}
+			// assign as the new speed goal
+			m_planarSpeedGoal = new_planarSpeedGoal;
+			if (m_inJump) { // if in jump, flip planar acceleration direction
+				m_acc.x = sign(m_planarSpeedGoal) * m_planarAcc;
+			}
+			else { // if not in jump, immediately apply direction change
+				m_speed.x = m_planarSpeedGoal;
+			}
+			m_motionChangeTimer = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
+		}
+		if (t == nextJumpStateChange) { // either starting or finishing jump
+			if (m_inJump) { // finishing jump
+				m_simulatedPos.y = m_standingHeight; // hard-set to non-jumping height.
+				m_acc.y = 0; // remove gravity effect
+				m_inJump = false;
+				m_jumpTimer = Random::common().uniform(m_jumpPeriodRange[0], m_jumpPeriodRange[1]);
+			}
+			else { // starting jump
+				m_acc.x = sign(m_planarSpeedGoal) * m_planarAcc;
+				m_acc.y = - Random::common().uniform(m_gravityRange[0], m_gravityRange[1]);
+				m_speed.y = Random::common().uniform(m_jumpSpeedRange[0], m_jumpSpeedRange[1]);
+				m_inJump = true;
+			}
+		}
 
-	//		// [rad] = [rad/s] * [s] 
-	//		float angleChange = angularSpeed * deltaTime;
-
-	//		if (angleChange > destinationAngle) {
-	//			// We'll reach the destination before the time step ends.
-	//			// Record how much time was consumed by this step.
-	//			deltaTime -= destinationAngle / angularSpeed;
-	//			angleChange = destinationAngle;
-	//			m_destinationPoints.popFront();
-	//		}
-	//		else {
-	//			// Consumed the entire time step
-	//			deltaTime = 0;
-	//		}
-
-	//		// Transform to spherical coordinates in the plane of the arc
-	//		const Vector3& U = currentVector;
-	//		const Vector3& V = (destinationVector - currentVector * projection).direction();
-
-	//		m_frame.translation = m_orbitCenter + (cos(angleChange) * U + sin(angleChange) * V) * radius;
-	//	}
-	//}
+		/// decrement deltaTime and timers by t
+		deltaTime -= t;
+		m_jumpTimer -= t;
+		m_motionChangeTimer -= t;
+	}
 }
 
