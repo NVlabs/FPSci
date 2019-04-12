@@ -695,6 +695,7 @@ void App::updateSession(String id) {
 		else {
 			dt = 1.0f / float(window()->settings().refreshRate);
 		}
+		setFrameDuration(dt, GApp::REAL_TIME);
 
 		// Update session drop-down selection
 		m_sessDropDown->setSelectedValue(id);
