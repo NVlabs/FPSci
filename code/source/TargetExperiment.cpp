@@ -303,7 +303,7 @@ void TargetExperiment::accumulateTrajectories()
 
 	std::vector<std::string> targetTrajectoryValues = {
 		//std::to_string(System::time()),
-		Logger::genUniqueTimestamp(),
+		addQuotes(Logger::genUniqueTimestamp()),
 		std::to_string(targetPosition.x),
 		std::to_string(targetPosition.y),
 		std::to_string(targetPosition.z),
@@ -320,7 +320,7 @@ void TargetExperiment::accumulatePlayerAction(String action)
 	Point2 dir = m_app->getViewDirection();
 	std::vector<std::string> playerActionValues = {
 		//std::to_string(System::time()),
-		 Logger::genUniqueTimestamp(),
+		addQuotes(Logger::genUniqueTimestamp()),
 		// TODO: make this nicer
 		format("'%s'",action.c_str()).c_str(),
 		std::to_string(dir.x),
