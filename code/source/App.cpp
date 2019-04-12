@@ -42,7 +42,7 @@ App::App(const GApp::Settings& settings) : GApp(settings) {
 
 void App::onInit() {
 	// feed a random seed based on time.
-	Random::common().reset(time(0));
+	Random::common().reset(uint32(time(0)));
 
 	GApp::onInit();
 
@@ -216,6 +216,11 @@ SystemConfig App::getSystemInfo(void) {
 	system.displayYSize = GetDeviceCaps(hdc, VERTSIZE);
 
 	return system;
+}
+
+void App::openUserSettingsWindow() {
+    m_userSettingsMode = true;
+    m_userSettingsWindow->setVisible(m_userSettingsMode);
 }
 
 void App::updateMouseSensitivity() {
@@ -602,6 +607,7 @@ void App::makeGUI() {
     m_currentUserPane = p->addPane("Current User Settings");
     updateUserGUI();
 
+    m_ddCurrentUser = m_userTable.getCurrentUserIndex();
     p = p->addPane("Experiment Settings");
     p->beginRow();
         m_userDropDown = p->addDropDownList("User", m_userTable.getIds(), &m_ddCurrentUser);
