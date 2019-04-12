@@ -100,6 +100,15 @@ public:
 		}
 	}
 
+    UserConfig* getCurrentUser() {
+        for (int i = 0; i < users.length(); ++i) {
+            if (!users[i].id.compare(currentUser)) return &(users[i]);
+        }
+        // return the first user by default and set the value
+        currentUser = users[0].id;
+        return &(users[0]);
+    }
+
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
 		a["settingsVersion"] = 1;						// Create a version 1 file

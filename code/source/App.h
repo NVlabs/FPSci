@@ -99,6 +99,7 @@ protected:
 	//bool                            m_renderHud = false;
 	bool                            m_renderFPS = false;
 	bool                            m_renderHitscan = false;
+    GuiPane*                        m_currentUserPane;
 
 	// Drop down selection writebacks
 	int								m_ddCurrentUser = 0;
@@ -127,6 +128,7 @@ protected:
 	void printExpConfigToLog(ExperimentConfig config);
 	void printUserTableToLog(UserTable table);
 	void updateUser(void);
+    void updateUserGUI();
 
 	CComPortDriver m_com;
 

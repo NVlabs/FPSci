@@ -596,19 +596,23 @@ void App::makeGUI() {
 
     // set up user settings window
     m_userSettingsWindow = GuiWindow::create("User Settings - press TAB to close", nullptr, 
-        Rect2D::xywh((float)window()->width() * 0.5f - 150.0f, (float)window()->height() * 0.5f - 50.0f, 300.0f, 100.0f));
+        Rect2D::xywh((float)window()->width() * 0.5f - 200.0f, (float)window()->height() * 0.5f - 100.0f, 400.0f, 200.0f));
     addWidget(m_userSettingsWindow);
     GuiPane* p = m_userSettingsWindow->pane();
-	m_userDropDown = p->addDropDownList("User ID", m_userTable.getIds(), &m_ddCurrentUser);
-	m_mouseDPILabel =  p->addLabel(format("Mouse DPI: %f", getCurrUser()->mouseDPI));
-	m_cm360Label = p->addLabel(format("cm/360°: %f", getCurrUser()->cmp360));
-	//m_cm360NumberBox = p->addNumberBox("Mouse 360", &m_userTable.users[m_ddCurrentUser].cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
-	//p->addButton("Save User Config", this, &App::userSaveButtonPress);
-	p->addButton("Update User", this, &App::updateUser);
-	m_sessDropDown = p->addDropDownList("Session", m_experimentConfig.getSessionIdArray(), &m_ddCurrentSession);
-	Array<String> m_remainingSess;
-	m_remainingSess = updateSessionDropDown();
-	p->addButton("Update Session", this, &App::updateSessionPress);
+    m_currentUserPane = p->addPane("Current User Settings");
+    updateUserGUI();
+
+    p = p->addPane("Experiment Settings");
+    p->beginRow();
+        m_userDropDown = p->addDropDownList("User", m_userTable.getIds(), &m_ddCurrentUser);
+	    p->addButton("Select User", this, &App::updateUser);
+    p->endRow();
+    p->beginRow();
+        m_sessDropDown = p->addDropDownList("Session", m_experimentConfig.getSessionIdArray(), &m_ddCurrentSession);
+	    Array<String> m_remainingSess;
+	    m_remainingSess = updateSessionDropDown();
+	    p->addButton("Select Session", this, &App::updateSessionPress);
+    p->endRow();
     m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
 
 	debugWindow->pack();
@@ -623,9 +627,6 @@ void App::userSaveButtonPress(void) {
 }	
 
 void App::updateUser(void){
-	// Get mouse DPI and cm360 for user
-	m_mouseDPILabel->setCaption(format("Mouse DPI: %f", m_userTable.users[m_ddCurrentUser].mouseDPI));
-	m_cm360Label->setCaption(format("cm/360°: %f", getCurrUser()->cmp360));
 	// Get new session list for user
 	updateSessionDropDown();
 	// Update the user if needed
@@ -635,7 +636,16 @@ void App::updateUser(void){
 		String filename = "../results/" + m_experimentConfig.taskType + "_" + id + "_" + String(Logger::genFileTimestamp()) + ".db";
 		m_logger->createResultsFile(filename, id);
 		m_lastSeenUser = m_ddCurrentUser;
+        m_userTable.currentUser = id;
 	}
+}
+
+void App::updateUserGUI() {
+    m_currentUserPane->removeAllChildren();
+    m_currentUserPane->addLabel(format("Current User: %s", m_userTable.currentUser));
+    m_mouseDPILabel = m_currentUserPane->addLabel(format("Mouse DPI: %f", m_userTable.getCurrentUser()->mouseDPI));
+    m_currentUserPane->addNumberBox("Mouse 360", &(m_userTable.getCurrentUser()->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
+    m_currentUserPane->addButton("Save cm/360°", this, &App::userSaveButtonPress);
 }
 
 Array<String> App::getSessListForUser() {
@@ -673,6 +683,7 @@ void App::markSessComplete(String id) {
 }
 
 shared_ptr<UserConfig> App::getCurrUser(void) {
+    //return m_userTable.getIds()[m_ddCurrentUser];
 	return m_userTable.getUserById(getCurrUserId());
 }
 
