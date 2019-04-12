@@ -184,15 +184,17 @@ void TargetExperiment::updatePresentationState()
 				newState = PresentationState::complete;
 				if (m_hasSession) {
 					m_app->markSessComplete(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
-					m_app->userSaveButtonPress();	// Press the save button for the user...
+					m_app->userSaveButtonPress();												// Press the save button for the user...
 					Array<String> remaining = m_app->updateSessionDropDown();
-					if (remaining.size() > 0) {
-						String nextSess = remaining.randomElement();				// Choose a random next session
-						m_app->updateSession(nextSess);								// Update the session
+					if (remaining.size() == 0) {
+						m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
 					}
-					else m_feedbackMessage = "All Sessions Complete!";
+					else{
+						isComplete = true;														// Check for session complete (signal start of next session)
+					}
 				}
-				else m_feedbackMessage = "All Sessions Complete!";
+				else 
+					m_feedbackMessage = "All Sessions Complete!";
 			}
 			else {
 				m_feedbackMessage = "";

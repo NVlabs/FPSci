@@ -108,7 +108,7 @@ protected:
 	Experiment(App* app) :m_app(app) {};
 
 public:
-
+	bool isComplete = false;
 	PsychHelper m_psych;
 	ExperimentConfig m_config;
 
