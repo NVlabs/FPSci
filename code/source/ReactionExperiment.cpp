@@ -141,11 +141,12 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 					m_app->getCurrUser()->completedSessions.append(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
 					m_app->userSaveButtonPress();
 					Array<String> remaining = m_app->updateSessionDropDown();
-					if (remaining.size() > 0) {
-						String nextSess = remaining.randomElement();				// Choose a random next session
-						m_app->updateSession(nextSess);								// Update the session
+					if (remaining.size() == 0) {
+						m_feedbackMessage = "All Sessions Complete!";
 					}
-					else m_feedbackMessage = "All Sessions Complete!";
+					else {
+						isComplete = true;																				// Check for session complete (signal start of next session)
+					}
 				}
 				else m_feedbackMessage = "All Sessions Complete!";
 			}

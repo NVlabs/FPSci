@@ -831,6 +831,12 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// Example GUI dynamic layout code.  Resize the debugWindow to fill
 	// the screen horizontally.
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+
+	// Check for completed session
+	if (m_ex->isComplete) {
+		String nextSess = updateSessionDropDown()[0];
+		updateSession(nextSess);
+	}
 }
 
 bool App::onEvent(const GEvent& event) {
