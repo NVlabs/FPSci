@@ -15,4 +15,5 @@ newGfx/x64
 newGfx/data-files/g3d-license.txt
 newGfx/data-files/log.txt
 "code/scripts/event logger/software/Logs"
+results/
 *.pyc
