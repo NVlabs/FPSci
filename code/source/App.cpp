@@ -599,7 +599,7 @@ void App::makeGUI() {
         Rect2D::xywh((float)window()->width() * 0.5f - 150.0f, (float)window()->height() * 0.5f - 50.0f, 300.0f, 100.0f));
     addWidget(m_userSettingsWindow);
     GuiPane* p = m_userSettingsWindow->pane();
-	p->addDropDownList("User ID", m_userTable.getIds(), &m_ddCurrentUser);
+	m_userDropDown = p->addDropDownList("User ID", m_userTable.getIds(), &m_ddCurrentUser);
 	m_mouseDPILabel =  p->addLabel(format("Mouse DPI: %f", getCurrUser()->mouseDPI));
 	m_cm360Label = p->addLabel(format("cm/360°: %f", getCurrUser()->cmp360));
 	//m_cm360NumberBox = p->addNumberBox("Mouse 360", &m_userTable.users[m_ddCurrentUser].cmp360, "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
@@ -623,13 +623,17 @@ void App::userSaveButtonPress(void) {
 }	
 
 void App::updateUser(void){
+	// Get mouse DPI and cm360 for user
 	m_mouseDPILabel->setCaption(format("Mouse DPI: %f", m_userTable.users[m_ddCurrentUser].mouseDPI));
 	m_cm360Label->setCaption(format("cm/360°: %f", getCurrUser()->cmp360));
+	// Get new session list for user
 	updateSessionDropDown();
-	//updateSessionPress();
-	// Check for change in user drop down
+	// Update the user if needed
 	if (m_lastSeenUser != m_ddCurrentUser) {
-		if(m_remainingSess.size() > 0) updateSession(updateSessionDropDown().randomElement());
+		if(m_remainingSess.size() > 0) updateSession(updateSessionDropDown()[0]);
+		String id = getCurrUserId();
+		String filename = "../results/" + m_experimentConfig.taskType + "_" + id + "_" + String(Logger::genFileTimestamp()) + ".db";
+		m_logger->createResultsFile(filename, id);
 		m_lastSeenUser = m_ddCurrentUser;
 	}
 }
@@ -660,12 +664,16 @@ String App::getCurrSessId(void) {
 	return m_sessDropDown->get(m_ddCurrentSession);
 }
 
+String App::getCurrUserId(void) {
+	return m_userDropDown->get(m_ddCurrentUser);
+}
+
 void App::markSessComplete(String id) {
 	m_userTable.users[m_ddCurrentUser].addCompletedSession(id);
 }
 
 shared_ptr<UserConfig> App::getCurrUser(void) {
-	return std::make_shared<UserConfig>(m_userTable.users[m_ddCurrentUser]);
+	return m_userTable.getUserById(getCurrUserId());
 }
 
 void App::updateSessionPress(void) {

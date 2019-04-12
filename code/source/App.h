@@ -75,6 +75,7 @@ protected:
 	RealTime						m_explosionEndTime;
 
 	GuiDropDownList*				m_sessDropDown;
+	GuiDropDownList*				m_userDropDown;
 	GuiLabel*						m_mouseDPILabel;
 	GuiLabel*						m_cm360Label;
 	//GuiNumberBox<double>*			m_cm360NumberBox;
@@ -213,6 +214,8 @@ public:
 	Array<String> getSessListForUser();
 
 	String getCurrSessId(void);
+
+	String getCurrUserId(void);
 
 	void markSessComplete(String id);
 
