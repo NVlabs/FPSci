@@ -103,7 +103,7 @@ protected:
 
 	// Drop down selection writebacks
 	int								m_ddCurrentUser = 0;
-	int								m_lastSeenUser = 0;
+	int								m_lastSeenUser = -1;
 	int								m_ddCurrentSession = 0;
 
 	/** Set to true to lower rendering quality to increase performance. */
@@ -230,6 +230,8 @@ public:
 	void setDisplayLatencyFrames(int f);
     
 	SystemConfig getSystemInfo(void);
+    /** opens the user settings window */
+    void openUserSettingsWindow();
 
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();

@@ -181,6 +181,7 @@ void TargetExperiment::updatePresentationState()
 		{
 			if (m_psych.isComplete()) {
 				m_feedbackMessage = "Session complete. Thanks!";
+                m_app->openUserSettingsWindow();
 				newState = PresentationState::complete;
 				if (m_hasSession) {
 					m_app->markSessComplete(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
