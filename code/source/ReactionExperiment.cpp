@@ -57,7 +57,7 @@ void ReactionExperiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface
 void ReactionExperiment::processResponse()
 {
 	m_taskExecutionTime = m_app->timer.getTime();
-	m_taskEndTime = System::time();
+	m_taskEndTime = Logger::genUniqueTimestamp();
 	if (m_app->m_presentationState == PresentationState::ready) {
 		if (m_reacted) {
 			// responded too quickly
@@ -165,7 +165,7 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 	{ // handle state transition.
 		m_app->timer.startTimer();
 		if (newState == PresentationState::task) {
-			m_taskStartTime = System::time();
+			m_taskStartTime = Logger::genUniqueTimestamp();
 		}
 		m_app->m_presentationState = newState;
 	}
@@ -222,8 +222,8 @@ void ReactionExperiment::recordTrialResponse()
 		std::to_string(m_psych.mCurrentConditionIndex),
 		addQuotes(sess.c_str()),
 		addQuotes(m_config.getSessionConfigById(sess)->expMode.c_str()),
-		std::to_string(m_taskStartTime),
-		std::to_string(m_taskEndTime),
+		addQuotes(m_taskStartTime),
+		addQuotes(m_taskEndTime),
 		std::to_string(m_taskExecutionTime),
 	};
 	m_app->m_logger->recordTrialResponse(trialValues);

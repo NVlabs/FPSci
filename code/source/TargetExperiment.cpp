@@ -168,7 +168,7 @@ void TargetExperiment::updatePresentationState()
 	{
 		if ((stateElapsedTime > m_config.taskDuration) || (m_app->m_targetHealth <= 0) || (m_clickCount == m_config.maxClicks))
 		{
-			m_taskEndTime = System::time();
+			m_taskEndTime = Logger::genUniqueTimestamp();
 			processResponse();
 			m_app->clearTargets(); // clear all remaining targets
 			m_app->m_targetColor = Color3::red().pow(2.0f);
@@ -209,7 +209,7 @@ void TargetExperiment::updatePresentationState()
 	{ // handle state transition.
 		m_app->timer.startTimer();
 		if (newState == PresentationState::task) {
-			m_taskStartTime = System::time();
+			m_taskStartTime = Logger::genUniqueTimestamp();
 		}
 		m_app->m_presentationState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
@@ -272,8 +272,8 @@ void TargetExperiment::recordTrialResponse()
 		std::to_string(m_psych.mCurrentConditionIndex),
 		addQuotes(sess.c_str()),
 		addQuotes(m_config.getSessionConfigById(sess)->expMode.c_str()),
-		std::to_string(m_taskStartTime),
-		std::to_string(m_taskEndTime),
+		addQuotes(m_taskStartTime),
+		addQuotes(m_taskEndTime),
 		std::to_string(m_taskExecutionTime)
 	};
 	m_app->m_logger->recordTrialResponse(trialValues);
@@ -300,7 +300,8 @@ void TargetExperiment::accumulateTrajectories()
 	//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
 
 	std::vector<std::string> targetTrajectoryValues = {
-		std::to_string(System::time()),
+		//std::to_string(System::time()),
+		Logger::genUniqueTimestamp(),
 		std::to_string(targetPosition.x),
 		std::to_string(targetPosition.y),
 		std::to_string(targetPosition.z),
@@ -316,7 +317,8 @@ void TargetExperiment::accumulatePlayerAction(String action)
 	// recording target trajectories
 	Point2 dir = m_app->getViewDirection();
 	std::vector<std::string> playerActionValues = {
-		std::to_string(System::time()),
+		//std::to_string(System::time()),
+		 Logger::genUniqueTimestamp(),
 		// TODO: make this nicer
 		format("'%s'",action.c_str()).c_str(),
 		std::to_string(dir.x),

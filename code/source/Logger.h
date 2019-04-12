@@ -11,7 +11,8 @@ public:
 	Logger() : m_db(nullptr) {}
 	void recordTrialResponse(std::vector<std::string> values);
 	void closeResultsFile(void);
-	static String genUniqueTimestamp();
+	static std::string genUniqueTimestamp();
+	static std::string genFileTimestamp();
 	virtual void addConditions(std::vector<SingleThresholdMeasurement> measurements) {};
 	virtual void createResultsFile(String filename, String subjectID) {};
 	virtual	void recordTargetTrajectory(std::vector<std::vector<std::string>> trajectory) {};

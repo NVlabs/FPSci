@@ -95,8 +95,8 @@ class Experiment : public ReferenceCountedObject {
 //class Experiment {
 protected:
 	double m_taskExecutionTime;
-	double m_taskStartTime;
-	double m_taskEndTime;
+	std::string m_taskStartTime;
+	std::string m_taskEndTime;
 	int m_response;
 	//Param m_config; // All parameters common in the experiment.
 	int m_clickCount = 0;

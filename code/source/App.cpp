@@ -91,7 +91,7 @@ void App::onInit() {
 	updateMouseSensitivity();
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
 
-	String filename = "../results/" + m_experimentConfig.taskType + "_" + m_userTable.currentUser + "_" + Logger::genUniqueTimestamp() + ".db";
+	String filename = "../results/" + m_experimentConfig.taskType + "_" + m_userTable.currentUser + "_" + String(Logger::genFileTimestamp()) + ".db";
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
 		m_logger = ReactionLogger::create();
@@ -626,10 +626,9 @@ void App::updateUser(void){
 	m_mouseDPILabel->setCaption(format("Mouse DPI: %f", m_userTable.users[m_ddCurrentUser].mouseDPI));
 	m_cm360Label->setCaption(format("cm/360°: %f", getCurrUser()->cmp360));
 	updateSessionDropDown();
-	updateSessionPress();
+	//updateSessionPress();
 	// Check for change in user drop down
 	if (m_lastSeenUser != m_ddCurrentUser) {
-
 		if(m_remainingSess.size() > 0) updateSession(updateSessionDropDown().randomElement());
 		m_lastSeenUser = m_ddCurrentUser;
 	}

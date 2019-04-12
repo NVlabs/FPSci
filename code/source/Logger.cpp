@@ -2,14 +2,22 @@
 
 // TODO: Replace with the G3D timestamp uses.
 // utility function for generating a unique timestamp.
-String Logger::genUniqueTimestamp() {
-	time_t t = std::time(nullptr);
-	std::tm tmbuf;
-	localtime_s(&tmbuf, &t);
-	char tmCharArray[17];
-	std::strftime(tmCharArray, sizeof(tmCharArray), "%Y%m%d_%H%M%S", &tmbuf);
+std::string Logger::genUniqueTimestamp() {
+	_SYSTEMTIME t;
+	GetLocalTime(&t);
+	char tmCharArray[30] = { 0 };
+	sprintf(tmCharArray, "%04d-%02d-%02d %02d:%02d:%02d.%06d", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond, t.wMilliseconds*1000);
 	std::string timeStr(tmCharArray);
-	return String(timeStr);
+	return timeStr;
+}
+
+std::string Logger::genFileTimestamp() {
+	_SYSTEMTIME t;
+	GetLocalTime(&t);
+	char tmCharArray[30] = { 0 };
+	sprintf(tmCharArray, "%04d_%02d_%02d-%02d_%02d_%02d", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
+	std::string timeStr(tmCharArray);
+	return timeStr;
 }
 
 void TargetLogger::createResultsFile(String filename, String subjectID)
@@ -20,7 +28,7 @@ void TargetLogger::createResultsFile(String filename, String subjectID)
 	}
 
 	// create a unique file name (can bring this back if desired)
-	String timeStr = genUniqueTimestamp();
+	std::string timeStr = genUniqueTimestamp();
 
 	// create the file
 	if (sqlite3_open(filename.c_str(), &m_db)) {
@@ -39,7 +47,7 @@ void TargetLogger::createResultsFile(String filename, String subjectID)
 
 	// populate table
 	std::vector<std::string> expValues = {
-		addQuotes(timeStr.c_str()),
+		addQuotes(timeStr),
 		addQuotes(subjectID.c_str())
 	};
 	insertRowIntoDB(m_db, "Experiments", expValues);
@@ -65,15 +73,15 @@ void TargetLogger::createResultsFile(String filename, String subjectID)
 			{ "condition_ID", "integer" },
 			{ "session_ID", "text" },
 			{ "session_mode", "text" },
-			{ "start_time", "real" },
-			{ "end_time", "real" },
+			{ "start_time", "text" },
+			{ "end_time", "text" },
 			{ "task_execution_time", "real" },
 	};
 	createTableInDB(m_db, "Trials", trialColumns);
 
 	// 4. Target_Trajectory, only need to create the table.
 	std::vector<std::vector<std::string>> targetTrajectoryColumns = {
-			{ "time", "real" },
+			{ "time", "text" },
 			{ "position_x", "real" },
 			{ "position_y", "real" },
 			{ "position_z", "real" },
@@ -82,7 +90,7 @@ void TargetLogger::createResultsFile(String filename, String subjectID)
 
 	// 5. Player_Action, only need to create the table.
 	std::vector<std::vector<std::string>> viewTrajectoryColumns = {
-			{ "time", "real" },
+			{ "time", "text" },
 			{ "event", "text" },
 			{ "position_az", "real" },
 			{ "position_el", "real" },
@@ -125,7 +133,7 @@ void ReactionLogger::createResultsFile(String filename, String subjectID)
 	}
 
 	// create a unique file name
-	String timeStr = genUniqueTimestamp();
+	std::string timeStr = genUniqueTimestamp();
 
 	// create the file
 	if (sqlite3_open(filename.c_str(), &m_db)) {
@@ -144,7 +152,7 @@ void ReactionLogger::createResultsFile(String filename, String subjectID)
 
 	// populate table
 	std::vector<std::string> expValues = {
-		addQuotes(timeStr.c_str()),
+		addQuotes(timeStr),
 		addQuotes(subjectID.c_str())
 	};
 	insertRowIntoDB(m_db, "Experiments", expValues);
@@ -164,8 +172,8 @@ void ReactionLogger::createResultsFile(String filename, String subjectID)
 			{ "condition_ID", "integer" },
 			{ "session_ID", "text"},
 			{ "session_mode", "text"},
-			{ "start_time", "real" },
-			{ "end_time", "real" },
+			{ "start_time", "text" },
+			{ "end_time", "text" },
 			{ "task_execution_time", "real" },
 	};
 	createTableInDB(m_db, "Trials", trialColumns);
