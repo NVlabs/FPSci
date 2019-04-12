@@ -636,7 +636,9 @@ void App::updateUser(void){
 		String filename = "../results/" + m_experimentConfig.taskType + "_" + id + "_" + String(Logger::genFileTimestamp()) + ".db";
 		m_logger->createResultsFile(filename, id);
 		m_lastSeenUser = m_ddCurrentUser;
+
         m_userTable.currentUser = id;
+        updateUserGUI();
 	}
 }
 
