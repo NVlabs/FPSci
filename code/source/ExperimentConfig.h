@@ -352,7 +352,8 @@ public:
 	}
 
 	int getSessionIndex(String id) {
-		for (int i = 0; i < targets.size(); i++) {
+		for (int i = 0; i < sessions.size(); i++) {
+			auto aa = sessions[i];
 			if (!sessions[i].id.compare(id)) return i;
 		}
         // wasn't found, probably will segfault
