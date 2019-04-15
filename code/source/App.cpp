@@ -88,30 +88,9 @@ void App::onInit() {
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
-	updateMouseSensitivity();
+	updateMouseSensitivity();			// Update (apply) mouse sensitivity
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
-
-	String filename = "../results/" + m_experimentConfig.taskType + "_" + m_userTable.currentUser + "_" + String(Logger::genFileTimestamp()) + ".db";
-	if (m_experimentConfig.taskType == "reaction") {
-		m_ex = ReactionExperiment::create(this);
-		m_logger = ReactionLogger::create();
-	}
-	else if (m_experimentConfig.taskType == "target") {
-		m_ex = TargetExperiment::create(this);
-		m_logger = TargetLogger::create();
-		loadScene(m_experimentConfig.sceneName);									// load the experiment background scene (should we do this regardless?)
-	}
-
-	// Don't create a results file for a user w/ no sessions left
-	if (m_sessDropDown->numElements() == 0) {
-		logPrintf("No sessions remaining for selected user.");
-	}
-	else {
-		// Create the results file here (but how do we make sure user set up name?)
-		m_logger->createResultsFile(filename, m_userTable.currentUser);
-	}
-	// TODO: Remove the following by invoking a call back.
-	m_ex->onInit();
+	updateSessionPress();				// Update session to create results file/start collection
 
 	// initialize comport driver
 	if (useSerialPort) {
@@ -702,39 +681,42 @@ void App::updateSession(String id) {
 	if (!id.empty()) {
 		// Get the new session config
 		shared_ptr<SessionConfig> sessConfig = m_experimentConfig.getSessionConfigById(id);
-
 		// Print message to log
 		logPrintf("User selected session: %s. Updating now...\n", id);
-
 		// apply frame lag
 		setDisplayLatencyFrames(sessConfig->frameDelay);
 
+		// Set a maximum *finite* frame rate
 		float dt = 0;
-		if (unlockFramerate) {
-			// Set a maximum *finite* frame rate
-			dt = 1.0f / 8192.0f;
-		}
-		else if (variableRefreshRate) {
-			dt = 1.0f / sessConfig->frameRate;
-		}
-		else {
-			dt = 1.0f / float(window()->settings().refreshRate);
-		}
+		if (unlockFramerate) dt = 1.0f / 8192.0f;					
+		else if (variableRefreshRate) dt = 1.0f / sessConfig->frameRate;
+		else dt = 1.0f / float(window()->settings().refreshRate);
 		setFrameDuration(dt, GApp::REAL_TIME);
 
 		// Update session drop-down selection
 		m_sessDropDown->setSelectedValue(id);
 	}
 
-	// Initialize the experiment.
+	// Initialize the experiment (session) and logger
+	String filename = "../results/" + m_experimentConfig.taskType + "_" + id + "_" + m_userTable.currentUser + "_" + String(Logger::genFileTimestamp()) + ".db";
 	if (m_experimentConfig.taskType == "reaction") {
 		m_ex = ReactionExperiment::create(this);
+		m_logger = ReactionLogger::create();
 	}
 	else if (m_experimentConfig.taskType == "target") {
 		m_ex = TargetExperiment::create(this);
+		m_logger = TargetLogger::create();
+		// Load the experiment scene if we haven't already (target only)
+		if (!m_sceneLoaded) {
+			loadScene(m_experimentConfig.sceneName);
+			m_sceneLoaded = true;
+		}
 	}
-	// Check for empty session drop down (no sessions left)
-	if (updateSessionDropDown().size() == 0) logPrintf("No sessions remaining for selected user.");
+	
+	// Don't create a results file for a user w/ no sessions left
+	if (m_sessDropDown->numElements() == 0) logPrintf("No sessions remaining for selected user.");
+	// Create the results file here (but how do we make sure user set up name?)
+	else m_logger->createResultsFile(filename, m_userTable.currentUser);
 
 	// TODO: Remove the following by invoking a call back.
 	m_ex->onInit();

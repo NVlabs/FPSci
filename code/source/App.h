@@ -113,6 +113,8 @@ protected:
 
 	int                             m_lastUniqueID = 0;
 
+	bool							m_sceneLoaded = false;				// Indicates whether or not the scene has been loaded (prevents reload)
+
 	/** When m_displayLagFrames > 0, 3D frames are delayed in this queue */
 	Array<shared_ptr<Framebuffer>>  m_ldrDelayBufferQueue;
 	int                             m_currentDelayBufferIndex = 0;
