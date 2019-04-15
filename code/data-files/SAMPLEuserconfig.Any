@@ -1,9 +1,9 @@
 { 
-    currentUser = "BB"; 
+    currentUser = "JongK"; 
     settingsVersion = 1; 
     users = ( 
         { 
-            cmp360 = 30; 
+            cmp360 = 45; 
             completedSessions = ( ); 
             id = "JK"; 
             mouseDPI = 800; 
@@ -13,6 +13,27 @@
             cmp360 = 300; 
             completedSessions = ( ); 
             id = "JS"; 
+            mouseDPI = 800; 
+            settingsVersion = 1; 
+        }, 
+        { 
+            cmp360 = 18.6; 
+            completedSessions = ( ); 
+            id = "JC"; 
+            mouseDPI = 800; 
+            settingsVersion = 1; 
+        }, 
+        { 
+            cmp360 = 15; 
+            completedSessions = ( ); 
+            id = "JongK"; 
+            mouseDPI = 800; 
+            settingsVersion = 1; 
+        }, 
+        { 
+            cmp360 = 300; 
+            completedSessions = ( ); 
+            id = "LN"; 
             mouseDPI = 800; 
             settingsVersion = 1; 
         }, 
