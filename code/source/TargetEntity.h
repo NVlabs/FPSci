@@ -10,7 +10,7 @@ protected:
     /** World space point at center of orbit */
 	Point3                          m_orbitCenter;
 
-	/** Angular Speed Range deg/s x=min y=max */
+	/** Angular Speed Range (deg/s) x=min y=max */
 	Vector2                         m_angularSpeedRange = Vector2{ 0.0f, 4.0f };
     /** Motion Change period x=min y=max */
     Vector2                         m_motionChangePeriodRange = Vector2{ 10000.0f, 10000.0f };
@@ -90,7 +90,7 @@ protected:
 	float                           m_planarSpeedGoal; // the speed value m_speed tries to approach.
 	Point2                          m_acc;
 
-	/** Parameters constant during a trial */
+	/** World space point at center of orbit */
 	Point3                          m_orbitCenter;
 	float                           m_orbitRadius;
 
@@ -102,11 +102,15 @@ protected:
 	bool                            m_inJump;
 	float                           m_standingHeight;
 
-	/** Properties defining target behavior */
+	/** Angular Speed Range (deg/s) x=min y=max */
 	Vector2                         m_angularSpeedRange;
+	/** Motion Change period x=min y=max */
 	Vector2                         m_motionChangePeriodRange;
+	/** Jump period x=min y=max */
     Vector2                         m_jumpPeriodRange;
+	/** Jump initial speed (m/s) x=min y=max */
     Vector2                         m_jumpSpeedRange;
+	/** Gravitational Acceleration (m/s^2) x=min y=max */
     Vector2                         m_gravityRange;
 	float                           m_planarAcc = 0.3f;
 
