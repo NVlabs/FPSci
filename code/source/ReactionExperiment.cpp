@@ -8,7 +8,7 @@ bool ReactionExperiment::initPsychHelper()
 {
 	// Add conditions, one per one intensity.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
-	shared_ptr<SessionConfig> sess = m_config.getSessionConfigById(m_app->getCurrSessId());
+	shared_ptr<SessionConfig> sess = m_config.getSessionConfigById(m_app->getDropDownSessId());
 	if (sess == nullptr) return false;
 	Array<Param> params = m_config.getReactionExpConditions(sess->id);
 	for (auto p : params) {
@@ -18,7 +18,7 @@ bool ReactionExperiment::initPsychHelper()
 		psychParam.mIsDefault = false;
 		psychParam.mStimLevels.push_back(m_config.taskDuration);		// Shorter task is more difficult. However, we are currently doing unlimited time.
 		psychParam.mMaxTrialCounts.push_back((int)p.val["trialCount"]);
-		p.add("session", m_app->getCurrSessId().c_str());
+		p.add("session", m_app->getDropDownSessId().c_str());
 		m_psych.addCondition(p, psychParam);
 	}
 

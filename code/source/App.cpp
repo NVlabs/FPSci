@@ -227,7 +227,7 @@ void App::updateMouseSensitivity() {
     // G3D expects mouse sensitivity in radians
     // we're converting from mouseDPI and centimeters/360 which explains
     // the screen resolution (dots), cm->in factor (2.54) and 2PI
-    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_userTable.users[m_ddCurrentUser].cmp360 * m_userTable.users[m_ddCurrentUser].mouseDPI);
+    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_userTable.getCurrentUser()->cmp360 * m_userTable.getCurrentUser()->mouseDPI);
     // additional correction factor based on few samples - TODO: need more careful setup to study this
     mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
     const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
@@ -632,12 +632,10 @@ void App::userSaveButtonPress(void) {
 }	
 
 void App::updateUser(void){
-	// Get new session list for user
-	updateSessionDropDown();
 	// Update the user if needed
 	if (m_lastSeenUser != m_ddCurrentUser) {
 		if(m_sessDropDown->numElements() > 0) updateSession(updateSessionDropDown()[0]);
-		String id = getCurrUserId();
+		String id = getDropDownUserId();
 		String filename = "../results/" + m_experimentConfig.taskType + "_" + id + "_" + String(Logger::genFileTimestamp()) + ".db";
 		m_logger->createResultsFile(filename, id);
 		m_lastSeenUser = m_ddCurrentUser;
@@ -645,6 +643,8 @@ void App::updateUser(void){
         m_userTable.currentUser = id;
         updateUserGUI();
 	}
+	// Get new session list for (new) user
+	updateSessionDropDown();
 }
 
 void App::updateUserGUI() {
@@ -652,7 +652,7 @@ void App::updateUserGUI() {
     m_currentUserPane->addLabel(format("Current User: %s", m_userTable.currentUser));
     m_mouseDPILabel = m_currentUserPane->addLabel(format("Mouse DPI: %f", m_userTable.getCurrentUser()->mouseDPI));
     m_currentUserPane->addNumberBox("Mouse 360", &(m_userTable.getCurrentUser()->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
-    m_currentUserPane->addButton("Save cm/360�", this, &App::userSaveButtonPress);
+    m_currentUserPane->addButton("Save cm/360", this, &App::userSaveButtonPress);
 }
 
 Array<String> App::updateSessionDropDown(void) {
@@ -676,25 +676,26 @@ Array<String> App::updateSessionDropDown(void) {
 	return remainingSess;
 }
 
-String App::getCurrSessId(void) {
+String App::getDropDownSessId(void) {
+	if (m_sessDropDown->numElements() == 0) return "";
 	return m_sessDropDown->get(m_ddCurrentSession);
 }
 
-String App::getCurrUserId(void) {
+String App::getDropDownUserId(void) {
 	return m_userDropDown->get(m_ddCurrentUser);
 }
 
 void App::markSessComplete(String id) {
-	m_userTable.users[m_ddCurrentUser].addCompletedSession(id);
+	m_userTable.getCurrentUser()->addCompletedSession(id);
 }
 
 shared_ptr<UserConfig> App::getCurrUser(void) {
     //return m_userTable.getIds()[m_ddCurrentUser];
-	return m_userTable.getUserById(getCurrUserId());
+	return m_userTable.getUserById(getDropDownUserId());
 }
 
 void App::updateSessionPress(void) {
-	updateSession(getCurrSessId());
+	updateSession(getDropDownSessId());
 }
 
 void App::updateSession(String id) {

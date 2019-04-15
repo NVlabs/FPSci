@@ -212,9 +212,9 @@ public:
 
 	Array<String> updateSessionDropDown(void);
 
-	String getCurrSessId(void);
+	String getDropDownSessId(void);
 
-	String getCurrUserId(void);
+	String getDropDownUserId(void);
 
 	void markSessComplete(String id);
 
@@ -227,7 +227,8 @@ public:
 	void setDisplayLatencyFrames(int f);
     
 	SystemConfig getSystemInfo(void);
-    /** opens the user settings window */
+    
+	/** opens the user settings window */
     void openUserSettingsWindow();
 
 	/** reads current user settings to update sensitivity in the controller */
