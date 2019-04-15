@@ -69,8 +69,8 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	Scene*                                  scene,
 	const shared_ptr<Model>&                model,
 	const CFrame&                           position,
-	Array<float>                            speedRange,
-	Array<float>                            motionChangePeriodRange,
+	const Vector2&                          speedRange,
+	const Vector2&                          motionChangePeriodRange,
 	Point3                                  orbitCenter) {
 
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
@@ -95,7 +95,7 @@ void FlyingEntity::init() {
 }
 
 
-void FlyingEntity::init(Array<float> angularSpeedRange, Array<float> motionChangePeriodRange, Point3 orbitCenter) {
+void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter) {
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
 	m_orbitCenter = orbitCenter;
@@ -237,11 +237,11 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 	Scene*                                  scene,
 	const shared_ptr<Model>&                model,
 	const CFrame&                           position,
-	Array<float>                            angularSpeedRange,
-	Array<float>                            motionChangePeriodRange,
-	Array<float>                            jumpPeriodRange,
-	Array<float>                            jumpSpeedRange,
-	Array<float>                            gravityRange,
+    const Vector2&                          angularSpeedRange,
+    const Vector2&                          motionChangePeriodRange,
+    const Vector2&                          jumpPeriodRange,
+    const Vector2&                          jumpSpeedRange,
+    const Vector2&                          gravityRange,
 	Point3                                  orbitCenter,
 	float                                   orbitRadius) {
 
@@ -274,11 +274,11 @@ void JumpingEntity::init() {
 }
 
 void JumpingEntity::init(
-	Array<float> angularSpeedRange,
-	Array<float> motionChangePeriodRange,
-	Array<float> jumpPeriodRange,
-	Array<float> jumpSpeedRange,
-	Array<float> gravityRange,
+    const Vector2& angularSpeedRange,
+    const Vector2& motionChangePeriodRange,
+    const Vector2& jumpPeriodRange,
+    const Vector2& jumpSpeedRange,
+    const Vector2& gravityRange,
 	Point3 orbitCenter,
 	float orbitRadius
 ){

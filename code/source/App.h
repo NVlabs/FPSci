@@ -187,8 +187,8 @@ public:
 		const Point3& position,
 		float scale,
 		const Color3& color,
-		Array<float> speedRange,
-		Array<float> motionChangePeriodRange,
+		const Vector2& speedRange,
+		const Vector2& motionChangePeriodRange,
 		Point3 orbitCenter
 	);
 
@@ -197,11 +197,11 @@ public:
 		const Point3& position,
 		float scale,
 		const Color3& color,
-		Array<float> speedRange,
-		Array<float> motionChangePeriodRange,
-		Array<float> jumpPeriodRange,
-		Array<float> jumpSpeedRange,
-		Array<float> gravityRange,
+        const Vector2& speedRange,
+        const Vector2& motionChangePeriodRange,
+        const Vector2& jumpPeriodRange,
+        const Vector2& jumpSpeedRange,
+        const Vector2& gravityRange,
 		Point3 orbitCenter
 	);
 

@@ -5,13 +5,15 @@
 class FlyingEntity : public VisibleEntity {
 protected:
 
-	/** Spherical component characteristics */
-	float                           m_speed = 0.0f; // deg / sec
+	/** Angular speed in degress/sec */
+	float                           m_speed = 0.0f;
+    /** World space point at center of orbit */
 	Point3                          m_orbitCenter;
 
-	/** Properties defining target behavior */
-	Array<float>                    m_angularSpeedRange = Array<float>{ 0.0f, 4.0f };
-	Array<float>                    m_motionChangePeriodRange = Array<float>{ 10000.0f, 10000.0f };
+	/** Angular Speed Range deg/s x=min y=max */
+	Vector2                         m_angularSpeedRange = Vector2{ 0.0f, 4.0f };
+    /** Motion Change period x=min y=max */
+    Vector2                         m_motionChangePeriodRange = Vector2{ 10000.0f, 10000.0f };
 
     /** The target will move through these points along arcs around
         m_orbitCenter at m_speed. As each point is hit, it is
@@ -23,7 +25,7 @@ protected:
 
 	void init();
 
-	void init(Array<float> angularSpeedRange, Array<float> motionChangePeriodRange, Point3 orbitCenter);
+	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter);
 
 public:
 
@@ -56,8 +58,8 @@ public:
 		Scene*                         scene,
 		const shared_ptr<Model>&       model,
 		const CFrame&                  position,
-		Array<float>                   speedRange,
-		Array<float>                   motionChangePeriodRange,
+		const Vector2&                 speedRange,
+		const Vector2&                 motionChangePeriodRange,
 		Point3                         orbitCenter);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
@@ -101,11 +103,11 @@ protected:
 	float                           m_standingHeight;
 
 	/** Properties defining target behavior */
-	Array<float>                    m_angularSpeedRange;
-	Array<float>                    m_motionChangePeriodRange;
-	Array<float>                    m_jumpPeriodRange;
-	Array<float>                    m_jumpSpeedRange;
-	Array<float>                    m_gravityRange;
+	Vector2                         m_angularSpeedRange;
+	Vector2                         m_motionChangePeriodRange;
+    Vector2                         m_jumpPeriodRange;
+    Vector2                         m_jumpSpeedRange;
+    Vector2                         m_gravityRange;
 	float                           m_planarAcc = 0.3f;
 
 	/** check first frame */
@@ -118,11 +120,11 @@ protected:
 	void init();
 
 	void init(
-		Array<float> angularSpeedRange,
-		Array<float> motionChangePeriodRange,
-		Array<float> jumpPeriodRange,
-		Array<float> jumpSpeedRange,
-		Array<float> gravityRange,
+		const Vector2& angularSpeedRange,
+        const Vector2& motionChangePeriodRange,
+        const Vector2& jumpPeriodRange,
+        const Vector2& jumpSpeedRange,
+        const Vector2& gravityRange,
 		Point3 orbitCenter,
 		float orbitRadius
 	);
@@ -143,11 +145,11 @@ public:
 		Scene*                         scene,
 		const shared_ptr<Model>&       model,
 		const CFrame&                  position,
-		Array<float>                   speedRange,
-		Array<float>                   motionChangePeriodRange,
-		Array<float>                   jumpPeriodRange,
-		Array<float>                   jumpSpeedRange,
-		Array<float>                   gravityRange,
+        const Vector2&                 speedRange,
+        const Vector2&                 motionChangePeriodRange,
+        const Vector2&                 jumpPeriodRange,
+        const Vector2&                 jumpSpeedRange,
+        const Vector2&                 gravityRange,
 		Point3                         orbitCenter,
 		float                          orbitRadius);
 

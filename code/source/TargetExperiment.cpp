@@ -81,11 +81,11 @@ void TargetExperiment::initTargetAnimation() {
 				f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
 				visualSize,
 				m_app->m_targetColor,
-				Array<float>{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
-				Array<float>{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"]},
-				Array<float>{ m_psych.getParam().val["minJumpPeriod"], m_psych.getParam().val["maxJumpPeriod"]},
-				Array<float>{ m_psych.getParam().val["minJumpSpeed"], m_psych.getParam().val["maxJumpSpeed"]},
-				Array<float>{ m_psych.getParam().val["minGravity"], m_psych.getParam().val["maxGravity"]},
+				{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
+				{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"]},
+				{ m_psych.getParam().val["minJumpPeriod"], m_psych.getParam().val["maxJumpPeriod"]},
+				{ m_psych.getParam().val["minJumpSpeed"], m_psych.getParam().val["maxJumpSpeed"]},
+				{ m_psych.getParam().val["minGravity"], m_psych.getParam().val["maxGravity"]},
 				initialSpawnPos
 			);
 		}
@@ -94,8 +94,8 @@ void TargetExperiment::initTargetAnimation() {
 				f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
 				visualSize,
 				m_app->m_targetColor,
-				Array<float>{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
-				Array<float>{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"]},
+				{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
+				{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"]},
 				initialSpawnPos
 			);
 		}
@@ -105,8 +105,8 @@ void TargetExperiment::initTargetAnimation() {
 			f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
 			visualSize,
 			m_app->m_targetColor,
-			Array<float>{ 0.0f, 0.0f },
-			Array<float>{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"] },
+			{ 0.0f, 0.0f },
+			{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"] },
 			initialSpawnPos
 		);
 	}
