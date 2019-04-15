@@ -103,7 +103,7 @@ void App::onInit() {
 	}
 
 	// Don't create a results file for a user w/ no sessions left
-	if (m_remainingSess.size() == 0) {
+	if (m_sessDropDown->numElements() == 0) {
 		logPrintf("No sessions remaining for selected user.");
 	}
 	else {
@@ -614,9 +614,8 @@ void App::makeGUI() {
 	    p->addButton("Select User", this, &App::updateUser);
     p->endRow();
     p->beginRow();
-        m_sessDropDown = p->addDropDownList("Session", m_experimentConfig.getSessionIdArray(), &m_ddCurrentSession);
-	    Array<String> m_remainingSess;
-	    m_remainingSess = updateSessionDropDown();
+        m_sessDropDown = p->addDropDownList("Session", Array<String>({}), &m_ddCurrentSession);
+        updateSessionDropDown();
 	    p->addButton("Select Session", this, &App::updateSessionPress);
     p->endRow();
     m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
@@ -637,7 +636,7 @@ void App::updateUser(void){
 	updateSessionDropDown();
 	// Update the user if needed
 	if (m_lastSeenUser != m_ddCurrentUser) {
-		if(m_remainingSess.size() > 0) updateSession(updateSessionDropDown()[0]);
+		if(m_sessDropDown->numElements() > 0) updateSession(updateSessionDropDown()[0]);
 		String id = getCurrUserId();
 		String filename = "../results/" + m_experimentConfig.taskType + "_" + id + "_" + String(Logger::genFileTimestamp()) + ".db";
 		m_logger->createResultsFile(filename, id);
@@ -653,29 +652,28 @@ void App::updateUserGUI() {
     m_currentUserPane->addLabel(format("Current User: %s", m_userTable.currentUser));
     m_mouseDPILabel = m_currentUserPane->addLabel(format("Mouse DPI: %f", m_userTable.getCurrentUser()->mouseDPI));
     m_currentUserPane->addNumberBox("Mouse 360", &(m_userTable.getCurrentUser()->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
-    m_currentUserPane->addButton("Save cm/360°", this, &App::userSaveButtonPress);
-}
-
-Array<String> App::getSessListForUser() {
-	Array<String> sessList;
-	for (String sess : m_experimentConfig.getSessionIdArray()) {
-		if (!getCurrUser()->completedSessions.contains(sess)) sessList.append(sess);
-	}
-	return sessList;
+    m_currentUserPane->addButton("Save cm/360ï¿½", this, &App::userSaveButtonPress);
 }
 
 Array<String> App::updateSessionDropDown(void) {
 	// Create updated session list
-	m_remainingSess = getSessListForUser();
-	m_sessDropDown->setList(m_remainingSess);
+    Array<String> remainingSess = {};
+    UserConfig* currentUser = m_userTable.getCurrentUser();
+    for (const SessionConfig& sess : m_experimentConfig.sessions) {
+        // user hasn't completed this session
+        if (!currentUser->completedSessions.contains(sess.id)) {
+            remainingSess.append(sess.id);
+        }
+    }
+	m_sessDropDown->setList(remainingSess);
 
 	// Print message to log
 	logPrintf("Updated session drop down to:\n");
-	for (String id : m_remainingSess) {
+	for (String id : remainingSess) {
 		logPrintf("\t%s\n", id);
 	}
 
-	return m_remainingSess;
+	return remainingSess;
 }
 
 String App::getCurrSessId(void) {

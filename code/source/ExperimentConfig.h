@@ -113,7 +113,7 @@ public:
         for (int i = 0; i < users.length(); ++i) {
             if (!users[i].id.compare(currentUser)) return i;
         }
-        // return the first user by default and set the value
+        // return the first user by default
         return 0;
     }
 
@@ -334,15 +334,6 @@ public:
 		target = 1
 	};
 	//const String taskTypes[2] = { "reaction", "target" };
-
-	// Get a list of session IDs from the session array
-	Array<String> getSessionIdArray(void) {
-		Array<String> ids;
-		for (int i = 0; i < sessions.size(); i++) {
-			ids.append(sessions[i].id);
-		}
-		return ids;
-	}
 
 	shared_ptr<SessionConfig> getSessionConfigById(String id) {
 		for (int i = 0; i < sessions.size(); i++) {
