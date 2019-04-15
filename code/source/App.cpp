@@ -210,7 +210,7 @@ void App::updateMouseSensitivity() {
     // additional correction factor based on few samples - TODO: need more careful setup to study this
     mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
     const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-    if (m_userSettingsMode || !m_experimentConfig.playMode) {
+    if (m_userSettingsMode) {
         // set to 3rd person
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
     }
@@ -219,10 +219,6 @@ void App::updateMouseSensitivity() {
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
         fpm->setMoveRate(0.0);
     }
-    //if (m_experimentConfig.playMode) {
-    //    // disable movement in play mode
-    //    fpm->setMoveRate(0.0);
-    //}
     fpm->setTurnRate(mouseSensitivity);
 }
 
