@@ -285,10 +285,10 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
+        //{"id": "static","count": 20},
+        //{"id": "straight_fly","count": 20},
         {"id": "stray_fly","count": 40},
-        {"id": "strafe_jump","count": 40}
+        //{"id": "strafe_jump","count": 40}
       ]
     }
   ],
@@ -326,7 +326,7 @@
       "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
-      "motionChangePeriod": [ 0.4, 1.0 ],
+      "motionChangePeriod": [ 1.0, 2.0 ],
       "jumpEnabled": false
     },
     {
