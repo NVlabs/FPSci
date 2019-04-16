@@ -9,9 +9,9 @@
   "sceneName": "eSports Simple Hallway", // Maybe don�t need this? Or maybe this ends up belonging to individual trials
   "taskType": "target", // Task type, can be "target" or "reaction"
   "feedbackDuration": 0.0, // Time allocated for providing user feedback
-  "readyDuration": 0.0, // Time allocated for preparing for trial
+  "readyDuration": 0.25, // Time allocated for preparing for trial
   "taskDuration": 6.0, // Maximum duration allowed for completion of the task
-  "maxClicks": 6,
+  "maxClicks": 12,
   "sessionOrder": "random", // Session ordering, can be "Random", "Serial"
 
   // Create a sessions table containing information related to sessions
@@ -285,9 +285,9 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        // {"id": "static","count": 20},
-        // {"id": "straight_fly","count": 20},
-        // {"id": "stray_fly","count": 40},
+        {"id": "static","count": 20},
+        {"id": "straight_fly","count": 20},
+        {"id": "stray_fly","count": 40},
         {"id": "strafe_jump","count": 40}
       ]
     }
@@ -326,7 +326,7 @@
       "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
-      "motionChangePeriod": [ 0.4, 0.8 ],
+      "motionChangePeriod": [ 0.4, 1.0 ],
       "jumpEnabled": false
     },
     {
@@ -336,7 +336,7 @@
       "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
-      "motionChangePeriod": [ 0.2, 0.4 ],
+      "motionChangePeriod": [ 0.2, 0.8 ],
       "jumpEnabled": true,
       "distance": [ 20, 25],
       "jumpPeriod": [ 0.3, 0.8 ],
