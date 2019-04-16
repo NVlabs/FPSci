@@ -15,21 +15,15 @@ If you already have an [Anaconda](https://www.anaconda.com/) distribution instal
 To use the setup you will need a complete hardware setup intended for the desired monitoring. For more information contact [Ben Boudaoud](mailto:bboudaoud@nvidia.com) and/or [Josef Spjut](maltio:jspjut@nvidia.com).
 
 ### Typical Usage
-1. Run the [logger (event_logger.py)](./software/event_logger.py)  from the command line, providing the Arduino COM port as the sole argument. Make sure you provide the full COM port string (i.e. 'COM3' in the window environoment).
-2. View the data in realtime (via histogram and time plot) and make sure that log files are being created (default to a "Log" directory you will need to create).
+1. Run the [logger (event_logger.py)](./software/event_logger.py)  from the command line, providing the Arduino COM port and output file basename (output log without the "_adc.csv" or "_event.csv") argument. Make sure you provide the full COM port string (i.e. 'COM3' in the window environoment). Example calls are provided below.
 
-### Calibration (V1 Firmware Only)
-*This process is not required in the V2 firmware as timestamped events replaced pulse width measurement*
+    ```python event_logger.py [COM port] [Output basefile] [(Optional) Sync COM Port]```
 
-The software/logger backend implements a simple (linear) calibration procedure to correct errors in the collected output measurements of latency from the hardware platform.
+    Without SYNC port: ```python event_logger.py COM9 ../results/mytest```
 
-The calibration proceedure described below is one example of a possible method for determining calibration parameters.
+    With SYNC port: ```python event_logger.py COM9 ../results/mytest COM1```
 
-1. Setup a signal generator to create a pulse of known (controllable) duration, repeating at a (relatively) slow rate of 1-2Hz.
-2. Set a range of pulse widths (from say 100µs-200ms) and for each pulse width record the average reported pulse width over 10-20 pulses.
-3. Perform a linear regression between the pulse width meaured by the device (as input) and actual pulse width (reported by the signal generator) to obtain a slope and offset for the correction.
-4. Update the LATENCY_CAL_OFFSET (offset) and LATENCY_CAL_MUL (slope) values in the [logger](./software/latency_logger.py) with the new values
-5. Re-check the output to make sure the signal generator settings and output from the logger now agree.
+2. View the data in realtime (via histogram and time plot if `PLOT_DATA` is set to `True`) and make sure that log files are being created.
 
 ## Required Hardware
 The firmware here is an Ardiuno sketch intended to work the the [SparkFun Pro Micro](https://www.sparkfun.com/products/12640). This firmware is intended to work with a [custom-designed piece of measurement hardware](https://workspace.circuitmaker.com/Projects/Details/Ben-Boudaoud-2/Latency-Measurement), though this can be replaced with a breadboard-based setup.

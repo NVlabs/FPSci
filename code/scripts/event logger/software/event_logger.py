@@ -26,7 +26,6 @@ MIN_EVENT_SPACING_S = 0.1       # Minimum allowable amount of time between 2 sim
 AUTOCLICK_COUNT_TOTAL = 500     # Number of autoclick events to perform once autoclick is enable
 
 # Logging parameters
-LOG_PREFIX = '../results/log'         # Prefix for logging directory (can relocate logs using this)
 IN_LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 LOG_NAME_TIME_FORMAT = '%y-%m-%d_%H%M%S'
 
@@ -48,10 +47,12 @@ nameLookup = {
 }
 
 # Create serial port and setup histogram
-if(len(sys.argv) > 1): com = sys.argv[1]
-else: raise Exception("Need to provide COM port as argument to call!")
+if(len(sys.argv) > 2): 
+    com = sys.argv[1]
+    logbasename = sys.argv[2]
+else: raise Exception("Need to provide COM port and output filename as argument to call!")
 
-if(len(sys.argv) > 2): serCard = sys.argv[2]
+if(len(sys.argv) > 3): serCard = sys.argv[3]
 else: serCard = None
 
 # Check test mode (for device emulation)
@@ -66,14 +67,14 @@ if PRINT_TO_CONSOLE: print("Starting logging (GUI will open when logging data is
 
 # Handle creating log file (and writing header here)
 if LOG_EVENT_DATA:
-    eventFname = LOG_PREFIX + "_event_" + datetime.now().strftime(LOG_NAME_TIME_FORMAT) + ".csv"
+    eventFname = logbasename + "_event.csv"
     eventFile = open(eventFname, mode='w')
     eventLogger = csv.writer(eventFile, delimiter=',', lineterminator='\n')
     eventLogger.writerow(['Timestamp [s]', 'Event'])
     eventFile.flush()
 
 if LOG_ADC_DATA:
-    adcFname = LOG_PREFIX + "_adc_"+ datetime.now().strftime(LOG_NAME_TIME_FORMAT) + ".csv"
+    adcFname = logbasename + "_adc.csv"
     adcFile = open(adcFname, mode='w')
     adcLogger = csv.writer(adcFile, delimiter=',', lineterminator='\n')
     adcLogger.writerow(['Timestamps [s]', 'Value'])
