@@ -57,12 +57,9 @@ void App::onInit() {
 	printExpConfigToLog(m_experimentConfig);
 
 	// Get and save system configuration
-	SystemConfig sysConfig = getSystemInfo();
-	Any a = sysConfig.toAny();
-	a.save("systemconfig.Any");
-	// Print system info to log
-	logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)", 
-		sysConfig.cpuName, sysConfig.coreCount, sysConfig.memCapacityMB, sysConfig.gpuName, sysConfig.displayName, sysConfig.displayXRes, sysConfig.displayYRes, sysConfig.displayXSize, sysConfig.displayYSize);
+	SystemConfig sysConfig = SystemConfig::getSystemConfig();
+	sysConfig.printSystemInfo();									// Print system info to log.txt
+	sysConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
 
 	setSubmitToDisplayMode(
 		//SubmitToDisplayMode::EXPLICIT);
@@ -127,74 +124,6 @@ void App::printExpConfigToLog(ExperimentConfig config) {
 		logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tElevation Locked = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n",
 			target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.elevLocked ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1]);
 	}
-}
-
-SystemConfig App::getSystemInfo(void) {
-	SystemConfig system;
-
-	// Get CPU name string
-	int cpuInfo[4] = { -1 };
-	unsigned nExIds, i = 0;
-	char cpuBrandString[0x40];
-	__cpuid(cpuInfo, 0x80000000);
-	nExIds = cpuInfo[0];
-	for (unsigned int i = 0x80000000; i <= nExIds; i++) {
-		__cpuid(cpuInfo, i);
-		// Interpret CPU brand string
-		switch (i) {
-		case 0x80000002:
-			memcpy(cpuBrandString, cpuInfo, sizeof(cpuInfo));
-			break;
-		case 0x80000003:
-			memcpy(cpuBrandString + 16, cpuInfo, sizeof(cpuInfo));
-			break;
-		case 0x80000004:
-			memcpy(cpuBrandString + 32, cpuInfo, sizeof(cpuInfo));
-			break;
-		default:
-			logPrintf("Couldn't get system info...\n");
-		}
-	}
-	system.cpuName = cpuBrandString;
-
-	// Get CPU core count
-	SYSTEM_INFO sysInfo;
-	GetSystemInfo(&sysInfo);
-	system.coreCount = sysInfo.dwNumberOfProcessors;
-
-	// Get memory size
-	MEMORYSTATUSEX statex;
-	statex.dwLength = sizeof(statex);
-	GlobalMemoryStatusEx(&statex);
-	system.memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
-	
-	// Get GPU name string
-	String gpuVendor = String((char*)glGetString(GL_VENDOR)).append(" ");
-	String gpuRenderer = String((char*)glGetString(GL_RENDERER));
-	system.gpuName = gpuVendor.append(gpuRenderer);
-
-	// Get display information (monitor name)
-	/*DISPLAY_DEVICE dd;
-	int deviceIndex = 0;
-	int monitorIndex = 0;
-	EnumDisplayDevices(0, deviceIndex, &dd, 0);
-	std::string deviceName = dd.DeviceName;
-	EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
-	system.displayName = String(dd.DeviceString);*/
-	system.displayName = String("TODO");
-
-	// Get screen resolution
-	system.displayXRes = GetSystemMetrics(SM_CXSCREEN);
-	system.displayYRes = GetSystemMetrics(SM_CYSCREEN);
-	
-	// Get display size
-	HWND const hwnd = 0;
-	HDC const hdc = GetDC(hwnd);
-	assert(hdc);
-	system.displayXSize = GetDeviceCaps(hdc, HORZSIZE);
-	system.displayYSize = GetDeviceCaps(hdc, VERTSIZE);
-
-	return system;
 }
 
 void App::openUserSettingsWindow() {
@@ -708,7 +637,22 @@ void App::updateSession(String id) {
 			m_sceneLoaded = true;
 		}
 	}
-	
+
+	// Check for need to start latency logging and if so run the logger now
+	SystemConfig sysConfig = SystemConfig::getSystemConfig();
+	if (sysConfig.hasLogger) {
+		// TODO: Decide how to spawn a process here (we need to be able to kill this later to start a new one for the next session)
+		//const char *args[4];
+		//args[0] = "event_logger.py";
+		//args[1] = sysConfig.loggerComPort.c_str();
+		//args[2] = sysConfig.hasSync ? sysConfig.syncComPort.c_str() : NULL;
+		//args[3] = NULL;
+		////system(cmd.c_str());
+
+		//// Give this a shot (still don't know how to end this...)
+		//spawnv(PIPE_NOWAIT, "python.exe", args);
+	}
+
 	// Don't create a results file for a user w/ no sessions left
 	if (m_sessDropDown->numElements() == 0) logPrintf("No sessions remaining for selected user.");
 	// Create the results file here (but how do we make sure user set up name?)
@@ -829,7 +773,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 
 	// Check for completed session
-	if (m_ex->isComplete) {
+	if (m_ex->moveOn) {
 		String nextSess = updateSessionDropDown()[0];
 		updateSession(nextSess);
 	}

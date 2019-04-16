@@ -191,7 +191,7 @@ void TargetExperiment::updatePresentationState()
 						m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
 					}
 					else{
-						isComplete = true;														// Check for session complete (signal start of next session)
+						moveOn = true;														// Check for session complete (signal start of next session)
 					}
 				}
 				else 

@@ -78,7 +78,6 @@ protected:
 	GuiDropDownList*				m_userDropDown;
 	GuiLabel*						m_mouseDPILabel;
 	GuiLabel*						m_cm360Label;
-	//GuiNumberBox<double>*			m_cm360NumberBox;
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
@@ -160,7 +159,7 @@ public:
 	shared_ptr<Experiment> m_ex;
 
 	/** Pointer to Logger class */
-	shared_ptr<Logger> m_logger;				// Why can't we do what Joohwan did above for experiment?
+	shared_ptr<Logger> m_logger;
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
@@ -227,8 +226,6 @@ public:
 	void updateSession(String id);
 
 	void setDisplayLatencyFrames(int f);
-    
-	SystemConfig getSystemInfo(void);
     
 	/** opens the user settings window */
     void openUserSettingsWindow();

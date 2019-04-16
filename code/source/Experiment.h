@@ -53,16 +53,13 @@ public:
 	*/
 	void addCondition(Param newConditionParam, PsychophysicsDesignParameter newExpParam);
 
-	/** Pick next condition
-	*/
+	/** Pick next condition*/
 	void chooseNextCondition();
 
-	/** Get current condtion parameter
-	*/
+	/** Get current condtion parameter*/
 	Param getParam();
 
-	/** Get stimulus level for current trial
-	*/
+	/** Get stimulus level for current trial*/
 	float getStimLevel();
 
 	/** Process user response and record it in the result file.
@@ -70,12 +67,10 @@ public:
 	*/
 	void processResponse(int32_t response);
 
-	/** Check whether experiment is complete
-	*/
+	/** Check whether experiment is complete*/
 	bool isComplete();
 
-	/** Reset the experiment state
-	*/
+	/** Reset the experiment state*/
 	//void clear();
 
 	std::vector<SingleThresholdMeasurement> mMeasurements;
@@ -98,7 +93,6 @@ protected:
 	std::string m_taskStartTime;
 	std::string m_taskEndTime;
 	int m_response;
-	//Param m_config; // All parameters common in the experiment.
 	int m_clickCount = 0;
 	bool m_hasSession;
 
@@ -108,12 +102,9 @@ protected:
 	Experiment(App* app) :m_app(app) {};
 
 public:
-	bool isComplete = false;
+	bool moveOn = false;
 	PsychHelper m_psych;
 	ExperimentConfig m_config;
-
-	//Experiment() : ReferenceCountedObject() {
-	//}
 
 	virtual void onInit() = 0;
 	virtual void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface) = 0;
