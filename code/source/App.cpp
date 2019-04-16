@@ -846,6 +846,10 @@ bool App::onEvent(const GEvent& event) {
 	// Handle super-class events
 	if (GApp::onEvent(event)) { return true; }
 
+    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::ESCAPE)) {
+        killLogger();
+    }
+
 	// If you need to track individual UI events, manage them here.
 	// Return true if you want to prevent other parts of the system
 	// from observing this specific event.
