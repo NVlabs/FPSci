@@ -981,10 +981,10 @@ void App::onUserInput(UserInput* ui) {
 	(void)ui;
 
 	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
-		// count clicks
-		m_ex->countClick();
 		// check for hit, add graphics, update target state
 		if (m_ex->responseReady()) {
+			// count clicks
+			m_ex->countClick();
 			fire();
 			if (m_targetHealth == 0) {
 				// target eliminated, must be 'hit'.
