@@ -113,7 +113,8 @@ protected:
 	int                             m_lastUniqueID = 0;
 
 	bool							m_sceneLoaded = false;				// Indicates whether or not the scene has been loaded (prevents reload)
-
+	bool							m_loggerRunning = false;
+	HANDLE							m_loggerHandle = 0;
 	/** When m_displayLagFrames > 0, 3D frames are delayed in this queue */
 	Array<shared_ptr<Framebuffer>>  m_ldrDelayBufferQueue;
 	int                             m_currentDelayBufferIndex = 0;
@@ -145,21 +146,21 @@ public:
 	App(const GApp::Settings& settings = GApp::Settings());
 
 	/** Array of all targets in the scene */
-	Array<shared_ptr<VisibleEntity>> m_targetArray;
-	Array<Projectile>               m_projectileArray;
+	Array<shared_ptr<VisibleEntity>> targetArray;
+	Array<Projectile>                projectileArray;
 
 	/** Parameter configurations */
-	UserTable						m_userTable;
-	ExperimentConfig                m_experimentConfig;
+	UserTable						userTable;
+	ExperimentConfig                experimentConfig;
 
 	//TODO: Remove it when we are using G3D timer
 	Timer timer;
 
 	/** Pointer to Experiment class */
-	shared_ptr<Experiment> m_ex;
+	shared_ptr<Experiment> ex;
 
 	/** Pointer to Logger class */
-	shared_ptr<Logger> m_logger;
+	shared_ptr<Logger> logger;
 
 	/** Call to change the reticle. */
 	void setReticle(int r);

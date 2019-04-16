@@ -27,7 +27,7 @@ bool TargetExperiment::initPsychHelper()
 	}
 
 	// Update the logger w/ these conditions (IS THIS THE RIGHT PLACE TO DO THIS???)
-	m_app->m_logger->addConditions(m_psych.mMeasurements);
+	m_app->logger->addConditions(m_psych.mMeasurements);
 
 	// call it once all conditions are defined.
 	m_psych.chooseNextCondition();
@@ -39,7 +39,7 @@ void TargetExperiment::onInit() {
 	m_app->m_presentationState = PresentationState::initial;
 	m_feedbackMessage = "Aim at the target and shoot!";
 	
-	m_config = m_app->m_experimentConfig;									// Setup config from app
+	m_config = m_app->experimentConfig;									// Setup config from app
 	m_hasSession = initPsychHelper();
 	if (!m_hasSession) {												// Initialize PsychHelper based on the configuration.
 		m_app->m_presentationState = PresentationState::feedback;
@@ -281,21 +281,21 @@ void TargetExperiment::recordTrialResponse()
 		std::to_string(m_taskExecutionTime),
 		std::to_string(m_response)
 	};
-	m_app->m_logger->recordTrialResponse(trialValues);
+	m_app->logger->recordTrialResponse(trialValues);
 
 	// Target_Trajectory table. Write down the recorded target trajectories.
-	m_app->m_logger->recordTargetTrajectory(m_targetTrajectory);
+	m_app->logger->recordTargetTrajectory(m_targetTrajectory);
 	m_targetTrajectory.clear();
 
 	// Player_Action table. Write down the recorded player actions.
-	m_app->m_logger->recordPlayerActions(m_playerActions);
+	m_app->logger->recordPlayerActions(m_playerActions);
 	m_playerActions.clear();
 }
 
 void TargetExperiment::accumulateTrajectories()
 {
 	// recording target trajectories
-	Point3 targetAbsolutePosition = m_app->m_targetArray[0]->frame().translation;
+	Point3 targetAbsolutePosition = m_app->targetArray[0]->frame().translation;
 	Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_app->m_spawnDistance, 0.0f, 0.0f);
 	Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
 
