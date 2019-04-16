@@ -278,7 +278,8 @@ void TargetExperiment::recordTrialResponse()
 		addQuotes(m_config.getSessionConfigById(sess)->expMode.c_str()),
 		addQuotes(m_taskStartTime),
 		addQuotes(m_taskEndTime),
-		std::to_string(m_taskExecutionTime)
+		std::to_string(m_taskExecutionTime),
+		std::to_string(m_response)
 	};
 	m_app->m_logger->recordTrialResponse(trialValues);
 

@@ -111,6 +111,7 @@ void TargetLogger::recordPlayerActions(std::vector<std::vector<std::string>> act
 void TargetLogger::addConditions(std::vector<SingleThresholdMeasurement> measurements) {
 	for (int i = 0; i < measurements.size(); ++i) {
 		Param meas = measurements[i].getParam();
+		String jump_enabled = String(meas.str["jumpEnabled"]);
 		std::vector<std::string> conditionValues = {
 			std::to_string(i), // this index is uniquely and statically assigned to each SingleThresholdMeasurement.
 			std::to_string(meas.val["targetFrameRate"]),
@@ -122,6 +123,7 @@ void TargetLogger::addConditions(std::vector<SingleThresholdMeasurement> measure
 			std::to_string(meas.val["minSpeed"]),
 			std::to_string(meas.val["maxSpeed"]),
 			std::to_string(meas.val["motionChangePeriod"]),
+			addQuotes(jump_enabled.c_str())
 		};
 		insertRowIntoDB(m_db, "Conditions", conditionValues);
 	}
