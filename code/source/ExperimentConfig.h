@@ -6,6 +6,7 @@
 // This is a write-only structure to log information affiliated with a system
 class SystemConfig {
 public:
+	// Output/runtime read parameters
 	String cpuName;
 	int coreCount;
 	String gpuName;
@@ -15,6 +16,33 @@ public:
 	int displayYRes;
 	int displayXSize;
 	int displayYSize;
+
+	bool hasLogger;
+	String loggerComPort;
+	bool hasSync;
+	String syncComPort;
+
+	SystemConfig() {};
+
+	SystemConfig(const Any& any) {
+		int settingsVersion = 1;
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.get("HasLogger", hasLogger);
+			reader.getIfPresent("LoggerComPort", loggerComPort);
+			reader.get("HasSync", hasSync);
+			reader.getIfPresent("SyncComPort", syncComPort);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in SystemConfig.\n", settingsVersion);
+			break;
+		}
+		// Get the system info
+		getSystemInfo();		
+	}
 
 	Any toAny(const bool forceAll = true) const{
 		Any a(Any::TABLE);
@@ -27,7 +55,92 @@ public:
 		a["DisplayResYpx"] = displayYRes;
 		a["DisplaySizeXmm"] = displayXSize;
 		a["DisplaySizeYmm"] = displayYSize;
+		a["HasLogger"] = hasLogger;
+		a["LoggerComPort"] = loggerComPort;
+		a["HasSync"] = hasSync;
+		a["SyncComPort"] = syncComPort;
 		return a;
+	}
+
+	static SystemConfig getSystemConfig() {
+		if (!FileSystem::exists("systemconfig.Any")) { // if file not found, copy from the sample config file.
+			FileSystem::copyFile(System::findDataFile("SAMPLEsystemconfig.Any"), "systemconfig.Any");
+		}
+		return Any::fromFile(System::findDataFile("systemconfig.Any"));
+	}
+
+	void getSystemInfo(void) {
+		SystemConfig system;
+
+		// Get CPU name string
+		int cpuInfo[4] = { -1 };
+		unsigned nExIds, i = 0;
+		char cpuBrandString[0x40];
+		__cpuid(cpuInfo, 0x80000000);
+		nExIds = cpuInfo[0];
+		for (unsigned int i = 0x80000000; i <= nExIds; i++) {
+			__cpuid(cpuInfo, i);
+			// Interpret CPU brand string
+			switch (i) {
+			case 0x80000002:
+				memcpy(cpuBrandString, cpuInfo, sizeof(cpuInfo));
+				break;
+			case 0x80000003:
+				memcpy(cpuBrandString + 16, cpuInfo, sizeof(cpuInfo));
+				break;
+			case 0x80000004:
+				memcpy(cpuBrandString + 32, cpuInfo, sizeof(cpuInfo));
+				break;
+			default:
+				logPrintf("Couldn't get system info...\n");
+			}
+		}
+		cpuName = cpuBrandString;
+
+		// Get CPU core count
+		SYSTEM_INFO sysInfo;
+		GetSystemInfo(&sysInfo);
+		coreCount = sysInfo.dwNumberOfProcessors;
+
+		// Get memory size
+		MEMORYSTATUSEX statex;
+		statex.dwLength = sizeof(statex);
+		GlobalMemoryStatusEx(&statex);
+		memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
+
+		// Get GPU name string
+		String gpuVendor = String((char*)glGetString(GL_VENDOR)).append(" ");
+		String gpuRenderer = String((char*)glGetString(GL_RENDERER));
+		gpuName = gpuVendor.append(gpuRenderer);
+
+		// Get display information (monitor name)
+		/*DISPLAY_DEVICE dd;
+		int deviceIndex = 0;
+		int monitorIndex = 0;
+		EnumDisplayDevices(0, deviceIndex, &dd, 0);
+		std::string deviceName = dd.DeviceName;
+		EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
+		displayName = String(dd.DeviceString);*/
+		displayName = String("TODO");
+
+		// Get screen resolution
+		displayXRes = GetSystemMetrics(SM_CXSCREEN);
+		displayYRes = GetSystemMetrics(SM_CYSCREEN);
+
+		// Get display size
+		HWND const hwnd = 0;
+		HDC const hdc = GetDC(hwnd);
+		assert(hdc);
+		displayXSize = GetDeviceCaps(hdc, HORZSIZE);
+		displayYSize = GetDeviceCaps(hdc, VERTSIZE);
+	}
+
+	void printSystemInfo() {
+		// Print system info to log
+		logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n",
+			cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
+		logPrintf("Logger Present: %s\nLogger COM Port: %s\nSync Card Present: %s\nSync COM Port: %s\n",
+			hasLogger ? "True" : "False", loggerComPort, hasSync ? "True" : "False", syncComPort);
 	}
 };
 

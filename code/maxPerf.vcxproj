@@ -158,6 +158,7 @@
   <ItemGroup>
     <None Include="data-files\experimentconfig.Any" />
     <None Include="data-files\shader\distort.pix" />
+    <None Include="data-files\systemconfig.Any" />
     <None Include="data-files\userconfig.Any" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

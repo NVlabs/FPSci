@@ -96,5 +96,8 @@
     <None Include="data-files\shader\distort.pix">
       <Filter>Shader Files</Filter>
     </None>
+    <None Include="data-files\systemconfig.Any">
+      <Filter>Config Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
