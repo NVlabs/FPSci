@@ -700,7 +700,7 @@ void App::runLogger(String logName, String com, bool hasSync, String syncComPort
 }
 
 void App::killLogger() {
-	TerminateProcess(m_loggerHandle, 0);
+	if (m_loggerRunning) TerminateProcess(m_loggerHandle, 0);
 }
 
 bool App::mergeLogs(String basename) {
