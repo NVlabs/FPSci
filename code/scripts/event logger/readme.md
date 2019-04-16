@@ -2,7 +2,7 @@
 This readme documents the firmware and software affiliated with the hardware event logger platform.
 
 ## Setup
-If you are planning to update firmware/develop for the platform make sure you have the [Arduino IDE](https://www.arduino.cc/en/Main/Software) installed, and have followed the [additional setup guide from SparkFun](https://learn.sparkfun.com/tutorials/pro-micro--fio-v3-hookup-guide/all) for the platform of your choice. Once you have completed the setup you can test it by connecting a [Arduino Pro Micro](https://www.sparkfun.com/products/12640) and making sure you can compile/write an example sketch to the hardware.
+If you are planning to update firmware/develop for the platform make sure you have the [Arduino IDE](https://www.arduino.cc/en/Main/Software) installed, and have followed the [additional setup guide from SparkFun](https://learn.sparkfun.com/tutorials/pro-micro--fio-v3-hookup-guide/all) for the platform of your choice. Once you have completed the setup you can test it by connecting a [SparkFun Pro Micro](https://www.sparkfun.com/products/12640) and making sure you can compile/write an example sketch to the hardware.
 
 You will also need Python 3 along with the following packages:
 * [Matplotlib](https://matplotlib.org/)
@@ -14,10 +14,6 @@ If you already have an [Anaconda](https://www.anaconda.com/) distribution instal
 ## Usage
 To use the setup you will need a complete hardware setup intended for the desired monitoring. For more information contact [Ben Boudaoud](mailto:bboudaoud@nvidia.com) and/or [Josef Spjut](maltio:jspjut@nvidia.com).
 
-### Optional Steps (FW Upload)
-1. Connect the Arduino to the computer via USB and open [pulse_meas.ino](./firmware/pulse_meas/pulse_meas.ino) in the Arduino environment.
-2. Use the "Upload" button in the top left to upload the sketch to the Arduino (you may need to reset the Arduino if it has previously been used for serial applications).
-3. Configure the [logger](./software/event_logger.py) as needed by editing the "Control Flags", "Plot Parameters", and "Logging Parameters".
 ### Typical Usage
 1. Run the [logger (event_logger.py)](./software/event_logger.py)  from the command line, providing the Arduino COM port as the sole argument. Make sure you provide the full COM port string (i.e. 'COM3' in the window environoment).
 2. View the data in realtime (via histogram and time plot) and make sure that log files are being created (default to a "Log" directory you will need to create).
