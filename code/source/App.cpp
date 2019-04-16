@@ -640,7 +640,6 @@ void App::updateSession(String id) {
 	}
 
 	// Initialize the experiment (session) and logger
-	String filename = "../results/" + experimentConfig.taskType + "_" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp()) + ".db";
 	if (experimentConfig.taskType == "reaction") {
 		ex = ReactionExperiment::create(this);
 		logger = ReactionLogger::create();
@@ -658,35 +657,72 @@ void App::updateSession(String id) {
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::getSystemConfig();
 	if (sysConfig.hasLogger) {
-		// Variables for creating process/getting handle
-		STARTUPINFO si;
-		PROCESS_INFORMATION pi;
-		ZeroMemory(&si, sizeof(si));
-		si.cb = sizeof(si);
-		ZeroMemory(&pi, sizeof(pi));
-		
-		// Handle running logger if we need to
-		if (m_loggerRunning) TerminateProcess(m_loggerHandle, 0);
-		// Come up w/ command string
-		String cmd = "pythonw.exe ../scripts/\"event logger\"/software/event_logger.py " + sysConfig.loggerComPort;
-		if (sysConfig.hasSync) cmd += " " + sysConfig.syncComPort;	
-
-		LPSTR command = LPSTR(cmd.c_str());
-		if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
-			logPrintf("Failed to start logger: %s", GetLastErrorString());
+		// Handle running logger if we need to (terminate then merge results)
+		if (m_loggerRunning) {
+			killLogger();
+			if (!mergeLogs(m_logName)) {
+				logPrintf("Error merging logs for file: %s", m_logName + ".db");
+			}
 		}
-		// Update logger management variables
-		m_loggerRunning = true;
-		m_loggerHandle = pi.hProcess;
+		// Run a new logger if we need to
+		m_logName = "../results/" + experimentConfig.taskType + "_" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
+		runLogger(m_logName, sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
 	}
 
 	// Don't create a results file for a user w/ no sessions left
 	if (m_sessDropDown->numElements() == 0) logPrintf("No sessions remaining for selected user.");
 	// Create the results file here (but how do we make sure user set up name?)
-	else logger->createResultsFile(filename, userTable.currentUser);
+	else logger->createResultsFile(m_logName + ".db", userTable.currentUser);
 
 	// TODO: Remove the following by invoking a call back.
 	ex->onInit();
+}
+
+void App::runLogger(String logName, String com, bool hasSync, String syncComPort = "") {
+	// Variables for creating process/getting handle
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	// Come up w/ command string
+	String cmd = "pythonw.exe ../scripts/\"event logger\"/software/event_logger.py " + com + " " + logName;
+	if (hasSync) cmd += " " + syncComPort;
+
+	LPSTR command = LPSTR(cmd.c_str());
+	if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+		logPrintf("Failed to start logger: %s", GetLastErrorString());
+	}
+	// Update logger management variables
+	m_loggerRunning = true;
+	m_loggerHandle = pi.hProcess;
+}
+
+void App::killLogger() {
+	TerminateProcess(m_loggerHandle, 0);
+}
+
+bool App::mergeLogs(String basename) {
+	String dbFile = basename + ".db";
+	String eventFile = basename + "_event.csv";
+
+	// If we can't find either the db output file or the csv input return false
+	if (!FileSystem::exists(dbFile) || !FileSystem::exists(eventFile)) return false;
+
+	// Variables for creating process/getting handle
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	String cmd = "pythonw.exe ../scripts/\"event logger\"/software/event_log_insert.py " + eventFile + " " + dbFile;	
+	LPSTR command = LPSTR(cmd.c_str());
+	if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+		logPrintf("Failed to merge results: %s", GetLastErrorString());
+	}
+	return true;
 }
 
 void App::setDisplayLatencyFrames(int f) {

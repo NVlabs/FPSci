@@ -115,6 +115,8 @@ protected:
 	bool							m_sceneLoaded = false;				// Indicates whether or not the scene has been loaded (prevents reload)
 	bool							m_loggerRunning = false;
 	HANDLE							m_loggerHandle = 0;
+	String							m_logName;
+
 	/** When m_displayLagFrames > 0, 3D frames are delayed in this queue */
 	Array<shared_ptr<Framebuffer>>  m_ldrDelayBufferQueue;
 	int                             m_currentDelayBufferIndex = 0;
@@ -226,6 +228,12 @@ public:
 	void updateSessionPress(void);
 
 	void updateSession(String id);
+
+	void runLogger(String logName, String com, bool hasSync, String syncComPort);
+
+	void killLogger();
+
+	bool mergeLogs(String basename);
 
 	void setDisplayLatencyFrames(int f);
     
