@@ -65,6 +65,7 @@ void TargetLogger::createResultsFile(String filename, String subjectID)
 			{ "min_speed", "real" },
 			{ "max_speed", "real" },
 			{ "motion_change_period", "real" },
+			{ "jump_enabled", "text" },
 	};
 	createTableInDB(m_db, "Conditions", conditionColumns); // Primary Key needed for this table.
 
@@ -76,6 +77,7 @@ void TargetLogger::createResultsFile(String filename, String subjectID)
 			{ "start_time", "text" },
 			{ "end_time", "text" },
 			{ "task_execution_time", "real" },
+			{ "success_failure", "real" },
 	};
 	createTableInDB(m_db, "Trials", trialColumns);
 

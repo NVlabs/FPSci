@@ -112,6 +112,8 @@ protected:
     Vector2                         m_jumpSpeedRange;
 	/** Gravitational Acceleration (m/s^2) x=min y=max */
     Vector2                         m_gravityRange;
+	/** Distance range */
+	Vector2                         m_distanceRange;
 	float                           m_planarAcc = 0.3f;
 
 	/** check first frame */
@@ -127,6 +129,7 @@ protected:
 		const Vector2& angularSpeedRange,
         const Vector2& motionChangePeriodRange,
         const Vector2& jumpPeriodRange,
+		const Vector2& distanceRange,
         const Vector2& jumpSpeedRange,
         const Vector2& gravityRange,
 		Point3 orbitCenter,
@@ -152,7 +155,8 @@ public:
         const Vector2&                 speedRange,
         const Vector2&                 motionChangePeriodRange,
         const Vector2&                 jumpPeriodRange,
-        const Vector2&                 jumpSpeedRange,
+		const Vector2&                 distanceRange,
+		const Vector2&                 jumpSpeedRange,
         const Vector2&                 gravityRange,
 		Point3                         orbitCenter,
 		float                          orbitRadius);

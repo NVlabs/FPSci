@@ -84,7 +84,8 @@ void TargetExperiment::initTargetAnimation() {
 				{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
 				{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"]},
 				{ m_psych.getParam().val["minJumpPeriod"], m_psych.getParam().val["maxJumpPeriod"]},
-				{ m_psych.getParam().val["minJumpSpeed"], m_psych.getParam().val["maxJumpSpeed"]},
+				{ m_psych.getParam().val["minDistance"], m_psych.getParam().val["maxDistance"] },
+				{ m_psych.getParam().val["minJumpSpeed"], m_psych.getParam().val["maxJumpSpeed"] },
 				{ m_psych.getParam().val["minGravity"], m_psych.getParam().val["maxGravity"]},
 				initialSpawnPos
 			);

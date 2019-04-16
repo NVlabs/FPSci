@@ -334,8 +334,9 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
     const Vector2& speedRange,
     const Vector2& motionChangePeriodRange,
     const Vector2& jumpPeriodRange,
-    const Vector2& jumpSpeedRange,
-    const Vector2& gravityRange,
+	const Vector2& distanceRange,
+	const Vector2& jumpSpeedRange,
+	const Vector2& gravityRange,
 	Point3 orbitCenter)
 {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
@@ -348,6 +349,7 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 		speedRange,
 		motionChangePeriodRange,
 		jumpPeriodRange,
+		distanceRange,
 		jumpSpeedRange,
 		gravityRange,
 		orbitCenter,

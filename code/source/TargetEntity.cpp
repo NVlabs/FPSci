@@ -239,9 +239,10 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 	const CFrame&                           position,
     const Vector2&                          angularSpeedRange,
     const Vector2&                          motionChangePeriodRange,
-    const Vector2&                          jumpPeriodRange,
-    const Vector2&                          jumpSpeedRange,
-    const Vector2&                          gravityRange,
+	const Vector2&                          jumpPeriodRange,
+	const Vector2&                          distanceRange,
+	const Vector2&                          jumpSpeedRange,
+	const Vector2&                          gravityRange,
 	Point3                                  orbitCenter,
 	float                                   orbitRadius) {
 
@@ -255,6 +256,7 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 		angularSpeedRange,
 		motionChangePeriodRange,
 		jumpPeriodRange,
+		distanceRange,
 		jumpSpeedRange,
 		gravityRange,
 		orbitCenter,
@@ -277,6 +279,7 @@ void JumpingEntity::init(
     const Vector2& angularSpeedRange,
     const Vector2& motionChangePeriodRange,
     const Vector2& jumpPeriodRange,
+	const Vector2& distanceRange,
     const Vector2& jumpSpeedRange,
     const Vector2& gravityRange,
 	Point3 orbitCenter,
@@ -285,6 +288,7 @@ void JumpingEntity::init(
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
 	m_jumpPeriodRange = jumpPeriodRange;
+	m_distanceRange = distanceRange;
 	m_jumpSpeedRange = jumpSpeedRange;
 	m_gravityRange = gravityRange;
 	m_orbitCenter = orbitCenter;
@@ -417,8 +421,12 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			}
 			else { // starting jump
 				m_acc.x = sign(m_planarSpeedGoal) * m_planarAcc;
-				m_acc.y = - Random::common().uniform(m_gravityRange[0], m_gravityRange[1]);
-				m_speed.y = Random::common().uniform(m_jumpSpeedRange[0], m_jumpSpeedRange[1]);
+				float gravity = - Random::common().uniform(m_gravityRange[0], m_gravityRange[1]);
+				float jumpSpeed = Random::common().uniform(m_jumpSpeedRange[0], m_jumpSpeedRange[1]);
+				float distance = Random::common().uniform(m_distanceRange[0], m_distanceRange[1]);
+				m_acc.y = gravity * m_orbitRadius / distance;
+				m_speed.y = jumpSpeed * m_orbitRadius / distance;
+				m_planarAcc = m_acc.y / 3.f;
 				m_inJump = true;
 			}
 		}

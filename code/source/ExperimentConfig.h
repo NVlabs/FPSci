@@ -293,7 +293,7 @@ class TargetConfig {
 public:
 	String id;												// Trial ID to indentify affiliated trial runs
 	bool elevLocked = false;								// Elevation locking
-	float distance = 30.0f;									// Distance to the target
+	Array<float> distance = { 30.0f, 40.0f };				// Distance to the target
 	Array<float> motionChangePeriod = { 1.0f, 1.0f };		// Range of motion change period in seconds
 	Array<float> speed = { 0.0f, 5.5f };					// Range of angular velocities for target
 	Array<float> eccH = { 5.0f, 15.0f };					// Range of initial horizontal eccentricity
@@ -504,6 +504,8 @@ public:
 			p.add("maxMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
 			p.add("minSpeed", getTargetConfigById(id)->speed[0]);
 			p.add("maxSpeed", getTargetConfigById(id)->speed[1]);
+			p.add("minDistance", getTargetConfigById(id)->distance[0]);
+			p.add("maxDistance", getTargetConfigById(id)->distance[1]);
 			p.add("minJumpPeriod", getTargetConfigById(id)->jumpPeriod[0]);
 			p.add("maxJumpPeriod", getTargetConfigById(id)->jumpPeriod[1]);
 			p.add("minJumpSpeed", getTargetConfigById(id)->jumpSpeed[0]);
