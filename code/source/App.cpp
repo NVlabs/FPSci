@@ -984,19 +984,28 @@ void App::onUserInput(UserInput* ui) {
 		// count clicks
 		m_ex->countClick();
 		// check for hit, add graphics, update target state
-		fire();
-		if (m_targetHealth == 0) {
-			// target eliminated, must be 'hit'.
-			if (m_presentationState == PresentationState::task)
-			{
-				m_ex->accumulatePlayerAction("hit");
+		if (m_ex->responseReady()) {
+			fire();
+			if (m_targetHealth == 0) {
+				// target eliminated, must be 'hit'.
+				if (m_presentationState == PresentationState::task)
+				{
+					m_ex->accumulatePlayerAction("hit");
+				}
+			}
+			else {
+				// target still present, must be 'miss'.
+				if (m_presentationState == PresentationState::task)
+				{
+					m_ex->accumulatePlayerAction("miss");
+				}
 			}
 		}
 		else {
 			// target still present, must be 'miss'.
 			if (m_presentationState == PresentationState::task)
 			{
-				m_ex->accumulatePlayerAction("miss");
+				m_ex->accumulatePlayerAction("invalid");
 			}
 		}
 	}

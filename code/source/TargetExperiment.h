@@ -13,6 +13,8 @@ protected:
 	
 	std::vector<std::vector<std::string>> m_playerActions;
 	std::vector<std::vector<std::string>> m_targetTrajectory;
+	double m_lastFireAt = 0.f;
+	float m_fireRate = 1000.f;
 
 	TargetExperiment(App* app) : Experiment(app) {
 		// secure vector capacity large enough so as to avoid memory allocation time.
@@ -54,8 +56,10 @@ public:
 	void accumulateTrajectories();
 
 	/** queues action with given name to insert into database when trial completes 
-	@param action - one of "aim" "hit" and "miss" */
+	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */
 	virtual void accumulatePlayerAction(String action) override;
+
+	virtual bool responseReady() override;
 
 	bool initPsychHelper();
 };

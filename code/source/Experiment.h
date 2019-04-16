@@ -120,6 +120,7 @@ public:
 	virtual void recordTrialResponse() = 0;
 	virtual void accumulatePlayerAction(String action) {}
 	virtual void countClick() { m_clickCount++; }
+	virtual bool responseReady() { return true; }
 
 	/** PsychHelper-related */
 	virtual bool initPsychHelper() = 0;

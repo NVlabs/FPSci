@@ -331,3 +331,14 @@ void TargetExperiment::accumulatePlayerAction(String action)
 	};
 	m_playerActions.push_back(playerActionValues);
 }
+
+bool TargetExperiment::responseReady() {
+	double timeNow = System::time();
+	if ((timeNow - m_lastFireAt) > (1 / m_fireRate)) {
+		m_lastFireAt = timeNow;
+		return true;
+	}
+	else {
+		return false;
+	}
+}
