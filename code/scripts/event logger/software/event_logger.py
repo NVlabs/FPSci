@@ -26,7 +26,7 @@ MIN_EVENT_SPACING_S = 0.1       # Minimum allowable amount of time between 2 sim
 AUTOCLICK_COUNT_TOTAL = 500     # Number of autoclick events to perform once autoclick is enable
 
 # Logging parameters
-LOG_PREFIX = '../../../results/log'         # Prefix for logging directory (can relocate logs using this)
+LOG_PREFIX = '../results/log'         # Prefix for logging directory (can relocate logs using this)
 IN_LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 LOG_NAME_TIME_FORMAT = '%y-%m-%d_%H%M%S'
 
