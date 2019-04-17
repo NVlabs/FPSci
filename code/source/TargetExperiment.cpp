@@ -334,7 +334,7 @@ void TargetExperiment::accumulatePlayerAction(String action)
 
 bool TargetExperiment::responseReady() {
 	double timeNow = System::time();
-	if ((timeNow - m_lastFireAt) > (1 / m_fireRate)) {
+	if ((timeNow - m_lastFireAt) > (1 / m_config.fireRate)) {
 		m_lastFireAt = timeNow;
 		return true;
 	}

@@ -11,7 +11,8 @@
   "feedbackDuration": 0.0, // Time allocated for providing user feedback
   "readyDuration": 0.0, // Time allocated for preparing for trial
   "taskDuration": 6.0, // Maximum duration allowed for completion of the task
-  "maxClicks": 6,
+  "maxClicks": 6, // Maximum number of clicks to allow in a trial
+  "fireRate" : 2.0, // Maximum rate of fire to allow in a trial
   "sessionOrder": "random", // Session ordering, can be "Random", "Serial"
 
   // Create a sessions table containing information related to sessions

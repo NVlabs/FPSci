@@ -14,7 +14,6 @@ protected:
 	std::vector<std::vector<std::string>> m_playerActions;
 	std::vector<std::vector<std::string>> m_targetTrajectory;
 	double m_lastFireAt = 0.f;
-	float m_fireRate = 2.f;
 
 	TargetExperiment(App* app) : Experiment(app) {
 		// secure vector capacity large enough so as to avoid memory allocation time.

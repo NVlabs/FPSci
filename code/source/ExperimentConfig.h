@@ -403,6 +403,7 @@ public:
 	float readyDuration = 0.5f;
 	float taskDuration = 100000.0f;
 	int maxClicks = 10000;							// Maximum number of clicks to allow in a trial
+	float fireRate = 100.0;							// Maximum fire rate
 	Array<SessionConfig> sessions;					// Array of sessions
 	String sessionOrder = "random";					// Order in which to run sessions?
 	Array<TargetConfig> targets;					// Array of trial configs
@@ -430,6 +431,7 @@ public:
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("maxClicks", maxClicks);
+			reader.getIfPresent("fireRate", fireRate);
 			reader.getIfPresent("renderDecals", renderDecals);
 			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
 			break;
