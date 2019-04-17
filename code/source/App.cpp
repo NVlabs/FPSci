@@ -660,14 +660,14 @@ void App::updateSession(String id) {
 	if (sysConfig.hasLogger) {
 		// Handle running logger if we need to (terminate then merge results)
 		if (m_loggerRunning) {
-			killLogger();
-			if (!mergeLogs(m_logName)) {
+			killPythonLogger();
+			if (!pythonMergeLogs(m_logName)) {
 				logPrintf("Error merging logs for file: %s", m_logName + ".db");
 			}
 		}
 		// Run a new logger if we need to
 		m_logName = "../results/" + experimentConfig.taskType + "_" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
-		runLogger(m_logName, sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
+		runPythonLogger(m_logName, sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
 	}
 
 	// Don't create a results file for a user w/ no sessions left
@@ -679,7 +679,7 @@ void App::updateSession(String id) {
 	ex->onInit();
 }
 
-void App::runLogger(String logName, String com, bool hasSync, String syncComPort = "") {
+void App::runPythonLogger(String logName, String com, bool hasSync, String syncComPort = "") {
 	// Variables for creating process/getting handle
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
@@ -700,16 +700,16 @@ void App::runLogger(String logName, String com, bool hasSync, String syncComPort
 	m_loggerHandle = pi.hProcess;
 }
 
-void App::killLogger() {
+void App::killPythonLogger() {
 	if (m_loggerRunning) TerminateProcess(m_loggerHandle, 0);
 }
 
 void App::quitRequest() {
     setExitCode(0);
-    killLogger();
+    killPythonLogger();
 }
 
-bool App::mergeLogs(String basename) {
+bool App::pythonMergeLogs(String basename) {
 	String dbFile = basename + ".db";
 	String eventFile = basename + "_event.csv";
 

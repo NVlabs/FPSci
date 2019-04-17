@@ -229,12 +229,12 @@ public:
 
 	void updateSession(String id);
 
-	void runLogger(String logName, String com, bool hasSync, String syncComPort);
+	void runPythonLogger(String logName, String com, bool hasSync, String syncComPort);
 
-	void killLogger();
+	void killPythonLogger();
     void quitRequest();
 
-	bool mergeLogs(String basename);
+	bool pythonMergeLogs(String basename);
 
 	void setDisplayLatencyFrames(int f);
     
