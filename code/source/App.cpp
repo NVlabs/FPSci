@@ -506,7 +506,7 @@ void App::makeGUI() {
 
 
     // set up user settings window
-    m_userSettingsWindow = GuiWindow::create("User Settings - press TAB to close", nullptr, 
+    m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, 
         Rect2D::xywh((float)window()->width() * 0.5f - 200.0f, (float)window()->height() * 0.5f - 100.0f, 400.0f, 200.0f));
     addWidget(m_userSettingsWindow);
     GuiPane* p = m_userSettingsWindow->pane();
@@ -524,7 +524,8 @@ void App::makeGUI() {
         updateSessionDropDown();
 	    p->addButton("Select Session", this, &App::updateSessionPress);
     p->endRow();
-    m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
+    p->addButton("Quit", this, &App::quitRequest);
+    m_userSettingsWindow->setVisible(m_userSettingsMode);
 
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
@@ -703,6 +704,11 @@ void App::killLogger() {
 	if (m_loggerRunning) TerminateProcess(m_loggerHandle, 0);
 }
 
+void App::quitRequest() {
+    setExitCode(0);
+    killLogger();
+}
+
 bool App::mergeLogs(String basename) {
 	String dbFile = basename + ".db";
 	String eventFile = basename + "_event.csv";
@@ -846,8 +852,9 @@ bool App::onEvent(const GEvent& event) {
 	// Handle super-class events
 	if (GApp::onEvent(event)) { return true; }
 
-    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::ESCAPE)) {
-        killLogger();
+    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::KP_MINUS)) {
+        quitRequest();
+        return true;
     }
 
 	// If you need to track individual UI events, manage them here.
@@ -859,11 +866,16 @@ bool App::onEvent(const GEvent& event) {
 	// if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) { ... return true; }
 	// if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == 'p')) { ... return true; }
 
-    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) {
+    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::ESCAPE || event.key.keysym.sym == GKey::TAB)) {
         m_userSettingsMode = !m_userSettingsMode;
         m_userSettingsWindow->setVisible(m_userSettingsMode);
+        if (m_userSettingsMode) {
+            // set focus so buttons properly highlight
+            m_widgetManager->setFocusedWidget(m_userSettingsWindow);
+        }
         // switch to first or 3rd person mode
         updateMouseSensitivity();
+        return true;
     }
 	return false;
 }

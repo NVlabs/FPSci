@@ -212,7 +212,7 @@ public:
 
 	/** Call to set the 3D scene brightness. Default is 1.0. */
 	void setSceneBrightness(float b);
-
+    /** callback for saving user config */
 	void userSaveButtonPress(void);
 
 	Array<String> updateSessionDropDown(void);
@@ -232,6 +232,7 @@ public:
 	void runLogger(String logName, String com, bool hasSync, String syncComPort);
 
 	void killLogger();
+    void quitRequest();
 
 	bool mergeLogs(String basename);
 
