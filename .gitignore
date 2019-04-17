@@ -10,6 +10,7 @@ code/data-files/result_data
 code/data-files/experimentconfig.Any
 code/data-files/userconfig.Any
 code/data-files/systemconfig.Any
+code/data-files/userstatus.Any
 newGfx/.vs
 newGfx/x64
 newGfx/data-files/g3d-license.txt

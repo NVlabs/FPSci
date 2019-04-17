@@ -48,16 +48,20 @@ void App::onInit() {
 
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);
 
-	// load user setting from file
-	userTable = UserTable::getUserTable();
+	// load per user setting from file
+	userTable = UserTable::load();
 	printUserTableToLog(userTable);
 
+	// load per experiment user settings from file
+	userStatusTable = UserStatusTable::load();
+	printUserStatusTableToLog(userStatusTable);
+
 	// load experiment setting from file
-	experimentConfig = ExperimentConfig::getExperimentConfig();
+	experimentConfig = ExperimentConfig::load();
 	printExpConfigToLog(experimentConfig);
 
 	// Get and save system configuration
-	SystemConfig sysConfig = SystemConfig::getSystemConfig();
+	SystemConfig sysConfig = SystemConfig::load();
 	sysConfig.printSystemInfo();									// Print system info to log.txt
 	sysConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
 
@@ -101,6 +105,23 @@ void App::printUserTableToLog(UserTable table) {
 	logPrintf("Current User: %s\n", table.currentUser);
 	for (UserConfig user : table.users) {
 		logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id, user.cmp360, user.mouseDPI);
+	}
+}
+
+void App::printUserStatusTableToLog(UserStatusTable table) {
+	for (UserSessionStatus status : table.userInfo) {
+		String sessOrder = "";
+		for (String sess : status.sessionOrder) {
+			sessOrder += sess + ", ";
+		}
+		sessOrder = sessOrder.substr(0, sessOrder.length() - 2);
+		String completedSess = "";
+		for (String sess : status.completedSessions) {
+			completedSess += sess + ", ";
+		}
+		completedSess = completedSess.substr(0, completedSess.length() - 2);
+
+		logPrintf("Subject ID: %s\nSession Order: [%s]\nCompleted Sessions: [%s]\n", status.id, sessOrder, completedSess);
 	}
 }
 
@@ -564,18 +585,19 @@ void App::updateUserGUI() {
 
 Array<String> App::updateSessionDropDown(void) {
 	// Create updated session list
-    Array<String> remainingSess = {};
-    UserConfig* currentUser = userTable.getCurrentUser();
-    for (const SessionConfig& sess : experimentConfig.sessions) {
+    String userId = userTable.getCurrentUser()->id;
+	shared_ptr<UserSessionStatus> userStatus = userStatusTable.getUserStatus(userId);
+	Array<String> remainingSess = {};
+	for (int i = 0; i < userStatus->sessionOrder.size(); i++) {
         // user hasn't completed this session
-        if (!currentUser->completedSessions.contains(sess.id)) {
-            remainingSess.append(sess.id);
+        if (!userStatus->completedSessions.contains(userStatus->sessionOrder[i])) {
+            remainingSess.append(userStatus->sessionOrder[i]);
         }
     }
 	m_sessDropDown->setList(remainingSess);
 
 	// Print message to log
-	logPrintf("Updated session drop down to:\n");
+	logPrintf("Updated %s's session drop down to:\n", userId);
 	for (String id : remainingSess) {
 		logPrintf("\t%s\n", id);
 	}
@@ -592,8 +614,12 @@ String App::getDropDownUserId(void) {
 	return m_userDropDown->get(m_ddCurrentUser);
 }
 
-void App::markSessComplete(String id) {
-	userTable.getCurrentUser()->addCompletedSession(id);
+void App::markSessComplete(String sessId) {
+	// Add the session id to completed session array
+	userStatusTable.addCompletedSession(userTable.currentUser, sessId);
+	// Save the file to any
+	userStatusTable.toAny().save("userstatus.Any");
+	logPrintf("Marked session: %s complete for user %s.\n", sessId, userTable.currentUser);
 }
 
 shared_ptr<UserConfig> App::getCurrUser(void) {
@@ -656,14 +682,12 @@ void App::updateSession(String id) {
 	}
 
 	// Check for need to start latency logging and if so run the logger now
-	SystemConfig sysConfig = SystemConfig::getSystemConfig();
+	SystemConfig sysConfig = SystemConfig::load();
 	if (sysConfig.hasLogger) {
 		// Handle running logger if we need to (terminate then merge results)
 		if (m_loggerRunning) {
 			killPythonLogger();
-			if (!pythonMergeLogs(m_logName)) {
-				logPrintf("Error merging logs for file: %s", m_logName + ".db");
-			}
+			pythonMergeLogs(m_logName);
 		}
 		// Run a new logger if we need to
 		m_logName = "../results/" + experimentConfig.taskType + "_" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
@@ -693,7 +717,7 @@ void App::runPythonLogger(String logName, String com, bool hasSync, String syncC
 
 	LPSTR command = LPSTR(cmd.c_str());
 	if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
-		logPrintf("Failed to start logger: %s", GetLastErrorString());
+		logPrintf("Failed to start logger: %s\n", GetLastErrorString());
 	}
 	// Update logger management variables
 	m_loggerRunning = true;
@@ -726,7 +750,7 @@ bool App::pythonMergeLogs(String basename) {
 	String cmd = "pythonw.exe ../scripts/\"event logger\"/software/event_log_insert.py " + eventFile + " " + dbFile;	
 	LPSTR command = LPSTR(cmd.c_str());
 	if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
-		logPrintf("Failed to merge results: %s", GetLastErrorString());
+		logPrintf("Failed to merge results: %s\n", GetLastErrorString());
 	}
 	return true;
 }
@@ -843,7 +867,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// Check for completed session
 	if (ex->moveOn) {
-		String nextSess = updateSessionDropDown()[0];
+		String nextSess = userStatusTable.getNextSession(userTable.currentUser);
 		updateSession(nextSess);
 	}
 }

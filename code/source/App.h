@@ -130,6 +130,7 @@ protected:
 	void destroyTarget(int index);
 	void printExpConfigToLog(ExperimentConfig config);
 	void printUserTableToLog(UserTable table);
+	void printUserStatusTableToLog(UserStatusTable table);
 	void updateUser(void);
     void updateUserGUI();
 
@@ -152,8 +153,9 @@ public:
 	Array<Projectile>                projectileArray;
 
 	/** Parameter configurations */
-	UserTable						userTable;
-	ExperimentConfig                experimentConfig;
+	UserTable						userTable;					// Table of per user information (DPI/cm/360) that doesn't change across experiment
+	UserStatusTable					userStatusTable;			// Table of user status (session ordering/completed sessions) that do change across experiments
+	ExperimentConfig                experimentConfig;			// Configuration for the experiment and its sessions
 
 	//TODO: Remove it when we are using G3D timer
 	Timer timer;

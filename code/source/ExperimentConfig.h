@@ -62,7 +62,7 @@ public:
 		return a;
 	}
 
-	static SystemConfig getSystemConfig() {
+	static SystemConfig load() {
 		if (!FileSystem::exists("systemconfig.Any")) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEsystemconfig.Any"), "systemconfig.Any");
 		}
@@ -150,7 +150,6 @@ public:
     double mouseDPI = 800.0;				// Mouse DPI setting
     double cmp360 = 12.75;					// Mouse sensitivity, reported as centimeters per 360�
 	int currentSession = 0;					// Currently selected session
-	Array<String> completedSessions = {};	// List of completed sessions for this user
     UserConfig() {}
 
     UserConfig(const Any& any) {
@@ -163,7 +162,6 @@ public:
             reader.getIfPresent("id", id);
             reader.getIfPresent("mouseDPI", mouseDPI);
             reader.getIfPresent("cmp360", cmp360);
-			reader.getIfPresent("completedSessions", completedSessions);
 			break;
         default:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
@@ -180,14 +178,8 @@ public:
 		a["id"] = id;										// Include subject ID
 		a["mouseDPI"] = mouseDPI;							// Include mouse DPI
 		a["cmp360"] = cmp360;								// Include cm/360
-		a["completedSessions"] = completedSessions;			// Include completed sessions list
 		return a;
 	}
-
-	void addCompletedSession(String id) {
-		completedSessions.append(id);
-	}
-
 };
 
 class UserTable {
@@ -252,7 +244,7 @@ public:
 	}
 
 	// Simple rotine to get the user configuration from file
-	static Any getUserTable(void) {
+	static Any load(void) {
 		// load user setting from file
 		if (!FileSystem::exists("userconfig.Any")) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
@@ -260,6 +252,104 @@ public:
 		return Any::fromFile(System::findDataFile("userconfig.Any"));
 	}
 };
+
+class UserSessionStatus {
+public:
+	String id;
+	Array<String> sessionOrder = {};
+	Array<String> completedSessions = {};
+
+	UserSessionStatus() {}
+
+	UserSessionStatus(const Any& any) {
+		int settingsVersion = 1; // used to allow different version numbers to be loaded differently
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.get("id", id);
+			reader.getIfPresent("sessions", sessionOrder);
+			reader.getIfPresent("completedSessions", completedSessions);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in UserSessionStatus.\n", settingsVersion);
+			break;
+		}
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["id"] = id;									// populate id
+		a["sessions"] = sessionOrder;					// populate session order
+		a["completedSessions"] = completedSessions; 	// Include updated subject table
+		return a;
+	}
+};
+
+class UserStatusTable {
+public:
+	Array<UserSessionStatus> userInfo = {};
+
+	UserStatusTable() {}
+
+	UserStatusTable(const Any& any) {
+		int settingsVersion = 1; // used to allow different version numbers to be loaded differently
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.get("users", userInfo);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in UserStatus.\n", settingsVersion);
+			break;
+		}
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["settingsVersion"] = 1;						// Create a version 1 file
+		a["users"] = userInfo;							// Include updated subject table
+		return a;
+	}
+
+	// Get the experiment config from file
+	static UserStatusTable load(void) {
+		if (!FileSystem::exists("userstatus.Any")) { // if file not found, copy from the sample config file.
+			FileSystem::copyFile(System::findDataFile("SAMPLEuserstatus.Any"), "userstatus.Any");
+		}
+		return Any::fromFile(System::findDataFile("userstatus.Any"));
+	}
+
+	shared_ptr<UserSessionStatus> getUserStatus(String id) {
+		for (UserSessionStatus user : userInfo) {
+			if (!user.id.compare(id)) return std::make_shared<UserSessionStatus>(user);
+		}
+		//TODO: make this return a new user/add one instead
+		return nullptr;
+	}
+
+	String getNextSession(String userId) {
+		// Return the first valid session that has not been completed
+		shared_ptr<UserSessionStatus> status = getUserStatus(userId);
+		for (auto sess : status->sessionOrder) {
+			if (!status->completedSessions.contains(sess)) return sess;
+		}
+		// If all sessions are complete return empty string
+		return "";
+	}
+
+	void addCompletedSession(String userId, String sessId) {
+		for (int i = 0; i < userInfo.length(); i++) {
+			if (!userInfo[i].id.compare(userId)) {
+				userInfo[i].completedSessions.append(sessId);
+			}
+		}
+	}
+};
+
 
 class ReactionConfig {
 public:
@@ -391,6 +481,8 @@ public:
 		}
 		//reader.verifyDone();
 	}
+
+
 };
 
 class ExperimentConfig {
@@ -442,6 +534,8 @@ public:
 		// fine to have extra entries not read
 		//reader.verifyDone();
 	}
+
+
 
 	// Start of enumeration for task type
 	enum taskType {
@@ -547,7 +641,7 @@ public:
 	}
 
 	// Get the experiment config from file
-	static ExperimentConfig getExperimentConfig(void) {
+	static ExperimentConfig load(void) {
 		if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
 		}
