@@ -327,7 +327,6 @@ public:
 		for (UserSessionStatus user : userInfo) {
 			if (!user.id.compare(id)) return std::make_shared<UserSessionStatus>(user);
 		}
-		//TODO: make this return a new user/add one instead
 		return nullptr;
 	}
 
@@ -543,6 +542,14 @@ public:
 		target = 1
 	};
 	//const String taskTypes[2] = { "reaction", "target" };
+
+	Array<String> getSessIds() {
+		Array<String> ids;
+		for (auto sess : sessions) {
+			ids.append(sess.id);
+		}
+		return ids;
+	}
 
 	shared_ptr<SessionConfig> getSessionConfigById(String id) {
 		for (int i = 0; i < sessions.size(); i++) {

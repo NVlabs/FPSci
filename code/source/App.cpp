@@ -556,7 +556,7 @@ void App::userSaveButtonPress(void) {
 	// Save the any file
 	Any a = Any(userTable);
 	a.save("userconfig.Any");
-	logPrintf("User table saved.");			// Print message to log
+	logPrintf("User table saved.\n");			// Print message to log
 }	
 
 void App::updateUser(void){
@@ -587,6 +587,17 @@ Array<String> App::updateSessionDropDown(void) {
 	// Create updated session list
     String userId = userTable.getCurrentUser()->id;
 	shared_ptr<UserSessionStatus> userStatus = userStatusTable.getUserStatus(userId);
+	// If we have a user that doesn't have specified sessions
+	if (userStatus == nullptr) {
+		// Create a new user session status w/ no progress and default order (from experimentconfig.Any)
+		logPrintf("User %s not found. Creating a new user w/ default session ordering.\n", userId);
+		UserSessionStatus newStatus = UserSessionStatus();
+		newStatus.id = userId;
+		newStatus.sessionOrder = experimentConfig.getSessIds();
+		userStatusTable.userInfo.append(newStatus);
+		userStatus = userStatusTable.getUserStatus(userId);
+		userStatusTable.toAny().save("userstatus.Any");
+	}
 	Array<String> remainingSess = {};
 	for (int i = 0; i < userStatus->sessionOrder.size(); i++) {
         // user hasn't completed this session
@@ -695,7 +706,7 @@ void App::updateSession(String id) {
 	}
 
 	// Don't create a results file for a user w/ no sessions left
-	if (m_sessDropDown->numElements() == 0) logPrintf("No sessions remaining for selected user.");
+	if (m_sessDropDown->numElements() == 0) logPrintf("No sessions remaining for selected user.\n");
 	// Create the results file here (but how do we make sure user set up name?)
 	else logger->createResultsFile(m_logName + ".db", userTable.currentUser);
 
