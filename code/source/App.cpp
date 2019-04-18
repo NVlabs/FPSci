@@ -1214,7 +1214,10 @@ int main(int argc, const char* argv[]) {
     if (FileSystem::exists("startupconfig.Any")) {
         startupConfig = Any::fromFile("startupconfig.Any");
     }
-    startupConfig.toAny().save("startupconfig.Any");
+    else {
+        // autogenerate if it wasn't there
+        startupConfig.toAny().save("startupconfig.Any");
+    }
 
 	{
 		G3DSpecification spec;
