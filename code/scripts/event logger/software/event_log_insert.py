@@ -1,9 +1,12 @@
 import sys
+import os
+from shutil import copyfile
 import csv
 import sqlite3
 from event_log_syncer import sync_log_to_wallclock
 
 VERBOSE = True      # Flag to control extra print statements
+CREATE_NEW = True   # Controls whether or not to create a new db file w/ merged results
 
 # Get click to photon timings from a dataset
 def get_click_to_photon(eventLog, maxClick2Photon=0.3):
@@ -37,7 +40,13 @@ def insert_in_db(dbName, tableName, info):
 # Get the input ADC/event log file
 if len(sys.argv) < 3: raise Exception("Provide input event log and output database name!")
 eventLogName = sys.argv[1]
-outputDbName = sys.argv[2]
+inputDbName = sys.argv[2]
+
+# Create a new db file here if we need to
+if CREATE_NEW: 
+    outputDbName = os.path.dirname(inputDbName) + "\\merged_" + os.path.basename(inputDbName)
+    copyfile(inputDbName, outputDbName)
+else: outputDbName = inputDbName
 
 # Get input reader and get wall-clock synced data from event log
 if VERBOSE: print("Reading events from CSV logfile and time synchronizing...")
