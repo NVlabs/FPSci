@@ -2,9 +2,6 @@
 #include "App.h"
 #include "TargetEntity.h"
 
-// Set to false when just editing content
-//static const bool playMode = true;
-
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. (true = target infinite frame rate)
 static const bool  unlockFramerate = false;
@@ -24,20 +21,7 @@ static const float horizontalFieldOfViewDegrees = 103; // deg
 static const bool measureClickPhotonLatency = true;
 static const bool testCustomProjection = false;
 
-// JBS: TODO: Refactor these as experiment variables
-//========================================================================
-// variables related to experimental condition and record.
-//static const float targetFrameRate = 360; // hz
-//const int numFrameDelay = 0;
-//static const std::string expMode = "training"; // training or real
-//static const std::string taskType = "reaction"; // reaction or target
-//static const std::string appendingDescription = "ver1";
-//========================================================================
-
 App::App(const GApp::Settings& settings) : GApp(settings) {
-	// TODO: make method that changes definition of ex, and have constructor call that
-	// method to set default experiment
-	// JBS: moved experiment definition to `onInit()`
 }
 
 void App::onInit() {
@@ -227,8 +211,8 @@ void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motion
 
 void App::spawnRandomTarget() {
     // TODO: temporary shortcut
-    spawnParameterizedRandomTarget();
-    return;
+    //spawnParameterizedRandomTarget();
+    //return;
 
 	Random& rng = Random::threadCommon();
 
@@ -335,12 +319,6 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	target->setPose(amPose);
 
 	target->setFrame(position);
-	/*
-	// Don't set a track. We'll take care of the positioning after creation
-	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
-	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
-	target->setTrack(track);
-	*/
 
 	target->setShouldBeSaved(false);
 	targetArray.append(target);
@@ -387,31 +365,12 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	target->setPose(amPose);
 
 	target->setFrame(position);
-	/*
-	// Don't set a track. We'll take care of the positioning after creation
-	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
-	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
-	target->setTrack(track);
-	*/
 
 	target->setShouldBeSaved(false);
 	targetArray.append(target);
 	scene()->insert(target);
 	return target;
 }
-
-// old target uses ifs/d12.ifs below plus setting color with "mesh" above
-//UniversalMaterial::Specification materialSpecification;
-//materialSpecification.setLambertian(Texture::Specification(color));
-//materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-//materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-//
-//const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-//amPose->materialTable.set("mesh", UniversalMaterial::create(materialSpecification));
-//target->setPose(amPose);
-//
-//
-//filename = "ifs/d12.ifs";
 
 void App::loadModels() {
 	const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
@@ -634,7 +593,6 @@ void App::markSessComplete(String sessId) {
 }
 
 shared_ptr<UserConfig> App::getCurrUser(void) {
-    //return m_userTable.getIds()[m_ddCurrentUser];
 	return userTable.getUserById(getDropDownUserId());
 }
 
@@ -1168,16 +1126,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 	//expDebugStr += ex->getDebugStr(); // debugging message
  //   debugFont->draw2D(rd, format(expDebugStr.c_str(), iRound(renderDevice->stats().smoothFrameRate)), Point2(10,10), 12.0f, Color3::yellow());
 
-    //// Display DONE when complete
-    //if (ex->isExperimentDone()) {
-    //    static const shared_ptr<Texture> doneTexture = Texture::fromFile("done.png");
-    //    rd->push2D(); {
-    //        const float scale = rd->viewport().width() / 3840.0f;
-    //        rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-    //        Draw::rect2D(doneTexture->rect2DBounds() * scale + (rd->viewport().wh() - doneTexture->vector2Bounds() * scale) / 2.0f, rd, Color3::white(), doneTexture);
-    //    } rd->pop2D();
-    //}
-		// Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
+    // Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
 
 	// Track the instantaneous frame duration (no smoothing) in a circular queue
 	if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
@@ -1220,7 +1169,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 	} rd->pop2D();
 
-	//MIght not need this on the reaction trial
+	// Might not need this on the reaction trial
 	// This is rendering the GUI. Can remove if desired.
 	Surface2D::sortAndRender(rd, posed2D);
 }
@@ -1234,6 +1183,16 @@ void App::setSceneBrightness(float b) {
 	m_sceneBrightness = b;
 }
 
+void App::resetView() {
+    // reset view direction (look front!)
+    const shared_ptr<Camera>& camera = activeCamera();
+    //activeCamera()->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
+    // Account for the camera translation to ensure correct look vector
+    //camera->lookAt(camera->frame().translation + Point3(0, 0, -1));
+    const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+    //fpm->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
+    fpm->lookAt(Point3(0, 0, -1));
+}
 
 void App::onCleanup() {
 	// Called after the application loop ends.  Place a majority of cleanup code
@@ -1292,16 +1251,5 @@ int main(int argc, const char* argv[]) {
 	settings.renderer.orderIndependentTransparency = false;
 
 	return App(settings).run();
-}
-
-void App::resetView() {
-	// reset view direction (look front!)
-    const shared_ptr<Camera>& camera = activeCamera();
-	//activeCamera()->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
-    // Account for the camera translation to ensure correct look vector
-	//camera->lookAt(camera->frame().translation + Point3(0, 0, -1));
-	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-	//fpm->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
-	fpm->lookAt(Point3(0,0,-1));
 }
 
