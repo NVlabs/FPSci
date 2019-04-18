@@ -4,7 +4,6 @@
   "settingsVersion": 1, // Used for parsing this file
 
   // General settings for the experiment
-  "playMode": true, // Debugging/development control flag
   "appendingDescription": "default", // Description of this file
   "sceneName": "eSports Simple Hallway", // Maybe don�t need this? Or maybe this ends up belonging to individual trials
   "taskType": "target", // Task type, can be "target" or "reaction"
