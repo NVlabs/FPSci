@@ -285,10 +285,10 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        //{"id": "static","count": 20},
-        //{"id": "straight_fly","count": 20},
+        {"id": "static","count": 20},
+        {"id": "straight_fly","count": 20},
         {"id": "stray_fly","count": 40},
-        //{"id": "strafe_jump","count": 40}
+        {"id": "strafe_jump","count": 40}
       ]
     }
   ],
