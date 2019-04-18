@@ -3,6 +3,51 @@
 #include <G3D/G3D.h>
 #include "SingleThresholdMeasurement.h"
 
+/** Configure how the application should start */
+class StartupConfig {
+public:
+    bool playMode = true;
+    String experimentConfigPath = "";
+    String userConfigPath = "";
+
+    StartupConfig() {};
+
+    StartupConfig(const Any& any) {
+        int settingsVersion = 1;
+        AnyTableReader reader(any);
+        reader.getIfPresent("settingsVersion", settingsVersion);
+
+        switch (settingsVersion) {
+        case 1:
+            reader.getIfPresent("playMode", playMode);
+            reader.getIfPresent("experimentConfigPath", experimentConfigPath);
+            reader.getIfPresent("userConfigPath", userConfigPath);
+            break;
+        default:
+            debugPrintf("Settings version '%d' not recognized in StartupConfig.\n", settingsVersion);
+            break;
+        }
+    }
+
+    Any toAny(const bool forceAll = true) const {
+        Any a(Any::TABLE);
+        a["playMode"] = playMode;
+        a["experimentConfigPath"] = experimentConfigPath;
+        a["userConfigPath"] = userConfigPath;
+        return a;
+    }
+
+    /** filename with given path to experiment config file */
+    String experimentConfig() {
+        return experimentConfigPath + "experimentconfig.Any";
+    }
+
+    /** filename with given path to user config file */
+    String userConfig() {
+        return userConfigPath + "userconfig.Any";
+    }
+};
+
 // This is a write-only structure to log information affiliated with a system
 class SystemConfig {
 public:
@@ -244,12 +289,12 @@ public:
 	}
 
 	// Simple rotine to get the user configuration from file
-	static Any load(void) {
+	static Any load(String filename) {
 		// load user setting from file
-		if (!FileSystem::exists("userconfig.Any")) { // if file not found, copy from the sample config file.
+		if (!FileSystem::exists(System::findDataFile(filename))) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
 		}
-		return Any::fromFile(System::findDataFile("userconfig.Any"));
+		return Any::fromFile(System::findDataFile(filename));
 	}
 };
 
@@ -486,7 +531,6 @@ public:
 
 class ExperimentConfig {
 public:
-	bool playMode = true;							// Developer only feature for debugging/testing
 	String	taskType = "reaction";					// "Reaction" or "Target"
 	String	appendingDescription = "ver0";			// Short text field for description
 	String  sceneName = "eSports Simple Hallway";	// For target experiment
@@ -511,7 +555,6 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("playMode", playMode);
 			reader.getIfPresent("taskType", taskType);
 			reader.getIfPresent("appendingDescription", appendingDescription);
 			reader.getIfPresent("sceneName", sceneName);
@@ -648,10 +691,10 @@ public:
 	}
 
 	// Get the experiment config from file
-	static ExperimentConfig load(void) {
-		if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
+	static ExperimentConfig load(String filename) {
+		if (!FileSystem::exists(System::findDataFile(filename))) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
 		}
-		return Any::fromFile(System::findDataFile("experimentconfig.Any"));
+		return Any::fromFile(System::findDataFile(filename));
 	}
 };

@@ -21,6 +21,9 @@ static const float horizontalFieldOfViewDegrees = 103; // deg
 static const bool measureClickPhotonLatency = true;
 static const bool testCustomProjection = false;
 
+/** global startup config - sets playMode and experiment/user paths */
+StartupConfig startupConfig;
+
 App::App(const GApp::Settings& settings) : GApp(settings) {
 }
 
@@ -33,7 +36,7 @@ void App::onInit() {
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);
 
 	// load per user setting from file
-	userTable = UserTable::load();
+	userTable = UserTable::load(startupConfig.userConfig());
 	printUserTableToLog(userTable);
 
 	// load per experiment user settings from file
@@ -41,7 +44,7 @@ void App::onInit() {
 	printUserStatusTableToLog(userStatusTable);
 
 	// load experiment setting from file
-	experimentConfig = ExperimentConfig::load();
+	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfig());
 	printExpConfigToLog(experimentConfig);
 
 	// Get and save system configuration
@@ -62,7 +65,7 @@ void App::onInit() {
 	m_hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
 	m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
-	if (experimentConfig.playMode) {
+	if (startupConfig.playMode) {
 		m_fireSound = Sound::create(System::findDataFile("sound/42108__marcuslee__Laser_Wrath_6.wav"));
 		m_explosionSound = Sound::create(System::findDataFile("sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav"));
 	}
@@ -110,8 +113,8 @@ void App::printUserStatusTableToLog(UserStatusTable table) {
 }
 
 void App::printExpConfigToLog(ExperimentConfig config) {
-	logPrintf("-------------------\nExperiment Config\n-------------------\nPlay Mode = %s\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-		(config.playMode ? "true" : "false"), config.taskType, config.appendingDescription, config.sceneName, config.feedbackDuration, config.readyDuration, config.taskDuration, config.maxClicks);
+	logPrintf("-------------------\nExperiment Config\n-------------------\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
+		config.taskType, config.appendingDescription, config.sceneName, config.feedbackDuration, config.readyDuration, config.taskDuration, config.maxClicks);
 	// Iterate through sessions and print them
 	for (int i = 0; i < config.sessions.size(); i++) {
 		SessionConfig sess = config.sessions[i];
@@ -447,10 +450,10 @@ void App::loadModels() {
 
 
 void App::makeGUI() {
-	debugWindow->setVisible(!experimentConfig.playMode);
-	developerWindow->setVisible(!experimentConfig.playMode);
-	developerWindow->sceneEditorWindow->setVisible(!experimentConfig.playMode);
-	developerWindow->cameraControlWindow->setVisible(!experimentConfig.playMode);
+	debugWindow->setVisible(!startupConfig.playMode);
+	developerWindow->setVisible(!startupConfig.playMode);
+	developerWindow->sceneEditorWindow->setVisible(!startupConfig.playMode);
+	developerWindow->cameraControlWindow->setVisible(!startupConfig.playMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
 
 	const float SLIDER_SPACING = 35;
@@ -514,7 +517,7 @@ void App::makeGUI() {
 void App::userSaveButtonPress(void) {
 	// Save the any file
 	Any a = Any(userTable);
-	a.save("userconfig.Any");
+	a.save(startupConfig.userConfig());
 	logPrintf("User table saved.\n");			// Print message to log
 }	
 
@@ -1002,7 +1005,7 @@ void App::fire() {
 		scene()->insert(laser);
 	}
 
-	if (experimentConfig.playMode) {
+	if (startupConfig.playMode) {
 		if (hitTarget) {
 			m_explosionSound->play(10.0f);
 			//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
@@ -1207,30 +1210,28 @@ void App::onCleanup() {
 G3D_START_AT_MAIN();
 
 int main(int argc, const char* argv[]) {
-	
-	// load experiment setting from file
-	if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
-		FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
-	}
 
-	ExperimentConfig m_expConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
-	
+    if (FileSystem::exists("startupconfig.Any")) {
+        startupConfig = Any::fromFile("startupconfig.Any");
+    }
+    startupConfig.toAny().save("startupconfig.Any");
+
 	{
 		G3DSpecification spec;
-		spec.audio = m_expConfig.playMode;
+		spec.audio = startupConfig.playMode;
 		initGLG3D(spec);
 	}
 
 	(void)argc; (void)argv;
 	GApp::Settings settings(argc, argv);
 
-	if (m_expConfig.playMode) {
+	if (startupConfig.playMode) {
 		settings.window.width = 1920; settings.window.height = 1080;
 	}
 	else {
 		settings.window.width = 1920; settings.window.height = 980;
 	}
-	settings.window.fullScreen = m_expConfig.playMode;
+	settings.window.fullScreen = startupConfig.playMode;
 	settings.window.resizable = !settings.window.fullScreen;
 
     // V-sync off always
