@@ -23,7 +23,7 @@ bool ReactionExperiment::initPsychHelper()
 	}
 
 	// Update the logger w/ these conditions (IS THIS THE RIGHT PLACE TO DO THIS???)
-	m_app->m_logger->addConditions(m_psych.mMeasurements);
+	m_app->logger->addConditions(m_psych.mMeasurements);
 
 	// call it once all conditions are defined.
 	m_psych.chooseNextCondition();
@@ -35,7 +35,7 @@ void ReactionExperiment::onInit() {
 	m_app->m_presentationState = PresentationState::initial;
 	m_feedbackMessage = "Reaction speed test. Click on green!";
 
-	m_config = m_app->m_experimentConfig;				// Get configuration
+	m_config = m_app->experimentConfig;				// Get configuration
 	m_hasSession = initPsychHelper();					// Initialize PsychHelper based on the configuration.
 	if (!m_hasSession) {								// Check for invalid session (nothing to do)
 		m_app->m_presentationState = PresentationState::feedback;
@@ -138,7 +138,7 @@ void ReactionExperiment::updatePresentationState(RealTime framePeriod)
 				m_feedbackMessage = "Session complete. Thanks!";
 				newState = PresentationState::complete;
 				if (m_hasSession) {
-					m_app->getCurrUser()->completedSessions.append(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
+					m_app->markSessComplete(String(m_psych.getParam().str["session"]));
 					m_app->userSaveButtonPress();
 					Array<String> remaining = m_app->updateSessionDropDown();
 					if (remaining.size() == 0) {
@@ -227,5 +227,5 @@ void ReactionExperiment::recordTrialResponse()
 		addQuotes(m_taskEndTime),
 		std::to_string(m_taskExecutionTime),
 	};
-	m_app->m_logger->recordTrialResponse(trialValues);
+	m_app->logger->recordTrialResponse(trialValues);
 }

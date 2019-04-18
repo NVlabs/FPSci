@@ -3,6 +3,51 @@
 #include <G3D/G3D.h>
 #include "SingleThresholdMeasurement.h"
 
+/** Configure how the application should start */
+class StartupConfig {
+public:
+    bool playMode = true;
+    String experimentConfigPath = "";
+    String userConfigPath = "";
+
+    StartupConfig() {};
+
+    StartupConfig(const Any& any) {
+        int settingsVersion = 1;
+        AnyTableReader reader(any);
+        reader.getIfPresent("settingsVersion", settingsVersion);
+
+        switch (settingsVersion) {
+        case 1:
+            reader.getIfPresent("playMode", playMode);
+            reader.getIfPresent("experimentConfigPath", experimentConfigPath);
+            reader.getIfPresent("userConfigPath", userConfigPath);
+            break;
+        default:
+            debugPrintf("Settings version '%d' not recognized in StartupConfig.\n", settingsVersion);
+            break;
+        }
+    }
+
+    Any toAny(const bool forceAll = true) const {
+        Any a(Any::TABLE);
+        a["playMode"] = playMode;
+        a["experimentConfigPath"] = experimentConfigPath;
+        a["userConfigPath"] = userConfigPath;
+        return a;
+    }
+
+    /** filename with given path to experiment config file */
+    String experimentConfig() {
+        return experimentConfigPath + "experimentconfig.Any";
+    }
+
+    /** filename with given path to user config file */
+    String userConfig() {
+        return userConfigPath + "userconfig.Any";
+    }
+};
+
 // This is a write-only structure to log information affiliated with a system
 class SystemConfig {
 public:
@@ -62,7 +107,7 @@ public:
 		return a;
 	}
 
-	static SystemConfig getSystemConfig() {
+	static SystemConfig load() {
 		if (!FileSystem::exists("systemconfig.Any")) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEsystemconfig.Any"), "systemconfig.Any");
 		}
@@ -150,7 +195,6 @@ public:
     double mouseDPI = 800.0;				// Mouse DPI setting
     double cmp360 = 12.75;					// Mouse sensitivity, reported as centimeters per 360�
 	int currentSession = 0;					// Currently selected session
-	Array<String> completedSessions = {};	// List of completed sessions for this user
     UserConfig() {}
 
     UserConfig(const Any& any) {
@@ -163,7 +207,6 @@ public:
             reader.getIfPresent("id", id);
             reader.getIfPresent("mouseDPI", mouseDPI);
             reader.getIfPresent("cmp360", cmp360);
-			reader.getIfPresent("completedSessions", completedSessions);
 			break;
         default:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
@@ -176,18 +219,11 @@ public:
 	// Simple method for conversion to Any (writing output file)
 	Any toAny(const bool forceAll=true) const {
 		Any a(Any::TABLE);
-		a["settingsVersion"] = 1;							// Create a version 1 file
 		a["id"] = id;										// Include subject ID
 		a["mouseDPI"] = mouseDPI;							// Include mouse DPI
 		a["cmp360"] = cmp360;								// Include cm/360
-		a["completedSessions"] = completedSessions;			// Include completed sessions list
 		return a;
 	}
-
-	void addCompletedSession(String id) {
-		completedSessions.append(id);
-	}
-
 };
 
 class UserTable {
@@ -252,14 +288,111 @@ public:
 	}
 
 	// Simple rotine to get the user configuration from file
-	static Any getUserTable(void) {
+	static Any load(String filename) {
 		// load user setting from file
-		if (!FileSystem::exists("userconfig.Any")) { // if file not found, copy from the sample config file.
+		if (!FileSystem::exists(System::findDataFile(filename))) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
 		}
-		return Any::fromFile(System::findDataFile("userconfig.Any"));
+		return Any::fromFile(System::findDataFile(filename));
 	}
 };
+
+class UserSessionStatus {
+public:
+	String id;
+	Array<String> sessionOrder = {};
+	Array<String> completedSessions = {};
+
+	UserSessionStatus() {}
+
+	UserSessionStatus(const Any& any) {
+		int settingsVersion = 1; // used to allow different version numbers to be loaded differently
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.get("id", id);
+			reader.getIfPresent("sessions", sessionOrder);
+			reader.getIfPresent("completedSessions", completedSessions);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in UserSessionStatus.\n", settingsVersion);
+			break;
+		}
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["id"] = id;									// populate id
+		a["sessions"] = sessionOrder;					// populate session order
+		a["completedSessions"] = completedSessions; 	// Include updated subject table
+		return a;
+	}
+};
+
+class UserStatusTable {
+public:
+	Array<UserSessionStatus> userInfo = {};
+
+	UserStatusTable() {}
+
+	UserStatusTable(const Any& any) {
+		int settingsVersion = 1; // used to allow different version numbers to be loaded differently
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.get("users", userInfo);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in UserStatus.\n", settingsVersion);
+			break;
+		}
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["settingsVersion"] = 1;						// Create a version 1 file
+		a["users"] = userInfo;							// Include updated subject table
+		return a;
+	}
+
+	// Get the experiment config from file
+	static UserStatusTable load(void) {
+		if (!FileSystem::exists("userstatus.Any")) { // if file not found, copy from the sample config file.
+			FileSystem::copyFile(System::findDataFile("SAMPLEuserstatus.Any"), "userstatus.Any");
+		}
+		return Any::fromFile(System::findDataFile("userstatus.Any"));
+	}
+
+	shared_ptr<UserSessionStatus> getUserStatus(String id) {
+		for (UserSessionStatus user : userInfo) {
+			if (!user.id.compare(id)) return std::make_shared<UserSessionStatus>(user);
+		}
+		return nullptr;
+	}
+
+	String getNextSession(String userId) {
+		// Return the first valid session that has not been completed
+		shared_ptr<UserSessionStatus> status = getUserStatus(userId);
+		for (auto sess : status->sessionOrder) {
+			if (!status->completedSessions.contains(sess)) return sess;
+		}
+		// If all sessions are complete return empty string
+		return "";
+	}
+
+	void addCompletedSession(String userId, String sessId) {
+		for (int i = 0; i < userInfo.length(); i++) {
+			if (!userInfo[i].id.compare(userId)) {
+				userInfo[i].completedSessions.append(sessId);
+			}
+		}
+	}
+};
+
 
 class ReactionConfig {
 public:
@@ -391,11 +524,12 @@ public:
 		}
 		//reader.verifyDone();
 	}
+
+
 };
 
 class ExperimentConfig {
 public:
-	bool playMode = true;							// Developer only feature for debugging/testing
 	String	taskType = "reaction";					// "Reaction" or "Target"
 	String	appendingDescription = "ver0";			// Short text field for description
 	String  sceneName = "eSports Simple Hallway";	// For target experiment
@@ -403,6 +537,7 @@ public:
 	float readyDuration = 0.5f;
 	float taskDuration = 100000.0f;
 	int maxClicks = 10000;							// Maximum number of clicks to allow in a trial
+	float fireRate = 100.0;							// Maximum fire rate
 	Array<SessionConfig> sessions;					// Array of sessions
 	String sessionOrder = "random";					// Order in which to run sessions?
 	Array<TargetConfig> targets;					// Array of trial configs
@@ -419,7 +554,6 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("playMode", playMode);
 			reader.getIfPresent("taskType", taskType);
 			reader.getIfPresent("appendingDescription", appendingDescription);
 			reader.getIfPresent("sceneName", sceneName);
@@ -430,6 +564,7 @@ public:
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("maxClicks", maxClicks);
+			reader.getIfPresent("fireRate", fireRate);
 			reader.getIfPresent("renderDecals", renderDecals);
 			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
 			break;
@@ -441,12 +576,22 @@ public:
 		//reader.verifyDone();
 	}
 
+
+
 	// Start of enumeration for task type
 	enum taskType {
 		reaction = 0,
 		target = 1
 	};
 	//const String taskTypes[2] = { "reaction", "target" };
+
+	Array<String> getSessIds() {
+		Array<String> ids;
+		for (auto sess : sessions) {
+			ids.append(sess.id);
+		}
+		return ids;
+	}
 
 	shared_ptr<SessionConfig> getSessionConfigById(String id) {
 		for (int i = 0; i < sessions.size(); i++) {
@@ -545,10 +690,10 @@ public:
 	}
 
 	// Get the experiment config from file
-	static ExperimentConfig getExperimentConfig(void) {
-		if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
+	static ExperimentConfig load(String filename) {
+		if (!FileSystem::exists(System::findDataFile(filename))) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
 		}
-		return Any::fromFile(System::findDataFile("experimentconfig.Any"));
+		return Any::fromFile(System::findDataFile(filename));
 	}
 };

@@ -1,0 +1,21 @@
+{
+	settingsVersion : 1,
+  // Create a user table with information about session ordering and completed sessions
+  users: [
+    {
+      "id": "JK",
+      "sessions": [ "s1-training", "s2-training", "s1-real", "s2-real" ],
+      "completedSessions": []
+    },
+    {
+      "id": "JS",
+      "sessions": [ "s2-training", "s2-real", "s1-training", "s1-real" ],
+      "completedSessions": []
+    },
+    {
+      "id": "BB",
+      "sessions": [ "s1-training", "s1-real", "s2-training", "s2-real" ],
+      "completedSessions": []
+    }
+  ]
+}

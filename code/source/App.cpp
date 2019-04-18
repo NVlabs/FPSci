@@ -2,9 +2,6 @@
 #include "App.h"
 #include "TargetEntity.h"
 
-// Set to false when just editing content
-//static const bool playMode = true;
-
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. (true = target infinite frame rate)
 static const bool  unlockFramerate = false;
@@ -24,20 +21,10 @@ static const float horizontalFieldOfViewDegrees = 103; // deg
 static const bool measureClickPhotonLatency = true;
 static const bool testCustomProjection = false;
 
-// JBS: TODO: Refactor these as experiment variables
-//========================================================================
-// variables related to experimental condition and record.
-//static const float targetFrameRate = 360; // hz
-//const int numFrameDelay = 0;
-//static const std::string expMode = "training"; // training or real
-//static const std::string taskType = "reaction"; // reaction or target
-//static const std::string appendingDescription = "ver1";
-//========================================================================
+/** global startup config - sets playMode and experiment/user paths */
+StartupConfig startupConfig;
 
 App::App(const GApp::Settings& settings) : GApp(settings) {
-	// TODO: make method that changes definition of ex, and have constructor call that
-	// method to set default experiment
-	// JBS: moved experiment definition to `onInit()`
 }
 
 void App::onInit() {
@@ -48,16 +35,20 @@ void App::onInit() {
 
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);
 
-	// load user setting from file
-	m_userTable = UserTable::getUserTable();
-	printUserTableToLog(m_userTable);
+	// load per user setting from file
+	userTable = UserTable::load(startupConfig.userConfig());
+	printUserTableToLog(userTable);
+
+	// load per experiment user settings from file
+	userStatusTable = UserStatusTable::load();
+	printUserStatusTableToLog(userStatusTable);
 
 	// load experiment setting from file
-	m_experimentConfig = ExperimentConfig::getExperimentConfig();
-	printExpConfigToLog(m_experimentConfig);
+	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfig());
+	printExpConfigToLog(experimentConfig);
 
 	// Get and save system configuration
-	SystemConfig sysConfig = SystemConfig::getSystemConfig();
+	SystemConfig sysConfig = SystemConfig::load();
 	sysConfig.printSystemInfo();									// Print system info to log.txt
 	sysConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
 
@@ -74,7 +65,7 @@ void App::onInit() {
 	m_hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
 	m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
-	if (m_experimentConfig.playMode) {
+	if (startupConfig.playMode) {
 		m_fireSound = Sound::create(System::findDataFile("sound/42108__marcuslee__Laser_Wrath_6.wav"));
 		m_explosionSound = Sound::create(System::findDataFile("sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav"));
 	}
@@ -104,9 +95,26 @@ void App::printUserTableToLog(UserTable table) {
 	}
 }
 
+void App::printUserStatusTableToLog(UserStatusTable table) {
+	for (UserSessionStatus status : table.userInfo) {
+		String sessOrder = "";
+		for (String sess : status.sessionOrder) {
+			sessOrder += sess + ", ";
+		}
+		sessOrder = sessOrder.substr(0, sessOrder.length() - 2);
+		String completedSess = "";
+		for (String sess : status.completedSessions) {
+			completedSess += sess + ", ";
+		}
+		completedSess = completedSess.substr(0, completedSess.length() - 2);
+
+		logPrintf("Subject ID: %s\nSession Order: [%s]\nCompleted Sessions: [%s]\n", status.id, sessOrder, completedSess);
+	}
+}
+
 void App::printExpConfigToLog(ExperimentConfig config) {
-	logPrintf("-------------------\nExperiment Config\n-------------------\nPlay Mode = %s\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-		(config.playMode ? "true" : "false"), config.taskType, config.appendingDescription, config.sceneName, config.feedbackDuration, config.readyDuration, config.taskDuration, config.maxClicks);
+	logPrintf("-------------------\nExperiment Config\n-------------------\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
+		config.taskType, config.appendingDescription, config.sceneName, config.feedbackDuration, config.readyDuration, config.taskDuration, config.maxClicks);
 	// Iterate through sessions and print them
 	for (int i = 0; i < config.sessions.size(); i++) {
 		SessionConfig sess = config.sessions[i];
@@ -135,7 +143,7 @@ void App::updateMouseSensitivity() {
     // G3D expects mouse sensitivity in radians
     // we're converting from mouseDPI and centimeters/360 which explains
     // the screen resolution (dots), cm->in factor (2.54) and 2PI
-    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (m_userTable.getCurrentUser()->cmp360 * m_userTable.getCurrentUser()->mouseDPI);
+    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
     // additional correction factor based on few samples - TODO: need more careful setup to study this
     mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
     const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
@@ -206,8 +214,8 @@ void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motion
 
 void App::spawnRandomTarget() {
     // TODO: temporary shortcut
-    spawnParameterizedRandomTarget();
-    return;
+    //spawnParameterizedRandomTarget();
+    //return;
 
 	Random& rng = Random::threadCommon();
 
@@ -279,7 +287,7 @@ shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, b
 	*/
 
 	target->setShouldBeSaved(false);
-	m_targetArray.append(target);
+	targetArray.append(target);
 	scene()->insert(target);
 	return target;
 }
@@ -314,15 +322,9 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	target->setPose(amPose);
 
 	target->setFrame(position);
-	/*
-	// Don't set a track. We'll take care of the positioning after creation
-	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
-	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
-	target->setTrack(track);
-	*/
 
 	target->setShouldBeSaved(false);
-	m_targetArray.append(target);
+	targetArray.append(target);
 	scene()->insert(target);
 	return target;
 }
@@ -366,31 +368,12 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	target->setPose(amPose);
 
 	target->setFrame(position);
-	/*
-	// Don't set a track. We'll take care of the positioning after creation
-	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
-	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
-	target->setTrack(track);
-	*/
 
 	target->setShouldBeSaved(false);
-	m_targetArray.append(target);
+	targetArray.append(target);
 	scene()->insert(target);
 	return target;
 }
-
-// old target uses ifs/d12.ifs below plus setting color with "mesh" above
-//UniversalMaterial::Specification materialSpecification;
-//materialSpecification.setLambertian(Texture::Specification(color));
-//materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-//materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-//
-//const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-//amPose->materialTable.set("mesh", UniversalMaterial::create(materialSpecification));
-//target->setPose(amPose);
-//
-//
-//filename = "ifs/d12.ifs";
 
 void App::loadModels() {
 	const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
@@ -467,10 +450,10 @@ void App::loadModels() {
 
 
 void App::makeGUI() {
-	debugWindow->setVisible(!m_experimentConfig.playMode);
-	developerWindow->setVisible(!m_experimentConfig.playMode);
-	developerWindow->sceneEditorWindow->setVisible(!m_experimentConfig.playMode);
-	developerWindow->cameraControlWindow->setVisible(!m_experimentConfig.playMode);
+	debugWindow->setVisible(!startupConfig.playMode);
+	developerWindow->setVisible(!startupConfig.playMode);
+	developerWindow->sceneEditorWindow->setVisible(!startupConfig.playMode);
+	developerWindow->cameraControlWindow->setVisible(!startupConfig.playMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
 
 	const float SLIDER_SPACING = 35;
@@ -506,17 +489,17 @@ void App::makeGUI() {
 
 
     // set up user settings window
-    m_userSettingsWindow = GuiWindow::create("User Settings - press TAB to close", nullptr, 
+    m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, 
         Rect2D::xywh((float)window()->width() * 0.5f - 200.0f, (float)window()->height() * 0.5f - 100.0f, 400.0f, 200.0f));
     addWidget(m_userSettingsWindow);
     GuiPane* p = m_userSettingsWindow->pane();
     m_currentUserPane = p->addPane("Current User Settings");
     updateUserGUI();
 
-    m_ddCurrentUser = m_userTable.getCurrentUserIndex();
+    m_ddCurrentUser = userTable.getCurrentUserIndex();
     p = p->addPane("Experiment Settings");
     p->beginRow();
-        m_userDropDown = p->addDropDownList("User", m_userTable.getIds(), &m_ddCurrentUser);
+        m_userDropDown = p->addDropDownList("User", userTable.getIds(), &m_ddCurrentUser);
 	    p->addButton("Select User", this, &App::updateUser);
     p->endRow();
     p->beginRow();
@@ -524,7 +507,8 @@ void App::makeGUI() {
         updateSessionDropDown();
 	    p->addButton("Select Session", this, &App::updateSessionPress);
     p->endRow();
-    m_userSettingsWindow->setVisible(m_userSettingsMode); // TODO: set based on mode
+    p->addButton("Quit", this, &App::quitRequest);
+    m_userSettingsWindow->setVisible(m_userSettingsMode);
 
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
@@ -532,9 +516,9 @@ void App::makeGUI() {
 
 void App::userSaveButtonPress(void) {
 	// Save the any file
-	Any a = Any(m_userTable);
-	a.save("userconfig.Any");
-	logPrintf("User table saved.");			// Print message to log
+	Any a = Any(userTable);
+	a.save(startupConfig.userConfig());
+	logPrintf("User table saved.\n");			// Print message to log
 }	
 
 void App::updateUser(void){
@@ -542,11 +526,11 @@ void App::updateUser(void){
 	if (m_lastSeenUser != m_ddCurrentUser) {
 		if(m_sessDropDown->numElements() > 0) updateSession(updateSessionDropDown()[0]);
 		String id = getDropDownUserId();
-		String filename = "../results/" + m_experimentConfig.taskType + "_" + id + "_" + String(Logger::genFileTimestamp()) + ".db";
-		m_logger->createResultsFile(filename, id);
+		String filename = "../results/" + experimentConfig.taskType + "_" + id + "_" + String(Logger::genFileTimestamp()) + ".db";
+		logger->createResultsFile(filename, id);
 		m_lastSeenUser = m_ddCurrentUser;
 
-        m_userTable.currentUser = id;
+        userTable.currentUser = id;
         updateUserGUI();
 	}
 	// Get new session list for (new) user
@@ -555,26 +539,38 @@ void App::updateUser(void){
 
 void App::updateUserGUI() {
     m_currentUserPane->removeAllChildren();
-    m_currentUserPane->addLabel(format("Current User: %s", m_userTable.currentUser));
-    m_mouseDPILabel = m_currentUserPane->addLabel(format("Mouse DPI: %f", m_userTable.getCurrentUser()->mouseDPI));
-    m_currentUserPane->addNumberBox("Mouse 360", &(m_userTable.getCurrentUser()->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
+    m_currentUserPane->addLabel(format("Current User: %s", userTable.currentUser));
+    m_mouseDPILabel = m_currentUserPane->addLabel(format("Mouse DPI: %f", userTable.getCurrentUser()->mouseDPI));
+    m_currentUserPane->addNumberBox("Mouse 360", &(userTable.getCurrentUser()->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
     m_currentUserPane->addButton("Save cm/360", this, &App::userSaveButtonPress);
 }
 
 Array<String> App::updateSessionDropDown(void) {
 	// Create updated session list
-    Array<String> remainingSess = {};
-    UserConfig* currentUser = m_userTable.getCurrentUser();
-    for (const SessionConfig& sess : m_experimentConfig.sessions) {
+    String userId = userTable.getCurrentUser()->id;
+	shared_ptr<UserSessionStatus> userStatus = userStatusTable.getUserStatus(userId);
+	// If we have a user that doesn't have specified sessions
+	if (userStatus == nullptr) {
+		// Create a new user session status w/ no progress and default order (from experimentconfig.Any)
+		logPrintf("User %s not found. Creating a new user w/ default session ordering.\n", userId);
+		UserSessionStatus newStatus = UserSessionStatus();
+		newStatus.id = userId;
+		newStatus.sessionOrder = experimentConfig.getSessIds();
+		userStatusTable.userInfo.append(newStatus);
+		userStatus = userStatusTable.getUserStatus(userId);
+		userStatusTable.toAny().save("userstatus.Any");
+	}
+	Array<String> remainingSess = {};
+	for (int i = 0; i < userStatus->sessionOrder.size(); i++) {
         // user hasn't completed this session
-        if (!currentUser->completedSessions.contains(sess.id)) {
-            remainingSess.append(sess.id);
+        if (!userStatus->completedSessions.contains(userStatus->sessionOrder[i])) {
+            remainingSess.append(userStatus->sessionOrder[i]);
         }
     }
 	m_sessDropDown->setList(remainingSess);
 
 	// Print message to log
-	logPrintf("Updated session drop down to:\n");
+	logPrintf("Updated %s's session drop down to:\n", userId);
 	for (String id : remainingSess) {
 		logPrintf("\t%s\n", id);
 	}
@@ -591,23 +587,41 @@ String App::getDropDownUserId(void) {
 	return m_userDropDown->get(m_ddCurrentUser);
 }
 
-void App::markSessComplete(String id) {
-	m_userTable.getCurrentUser()->addCompletedSession(id);
+void App::markSessComplete(String sessId) {
+	// Add the session id to completed session array
+	userStatusTable.addCompletedSession(userTable.currentUser, sessId);
+	// Save the file to any
+	userStatusTable.toAny().save("userstatus.Any");
+	logPrintf("Marked session: %s complete for user %s.\n", sessId, userTable.currentUser);
 }
 
 shared_ptr<UserConfig> App::getCurrUser(void) {
-    //return m_userTable.getIds()[m_ddCurrentUser];
-	return m_userTable.getUserById(getDropDownUserId());
+	return userTable.getUserById(getDropDownUserId());
 }
 
 void App::updateSessionPress(void) {
 	updateSession(getDropDownSessId());
 }
 
+String GetLastErrorString() {
+	DWORD error = GetLastError();
+	if (error){
+		LPVOID lpMsgBuf;
+		DWORD bufLen = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL);
+		if (bufLen){
+			LPCSTR lpMsgStr = (LPCSTR)lpMsgBuf;
+			std::string result(lpMsgStr, lpMsgStr + bufLen);
+			LocalFree(lpMsgBuf);
+			return String(result);
+		}
+	}
+	return String();
+}
+
 void App::updateSession(String id) {
 	if (!id.empty()) {
 		// Get the new session config
-		shared_ptr<SessionConfig> sessConfig = m_experimentConfig.getSessionConfigById(id);
+		shared_ptr<SessionConfig> sessConfig = experimentConfig.getSessionConfigById(id);
 		// Print message to log
 		logPrintf("User selected session: %s. Updating now...\n", id);
 		// apply frame lag
@@ -625,43 +639,92 @@ void App::updateSession(String id) {
 	}
 
 	// Initialize the experiment (session) and logger
-	String filename = "../results/" + m_experimentConfig.taskType + "_" + id + "_" + m_userTable.currentUser + "_" + String(Logger::genFileTimestamp()) + ".db";
-	if (m_experimentConfig.taskType == "reaction") {
-		m_ex = ReactionExperiment::create(this);
-		m_logger = ReactionLogger::create();
+	if (experimentConfig.taskType == "reaction") {
+		ex = ReactionExperiment::create(this);
+		logger = ReactionLogger::create();
 	}
-	else if (m_experimentConfig.taskType == "target") {
-		m_ex = TargetExperiment::create(this);
-		m_logger = TargetLogger::create();
+	else if (experimentConfig.taskType == "target") {
+		ex = TargetExperiment::create(this);
+		logger = TargetLogger::create();
 		// Load the experiment scene if we haven't already (target only)
 		if (!m_sceneLoaded) {
-			loadScene(m_experimentConfig.sceneName);
+			loadScene(experimentConfig.sceneName);
 			m_sceneLoaded = true;
 		}
 	}
 
 	// Check for need to start latency logging and if so run the logger now
-	SystemConfig sysConfig = SystemConfig::getSystemConfig();
+	SystemConfig sysConfig = SystemConfig::load();
 	if (sysConfig.hasLogger) {
-		// TODO: Decide how to spawn a process here (we need to be able to kill this later to start a new one for the next session)
-		//const char *args[4];
-		//args[0] = "event_logger.py";
-		//args[1] = sysConfig.loggerComPort.c_str();
-		//args[2] = sysConfig.hasSync ? sysConfig.syncComPort.c_str() : NULL;
-		//args[3] = NULL;
-		////system(cmd.c_str());
-
-		//// Give this a shot (still don't know how to end this...)
-		//spawnv(PIPE_NOWAIT, "python.exe", args);
+		// Handle running logger if we need to (terminate then merge results)
+		if (m_loggerRunning) {
+			killPythonLogger();
+			pythonMergeLogs(m_logName);
+		}
+		// Run a new logger if we need to
+		m_logName = "../results/" + experimentConfig.taskType + "_" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
+		runPythonLogger(m_logName, sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
 	}
 
 	// Don't create a results file for a user w/ no sessions left
-	if (m_sessDropDown->numElements() == 0) logPrintf("No sessions remaining for selected user.");
+	if (m_sessDropDown->numElements() == 0) logPrintf("No sessions remaining for selected user.\n");
 	// Create the results file here (but how do we make sure user set up name?)
-	else m_logger->createResultsFile(filename, m_userTable.currentUser);
+	else logger->createResultsFile(m_logName + ".db", userTable.currentUser);
 
 	// TODO: Remove the following by invoking a call back.
-	m_ex->onInit();
+	ex->onInit();
+}
+
+void App::runPythonLogger(String logName, String com, bool hasSync, String syncComPort = "") {
+	// Variables for creating process/getting handle
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	// Come up w/ command string
+	String cmd = "pythonw.exe ../scripts/\"event logger\"/software/event_logger.py " + com + " " + logName;
+	if (hasSync) cmd += " " + syncComPort;
+
+	LPSTR command = LPSTR(cmd.c_str());
+	if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+		logPrintf("Failed to start logger: %s\n", GetLastErrorString());
+	}
+	// Update logger management variables
+	m_loggerRunning = true;
+	m_loggerHandle = pi.hProcess;
+}
+
+void App::killPythonLogger() {
+	if (m_loggerRunning) TerminateProcess(m_loggerHandle, 0);
+}
+
+void App::quitRequest() {
+    setExitCode(0);
+    killPythonLogger();
+}
+
+bool App::pythonMergeLogs(String basename) {
+	String dbFile = basename + ".db";
+	String eventFile = basename + "_event.csv";
+
+	// If we can't find either the db output file or the csv input return false
+	if (!FileSystem::exists(dbFile) || !FileSystem::exists(eventFile)) return false;
+
+	// Variables for creating process/getting handle
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	String cmd = "pythonw.exe ../scripts/\"event logger\"/software/event_log_insert.py " + eventFile + " " + dbFile;	
+	LPSTR command = LPSTR(cmd.c_str());
+	if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+		logPrintf("Failed to merge results: %s\n", GetLastErrorString());
+	}
+	return true;
 }
 
 void App::setDisplayLatencyFrames(int f) {
@@ -733,7 +796,7 @@ Point2 App::getViewDirection()
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
-	m_ex->onSimulation(rdt, sdt, idt);
+	ex->onSimulation(rdt, sdt, idt);
 
 	GApp::onSimulation(rdt, sdt, idt);
 
@@ -743,8 +806,8 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
     }
 
 	const RealTime now = System::time();
-	for (int p = 0; p < m_projectileArray.size(); ++p) {
-		const Projectile& projectile = m_projectileArray[p];
+	for (int p = 0; p < projectileArray.size(); ++p) {
+		const Projectile& projectile = projectileArray[p];
 
 		if (!m_hitScan) {
 			// Check for collisions
@@ -752,7 +815,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 		if (projectile.endTime < now) {
 			// Expire
-			m_projectileArray.fastRemove(p);
+			projectileArray.fastRemove(p);
 			--p;
 		}
 		else {
@@ -775,8 +838,8 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 
 	// Check for completed session
-	if (m_ex->moveOn) {
-		String nextSess = updateSessionDropDown()[0];
+	if (ex->moveOn) {
+		String nextSess = userStatusTable.getNextSession(userTable.currentUser);
 		updateSession(nextSess);
 	}
 }
@@ -784,6 +847,11 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 bool App::onEvent(const GEvent& event) {
 	// Handle super-class events
 	if (GApp::onEvent(event)) { return true; }
+
+    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::KP_MINUS)) {
+        quitRequest();
+        return true;
+    }
 
 	// If you need to track individual UI events, manage them here.
 	// Return true if you want to prevent other parts of the system
@@ -794,11 +862,16 @@ bool App::onEvent(const GEvent& event) {
 	// if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) { ... return true; }
 	// if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == 'p')) { ... return true; }
 
-    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) {
+    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::ESCAPE || event.key.keysym.sym == GKey::TAB)) {
         m_userSettingsMode = !m_userSettingsMode;
         m_userSettingsWindow->setVisible(m_userSettingsMode);
+        if (m_userSettingsMode) {
+            // set focus so buttons properly highlight
+            m_widgetManager->setFocusedWidget(m_userSettingsWindow);
+        }
         // switch to first or 3rd person mode
         updateMouseSensitivity();
+        return true;
     }
 	return false;
 }
@@ -809,7 +882,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 	rd->push2D(); {
 		// TODO: Is this the right place to call it?
-		m_ex->onGraphics2D(rd);
+		ex->onGraphics2D(rd);
 
 		// Paint both sides by the width of latency measuring box.
 		Color3 blackColor = Color3::black();
@@ -887,15 +960,15 @@ void App::fire() {
 
 		float closest = finf();
 		int closestIndex = -1;
-		for (int t = 0; t < m_targetArray.size(); ++t) {
-			if (m_targetArray[t]->intersect(ray, closest)) {
+		for (int t = 0; t < targetArray.size(); ++t) {
+			if (targetArray[t]->intersect(ray, closest)) {
 				closestIndex = t;
 			}
 		}
 
 		if (closestIndex >= 0) {
 			// create explosion animation
-			CFrame explosionFrame = m_targetArray[closestIndex]->frame();
+			CFrame explosionFrame = targetArray[closestIndex]->frame();
 			explosionFrame.rotation = m_debugCamera->frame().rotation;
 			const shared_ptr<VisibleEntity>& newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModel, explosionFrame);
 			scene()->insert(newExplosion);
@@ -928,11 +1001,11 @@ void App::fire() {
 			Any::parse(format("%s", laserStartFrame.toXYZYPRDegreesString().c_str())));
 		laser->setTrack(track);
 		*/
-		m_projectileArray.push(Projectile(laser, System::time() + 1.0f));
+		projectileArray.push(Projectile(laser, System::time() + 1.0f));
 		scene()->insert(laser);
 	}
 
-	if (m_experimentConfig.playMode) {
+	if (startupConfig.playMode) {
 		if (hitTarget) {
 			m_explosionSound->play(10.0f);
 			//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
@@ -943,7 +1016,7 @@ void App::fire() {
 		}
 	}
 
-	if (m_experimentConfig.renderDecals && !hitTarget) {
+	if (experimentConfig.renderDecals && !hitTarget) {
 		// compute world intersection
 		const Ray& ray = m_debugCamera->frame().lookRay();
 		Model::HitInfo info;
@@ -971,7 +1044,7 @@ void App::fire() {
 }
 
 void App::clearTargets() {
-	while (m_targetArray.size() > 0) {
+	while (targetArray.size() > 0) {
 		destroyTarget(0);
 	}
 }
@@ -982,22 +1055,22 @@ void App::onUserInput(UserInput* ui) {
 
 	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
 		// check for hit, add graphics, update target state
-		if (m_ex->responseReady()) {
+		if (ex->responseReady()) {
 			// count clicks
-			m_ex->countClick();
+			ex->countClick();
 			fire();
 			if (m_targetHealth == 0) {
 				// target eliminated, must be 'hit'.
 				if (m_presentationState == PresentationState::task)
 				{
-					m_ex->accumulatePlayerAction("hit");
+					ex->accumulatePlayerAction("hit");
 				}
 			}
 			else {
 				// target still present, must be 'miss'.
 				if (m_presentationState == PresentationState::task)
 				{
-					m_ex->accumulatePlayerAction("miss");
+					ex->accumulatePlayerAction("miss");
 				}
 			}
 		}
@@ -1005,7 +1078,7 @@ void App::onUserInput(UserInput* ui) {
 			// target still present, must be 'miss'.
 			if (m_presentationState == PresentationState::task)
 			{
-				m_ex->accumulatePlayerAction("invalid");
+				ex->accumulatePlayerAction("invalid");
 			}
 		}
 	}
@@ -1029,8 +1102,8 @@ void App::onUserInput(UserInput* ui) {
 
 void App::destroyTarget(int index) {
 	// Not a reference because we're about to manipulate the array
-	const shared_ptr<VisibleEntity> target = m_targetArray[index];
-	m_targetArray.fastRemove(index);
+	const shared_ptr<VisibleEntity> target = targetArray[index];
+	targetArray.fastRemove(index);
 
 	scene()->removeEntity(target->name());
 }
@@ -1056,16 +1129,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 	//expDebugStr += ex->getDebugStr(); // debugging message
  //   debugFont->draw2D(rd, format(expDebugStr.c_str(), iRound(renderDevice->stats().smoothFrameRate)), Point2(10,10), 12.0f, Color3::yellow());
 
-    //// Display DONE when complete
-    //if (ex->isExperimentDone()) {
-    //    static const shared_ptr<Texture> doneTexture = Texture::fromFile("done.png");
-    //    rd->push2D(); {
-    //        const float scale = rd->viewport().width() / 3840.0f;
-    //        rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-    //        Draw::rect2D(doneTexture->rect2DBounds() * scale + (rd->viewport().wh() - doneTexture->vector2Bounds() * scale) / 2.0f, rd, Color3::white(), doneTexture);
-    //    } rd->pop2D();
-    //}
-		// Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
+    // Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
 
 	// Track the instantaneous frame duration (no smoothing) in a circular queue
 	if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
@@ -1108,7 +1172,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 	} rd->pop2D();
 
-	//MIght not need this on the reaction trial
+	// Might not need this on the reaction trial
 	// This is rendering the GUI. Can remove if desired.
 	Surface2D::sortAndRender(rd, posed2D);
 }
@@ -1122,6 +1186,16 @@ void App::setSceneBrightness(float b) {
 	m_sceneBrightness = b;
 }
 
+void App::resetView() {
+    // reset view direction (look front!)
+    const shared_ptr<Camera>& camera = activeCamera();
+    //activeCamera()->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
+    // Account for the camera translation to ensure correct look vector
+    //camera->lookAt(camera->frame().translation + Point3(0, 0, -1));
+    const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+    //fpm->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
+    fpm->lookAt(Point3(0, 0, -1));
+}
 
 void App::onCleanup() {
 	// Called after the application loop ends.  Place a majority of cleanup code
@@ -1136,30 +1210,31 @@ void App::onCleanup() {
 G3D_START_AT_MAIN();
 
 int main(int argc, const char* argv[]) {
-	
-	// load experiment setting from file
-	if (!FileSystem::exists("experimentconfig.Any")) { // if file not found, copy from the sample config file.
-		FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
-	}
 
-	ExperimentConfig m_expConfig = Any::fromFile(System::findDataFile("experimentconfig.Any"));
-	
+    if (FileSystem::exists("startupconfig.Any")) {
+        startupConfig = Any::fromFile("startupconfig.Any");
+    }
+    else {
+        // autogenerate if it wasn't there
+        startupConfig.toAny().save("startupconfig.Any");
+    }
+
 	{
 		G3DSpecification spec;
-		spec.audio = m_expConfig.playMode;
+		spec.audio = startupConfig.playMode;
 		initGLG3D(spec);
 	}
 
 	(void)argc; (void)argv;
 	GApp::Settings settings(argc, argv);
 
-	if (m_expConfig.playMode) {
+	if (startupConfig.playMode) {
 		settings.window.width = 1920; settings.window.height = 1080;
 	}
 	else {
 		settings.window.width = 1920; settings.window.height = 980;
 	}
-	settings.window.fullScreen = m_expConfig.playMode;
+	settings.window.fullScreen = startupConfig.playMode;
 	settings.window.resizable = !settings.window.fullScreen;
 
     // V-sync off always
@@ -1180,16 +1255,5 @@ int main(int argc, const char* argv[]) {
 	settings.renderer.orderIndependentTransparency = false;
 
 	return App(settings).run();
-}
-
-void App::resetView() {
-	// reset view direction (look front!)
-    const shared_ptr<Camera>& camera = activeCamera();
-	//activeCamera()->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
-    // Account for the camera translation to ensure correct look vector
-	//camera->lookAt(camera->frame().translation + Point3(0, 0, -1));
-	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-	//fpm->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
-	fpm->lookAt(Point3(0,0,-1));
 }
 

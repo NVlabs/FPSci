@@ -113,6 +113,9 @@ protected:
 	int                             m_lastUniqueID = 0;
 
 	bool							m_sceneLoaded = false;				// Indicates whether or not the scene has been loaded (prevents reload)
+	bool							m_loggerRunning = false;
+	HANDLE							m_loggerHandle = 0;
+	String							m_logName;
 
 	/** When m_displayLagFrames > 0, 3D frames are delayed in this queue */
 	Array<shared_ptr<Framebuffer>>  m_ldrDelayBufferQueue;
@@ -127,6 +130,7 @@ protected:
 	void destroyTarget(int index);
 	void printExpConfigToLog(ExperimentConfig config);
 	void printUserTableToLog(UserTable table);
+	void printUserStatusTableToLog(UserStatusTable table);
 	void updateUser(void);
     void updateUserGUI();
 
@@ -145,21 +149,22 @@ public:
 	App(const GApp::Settings& settings = GApp::Settings());
 
 	/** Array of all targets in the scene */
-	Array<shared_ptr<VisibleEntity>> m_targetArray;
-	Array<Projectile>               m_projectileArray;
+	Array<shared_ptr<VisibleEntity>> targetArray;
+	Array<Projectile>                projectileArray;
 
 	/** Parameter configurations */
-	UserTable						m_userTable;
-	ExperimentConfig                m_experimentConfig;
+	UserTable						userTable;					// Table of per user information (DPI/cm/360) that doesn't change across experiment
+	UserStatusTable					userStatusTable;			// Table of user status (session ordering/completed sessions) that do change across experiments
+	ExperimentConfig                experimentConfig;			// Configuration for the experiment and its sessions
 
 	//TODO: Remove it when we are using G3D timer
 	Timer timer;
 
 	/** Pointer to Experiment class */
-	shared_ptr<Experiment> m_ex;
+	shared_ptr<Experiment> ex;
 
 	/** Pointer to Logger class */
-	shared_ptr<Logger> m_logger;
+	shared_ptr<Logger> logger;
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
@@ -209,7 +214,7 @@ public:
 
 	/** Call to set the 3D scene brightness. Default is 1.0. */
 	void setSceneBrightness(float b);
-
+    /** callback for saving user config */
 	void userSaveButtonPress(void);
 
 	Array<String> updateSessionDropDown(void);
@@ -225,6 +230,13 @@ public:
 	void updateSessionPress(void);
 
 	void updateSession(String id);
+
+	void runPythonLogger(String logName, String com, bool hasSync, String syncComPort);
+
+	void killPythonLogger();
+    void quitRequest();
+
+	bool pythonMergeLogs(String basename);
 
 	void setDisplayLatencyFrames(int f);
     

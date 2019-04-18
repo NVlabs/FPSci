@@ -99,5 +99,8 @@
     <None Include="data-files\systemconfig.Any">
       <Filter>Config Files</Filter>
     </None>
+    <None Include="data-files\userstatus.Any">
+      <Filter>Config Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
