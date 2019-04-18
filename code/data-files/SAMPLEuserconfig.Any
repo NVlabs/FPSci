@@ -31,9 +31,30 @@
             settingsVersion = 1; 
         }, 
         { 
-            cmp360 = 300; 
+            cmp360 = 20; 
             completedSessions = ( ); 
             id = "LN"; 
+            mouseDPI = 800; 
+            settingsVersion = 1; 
+        }, 
+        { 
+            cmp360 = 13; 
+            completedSessions = ( ); 
+            id = "MB"; 
+            mouseDPI = 800; 
+            settingsVersion = 1; 
+        }, 
+        { 
+            cmp360 = 18; 
+            completedSessions = ( ); 
+            id = "JA"; 
+            mouseDPI = 800; 
+            settingsVersion = 1; 
+        }, 
+        { 
+            cmp360 = 46.4; 
+            completedSessions = ( ); 
+            id = "SS"; 
             mouseDPI = 800; 
             settingsVersion = 1; 
         }, 
