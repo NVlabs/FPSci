@@ -77,20 +77,23 @@ def update(i):
                 delays.append(m2photon_ms)
     
     # Parse lines out of adc reader
-    for line in adcReader:
-            try: 
-                timestamp_s = float(line[0])
-                aVal = int(line[1])
-            except: continue
-            aTime.append(timestamp_s)
-            aValue.append(aVal)
+    if not eventOnly:
+        for line in adcReader:
+                try: 
+                    timestamp_s = float(line[0])
+                    aVal = int(line[1])
+                except: continue
+                aTime.append(timestamp_s)
+                aValue.append(aVal)
+    
     if timestamp_s is None: return
 
     # Clear the plot, not sure this is necessary
     plt.clf()
 
     # Create the histogram
-    plt.subplot(3,1,1)
+    if eventOnly: plt.subplot(2,1,1)
+    else: plt.subplot(3,1,1)
     fig.canvas.set_window_title("Event Logger")
     plt.hist(delays, bins=bin_range, color=HIST_COLOR)
     plt.xlabel('Latency [ms]')
@@ -99,7 +102,8 @@ def update(i):
     plt.subplots_adjust(right=0.8)
     
     # Create a scrolling time plot for events
-    plt.subplot(3,1,2)
+    if eventOnly: plt.subplot(2,1,2)
+    else: plt.subplot(3,1,2)
     plt.tight_layout()
     plt.plot(m1Time, m1Event, color=MOUSE1_COLOR)
     plt.plot(m2Time, m2Event, color=MOUSE2_COLOR)
@@ -113,16 +117,18 @@ def update(i):
     plt.tight_layout()
 
     # Create the real-time scolling plot of intensity
-    plt.subplot(3,1,3)
-    plt.plot(aTime, aValue, color=ADC_COLOR)
-    plt.xlim(aTime[-1]-EVENT_PLOT_LEN_S, aTime[-1])
-    plt.ylim(0, 1100)
-    plt.ylabel('ADC Value')
-    plt.xlabel('Time (s)')
-    plt.tight_layout()
+    if not eventOnly:
+        plt.subplot(3,1,3)
+        plt.plot(aTime, aValue, color=ADC_COLOR)
+        plt.xlim(aTime[-1]-EVENT_PLOT_LEN_S, aTime[-1])
+        plt.ylim(0, 1100)
+        plt.ylabel('ADC Value')
+        plt.xlabel('Time (s)')
+        plt.tight_layout()
 
 # Open CSV file(s) for reading
-if len(sys.argv) < 3: raise Exception("Need to provide log file as input")
+if len(sys.argv) < 2: raise Exception("Need to provide log file as input")
+eventOnly = (len(sys.argv) < 3)
 eventLogName = sys.argv[1]
 if 'http' in eventLogName: 
     eventLogFile = urllib.request.urlopen(eventLogName)
@@ -132,14 +138,15 @@ eventReader = csv.reader(eventLogFile, delimiter=',', lineterminator='\n')
 try: next(eventReader)
 except: 0
 
-adcLogName = sys.argv[2]
-if 'http' in adcLogName: 
-    adcLogFile = urllib.request.urlopen(adcLogName)
-    adcLogFile = codecs.iterdecode(adcLogFile, 'utf-8')
-else: adcLogFile = open(adcLogName, mode='r')
-adcReader = csv.reader(adcLogFile, delimiter=',', lineterminator='\n')
-try: next(adcReader)
-except: 0   
+if not eventOnly:
+    adcLogName = sys.argv[2]
+    if 'http' in adcLogName: 
+        adcLogFile = urllib.request.urlopen(adcLogName)
+        adcLogFile = codecs.iterdecode(adcLogFile, 'utf-8')
+    else: adcLogFile = open(adcLogName, mode='r')
+    adcReader = csv.reader(adcLogFile, delimiter=',', lineterminator='\n')
+    try: next(adcReader)
+    except: 0   
 
 # Create parent figure and window
 fig = plt.figure()
