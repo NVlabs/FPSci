@@ -9,6 +9,7 @@ class App;
 class TargetExperiment : public Experiment
 {
 protected:
+	double m_totalRemainingTime;
 	double m_lastMotionChangeAt;
 	
 	std::vector<std::vector<std::string>> m_playerActions;

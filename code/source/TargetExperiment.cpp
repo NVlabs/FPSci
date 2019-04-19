@@ -31,6 +31,10 @@ bool TargetExperiment::initPsychHelper()
 
 	// call it once all conditions are defined.
 	m_psych.chooseNextCondition();
+
+	// initialize score.
+	m_totalRemainingTime = 0;
+
 	return true;
 }
 
@@ -129,11 +133,15 @@ void TargetExperiment::processResponse()
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 	m_psych.processResponse(m_response); // process response.
 	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
-	if (m_config.getSessionConfigById(sess)->expMode == "training") {
-		if (m_response == 1) {
+	if (m_response == 1) {
+		m_totalRemainingTime += (m_config.taskDuration - m_taskExecutionTime);
+		if (m_config.getSessionConfigById(sess)->expMode == "training") {
 			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
 		}
-		else {
+	}
+	else {
+		m_totalRemainingTime += m_config.taskDuration;
+		if (m_config.getSessionConfigById(sess)->expMode == "training") {
 			m_feedbackMessage = "Failure!";
 		}
 	}
@@ -189,7 +197,7 @@ void TargetExperiment::updatePresentationState()
 					m_app->userSaveButtonPress();												// Press the save button for the user...
 					Array<String> remaining = m_app->updateSessionDropDown();
 					if (remaining.size() == 0) {
-						m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
+						m_feedbackMessage = format("All Sessions Complete! Your score is %d!", (int)(m_totalRemainingTime));							// Update the feedback message
 					}
 					else{
 						moveOn = true;														// Check for session complete (signal start of next session)
