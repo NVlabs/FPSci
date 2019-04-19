@@ -141,17 +141,3 @@ while(True):
             if LOG_ADC_DATA and event_type == 'SW': 
                 adcLogger.writerow([timestamp_s, event_type])
                 adcFile.flush()
-
-            # MOVED TO event_plotter.py FOR NOW!!!
-            # # Try making a mouse-to-photon measurement here
-            # if(event_type == 'M1'): lastM1Time = timestamp_s; m2pd = False
-            # if(event_type == 'PD' and timestamp_s-lastM1Time < CLICK_TO_PHOTON_THRESH_S):
-            #     m2photon_ms = 1000*(timestamp_s-lastM1Time)
-            #     if PRINT_TO_CONSOLE: print("\tMouse-to-photon = {0:0.3f}ms".format(m2photon_ms))
-                
-            #     if autoclick:
-            #         # Count the autoclicks (mouse-to-photons and turn off auto clicker here)
-            #         autoclick_count += 1
-            #         if autoclick_count > autoclick_count_max:
-            #             hwInterface.write("off\n".encode('utf-8'))
-            #             autoclick = False
