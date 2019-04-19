@@ -290,7 +290,7 @@ public:
 	// Simple rotine to get the user configuration from file
 	static Any load(String filename) {
 		// load user setting from file
-		if (!FileSystem::exists(System::findDataFile(filename))) { // if file not found, copy from the sample config file.
+		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
 		}
 		return Any::fromFile(System::findDataFile(filename));
@@ -691,7 +691,7 @@ public:
 
 	// Get the experiment config from file
 	static ExperimentConfig load(String filename) {
-		if (!FileSystem::exists(System::findDataFile(filename))) { // if file not found, copy from the sample config file.
+		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
 		}
 		return Any::fromFile(System::findDataFile(filename));
