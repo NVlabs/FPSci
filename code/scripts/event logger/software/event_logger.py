@@ -17,8 +17,8 @@ TIMEOUT_S = 0.3                 # Timeout for serial port read (ideally longer t
 
 # Control Flags
 LOG_EVENT_DATA = True           # Control whether event data is logged to a .csv file (seperate from ADC data)
-LOG_ADC_DATA = True             # Control whether analog data is logged to a .csv file (seperate from event data)
-PLOT_DATA = False                # Control whether data is plotted
+LOG_ADC_DATA = False            # Control whether analog data is logged to a .csv file (seperate from event data)
+PLOT_DATA = False               # Control whether data is plotted
 PRINT_TO_CONSOLE = True         # Control whether data is printed to the console
 
 CLICK_TO_PHOTON_THRESH_S = 0.3  # Maximum delay expected between click and photon
@@ -63,7 +63,7 @@ else: syncer = None
 autoclick = False
 
 # Opening print to console
-if PRINT_TO_CONSOLE: print("Starting logging (GUI will open when logging data is available)")
+if PRINT_TO_CONSOLE and PLOT_DATA: print("Starting logging (GUI will open when logging data is available)")
 
 # Handle creating log file (and writing header here)
 if LOG_EVENT_DATA:
@@ -84,8 +84,8 @@ if LOG_ADC_DATA:
 hwInterface.flush()
 
 # If plotting open the plotter tool in another thread here
-if PLOT_DATA: proc = subprocess.Popen('python event_plotter.py \"{0}\" \"{1}\"'.format(eventFname, adcFname))
-
+if PLOT_DATA and LOG_ADC_DATA: proc = subprocess.Popen('python event_plotter.py \"{0}\" \"{1}\"'.format(eventFname, adcFname))
+elif PLOT_DATA: proc = subprocess.Popen('python event_plotter.py \"{0}\"'.format(eventFname))
 # Create intro sync here (used to align data to wallclock later)
 synced  = False
 if syncer is not None:
