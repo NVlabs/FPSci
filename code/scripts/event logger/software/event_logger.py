@@ -30,13 +30,8 @@ IN_LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 LOG_NAME_TIME_FORMAT = '%y-%m-%d_%H%M%S'
 
 # Create storage and lookups
-m1Time = []; m1Event = [];
-m2Time = []; m2Event = [];
-pdTime = []; pdEvent = [];
-swTime = []; swEvent = [];
-lastM1Time = 0
-timeLookup = {"M1": m1Time, "M2": m2Time, "PD": pdTime, "SW": swTime}
-eventLookup = {"M1": m1Event, "M2": m2Event, "PD": pdEvent, "SW": swEvent}
+lastM1Time = 0; lastM2Time = 0; lastPdTime = 0; lastSwTime = 0
+timeLookup = {"M1": lastM1Time, "M2": lastM2Time, "PD": lastPdTime, "SW": lastSwTime}
 
 # Create lookup for event (proper names)
 nameLookup = {
@@ -130,7 +125,9 @@ while(True):
             event_type = data                   # Data is just an event string
             
             # Check that this event is far enough away from last event of this type (debounce)
-            if(len(timeLookup[event_type]) != 0 and timestamp_s - timeLookup[event_type][-1] < MIN_EVENT_SPACING_S): continue
+            if(timeLookup[event_type] != 0 and (timestamp_s - timeLookup[event_type]) < MIN_EVENT_SPACING_S): continue
+            # Otherwise make this the last event of its type
+            timeLookup[event_type] = timestamp_s
 
             # Print/log the event if requested
             if PRINT_TO_CONSOLE: print("{0} at {1:0.3f}s".format(nameLookup[event_type], timestamp_s))
