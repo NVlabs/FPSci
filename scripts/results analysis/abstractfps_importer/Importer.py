@@ -1,6 +1,5 @@
 import sqlite3
 import math
-
 class Trial:
     def __init__(self, conditionId, sessName, sessMode, startTime, endTime, taskExecTime, success):
         self.id = conditionId
@@ -15,6 +14,14 @@ class Event:
     def __init__(self, time, eventType):
         self.time = time
         self.type = eventType
+
+class Click:
+    def __init__(self, time, azim, elev, hit, clicktophoton):
+        self.time = time
+        self.azim = azim
+        self.elev = elev
+        self.hit = hit
+        self.clicktophoton = clicktophoton
 
 class Importer:
     """Simple class for importing data from abstract-fps results files"""
@@ -91,3 +98,18 @@ class Importer:
         actions = []
         for row in rows: actions.append([row[2], row[3], row[1]])
         return actions
+
+    def getClicks(self):
+        actions = self.queryDb('SELECT * from Player_Action WHERE [event] = \'hit\' OR [event] = \'miss\'')
+        clicks = []
+        for [t,event,azim,elev] in actions:
+            # TODO: test this query
+            #query = 'SELECT (JulianDay(time)-JulianDay(\'{0}\'))*24*60*60 from click_latencies WHERE [time] >= \'{0}\' ORDER BY time ASC'.format(t)
+            query = 'SELECT latency from click_latencies WHERE time >= \'{0}\' ORDER BY time ASC'.format(t)
+            #print(query)
+            c2p = self.queryDb(query)
+            #print(c2p)
+            if len(c2p) == 0: c2ptime = None
+            else: c2ptime = c2p[0][0]
+            clicks.append(Click(t, azim, elev, event == 'hit', c2ptime))
+        return clicks
