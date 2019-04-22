@@ -684,8 +684,10 @@ void App::runPythonLogger(String logName, String com, bool hasSync, String syncC
 	ZeroMemory(&pi, sizeof(pi));
 
 	// Come up w/ command string
-	String cmd = "pythonw.exe ../scripts/\"event logger\"/software/event_logger.py " + com + " " + logName;
+	String cmd = "python ../scripts/\"event logger\"/software/event_logger.py " + com + " \"" + logName + "\"";
 	if (hasSync) cmd += " " + syncComPort;
+
+    logPrintf("Running python command: '%s'\n", cmd.c_str());
 
 	LPSTR command = LPSTR(cmd.c_str());
 	if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
