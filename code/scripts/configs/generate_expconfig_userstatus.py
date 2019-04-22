@@ -9,10 +9,10 @@ refresh_rates = [360, 240, 120, 60]
 latencies = [0.02, 0.05, 0.08] # sec
 min_latency = 0.01 # sec
 exp_modes = ['training', 'real']
-count_static_trials = 20
-count_straight_fly_trials = 20
-count_stray_fly_trials = 60
-count_strafe_jump_trials = 60
+count_static_trials = 5
+count_straight_fly_trials = 5
+count_stray_fly_trials = 10
+count_strafe_jump_trials = 10
 
 global_setting_txt = \
 '''
@@ -47,7 +47,7 @@ for latency in latencies:
         session_template_txt =\
 '''
     {
-      "id": "s%d-training", // Session ID
+      "id": "s%d-%s", // Session ID
       "frameDelay": %d, // Session frame delay (in frames)
       "frameRate": %d, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
@@ -66,7 +66,7 @@ for latency in latencies:
         for exp_mode in exp_modes:
             num_frame_delay = np.round((latency - (min_latency + 0.5 / refresh_rate)) / (1/refresh_rate))
             session_txt += session_template_txt % ( \
-                session_idx, num_frame_delay, refresh_rate, exp_mode, \
+                session_idx, exp_mode, num_frame_delay, refresh_rate, exp_mode, \
                 count_static_trials, count_straight_fly_trials, count_stray_fly_trials, count_strafe_jump_trials\
             )
 

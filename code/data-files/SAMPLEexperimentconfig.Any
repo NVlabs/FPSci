@@ -28,24 +28,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s1-training", // Session ID
+      "id": "s1-real", // Session ID
       "frameDelay": 3, // Session frame delay (in frames)
       "frameRate": 360, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
@@ -56,24 +56,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s2-training", // Session ID
+      "id": "s2-real", // Session ID
       "frameDelay": 2, // Session frame delay (in frames)
       "frameRate": 240, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
@@ -84,24 +84,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s3-training", // Session ID
+      "id": "s3-real", // Session ID
       "frameDelay": 1, // Session frame delay (in frames)
       "frameRate": 120, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
@@ -112,24 +112,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s4-training", // Session ID
+      "id": "s4-real", // Session ID
       "frameDelay": 0, // Session frame delay (in frames)
       "frameRate": 60, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
@@ -140,24 +140,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s5-training", // Session ID
+      "id": "s5-real", // Session ID
       "frameDelay": 14, // Session frame delay (in frames)
       "frameRate": 360, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
@@ -168,24 +168,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s6-training", // Session ID
+      "id": "s6-real", // Session ID
       "frameDelay": 9, // Session frame delay (in frames)
       "frameRate": 240, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
@@ -196,24 +196,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s7-training", // Session ID
+      "id": "s7-real", // Session ID
       "frameDelay": 4, // Session frame delay (in frames)
       "frameRate": 120, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
@@ -224,24 +224,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s8-training", // Session ID
+      "id": "s8-real", // Session ID
       "frameDelay": 2, // Session frame delay (in frames)
       "frameRate": 60, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
@@ -252,24 +252,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s9-training", // Session ID
+      "id": "s9-real", // Session ID
       "frameDelay": 25, // Session frame delay (in frames)
       "frameRate": 360, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
@@ -280,24 +280,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s10-training", // Session ID
+      "id": "s10-real", // Session ID
       "frameDelay": 16, // Session frame delay (in frames)
       "frameRate": 240, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
@@ -308,24 +308,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s11-training", // Session ID
+      "id": "s11-real", // Session ID
       "frameDelay": 8, // Session frame delay (in frames)
       "frameRate": 120, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
@@ -336,24 +336,24 @@
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
     {
-      "id": "s12-training", // Session ID
+      "id": "s12-real", // Session ID
       "frameDelay": 4, // Session frame delay (in frames)
       "frameRate": 60, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 20},
-        {"id": "straight_fly","count": 20},
-        {"id": "stray_fly","count": 60},
-        {"id": "strafe_jump","count": 60}
+        {"id": "static","count": 5},
+        {"id": "straight_fly","count": 5},
+        {"id": "stray_fly","count": 10},
+        {"id": "strafe_jump","count": 10}
       ]
     },
 
