@@ -125,6 +125,9 @@ public:
 	/** PsychHelper-related */
 	virtual bool initPsychHelper() = 0;
 
+    /** how close the weapon is to ready to fire again */
+    virtual double weaponCooldownPercent() { return 1.0; }
+
 	std::string mResultFileName;
 	App* m_app;
 };

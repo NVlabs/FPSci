@@ -544,6 +544,7 @@ public:
 	Array<ReactionConfig> reactions;				// Array of reaction configs
 	bool renderDecals = true;						// If bullet decals are on
 	bool renderMuzzleFlash = false;					// Muzzle flash
+    bool renderWeaponStatus = true;                 // Display weapon cooldown
 
 	ExperimentConfig() {}
 	
@@ -566,7 +567,8 @@ public:
 			reader.getIfPresent("maxClicks", maxClicks);
 			reader.getIfPresent("fireRate", fireRate);
 			reader.getIfPresent("renderDecals", renderDecals);
-			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
+            reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
+            reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);

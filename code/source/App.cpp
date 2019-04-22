@@ -904,6 +904,18 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			), rd, blackColor
 		);
 
+        // weapon ready status
+        if (experimentConfig.renderWeaponStatus) {
+            Draw::rect2D(
+                Rect2D::xywh(
+                (float)m_framebuffer->width() * 0.0f,
+                    (float)m_framebuffer->height() * (float)(ex->weaponCooldownPercent()),
+                    (float)m_framebuffer->width() * latencyRect.x,
+                    (float)m_framebuffer->height() * (float)(1.0 - ex->weaponCooldownPercent())
+                ), rd, Color3::white() * 0.8f
+            );
+        }
+
 		// Click to photon latency measuring corner box
 		if (measureClickPhotonLatency) {
 			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;

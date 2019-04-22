@@ -34,6 +34,7 @@ public:
 
 	/**creates a new target with randomized motion path and gives it to the app */
 	void initTargetAnimation();
+    virtual double weaponCooldownPercent() override;
 
 	float randSign();
 

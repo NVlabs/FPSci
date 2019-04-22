@@ -350,3 +350,7 @@ bool TargetExperiment::responseReady() {
 		return false;
 	}
 }
+
+double TargetExperiment::weaponCooldownPercent() {
+    return min((System::time() - m_lastFireAt) * m_config.fireRate, 1.0);
+}
