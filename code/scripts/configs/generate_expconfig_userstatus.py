@@ -7,12 +7,14 @@ f_ex = open("experimentconfig.Any", "w")
 
 refresh_rates = [360, 240, 120, 60]
 latencies = [0.02, 0.05, 0.08] # sec
-min_latency = 0.01 # sec
+min_latency = 0.012 # sec
 exp_modes = ['training', 'real']
-count_static_trials = 5
-count_straight_fly_trials = 5
-count_stray_fly_trials = 10
-count_strafe_jump_trials = 10
+
+count_static_trials = 30
+count_straight_fly_trials = 30
+count_stray_fly_easy_trials = 40
+count_stray_fly_hard_trials = 40
+count_strafe_jump_trials = 80
 
 global_setting_txt = \
 '''
@@ -55,7 +57,8 @@ for latency in latencies:
       "trials": [
         {"id": "static","count": %d},
         {"id": "straight_fly","count": %d},
-        {"id": "stray_fly","count": %d},
+        {"id": "stray_fly_easy","count": %d},
+        {"id": "stray_fly_hard","count": %d},
         {"id": "strafe_jump","count": %d}
       ]
     },
@@ -67,7 +70,8 @@ for latency in latencies:
             num_frame_delay = np.round((latency - (min_latency + 0.5 / refresh_rate)) / (1/refresh_rate))
             session_txt += session_template_txt % ( \
                 session_idx, exp_mode, num_frame_delay, refresh_rate, exp_mode, \
-                count_static_trials, count_straight_fly_trials, count_stray_fly_trials, count_strafe_jump_trials\
+                count_static_trials, count_straight_fly_trials, \
+                count_stray_fly_easy_trials, count_stray_fly_hard_trials, count_strafe_jump_trials\
             )
 
 session_txt += \
@@ -104,7 +108,17 @@ trial_txt = \
       "jumpEnabled": false
     },
     {
-      "id": "stray_fly",
+      "id": "stray_fly_hard",
+    "elevationLocked": false,
+      "speed": [ 8, 15 ],
+      "visualSize": [ 0.01, 0.01 ],
+      "eccH": [ 5.0, 15.0 ],
+      "eccV": [ 0.0, 1.0 ],
+      "motionChangePeriod": [ 0.5, 1.0 ],
+      "jumpEnabled": false
+    },
+    {
+      "id": "stray_fly_easy",
     "elevationLocked": false,
       "speed": [ 8, 15 ],
       "visualSize": [ 0.01, 0.01 ],
