@@ -675,6 +675,13 @@ void App::updateSession(String id) {
 	ex->onInit();
 }
 
+void App::mergeCurrentLogToCurrentDB() {
+	if (m_loggerRunning) {
+		killPythonLogger();
+		pythonMergeLogs(m_logName);
+	}
+}
+
 void App::runPythonLogger(String logName, String com, bool hasSync, String syncComPort = "") {
 	// Variables for creating process/getting handle
 	STARTUPINFO si;
@@ -700,6 +707,7 @@ void App::runPythonLogger(String logName, String com, bool hasSync, String syncC
 
 void App::killPythonLogger() {
 	if (m_loggerRunning) TerminateProcess(m_loggerHandle, 0);
+	m_loggerRunning = false;
 }
 
 void App::quitRequest() {

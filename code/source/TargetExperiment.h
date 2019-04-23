@@ -9,8 +9,9 @@ class App;
 class TargetExperiment : public Experiment
 {
 protected:
-	double m_totalRemainingTime;
+	double m_totalRemainingTime = 0;
 	double m_lastMotionChangeAt;
+	double m_scoreboardDuration = 10.0; // show the score for at least this amount of seconds.
 	
 	std::vector<std::vector<std::string>> m_playerActions;
 	std::vector<std::vector<std::string>> m_targetTrajectory;

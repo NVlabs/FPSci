@@ -39,7 +39,7 @@ class JumpingEntity;
 // ready: ready scene that happens before beginning of a task.
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
-enum PresentationState { initial, ready, task, feedback , complete };
+enum PresentationState { initial, ready, task, feedback, scoreboard, complete };
 
 class Projectile {
 public:
@@ -216,6 +216,8 @@ public:
 	void setSceneBrightness(float b);
     /** callback for saving user config */
 	void userSaveButtonPress(void);
+	/** used by experiment class to finish data logging */
+	void mergeCurrentLogToCurrentDB();
 
 	Array<String> updateSessionDropDown(void);
 

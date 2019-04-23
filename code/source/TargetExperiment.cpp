@@ -32,9 +32,6 @@ bool TargetExperiment::initPsychHelper()
 	// call it once all conditions are defined.
 	m_psych.chooseNextCondition();
 
-	// initialize score.
-	m_totalRemainingTime = 0;
-
 	return true;
 }
 
@@ -42,7 +39,7 @@ void TargetExperiment::onInit() {
 	// Initialize presentation states
 	m_app->m_presentationState = PresentationState::initial;
 	m_feedbackMessage = "Aim at the target and shoot!";
-	
+
 	m_config = m_app->experimentConfig;									// Setup config from app
 	m_hasSession = initPsychHelper();
 	if (!m_hasSession) {												// Initialize PsychHelper based on the configuration.
@@ -134,13 +131,12 @@ void TargetExperiment::processResponse()
 	m_psych.processResponse(m_response); // process response.
 	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
 	if (m_response == 1) {
-		m_totalRemainingTime += (m_config.taskDuration - m_taskExecutionTime);
+		m_totalRemainingTime += (double(m_config.taskDuration) - m_taskExecutionTime);
 		if (m_config.getSessionConfigById(sess)->expMode == "training") {
 			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
 		}
 	}
 	else {
-		m_totalRemainingTime += m_config.taskDuration;
 		if (m_config.getSessionConfigById(sess)->expMode == "training") {
 			m_feedbackMessage = "Failure!";
 		}
@@ -160,7 +156,7 @@ void TargetExperiment::updatePresentationState()
 	{
 		if (!m_app->m_buttonUp)
 		{
-			m_feedbackMessage = "";
+			//m_feedbackMessage = "";
 			newState = PresentationState::feedback;
 		}
 	}
@@ -189,22 +185,11 @@ void TargetExperiment::updatePresentationState()
 		if ((stateElapsedTime > m_config.feedbackDuration) && (m_app->m_targetHealth <= 0))
 		{
 			if (m_psych.isComplete()) {
-				m_feedbackMessage = "Session complete. Thanks!";
-                m_app->openUserSettingsWindow();
-				newState = PresentationState::complete;
-				if (m_hasSession) {
-					m_app->markSessComplete(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
-					m_app->userSaveButtonPress();												// Press the save button for the user...
-					Array<String> remaining = m_app->updateSessionDropDown();
-					if (remaining.size() == 0) {
-						m_feedbackMessage = format("All Sessions Complete! Your score is %d!", (int)(m_totalRemainingTime));							// Update the feedback message
-					}
-					else{
-						moveOn = true;														// Check for session complete (signal start of next session)
-					}
-				}
-				else 
-					m_feedbackMessage = "All Sessions Complete!";
+				m_app->mergeCurrentLogToCurrentDB();
+					
+				int score = int(m_totalRemainingTime);
+				m_feedbackMessage = format("You scored %d!", score); // Update the feedback message
+				newState = PresentationState::scoreboard;
 			}
 			else {
 				m_feedbackMessage = "";
@@ -213,6 +198,27 @@ void TargetExperiment::updatePresentationState()
 			}
 		}
 	}
+	else if (currentState == PresentationState::scoreboard) {
+		if (stateElapsedTime > m_scoreboardDuration) {
+			newState = PresentationState::complete;
+			m_app->openUserSettingsWindow();
+			if (m_hasSession) {
+				m_app->markSessComplete(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
+				m_app->userSaveButtonPress();												// Press the save button for the user...
+				Array<String> remaining = m_app->updateSessionDropDown();
+				if (remaining.size() == 0) {
+					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
+				}
+				else {
+					m_feedbackMessage = "Session Complete!"; // Update the feedback message
+					moveOn = true;														// Check for session complete (signal start of next session)
+				}
+			}
+			else
+				m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
+		}
+	}
+
 	else {
 		newState = currentState;
 	}
