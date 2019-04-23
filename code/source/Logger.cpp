@@ -64,7 +64,8 @@ void TargetLogger::createResultsFile(String filename, String subjectID)
 			{ "max_ecc_V", "real" },
 			{ "min_speed", "real" },
 			{ "max_speed", "real" },
-			{ "motion_change_period", "real" },
+			{ "min_motion_change_period", "real" },
+			{ "max_motion_change_period", "real" },
 			{ "jump_enabled", "text" },
 	};
 	createTableInDB(m_db, "Conditions", conditionColumns); // Primary Key needed for this table.
@@ -122,7 +123,8 @@ void TargetLogger::addConditions(std::vector<SingleThresholdMeasurement> measure
 			std::to_string(meas.val["maxEccV"]),
 			std::to_string(meas.val["minSpeed"]),
 			std::to_string(meas.val["maxSpeed"]),
-			std::to_string(meas.val["motionChangePeriod"]),
+			std::to_string(meas.val["minMotionChangePeriod"]),
+			std::to_string(meas.val["maxMotionChangePeriod"]),
 			addQuotes(jump_enabled.c_str())
 		};
 		insertRowIntoDB(m_db, "Conditions", conditionValues);

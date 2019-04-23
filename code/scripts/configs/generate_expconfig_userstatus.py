@@ -6,7 +6,7 @@ import numpy as np
 f_ex = open("experimentconfig.Any", "w")
 
 refresh_rates = [360, 240, 120, 60]
-latencies = [0.02, 0.05, 0.08] # sec
+latencies = [0.025, 0.05, 0.08] # sec
 min_latency = 0.012 # sec
 exp_modes = ['training', 'real']
 

@@ -648,7 +648,7 @@ public:
 			p.add("minVisualSize", getTargetConfigById(id)->visualSize[0]);
 			p.add("maxVisualSize", getTargetConfigById(id)->visualSize[0]);
 			p.add("minMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
-			p.add("maxMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
+			p.add("maxMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[1]);
 			p.add("minSpeed", getTargetConfigById(id)->speed[0]);
 			p.add("maxSpeed", getTargetConfigById(id)->speed[1]);
 			p.add("minDistance", getTargetConfigById(id)->distance[0]);
