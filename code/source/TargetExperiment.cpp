@@ -186,7 +186,9 @@ void TargetExperiment::updatePresentationState()
 		{
 			if (m_psych.isComplete()) {
 				m_app->mergeCurrentLogToCurrentDB();
-					
+				m_app->markSessComplete(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
+				m_app->updateSessionDropDown();
+
 				int score = int(m_totalRemainingTime);
 				m_feedbackMessage = format("Session complete! You scored %d!", score); // Update the feedback message
 				newState = PresentationState::scoreboard;
@@ -203,7 +205,6 @@ void TargetExperiment::updatePresentationState()
 			newState = PresentationState::complete;
 			m_app->openUserSettingsWindow();
 			if (m_hasSession) {
-				m_app->markSessComplete(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
 				m_app->userSaveButtonPress();												// Press the save button for the user...
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {

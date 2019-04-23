@@ -1097,11 +1097,7 @@ void App::onUserInput(UserInput* ui) {
 			}
 		}
 		else {
-			// target still present, must be 'miss'.
-			if (m_presentationState == PresentationState::task)
-			{
-				ex->accumulatePlayerAction("invalid");
-			}
+			ex->accumulatePlayerAction("invalid");
 		}
 	}
 
