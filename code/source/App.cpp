@@ -712,7 +712,8 @@ void App::killPythonLogger() {
 
 void App::quitRequest() {
     setExitCode(0);
-    killPythonLogger();
+	mergeCurrentLogToCurrentDB();
+    //killPythonLogger();
 }
 
 bool App::pythonMergeLogs(String basename) {
@@ -1077,33 +1078,32 @@ void App::onUserInput(UserInput* ui) {
 
 	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
 		// check for hit, add graphics, update target state
-		if (ex->responseReady()) {
-			// count clicks
-			ex->countClick();
-			fire();
-			if (m_targetHealth == 0) {
-				// target eliminated, must be 'hit'.
-				if (m_presentationState == PresentationState::task)
-				{
+		if (m_presentationState == PresentationState::task) {
+			if (ex->responseReady()) {
+				// count clicks
+				ex->countClick();
+				fire();
+				if (m_targetHealth == 0) {
+					// target eliminated, must be 'hit'.
 					ex->accumulatePlayerAction("hit");
 				}
-			}
-			else {
-				// target still present, must be 'miss'.
-				if (m_presentationState == PresentationState::task)
-				{
+				else {
+					// target still present, must be 'miss'.
 					ex->accumulatePlayerAction("miss");
 				}
 			}
-		}
-		else {
-			if (m_presentationState == PresentationState::task) {
+			else {
+				// this click is not valid
 				ex->accumulatePlayerAction("invalid");
 			}
-			else {
-				ex->accumulatePlayerAction("non-task"); // not happening in task state.
-			}
 		}
+		else {
+			ex->accumulatePlayerAction("non-task"); // not happening in task state.
+		}
+	}
+
+	if (ui->keyPressed(GKey::SPACE) && (m_presentationState == PresentationState::feedback)) {
+		fire(); // Space for ready target
 	}
 
 	// used for click-to-photon box
