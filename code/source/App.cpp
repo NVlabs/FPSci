@@ -1097,7 +1097,12 @@ void App::onUserInput(UserInput* ui) {
 			}
 		}
 		else {
-			ex->accumulatePlayerAction("invalid");
+			if (m_presentationState == PresentationState::task) {
+				ex->accumulatePlayerAction("invalid");
+			}
+			else {
+				ex->accumulatePlayerAction("non-task"); // not happening in task state.
+			}
 		}
 	}
 
