@@ -188,7 +188,7 @@ void TargetExperiment::updatePresentationState()
 				m_app->mergeCurrentLogToCurrentDB();
 					
 				int score = int(m_totalRemainingTime);
-				m_feedbackMessage = format("You scored %d!", score); // Update the feedback message
+				m_feedbackMessage = format("Session complete! You scored %d!", score); // Update the feedback message
 				newState = PresentationState::scoreboard;
 			}
 			else {
