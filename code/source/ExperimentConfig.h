@@ -530,14 +530,19 @@ public:
 
 class ExperimentConfig {
 public:
+	// Task parameters
 	String	taskType = "reaction";					// "Reaction" or "Target"
 	String	appendingDescription = "ver0";			// Short text field for description
 	String  sceneName = "eSports Simple Hallway";	// For target experiment
 	float feedbackDuration = 1.0f;
 	float readyDuration = 0.5f;
 	float taskDuration = 100000.0f;
+	// Weapon parameters
 	int maxClicks = 10000;							// Maximum number of clicks to allow in a trial
-	float fireRate = 100.0;							// Maximum fire rate
+	float firePeriod = 0.5;							// Minimum fire period (in seconds)
+	bool autoFire = false;							// Set automatic (rather than semi-automatic) firing
+	String fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav";		// Sound to play when the weapon fires
+
 	Array<SessionConfig> sessions;					// Array of sessions
 	String sessionOrder = "random";					// Order in which to run sessions?
 	Array<TargetConfig> targets;					// Array of trial configs
@@ -565,7 +570,9 @@ public:
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("maxClicks", maxClicks);
-			reader.getIfPresent("fireRate", fireRate);
+			reader.getIfPresent("firePeriod", firePeriod);
+			reader.getIfPresent("autoFire", autoFire);
+			reader.getIfPresent("fireSound", fireSound);
 			reader.getIfPresent("renderDecals", renderDecals);
             reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
             reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);

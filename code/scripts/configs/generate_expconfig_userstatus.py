@@ -30,8 +30,9 @@ global_setting_txt = \
   "feedbackDuration": 0.0, // Time allocated for providing user feedback
   "readyDuration": 0.25, // Time allocated for preparing for trial
   "taskDuration": 6.0, // Maximum duration allowed for completion of the task
-  "maxClicks": 12,
-  "fireRate" : 2.0, // Maximum rate of fire to allow in a trial
+  "maxClicks": 12,    // Maximum number of clicks to allow per trial
+  "firePeriod" : 0.5, // Maximum rate of fire to allow in a trial
+  "autoFire": false,  // Whether the weapon fires automatically when the left mouse is held down
   "sessionOrder": "random", // Session ordering, can be "Random", "Serial"
 
   // Create a sessions table containing information related to sessions

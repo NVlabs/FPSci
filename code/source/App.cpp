@@ -66,7 +66,7 @@ void App::onInit() {
 	m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
 	if (startupConfig.playMode) {
-		m_fireSound = Sound::create(System::findDataFile("sound/42108__marcuslee__Laser_Wrath_6.wav"));
+		m_fireSound = Sound::create(System::findDataFile(experimentConfig.fireSound));
 		m_explosionSound = Sound::create(System::findDataFile("sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav"));
 	}
 
@@ -697,7 +697,7 @@ void App::runPythonLogger(String logName, String com, bool hasSync, String syncC
     logPrintf("Running python command: '%s'\n", cmd.c_str());
 
 	LPSTR command = LPSTR(cmd.c_str());
-	if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+	if (!CreateProcess(NULL, command, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
 		logPrintf("Failed to start logger: %s\n", GetLastErrorString());
 	}
 	// Update logger management variables
@@ -976,6 +976,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 void App::fire() {
 	Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
+	bool destroyedTarget = false;
 	bool hitTarget = false;
 
 	if (m_hitScan) {
@@ -990,19 +991,32 @@ void App::fire() {
 		}
 
 		if (closestIndex >= 0) {
-			// create explosion animation
-			CFrame explosionFrame = targetArray[closestIndex]->frame();
-			explosionFrame.rotation = m_debugCamera->frame().rotation;
-			const shared_ptr<VisibleEntity>& newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModel, explosionFrame);
-			scene()->insert(newExplosion);
-			m_explosion = newExplosion;
-			m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
-
 			// destroy target
 			aimPoint = ray.origin() + ray.direction() * closest;
 			m_targetHealth -= m_weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
 			if (m_targetHealth <= 0) {
+				// create explosion animation
+				CFrame explosionFrame = targetArray[closestIndex]->frame();
+				explosionFrame.rotation = m_debugCamera->frame().rotation;
+				const shared_ptr<VisibleEntity>& newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModel, explosionFrame);
+				scene()->insert(newExplosion);
+				m_explosion = newExplosion;
+				m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
+
 				destroyTarget(closestIndex);
+				destroyedTarget = true;
+			}
+			else {
+				// Use a gamma of 2.2 baseed on sRGB tansfer function (https://en.wikipedia.org/wiki/SRGB)
+				Color3 color = {1.0f-pow(m_targetHealth, 2.2f), pow(m_targetHealth, 2.2f), 0.0f};
+				UniversalMaterial::Specification materialSpecification;
+				materialSpecification.setLambertian(Texture::Specification(color));
+				materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+				materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+
+				shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(targetArray[closestIndex]->pose()->clone());
+				pose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
+				targetArray[closestIndex]->setPose(pose);
 			}
 			hitTarget = true;
 		}
@@ -1031,17 +1045,17 @@ void App::fire() {
 	}
 
 	if (startupConfig.playMode) {
-		if (hitTarget) {
+		if (destroyedTarget) {
 			m_explosionSound->play(10.0f);
 			//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
 		}
-		else {
+		else if(!experimentConfig.autoFire) {
 			m_fireSound->play(0.5f);
 			//m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 0.5f);
 		}
 	}
 
-	if (experimentConfig.renderDecals && !hitTarget) {
+	if (experimentConfig.renderDecals && !experimentConfig.autoFire && !hitTarget) {
 		// compute world intersection
 		const Ray& ray = m_debugCamera->frame().lookRay();
 		Model::HitInfo info;
@@ -1086,7 +1100,7 @@ void App::onUserInput(UserInput* ui) {
 		m_buttonUp = true;
 	}
 
-	if (experimentConfig.fireRate > 0) { // instant impulse weapon strength
+	if (!experimentConfig.autoFire) { // instant impulse weapon strength
 		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
 			// check for hit, add graphics, update target state
 			if (m_presentationState == PresentationState::task) {

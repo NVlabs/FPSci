@@ -203,7 +203,7 @@ void TargetExperiment::updatePresentationState()
 				newState = PresentationState::ready;
 
 				// update weapon strength // TODO: Is this appropriate to be here? (Not in onInit because we want to update when user changes session)
-				if (m_config.fireRate == 0) {
+				if (m_config.autoFire) {
 					String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
 					// this means a tracking weapon
 					m_app->m_weaponStrength = 1 / m_config.getSessionConfigById(sess)->frameRate; // TODO: Hard-coding to 1 sec for destroyal, needs parametrization
@@ -363,7 +363,7 @@ void TargetExperiment::accumulatePlayerAction(String action)
 
 bool TargetExperiment::responseReady() {
 	double timeNow = System::time();
-	if ((timeNow - m_lastFireAt) > (1 / m_config.fireRate)) {
+	if ((timeNow - m_lastFireAt) > (m_config.firePeriod)) {
 		m_lastFireAt = timeNow;
 		return true;
 	}
@@ -373,5 +373,5 @@ bool TargetExperiment::responseReady() {
 }
 
 double TargetExperiment::weaponCooldownPercent() {
-    return min((System::time() - m_lastFireAt) * m_config.fireRate, 1.0);
+    return min((System::time() - m_lastFireAt) / m_config.firePeriod, 1.0);
 }
