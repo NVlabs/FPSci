@@ -541,6 +541,7 @@ public:
 	int maxClicks = 10000;							// Maximum number of clicks to allow in a trial
 	float firePeriod = 0.5;							// Minimum fire period (in seconds)
 	bool autoFire = false;							// Set automatic (rather than semi-automatic) firing
+	float damagePerSecond = 2.0f;					// Damage per second
 	String fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav";		// Sound to play when the weapon fires
 
 	Array<SessionConfig> sessions;					// Array of sessions

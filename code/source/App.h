@@ -249,7 +249,7 @@ public:
     void updateMouseSensitivity();
 
 	/** Fire the weapon - hits targets, draws decals, starts explosions */
-	void fire();
+	bool fire(bool destroyImmediately=false);
 
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
 	void clearTargets();

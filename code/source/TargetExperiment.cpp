@@ -373,5 +373,6 @@ bool TargetExperiment::responseReady() {
 }
 
 double TargetExperiment::weaponCooldownPercent() {
-    return min((System::time() - m_lastFireAt) / m_config.firePeriod, 1.0);
+	if (m_config.firePeriod == 0.0f) return 1.0;
+	return min((System::time() - m_lastFireAt) / m_config.firePeriod, 1.0);
 }

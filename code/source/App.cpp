@@ -974,10 +974,11 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 }
 
 
-void App::fire() {
+bool App::fire(bool destroyImmediately) {
 	Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
 	bool destroyedTarget = false;
-	bool hitTarget = false;
+	static bool hitTarget = false;
+	static RealTime lastTime;
 
 	if (m_hitScan) {
 		const Ray& ray = m_debugCamera->frame().lookRay();
@@ -993,7 +994,18 @@ void App::fire() {
 		if (closestIndex >= 0) {
 			// destroy target
 			aimPoint = ray.origin() + ray.direction() * closest;
-			m_targetHealth -= m_weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
+			float damage;
+			if (destroyImmediately) damage = m_targetHealth;
+			else if (experimentConfig.firePeriod == 0.0f && hitTarget) {		// Check if we are in "laser" mode hit the target last time
+				float dt = (System::time() - lastTime);
+				damage = experimentConfig.damagePerSecond * dt;
+			}
+			else {																// If we're not in "laser" mode then damage/shot is just damage/second * second/shot
+				damage = experimentConfig.damagePerSecond * experimentConfig.firePeriod;
+			}
+			lastTime = System::time();
+			hitTarget = true;
+			m_targetHealth -= damage; // TODO: health point should be tracked by Target Entity class (not existing yet).
 			if (m_targetHealth <= 0) {
 				// create explosion animation
 				CFrame explosionFrame = targetArray[closestIndex]->frame();
@@ -1002,9 +1014,9 @@ void App::fire() {
 				scene()->insert(newExplosion);
 				m_explosion = newExplosion;
 				m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
-
 				destroyTarget(closestIndex);
 				destroyedTarget = true;
+				hitTarget = false;
 			}
 			else {
 				// Use a gamma of 2.2 baseed on sRGB tansfer function (https://en.wikipedia.org/wiki/SRGB)
@@ -1018,8 +1030,8 @@ void App::fire() {
 				pose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
 				targetArray[closestIndex]->setPose(pose);
 			}
-			hitTarget = true;
 		}
+		else hitTarget = false;
 	}
 
 	// Create the laser
@@ -1049,13 +1061,13 @@ void App::fire() {
 			m_explosionSound->play(10.0f);
 			//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
 		}
-		else if(!experimentConfig.autoFire) {
+		else if(experimentConfig.firePeriod > 0.0f) {
 			m_fireSound->play(0.5f);
 			//m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 0.5f);
 		}
 	}
 
-	if (experimentConfig.renderDecals && !experimentConfig.autoFire && !hitTarget) {
+	if (experimentConfig.renderDecals && experimentConfig.firePeriod > 0.0f && !hitTarget) {
 		// compute world intersection
 		const Ray& ray = m_debugCamera->frame().lookRay();
 		Model::HitInfo info;
@@ -1080,6 +1092,8 @@ void App::fire() {
 		m_lastDecal = m_firstDecal;
 		m_firstDecal = newDecal;
 	}
+
+	return hitTarget;
 }
 
 void App::clearTargets() {
@@ -1089,73 +1103,47 @@ void App::clearTargets() {
 }
 
 void App::onUserInput(UserInput* ui) {
+	static bool haveReleased = false;
+	static bool fired = false;
 	GApp::onUserInput(ui);
 	(void)ui;
 
-	// infer button state
-	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
-		m_buttonUp = false;
-	}
-	else if (ui->keyReleased(GKey::LEFT_MOUSE)) {
+	// Require release between clicks for non-autoFire modes
+	if (ui->keyReleased(GKey::LEFT_MOUSE)) {
 		m_buttonUp = true;
+		if (!experimentConfig.autoFire && fired) {
+			haveReleased = true;
+			fired = false;
+		}
 	}
 
-	if (!experimentConfig.autoFire) { // instant impulse weapon strength
-		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
+	// Handle the mouse down events
+	if (ui->keyDown(GKey::LEFT_MOUSE)) {
+		if (experimentConfig.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
 			// check for hit, add graphics, update target state
 			if (m_presentationState == PresentationState::task) {
 				if (ex->responseReady()) {
-					// count clicks
-					ex->countClick();
-					fire();
-					if (m_targetHealth == 0) {
-						// target eliminated, must be 'hit'.
-						ex->accumulatePlayerAction("hit");
+					fired = true;
+					ex->countClick();	// count clicks
+					bool hitTarget = fire();				// fire and process click here
+					if (hitTarget) {
+						if (m_targetHealth == 0) ex->accumulatePlayerAction("destroy");	// Target eliminated, must be 'destroy'.
+						else ex->accumulatePlayerAction("hit");							// Target 'hit', but still alive.
 					}
-					else {
-						// target still present, must be 'miss'.
-						ex->accumulatePlayerAction("miss");
-					}
+					else ex->accumulatePlayerAction("miss");			// Target still present, must be 'miss'.
 				}
-				else {
-					// this click is not valid
-					ex->accumulatePlayerAction("invalid");
-				}
-			}
-			else {
-				ex->accumulatePlayerAction("non-task"); // not happening in task state.
+				// Avoid accumulating invalid clicks during holds...
+				else ex->accumulatePlayerAction("invalid");				// Invalid click since the trial isn't ready for response
 			}
 		}
+		else ex->accumulatePlayerAction("non-task"); // not happening in task state.
+		haveReleased = false;					// Make it known we are no longer in released state
+		m_buttonUp = false;
 	}
-	else { // continuously reducing, tracking type weapon
-		if (!m_buttonUp) { // button held down
-			// check for hit, add graphics, update target state
-			if (m_presentationState == PresentationState::task) {
-				float previousHealth = m_targetHealth;
-				fire();
-				if (m_targetHealth != previousHealth) {
-					if (m_targetHealth == 0) {
-						// target eliminated, must be 'destroy'.
-						ex->accumulatePlayerAction("destroy");
-					}
-					else {
-						// target 'hit', but still alive.
-						ex->accumulatePlayerAction("hit");
-					}
-				}
-				else {
-					// target still present, must be 'miss'.
-					ex->accumulatePlayerAction("miss");
-				}
-			}
-			else {
-				ex->accumulatePlayerAction("non-task"); // not happening in task state.
-			}
-		}
-	}
-
+	
+	// Handle spacebar during feedback
 	if (ui->keyPressed(GKey::SPACE) && (m_presentationState == PresentationState::feedback)) {
-		fire(); // Space for ready target
+		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
 	}
 
 	if (m_lastReticleLoaded != m_reticleIndex) {
