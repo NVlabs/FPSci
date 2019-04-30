@@ -44,10 +44,14 @@ There are a number of inputs to experiment config. The following is a descriptio
     * `minimumForeperiod` is the minimum amount of time to wait before performing a transition (in seconds)
     * `intensities` is an array of intensities (1 normalized) to use for various trial runs
 
-## Weapon Modes
+## Weapon Modes and Damage
 There were several common "modes" that motivated the weapon configuration information provided in the experimentconfig. These are outlined below:
 
 |  | autoFire = True | autoFire = False |
 |-----------------|------------------------|--------------------------|
 | **firePeriod = 0** | "laser" mode | unlimited rate semi-auto |
 | **firePeriod > 0** | limited rate full auto | limited rate semi-auto |
+
+When using a non "laser" mode weapon, the damage done (per fired round) is computed as `damagePerSecond` * `firePeriod` where damage/s * s/fire = damage/fire.
+
+When using a "laser" mode weapon the `damagePerSecond` is applied iteratively (the weapon does no damage instantaneously). Instead for each frame the laser stays over the target the health is reduced based on the time since the last frame.
