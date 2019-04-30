@@ -7,10 +7,17 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `appendingDescription` allows the user to annotate these results with a custom string
 * `sceneName` provides the name of the (virtual) scene in which this experiment takes place
 * `taskType` refers to the task at hand (either `target` or `reaction` for now)
+* `feedbackDuration` describes the duration of the feedback window between experiments
+* `readyDuration` sets the time before the start of each trial
+* `taskDuration` sets the maximum time over which the task can occur
 * `maxClicks` refers to the maximum number of clicks a user can make in any given trial
-* `feedbackDuration` describes the duration of the feedback window between experiments?
-* `readyDuration` sets the time before the start of each trial?
-* `sessionOrder?` may be used to do some automatic session ordering within the experiment
+* `firePeriod` controls the minimum fire period allowed in the session (set this to 0 if you want "laser" mode)
+* `autoFire` controls whether or not the weapon fires when the left mouse is held, or requires release between fire
+* `damagePerSecond` controls the damage done by the weapon per second, when `firePeriod` > 0 the damage per round is set by `damagePerSecond`*`firePeriod`, when `firePeriod` is 0 and `autoFire` is `True` damage is computed based on time hitting the target.
+* `fireSound` is the filename/location of the audio clip to use for the weapon firing
+* `renderDecals` controls whether or not bullet hole decals are put on misses when `autoFire` is `False` and `firePeriod` > 0 (i.e. not in laser mode)
+* `renderMuzzleFlash` controls whether or not a muzzle flash is rendered for the weapon
+* `renderWeaponStatus` controls whether or not the weapon cooldown is rendered on the left side of the screen.
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
     * `FrameDelay` is an (integer) count of frames to delay to control latency
