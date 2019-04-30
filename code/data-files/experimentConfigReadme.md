@@ -1,4 +1,4 @@
-# How experiment configs work
+# Experiment Config Field Descriptions
 
 There are a number of inputs to experiment config. The following is a description of what each one means, and how it is meant to be used.
 
@@ -43,3 +43,11 @@ There are a number of inputs to experiment config. The following is a descriptio
     * `id` is a short string to refer to this reaction information
     * `minimumForeperiod` is the minimum amount of time to wait before performing a transition (in seconds)
     * `intensities` is an array of intensities (1 normalized) to use for various trial runs
+
+## Weapon Modes
+There were several common "modes" that motivated the weapon configuration information provided in the experimentconfig. These are outlined below:
+
+|  | autoFire = True | autoFire = False |
+|-----------------|------------------------|--------------------------|
+| firePeriod = 0 | "laser" mode | unlimited rate semi-auto |
+| firePeriod > 0 | limited rate full auto | limited rate semi-auto |
