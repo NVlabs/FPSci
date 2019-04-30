@@ -1111,7 +1111,7 @@ void App::onUserInput(UserInput* ui) {
 	// Require release between clicks for non-autoFire modes
 	if (ui->keyReleased(GKey::LEFT_MOUSE)) {
 		m_buttonUp = true;
-		if (!experimentConfig.autoFire && fired) {
+		if (!experimentConfig.autoFire) {
 			haveReleased = true;
 			fired = false;
 		}
