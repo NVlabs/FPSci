@@ -999,9 +999,11 @@ void App::fire() {
 			m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
 
 			// destroy target
-			destroyTarget(closestIndex);
 			aimPoint = ray.origin() + ray.direction() * closest;
-			m_targetHealth -= 1; // TODO: health point should be tracked by Target Entity class (not existing yet).
+			m_targetHealth -= m_weaponStrength; // TODO: health point should be tracked by Target Entity class (not existing yet).
+			if (m_targetHealth <= 0) {
+				destroyTarget(closestIndex);
+			}
 			hitTarget = true;
 		}
 	}
@@ -1076,16 +1078,56 @@ void App::onUserInput(UserInput* ui) {
 	GApp::onUserInput(ui);
 	(void)ui;
 
+	// infer button state
 	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
-		// check for hit, add graphics, update target state
-		if (m_presentationState == PresentationState::task) {
-			if (ex->responseReady()) {
-				// count clicks
-				ex->countClick();
+		m_buttonUp = false;
+	}
+	else if (ui->keyReleased(GKey::LEFT_MOUSE)) {
+		m_buttonUp = true;
+	}
+
+	if (experimentConfig.fireRate > 0) { // instant impulse weapon strength
+		if (ui->keyPressed(GKey::LEFT_MOUSE)) {
+			// check for hit, add graphics, update target state
+			if (m_presentationState == PresentationState::task) {
+				if (ex->responseReady()) {
+					// count clicks
+					ex->countClick();
+					fire();
+					if (m_targetHealth == 0) {
+						// target eliminated, must be 'hit'.
+						ex->accumulatePlayerAction("hit");
+					}
+					else {
+						// target still present, must be 'miss'.
+						ex->accumulatePlayerAction("miss");
+					}
+				}
+				else {
+					// this click is not valid
+					ex->accumulatePlayerAction("invalid");
+				}
+			}
+			else {
+				ex->accumulatePlayerAction("non-task"); // not happening in task state.
+			}
+		}
+	}
+	else { // continuously reducing, tracking type weapon
+		if (!m_buttonUp) { // button held down
+			// check for hit, add graphics, update target state
+			if (m_presentationState == PresentationState::task) {
+				float previousHealth = m_targetHealth;
 				fire();
-				if (m_targetHealth == 0) {
-					// target eliminated, must be 'hit'.
-					ex->accumulatePlayerAction("hit");
+				if (m_targetHealth != previousHealth) {
+					if (m_targetHealth == 0) {
+						// target eliminated, must be 'destroy'.
+						ex->accumulatePlayerAction("destroy");
+					}
+					else {
+						// target 'hit', but still alive.
+						ex->accumulatePlayerAction("hit");
+					}
 				}
 				else {
 					// target still present, must be 'miss'.
@@ -1093,25 +1135,13 @@ void App::onUserInput(UserInput* ui) {
 				}
 			}
 			else {
-				// this click is not valid
-				ex->accumulatePlayerAction("invalid");
+				ex->accumulatePlayerAction("non-task"); // not happening in task state.
 			}
-		}
-		else {
-			ex->accumulatePlayerAction("non-task"); // not happening in task state.
 		}
 	}
 
 	if (ui->keyPressed(GKey::SPACE) && (m_presentationState == PresentationState::feedback)) {
 		fire(); // Space for ready target
-	}
-
-	// used for click-to-photon box
-	if (ui->keyPressed(GKey::LEFT_MOUSE)) {
-		m_buttonUp = false;
-	}
-	else if (ui->keyReleased(GKey::LEFT_MOUSE)) {
-		m_buttonUp = true;
 	}
 
 	if (m_lastReticleLoaded != m_reticleIndex) {

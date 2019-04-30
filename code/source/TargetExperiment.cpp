@@ -178,6 +178,10 @@ void TargetExperiment::updatePresentationState()
 			m_app->clearTargets(); // clear all remaining targets
 			m_app->m_targetColor = Color3::red().pow(2.0f);
 			newState = PresentationState::feedback;
+
+			// update weapon strength // TODO: Is this appropriate to be here? (Not in onInit because we want to update when user changes session)
+			// Instant destroyal if in feedback state.
+			m_app->m_weaponStrength = 1;
 		}
 	}
 	else if (currentState == PresentationState::feedback)
@@ -197,6 +201,16 @@ void TargetExperiment::updatePresentationState()
 				m_feedbackMessage = "";
 				m_psych.chooseNextCondition();
 				newState = PresentationState::ready;
+
+				// update weapon strength // TODO: Is this appropriate to be here? (Not in onInit because we want to update when user changes session)
+				if (m_config.fireRate == 0) {
+					String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
+					// this means a tracking weapon
+					m_app->m_weaponStrength = 1 / m_config.getSessionConfigById(sess)->frameRate; // TODO: Hard-coding to 1 sec for destroyal, needs parametrization
+				}
+				else {
+					m_app->m_weaponStrength = 1;
+				}
 			}
 		}
 	}

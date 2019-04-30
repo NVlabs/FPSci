@@ -144,7 +144,7 @@ public:
 	shared_ptr<Texture>             m_hudTexture;
 	bool                            m_renderHud = false;
 	bool                            m_emergencyTurbo = false;
-
+	double m_weaponStrength = 1.0; // Strength of each shot. 1 will instantly destroy the target (total target health is 1).
 
 	App(const GApp::Settings& settings = GApp::Settings());
 
