@@ -1061,7 +1061,7 @@ bool App::fire(bool destroyImmediately) {
 			m_explosionSound->play(10.0f);
 			//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
 		}
-		else if(experimentConfig.firePeriod > 0.0f) {
+		else if(experimentConfig.firePeriod > 0.0f || !experimentConfig.autoFire) {
 			m_fireSound->play(0.5f);
 			//m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 0.5f);
 		}
