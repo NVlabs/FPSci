@@ -49,5 +49,5 @@ There were several common "modes" that motivated the weapon configuration inform
 
 |  | autoFire = True | autoFire = False |
 |-----------------|------------------------|--------------------------|
-| firePeriod = 0 | "laser" mode | unlimited rate semi-auto |
-| firePeriod > 0 | limited rate full auto | limited rate semi-auto |
+| **firePeriod = 0** | "laser" mode | unlimited rate semi-auto |
+| **firePeriod > 0** | limited rate full auto | limited rate semi-auto |
