@@ -573,6 +573,7 @@ public:
 			reader.getIfPresent("maxClicks", maxClicks);
 			reader.getIfPresent("firePeriod", firePeriod);
 			reader.getIfPresent("autoFire", autoFire);
+			reader.getIfPresent("damagePerSecond", damagePerSecond);
 			reader.getIfPresent("fireSound", fireSound);
 			reader.getIfPresent("renderDecals", renderDecals);
             reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);

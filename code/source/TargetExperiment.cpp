@@ -257,7 +257,7 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	// 1. Update presentation state and send task performance to psychophysics library.
 	updatePresentationState();
 
-	// 2. Record target trajectories, view direction trajectories, and mouse motion.
+		// 2. Record target trajectories, view direction trajectories, and mouse motion.
 	if (m_app->m_presentationState == PresentationState::task)
 	{
 		accumulateTrajectories();
@@ -351,9 +351,7 @@ void TargetExperiment::accumulatePlayerAction(String action)
 	// recording target trajectories
 	Point2 dir = m_app->getViewDirection();
 	std::vector<std::string> playerActionValues = {
-		//std::to_string(System::time()),
 		addQuotes(Logger::genUniqueTimestamp()),
-		// TODO: make this nicer
 		format("'%s'",action.c_str()).c_str(),
 		std::to_string(dir.x),
 		std::to_string(dir.y),
