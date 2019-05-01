@@ -10,11 +10,11 @@ latencies = [0.025, 0.05, 0.08] # sec
 min_latency = 0.012 # sec
 exp_modes = ['training', 'real']
 
-count_static_trials = 30
-count_straight_fly_trials = 30
-count_stray_fly_easy_trials = 40
-count_stray_fly_hard_trials = 40
-count_strafe_jump_trials = 80
+count_static_trials = 0
+count_straight_fly_trials = 0
+count_stray_fly_easy_trials = 0
+count_stray_fly_hard_trials = 60
+count_strafe_jump_trials = 60
 
 global_setting_txt = \
 '''
@@ -30,9 +30,9 @@ global_setting_txt = \
   "feedbackDuration": 0.0, // Time allocated for providing user feedback
   "readyDuration": 0.25, // Time allocated for preparing for trial
   "taskDuration": 6.0, // Maximum duration allowed for completion of the task
-  "maxClicks": 12,    // Maximum number of clicks to allow per trial
-  "firePeriod" : 0.5, // Maximum rate of fire to allow in a trial
-  "autoFire": false,  // Whether the weapon fires automatically when the left mouse is held down
+  "maxClicks": 3600,    // Maximum number of clicks to allow per trial
+  "firePeriod" : 0.0, // Maximum rate of fire to allow in a trial
+  "autoFire": true,  // Whether the weapon fires automatically when the left mouse is held down
   "sessionOrder": "random", // Session ordering, can be "Random", "Serial"
 
   // Create a sessions table containing information related to sessions
@@ -115,7 +115,7 @@ trial_txt = \
       "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
-      "motionChangePeriod": [ 0.5, 1.0 ],
+      "motionChangePeriod": [ 0.5, 0.6 ],
       "jumpEnabled": false
     },
     {
@@ -125,7 +125,7 @@ trial_txt = \
       "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
-      "motionChangePeriod": [ 1.0, 2.0 ],
+      "motionChangePeriod": [ 1.0, 1.2 ],
       "jumpEnabled": false
     },
     {
@@ -138,7 +138,7 @@ trial_txt = \
       "motionChangePeriod": [ 0.2, 0.8 ],
       "jumpEnabled": true,
       "distance": [ 20, 25],
-      "jumpPeriod": [ 0.3, 0.8 ],
+      "jumpPeriod": [ 0.3, 0.5 ],
       "jumpSpeed": [7, 7],
       "accelGravity": [20, 20]
     }
