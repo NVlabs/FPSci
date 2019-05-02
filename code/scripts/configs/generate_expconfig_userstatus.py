@@ -11,10 +11,10 @@ min_latency = 0.012 # sec
 exp_modes = ['training', 'real']
 
 count_static_trials = 0
-count_straight_fly_trials = 0
-count_stray_fly_easy_trials = 0
-count_stray_fly_hard_trials = 60
-count_strafe_jump_trials = 60
+count_straight_fly_trials = 20
+count_stray_fly_easy_trials = 50
+count_stray_fly_hard_trials = 0
+count_strafe_jump_trials = 50
 
 global_setting_txt = \
 '''
@@ -33,6 +33,7 @@ global_setting_txt = \
   "maxClicks": 3600,    // Maximum number of clicks to allow per trial
   "firePeriod" : 0.0, // Maximum rate of fire to allow in a trial
   "autoFire": true,  // Whether the weapon fires automatically when the left mouse is held down
+  "damagePerSecond": 1,
   "sessionOrder": "random", // Session ordering, can be "Random", "Serial"
 
   // Create a sessions table containing information related to sessions
@@ -101,8 +102,8 @@ trial_txt = \
     {
       "id": "straight_fly",
     "elevationLocked": false,
-      "speed": [ 8, 15 ],
-      "visualSize": [ 0.01, 0.01 ],
+      "speed": [ 10, 20 ],
+      "visualSize": [ 0.018, 0.018 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
       "motionChangePeriod": [ 1000000, 1000000 ],
@@ -121,8 +122,8 @@ trial_txt = \
     {
       "id": "stray_fly_easy",
     "elevationLocked": false,
-      "speed": [ 8, 15 ],
-      "visualSize": [ 0.01, 0.01 ],
+      "speed": [ 10, 20 ],
+      "visualSize": [ 0.018, 0.018 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
       "motionChangePeriod": [ 1.0, 1.2 ],
@@ -131,14 +132,14 @@ trial_txt = \
     {
       "id": "strafe_jump",
       "elevationLocked": true,
-      "speed": [ 8, 15 ],
-      "visualSize": [ 0.01, 0.01 ],
+      "speed": [ 10, 20 ],
+      "visualSize": [ 0.018, 0.018 ],
       "eccH": [ 5.0, 15.0 ],
       "eccV": [ 0.0, 1.0 ],
-      "motionChangePeriod": [ 0.2, 0.8 ],
+      "motionChangePeriod": [ 1.0, 1.2 ],
       "jumpEnabled": true,
-      "distance": [ 20, 25],
-      "jumpPeriod": [ 0.3, 0.5 ],
+      "distance": [ 13, 15],
+      "jumpPeriod": [ 0.3, 0.6 ],
       "jumpSpeed": [7, 7],
       "accelGravity": [20, 20]
     }
@@ -170,7 +171,7 @@ f_ex.close()
 ### variables ###
 # use the found ordering to generate the user status file.
 f_user = open("userstatus.Any", "w")
-subjects = ['JC','JongK','LN','MB','JA','DM','CM','EP','SS']
+subjects = ['JC','LN','MB','JA','DM','CM','EP','SS']
 condition_count = 12
 
 # first, generate the ordering.
