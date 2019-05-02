@@ -7,6 +7,7 @@ f_ex = open("experimentconfig.Any", "w")
 
 refresh_rates = [360, 240, 120, 60]
 latencies = [0.025, 0.05, 0.08] # sec
+frame_lag_counts = [4, 3, 1, 0, 16, 10, 5, 2, 28, 18, 9, 4]
 min_latency = 0.012 # sec
 exp_modes = ['training', 'real']
 
@@ -69,7 +70,8 @@ for latency in latencies:
         session_idx += 1
         
         for exp_mode in exp_modes:
-            num_frame_delay = np.round((latency - (min_latency + 0.5 / refresh_rate)) / (1/refresh_rate))
+            # num_frame_delay = np.round((latency - (min_latency + 0.5 / refresh_rate)) / (1/refresh_rate))
+            num_frame_delay = frame_lag_counts[session_idx - 1]
             session_txt += session_template_txt % ( \
                 session_idx, exp_mode, num_frame_delay, refresh_rate, exp_mode, \
                 count_static_trials, count_straight_fly_trials, \
