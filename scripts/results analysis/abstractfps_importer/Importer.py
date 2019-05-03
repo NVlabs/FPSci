@@ -47,7 +47,7 @@ class Importer:
             trials.append(Trial(row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
         return trials
 
-    def getTrialIds(self):
+    def getCondIds(self):
         """Get a list of trial ids from the trials table"""
         ids = []
         for trial in self.getTrials(): ids.append(trial.id)
