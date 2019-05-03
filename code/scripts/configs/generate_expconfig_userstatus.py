@@ -46,10 +46,14 @@ session_txt = \
 '''
   "sessions": [
 '''
+
 session_idx = 0
 for latency in latencies:
     for refresh_rate in refresh_rates:
-        session_template_txt =\
+        session_idx += 1       
+        for exp_mode in exp_modes:
+          num_frame_delay = frame_lag_counts[session_idx - 1]
+          session_txt +=\
 '''
     {
       "id": "s%d-%s", // Session ID
@@ -57,27 +61,15 @@ for latency in latencies:
       "frameRate": %d, // Session frame rate (in frames per second)
       "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "%s", // Experiment mode ("real" or "training")
-      "trials": [
-        {"id": "static","count": %d},
-        {"id": "straight_fly","count": %d},
-        {"id": "stray_fly_easy","count": %d},
-        {"id": "stray_fly_hard","count": %d},
-        {"id": "strafe_jump","count": %d}
-      ]
-    },
-'''
+      "trials": [''' % (session_idx, exp_mode, num_frame_delay, refresh_rate, exp_mode)
 
-        session_idx += 1
-        
-        for exp_mode in exp_modes:
             # num_frame_delay = np.round((latency - (min_latency + 0.5 / refresh_rate)) / (1/refresh_rate))
-            num_frame_delay = frame_lag_counts[session_idx - 1]
-            session_txt += session_template_txt % ( \
-                session_idx, exp_mode, num_frame_delay, refresh_rate, exp_mode, \
-                count_static_trials, count_straight_fly_trials, \
-                count_stray_fly_easy_trials, count_stray_fly_hard_trials, count_strafe_jump_trials\
-            )
-
+          if count_static_trials > 0: session_txt          += "\n        {\"id\": \"static\", \"count\": %d}," % count_static_trials
+          if count_straight_fly_trials > 0: session_txt    += "\n        {\"id\": \"straight_fly\", \"count\": %d}," % count_straight_fly_trials
+          if count_stray_fly_easy_trials > 0: session_txt  += "\n        {\"id\": \"stray_fly_easy\", \"count\": %d}," % count_stray_fly_easy_trials
+          if count_stray_fly_hard_trials > 0: session_txt  += "\n        {\"id\": \"stray_fly_hard\", \"count\": %d}," % count_stray_fly_hard_trials
+          if count_strafe_jump_trials > 0: session_txt     += "\n        {\"id\": \"strafe_jump\", \"count\": %d}," % count_strafe_jump_trials
+          session_txt += "\n      ]\n    },"
 session_txt += \
 '''
   ],
