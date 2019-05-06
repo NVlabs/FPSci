@@ -864,6 +864,11 @@ bool App::onEvent(const GEvent& event) {
         return true;
     }
 
+    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::LCTRL)) {
+        Profiler::setEnabled(false);
+        return true;
+    }
+
 	// If you need to track individual UI events, manage them here.
 	// Return true if you want to prevent other parts of the system
 	// from observing this specific event.
@@ -975,6 +980,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 
 bool App::fire(bool destroyImmediately) {
+    BEGIN_PROFILER_EVENT("fire");
 	Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
 	bool destroyedTarget = false;
 	static bool hitTarget = false;
@@ -1019,16 +1025,26 @@ bool App::fire(bool destroyImmediately) {
 				hitTarget = false;
 			}
 			else {
-				// Use a gamma of 2.2 baseed on sRGB tansfer function (https://en.wikipedia.org/wiki/SRGB)
-				Color3 color = {1.0f-pow(m_targetHealth, 2.2f), pow(m_targetHealth, 2.2f), 0.0f};
-				UniversalMaterial::Specification materialSpecification;
-				materialSpecification.setLambertian(Texture::Specification(color));
-				materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-				materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+                BEGIN_PROFILER_EVENT("fire/changeColor");
+				    // Use a gamma of 2.2 baseed on sRGB tansfer function (https://en.wikipedia.org/wiki/SRGB)
+                    BEGIN_PROFILER_EVENT("fire/colorCreate");
+				        Color3 color = {1.0f-pow(m_targetHealth, 2.2f), pow(m_targetHealth, 2.2f), 0.0f};
+				        UniversalMaterial::Specification materialSpecification;
+				        materialSpecification.setLambertian(Texture::Specification(color));
+				        materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+				        materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+                    END_PROFILER_EVENT();
 
-				shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(targetArray[closestIndex]->pose()->clone());
-				pose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-				targetArray[closestIndex]->setPose(pose);
+                    BEGIN_PROFILER_EVENT("fire/clone");
+				        shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(targetArray[closestIndex]->pose()->clone());
+                    END_PROFILER_EVENT();
+                    BEGIN_PROFILER_EVENT("fire/materialCreate");
+				        pose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
+                    END_PROFILER_EVENT();
+                    BEGIN_PROFILER_EVENT("fire/setPose");
+				        targetArray[closestIndex]->setPose(pose);
+                    END_PROFILER_EVENT();
+                END_PROFILER_EVENT();
 			}
 		}
 		else hitTarget = false;
@@ -1092,7 +1108,7 @@ bool App::fire(bool destroyImmediately) {
 		m_lastDecal = m_firstDecal;
 		m_firstDecal = newDecal;
 	}
-
+    END_PROFILER_EVENT();
 	return hitTarget;
 }
 
@@ -1103,6 +1119,7 @@ void App::clearTargets() {
 }
 
 void App::onUserInput(UserInput* ui) {
+    BEGIN_PROFILER_EVENT("onUserInput");
 	static bool haveReleased = false;
 	static bool fired = false;
 	GApp::onUserInput(ui);
@@ -1124,16 +1141,30 @@ void App::onUserInput(UserInput* ui) {
 			if (m_presentationState == PresentationState::task) {
 				if (ex->responseReady()) {
 					fired = true;
-					ex->countClick();	// count clicks
-					bool hitTarget = fire();				// fire and process click here
+                    // count clicks
+					ex->countClick();	
+                    // fire and process click here
+					bool hitTarget = fire();				
 					if (hitTarget) {
-						if (m_targetHealth == 0) ex->accumulatePlayerAction("destroy");	// Target eliminated, must be 'destroy'.
-						else ex->accumulatePlayerAction("hit");							// Target 'hit', but still alive.
+                        if (m_targetHealth == 0) {
+                            // Target eliminated, must be 'destroy'.
+                            ex->accumulatePlayerAction("destroy");	
+                        }
+                        else {
+                            // Target 'hit', but still alive.
+                            ex->accumulatePlayerAction("hit");
+                        }
 					}
-					else ex->accumulatePlayerAction("miss");			// Target still present, must be 'miss'.
+                    else {
+                        // Target still present, must be 'miss'.
+                        ex->accumulatePlayerAction("miss");
+                    }
 				}
 				// Avoid accumulating invalid clicks during holds...
-				else ex->accumulatePlayerAction("invalid");				// Invalid click since the trial isn't ready for response
+                else {
+                    // Invalid click since the trial isn't ready for response
+                    ex->accumulatePlayerAction("invalid");
+                }
 			}
 		}
 		else ex->accumulatePlayerAction("non-task"); // not happening in task state.
@@ -1152,7 +1183,7 @@ void App::onUserInput(UserInput* ui) {
 	}
 
 	m_debugCamera->filmSettings().setSensitivity(m_sceneBrightness);
-
+    END_PROFILER_EVENT();
 }
 
 void App::destroyTarget(int index) {

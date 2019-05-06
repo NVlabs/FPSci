@@ -348,6 +348,7 @@ void TargetExperiment::accumulateTrajectories()
 
 void TargetExperiment::accumulatePlayerAction(String action)
 {
+    BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 	// recording target trajectories
 	Point2 dir = m_app->getViewDirection();
 	std::vector<std::string> playerActionValues = {
@@ -357,6 +358,7 @@ void TargetExperiment::accumulatePlayerAction(String action)
 		std::to_string(dir.y),
 	};
 	m_playerActions.push_back(playerActionValues);
+    END_PROFILER_EVENT();
 }
 
 bool TargetExperiment::responseReady() {
