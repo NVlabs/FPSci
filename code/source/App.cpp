@@ -900,6 +900,18 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		// TODO: Is this the right place to call it?
 		ex->onGraphics2D(rd);
 
+		float healthBarWidth = 0.1f;
+		float healthBarHeight = 0.01f;
+		Color3 color = { 1.0f - pow(m_targetHealth, 2.2f), pow(m_targetHealth, 2.2f), 0.0f };
+		Draw::rect2D(
+			Rect2D::xywh(
+			(float)m_framebuffer->width() * (0.5f - healthBarWidth / 2),
+				(float)m_framebuffer->height() * (0.5f + 0.05f),
+				(float)m_framebuffer->width() * healthBarWidth * m_targetHealth,
+				(float)m_framebuffer->height() * healthBarHeight
+			), rd, color
+		);
+
 		// Paint both sides by the width of latency measuring box.
 		Color3 blackColor = Color3::black();
 		Point2 latencyRect = Point2(0.09f, 0.1f);
