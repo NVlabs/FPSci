@@ -73,6 +73,16 @@ void App::onInit() {
 	loadModels();
 	setReticle(m_reticleIndex);
 
+	// Further evaluate where this should go!
+	for (int i = 0; i < m_MatTableSize; i++) {
+		Color3 color = { 1.0f - pow((float)i/ m_MatTableSize, 2.2f), pow((float)i / m_MatTableSize, 2.2f), 0.0f };
+		UniversalMaterial::Specification materialSpecification;
+		materialSpecification.setLambertian(Texture::Specification(color));
+		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+		m_materials.append(UniversalMaterial::create(materialSpecification));
+	}
+
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
@@ -900,17 +910,18 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		// TODO: Is this the right place to call it?
 		ex->onGraphics2D(rd);
 
-		float healthBarWidth = 0.1f;
-		float healthBarHeight = 0.01f;
-		Color3 color = { 1.0f - pow(m_targetHealth, 2.2f), pow(m_targetHealth, 2.2f), 0.0f };
-		Draw::rect2D(
-			Rect2D::xywh(
-			(float)m_framebuffer->width() * (0.5f - healthBarWidth / 2),
-				(float)m_framebuffer->height() * (0.5f + 0.05f),
-				(float)m_framebuffer->width() * healthBarWidth * m_targetHealth,
-				(float)m_framebuffer->height() * healthBarHeight
-			), rd, color
-		);
+		// Target health bar (removed for now)
+		//float healthBarWidth = 0.1f;
+		//float healthBarHeight = 0.01f;
+		//Color3 color = { 1.0f - pow(m_targetHealth, 2.2f), pow(m_targetHealth, 2.2f), 0.0f };
+		//Draw::rect2D(
+		//	Rect2D::xywh(
+		//	(float)m_framebuffer->width() * (0.5f - healthBarWidth / 2),
+		//		(float)m_framebuffer->height() * (0.5f + 0.05f),
+		//		(float)m_framebuffer->width() * healthBarWidth * m_targetHealth,
+		//		(float)m_framebuffer->height() * healthBarHeight
+		//	), rd, color
+		//);
 
 		// Paint both sides by the width of latency measuring box.
 		Color3 blackColor = Color3::black();
@@ -1050,8 +1061,9 @@ bool App::fire(bool destroyImmediately) {
                     BEGIN_PROFILER_EVENT("fire/clone");
 				        shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(targetArray[closestIndex]->pose()->clone());
                     END_PROFILER_EVENT();
-                    BEGIN_PROFILER_EVENT("fire/materialCreate");
-				        pose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
+                    BEGIN_PROFILER_EVENT("fire/materialSet");
+						shared_ptr<UniversalMaterial> mat = m_materials[min((int)(m_targetHealth*m_MatTableSize), m_MatTableSize-1)];
+				        pose->materialTable.set("core/icosahedron_default", mat);
                     END_PROFILER_EVENT();
                     BEGIN_PROFILER_EVENT("fire/setPose");
 				        targetArray[closestIndex]->setPose(pose);

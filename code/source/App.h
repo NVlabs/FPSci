@@ -74,6 +74,9 @@ protected:
 	shared_ptr<VisibleEntity>		m_explosion;
 	RealTime						m_explosionEndTime;
 
+	const int m_MatTableSize = 10;							///< Set this to set # of color "levels"
+	Array<shared_ptr<UniversalMaterial>>	m_materials;	///< This stores the color materials
+
 	GuiDropDownList*				m_sessDropDown;
 	GuiDropDownList*				m_userDropDown;
 	GuiLabel*						m_mouseDPILabel;
