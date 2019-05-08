@@ -686,6 +686,7 @@ void App::updateSession(String id) {
 }
 
 void App::mergeCurrentLogToCurrentDB() {
+	logger->closeResultsFile();
 	if (m_loggerRunning) {
 		killPythonLogger();
 		pythonMergeLogs(m_logName);
