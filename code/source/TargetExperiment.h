@@ -15,6 +15,8 @@ protected:
 	
 	std::vector<std::vector<std::string>> m_playerActions;
 	std::vector<std::vector<std::string>> m_targetTrajectory;
+	std::vector<std::vector<std::string>> m_frameInfo;
+
 	double m_lastFireAt = 0.f;
 
 	TargetExperiment(App* app) : Experiment(app) {
@@ -56,6 +58,8 @@ public:
 	void recordTrialResponse();
 
 	void accumulateTrajectories();
+
+	void accumulateFrameInfo(RealTime rdt, float sdt, float idt);
 
 	/** queues action with given name to insert into database when trial completes 
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */

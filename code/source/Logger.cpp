@@ -99,6 +99,14 @@ void TargetLogger::createResultsFile(String filename, String subjectID)
 			{ "position_el", "real" },
 	};
 	createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
+
+	// 6. Frame_Info, create the table
+	std::vector<std::vector<std::string>> frameInfoColumns = {
+			{"time", "text"},
+			{"idt", "real"},
+			{"sdt", "real"},
+	};
+	createTableInDB(m_db, "Frame_Info", frameInfoColumns);
 }
 
 void TargetLogger::recordTargetTrajectory(std::vector<std::vector<std::string>> trajectory) {
@@ -107,6 +115,10 @@ void TargetLogger::recordTargetTrajectory(std::vector<std::vector<std::string>> 
 
 void TargetLogger::recordPlayerActions(std::vector<std::vector<std::string>> actions) {
 	insertRowsIntoDB(m_db, "Player_Action", actions);
+}
+
+void TargetLogger::recordFrameInfo(std::vector<std::vector<std::string>> info) {
+	insertRowsIntoDB(m_db, "Frame_Info", info);
 }
 
 void TargetLogger::addConditions(std::vector<SingleThresholdMeasurement> measurements) {
@@ -183,6 +195,14 @@ void ReactionLogger::createResultsFile(String filename, String subjectID)
 			{ "task_execution_time", "real" },
 	};
 	createTableInDB(m_db, "Trials", trialColumns);
+
+	// 4. Frame_Info, create the table
+	std::vector<std::vector<std::string>> frameInfoColumns = {
+		{"time", "text"},
+		{"idt", "real"},
+		{"sdt", "real"},
+	};
+	createTableInDB(m_db, "Frame_Info", frameInfoColumns);
 }
 
 void ReactionLogger::addConditions(std::vector<SingleThresholdMeasurement> measurements){

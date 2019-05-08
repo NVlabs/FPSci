@@ -17,6 +17,7 @@ public:
 	virtual void createResultsFile(String filename, String subjectID) {};
 	virtual	void recordTargetTrajectory(std::vector<std::vector<std::string>> trajectory) {};
 	virtual void recordPlayerActions(std::vector<std::vector<std::string>> actions) {};
+	virtual void recordFrameInfo(std::vector<std::vector<std::string>> info) {};
 };
 
 class TargetLogger : public Logger
@@ -31,6 +32,7 @@ public:
 	void createResultsFile(String filename, String subjectID);
 	void recordTargetTrajectory(std::vector<std::vector<std::string>> trajectory);
 	void recordPlayerActions(std::vector<std::vector<std::string>> actions);
+	void recordFrameInfo(std::vector<std::vector<std::string>> info);
 };
 
 class ReactionLogger : public Logger

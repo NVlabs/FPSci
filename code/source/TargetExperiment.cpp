@@ -261,6 +261,7 @@ void TargetExperiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	if (m_app->m_presentationState == PresentationState::task)
 	{
 		accumulateTrajectories();
+		accumulateFrameInfo(rdt, sdt, idt);
 	}
 }
 
@@ -319,6 +320,10 @@ void TargetExperiment::recordTrialResponse()
 	// Player_Action table. Write down the recorded player actions.
 	m_app->logger->recordPlayerActions(m_playerActions);
 	m_playerActions.clear();
+
+	// Frame_Info table. Write down all frame info.
+	m_app->logger->recordFrameInfo(m_frameInfo);
+	m_frameInfo.clear();
 }
 
 void TargetExperiment::accumulateTrajectories()
@@ -359,6 +364,15 @@ void TargetExperiment::accumulatePlayerAction(String action)
 	};
 	m_playerActions.push_back(playerActionValues);
     END_PROFILER_EVENT();
+}
+
+void TargetExperiment::accumulateFrameInfo(RealTime t, float sdt, float idt) {
+	std::vector<std::string> frameValues = {
+		addQuotes(Logger::genUniqueTimestamp()),
+		std::to_string(idt),
+		std::to_string(sdt)
+	};
+	m_frameInfo.push_back(frameValues);
 }
 
 bool TargetExperiment::responseReady() {
