@@ -534,10 +534,11 @@ void App::userSaveButtonPress(void) {
 void App::updateUser(void){
 	// Update the user if needed
 	if (m_lastSeenUser != m_ddCurrentUser) {
+		// This creates a new results file...
 		if(m_sessDropDown->numElements() > 0) updateSession(updateSessionDropDown()[0]);
 		String id = getDropDownUserId();
-		String filename = "../results/" + experimentConfig.taskType + "_" + id + "_" + String(Logger::genFileTimestamp()) + ".db";
-		logger->createResultsFile(filename, id);
+		//String filename = "../results/" + experimentConfig.taskType + "_" + id + "_" + String(Logger::genFileTimestamp()) + ".db";
+		//logger->createResultsFile(filename, id);
 		m_lastSeenUser = m_ddCurrentUser;
 
         userTable.currentUser = id;
@@ -665,6 +666,7 @@ void App::updateSession(String id) {
 
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::load();
+	m_logName = "../results/" + experimentConfig.taskType + "_" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
 	if (sysConfig.hasLogger) {
 		// Handle running logger if we need to (terminate then merge results)
 		if (m_loggerRunning) {
@@ -672,14 +674,18 @@ void App::updateSession(String id) {
 			pythonMergeLogs(m_logName);
 		}
 		// Run a new logger if we need to
-		m_logName = "../results/" + experimentConfig.taskType + "_" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
 		runPythonLogger(m_logName, sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
 	}
 
 	// Don't create a results file for a user w/ no sessions left
-	if (m_sessDropDown->numElements() == 0) logPrintf("No sessions remaining for selected user.\n");
+	if (m_sessDropDown->numElements() == 0) {
+		logPrintf("No sessions remaining for selected user.\n");
+	}
 	// Create the results file here (but how do we make sure user set up name?)
-	else logger->createResultsFile(m_logName + ".db", userTable.currentUser);
+	else {
+		logger->createResultsFile(m_logName + ".db", userTable.currentUser);
+		logPrintf("Created results file: %s.db\n", m_logName.c_str());
+	}
 
 	// TODO: Remove the following by invoking a call back.
 	ex->onInit();
