@@ -39,6 +39,7 @@ class EventLoggerInterface:
         if emulate:
             self.emuParams = emuParams
             self.emuStart = datetime.now()
+            self.emuQueue = []
         else:
             self.com = serial.Serial(comPort, baudRate, timeout=timeoutS)
             self.buffer = ""
@@ -86,7 +87,9 @@ class EventLoggerInterface:
         return self.parseString(line)
 
     def parseLines(self):
-        if self.emulate: return [self.emulateLine()]    # Just do a single line when in emulation mode (we can do this as fast as we want)
+        if self.emulate: 
+            if len(self.emuQueue) > 0: return self.emuQueue     # If we have clicks to report, do that first
+            else: return [self.emulateLine()]    # Otherwise just do a single line when in emulation mode (we can do this as fast as we want)
         else:
             output = []
             self.buffer += self.com.read(self.com.inWaiting()).decode('utf-8')      # Keep remnant characters in a buffer here                
@@ -125,6 +128,7 @@ class EventLoggerInterface:
 
     def mouseDown(self):
         self.set_autoclick(True)
+        if self.emulate: self.emuQueue.append(self.emulate_event('M1'))
 
     def mouseUp(self):
         self.set_autoclick(False)

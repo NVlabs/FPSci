@@ -122,9 +122,10 @@ while(c2ps < AUTOCLICK_C2P_COUNT_TOTAL):
     if PLOT_DATA and not psutil.pid_exists(proc.pid): break  
 
     # Periodic autoclicking is handled here...
-    period_s = AUTOCLICK_TARGET_PERIOD_S + AUTOCLICK_JITTER_MS * (np.random.random()-1/2)
+    period_s = AUTOCLICK_TARGET_PERIOD_S + AUTOCLICK_JITTER_MS/1000 * (np.random.random()-1/2)
     if (datetime.now() - last_click_time).total_seconds() > period_s: 
         hwInterface.click(AUTOCLICK_DURATION_MS)
+        last_click_time = datetime.now()
 
     # Read the values from the HW interface
     vals = hwInterface.parseLines()             # Get all lines waiting on read from the serial port
