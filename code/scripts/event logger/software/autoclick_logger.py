@@ -16,7 +16,7 @@ BAUD = 115200                   # Serial port baud rate (should only change if A
 TIMEOUT_S = 0.3                 # Timeout for serial port read (ideally longer than timeout for pulse measurement)
 
 # Control Flags
-LOG_EVENT_DATA = False          # Control whether event data is logged to a .csv file (seperate from ADC data)
+LOG_EVENT_DATA = True           # Control whether event data is logged to a .csv file (seperate from ADC data)
 LOG_ADC_DATA = False            # Control whether analog data is logged to a .csv file (seperate from event data)
 LOG_C2P_DATA = True             # Control whether click to photon data is logged to a .csv file (seperate from above)
 PLOT_DATA = True                # Control whether data is plotted
@@ -26,7 +26,7 @@ CLICK_TO_PHOTON_THRESH_S = 0.3  # Maximum delay expected between click and photo
 MIN_EVENT_SPACING_S = 0.1       # Minimum allowable amount of time between 2 similar events
 
 # Autoclick parameters
-AUTOCLICK_COUNT_TOTAL = 30     # Number of autoclick events to perform once autoclick is enable
+AUTOCLICK_C2P_COUNT_TOTAL = 30     # Number of autoclick events to perform once autoclick is enable
 AUTOCLICK_TARGET_PERIOD_S = 1  # Approximate target period
 AUTOCLICK_JITTER_MS = 50       # Jitter range for the autoclick interval
 AUTOCLICK_DURATION_MS = 50     # Duration of the autoclick
@@ -51,13 +51,23 @@ nameLookup = {
 if(len(sys.argv) > 2): 
     com = sys.argv[1]
     logbasename = sys.argv[2]
+    emulate = False
+    if com == 'EMU': 
+        emulate = True
+        print("Running in emulation mode.")
 else: raise Exception("Need to provide COM port and output filename as argument to call!")
 
 if(len(sys.argv) > 3): serCard = sys.argv[3]
 else: serCard = None
 
 # Check test mode (for device emulation)
-hwInterface = EventLoggerInterface(com, BAUD, TIMEOUT_S)
+emuParams = EventLoggerInterface.EmulationParams(
+    events=['M1', 'M2', 'PD'],
+    probability_dict = {'M1':0.1,
+                        'M2':0.001,
+                        'PD':0.1}
+)
+hwInterface = EventLoggerInterface(com, BAUD, TIMEOUT_S, emulate=emulate, emuParams=emuParams)
 if serCard is not None: syncer = SerialSynchronizer(serCard)
 else: syncer = None
 
@@ -104,10 +114,10 @@ if syncer is not None:
     synced = True
 
 # This is the main loop that handles data aquisition and plotting
-autoclicks = 0
+c2ps = 0
 last_click_time = datetime.now()
 hwInterface.flush()
-while(autoclicks < AUTOCLICK_COUNT_TOTAL):
+while(c2ps < AUTOCLICK_C2P_COUNT_TOTAL):
     # Shutdown if the plot is closed
     if PLOT_DATA and not psutil.pid_exists(proc.pid): break  
 
@@ -115,7 +125,6 @@ while(autoclicks < AUTOCLICK_COUNT_TOTAL):
     period_s = AUTOCLICK_TARGET_PERIOD_S + AUTOCLICK_JITTER_MS * (np.random.random()-1/2)
     if (datetime.now() - last_click_time).total_seconds() > period_s: 
         hwInterface.click(AUTOCLICK_DURATION_MS)
-        autoclicks += 1
 
     # Read the values from the HW interface
     vals = hwInterface.parseLines()             # Get all lines waiting on read from the serial port
@@ -154,6 +163,7 @@ while(autoclicks < AUTOCLICK_COUNT_TOTAL):
             # Try making a mouse-to-photon measurement here
             if(event_type == 'M1'): lastM1Time = timestamp_s
             if(event_type == 'PD' and timestamp_s-lastM1Time < CLICK_TO_PHOTON_THRESH_S):
+                    c2ps += 1
                     c2p = 1000*(timestamp_s-lastM1Time)
-                    if PRINT_TO_CONSOLE: print("Mouse-to-photon = {0:0.3f}ms".format(c2p))
-                    if LOG_C2P_DATA: c2pLogger.writerow([lastM1Time, c2p]); c2pLogger.flush()
+                    if PRINT_TO_CONSOLE: print("\t\tMouse-to-photon #{0} = {1:0.3f}ms".format(c2ps, c2p))
+                    if LOG_C2P_DATA: c2pLogger.writerow([lastM1Time, c2p]); c2pFile.flush()

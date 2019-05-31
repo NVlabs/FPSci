@@ -29,13 +29,39 @@ class SerialSynchronizer:
 # Class for handling logging from the event logger
 class EventLoggerInterface:
 
-    def __init__(self, comPort, baudRate=115200, timeoutS=0.1):
-        self.com = serial.Serial(comPort, baudRate, timeout=timeoutS)
-        self.buffer = ""
+    class EmulationParams:
+        def __init__(self, events, probability_dict):
+            self.events = events
+            self.prob = probability_dict
+
+    def __init__(self, comPort, baudRate=115200, timeoutS=0.1, emulate=False, emuParams=None):
+        self.emulate = emulate
+        if emulate:
+            self.emuParams = emuParams
+            self.emuStart = datetime.now()
+        else:
+            self.com = serial.Serial(comPort, baudRate, timeout=timeoutS)
+            self.buffer = ""
 
     def flush(self):
         # Flush incoming data
-        self.com.flushInput()
+        if not self.emulate: self.com.flushInput()
+
+    def emulateLine(self):
+        if self.emuParams is None: raise Exception("Need emulation parameters!")
+        options = {}
+        for event in self.emuParams.events:
+            rval = np.random.random()
+            if rval > (1-self.emuParams.prob[event]):
+                options[event] = rval
+        if len(options) == 0: return None
+        else:
+            e = max(options, key=self.emuParams.prob.get)
+            return self.emulate_event(e)
+
+    def emulate_event(self, event):
+        timestamp_s = (datetime.now() - self.emuStart).total_seconds()
+        return [timestamp_s, event]
 
     def parseString(self, string):
         if not ":" in string: return None
@@ -55,24 +81,28 @@ class EventLoggerInterface:
     
     def parseLine(self):
         # Read a line and parse it
-        line = self.com.readline().decode('utf-8').strip()
+        if self.emulate: return self.emulateLine()
+        else: line = self.com.readline().decode('utf-8').strip()
         return self.parseString(line)
 
     def parseLines(self):
-        self.buffer += self.com.read(self.com.inWaiting()).decode('utf-8')      # Keep remnant characters in a buffer here
-        output = []                         
-        if '\n' in self.buffer:
-            # Split lines and iterate through them to process for events 
-            lines = self.buffer.split('\n')
-            for line in lines:
-                evt = self.parseString(line)
-                if evt is not None: output.append(evt)
-        self.buffer = self.buffer.split('\n')[-1]
-        return output
+        if self.emulate: return [self.emulateLine()]    # Just do a single line when in emulation mode (we can do this as fast as we want)
+        else:
+            output = []
+            self.buffer += self.com.read(self.com.inWaiting()).decode('utf-8')      # Keep remnant characters in a buffer here                
+            if '\n' in self.buffer:
+                # Split lines and iterate through them to process for events 
+                lines = self.buffer.split('\n')
+                for line in lines:
+                    evt = self.parseString(line)
+                    if evt is not None: output.append(evt)
+            self.buffer = self.buffer.split('\n')[-1]
+            return output
 
+    # Write data to the COM port
     def write(self, data):
-        # Write data to the COM port
-        self.com.write(data)
+        if not self.emulate: self.com.write(data)
+        else: pass
 
     def send_cmd(self, cmd):
         self.write((cmd + '\n').encode('utf-8'))
@@ -107,30 +137,34 @@ class EventLoggerInterface:
 
     # Simple method to get version from logger
     def get_fw_version(self):
-        self.buffer += self.com.read(self.com.inWaiting()).decode('utf-8')      # Read any characters waiting in the buffer
-        self.send_cmd(INFO)                                                     # Request device info
-        time.sleep(0.05)
-        lines = self.com.read(self.com.inWaiting()).decode('utf-8')
-        for line in lines.split('\n'):
-            line = line.strip()
-            if 'Hardware Event Logger' in line: return line                     # If we find the version report it here
-            else: self.buffer += line
-        return None
+        if self.emulate: return 'Hardware Event Logger Emulator'
+        else:
+            self.buffer += self.com.read(self.com.inWaiting()).decode('utf-8')      # Read any characters waiting in the buffer
+            self.send_cmd(INFO)                                                     # Request device info
+            time.sleep(0.05)
+            lines = self.com.read(self.com.inWaiting()).decode('utf-8')
+            for line in lines.split('\n'):
+                line = line.strip()
+                if 'Hardware Event Logger' in line: return line                     # If we find the version report it here
+                else: self.buffer += line
+            return None
 
     def get_analog_values(self, time_window_s=1, flush=True):
-        starttime = datetime.now()
-        data = []
-        times = []
-        if flush: self.com.flushInput()
-        while((datetime.now()-starttime).total_seconds() < time_window_s):
-            result = self.parseLine()
-            if result is None: continue
-            [time,value] = result
-            if(value in validEventTypes): continue
-            if value > MAX_ADC_VALUE: continue
-            times.append(time)
-            data.append(value)
-        return [times,data]
+        if self.emulate: return [[0],[0]]     # Analog not supported in emulation for now!!!
+        else:
+            starttime = datetime.now()
+            data = []
+            times = []
+            if flush: self.com.flushInput()
+            while((datetime.now()-starttime).total_seconds() < time_window_s):
+                result = self.parseLine()
+                if result is None: continue
+                [time,value] = result
+                if(value in validEventTypes): continue
+                if value > MAX_ADC_VALUE: continue
+                times.append(time)
+                data.append(value)
+            return [times,data]
     
     def get_average_analog_value(self, time_window_s=1):
         [times,data] = self.get_analog_values()
