@@ -78,7 +78,7 @@ while(True):
 
     # Click and wait for capture to complete
     elogger.flush()
-    elogger.autoclick_on()
+    elogger.mouseDown()
     while not s.is_processing_complete(): continue
     
     #elogger.autoclick_off()

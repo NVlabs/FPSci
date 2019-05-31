@@ -93,11 +93,17 @@ class EventLoggerInterface:
         if active: self.send_cmd(AUTOCLICK_ON)
         else: self.send_cmd(AUTOCLICK_OFF)
 
-    def autoclick_on(self):
+    def mouseDown(self):
         self.set_autoclick(True)
 
-    def autoclick_off(self):
+    def mouseUp(self):
         self.set_autoclick(False)
+
+    def click(self, duration_ms=80):
+        if duration_ms > 100: raise Exception("Cannot produce click duration >100ms!")
+        self.mouseDown()
+        time.sleep(duration_ms/1000.0)
+        self.mouseUp()
 
     # Simple method to get version from logger
     def get_fw_version(self):
