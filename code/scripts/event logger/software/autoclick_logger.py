@@ -122,6 +122,7 @@ if syncer is not None:
 # This is the main loop that handles data aquisition and plotting
 c2ps = 0
 started = not CLICK_TO_START
+period_s = AUTOCLICK_TARGET_PERIOD_S + AUTOCLICK_JITTER_MS/1000 * (np.random.random()-0.5)
 last_click_time = datetime.now()
 hwInterface.flush()
 while(c2ps < AUTOCLICK_C2P_COUNT_TOTAL):
@@ -130,8 +131,8 @@ while(c2ps < AUTOCLICK_C2P_COUNT_TOTAL):
 
     # Periodic autoclicking is handled here...
     if started:
-        period_s = AUTOCLICK_TARGET_PERIOD_S + AUTOCLICK_JITTER_MS/1000 * (np.random.random()-0.5)
-        if (datetime.now() - last_click_time).total_seconds() > period_s: 
+        if (datetime.now() - last_click_time).total_seconds() > period_s:
+            period_s = AUTOCLICK_TARGET_PERIOD_S + AUTOCLICK_JITTER_MS/1000 * (np.random.random()-0.5)
             last_click_time = datetime.now()
             hwInterface.click(AUTOCLICK_DURATION_MS)
 
