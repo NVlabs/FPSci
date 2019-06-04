@@ -12,7 +12,7 @@
 #define BAUD_RATE       115200      // This is the UART baud rate
 
 // Storage for timestamps and flags as well as name string lookup
-char* vString = "Hardware Event Logger v1.2\ (FW Rev 3.0)";      // Version print string
+char* vString = "Hardware Event Logger v1.2 (FW Rev 3.0)";      // Version print string
 char* names[INTS] = {"M1", "M2", "PD", "SW"};      // Names for reporting
 unsigned long timestamps[INTS] = {0};      // These are the timestamps captured from micros() for pulses
 bool flags[INTS] = {false};                // These are the flags set when a timestamp is captured
