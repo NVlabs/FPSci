@@ -24,13 +24,14 @@ PRINT_TO_CONSOLE = True         # Control whether data is printed to the console
 CLICK_TO_START = True           # Control whether a single M1 click starts the autoclicking
 
 CLICK_TO_PHOTON_THRESH_S = 0.3  # Maximum delay expected between click and photon
-MIN_EVENT_SPACING_S = 0.1       # Minimum allowable amount of time between 2 similar events
 
 # Autoclick parameters
-AUTOCLICK_C2P_COUNT_TOTAL = 200 # Number of autoclick events to perform once autoclick is enable
-AUTOCLICK_TARGET_PERIOD_S = 0.3 # Approximate target period
+AUTOCLICK_C2P_COUNT_TOTAL = 20 # Number of autoclick events to perform once autoclick is enable
+AUTOCLICK_TARGET_PERIOD_S = 0.5 # Approximate target period
 AUTOCLICK_JITTER_MS = 10        # Jitter range for the autoclick interval
 AUTOCLICK_DURATION_MS = 100     # Duration of the autoclick
+
+MIN_EVENT_SPACING_S = AUTOCLICK_TARGET_PERIOD_S * 0.4      # Minimum allowable amount of time between 2 similar events
 
 # Logging parameters
 IN_LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
@@ -157,16 +158,17 @@ while(c2ps < AUTOCLICK_C2P_COUNT_TOTAL):
             if LOG_ADC_DATA: adcLogger.writerow([timestamp_s, data]); adcFile.flush()
         else:                                   # Otherwise this is an event timestamp
             event_type = data                   # Data is just an event string
-            
             # Check that this event is far enough away from last event of this type (debounce)
             if(timeLookup[event_type] != 0 and (timestamp_s - timeLookup[event_type]) < MIN_EVENT_SPACING_S): continue
-            timeLookup[event_type] = timestamp_s   # Otherwise make this the last event of its type
 
             # Print and log event
-            if PRINT_TO_CONSOLE: print("{0} at {1:0.3f}s".format(nameLookup[event_type], timestamp_s))
+            if PRINT_TO_CONSOLE: print("{0} at {1:0.3f}s ({2} from last)".format(nameLookup[event_type], timestamp_s, timestamp_s - timeLookup[event_type]))
             if LOG_EVENT_DATA: eventLogger.writerow([timestamp_s, event_type]); eventFile.flush()
             # Allow SW events to be written to the ADC log to allow time sync
             if LOG_ADC_DATA and event_type == 'SW': adcLogger.writerow([timestamp_s, event_type]); adcFile.flush()
+
+            timeLookup[event_type] = timestamp_s   # Otherwise make this the last event of its type
+
 
             # Try making a mouse-to-photon measurement here
             if(event_type == 'M1'): 
