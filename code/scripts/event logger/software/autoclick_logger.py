@@ -16,11 +16,12 @@ BAUD = 115200                   # Serial port baud rate (should only change if A
 TIMEOUT_S = 0.3                 # Timeout for serial port read (ideally longer than timeout for pulse measurement)
 
 # Control Flags
+LOG_C2P_DATA = True             # Control whether click to photon data is logged to a .csv file (seperate from above)
 LOG_EVENT_DATA = False          # Control whether event data is logged to a .csv file (seperate from ADC data)
 LOG_ADC_DATA = False            # Control whether analog data is logged to a .csv file (seperate from event data)
-LOG_C2P_DATA = True             # Control whether click to photon data is logged to a .csv file (seperate from above)
 PLOT_DATA = False               # Control whether data is plotted
 PRINT_TO_CONSOLE = True         # Control whether data is printed to the console
+CLICK_TO_START = True           # Control whether a single M1 click starts the autoclicking
 
 CLICK_TO_PHOTON_THRESH_S = 0.3  # Maximum delay expected between click and photon
 MIN_EVENT_SPACING_S = 0.1       # Minimum allowable amount of time between 2 similar events
@@ -29,7 +30,7 @@ MIN_EVENT_SPACING_S = 0.1       # Minimum allowable amount of time between 2 sim
 AUTOCLICK_C2P_COUNT_TOTAL = 200 # Number of autoclick events to perform once autoclick is enable
 AUTOCLICK_TARGET_PERIOD_S = 0.3 # Approximate target period
 AUTOCLICK_JITTER_MS = 10        # Jitter range for the autoclick interval
-AUTOCLICK_DURATION_MS = 100      # Duration of the autoclick
+AUTOCLICK_DURATION_MS = 100     # Duration of the autoclick
 
 # Logging parameters
 IN_LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
@@ -55,6 +56,8 @@ if(len(sys.argv) > 2):
     if com == 'EMU': 
         emulate = True
         print("Running in emulation mode.")
+    else:
+        print("Opening logger on {0}...".format(com))
 else: raise Exception("Need to provide COM port and output filename as argument to call!")
 
 if(len(sys.argv) > 3): serCard = sys.argv[3]
@@ -100,7 +103,9 @@ hwInterface.flush()
 
 # If plotting open the plotter tool in another thread here
 if PLOT_DATA and LOG_ADC_DATA: proc = subprocess.Popen('python event_plotter.py \"{0}\" \"{1}\"'.format(eventFname, adcFname))
-elif PLOT_DATA: proc = subprocess.Popen('python event_plotter.py \"{0}\"'.format(eventFname))
+elif PLOT_DATA and LOG_EVENT_DATA: proc = subprocess.Popen('python event_plotter.py \"{0}\"'.format(eventFname))
+elif PLOT_DATA: raise Exception('Need to set LOG_EVENT_DATA = True for plotting!')
+
 # Create intro sync here (used to align data to wallclock later)
 synced  = False
 if syncer is not None:
@@ -115,6 +120,7 @@ if syncer is not None:
 
 # This is the main loop that handles data aquisition and plotting
 c2ps = 0
+started = not CLICK_TO_START
 last_click_time = datetime.now()
 hwInterface.flush()
 while(c2ps < AUTOCLICK_C2P_COUNT_TOTAL):
@@ -122,10 +128,11 @@ while(c2ps < AUTOCLICK_C2P_COUNT_TOTAL):
     if PLOT_DATA and not psutil.pid_exists(proc.pid): break  
 
     # Periodic autoclicking is handled here...
-    period_s = AUTOCLICK_TARGET_PERIOD_S + AUTOCLICK_JITTER_MS/1000 * (np.random.random()-0.5)
-    if (datetime.now() - last_click_time).total_seconds() > period_s: 
-        hwInterface.click(AUTOCLICK_DURATION_MS)
-        last_click_time = datetime.now()
+    if started:
+        period_s = AUTOCLICK_TARGET_PERIOD_S + AUTOCLICK_JITTER_MS/1000 * (np.random.random()-0.5)
+        if (datetime.now() - last_click_time).total_seconds() > period_s: 
+            last_click_time = datetime.now()
+            hwInterface.click(AUTOCLICK_DURATION_MS)
 
     # Read the values from the HW interface
     vals = hwInterface.parseLines()             # Get all lines waiting on read from the serial port
@@ -162,7 +169,11 @@ while(c2ps < AUTOCLICK_C2P_COUNT_TOTAL):
             if LOG_ADC_DATA and event_type == 'SW': adcLogger.writerow([timestamp_s, event_type]); adcFile.flush()
 
             # Try making a mouse-to-photon measurement here
-            if(event_type == 'M1'): lastM1Time = timestamp_s
+            if(event_type == 'M1'): 
+                if CLICK_TO_START and not started: 
+                    started = True       # Start autoclicking on the first M1 if in CLICK_TO_START
+                    if PRINT_TO_CONSOLE: print("Starting autoclicking...")
+                else: lastM1Time = timestamp_s                          # Otherwise just grab the M1 time event for M1-->PD measurement
             if(event_type == 'PD' and timestamp_s-lastM1Time < CLICK_TO_PHOTON_THRESH_S):
                     c2ps += 1
                     c2p = 1000*(timestamp_s-lastM1Time)

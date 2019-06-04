@@ -6,8 +6,7 @@
 #define     INTS    4       // Total number of interrupts
 
 // Parameters for autoclicking
-#define MOUSE_DOWN_MS   100   // Time for mouse down (in autoclick)
-#define MOUSE_UP_MS     900   // Time for mouse up (in autoclick)
+#define MAX_MOUSE_DOWN_MS   1000   // Time for mouse down (in autoclick)
 
 #define MAX_CMD_LEN     8           // This is the max command length (for now just 'on\n' or 'off\n' for autoclick)
 #define BAUD_RATE       115200      // This is the UART baud rate
@@ -192,7 +191,7 @@ SIGNAL(TIMER0_COMPA_vect){
     if(!clickOut) mouseUp();     // Get rid of the click for good
     else {
         mouseCount++;         // Increment the mouse count
-        if(mouseCount >= MOUSE_DOWN_MS){
+        if(mouseCount >= MAX_MOUSE_DOWN_MS){
             clickOut = false;               // Clear flag
             mouseCount = 0;                 // Clear count
             mouseUp();

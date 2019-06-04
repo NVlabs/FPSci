@@ -122,18 +122,19 @@ class EventLoggerInterface:
         self.set_adc_report(False)
 
     # Control auto click feature
-    def set_autoclick(self, active):
+    def set_mouse_down(self, active):
         if active: self.send_cmd(AUTOCLICK_ON)
         else: self.send_cmd(AUTOCLICK_OFF)
-
+        self.com.flushOutput()
+        
     def mouseDown(self):
-        self.set_autoclick(True)
+        self.set_mouse_down(True)
         if self.emulate: self.emuQueue.append(self.emulate_event('M1'))
 
     def mouseUp(self):
-        self.set_autoclick(False)
+        self.set_mouse_down(False)
 
-    def click(self, duration_ms=80):
+    def click(self, duration_ms=100):
         if duration_ms > 100: raise Exception("Cannot produce click duration >100ms!")
         self.mouseDown()
         time.sleep(duration_ms/1000.0)
