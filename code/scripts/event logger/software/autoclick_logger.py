@@ -16,20 +16,20 @@ BAUD = 115200                   # Serial port baud rate (should only change if A
 TIMEOUT_S = 0.3                 # Timeout for serial port read (ideally longer than timeout for pulse measurement)
 
 # Control Flags
-LOG_EVENT_DATA = True           # Control whether event data is logged to a .csv file (seperate from ADC data)
+LOG_EVENT_DATA = False          # Control whether event data is logged to a .csv file (seperate from ADC data)
 LOG_ADC_DATA = False            # Control whether analog data is logged to a .csv file (seperate from event data)
 LOG_C2P_DATA = True             # Control whether click to photon data is logged to a .csv file (seperate from above)
-PLOT_DATA = True                # Control whether data is plotted
+PLOT_DATA = False               # Control whether data is plotted
 PRINT_TO_CONSOLE = True         # Control whether data is printed to the console
 
 CLICK_TO_PHOTON_THRESH_S = 0.3  # Maximum delay expected between click and photon
 MIN_EVENT_SPACING_S = 0.1       # Minimum allowable amount of time between 2 similar events
 
 # Autoclick parameters
-AUTOCLICK_C2P_COUNT_TOTAL = 30     # Number of autoclick events to perform once autoclick is enable
-AUTOCLICK_TARGET_PERIOD_S = 1  # Approximate target period
-AUTOCLICK_JITTER_MS = 50       # Jitter range for the autoclick interval
-AUTOCLICK_DURATION_MS = 50     # Duration of the autoclick
+AUTOCLICK_C2P_COUNT_TOTAL = 200 # Number of autoclick events to perform once autoclick is enable
+AUTOCLICK_TARGET_PERIOD_S = 0.3 # Approximate target period
+AUTOCLICK_JITTER_MS = 10        # Jitter range for the autoclick interval
+AUTOCLICK_DURATION_MS = 100      # Duration of the autoclick
 
 # Logging parameters
 IN_LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
@@ -93,7 +93,7 @@ if LOG_C2P_DATA:
     c2pFname = logbasename + "_c2p.csv"
     c2pFile = open(c2pFname, mode='w')
     c2pLogger = csv.writer(c2pFile, delimiter=',', lineterminator='\n')
-    c2pLogger.writerow(['Timestamp [s], Latency [ms]'])
+    c2pLogger.writerow(['Timestamp [s]', 'Latency [ms]'])
 
 # Clean out any data waiting for input
 hwInterface.flush()
@@ -122,7 +122,7 @@ while(c2ps < AUTOCLICK_C2P_COUNT_TOTAL):
     if PLOT_DATA and not psutil.pid_exists(proc.pid): break  
 
     # Periodic autoclicking is handled here...
-    period_s = AUTOCLICK_TARGET_PERIOD_S + AUTOCLICK_JITTER_MS/1000 * (np.random.random()-1/2)
+    period_s = AUTOCLICK_TARGET_PERIOD_S + AUTOCLICK_JITTER_MS/1000 * (np.random.random()-0.5)
     if (datetime.now() - last_click_time).total_seconds() > period_s: 
         hwInterface.click(AUTOCLICK_DURATION_MS)
         last_click_time = datetime.now()
@@ -166,5 +166,6 @@ while(c2ps < AUTOCLICK_C2P_COUNT_TOTAL):
             if(event_type == 'PD' and timestamp_s-lastM1Time < CLICK_TO_PHOTON_THRESH_S):
                     c2ps += 1
                     c2p = 1000*(timestamp_s-lastM1Time)
-                    if PRINT_TO_CONSOLE: print("\t\tMouse-to-photon #{0} = {1:0.3f}ms".format(c2ps, c2p))
+                    if PRINT_TO_CONSOLE: print("\t\tMouse-to-photon #{0} = {1:0.3f}ms".format(c2ps, c2p)); sys.stdout.flush()
                     if LOG_C2P_DATA: c2pLogger.writerow([lastM1Time, c2p]); c2pFile.flush()
+    # if not PRINT_TO_CONSOLE: print('%d clicks'%c2ps)
