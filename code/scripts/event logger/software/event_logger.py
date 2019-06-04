@@ -23,7 +23,6 @@ PRINT_TO_CONSOLE = True         # Control whether data is printed to the console
 
 CLICK_TO_PHOTON_THRESH_S = 0.3  # Maximum delay expected between click and photon
 MIN_EVENT_SPACING_S = 0.1       # Minimum allowable amount of time between 2 similar events
-AUTOCLICK_COUNT_TOTAL = 500     # Number of autoclick events to perform once autoclick is enable
 
 # Logging parameters
 IN_LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
@@ -54,8 +53,6 @@ else: serCard = None
 hwInterface = EventLoggerInterface(com, BAUD, TIMEOUT_S)
 if serCard is not None: syncer = SerialSynchronizer(serCard)
 else: syncer = None
-
-autoclick = False
 
 # Opening print to console
 if PRINT_TO_CONSOLE and PLOT_DATA: print("Starting logging (GUI will open when logging data is available)")
