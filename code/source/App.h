@@ -275,6 +275,7 @@ public:
 	virtual bool onEvent(const GEvent& e) override;
 	virtual void onUserInput(UserInput* ui) override;
 	virtual void onCleanup() override;
+    virtual void oneFrame() override;
 
 	// variables for experiments
     const float                     m_targetDistance = 1.0f;
