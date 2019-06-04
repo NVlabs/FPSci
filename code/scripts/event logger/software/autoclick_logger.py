@@ -26,8 +26,8 @@ CLICK_TO_START = True           # Control whether a single M1 click starts the a
 CLICK_TO_PHOTON_THRESH_S = 0.3  # Maximum delay expected between click and photon
 
 # Autoclick parameters
-AUTOCLICK_C2P_COUNT_TOTAL = 20 # Number of autoclick events to perform once autoclick is enable
-AUTOCLICK_TARGET_PERIOD_S = 0.5 # Approximate target period
+AUTOCLICK_C2P_COUNT_TOTAL = 2000 # Number of autoclick events to perform once autoclick is enable
+AUTOCLICK_TARGET_PERIOD_S = 0.3 # Approximate target period
 AUTOCLICK_JITTER_MS = 10        # Jitter range for the autoclick interval
 AUTOCLICK_DURATION_MS = 100     # Duration of the autoclick
 
