@@ -18,7 +18,6 @@ const float App::TARGET_MODEL_ARRAY_OFFSET = 40;
 //static const float verticalFieldOfViewDegrees = 90; // deg
 static const float horizontalFieldOfViewDegrees = 103; // deg
 
-static const bool measureClickPhotonLatency = true;
 static const bool testCustomProjection = false;
 
 /** global startup config - sets playMode and experiment/user paths */
@@ -952,9 +951,14 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
         // weapon ready status
         if (experimentConfig.renderWeaponStatus) {
+            float boxLeft = (float)m_framebuffer->width() * 0.0f;
+            if (experimentConfig.weaponStatusSide == "right") {
+                // swap side
+                boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
+            }
             Draw::rect2D(
                 Rect2D::xywh(
-                (float)m_framebuffer->width() * 0.0f,
+                boxLeft,
                     (float)m_framebuffer->height() * (float)(ex->weaponCooldownPercent()),
                     (float)m_framebuffer->width() * latencyRect.x,
                     (float)m_framebuffer->height() * (float)(1.0 - ex->weaponCooldownPercent())
@@ -963,13 +967,18 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
         }
 
 		// Click to photon latency measuring corner box
-		if (measureClickPhotonLatency) {
+		if (experimentConfig.renderClickPhoton) {
+            float boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
+            if (experimentConfig.clickPhotonSide != "right") {
+                // swap side
+                boxLeft = (float)m_framebuffer->width() * 0.0f;
+            }
 			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
 			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
 			//Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.925f, (float)window()->height() * 0.0f, (float)window()->width() * 0.075f, (float)window()->height() * 0.15f), rd, cornerColor);
 			Draw::rect2D(
 				Rect2D::xywh(
-					(float)m_framebuffer->width() * (1.0f - latencyRect.x),
+					boxLeft,
 					(float)m_framebuffer->height() * (0.5f - latencyRect.y / 2),
 					(float)m_framebuffer->width() * latencyRect.x,
 					(float)m_framebuffer->height() * latencyRect.y

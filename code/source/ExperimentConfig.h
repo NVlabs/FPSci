@@ -551,6 +551,9 @@ public:
 	bool renderDecals = true;						// If bullet decals are on
 	bool renderMuzzleFlash = false;					// Muzzle flash
     bool renderWeaponStatus = true;                 // Display weapon cooldown
+    String weaponStatusSide = "left";               // "right" for right side, otherwise left
+    bool renderClickPhoton = true;                  // Render click to photon box
+    String clickPhotonSide = "right";               // "right" for right side, otherwise left
 
 	ExperimentConfig() {}
 	
@@ -578,6 +581,9 @@ public:
 			reader.getIfPresent("renderDecals", renderDecals);
             reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
             reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
+            reader.getIfPresent("weaponStatusSide", weaponStatusSide);
+            reader.getIfPresent("renderClickPhoton", renderClickPhoton);
+            reader.getIfPresent("clickPhotonSide", clickPhotonSide);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);
