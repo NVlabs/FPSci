@@ -65,7 +65,7 @@ void App::onInit() {
 	m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
 	if (startupConfig.playMode) {
-		m_fireSound = Sound::create(System::findDataFile(experimentConfig.fireSound));
+		m_fireSound = Sound::create(System::findDataFile(experimentConfig.weapon.fireSound));
 		m_explosionSound = Sound::create(System::findDataFile("sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav"));
 	}
 
@@ -123,7 +123,7 @@ void App::printUserStatusTableToLog(UserStatusTable table) {
 
 void App::printExpConfigToLog(ExperimentConfig config) {
 	logPrintf("-------------------\nExperiment Config\n-------------------\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-		config.taskType, config.appendingDescription, config.sceneName, config.feedbackDuration, config.readyDuration, config.taskDuration, config.maxClicks);
+		config.taskType, config.appendingDescription, config.sceneName, config.feedbackDuration, config.readyDuration, config.taskDuration, config.weapon.maxAmmo);
 	// Iterate through sessions and print them
 	for (int i = 0; i < config.sessions.size(); i++) {
 		SessionConfig sess = config.sessions[i];
@@ -385,16 +385,16 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 }
 
 void App::loadModels() {
-	const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
-		filename = "model/sniper/sniper.obj";
-		preprocess = {
-			transformGeometry(all(), Matrix4::yawDegrees(90));
-			transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
-		};
-		scale = 0.25;
-	});
+	//const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
+	//	filename = "model/sniper/sniper.obj";
+	//	preprocess = {
+	//		transformGeometry(all(), Matrix4::yawDegrees(90));
+	//		transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
+	//	};
+	//	scale = 0.25;
+	//});
 
-	m_viewModel = ArticulatedModel::create(modelSpec, "viewModel");
+	m_viewModel = ArticulatedModel::create(experimentConfig.weapon.modelSpec, "viewModel");
 
 	const static Any laserSpec = PARSE_ANY(ArticulatedModel::Specification{
 		filename = "ifs/d10.ifs";
@@ -468,8 +468,8 @@ void App::makeGUI() {
 	const float SLIDER_SPACING = 35;
 	debugPane->beginRow(); {
 		debugPane->addCheckBox("Hitscan", &m_hitScan);
-		debugPane->addCheckBox("Show Laser", &m_renderHitscan);
-		debugPane->addCheckBox("Weapon", &m_renderViewModel);
+		debugPane->addCheckBox("Show Laser", &experimentConfig.weapon.renderBullets);
+		debugPane->addCheckBox("Weapon", &experimentConfig.weapon.renderModel);
 		debugPane->addCheckBox("HUD", &m_renderHud);
 		debugPane->addCheckBox("FPS", &m_renderFPS);
 		debugPane->addCheckBox("Turbo", &m_emergencyTurbo);
@@ -492,7 +492,7 @@ void App::makeGUI() {
 
 			c = debugPane->addNumberBox("Input Lag", &frames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->setEnabled(false); c->moveBy(SLIDER_SPACING, 0);
 			c = debugPane->addNumberBox("Display Lag", &m_displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->moveBy(SLIDER_SPACING, 0);
-			debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles - 1, 1)->moveBy(SLIDER_SPACING, 0);
+			debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles, 1)->moveBy(SLIDER_SPACING, 0);
 			debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(SLIDER_SPACING, 0);
 	} debugPane->endRow();
 
@@ -1041,12 +1041,12 @@ bool App::fire(bool destroyImmediately) {
 			aimPoint = ray.origin() + ray.direction() * closest;
 			float damage;
 			if (destroyImmediately) damage = m_targetHealth;
-			else if (experimentConfig.firePeriod == 0.0f && hitTarget) {		// Check if we are in "laser" mode hit the target last time
+			else if (experimentConfig.weapon.firePeriod == 0.0f && hitTarget) {		// Check if we are in "laser" mode hit the target last time
 				float dt = static_cast<float>(System::time() - lastTime);
-				damage = experimentConfig.damagePerSecond * dt;
+				damage = experimentConfig.weapon.damagePerSecond * dt;
 			}
 			else {																// If we're not in "laser" mode then damage/shot is just damage/second * second/shot
-				damage = experimentConfig.damagePerSecond * experimentConfig.firePeriod;
+				damage = experimentConfig.weapon.damagePerSecond * experimentConfig.weapon.firePeriod;
 			}
 			lastTime = System::time();
 			hitTarget = true;
@@ -1091,7 +1091,7 @@ bool App::fire(bool destroyImmediately) {
 	}
 
 	// Create the laser
-	if (m_renderHitscan) {
+	if (experimentConfig.weapon.renderBullets) {
 		CFrame laserStartFrame = m_weaponFrame;
 		laserStartFrame.translation += laserStartFrame.upVector() * 0.1f;
 
@@ -1117,18 +1117,22 @@ bool App::fire(bool destroyImmediately) {
 			m_explosionSound->play(10.0f);
 			//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
 		}
-		else if(experimentConfig.firePeriod > 0.0f || !experimentConfig.autoFire) {
+		else if(experimentConfig.weapon.firePeriod > 0.0f || !experimentConfig.weapon.autoFire) {
 			m_fireSound->play(0.5f);
 			//m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 0.5f);
 		}
 	}
 
-	if (experimentConfig.renderDecals && experimentConfig.firePeriod > 0.0f && !hitTarget) {
+	if (experimentConfig.weapon.renderDecals && experimentConfig.weapon.firePeriod > 0.0f && !hitTarget) {
 		// compute world intersection
 		const Ray& ray = m_debugCamera->frame().lookRay();
 		Model::HitInfo info;
 		float closest = finf();
-		scene()->intersect(ray, closest, false, {m_explosion, m_lastDecal, m_firstDecal}, info);
+		Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
+		for (auto projectile : projectileArray) {
+			dontHit.append(projectile.entity);
+		}
+		scene()->intersect(ray, closest, false, dontHit, info);
 
 		// Find where to put the decal
 		CFrame decalFrame = m_debugCamera->frame();
@@ -1168,7 +1172,7 @@ void App::onUserInput(UserInput* ui) {
 	// Require release between clicks for non-autoFire modes
 	if (ui->keyReleased(GKey::LEFT_MOUSE)) {
 		m_buttonUp = true;
-		if (!experimentConfig.autoFire) {
+		if (!experimentConfig.weapon.autoFire) {
 			haveReleased = true;
 			fired = false;
 		}
@@ -1176,7 +1180,7 @@ void App::onUserInput(UserInput* ui) {
 
 	// Handle the mouse down events
 	if (ui->keyDown(GKey::LEFT_MOUSE)) {
-		if (experimentConfig.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
+		if (experimentConfig.weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
 			// check for hit, add graphics, update target state
 			if (m_presentationState == PresentationState::task) {
 				if (ex->responseReady()) {
@@ -1237,7 +1241,7 @@ void App::destroyTarget(int index) {
 void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {
 	GApp::onPose(surface, surface2D);
 
-	if (m_renderViewModel) {
+	if (experimentConfig.weapon.renderModel) {
 		const float yScale = -0.12f;
 		const float zScale = -yScale * 0.5f;
 		const float lookY = m_debugCamera->frame().lookVector().y;
@@ -1304,8 +1308,13 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 }
 
 void App::setReticle(int r) {
-	m_lastReticleLoaded = m_reticleIndex = clamp(0, r, numReticles - 1);
-	m_reticleTexture = Texture::fromFile(System::findDataFile("gui/reticle.png"));
+	m_lastReticleLoaded = m_reticleIndex = clamp(0, r, numReticles);
+	if (r < numReticles) {
+		m_reticleTexture = Texture::fromFile(System::findDataFile(format("gui/reticle/reticle-%03d.png", m_reticleIndex)));
+	}
+	else {
+		m_reticleTexture = Texture::fromFile(System::findDataFile("gui/reticle.png"));
+	}
 }
 
 void App::setSceneBrightness(float b) {

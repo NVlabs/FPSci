@@ -171,7 +171,7 @@ void TargetExperiment::updatePresentationState()
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_config.taskDuration) || (m_app->m_targetHealth <= 0) || (m_clickCount == m_config.maxClicks))
+		if ((stateElapsedTime > m_config.taskDuration) || (m_app->m_targetHealth <= 0) || (m_clickCount == m_config.weapon.maxAmmo))
 		{
 			m_taskEndTime = Logger::genUniqueTimestamp();
 			processResponse();
@@ -203,7 +203,7 @@ void TargetExperiment::updatePresentationState()
 				newState = PresentationState::ready;
 
 				// update weapon strength // TODO: Is this appropriate to be here? (Not in onInit because we want to update when user changes session)
-				if (m_config.autoFire) {
+				if (m_config.weapon.autoFire) {
 					String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
 					// this means a tracking weapon
 					m_app->m_weaponStrength = 1 / m_config.getSessionConfigById(sess)->frameRate; // TODO: Hard-coding to 1 sec for destroyal, needs parametrization
@@ -377,7 +377,7 @@ void TargetExperiment::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 
 bool TargetExperiment::responseReady() {
 	double timeNow = System::time();
-	if ((timeNow - m_lastFireAt) > (m_config.firePeriod)) {
+	if ((timeNow - m_lastFireAt) > (m_config.weapon.firePeriod)) {
 		m_lastFireAt = timeNow;
 		return true;
 	}
@@ -387,6 +387,6 @@ bool TargetExperiment::responseReady() {
 }
 
 double TargetExperiment::weaponCooldownPercent() {
-	if (m_config.firePeriod == 0.0f) return 1.0;
-	return min((System::time() - m_lastFireAt) / m_config.firePeriod, 1.0);
+	if (m_config.weapon.firePeriod == 0.0f) return 1.0;
+	return min((System::time() - m_lastFireAt) / m_config.weapon.firePeriod, 1.0);
 }

@@ -94,12 +94,12 @@ protected:
 
 	/** Used to detect GUI changes to m_reticleIndex */
 	int                             m_lastReticleLoaded = -1;
-	int                             m_reticleIndex = 41;
+	int                             m_reticleIndex = numReticles;
 	float                           m_sceneBrightness = 1.0f;
-	bool                            m_renderViewModel = false;
+	//bool                            m_renderViewModel = false;
 	//bool                            m_renderHud = false;
 	bool                            m_renderFPS = false;
-	bool                            m_renderHitscan = false;
+	//bool                            m_renderHitscan = false;
     GuiPane*                        m_currentUserPane;
 
 	// Drop down selection writebacks
@@ -174,7 +174,7 @@ public:
 
 	/** Increment the current reticle index */
 	void nextReticle() {
-		setReticle((m_reticleIndex + 1) % numReticles);
+		setReticle((m_reticleIndex + 1) % (numReticles+1));
 	}
 
     /** Creates a random target with motion based on parameters 

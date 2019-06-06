@@ -422,6 +422,67 @@ public:
 	}
 };
 
+class WeaponConfig {
+public:
+	String id = "default";									// Id by which to refer to this weapon
+	int maxAmmo = 10000;									// Max ammo (clicks) allowed per trial (set large for laser mode)
+	float firePeriod = 0.5;									// Minimum fire period (set to 0 for laser mode)
+	bool autoFire = false;									// Fire repeatedly when mouse is held? (set true for laser mode)
+	float damagePerSecond = 2.0f;							// Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
+	String fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	// Sound to play on fire
+	bool renderModel = false;								// Render a model for the weapon?
+	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			// Basic model spec
+		filename = "model/sniper/sniper.obj";
+		preprocess = {
+			transformGeometry(all(), Matrix4::yawDegrees(90));
+			transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
+		};
+		scale = 0.25;
+		});
+	bool renderMuzzleFlash = false;							// Render a muzzle flash when the weapon fires?
+	bool renderDecals = true;								// Render decals when the shots miss?
+	bool renderBullets = false;								// Render bullets leaving the weapon
+	//String missDecal = "bullet-decal-256x256.png";			// The decal to place where the shot misses
+	float fireSpread = 0;									// The spread of the fire
+	float damageRollOffAim = 0;								// Damage roll off w/ aim
+	float damageRollOffDistance = 0;						// Damage roll of w/ distance
+	//String reticleImage;									// Reticle image to show for this weapon
+
+	WeaponConfig() {}
+
+	WeaponConfig(const Any& any) {
+		int settingsVersion = 1;
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("id", id);
+			reader.getIfPresent("maxAmmo", maxAmmo);
+			reader.getIfPresent("firePeriod", firePeriod);
+			reader.getIfPresent("autoFire", autoFire);
+			reader.getIfPresent("damagePerSecond", damagePerSecond);
+			reader.getIfPresent("fireSound", fireSound);
+			reader.getIfPresent("renderModel", renderModel);
+
+			reader.getIfPresent("modelSpec", modelSpec);
+			//model = ArticulatedModel::create(modelSpec, "viewModel");
+			
+			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
+			reader.getIfPresent("renderDecals", renderDecals);
+			reader.getIfPresent("renderBullets", renderBullets);
+			//reader.getIfPresent("missDecal", missDecal);
+			reader.getIfPresent("fireSpread", fireSpread);
+			reader.getIfPresent("damageRollOffAim", damageRollOffAim);
+			reader.getIfPresent("damageRollOffDistance", damageRollOffDistance);
+			//reader.getIfPresent("recticleImage", reticleImage);
+		default:
+			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
+			break;
+		}
+	}
+};
+
 class TargetConfig {
 public:
 	String id;												// Trial ID to indentify affiliated trial runs
@@ -437,6 +498,7 @@ public:
 	Array<float> jumpSpeed = { 2.0f, 5.5f };
 	Array<float> accelGravity = { 9.8f, 9.8f };
 	//Array<Vector3> path;		// Unused, to dictate a motion path...
+	//String explosionSound;	// TODO: Add target explosion sound string here and use it for m_explosionSound
 
 	TargetConfig() {}
 
@@ -524,8 +586,6 @@ public:
 		}
 		//reader.verifyDone();
 	}
-
-
 };
 
 class ExperimentConfig {
@@ -537,19 +597,12 @@ public:
 	float feedbackDuration = 1.0f;
 	float readyDuration = 0.5f;
 	float taskDuration = 100000.0f;
-	// Weapon parameters
-	int maxClicks = 10000;							// Maximum number of clicks to allow in a trial
-	float firePeriod = 0.5;							// Minimum fire period (in seconds)
-	bool autoFire = false;							// Set automatic (rather than semi-automatic) firing
-	float damagePerSecond = 1.0f;					// Damage per second
-	String fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav";		// Sound to play when the weapon fires
-
+	WeaponConfig weapon;
+	
 	Array<SessionConfig> sessions;					// Array of sessions
 	String sessionOrder = "random";					// Order in which to run sessions?
 	Array<TargetConfig> targets;					// Array of trial configs
 	Array<ReactionConfig> reactions;				// Array of reaction configs
-	bool renderDecals = true;						// If bullet decals are on
-	bool renderMuzzleFlash = false;					// Muzzle flash
     bool renderWeaponStatus = true;                 // Display weapon cooldown
     String weaponStatusSide = "left";               // "right" for right side, otherwise left
     bool renderClickPhoton = true;                  // Render click to photon box
@@ -573,13 +626,7 @@ public:
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
-			reader.getIfPresent("maxClicks", maxClicks);
-			reader.getIfPresent("firePeriod", firePeriod);
-			reader.getIfPresent("autoFire", autoFire);
-			reader.getIfPresent("damagePerSecond", damagePerSecond);
-			reader.getIfPresent("fireSound", fireSound);
-			reader.getIfPresent("renderDecals", renderDecals);
-            reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
+			reader.getIfPresent("weapon", weapon);
             reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
             reader.getIfPresent("weaponStatusSide", weaponStatusSide);
             reader.getIfPresent("renderClickPhoton", renderClickPhoton);
