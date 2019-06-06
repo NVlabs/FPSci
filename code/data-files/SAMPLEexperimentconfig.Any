@@ -12,10 +12,13 @@
   "readyDuration": 0.25, // Time allocated for preparing for trial
   "taskDuration": 6.0, // Maximum duration allowed for completion of the task
   
-  "maxClicks": 12, // Maximum number of clicks to allow per trial
-  "firePeriod": 0.5, // Maximum rate of fire (in Hz) to allow during the experiment
-  "autoFire": false,  // Whether the weapon fires automatically when the left mouse is held down
-  
+  // Basic weapon configuration
+  "weapon": {
+    "maxAmmo": 12, // Maximum number of clicks to allow per trial
+    "firePeriod": 0.5, // Maximum rate of fire (in Hz) to allow during the experiment
+    "autoFire": false, // Whether the weapon fires automatically when the left mouse is held down
+  },
+
   "sessionOrder": "random", // Session ordering, can be "Random", "Serial"
 
   // Create a sessions table containing information related to sessions
