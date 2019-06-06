@@ -1355,14 +1355,14 @@ void App::oneFrame() {
 
             // Learn how much onWait appears to overshoot by and compensate
             double thisOverWait = actualWaitTime - desiredWaitTime;
-            //if (abs(thisOverWait - m_lastFrameOverWait) / max(abs(m_lastFrameOverWait), abs(thisOverWait)) > 0.4) {
-            //    // Abruptly change our estimate
-            //    m_lastFrameOverWait = thisOverWait;
-            //}
-            //else {
+            if (G3D::abs(thisOverWait - m_lastFrameOverWait) / max(G3D::abs(m_lastFrameOverWait), G3D::abs(thisOverWait)) > 0.4) {
+                // Abruptly change our estimate
+                m_lastFrameOverWait = thisOverWait;
+            }
+            else {
                 // Smoothly change our estimate
-            m_lastFrameOverWait = lerp(m_lastFrameOverWait, thisOverWait, 0.1);
-            //}
+                m_lastFrameOverWait = lerp(m_lastFrameOverWait, thisOverWait, 0.1);
+            }
         }  m_waitWatch.tock();
         END_PROFILER_EVENT();
     }
@@ -1470,14 +1470,14 @@ void App::oneFrame() {
 
             // Learn how much onWait appears to overshoot by and compensate
             double thisOverWait = actualWaitTime - desiredWaitTime;
-            //if (abs(thisOverWait - m_lastFrameOverWait) / max(abs(m_lastFrameOverWait), abs(thisOverWait)) > 0.4) {
-            //    // Abruptly change our estimate
-            //    m_lastFrameOverWait = thisOverWait;
-            //}
-            //else {
+            if (G3D::abs(thisOverWait - m_lastFrameOverWait) / max(G3D::abs(m_lastFrameOverWait), G3D::abs(thisOverWait)) > 0.4) {
+                // Abruptly change our estimate
+                m_lastFrameOverWait = thisOverWait;
+            }
+            else {
                 // Smoothly change our estimate
-            m_lastFrameOverWait = lerp(m_lastFrameOverWait, thisOverWait, 0.1);
-            //}
+                m_lastFrameOverWait = lerp(m_lastFrameOverWait, thisOverWait, 0.1);
+            }
         }  m_waitWatch.tock();
         END_PROFILER_EVENT();
     }
