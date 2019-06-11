@@ -9,15 +9,15 @@ protected:
 	sqlite3* m_db = nullptr;
 public:
 	Logger() : m_db(nullptr) {}
-	void recordTrialResponse(std::vector<std::string> values);
+	void recordTrialResponse(Array<String> values);
 	void closeResultsFile(void);
-	static std::string genUniqueTimestamp();
-	static std::string genFileTimestamp();
-	virtual void addConditions(std::vector<SingleThresholdMeasurement> measurements) {};
+	static String genUniqueTimestamp();
+	static String genFileTimestamp();
+	virtual void addConditions(Array<SingleThresholdMeasurement> measurements) {};
 	virtual void createResultsFile(String filename, String subjectID) {};
-	virtual	void recordTargetTrajectory(std::vector<std::vector<std::string>> trajectory) {};
-	virtual void recordPlayerActions(std::vector<std::vector<std::string>> actions) {};
-	virtual void recordFrameInfo(std::vector<std::vector<std::string>> info) {};
+	virtual	void recordTargetTrajectory(Array<Array<String>> trajectory) {};
+	virtual void recordPlayerActions(Array<Array<String>> actions) {};
+	virtual void recordFrameInfo(Array<Array<String>> info) {};
 };
 
 class TargetLogger : public Logger
@@ -28,11 +28,11 @@ public:
 	static shared_ptr<TargetLogger> create() {
 		return createShared<TargetLogger>();
 	}
-	void addConditions(std::vector<SingleThresholdMeasurement> measurements);
+	void addConditions(Array<SingleThresholdMeasurement> measurements);
 	void createResultsFile(String filename, String subjectID);
-	void recordTargetTrajectory(std::vector<std::vector<std::string>> trajectory);
-	void recordPlayerActions(std::vector<std::vector<std::string>> actions);
-	void recordFrameInfo(std::vector<std::vector<std::string>> info);
+	void recordTargetTrajectory(Array<Array<String>> trajectory);
+	void recordPlayerActions(Array<Array<String>> actions);
+	void recordFrameInfo(Array<Array<String>> info);
 };
 
 class ReactionLogger : public Logger
@@ -43,8 +43,9 @@ public:
 	static shared_ptr<ReactionLogger> create() {
 		return createShared<ReactionLogger>();
 	}
-	void addConditions(std::vector<SingleThresholdMeasurement> measurements);
+	void addConditions(Array<SingleThresholdMeasurement> measurements);
 	void createResultsFile(String filename, String subjectID);
-	void recordTargetTracjetory(std::vector<std::vector<std::string>> trajectory) {};
-	void recordPlayerActions(std::vector<std::vector<std::string>> trajectory) {};
+	void recordTargetTrajectory(Array<Array<String>> trajectory) {};
+	void recordPlayerActions(Array<Array<String>> actions) {};
+	void recordFrameInfo(Array<Array<String>> info) {};
 };

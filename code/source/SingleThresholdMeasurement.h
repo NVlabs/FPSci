@@ -93,6 +93,8 @@ public:
 	*/
 	SingleThresholdMeasurement(Param initConditionParam, PsychophysicsDesignParameter initExpParam);
 
+	SingleThresholdMeasurement(){};
+
 	/** Get current level
 	*/
 	float getCurrentLevel();

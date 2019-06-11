@@ -219,13 +219,13 @@ void ReactionExperiment::recordTrialResponse()
 {
 	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
 
-	std::vector<std::string> trialValues = {
-		std::to_string(m_psych.mCurrentConditionIndex),
-		addQuotes(sess.c_str()),
-		addQuotes(m_config.getSessionConfigById(sess)->expMode.c_str()),
-		addQuotes(m_taskStartTime),
-		addQuotes(m_taskEndTime),
-		std::to_string(m_taskExecutionTime),
+	Array<String> trialValues = {
+		String(m_psych.mCurrentConditionIndex),
+		"'"+ sess +"'",
+		"'" + m_config.getSessionConfigById(sess)->expMode + "'",
+		"'" + m_taskStartTime + "'",
+		"'" + (m_taskEndTime) + "'",
+		String(std::to_string(m_taskExecutionTime)),
 	};
 	m_app->logger->recordTrialResponse(trialValues);
 }

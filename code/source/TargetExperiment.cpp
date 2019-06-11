@@ -302,14 +302,14 @@ void TargetExperiment::recordTrialResponse()
 	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
 
 	// Trials table. Record trial start time, end time, and task completion time.
-	std::vector<std::string> trialValues = {
-		std::to_string(m_psych.mCurrentConditionIndex),
-		addQuotes(sess.c_str()),
-		addQuotes(m_config.getSessionConfigById(sess)->expMode.c_str()),
-		addQuotes(m_taskStartTime),
-		addQuotes(m_taskEndTime),
-		std::to_string(m_taskExecutionTime),
-		std::to_string(m_response)
+	Array<String> trialValues = {
+		String(m_psych.mCurrentConditionIndex),
+		"'" + sess + "'",
+		"'" + m_config.getSessionConfigById(sess)->expMode + "'",
+		"'" + m_taskStartTime + "'",
+		"'" + m_taskEndTime + "'",
+		String(std::to_string(m_taskExecutionTime)),
+		String(std::to_string(m_response))
 	};
 	m_app->logger->recordTrialResponse(trialValues);
 
@@ -338,12 +338,11 @@ void TargetExperiment::accumulateTrajectories()
 	//float az = atan2(-t.z, -t.x) * 180 / pif();
 	//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
 
-	std::vector<std::string> targetTrajectoryValues = {
-		//std::to_string(System::time()),
-		addQuotes(Logger::genUniqueTimestamp()),
-		std::to_string(targetPosition.x),
-		std::to_string(targetPosition.y),
-		std::to_string(targetPosition.z),
+	Array<String> targetTrajectoryValues = {
+		"'" + Logger::genUniqueTimestamp() + "'",
+		String(std::to_string(targetPosition.x)),
+		String(std::to_string(targetPosition.y)),
+		String(std::to_string(targetPosition.z)),
 	};
 	m_targetTrajectory.push_back(targetTrajectoryValues);
 
@@ -356,21 +355,21 @@ void TargetExperiment::accumulatePlayerAction(String action)
     BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 	// recording target trajectories
 	Point2 dir = m_app->getViewDirection();
-	std::vector<std::string> playerActionValues = {
-		addQuotes(Logger::genUniqueTimestamp()),
-		format("'%s'",action.c_str()).c_str(),
-		std::to_string(dir.x),
-		std::to_string(dir.y),
+	Array<String> playerActionValues = {
+		"'" + Logger::genUniqueTimestamp() + "'",
+		"'" + action + "'",
+		String(std::to_string(dir.x)),
+		String(std::to_string(dir.y)),
 	};
 	m_playerActions.push_back(playerActionValues);
     END_PROFILER_EVENT();
 }
 
 void TargetExperiment::accumulateFrameInfo(RealTime t, float sdt, float idt) {
-	std::vector<std::string> frameValues = {
-		addQuotes(Logger::genUniqueTimestamp()),
-		std::to_string(idt),
-		std::to_string(sdt)
+	Array<String> frameValues = {
+		"'" + Logger::genUniqueTimestamp() + "'",
+		String(std::to_string(idt)),
+		String(std::to_string(sdt))
 	};
 	m_frameInfo.push_back(frameValues);
 }

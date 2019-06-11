@@ -13,9 +13,9 @@ protected:
 	double m_lastMotionChangeAt;
 	double m_scoreboardDuration = 10.0; // show the score for at least this amount of seconds.
 	
-	std::vector<std::vector<std::string>> m_playerActions;
-	std::vector<std::vector<std::string>> m_targetTrajectory;
-	std::vector<std::vector<std::string>> m_frameInfo;
+	Array<Array<String>> m_playerActions;
+	Array<Array<String>> m_targetTrajectory;
+	Array<Array<String>> m_frameInfo;
 
 	double m_lastFireAt = 0.f;
 
@@ -32,7 +32,7 @@ public:
 
 	static shared_ptr<TargetExperiment> create_empty(App* app) {
 		shared_ptr<TargetExperiment> texp = create(app);
-		texp->m_psych.mMeasurements = {};
+		texp->m_psych.mMeasurements = Array<SingleThresholdMeasurement>();
 	}
 
 	/**creates a new target with randomized motion path and gives it to the app */

@@ -73,7 +73,7 @@ public:
 	/** Reset the experiment state*/
 	//void clear();
 
-	std::vector<SingleThresholdMeasurement> mMeasurements;
+	Array<SingleThresholdMeasurement> mMeasurements;
 	int32_t mCurrentConditionIndex = 0;
 	int32_t mTrialCount = 0;
 
@@ -90,8 +90,8 @@ class Experiment : public ReferenceCountedObject {
 //class Experiment {
 protected:
 	double m_taskExecutionTime;
-	std::string m_taskStartTime;
-	std::string m_taskEndTime;
+	String m_taskStartTime;
+	String m_taskEndTime;
 	int m_response;
 	int m_clickCount = 0;
 	bool m_hasSession;
