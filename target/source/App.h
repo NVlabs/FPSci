@@ -15,20 +15,6 @@
 #include "Logger.h"
 #include <chrono>
 
-// TODO: This has to be replaced with G3D timer.
-class Timer
-{
-public:
-	std::chrono::steady_clock::time_point startTime;
-	void startTimer() { startTime = std::chrono::steady_clock::now(); };
-	float getTime()
-	{
-		auto now = std::chrono::steady_clock::now();
-		int t = std::chrono::duration_cast<std::chrono::duration<int, std::milli>>(now - startTime).count();
-		return ((float)t) / 1000.0f;
-	};
-};
-
 class FlyingEntity;
 class JumpingEntity;
 
@@ -154,9 +140,6 @@ public:
 	UserTable						userTable;					// Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;			// Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;			// Configuration for the experiment and its sessions
-
-	//TODO: Remove it when we are using G3D timer
-	Timer timer;
 
 	/** Pointer to Experiment class */
 	shared_ptr<Experiment> ex;
