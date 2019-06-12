@@ -210,7 +210,7 @@ void Experiment::initTargetAnimation() {
 
 void Experiment::processResponse()
 {
-	m_taskExecutionTime = m_app->timer.getTime();
+	m_taskExecutionTime = timer.getTime();
 	m_response = (m_app->m_targetHealth <= 0) ? 1 : 0; // 1 means success, 0 means failure.
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 	m_psych.processResponse(m_response); // process response.
@@ -233,7 +233,7 @@ void Experiment::updatePresentationState()
 	// This updates presentation state and also deals with data collection when each trial ends.
 	PresentationState currentState = m_app->m_presentationState;
 	PresentationState newState;
-	float stateElapsedTime = m_app->timer.getTime();
+	float stateElapsedTime = timer.getTime();
 
 	newState = currentState;
 
@@ -325,7 +325,7 @@ void Experiment::updatePresentationState()
 
 	if (currentState != newState)
 	{ // handle state transition.
-		m_app->timer.startTimer();
+		timer.startTimer();
 		if (newState == PresentationState::task) {
 			m_taskStartTime = Logger::genUniqueTimestamp();
 		}

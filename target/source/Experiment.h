@@ -35,6 +35,21 @@
 
 class App;
 
+
+// Simple timer for measuring time offsets
+class Timer
+{
+public:
+	std::chrono::steady_clock::time_point startTime;
+	void startTimer() { startTime = std::chrono::steady_clock::now(); };
+	float getTime()
+	{
+		auto now = std::chrono::steady_clock::now();
+		int t = std::chrono::duration_cast<std::chrono::duration<int, std::milli>>(now - startTime).count();
+		return ((float)t) / 1000.0f;
+	};
+};
+
 /** A class representing a psychophysical experiment
 */
 class PsychHelper
@@ -50,34 +65,24 @@ public:
 
 	/** Add condition
 		\param[in] newConditionParam New condition
-		\param[in] newExpParam New experiment design parameter
-	*/
+		\param[in] newExpParam New experiment design parameter */
 	void addCondition(Param newConditionParam, PsychophysicsDesignParameter newExpParam);
-
 	/** Pick next condition*/
 	void chooseNextCondition();
-
 	/** Get current condtion parameter*/
 	Param getParam();
-
 	/** Get stimulus level for current trial*/
 	float getStimLevel();
-
 	/** Process user response and record it in the result file.
-		\param[in] response Integer indicating user response
-	*/
+		\param[in] response Integer indicating user response */
 	void processResponse(int32_t response);
-
 	/** Check whether experiment is complete*/
 	bool isComplete();
-
 	/** Reset the experiment state*/
 	//void clear();
-
 	Array<SingleThresholdMeasurement> mMeasurements;
 	int32_t mCurrentConditionIndex = 0;
 	int32_t mTrialCount = 0;
-
 	/** Description of an experiment: Any information that could be useful
 		in future, in case an experiment grows while piloting or when
 		between-experiment analysis becomes necessary later.
@@ -107,7 +112,8 @@ protected:
 	Array<Array<String>> m_frameInfo;
 
 	String m_feedbackMessage;
-	Stopwatch stopwatch;
+	Timer timer;
+	//Stopwatch stopwatch;			// Could move timer above to stopwatch in future
 
 	Experiment(App* app) : m_app(app) {
 		// secure vector capacity large enough so as to avoid memory allocation time.
@@ -126,9 +132,11 @@ public:
 		texp->m_psych.mMeasurements = Array<SingleThresholdMeasurement>();
 	}
 
-	/**creates a new target with randomized motion path and gives it to the app */
+	/** creates a new target with randomized motion path and gives it to the app */
 	void initTargetAnimation();
+	/** gets the current weapon cooldown as a ratio **/
 	double weaponCooldownPercent();
+	/** randomly returns either +1 or -1 **/
 	float randSign();
 	void updatePresentationState();
 	void onInit();
