@@ -20,3 +20,17 @@ newGfx/data-files/log.txt
 code/scripts/configs/*.Any
 results/
 *.pyc
+reaction/.vs
+reaction/x64
+reaction/data-files/debugging_db.db
+reaction/data-files/g3d-license.txt
+reaction/data-files/log.txt
+reaction/data-files/*.db
+reaction/data-files/*.csv
+reaction/data-files/*.pdn
+reaction/data-files/result_data
+reaction/data-files/experimentconfig.Any
+reaction/data-files/userconfig.Any
+reaction/data-files/systemconfig.Any
+reaction/data-files/startupconfig.Any
+reaction/data-files/userstatus.Any
