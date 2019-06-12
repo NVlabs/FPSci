@@ -1,0 +1,11 @@
+{ 
+    currentUser = "User"; 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            id = "User"; 
+            settingsVersion = 1; 
+        }
+    ); 
+    
+} 
