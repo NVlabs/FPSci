@@ -1,0 +1,228 @@
+
+/* -*- c++ -*- */
+{ 
+    defaultCamera = "defaultCamera"; 
+    description = ""; 
+    entities = { 
+        building = VisibleEntity { 
+            canCauseCollisions = true; 
+            canChange = false; 
+            castsShadows = false; 
+            mass = 1; 
+            model = "buildingModel"; 
+        }; 
+        
+        defaultCamera = Camera { 
+            canChange = false; 
+            depthOfFieldSettings = DepthOfFieldSettings { 
+                enabled = false; 
+                farBlurRadiusFraction = 0.006; 
+                farBlurryPlaneZ = -33.2498; 
+                farSharpPlaneZ = -7.04668; 
+                focusPlaneZ = -10; 
+                lensRadius = 0.01; 
+                model = "ARTIST"; 
+                nearBlurRadiusFraction = 0.003; 
+                nearBlurryPlaneZ = -0.1; 
+                nearSharpPlaneZ = -3.28801; 
+                reducedResolutionFactor = 1; 
+            }; 
+            
+            filmSettings = FilmSettings { 
+                antialiasingEnabled = true; 
+                antialiasingFilterRadius = 0; 
+                antialiasingHighQuality = true; 
+                bloomRadiusFraction = 0.009; 
+                bloomStrength = 0.5; 
+                debugZoom = 1; 
+                effectsEnabled = true; 
+                gamma = 2.2; 
+                sensitivity = 1; 
+                temporalAntialiasingEnabled = false; 
+                toneCurve = Spline { 
+                    control = ( 0, 0.0787234, 0.306383, 0.75532, 0.92 ); 
+                    extrapolationMode = "LINEAR"; 
+                    finalInterval = -1; 
+                    interpolationMode = "CUBIC"; 
+                    time = ( 0, 0.169565, 0.339131, 0.752174, 1 ); 
+                }; 
+                
+                vignetteBottomStrength = 0.05; 
+                vignetteSizeFraction = 0.17; 
+                vignetteTopStrength = 0.5; 
+            }; 
+            
+            frame = CFrame::fromXYZYPRDegrees(14.622, 5.6226, -4.6979, 40.798, -3.7125, 0 ); 
+            mass = 1; 
+            motionBlurSettings = MotionBlurSettings { 
+                enabled = false; 
+                exposureFraction = 0.75; 
+                maxBlurDiameterFraction = 0.1; 
+                numSamples = 15; 
+            }; 
+            
+            overridePixelOffset = true; 
+            projection = Projection { 
+                farPlaneZ = -150; 
+                fovDegrees = 60; 
+                fovDirection = "VERTICAL"; 
+                nearPlaneZ = -0.1; 
+                pixelOffset = Vector2(0, 0 ); 
+            }; 
+            
+            visualizationScale = 1; 
+        }; 
+        
+        skybox = Skybox { 
+            mass = 1; 
+            texture = Texture::Specification { 
+                encoding = Texture::Encoding { 
+                    readMultiplyFirst = 2; 
+                }; 
+                
+                filename = "cubemap/islands/islands_*.jpg"; 
+            }; 
+            
+        }; 
+        
+        sun = Light { 
+            attenuation = ( 0, 0, 1 ); 
+            bulbPower = Power3(300000, 250000, 200000 ); 
+            canCauseCollisions = true; 
+            canChange = false; 
+            enabled = true; 
+            frame = CFrame::fromXYZYPRDegrees(36.769, 65.375, -7.8418, 88.354, -62.441, 0 ); 
+            mass = 1; 
+            producesDirectIllumination = true; 
+            producesIndirectIllumination = true; 
+            rectangular = true; 
+            shadowMapBias = 0.05; 
+            shadowMapSize = Vector2int16(2048, 2048 ); 
+            shadowsEnabled = true; 
+            spotHalfAngleDegrees = 10; 
+            type = "SPOT"; 
+        }; 
+        
+    }; 
+    
+    lightingEnvironment = LightingEnvironment { 
+        ambientOcclusionSettings = AmbientOcclusionSettings { 
+            bias = 0.0760417; 
+            blurRadius = 2; 
+            blurStepSize = 2; 
+            depthPeelSeparationHint = 0.02; 
+            edgeSharpness = 1; 
+            enabled = true; 
+            highQualityBlur = true; 
+            intensity = 1.20833; 
+            monotonicallyDecreasingBilateralWeights = false; 
+            numSamples = 6; 
+            packBlurKeys = false; 
+            radius = 1.5; 
+            temporalFilterSettings = TemporalFilter::Settings { 
+                falloffEndDistance = 0.07; 
+                falloffStartDistance = 0.05; 
+                hysteresis = 0.98; 
+            }; 
+            
+            temporallyVarySamples = true; 
+            useDepthPeelBuffer = false; 
+            useNormalBuffer = true; 
+            useNormalsInBlur = true; 
+            zStorage = "HALF"; 
+        }; 
+        
+        environmentMap = Texture::Specification { 
+            encoding = Texture::Encoding { 
+                readMultiplyFirst = 0.6; 
+            }; 
+            
+            filename = "cubemap/lostvalley/lostvalley_*.jpg"; 
+        }; 
+        
+    }; 
+    
+    models = { 
+        buildingModel = ArticulatedModel::Specification { 
+            alphaFilter = "BINARY"; 
+            cleanGeometrySettings = CleanGeometrySettings { 
+                allowVertexMerging = true; 
+                forceVertexMerging = true; 
+            }; 
+            
+            filename = "model/bubtny2/bubtny2.pk3/maps/bubtny2.bsp"; 
+            preprocess = { 
+                
+                /* Accents */
+                setMaterial("techallmix_old-LM0", Color3(0.2, 0.5, 0.7 ) ); 
+                setMaterial("cable-LM0", Color3(0.2, 0.5, 0.7 ) ); 
+                setMaterial("walltech-LM0", Color3(0.2, 0.5, 0.7 ) ); 
+                
+                /* Walls */
+                setMaterial("concrete-LM0", Color3(1 ) ); 
+                setMaterial("rstmtl_smllpnls-LM0", Color3(1 ) ); 
+                setMaterial("crete_tekbtm-LM0", Color3(1 ) ); 
+                setMaterial("crete_tekbtm2-LM0", Color3(1 ) ); 
+                setMaterial("met_wall01b-LM0", Color3(1 ) ); 
+                setMaterial("crete_btmold-LM0", Color3(1 ) ); 
+                setMaterial("met_wall01d-LM0", Color3(1 ) ); 
+                setMaterial("crete_symbol-LM0", Color3(1 ) ); 
+                setMaterial("drkrstmtl-LM0", Color3(1 ) ); 
+                
+                /* Trim */
+                setMaterial("e7brnmetal-LM0", Color3(0.2 ) ); 
+                setMaterial("rstmtl-LM0", Color3(0.2 ) ); 
+                setMaterial("trim3_rstmtl-LM0", Color3(0.2 ) ); 
+                setMaterial("trim_drkrstmtl-LM0", Color3(0.2 ) ); 
+                setMaterial("steptop_mtl2-LM0", Color3(0.2 ) ); 
+                setMaterial("boxq3_3b-LM0", Color3(0.2 ) ); 
+                setMaterial("G3D::Texture::white-LM0", Color3(0.2 ) ); 
+                
+                /* Floors */
+                setMaterial("confllrtile2-LM0", Color3(0.15, 0.1, 0.05 ) ); 
+                setMaterial("clangdark-LM0", Color3(0.15, 0.1, 0.05 ) ); 
+                setMaterial("block01a-LM0", Color3(0.15, 0.1, 0.05 ) ); 
+                setMaterial("block01a-LM0", Color3(0.15, 0.1, 0.05 ) ); 
+                setMaterial("stepside_con-LM0", Color3(0.15, 0.1, 0.05 ) ); 
+                setMaterial("clear_ripple1-LM0", Color3(0.15, 0.1, 0.05 ) ); 
+                setMaterial("flr_rstmtlhls-LM0", Color3(0.15, 0.1, 0.05 ) );                 
+                
+                /* Lights */
+                setMaterial("wsupprt1_12-LM0", UniversalMaterial::Specification { 
+                        emissive = Color3(2, 2, 1.5 ); 
+                        lambertian = Color3(0 ); 
+                    } ); 
+                setMaterial("gothic_light3_8K-LM0", UniversalMaterial::Specification { 
+                        emissive = Color3(2, 2, 1.5 ); 
+                        lambertian = Color3(0 ); 
+                    } ); 
+                setMaterial("gothic_light3_5K-LM0", UniversalMaterial::Specification { 
+                        emissive = Color3(2, 2, 1.5 ); 
+                        lambertian = Color3(0 ); 
+                    } ); 
+                setMaterial("ceil1_30-LM0", UniversalMaterial::Specification { 
+                        emissive = Color3(2, 2, 1.5 ); 
+                        lambertian = Color3(0 ); 
+                    } ); 
+                setMaterial("light1red_5000-LM0", UniversalMaterial::Specification { 
+                        emissive = Color3(2, 2, 1.5 ); 
+                        lambertian = Color3(0 ); 
+                    } ); 
+                setMaterial("clangdark_bounce-LM0", UniversalMaterial::Specification { 
+                        emissive = Color3(2, 2, 1.5 ); 
+                        lambertian = Color3(0 ); 
+                    } ); 
+                removeMesh("pjgrate2-LM0"); 
+                removeMesh("fan_grate-LM0"); 
+                removeMesh("fan-LM0"); 
+                mergeAll("ALL", "ALL") }; 
+            
+            scale = 0.5; 
+            stripLightMaps = true; 
+        }; 
+        
+        
+    }; 
+    
+    name = "eSports Medium Courtyard"; 
+} 

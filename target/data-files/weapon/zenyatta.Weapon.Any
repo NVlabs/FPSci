@@ -1,0 +1,16 @@
+{
+    "id": "Zenyatta Orb",
+    // Damage: 48 (59.8 with orb of discord)
+    // Ammo: 20 shots
+    // Reload time: 1.5 seconds
+    // Fire Rate: 2.5 shots per second
+    // Projectile Speed: 80 m/s projectile speed
+    // 3 shots to 1.0 damage = 1 / 3 / 0.4 = 0.8333 dps
+    "maxAmmo": 20, 
+    "firePeriod": 0.4, 
+    // damage per shot is 20-70 across 20-40m falloff range. Health is about 150 on average, so 2 shots is about 1 kill
+    "damagePerSecond": 0.84, 
+    "autoFire": true, // Whether the weapon fires automatically when the left mouse is held down
+    // Not yet implemented
+    "projectileSpeed": 80, 
+}
