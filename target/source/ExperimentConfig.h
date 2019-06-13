@@ -532,10 +532,9 @@ public:
 	float	frameRate = 240.0f;					// Target (goal) frame rate (in Hz)
 	unsigned int frameDelay = 0;				// Integer frame delay (in frames)
 	String  expMode = "training";				// String indicating whether session is training or real
-	String	selectionOrder = "random";			// "Random", "Round Robbin", "In Order"
 	Array<TrialCount> trials;
 
-	SessionConfig() : frameRate(240.0f), frameDelay(0), selectionOrder("random") {}
+	SessionConfig() : frameRate(240.0f), frameDelay(0){}
 
 	SessionConfig(const Any& any) {
 		int settingsVersion = 1;
@@ -547,7 +546,6 @@ public:
 			reader.getIfPresent("id", id);
 			reader.getIfPresent("frameRate", frameRate);
 			reader.getIfPresent("frameDelay", frameDelay);
-			reader.getIfPresent("selectionOrder", selectionOrder);
 			reader.getIfPresent("expMode", expMode);
 			reader.get("trials", trials);
 			break;
@@ -562,7 +560,6 @@ public:
 class ExperimentConfig {
 public:
 	// Task parameters
-	String	taskType = "Target";					// "Reaction" or "Target"
 	String	appendingDescription = "ver0";			// Short text field for description
 	String  sceneName = "eSports Simple Hallway";	// For target experiment
 	float feedbackDuration = 1.0f;
@@ -571,7 +568,6 @@ public:
 	WeaponConfig weapon;
 	
 	Array<SessionConfig> sessions;					// Array of sessions
-	String sessionOrder = "random";					// Order in which to run sessions?
 	Array<TargetConfig> targets;					// Array of trial configs
     bool renderWeaponStatus = true;                 // Display weapon cooldown
     String weaponStatusSide = "left";               // "right" for right side, otherwise left
@@ -587,10 +583,8 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("taskType", taskType);
 			reader.getIfPresent("appendingDescription", appendingDescription);
 			reader.getIfPresent("sceneName", sceneName);
-			reader.getIfPresent("sessionOrder", sessionOrder);
 			reader.get("sessions", sessions);
 			reader.get("targets", targets);
 			reader.getIfPresent("feedbackDuration", feedbackDuration);

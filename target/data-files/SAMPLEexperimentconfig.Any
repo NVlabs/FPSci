@@ -7,7 +7,6 @@
   // General settings for the experiment
   "appendingDescription": "default", // Description of this file
   "sceneName": "eSports Simple Hallway", // Maybe don't need this? Or maybe this ends up belonging to individual trials
-  "taskType": "target", // Task type, can be "target" or "reaction"
   "feedbackDuration": 0.0, // Time allocated for providing user feedback
   "readyDuration": 0.25, // Time allocated for preparing for trial
   "taskDuration": 6.0, // Maximum duration allowed for completion of the task
@@ -19,19 +18,15 @@
     "autoFire": false, // Whether the weapon fires automatically when the left mouse is held down
   },
 
-  "sessionOrder": "random", // Session ordering, can be "Random", "Serial"
-
   // Create a sessions table containing information related to sessions
   // These sessions attempt to have fixed latency with variable frame rate
   // all run the same set of trial conditions
-
   "sessions": [
 
     {
       "id": "s1-training", // Session ID
       "frameDelay": 3, // Session frame delay (in frames)
       "frameRate": 360, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -45,7 +40,6 @@
       "id": "s1-real", // Session ID
       "frameDelay": 3, // Session frame delay (in frames)
       "frameRate": 360, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -59,7 +53,6 @@
       "id": "s2-training", // Session ID
       "frameDelay": 2, // Session frame delay (in frames)
       "frameRate": 240, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -73,7 +66,6 @@
       "id": "s2-real", // Session ID
       "frameDelay": 2, // Session frame delay (in frames)
       "frameRate": 240, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -87,7 +79,6 @@
       "id": "s3-training", // Session ID
       "frameDelay": 1, // Session frame delay (in frames)
       "frameRate": 120, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -101,7 +92,6 @@
       "id": "s3-real", // Session ID
       "frameDelay": 1, // Session frame delay (in frames)
       "frameRate": 120, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -115,7 +105,6 @@
       "id": "s4-training", // Session ID
       "frameDelay": 0, // Session frame delay (in frames)
       "frameRate": 60, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -129,7 +118,6 @@
       "id": "s4-real", // Session ID
       "frameDelay": 0, // Session frame delay (in frames)
       "frameRate": 60, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -143,7 +131,6 @@
       "id": "s5-training", // Session ID
       "frameDelay": 14, // Session frame delay (in frames)
       "frameRate": 360, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -157,7 +144,6 @@
       "id": "s5-real", // Session ID
       "frameDelay": 14, // Session frame delay (in frames)
       "frameRate": 360, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -171,7 +157,6 @@
       "id": "s6-training", // Session ID
       "frameDelay": 9, // Session frame delay (in frames)
       "frameRate": 240, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -185,7 +170,6 @@
       "id": "s6-real", // Session ID
       "frameDelay": 9, // Session frame delay (in frames)
       "frameRate": 240, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -199,7 +183,6 @@
       "id": "s7-training", // Session ID
       "frameDelay": 4, // Session frame delay (in frames)
       "frameRate": 120, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -213,7 +196,6 @@
       "id": "s7-real", // Session ID
       "frameDelay": 4, // Session frame delay (in frames)
       "frameRate": 120, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -227,7 +209,6 @@
       "id": "s8-training", // Session ID
       "frameDelay": 2, // Session frame delay (in frames)
       "frameRate": 60, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -241,7 +222,6 @@
       "id": "s8-real", // Session ID
       "frameDelay": 2, // Session frame delay (in frames)
       "frameRate": 60, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -255,7 +235,6 @@
       "id": "s9-training", // Session ID
       "frameDelay": 25, // Session frame delay (in frames)
       "frameRate": 360, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -269,7 +248,6 @@
       "id": "s9-real", // Session ID
       "frameDelay": 25, // Session frame delay (in frames)
       "frameRate": 360, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -283,7 +261,6 @@
       "id": "s10-training", // Session ID
       "frameDelay": 16, // Session frame delay (in frames)
       "frameRate": 240, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -297,7 +274,6 @@
       "id": "s10-real", // Session ID
       "frameDelay": 16, // Session frame delay (in frames)
       "frameRate": 240, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -311,7 +287,6 @@
       "id": "s11-training", // Session ID
       "frameDelay": 8, // Session frame delay (in frames)
       "frameRate": 120, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -325,7 +300,6 @@
       "id": "s11-real", // Session ID
       "frameDelay": 8, // Session frame delay (in frames)
       "frameRate": 120, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -339,7 +313,6 @@
       "id": "s12-training", // Session ID
       "frameDelay": 4, // Session frame delay (in frames)
       "frameRate": 60, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
@@ -353,7 +326,6 @@
       "id": "s12-real", // Session ID
       "frameDelay": 4, // Session frame delay (in frames)
       "frameRate": 60, // Session frame rate (in frames per second)
-      "selectionOrder": "random", // Selection order for trials within this session
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
         {"id": "static","count": 5},
