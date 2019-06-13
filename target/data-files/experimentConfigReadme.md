@@ -5,7 +5,6 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `settingsVersion` refers to the version of the contents of this file, unless you are aware of changes that need to be made, don't change this number.
 * `appendingDescription` allows the user to annotate these results with a custom string
 * `sceneName` provides the name of the (virtual) scene in which this experiment takes place
-* `taskType` refers to the task at hand (either `target` or `reaction` for now)
 * `feedbackDuration` describes the duration of the feedback window between experiments
 * `readyDuration` sets the time before the start of each trial
 * `taskDuration` sets the maximum time over which the task can occur
@@ -13,9 +12,9 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](./weapon/weaponConfigReadme.md))
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
-    * `FrameDelay` is an (integer) count of frames to delay to control latency
-    * `FrameRate` is the frame rate of the display (constant for a given session)
-    * `SelectionOrder` describes the order of trial selection from the trial set
+    * `frameDelay` is an (integer) count of frames to delay to control latency
+    * `frameRate` is the frame rate of the display (constant for a given session)
+    * `expMode` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
     * `trials` is a list of trials referencing the `trials` table above:
         * `id` is a short name for the trial to affiliate with the `targets` or `reactions` table below
         * `count` provides the number of trials in this session

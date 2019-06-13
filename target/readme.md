@@ -3,6 +3,15 @@ The `abstract-fps` application is a simple FPS-style tool designed to help study
 
 The application implements a simple mouse-controlled view model with a variety of parameters controllable through various `.Any` files (more on this below). The scene, weapon, target size/behavior, and frame rate/latency controls are all available via this interface.
 
+# Organization and Terminology
+Since the `abstract-fps` application was developed for use in scientific studies it adopts somewhat standard experimental terminology from psychophysics for much of its organization. This section describes the various levels of control in the application and provides the terminology by which they will be referred to for the remainder of this documentation.
+
+The `experiment` is the highest level "grouping" of tasks in the application. An experiment is defined by a set of parameters specified in an [`experimentconfig.Any`](./data-files/experimentConfigReadme.md) which include information about included `sessions`, as well as more general scene, weapon, and timing configurations.
+
+A `session` is the next level of task grouping in the application. A session consists of frame-based information (control over `frameDelay` and `frameRate` parameters) as well as list of `trails` along with their counts.
+
+A `trial` is the lowest level grouping of task in the application. From a user-perspective the trial represents a single target being spawned, traveling, and either being shot or missed within a given time period. In specifying trials the developer enters trial groups, which are sets of trials specified using a trial type id and count for one or multiple trial types.
+
 # Parameter Files
 As mentioned above a variety of `.Any` files (similar to JSON file format) are used to control the behavior of the application. These files are as follows:
 
