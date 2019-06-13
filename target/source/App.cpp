@@ -115,13 +115,13 @@ void App::printUserStatusTableToLog(UserStatusTable table) {
 }
 
 void App::printExpConfigToLog(ExperimentConfig config) {
-	logPrintf("-------------------\nExperiment Config\n-------------------\nTask Type = %s\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-		config.taskType, config.appendingDescription, config.sceneName, config.feedbackDuration, config.readyDuration, config.taskDuration, config.weapon.maxAmmo);
+	logPrintf("-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
+		config.appendingDescription, config.sceneName, config.feedbackDuration, config.readyDuration, config.taskDuration, config.weapon.maxAmmo);
 	// Iterate through sessions and print them
 	for (int i = 0; i < config.sessions.size(); i++) {
 		SessionConfig sess = config.sessions[i];
-		logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n\tSelection Order = %s\n",
-			sess.id, sess.frameRate, sess.frameDelay, sess.selectionOrder);
+		logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n",
+			sess.id, sess.frameRate, sess.frameDelay);
 		// Now iterate through each run
 		for (int j = 0; j < sess.trials.size(); j++) {
 			logPrintf("\t\tTrial Run Config: ID = %s, Count = %d\n",
@@ -529,8 +529,6 @@ void App::updateUser(void){
 		// This creates a new results file...
 		if(m_sessDropDown->numElements() > 0) updateSession(updateSessionDropDown()[0]);
 		String id = getDropDownUserId();
-		//String filename = "../results/" + experimentConfig.taskType + "_" + id + "_" + String(Logger::genFileTimestamp()) + ".db";
-		//logger->createResultsFile(filename, id);
 		m_lastSeenUser = m_ddCurrentUser;
 
         userTable.currentUser = id;
@@ -652,7 +650,7 @@ void App::updateSession(String id) {
 
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::load();
-	m_logName = "../results/" + experimentConfig.taskType + "_" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
+	m_logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
 	if (sysConfig.hasLogger) {
 		// Handle running logger if we need to (terminate then merge results)
 		if (m_loggerRunning) {
