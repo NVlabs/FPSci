@@ -6,6 +6,11 @@ We depend on the [G3D innovation engine](https://casual-effects.com/g3d) for muc
 
 When you check out G3D, you'll need some data files from the `research` and `game` subdirectories so you can't just checkout the `common` subdirectory.
 
+## Project Location and Tools
+The most current/up-to-date version of the `abstract-fps` experiment solution can be found at [`target/abstract-fps.sln`](./target/abstract-fps.sln). 
+
+This solution file can be built/run using [Visual Studio](https://visualstudio.microsoft.com/vs/). If you install G3D using its `.hta` installer, then this will automatically install Visual Studio Community Edition for you.
+
 ## Instructions for running the experiment
 
 There are two files that control the experiment settings, `userconfig.Any` and `experimentconfig.Any`. Samples of these files are provide in the `data-files` directory, so you can copy the `SAMPLEuserconfig.Any` to `userconfig.Any` and `SAMPLEexperimentconfig.Any` to `experimentconfig.Any` prior to running the application. The standard location during development is the `data-files` directory. If the application fails to find `userconfig.Any` and `experimentconfig.Any` when it loads, it will silently copy the two sample files and put the config files in the `data-files` directory.
