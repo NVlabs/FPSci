@@ -190,7 +190,7 @@ public:
 	}
 
 	/** Print the system info to log.txt */
-	void printSystemInfo() {
+	void printToLog() {
 		// Print system info to log
 		logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n",
 			cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
@@ -313,6 +313,14 @@ public:
 		}
 		return Any::fromFile(System::findDataFile(filename));
 	}
+
+	/** Print the user table to the log */
+	void printToLog() {
+		logPrintf("Current User: %s\n", currentUser);
+		for (UserConfig user : users) {
+			logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id, user.cmp360, user.mouseDPI);
+		}
+	}
 };
 
 /** Class for handling user status */
@@ -416,6 +424,24 @@ public:
 			if (!userInfo[i].id.compare(userId)) {
 				userInfo[i].completedSessions.append(sessId);
 			}
+		}
+	}
+
+	/** Print the user status table to the log */
+	void printToLog() {
+		for (UserSessionStatus status : userInfo) {
+			String sessOrder = "";
+			for (String sess : status.sessionOrder) {
+				sessOrder += sess + ", ";
+			}
+			sessOrder = sessOrder.substr(0, sessOrder.length() - 2);
+			String completedSess = "";
+			for (String sess : status.completedSessions) {
+				completedSess += sess + ", ";
+			}
+			completedSess = completedSess.substr(0, completedSess.length() - 2);
+
+			logPrintf("Subject ID: %s\nSession Order: [%s]\nCompleted Sessions: [%s]\n", status.id, sessOrder, completedSess);
 		}
 	}
 };
@@ -722,5 +748,28 @@ public:
 			FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
 		}
 		return Any::fromFile(System::findDataFile(filename));
+	}
+
+	/** Print the experiment config to the log */
+	void printToLog() {
+		logPrintf("-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
+			appendingDescription, sceneName, feedbackDuration, readyDuration, taskDuration, weapon.maxAmmo);
+		// Iterate through sessions and print them
+		for (int i = 0; i < sessions.size(); i++) {
+			SessionConfig sess = sessions[i];
+			logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n",
+				sess.id, sess.frameRate, sess.frameDelay);
+			// Now iterate through each run
+			for (int j = 0; j < sess.trials.size(); j++) {
+				logPrintf("\t\tTrial Run Config: ID = %s, Count = %d\n",
+					sess.trials[j].id, sess.trials[j].count);
+			}
+		}
+		// Iterate through trials and print them
+		for (int i = 0; i < targets.size(); i++) {
+			TargetConfig target = targets[i];
+			logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tElevation Locked = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n",
+				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.elevLocked ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1]);
+		}
 	}
 };
