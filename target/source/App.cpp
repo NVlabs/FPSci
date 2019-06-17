@@ -5,19 +5,20 @@
 // Enable this to see maximum CPU/GPU rate when not limited
 // by the monitor. (true = target infinite frame rate)
 static const bool  unlockFramerate = false;
-static const bool  useSerialPort = false;
 
 // Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
 // which allows the application to submit asynchronously with vsync
 // without tearing.
 static const bool  variableRefreshRate = true;
 
+// Scale and offset for target
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
 const float App::TARGET_MODEL_ARRAY_OFFSET = 40;
 
-//static const float verticalFieldOfViewDegrees = 90; // deg
+// Set FoV (in degrees) based on horizontal
 static const float horizontalFieldOfViewDegrees = 103; // deg
 
+//TODO: Decide whether this should be removed!!!
 static const bool testCustomProjection = false;
 
 /** global startup config - sets playMode and experiment/user paths */
@@ -26,53 +27,62 @@ StartupConfig startupConfig;
 App::App(const GApp::Settings& settings) : GApp(settings) {
 }
 
+/** Initialize the app */
 void App::onInit() {
-	// feed a random seed based on time.
+	// Seed random based on the time
 	Random::common().reset(uint32(time(0)));
 
+	// Initialize the app
 	GApp::onInit();
 
+	// Create a target
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);
 
-	// load per user setting from file
+	// Load per user settings from file
 	userTable = UserTable::load(startupConfig.userConfig());
-	printUserTableToLog(userTable);
+	userTable.printToLog();
 
-	// load per experiment user settings from file
+	// Load per experiment user settings from file
 	userStatusTable = UserStatusTable::load();
-	printUserStatusTableToLog(userStatusTable);
+	userStatusTable.printToLog();
 
-	// load experiment setting from file
+	// Load experiment setting from file
 	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfig());
-	printExpConfigToLog(experimentConfig);
+	experimentConfig.printToLog();
 
 	// Get and save system configuration
 	SystemConfig sysConfig = SystemConfig::load();
-	sysConfig.printSystemInfo();									// Print system info to log.txt
+	sysConfig.printToLog();											// Print system info to log.txt
 	sysConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
 
+	// Setup the display mode
 	setSubmitToDisplayMode(
 		//SubmitToDisplayMode::EXPLICIT);
 		SubmitToDisplayMode::MINIMIZE_LATENCY);
 		//SubmitToDisplayMode::BALANCE);
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
 
+	// Setup the GUI
 	showRenderingStats = false;
 	makeGUI();
 	developerWindow->videoRecordDialog->setCaptureGui(true);
-	m_outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
-	m_hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
-	m_hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
+	// Load fonts and images
+	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
+	hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
+	hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
+
+	// Check for play mode specific parameters
 	if (startupConfig.playMode) {
 		m_fireSound = Sound::create(System::findDataFile(experimentConfig.weapon.fireSound));
 		m_explosionSound = Sound::create(System::findDataFile("sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav"));
 	}
 
+	// Load models and set the reticle
 	loadModels();
 	setReticle(m_reticleIndex);
 
-	// Further evaluate where this should go!
+	// Create a series of colored materials to choose from for target health
 	for (int i = 0; i < m_MatTableSize; i++) {
 		Color3 color = { 1.0f - pow((float)i/ m_MatTableSize, 2.2f), pow((float)i / m_MatTableSize, 2.2f), 0.0f };
 		UniversalMaterial::Specification materialSpecification;
@@ -82,6 +92,7 @@ void App::onInit() {
 		m_materials.append(UniversalMaterial::create(materialSpecification));
 	}
 
+	// Spawn some targets
 	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
 	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
 
@@ -90,57 +101,13 @@ void App::onInit() {
 	updateSessionPress();				// Update session to create results file/start collection
 }
 
-void App::printUserTableToLog(UserTable table) {
-	logPrintf("Current User: %s\n", table.currentUser);
-	for (UserConfig user : table.users) {
-		logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id, user.cmp360, user.mouseDPI);
-	}
-}
-
-void App::printUserStatusTableToLog(UserStatusTable table) {
-	for (UserSessionStatus status : table.userInfo) {
-		String sessOrder = "";
-		for (String sess : status.sessionOrder) {
-			sessOrder += sess + ", ";
-		}
-		sessOrder = sessOrder.substr(0, sessOrder.length() - 2);
-		String completedSess = "";
-		for (String sess : status.completedSessions) {
-			completedSess += sess + ", ";
-		}
-		completedSess = completedSess.substr(0, completedSess.length() - 2);
-
-		logPrintf("Subject ID: %s\nSession Order: [%s]\nCompleted Sessions: [%s]\n", status.id, sessOrder, completedSess);
-	}
-}
-
-void App::printExpConfigToLog(ExperimentConfig config) {
-	logPrintf("-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-		config.appendingDescription, config.sceneName, config.feedbackDuration, config.readyDuration, config.taskDuration, config.weapon.maxAmmo);
-	// Iterate through sessions and print them
-	for (int i = 0; i < config.sessions.size(); i++) {
-		SessionConfig sess = config.sessions[i];
-		logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n",
-			sess.id, sess.frameRate, sess.frameDelay);
-		// Now iterate through each run
-		for (int j = 0; j < sess.trials.size(); j++) {
-			logPrintf("\t\tTrial Run Config: ID = %s, Count = %d\n",
-				sess.trials[j].id, sess.trials[j].count);
-		}
-	}
-	// Iterate through trials and print them
-	for (int i = 0; i < config.targets.size(); i++) {
-		TargetConfig target = config.targets[i];
-		logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tElevation Locked = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n",
-			target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.elevLocked ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1]);
-	}
-}
-
+/** Handle then user settings window visibility */
 void App::openUserSettingsWindow() {
     m_userSettingsMode = true;
     m_userSettingsWindow->setVisible(m_userSettingsMode);
 }
 
+/** Update the mouse mode/sensitivity */
 void App::updateMouseSensitivity() {
     // G3D expects mouse sensitivity in radians
     // we're converting from mouseDPI and centimeters/360 which explains
@@ -161,6 +128,7 @@ void App::updateMouseSensitivity() {
     fpm->setTurnRate(mouseSensitivity);
 }
 
+/** Spawn a randomly parametrized target */
 void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
     Random& rng = Random::threadCommon();
 
@@ -214,11 +182,8 @@ void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motion
     target->setDestinations(destinationArray, center);
 }
 
+/** Spawn a random non-parametrized target */
 void App::spawnRandomTarget() {
-    // TODO: temporary shortcut
-    //spawnParameterizedRandomTarget();
-    //return;
-
 	Random& rng = Random::threadCommon();
 
 	bool done = false;
@@ -265,7 +230,7 @@ void App::spawnRandomTarget() {
 	} while (!done && tries < 100);
 }
 
-
+/** Spawn a flying entity target */
 shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color) {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
 
@@ -463,9 +428,9 @@ void App::makeGUI() {
 		debugPane->addCheckBox("Hitscan", &m_hitScan);
 		debugPane->addCheckBox("Show Laser", &experimentConfig.weapon.renderBullets);
 		debugPane->addCheckBox("Weapon", &experimentConfig.weapon.renderModel);
-		debugPane->addCheckBox("HUD", &m_renderHud);
+		debugPane->addCheckBox("HUD", &renderHud);
 		debugPane->addCheckBox("FPS", &m_renderFPS);
-		debugPane->addCheckBox("Turbo", &m_emergencyTurbo);
+		debugPane->addCheckBox("Turbo", &emergencyTurbo);
 		static int frames = 0;
 		GuiControl* c = nullptr;
 
@@ -639,9 +604,13 @@ void App::updateSession(String id) {
 		m_sessDropDown->setSelectedValue(id);
 	}
 
+	// Make sure all targets are cleared
+	clearTargets();
+
 	// Initialize the experiment (session) and logger
 	ex = Experiment::create(this);
 	logger = Logger::create();
+
 	// Load the experiment scene if we haven't already (target only)
 	if (!m_sceneLoaded) {
 		loadScene(experimentConfig.sceneName);
@@ -780,9 +749,9 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 		rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
 	}
 
-	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = ! m_emergencyTurbo;
-	m_debugCamera->filmSettings().setAntialiasingEnabled(! m_emergencyTurbo);
-	m_debugCamera->filmSettings().setBloomStrength(m_emergencyTurbo ? 0.0f : 0.5f);
+	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = ! emergencyTurbo;
+	m_debugCamera->filmSettings().setAntialiasingEnabled(! emergencyTurbo);
+	m_debugCamera->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
 
 	GApp::onGraphics3D(rd, surface);
 
@@ -990,7 +959,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 	}
 }
 
-
+/** Method for handling weapon fire */
 bool App::fire(bool destroyImmediately) {
     BEGIN_PROFILER_EVENT("fire");
 	Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
@@ -1105,6 +1074,9 @@ bool App::fire(bool destroyImmediately) {
 		for (auto projectile : projectileArray) {
 			dontHit.append(projectile.entity);
 		}
+		for (auto target : targetArray) {
+			dontHit.append(target);
+		}
 		scene()->intersect(ray, closest, false, dontHit, info);
 
 		// Find where to put the decal
@@ -1129,12 +1101,14 @@ bool App::fire(bool destroyImmediately) {
 	return hitTarget;
 }
 
+/** Clear all targets one by one */
 void App::clearTargets() {
 	while (targetArray.size() > 0) {
 		destroyTarget(0);
 	}
 }
 
+/** Handle user input here */
 void App::onUserInput(UserInput* ui) {
     BEGIN_PROFILER_EVENT("onUserInput");
 	static bool haveReleased = false;
@@ -1206,8 +1180,9 @@ void App::onUserInput(UserInput* ui) {
 void App::destroyTarget(int index) {
 	// Not a reference because we're about to manipulate the array
 	const shared_ptr<VisibleEntity> target = targetArray[index];
+	// Remove the target from the target array
 	targetArray.fastRemove(index);
-
+	// Remove the target from the scene
 	scene()->removeEntity(target->name());
 }
 
@@ -1270,7 +1245,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 			msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
 
-			m_outputFont->draw2D(rd, msg, (Point2(30, 28) * scale).floor(), floor(20.0f * scale), Color3::yellow());
+			outputFont->draw2D(rd, msg, (Point2(30, 28) * scale).floor(), floor(20.0f * scale), Color3::yellow());
 		}
 
 	} rd->pop2D();
@@ -1280,13 +1255,15 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 	Surface2D::sortAndRender(rd, posed2D);
 }
 
+/** Set the currently reticle by index */
 void App::setReticle(int r) {
 	m_lastReticleLoaded = m_reticleIndex = clamp(0, r, numReticles);
 	if (r < numReticles) {
-		m_reticleTexture = Texture::fromFile(System::findDataFile(format("gui/reticle/reticle-%03d.png", m_reticleIndex)));
+		reticleTexture = Texture::fromFile(System::findDataFile(format("gui/reticle/reticle-%03d.png", m_reticleIndex)));
 	}
 	else {
-		m_reticleTexture = Texture::fromFile(System::findDataFile("gui/reticle.png"));
+		// This special case is added to allow a custom reticle not in the gui/reticle/reticle-[x].png format
+		reticleTexture = Texture::fromFile(System::findDataFile("gui/reticle.png"));
 	}
 }
 
@@ -1310,7 +1287,7 @@ void App::onCleanup() {
 	// here instead of in the constructor so that exceptions can be caught.
 }
 
-
+/** Overridden (optimized) oneFrame() function to improve latency */
 void App::oneFrame() {
 
     // Wait

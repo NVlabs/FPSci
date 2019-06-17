@@ -39,62 +39,55 @@ protected:
 	static const float TARGET_MODEL_ARRAY_OFFSET;
 	/** Length of the history queue for m_frameDurationQueue */
 	static const int MAX_HISTORY_TIMING_FRAMES = 360;
-	const int                       numReticles = 55;
+	const int                       numReticles = 55;					///< Total count of reticles available to choose from
 
-	//shared_ptr<GFont>               m_outputFont;
-	//shared_ptr<GFont>               m_hudFont;
-	//shared_ptr<Texture>             m_reticleTexture;
-	//shared_ptr<Texture>             m_hudTexture;
-	shared_ptr<ArticulatedModel>    m_viewModel;
-	shared_ptr<Sound>               m_fireSound;
-	shared_ptr<Sound>               m_explosionSound;
+	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
+	shared_ptr<Sound>               m_fireSound;						///< Sound for weapon firing
+	shared_ptr<Sound>               m_explosionSound;					///< Sound for target exploding
 
-	shared_ptr<ArticulatedModel>    m_laserModel;
-	shared_ptr<ArticulatedModel>	m_decalModel;
-	shared_ptr<VisibleEntity>		m_lastDecal;
-	shared_ptr<VisibleEntity>		m_firstDecal;
-	shared_ptr<ArticulatedModel>	m_explosionModel;
-	shared_ptr<VisibleEntity>		m_explosion;
-	RealTime						m_explosionEndTime;
+	shared_ptr<ArticulatedModel>    m_laserModel;						///< Model for the "bullet"
+	shared_ptr<ArticulatedModel>	m_decalModel;						///< Model for the miss decal
+	shared_ptr<VisibleEntity>		m_lastDecal;						///< Model for the last decal we created
+	shared_ptr<VisibleEntity>		m_firstDecal;						///< Model for the first decal we created
+	shared_ptr<ArticulatedModel>	m_explosionModel;					///< Model for target destroyed animation
+	shared_ptr<VisibleEntity>		m_explosion;						///< Model for target destroyed decal
+	RealTime						m_explosionEndTime;					///< Time for end of explosion
 
-	const int m_MatTableSize = 10;							///< Set this to set # of color "levels"
-	Array<shared_ptr<UniversalMaterial>>	m_materials;	///< This stores the color materials
+	const int m_MatTableSize = 10;										///< Set this to set # of color "levels"
+	Array<shared_ptr<UniversalMaterial>>	m_materials;				///< This stores the color materials
 
-	GuiDropDownList*				m_sessDropDown;
-	GuiDropDownList*				m_userDropDown;
-	GuiLabel*						m_mouseDPILabel;
-	GuiLabel*						m_cm360Label;
+	GuiDropDownList*				m_sessDropDown;						///< Dropdown menu for session selection
+	GuiDropDownList*				m_userDropDown;						///< Dropdown menu for user selection
+	GuiLabel*						m_mouseDPILabel;					///< Label for mouse DPI field
+	GuiLabel*						m_cm360Label;						///< Label for cm/360 field
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
-	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;
+	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
-	Queue<float>                    m_frameDurationQueue;
+	Queue<float>                    m_frameDurationQueue;				///< Queue for history of frrame times
 
 	/** Coordinate frame of the weapon, updated in onPose() */
-	CFrame                          m_weaponFrame;
-	int                             m_displayLagFrames = 0;
+	CFrame                          m_weaponFrame;						///< Frame for the weapon
+	int                             m_displayLagFrames = 0;				///< Count of frames of latency to add
 
 	/** Used to detect GUI changes to m_reticleIndex */
-	int                             m_lastReticleLoaded = -1;
-	int                             m_reticleIndex = numReticles;
-	float                           m_sceneBrightness = 1.0f;
+	int                             m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
+	int                             m_reticleIndex = numReticles;		///< Start by selecting the last reticle
+	float                           m_sceneBrightness = 1.0f;			///< Scene brightness scale factor
 	//bool                            m_renderViewModel = false;
 	//bool                            m_renderHud = false;
-	bool                            m_renderFPS = false;
+	bool                            m_renderFPS = false;				
 	//bool                            m_renderHitscan = false;
     GuiPane*                        m_currentUserPane;
 
 	// Drop down selection writebacks
-	int								m_ddCurrentUser = 0;
-	int								m_lastSeenUser = -1;
-	int								m_ddCurrentSession = 0;
-
-	/** Set to true to lower rendering quality to increase performance. */
-	//bool                              m_emergencyTurbo = false;
+	int								m_ddCurrentUser = 0;				///< Index of current user
+	int								m_lastSeenUser = -1;				///< Index of last seen user (used for change determination)
+	int								m_ddCurrentSession = 0;				///< Index of current session
 
 	/** Projectile if false         */
-	bool                            m_hitScan = true;
+	bool                            m_hitScan = true;					// NOTE: Projectile mode has not been implemented
 
 	int                             m_lastUniqueID = 0;
 
@@ -114,38 +107,31 @@ protected:
 	void makeGUI();
 	void loadModels();
 	void destroyTarget(int index);
-	void printExpConfigToLog(ExperimentConfig config);
-	void printUserTableToLog(UserTable table);
-	void printUserStatusTableToLog(UserStatusTable table);
 	void updateUser(void);
     void updateUserGUI();
 
 public:
 	/* Moving from proctected so that Experiment classes can use it. */
-	shared_ptr<GFont>               m_outputFont;
-	shared_ptr<GFont>               m_hudFont;
-	shared_ptr<Texture>             m_reticleTexture;
-	shared_ptr<Texture>             m_hudTexture;
-	bool                            m_renderHud = false;
-	bool                            m_emergencyTurbo = false;
-	double m_weaponStrength = 1.0; // Strength of each shot. 1 will instantly destroy the target (total target health is 1).
+	shared_ptr<GFont>               outputFont;						///< Font used for output
+	shared_ptr<GFont>               hudFont;						///< Font used in HUD
+	shared_ptr<Texture>             reticleTexture;					///< Texture used for reticle
+	shared_ptr<Texture>             hudTexture;						///< Texture used for HUD
+	bool                            renderHud = false;				///< Controls whether HUD is drawn
+	bool                            emergencyTurbo = false;			///< Lower rendering quality to improve performance
 
 	App(const GApp::Settings& settings = GApp::Settings());
 
 	/** Array of all targets in the scene */
-	Array<shared_ptr<VisibleEntity>> targetArray;
-	Array<Projectile>                projectileArray;
+	Array<shared_ptr<VisibleEntity>> targetArray;					///< Array of drawn targets
+	Array<Projectile>                projectileArray;				///< Arrray of drawn projectiles
 
 	/** Parameter configurations */
-	UserTable						userTable;					// Table of per user information (DPI/cm/360) that doesn't change across experiment
-	UserStatusTable					userStatusTable;			// Table of user status (session ordering/completed sessions) that do change across experiments
-	ExperimentConfig                experimentConfig;			// Configuration for the experiment and its sessions
+	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
+	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
+	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
 
-	/** Pointer to Experiment class */
-	shared_ptr<Experiment> ex;
-
-	/** Pointer to Logger class */
-	shared_ptr<Logger> logger;
+	shared_ptr<Experiment> ex;										///< Pointer to the experiment
+	shared_ptr<Logger> logger;										///< Pointer to the logger
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
@@ -291,10 +277,9 @@ public:
 
 	void resetView();
 	Point2 getViewDirection();
-	Point2 getMouseMotion(); // TODO: how do we do this?
 };
 
-// The 'old' way of animation
+// The "old" way of animation
 /** Parameters related to animation during a trial. */
 // Animation flow.
 // updateAnimation() is called at the beginning of onGraphics3D. Workflow in updateLocation()

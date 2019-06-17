@@ -263,10 +263,6 @@ void Experiment::updatePresentationState()
 			m_app->clearTargets(); // clear all remaining targets
 			m_app->m_targetColor = Color3::red().pow(2.0f);
 			newState = PresentationState::feedback;
-
-			// update weapon strength // TODO: Is this appropriate to be here? (Not in onInit because we want to update when user changes session)
-			// Instant destroyal if in feedback state.
-			m_app->m_weaponStrength = 1;
 		}
 	}
 	else if (currentState == PresentationState::feedback)
@@ -286,16 +282,6 @@ void Experiment::updatePresentationState()
 				m_feedbackMessage = "";
 				m_psych.chooseNextCondition();
 				newState = PresentationState::ready;
-
-				// update weapon strength // TODO: Is this appropriate to be here? (Not in onInit because we want to update when user changes session)
-				if (m_config.weapon.autoFire) {
-					String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
-					// this means a tracking weapon
-					m_app->m_weaponStrength = 1 / m_config.getSessionConfigById(sess)->frameRate; // TODO: Hard-coding to 1 sec for destroyal, needs parametrization
-				}
-				else {
-					m_app->m_weaponStrength = 1;
-				}
 			}
 		}
 	}
@@ -362,22 +348,22 @@ void Experiment::onGraphics2D(RenderDevice* rd)
 
 	// Reticle
 	Draw::rect2D(
-		(m_app->m_reticleTexture->rect2DBounds() * scale - m_app->m_reticleTexture->vector2Bounds() * scale / 2.0f) / 2.0f + rd->viewport().wh() / 2.0f,
-		rd, Color3::green(), m_app->m_reticleTexture
+		(m_app->reticleTexture->rect2DBounds() * scale - m_app->reticleTexture->vector2Bounds() * scale / 2.0f) / 2.0f + rd->viewport().wh() / 2.0f,
+		rd, Color3::green(), m_app->reticleTexture
 	);
 
 	// TODO: Feels like the following variables should be members of Experiment:
 	// m_renderHud, m_hudTexture, m_reticleTexture, ...
-	if (m_app->m_renderHud && !m_app->m_emergencyTurbo) {
-		const Point2 hudCenter(rd->viewport().width() / 2.0f, m_app->m_hudTexture->height() * scale * 0.48f);
-		Draw::rect2D((m_app->m_hudTexture->rect2DBounds() * scale - m_app->m_hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_app->m_hudTexture);
-		m_app->m_hudFont->draw2D(rd, "1:36", hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-		m_app->m_hudFont->draw2D(rd, "86%", hudCenter + Vector2(7, -1), scale * 30, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-		m_app->m_hudFont->draw2D(rd, "2080", hudCenter + Vector2(125, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+	if (m_app->renderHud && !m_app->emergencyTurbo) {
+		const Point2 hudCenter(rd->viewport().width() / 2.0f, m_app->hudTexture->height() * scale * 0.48f);
+		Draw::rect2D((m_app->hudTexture->rect2DBounds() * scale - m_app->hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_app->hudTexture);
+		m_app->hudFont->draw2D(rd, "1:36", hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		m_app->hudFont->draw2D(rd, "86%", hudCenter + Vector2(7, -1), scale * 30, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+		m_app->hudFont->draw2D(rd, "2080", hudCenter + Vector2(125, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 	}
 
 	if (!m_feedbackMessage.empty()) {
-		m_app->m_outputFont->draw2D(rd, m_feedbackMessage.c_str(),
+		m_app->outputFont->draw2D(rd, m_feedbackMessage.c_str(),
 			(Point2((float)m_app->window()->width() / 2 - 40, (float)m_app->window()->height() / 2 + 40) * scale).floor(), floor(20.0f * scale), Color3::yellow());
 	}
 }
