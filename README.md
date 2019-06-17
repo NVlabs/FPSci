@@ -1,5 +1,5 @@
-# `abstract-fps`
-`abstract-fps` is an tool for conducting user studies on first person shooter (FPS) style tasks. The name comes from our desire to use an abstract art style for the graphics, and the target set of tasks.
+# abstract-fps Application
+The `abstract-fps` application is a tool for conducting user studies on first person shooter (FPS) style tasks. The name comes from our desire to use an abstract art style for the graphics, and the target set of tasks.
 
 ## G3D dependence
 We depend on the [G3D innovation engine](https://casual-effects.com/g3d) for much of our functionality. [Installation instructions](https://casual-effects.com/g3d/www/index.html#install).
@@ -14,6 +14,16 @@ There are two files that control the experiment settings, `userconfig.Any` and `
 
 `experimentconfig.Any` allows you to set up the various experiment settings, including `targetFrameRate`, `expMode`, `taskType` and `appendingDescription`. More details can be found in [experimentConfigReadme.md](/code/data-files/experimentConfigReadme.md). It is recommended to set up a list of experimental settings you would like to run ahead of time, and switch between them when executing.
 
-## Progress tracking document (Nvidia employees only)
+## File Organization
+This repository is used as the working development enivronment for the NVR NXP team so there are a variety of folders available at the top-level. For most causual users the [`target`](./target) directory has the copy of the `abstract-fps` application with the most recent fixes and cleanest code structure.
 
+A quick guide is provided below to this directory structure:
+
+* [`code`](./code) is the working directory for old development code (unused for most users)
+* [`newGfx`](./newGfx) is a working directory for an optimized example project setup by Morgan McGuire (unused for most users)
+* [`reaction`](./reaction) contains a project affiliated with measuring reaction time (currently unsupported)
+* [`scripts`](./scripts) contains some useful scripts for developers
+* [`target`](./target) has the primary `abstract-fps` application code cleaned up for users
+
+## Progress tracking document (Nvidia employees only)
 https://docs.google.com/spreadsheets/d/1rxkRC-GVi-nCIIElz8XpO-7lhCwv9De2x2wF_ZM9Vnk/edit?usp=sharing

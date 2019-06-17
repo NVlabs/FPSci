@@ -20,3 +20,4 @@ As mentioned above a variety of `.Any` files (similar to JSON file format) are u
 * [`userconfig.Any`](./data-files/userConfigReadme.md) holds user information for (multiple) users including mouse sensitivity and DPI
 * [`userstatus.Any`](./data-files/userStatusReadme.md) keeps track of both the session ordering and the completed sessions for any given user
 * [`weaponconfig.Any`](./data-files/weapon/weaponConfigReadme.md) can be optionally included (using the `#include("filename")` option in the .Any format) to allow quick swap of weapons across multiple configs
+* [`systemconfig.Any`](./data-files/systemConfigReadme.md) optionally configures an attached hardware click-to-photon monitor and provides (as output) specs from the system the application is being run on
