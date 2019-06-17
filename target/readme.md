@@ -12,7 +12,7 @@ A `session` is the next level of task grouping in the application. A session con
 
 A `trial` is the lowest level grouping of task in the application. From a user-perspective the trial represents a single target being spawned, traveling, and either being shot or missed within a given time period. In specifying trials the developer enters trial groups, which are sets of trials specified using a trial type id and count for one or multiple trial types.
 
-# Parameter Files
+# Config `.Any` Files
 As mentioned above a variety of `.Any` files (similar to JSON file format) are used to control the behavior of the application. These files are as follows:
 
 * [`startupconfig.Any`](./data-files/startupConfigReadme.md) is a simple configuration file for setting the `playMode` (debug feature) and pointing to the experiment and user configs
@@ -21,3 +21,8 @@ As mentioned above a variety of `.Any` files (similar to JSON file format) are u
 * [`userstatus.Any`](./data-files/userStatusReadme.md) keeps track of both the session ordering and the completed sessions for any given user
 * [`weaponconfig.Any`](./data-files/weapon/weaponConfigReadme.md) can be optionally included (using the `#include("filename")` option in the .Any format) to allow quick swap of weapons across multiple configs
 * [`systemconfig.Any`](./data-files/systemConfigReadme.md) optionally configures an attached hardware click-to-photon monitor and provides (as output) specs from the system the application is being run on
+
+## Managing Configurations
+One reason for using the modular `.Any` file configuration structure shown above is the ability to track multiple experiments/sessions/trials without a need to perform major edits on the files. For example, an `experimentconfig.Any` file can either be renamed or can make use of the `#include("[filename]")` syntax provided by G3D's `.Any` parsing to include entire `.Any` files as sections in a larger file.
+
+This allows users to create `.Any` files for a wide variety of experiments, weapons, users, and even system configurations, then swap between these at runtime by simply changing filenames or `#include` statements.

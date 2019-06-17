@@ -12,12 +12,7 @@ The most current/up-to-date version of the `abstract-fps` experiment solution ca
 This solution file can be built/run using [Visual Studio](https://visualstudio.microsoft.com/vs/). If you install G3D using its `.hta` installer, then this will automatically install Visual Studio Community Edition for you.
 
 ## Instructions for running the experiment
-
-There are two files that control the experiment settings, `userconfig.Any` and `experimentconfig.Any`. Samples of these files are provide in the `data-files` directory, so you can copy the `SAMPLEuserconfig.Any` to `userconfig.Any` and `SAMPLEexperimentconfig.Any` to `experimentconfig.Any` prior to running the application. The standard location during development is the `data-files` directory. If the application fails to find `userconfig.Any` and `experimentconfig.Any` when it loads, it will silently copy the two sample files and put the config files in the `data-files` directory.
-
-`userconfig.Any` contains settings that pertain to the user, such as the `subjectID`, `mouseDPI` and `cmp360` settings. One way to set this up effectively is to have a settings file per user and switch between them as you switch users.
-
-`experimentconfig.Any` allows you to set up the various experiment settings, including `targetFrameRate`, `expMode`, `taskType` and `appendingDescription`. More details can be found in [experimentConfigReadme.md](/code/data-files/experimentConfigReadme.md). It is recommended to set up a list of experimental settings you would like to run ahead of time, and switch between them when executing.
+For more information on how to run the experiment and configure its `config.Any` files refer to the [target experiment readme](./target/readme.md).
 
 ## File Organization
 This repository is used as the working development enivronment for the NVR NXP team so there are a variety of folders available at the top-level. For most causual users the [`target`](./target) directory has the copy of the `abstract-fps` application with the most recent fixes and cleanest code structure.
