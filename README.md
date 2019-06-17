@@ -1,4 +1,4 @@
-# abstract-fps Application
+# `abstract-fps` Application
 The `abstract-fps` application is a tool for conducting user studies on first person shooter (FPS) style tasks. The name comes from our desire to use an abstract art style for the graphics, and the target set of tasks.
 
 ## G3D dependence
