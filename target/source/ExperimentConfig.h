@@ -6,12 +6,13 @@
 /** Configure how the application should start */
 class StartupConfig {
 public:
-    bool playMode = true;
-    String experimentConfigPath = "";
-    String userConfigPath = "";
+    bool playMode = true;					///< Sets whether the experiment is run in full-screen "playMode" (true for real data)
+    String experimentConfigPath = "";		///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
+    String userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
 
     StartupConfig() {};
 
+	/** Construct from any here */
     StartupConfig(const Any& any) {
         int settingsVersion = 1;
         AnyTableReader reader(any);
@@ -29,6 +30,7 @@ public:
         }
     }
 
+	/** Allow this to be converted back to any */
     Any toAny(const bool forceAll = true) const {
         Any a(Any::TABLE);
         a["playMode"] = playMode;
@@ -48,27 +50,29 @@ public:
     }
 };
 
-// This is a write-only structure to log information affiliated with a system
+/** System configuration control and logging */
 class SystemConfig {
 public:
 	// Output/runtime read parameters
-	String cpuName;
-	int coreCount;
-	String gpuName;
-	long memCapacityMB;
-	String displayName;
-	int displayXRes;
-	int displayYRes;
-	int displayXSize;
-	int displayYSize;
+	String cpuName;			///< The vendor name of the CPU being used
+	int coreCount;			///< Core count for the CPU being used
+	String gpuName;			///< The vendor name of the GPU being used
+	long memCapacityMB;		///< The capacity of memory (RAM) in MB
+	String displayName;		///< The vendor name of the display (not currently working)
+	int displayXRes;		///< The horizontal size of the display in pixels
+	int displayYRes;		///< The vertical size of the display in pixels
+	int displayXSize;		///< The horizontal size of the display in mm
+	int displayYSize;		///< The vertical size of the display in mm
 
-	bool hasLogger;
-	String loggerComPort;
-	bool hasSync;
-	String syncComPort;
+	// Input parameters
+	bool hasLogger;			///< Indicates that a hardware logger is present in the system
+	String loggerComPort;	///< Indicates the COM port that the logger is on when hasLogger = True
+	bool hasSync;			///< Indicates that a hardware sync will occur via serial card DTR signal
+	String syncComPort;		///< Indicates the COM port that the sync is on when hasSync = True
 
 	SystemConfig() {};
 
+	/** Construct from Any */
 	SystemConfig(const Any& any) {
 		int settingsVersion = 1;
 		AnyTableReader reader(any);
@@ -89,6 +93,7 @@ public:
 		getSystemInfo();		
 	}
 
+	/** Serialize to Any */
 	Any toAny(const bool forceAll = true) const{
 		Any a(Any::TABLE);
 		a["CPU"] = cpuName;
@@ -107,13 +112,16 @@ public:
 		return a;
 	}
 
+	/** Load a system config from file */
 	static SystemConfig load() {
-		if (!FileSystem::exists("systemconfig.Any")) { // if file not found, copy from the sample config file.
+		// if file not found, copy from the sample config file
+		if (!FileSystem::exists("systemconfig.Any")) { 
 			FileSystem::copyFile(System::findDataFile("SAMPLEsystemconfig.Any"), "systemconfig.Any");
 		}
 		return Any::fromFile(System::findDataFile("systemconfig.Any"));
 	}
 
+	/** Get the system info using (windows) calls */
 	void getSystemInfo(void) {
 		SystemConfig system;
 
@@ -159,6 +167,7 @@ public:
 		gpuName = gpuVendor.append(gpuRenderer);
 
 		// Get display information (monitor name)
+		// This seems to break on many systems/provide less than descriptive names!!!
 		/*DISPLAY_DEVICE dd;
 		int deviceIndex = 0;
 		int monitorIndex = 0;
@@ -180,6 +189,7 @@ public:
 		displayYSize = GetDeviceCaps(hdc, VERTSIZE);
 	}
 
+	/** Print the system info to log.txt */
 	void printSystemInfo() {
 		// Print system info to log
 		logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n",
@@ -189,14 +199,17 @@ public:
 	}
 };
 
+/**Class for managing user configuration*/
 class UserConfig {
 public:
-    String id = "anon";						// Subject ID (as recorded in output DB)
-    double mouseDPI = 800.0;				// Mouse DPI setting
-    double cmp360 = 12.75;					// Mouse sensitivity, reported as centimeters per 360�
-	int currentSession = 0;					// Currently selected session
-    UserConfig() {}
+    String id = "anon";						///< Subject ID (as recorded in output DB)
+    double mouseDPI = 800.0;				///< Mouse DPI setting
+    double cmp360 = 12.75;					///< Mouse sensitivity, reported as centimeters per 360�
+	int currentSession = 0;					///< Currently selected session
 
+	UserConfig() {};
+
+	/** Load from Any */
     UserConfig(const Any& any) {
         int settingsVersion = 1; // used to allow different version numbers to be loaded differently
         AnyTableReader reader(any);
@@ -212,11 +225,9 @@ public:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
             break;
         }
-        // fine to have extra entries not read
-        //reader.verifyDone();
     }
-
-	// Simple method for conversion to Any (writing output file)
+	
+	/** Serialize to Any */
 	Any toAny(const bool forceAll=true) const {
 		Any a(Any::TABLE);
 		a["id"] = id;										// Include subject ID
@@ -226,13 +237,15 @@ public:
 	}
 };
 
+/** Class for loading a user table and getting user info */
 class UserTable {
 public:
-	String currentUser = "None";
-	Array<UserConfig> users = {};
+	String currentUser = "None";			///< The currently active user
+	Array<UserConfig> users = {};			///< A list of valid users
 
 	UserTable() {};
 
+	/** Load from Any */
 	UserTable(const Any& any) {
 		int settingsVersion = 1;
 		AnyTableReader reader(any);
@@ -249,6 +262,7 @@ public:
 		}
 	}
 
+	/** Get the current user's config */
     UserConfig* getCurrentUser() {
         for (int i = 0; i < users.length(); ++i) {
             if (!users[i].id.compare(currentUser)) return &(users[i]);
@@ -258,6 +272,7 @@ public:
         return &(users[0]);
     }
 
+	/** Get the index of the current user from the user table */
     int getCurrentUserIndex() {
         for (int i = 0; i < users.length(); ++i) {
             if (!users[i].id.compare(currentUser)) return i;
@@ -266,14 +281,16 @@ public:
         return 0;
     }
 
+	/** Serialize to Any */
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
-		a["settingsVersion"] = 1;						// Create a version 1 file
-		a["currentUser"] = currentUser;					// Include current subject ID
-		a["users"] = users;								// Include updated subject table
+		a["settingsVersion"] = 1;						///< Create a version 1 file
+		a["currentUser"] = currentUser;					///< Include current subject ID
+		a["users"] = users;								///< Include updated subject table
 		return a;
 	}
 
+	/** Get a user config based on a user ID */
 	shared_ptr<UserConfig> getUserById(String id) {
 		for (UserConfig user : users) {
 			if (!user.id.compare(id)) return std::make_shared<UserConfig>(user);
@@ -281,13 +298,14 @@ public:
 		return nullptr;
 	}
 
+	/** Get an array of user IDs */
 	Array<String> getIds() {
 		Array<String> ids;
 		for (UserConfig user : users) ids.append(user.id);
 		return ids;
 	}
 
-	// Simple rotine to get the user configuration from file
+	/** Simple rotine to get the UserTable Any structure from file */
 	static Any load(String filename) {
 		// load user setting from file
 		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, copy from the sample config file.
@@ -297,14 +315,16 @@ public:
 	}
 };
 
+/** Class for handling user status */
 class UserSessionStatus {
 public:
-	String id;
-	Array<String> sessionOrder = {};
-	Array<String> completedSessions = {};
+	String id;										///< User ID
+	Array<String> sessionOrder = {};				///< Array containing session ordering
+	Array<String> completedSessions = {};			///< Array containing all completed session ids for this user
 
 	UserSessionStatus() {}
 
+	/** Load user status from Any */
 	UserSessionStatus(const Any& any) {
 		int settingsVersion = 1; // used to allow different version numbers to be loaded differently
 		AnyTableReader reader(any);
@@ -322,6 +342,7 @@ public:
 		}
 	}
 
+	/** Serialize to Any */
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
 		a["id"] = id;									// populate id
@@ -331,12 +352,14 @@ public:
 	}
 };
 
+/** Class for representing user status tables */
 class UserStatusTable {
 public:
-	Array<UserSessionStatus> userInfo = {};
+	Array<UserSessionStatus> userInfo = {};				///< Array of user status
 
 	UserStatusTable() {}
 
+	/** Load from Any */
 	UserStatusTable(const Any& any) {
 		int settingsVersion = 1; // used to allow different version numbers to be loaded differently
 		AnyTableReader reader(any);
@@ -352,6 +375,7 @@ public:
 		}
 	}
 
+	/** Serialzie to Any */
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
 		a["settingsVersion"] = 1;						// Create a version 1 file
@@ -359,7 +383,7 @@ public:
 		return a;
 	}
 
-	// Get the experiment config from file
+	/** Get the user status table from file */
 	static UserStatusTable load(void) {
 		if (!FileSystem::exists("userstatus.Any")) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEuserstatus.Any"), "userstatus.Any");
@@ -367,6 +391,7 @@ public:
 		return Any::fromFile(System::findDataFile("userstatus.Any"));
 	}
 
+	/** Get a given user's status from the table by ID */
 	shared_ptr<UserSessionStatus> getUserStatus(String id) {
 		for (UserSessionStatus user : userInfo) {
 			if (!user.id.compare(id)) return std::make_shared<UserSessionStatus>(user);
@@ -374,6 +399,7 @@ public:
 		return nullptr;
 	}
 
+	/** Get the next session ID for a given user (by ID) */
 	String getNextSession(String userId) {
 		// Return the first valid session that has not been completed
 		shared_ptr<UserSessionStatus> status = getUserStatus(userId);
@@ -384,6 +410,7 @@ public:
 		return "";
 	}
 
+	/** Add a completed session to a given user's completedSessions array */
 	void addCompletedSession(String userId, String sessId) {
 		for (int i = 0; i < userInfo.length(); i++) {
 			if (!userInfo[i].id.compare(userId)) {
@@ -393,16 +420,17 @@ public:
 	}
 };
 
+/** Weapon configuration class */
 class WeaponConfig {
 public:
-	String id = "default";									// Id by which to refer to this weapon
-	int maxAmmo = 10000;									// Max ammo (clicks) allowed per trial (set large for laser mode)
-	float firePeriod = 0.5;									// Minimum fire period (set to 0 for laser mode)
-	bool autoFire = false;									// Fire repeatedly when mouse is held? (set true for laser mode)
-	float damagePerSecond = 2.0f;							// Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
-	String fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	// Sound to play on fire
-	bool renderModel = false;								// Render a model for the weapon?
-	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			// Basic model spec
+	String id = "default";												///< Id by which to refer to this weapon
+	int maxAmmo = 10000;												///< Max ammo (clicks) allowed per trial (set large for laser mode)
+	float firePeriod = 0.5;												///< Minimum fire period (set to 0 for laser mode)
+	bool autoFire = false;												///< Fire repeatedly when mouse is held? (set true for laser mode)
+	float damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
+	String fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	///< Sound to play on fire
+	bool renderModel = false;											///< Render a model for the weapon?
+	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec
 		filename = "model/sniper/sniper.obj";
 		preprocess = {
 			transformGeometry(all(), Matrix4::yawDegrees(90));
@@ -410,17 +438,18 @@ public:
 		};
 		scale = 0.25;
 		});
-	bool renderMuzzleFlash = false;							// Render a muzzle flash when the weapon fires?
-	bool renderDecals = true;								// Render decals when the shots miss?
-	bool renderBullets = false;								// Render bullets leaving the weapon
-	//String missDecal = "bullet-decal-256x256.png";			// The decal to place where the shot misses
-	float fireSpread = 0;									// The spread of the fire
-	float damageRollOffAim = 0;								// Damage roll off w/ aim
-	float damageRollOffDistance = 0;						// Damage roll of w/ distance
-	//String reticleImage;									// Reticle image to show for this weapon
+	bool renderMuzzleFlash = false;										///< Render a muzzle flash when the weapon fires?
+	bool renderDecals = true;											///< Render decals when the shots miss?
+	bool renderBullets = false;											///< Render bullets leaving the weapon
+	//String missDecal = "bullet-decal-256x256.png";					///< The decal to place where the shot misses
+	float fireSpread = 0;												///< The spread of the fire
+	float damageRollOffAim = 0;											///< Damage roll off w/ aim
+	float damageRollOffDistance = 0;									///< Damage roll of w/ distance
+	//String reticleImage;												///< Reticle image to show for this weapon
 
 	WeaponConfig() {}
 
+	/** Load from Any */
 	WeaponConfig(const Any& any) {
 		int settingsVersion = 1;
 		AnyTableReader reader(any);
@@ -454,25 +483,27 @@ public:
 	}
 };
 
+/** Class for representing a given target configuration */
 class TargetConfig {
 public:
-	String id;												// Trial ID to indentify affiliated trial runs
-	bool elevLocked = false;								// Elevation locking
-	Array<float> distance = { 30.0f, 40.0f };				// Distance to the target
-	Array<float> motionChangePeriod = { 1.0f, 1.0f };		// Range of motion change period in seconds
-	Array<float> speed = { 0.0f, 5.5f };					// Range of angular velocities for target
-	Array<float> eccH = { 5.0f, 15.0f };					// Range of initial horizontal eccentricity
-	Array<float> eccV = { 0.0f, 2.0f };						// Range of initial vertical eccentricity
-	Array<float> visualSize = { 0.02f, 0.02f };				// Visual size of the target (in degrees)
-	bool jumpEnabled = false;
-	Array<float> jumpPeriod = { 2.0f, 2.0f };
-	Array<float> jumpSpeed = { 2.0f, 5.5f };
-	Array<float> accelGravity = { 9.8f, 9.8f };
+	String id;												///< Trial ID to indentify affiliated trial runs
+	bool elevLocked = false;								///< Elevation locking
+	Array<float> distance = { 30.0f, 40.0f };				///< Distance to the target
+	Array<float> motionChangePeriod = { 1.0f, 1.0f };		///< Range of motion change period in seconds
+	Array<float> speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
+	Array<float> eccH = { 5.0f, 15.0f };					///< Range of initial horizontal eccentricity
+	Array<float> eccV = { 0.0f, 2.0f };						///< Range of initial vertical eccentricity
+	Array<float> visualSize = { 0.02f, 0.02f };				///< Visual size of the target (in degrees)
+	bool jumpEnabled = false;								///< Flag indicating whether the target jumps
+	Array<float> jumpPeriod = { 2.0f, 2.0f };				///< Range of time period between jumps in seconds
+	Array<float> jumpSpeed = { 2.0f, 5.5f };				///< Range of jump speeds in meters/s
+	Array<float> accelGravity = { 9.8f, 9.8f };				///< Range of acceleration due to gravity in meters/s^2
 	//Array<Vector3> path;		// Unused, to dictate a motion path...
 	//String explosionSound;	// TODO: Add target explosion sound string here and use it for m_explosionSound
 
 	TargetConfig() {}
 
+	/** Load from Any */
 	TargetConfig(const Any& any) {
 		int settingsVersion = 1;
 		AnyTableReader reader(any);
@@ -497,18 +528,18 @@ public:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
 			break;
 		}
-		//reader.verifyDone();
 	}
 };
 
-// Trial count class (optional for alternate TargetConfig/count table lookup)
+/** Trial count class (optional for alternate TargetConfig/count table lookup) */
 class TrialCount {
 public:
-	String id;
-	unsigned int count = 0;
+	String id;						///< Trial ID
+	unsigned int count = 0;			///< Count of trials to be performed
 
 	TrialCount() {};
 
+	/** Load from Any */
 	TrialCount(const Any& any) {
 		int settingsVersion = 1;
 		AnyTableReader reader(any);
@@ -526,16 +557,18 @@ public:
 	}
 };
 
+/** Configuration for a session worth of trials */
 class SessionConfig {
 public:
-	String id;
-	float	frameRate = 240.0f;					// Target (goal) frame rate (in Hz)
-	unsigned int frameDelay = 0;				// Integer frame delay (in frames)
-	String  expMode = "training";				// String indicating whether session is training or real
-	Array<TrialCount> trials;
+	String id;									///< Session ID
+	float	frameRate = 240.0f;					///< Target (goal) frame rate (in Hz)
+	unsigned int frameDelay = 0;				///< Integer frame delay (in frames)
+	String  expMode = "training";				///< String indicating whether session is training or real
+	Array<TrialCount> trials;					///< Array of trials (and their counts) to be performed
 
 	SessionConfig() : frameRate(240.0f), frameDelay(0){}
 
+	/** Load from Any */
 	SessionConfig(const Any& any) {
 		int settingsVersion = 1;
 		AnyTableReader reader(any);
@@ -553,29 +586,30 @@ public:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
 			break;
 		}
-		//reader.verifyDone();
 	}
 };
 
+/** Experiment configuration */
 class ExperimentConfig {
 public:
 	// Task parameters
-	String	appendingDescription = "ver0";			// Short text field for description
-	String  sceneName = "eSports Simple Hallway";	// For target experiment
-	float feedbackDuration = 1.0f;
-	float readyDuration = 0.5f;
-	float taskDuration = 100000.0f;
-	WeaponConfig weapon;
+	String	appendingDescription = "ver0";			///< Short text field for description
+	String  sceneName = "eSports Simple Hallway";	///< Scene to use for the experiment
+	float readyDuration = 0.5f;						///< Time in ready state in seconds
+	float taskDuration = 100000.0f;					///< Maximum time spent in any one task
+	float feedbackDuration = 1.0f;					///< Time in feedback state in seconds
+	WeaponConfig weapon;							///< Weapon to be used
 	
-	Array<SessionConfig> sessions;					// Array of sessions
-	Array<TargetConfig> targets;					// Array of trial configs
-    bool renderWeaponStatus = true;                 // Display weapon cooldown
-    String weaponStatusSide = "left";               // "right" for right side, otherwise left
-    bool renderClickPhoton = true;                  // Render click to photon box
-    String clickPhotonSide = "right";               // "right" for right side, otherwise left
+	Array<SessionConfig> sessions;					///< Array of sessions
+	Array<TargetConfig> targets;					///< Array of trial configs
+    bool renderWeaponStatus = true;                 ///< Display weapon cooldown
+    String weaponStatusSide = "left";               ///< "right" for right side, otherwise left
+    bool renderClickPhoton = true;                  ///< Render click to photon box
+    String clickPhotonSide = "right";               ///< "right" for right side, otherwise left
 
 	ExperimentConfig() {}
 	
+	/** Load from Any */
 	ExperimentConfig(const Any& any) {
 		int settingsVersion = 1; // used to allow different version numbers to be loaded differently
 		AnyTableReader reader(any);
@@ -600,10 +634,9 @@ public:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);
 			break;
 		}
-		// fine to have extra entries not read
-		//reader.verifyDone();
 	}
 
+	/** Get an array of session IDs */
 	Array<String> getSessIds() {
 		Array<String> ids;
 		for (auto sess : sessions) {
@@ -612,6 +645,7 @@ public:
 		return ids;
 	}
 
+	/** Get a session config based on its ID */
 	shared_ptr<SessionConfig> getSessionConfigById(String id) {
 		for (int i = 0; i < sessions.size(); i++) {
 			if (!sessions[i].id.compare(id)) return std::make_shared<SessionConfig>(sessions[i]);
@@ -619,6 +653,7 @@ public:
 		return nullptr;
 	}
 
+	/** Get the index of a session in the session array (by ID) */
 	int getSessionIndex(String id) {
 		for (int i = 0; i < sessions.size(); i++) {
 			auto aa = sessions[i];
@@ -636,12 +671,13 @@ public:
 		return nullptr;
 	}
 
+	/** Get experiment conditions for a given session (by ID) */
 	Array<Param> getExpConditions(String id) {
 		int idx = getSessionIndex(id);
 		return getExpConditions(idx);
 	}
 
-	// This is a kludge to quickly create experiment conditions w/ appropriate parameters
+	/** This is a kludge to quickly create param-based experiment conditions w/ appropriate parameters */
 	Array<Param> getExpConditions(int sessionIndex) {
 		Array<Param> params;
 		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
@@ -680,7 +716,7 @@ public:
 		return params;
 	}
 
-	// Get the experiment config from file
+	/** Get the experiment config from file */
 	static ExperimentConfig load(String filename) {
 		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, copy from the sample config file.
 			FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
