@@ -189,6 +189,8 @@ void Experiment::initTargetAnimation() {
 		}
 	}
 	else {
+		// Make sure we reset the target color here (avoid color bugs)
+		m_app->m_targetColor = Color3::red().pow(2.0f);
 		m_app->spawnFlyingTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
 			visualSize,
@@ -199,7 +201,7 @@ void Experiment::initTargetAnimation() {
 		);
 	}
 
-	// Full health for the target
+	// Reset health for the target
 	m_app->m_targetHealth = 1.f;
 	// reset click counter
 	m_clickCount = 0;
