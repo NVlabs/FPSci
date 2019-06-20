@@ -32,7 +32,8 @@ void Logger::createResultsFile(String filename, String subjectID)
 
 	// create the file
 	if (sqlite3_open(filename.c_str(), &m_db)) {
-		// TODO: report error if failed.
+		// Write an error to the log
+		logPrintf(("Error creating log file: " + filename).c_str());
 	}
 
 	// create tables inside the db file.
