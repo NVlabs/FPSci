@@ -50,8 +50,7 @@ struct PsychophysicsDesignParameter
 	std::vector<int32_t> mMaxTrialCounts; // for Method of Constant Stimuli
 };
 
-/** Struct for condition parameter or experiment description
-*/
+/** Struct for condition parameter or experiment description */
 struct Param
 {
 	std::map<std::string, float> val;
@@ -75,8 +74,7 @@ struct Param
 	}
 };
 
-/** Response struct
-*/
+/** Response struct */
 struct Response
 {
 	float mStimLevel;
@@ -116,15 +114,16 @@ public:
 	*/
 	bool isComplete();
 
-	PsychophysicsDesignParameter mPsyParam;
-	std::vector<Response> mResponses;
-	float mCurrentLevel; // universal for both general SC and MCS
-	float mLevelStepSize; // for general SC only
+	PsychophysicsDesignParameter mPsyParam;				///< Parameter
+	std::vector<Response> mResponses;					///< Array of responses
+
+	float mCurrentLevel;								///< Current stimulus level, universal for both general SC and MCS
+	float mLevelStepSize;								///< for general SC only
 	int32_t mCurrentStimIndex, mIndexStepSize; // for SC with pre-determined stimulus levels
 	int32_t mUpCount, mDownCount, mCurrentDirection, mReversalCount, mLimitHitCount; // for SC only
 	std::vector<int32_t> mTrialCounts; // for MCS only
 										// description of condition for the current measurement
-	Param mParam;
+	Param mParam;										///< Parameter storage structure
 
 	bool mIsInitialized = false;
 };

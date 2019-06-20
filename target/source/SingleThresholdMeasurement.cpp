@@ -119,7 +119,9 @@ SingleThresholdMeasurement::SingleThresholdMeasurement(Param initConditionParam,
 		mReversalCount = 0;
 		mLimitHitCount = 0;
 	}
-	else if (mPsyParam.mMeasuringMethod == MethodOfConstantStimuli) // MCS
+
+	// MCS
+	else if (mPsyParam.mMeasuringMethod == MethodOfConstantStimuli)
 	{
 		if (mPsyParam.mIsDefault) // only stimLevels were defined
 		{
@@ -276,8 +278,10 @@ void SingleThresholdMeasurement::processResponse(int32_t response)
 				mUpCount = 0; // reset up count
 			}
 			mCurrentLevel = mPsyParam.mStimLevels[mCurrentStimIndex];
+
 			// TODO: How to print log messages?
-			//std::cout << "Processed a response that was incorrect. Reversal count is: " << mReversalCount << "\n";
+			//logPrintf("Processed a response that was incorrect. Reversal count is: " << mReversalCount << "\n"")
+			//std::cout << ";
 		}
 		else // telling 'signal level too high!', attempting to go down.
 		{
