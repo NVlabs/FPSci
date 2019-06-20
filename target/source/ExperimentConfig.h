@@ -624,6 +624,7 @@ public:
 	float readyDuration = 0.5f;						///< Time in ready state in seconds
 	float taskDuration = 100000.0f;					///< Maximum time spent in any one task
 	float feedbackDuration = 1.0f;					///< Time in feedback state in seconds
+	float fieldOfView = 103.0f;						///< Field of view (horizontal) for the user
 	WeaponConfig weapon;							///< Weapon to be used
 	
 	Array<SessionConfig> sessions;					///< Array of sessions
@@ -650,6 +651,7 @@ public:
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
+			reader.getIfPresent("fieldOfView", fieldOfView);
 			reader.getIfPresent("weapon", weapon);
             reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
             reader.getIfPresent("weaponStatusSide", weaponStatusSide);

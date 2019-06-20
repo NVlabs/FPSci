@@ -8,6 +8,7 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `feedbackDuration` describes the duration of the feedback window between experiments
 * `readyDuration` sets the time before the start of each trial
 * `taskDuration` sets the maximum time over which the task can occur
+* `fieldOfView` sets the (horizontal) field of view for the user's display
 * `renderWeaponStatus` controls whether or not the weapon cooldown is rendered on the left side of the screen
 * `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](./weapon/weaponConfigReadme.md))
 * `sessions` is a list of all sessions and their affiliated information:

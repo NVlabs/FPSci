@@ -15,9 +15,6 @@ static const bool  variableRefreshRate = true;
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
 const float App::TARGET_MODEL_ARRAY_OFFSET = 40;
 
-// Set FoV (in degrees) based on horizontal
-static const float horizontalFieldOfViewDegrees = 103; // deg
-
 //TODO: Decide whether this should be removed!!!
 static const bool testCustomProjection = false;
 
@@ -415,7 +412,6 @@ void App::loadModels() {
 	}
 }
 
-
 void App::makeGUI() {
 	debugWindow->setVisible(!startupConfig.playMode);
 	developerWindow->setVisible(!startupConfig.playMode);
@@ -713,7 +709,7 @@ void App::setDisplayLatencyFrames(int f) {
 }
 
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
-	m_debugCamera->setFieldOfView(horizontalFieldOfViewDegrees * units::degrees(), FOVDirection::HORIZONTAL);
+	m_debugCamera->setFieldOfView(experimentConfig.fieldOfView * units::degrees(), FOVDirection::HORIZONTAL);
 	setSceneBrightness(m_sceneBrightness);
 	setActiveCamera(m_debugCamera);
 }
