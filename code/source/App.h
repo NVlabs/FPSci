@@ -66,7 +66,7 @@ protected:
 	shared_ptr<Sound>               m_fireSound;
 	shared_ptr<Sound>               m_explosionSound;
 
-	shared_ptr<ArticulatedModel>    m_laserModel;
+	shared_ptr<ArticulatedModel>    m_bulletModel;
 	shared_ptr<ArticulatedModel>	m_decalModel;
 	shared_ptr<VisibleEntity>		m_lastDecal;
 	shared_ptr<VisibleEntity>		m_firstDecal;
