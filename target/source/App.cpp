@@ -351,7 +351,7 @@ void App::loadModels() {
 
 	m_viewModel = ArticulatedModel::create(experimentConfig.weapon.modelSpec, "viewModel");
 
-	const static Any laserSpec = PARSE_ANY(ArticulatedModel::Specification{
+	const static Any bulletSpec = PARSE_ANY(ArticulatedModel::Specification{
 		filename = "ifs/d10.ifs";
 		preprocess = {
 			transformGeometry(all(), Matrix4::pitchDegrees(90));
@@ -362,7 +362,7 @@ void App::loadModels() {
 			});
 		}; });
 
-	m_laserModel = ArticulatedModel::create(laserSpec, "laserModel");
+	m_bulletModel = ArticulatedModel::create(bulletSpec, "bulletModel");
 
 	const static Any decalSpec = PARSE_ANY(ArticulatedModel::Specification{
 		filename = "ifs/square.ifs";
@@ -422,7 +422,7 @@ void App::makeGUI() {
 	const float SLIDER_SPACING = 35;
 	debugPane->beginRow(); {
 		debugPane->addCheckBox("Hitscan", &m_hitScan);
-		debugPane->addCheckBox("Show Laser", &experimentConfig.weapon.renderBullets);
+		debugPane->addCheckBox("Show Bullets", &experimentConfig.weapon.renderBullets);
 		debugPane->addCheckBox("Weapon", &experimentConfig.weapon.renderModel);
 		debugPane->addCheckBox("HUD", &renderHud);
 		debugPane->addCheckBox("FPS", &m_renderFPS);
@@ -1028,26 +1028,26 @@ bool App::fire(bool destroyImmediately) {
 		else hitTarget = false;
 	}
 
-	// Create the laser
+	// Create the bullet
 	if (experimentConfig.weapon.renderBullets) {
-		CFrame laserStartFrame = m_weaponFrame;
-		laserStartFrame.translation += laserStartFrame.upVector() * 0.1f;
+		CFrame bulletStartFrame = m_weaponFrame;
+		bulletStartFrame.translation += bulletStartFrame.upVector() * 0.1f;
 
 		// Adjust for the discrepancy between where the gun is and where the player is looking
-		laserStartFrame.lookAt(aimPoint);
+		bulletStartFrame.lookAt(aimPoint);
 
-		laserStartFrame.translation += laserStartFrame.lookVector() * 2.0f;
-		const shared_ptr<VisibleEntity>& laser = VisibleEntity::create(format("laser%03d", ++m_lastUniqueID), scene().get(), m_laserModel, laserStartFrame);
-		laser->setShouldBeSaved(false);
-		laser->setCanCauseCollisions(false);
-		laser->setCastsShadows(false);
+		bulletStartFrame.translation += bulletStartFrame.lookVector() * 2.0f;
+		const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastUniqueID), scene().get(), m_bulletModel, bulletStartFrame);
+		bullet->setShouldBeSaved(false);
+		bullet->setCanCauseCollisions(false);
+		bullet->setCastsShadows(false);
 		/*
-		const shared_ptr<Entity::Track>& track = Entity::Track::create(laser.get(), scene().get(),
-			Any::parse(format("%s", laserStartFrame.toXYZYPRDegreesString().c_str())));
-		laser->setTrack(track);
+		const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
+			Any::parse(format("%s", bulletStartFrame.toXYZYPRDegreesString().c_str())));
+		bullet->setTrack(track);
 		*/
-		projectileArray.push(Projectile(laser, System::time() + 1.0f));
-		scene()->insert(laser);
+		projectileArray.push(Projectile(bullet, System::time() + 1.0f));
+		scene()->insert(bullet);
 	}
 
 	if (startupConfig.playMode) {

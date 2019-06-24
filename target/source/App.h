@@ -45,7 +45,7 @@ protected:
 	shared_ptr<Sound>               m_fireSound;						///< Sound for weapon firing
 	shared_ptr<Sound>               m_explosionSound;					///< Sound for target exploding
 
-	shared_ptr<ArticulatedModel>    m_laserModel;						///< Model for the "bullet"
+	shared_ptr<ArticulatedModel>    m_bulletModel;						///< Model for the "bullet"
 	shared_ptr<ArticulatedModel>	m_decalModel;						///< Model for the miss decal
 	shared_ptr<VisibleEntity>		m_lastDecal;						///< Model for the last decal we created
 	shared_ptr<VisibleEntity>		m_firstDecal;						///< Model for the first decal we created
