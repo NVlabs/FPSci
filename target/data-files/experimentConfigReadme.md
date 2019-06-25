@@ -11,6 +11,9 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `fieldOfView` sets the (horizontal) field of view for the user's display
 * `renderWeaponStatus` controls whether or not the weapon cooldown is rendered on the left side of the screen
 * `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](./weapon/weaponConfigReadme.md))
+* `weaponStatusSide` controls which side of the display the weapon status is drawn on (can be `right` or `left`)
+* `clickPhotonSide` controls which side of the display the click-to-photon region is drawn on (can be `right` or `left`)
+* `shader` provides the (relative) path of an (optional) shader to run
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
     * `frameDelay` is an (integer) count of frames to delay to control latency

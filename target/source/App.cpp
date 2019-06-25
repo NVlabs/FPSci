@@ -15,9 +15,6 @@ static const bool  variableRefreshRate = true;
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
 const float App::TARGET_MODEL_ARRAY_OFFSET = 40;
 
-//TODO: Decide whether this should be removed!!!
-static const bool testCustomProjection = false;
-
 /** global startup config - sets playMode and experiment/user paths */
 StartupConfig startupConfig;
 
@@ -937,7 +934,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		}
 	} rd->pop2D();
 
-	if (testCustomProjection) {
+	if (experimentConfig.shader != "") {
 		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
 		// latency queue copy
 			
@@ -950,7 +947,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			Args args;
 			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
 			args.setRect(rd->viewport());
-			LAUNCH_SHADER("shader/distort.pix", args);
+			LAUNCH_SHADER(experimentConfig.shader, args);
 		} rd->pop2D();
 	}
 }

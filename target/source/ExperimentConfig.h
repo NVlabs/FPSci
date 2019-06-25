@@ -633,6 +633,7 @@ public:
     String weaponStatusSide = "left";               ///< "right" for right side, otherwise left
     bool renderClickPhoton = true;                  ///< Render click to photon box
     String clickPhotonSide = "right";               ///< "right" for right side, otherwise left
+	String shader = "";								///< Option for a custom shader name
 
 	ExperimentConfig() {}
 	
@@ -657,6 +658,7 @@ public:
             reader.getIfPresent("weaponStatusSide", weaponStatusSide);
             reader.getIfPresent("renderClickPhoton", renderClickPhoton);
             reader.getIfPresent("clickPhotonSide", clickPhotonSide);
+			reader.getIfPresent("shader", shader);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);
