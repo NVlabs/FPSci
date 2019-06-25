@@ -17,7 +17,7 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
     * `frameDelay` is an (integer) count of frames to delay to control latency
-    * `frameRate` is the frame rate of the display (constant for a given session)
+    * `frameRate` is the frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#Frame-Rate-Modes) below.
     * `expMode` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
     * `trials` is a list of trials referencing the `trials` table above:
         * `id` is a short name for the trial to affiliate with the `targets` or `reactions` table below
@@ -34,3 +34,9 @@ There are a number of inputs to experiment config. The following is a descriptio
     * `jumpPeriod` is a vector indicating the minimum ([0]) and maximum ([1]) period to wait between jumps (in seconds)
     * `jumpSpeed` is a vector indicating the minimum ([0]) and maximum([1]) angular speed with which to jump (in deg/s)
     * `accelGravity` is the min ([0])/max ([1]) acceleration due to gravity during the jump (in m/s^2)
+
+## Frame Rate Modes
+The `frameRate` parameter in any given session config can be used in 3 different modes:
+* If the `frameRate` parameter is set to a value >> refresh rate of the display (we suggest `8192fps`), then the program runs in "unlocked" mode wherein as many frames as can be drawn are rendered per displayed frame. This is the common mode of operation in many modern games.
+* If the `frameRate` parameter is set close to the refresh rate of the display then the programs runs in "fixed" frame rate mode, wherein the drawn frames are limited to the rate provided
+* If `frameRate = 0` then this indicates "default" mode, wherein the default frame rate settings for the window are applied. This should be equivalent to the "unlocked" mode for most systems. This is the default setting if you do not specify a frame rate in the file.

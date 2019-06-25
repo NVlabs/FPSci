@@ -587,7 +587,7 @@ public:
 class SessionConfig {
 public:
 	String id;									///< Session ID
-	float	frameRate = 240.0f;					///< Target (goal) frame rate (in Hz)
+	float	frameRate = 0.0f;					///< Target (goal) frame rate (in Hz)
 	unsigned int frameDelay = 0;				///< Integer frame delay (in frames)
 	String  expMode = "training";				///< String indicating whether session is training or real
 	Array<TrialCount> trials;					///< Array of trials (and their counts) to be performed

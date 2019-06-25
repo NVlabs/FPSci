@@ -2,15 +2,6 @@
 #include "App.h"
 #include "TargetEntity.h"
 
-// Enable this to see maximum CPU/GPU rate when not limited
-// by the monitor. (true = target infinite frame rate)
-static const bool  unlockFramerate = false;
-
-// Set to true if the monitor has G-SYNC/Adaptive VSync/FreeSync, 
-// which allows the application to submit asynchronously with vsync
-// without tearing.
-static const bool  variableRefreshRate = true;
-
 // Scale and offset for target
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
 const float App::TARGET_MODEL_ARRAY_OFFSET = 40;
@@ -588,8 +579,7 @@ void App::updateSession(String id) {
 
 		// Set a maximum *finite* frame rate
 		float dt = 0;
-		if (unlockFramerate) dt = 1.0f / 8192.0f;					
-		else if (variableRefreshRate) dt = 1.0f / sessConfig->frameRate;
+		if (sessConfig->frameRate > 0) dt = 1.0f / sessConfig->frameRate;
 		else dt = 1.0f / float(window()->settings().refreshRate);
 		setFrameDuration(dt, GApp::REAL_TIME);
 
