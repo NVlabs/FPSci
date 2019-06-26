@@ -9,8 +9,7 @@ const float App::TARGET_MODEL_ARRAY_OFFSET = 40;
 /** global startup config - sets playMode and experiment/user paths */
 StartupConfig startupConfig;
 
-App::App(const GApp::Settings& settings) : GApp(settings) {
-}
+App::App(const GApp::Settings& settings) : GApp(settings) {}
 
 /** Initialize the app */
 void App::onInit() {
@@ -108,8 +107,9 @@ void App::updateMouseSensitivity() {
     else {
         // Force into FPS mode
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
-        fpm->setMoveRate(0.0);
     }
+	// Control player motion using the flag
+	fpm->setMoveRate(m_allowPlayerMotion ? 1.0 : 0.0);
     fpm->setTurnRate(mouseSensitivity);
 }
 
@@ -415,6 +415,7 @@ void App::makeGUI() {
 		debugPane->addCheckBox("HUD", &renderHud);
 		debugPane->addCheckBox("FPS", &m_renderFPS);
 		debugPane->addCheckBox("Turbo", &emergencyTurbo);
+		debugPane->addCheckBox("Motion", &m_allowPlayerMotion);
 		static int frames = 0;
 		GuiControl* c = nullptr;
 
