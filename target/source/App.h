@@ -206,8 +206,6 @@ public:
     void quitRequest();
 
 	bool pythonMergeLogs(String basename);
-
-	void setDisplayLatencyFrames(int f);
     
 	/** opens the user settings window */
     void openUserSettingsWindow();
@@ -221,11 +219,6 @@ public:
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
 	void clearTargets();
 
-	int displayLatencyFrames() const {
-		return m_displayLagFrames;
-	}
-	
-	
 	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
 
 	virtual void onInit() override;

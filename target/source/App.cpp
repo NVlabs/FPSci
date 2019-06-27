@@ -328,15 +328,6 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 }
 
 void App::loadModels() {
-	//const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
-	//	filename = "model/sniper/sniper.obj";
-	//	preprocess = {
-	//		transformGeometry(all(), Matrix4::yawDegrees(90));
-	//		transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
-	//	};
-	//	scale = 0.25;
-	//});
-
 	m_viewModel = ArticulatedModel::create(experimentConfig.weapon.modelSpec, "viewModel");
 
 	const static Any bulletSpec = PARSE_ANY(ArticulatedModel::Specification{
@@ -575,7 +566,7 @@ void App::updateSession(String id) {
 		// Print message to log
 		logPrintf("User selected session: %s. Updating now...\n", id);
 		// apply frame lag
-		setDisplayLatencyFrames(sessConfig->frameDelay);
+		m_displayLagFrames = sessConfig->frameDelay;
 
 		// Set a maximum *finite* frame rate
 		float dt = 0;
@@ -691,13 +682,9 @@ bool App::pythonMergeLogs(String basename) {
 	return true;
 }
 
-void App::setDisplayLatencyFrames(int f) {
-	m_displayLagFrames = f;
-}
-
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	m_debugCamera->setFieldOfView(experimentConfig.fieldOfView * units::degrees(), FOVDirection::HORIZONTAL);
-	setSceneBrightness(m_sceneBrightness);
+	//setSceneBrightness(m_sceneBrightness);
 	setActiveCamera(m_debugCamera);
 }
 
@@ -1248,10 +1235,6 @@ void App::setReticle(int r) {
 		// This special case is added to allow a custom reticle not in the gui/reticle/reticle-[x].png format
 		reticleTexture = Texture::fromFile(System::findDataFile("gui/reticle.png"));
 	}
-}
-
-void App::setSceneBrightness(float b) {
-	m_sceneBrightness = b;
 }
 
 void App::resetView() {
