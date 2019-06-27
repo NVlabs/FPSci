@@ -205,9 +205,6 @@ void Experiment::initTargetAnimation() {
 	m_app->m_targetHealth = 1.f;
 	// reset click counter
 	m_clickCount = 0;
-
-	// Don't reset the view. Wait for the subject to center on the ready target.
-	//m_app->resetView();
 }
 
 void Experiment::processResponse()

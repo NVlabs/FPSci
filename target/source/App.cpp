@@ -1238,17 +1238,6 @@ void App::setReticle(int r) {
 	}
 }
 
-void App::resetView() {
-    // reset view direction (look front!)
-    const shared_ptr<Camera>& camera = activeCamera();
-    //activeCamera()->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
-    // Account for the camera translation to ensure correct look vector
-    //camera->lookAt(camera->frame().translation + Point3(0, 0, -1));
-    const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-    //fpm->setFrame(CFrame::fromXYZYPRDegrees(0, 0, 0, 0, 0, 0));
-    fpm->lookAt(Point3(0, 0, -1));
-}
-
 void App::onCleanup() {
 	// Called after the application loop ends.  Place a majority of cleanup code
 	// here instead of in the constructor so that exceptions can be caught.

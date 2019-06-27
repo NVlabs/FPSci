@@ -180,8 +180,7 @@ public:
 		Point3 orbitCenter
 	);
 
-	/** Call to set the 3D scene brightness. Default is 1.0. */
-	void setSceneBrightness(float b);
+
     /** callback for saving user config */
 	void userSaveButtonPress(void);
 	/** used by experiment class to finish data logging */
@@ -268,8 +267,6 @@ protected:
 
 public:
 	bool							m_buttonUp = true;
-
-	void resetView();
 	Point2 getViewDirection();
 };
 
