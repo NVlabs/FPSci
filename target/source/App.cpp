@@ -108,8 +108,8 @@ void App::updateMouseSensitivity() {
         // Force into FPS mode
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
     }
-	// Control player motion using the flag
-	fpm->setMoveRate(m_allowPlayerMotion ? 1.0 : 0.0);
+	// Control player motion using the experiment config parameter
+	fpm->setMoveRate(experimentConfig.moveRate);
     fpm->setTurnRate(mouseSensitivity);
 }
 
@@ -406,7 +406,6 @@ void App::makeGUI() {
 		debugPane->addCheckBox("HUD", &renderHud);
 		debugPane->addCheckBox("FPS", &m_renderFPS);
 		debugPane->addCheckBox("Turbo", &emergencyTurbo);
-		debugPane->addCheckBox("Motion", &m_allowPlayerMotion);
 		static int frames = 0;
 		GuiControl* c = nullptr;
 

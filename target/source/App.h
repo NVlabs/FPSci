@@ -79,7 +79,6 @@ protected:
 	//bool                            m_renderHud = false;
 	bool                            m_renderFPS = false;				
 	//bool                            m_renderHitscan = false;
-	bool							m_allowPlayerMotion = false;
     GuiPane*                        m_currentUserPane;
 
 	// Drop down selection writebacks

@@ -625,14 +625,19 @@ public:
 	float taskDuration = 100000.0f;					///< Maximum time spent in any one task
 	float feedbackDuration = 1.0f;					///< Time in feedback state in seconds
 	float fieldOfView = 103.0f;						///< Field of view (horizontal) for the user
+	float moveRate = 0.0f;							///< Player move rate (defaults to no motion)
+
 	WeaponConfig weapon;							///< Weapon to be used
 	
 	Array<SessionConfig> sessions;					///< Array of sessions
 	Array<TargetConfig> targets;					///< Array of trial configs
-    bool renderWeaponStatus = true;                 ///< Display weapon cooldown
+    
+	bool renderWeaponStatus = true;                 ///< Display weapon cooldown
     String weaponStatusSide = "left";               ///< "right" for right side, otherwise left
-    bool renderClickPhoton = true;                  ///< Render click to photon box
+    
+	bool renderClickPhoton = true;                  ///< Render click to photon box
     String clickPhotonSide = "right";               ///< "right" for right side, otherwise left
+	
 	String shader = "";								///< Option for a custom shader name
 
 	ExperimentConfig() {}
@@ -653,6 +658,7 @@ public:
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("fieldOfView", fieldOfView);
+			reader.getIfPresent("moveRate", moveRate);
 			reader.getIfPresent("weapon", weapon);
             reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
             reader.getIfPresent("weaponStatusSide", weaponStatusSide);

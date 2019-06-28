@@ -9,6 +9,7 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `readyDuration` sets the time before the start of each trial
 * `taskDuration` sets the maximum time over which the task can occur
 * `fieldOfView` sets the (horizontal) field of view for the user's display
+* `moveRate` sets the rate of player motion in m/s, set this parameter to `0` to display player motion
 * `renderWeaponStatus` controls whether or not the weapon cooldown is rendered on the left side of the screen
 * `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](./weapon/weaponConfigReadme.md))
 * `weaponStatusSide` controls which side of the display the weapon status is drawn on (can be `right` or `left`)
