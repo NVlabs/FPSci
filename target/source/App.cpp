@@ -1015,11 +1015,13 @@ bool App::fire(bool destroyImmediately) {
 		bullet->setShouldBeSaved(false);
 		bullet->setCanCauseCollisions(false);
 		bullet->setCastsShadows(false);
+
 		/*
 		const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
 			Any::parse(format("%s", bulletStartFrame.toXYZYPRDegreesString().c_str())));
 		bullet->setTrack(track);
 		*/
+
 		projectileArray.push(Projectile(bullet, System::time() + 1.0f));
 		scene()->insert(bullet);
 	}
@@ -1038,30 +1040,32 @@ bool App::fire(bool destroyImmediately) {
 	if (experimentConfig.weapon.renderDecals && experimentConfig.weapon.firePeriod > 0.0f && !hitTarget) {
 		// compute world intersection
 		const Ray& ray = m_debugCamera->frame().lookRay();
-		Model::HitInfo info;
-		float closest = finf();
+		float hitDist = finf();
 		Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
 		for (auto projectile : projectileArray) {
 			dontHit.append(projectile.entity);
 		}
 		for (auto target : targetArray) {
 			dontHit.append(target);
-		}
-		scene()->intersect(ray, closest, false, dontHit, info);
 
+		}
+
+		// Cast a ray against the scene to get the decal location/normal
+		Model::HitInfo info;
+		scene()->intersect(ray, hitDist, false, dontHit, info);
 		// Find where to put the decal
 		CFrame decalFrame = m_debugCamera->frame();
-		decalFrame.translation += ray.direction() * (closest - 0.01f);
-		// TODO: Make it rotate to the surface normal. info.normal appears to be at inf...
-		//decalFrame.rotation = info.entity->frame().rotation;
-		//decalFrame.rotation = info.normal;
+		decalFrame.translation += ray.direction() * (hitDist - 0.01f);
+		// Set the decal rotation to match the normal here
+		decalFrame.lookAt(decalFrame.translation - info.normal);
 
-		// remove last decal if at max size
+
+		// Only allow 1 miss decal at a time (remove last decal if present)
 		if (notNull(m_lastDecal)) {
 			scene()->remove(m_lastDecal);
 		}
 
-		// add decal to scene
+		// Add the new decal to the scene
 		const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastUniqueID), scene().get(), m_decalModel, decalFrame);
 		scene()->insert(newDecal);
 		m_lastDecal = m_firstDecal;
