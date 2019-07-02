@@ -771,7 +771,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		}
 		else {
 			// Animate
-			projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * 0.6f);
+			projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * experimentConfig.weapon.bulletSpeed);
 		}
 	}
 

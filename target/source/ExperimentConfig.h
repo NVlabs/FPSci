@@ -468,6 +468,7 @@ public:
 	bool renderMuzzleFlash = false;										///< Render a muzzle flash when the weapon fires?
 	bool renderDecals = true;											///< Render decals when the shots miss?
 	bool renderBullets = false;											///< Render bullets leaving the weapon
+	float bulletSpeed = 1.0f;											///< Speed to draw at for rendered rounds (in m/s)
 	//String missDecal = "bullet-decal-256x256.png";					///< The decal to place where the shot misses
 	float fireSpread = 0;												///< The spread of the fire
 	float damageRollOffAim = 0;											///< Damage roll off w/ aim
@@ -499,6 +500,7 @@ public:
 			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
 			reader.getIfPresent("renderDecals", renderDecals);
 			reader.getIfPresent("renderBullets", renderBullets);
+			reader.getIfPresent("bulletSpeed", bulletSpeed);
 			//reader.getIfPresent("missDecal", missDecal);
 			reader.getIfPresent("fireSpread", fireSpread);
 			reader.getIfPresent("damageRollOffAim", damageRollOffAim);

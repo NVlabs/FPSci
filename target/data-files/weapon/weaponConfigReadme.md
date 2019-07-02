@@ -10,6 +10,7 @@ This file provides information about the weapon to be used in the experiment. De
 * `renderModel` controls whether or not a weapon model is rendered in the first-person view
 * `modelSpec` provides an `ArticulatedModel` Any specification for the weapon being used
 * `renderBullets` controls whether or not bullets are rendered from the barrel of the weapon when fired
+* `bulletSpeed` contrls the speed of rendered bullets (in m/s)
 * `renderDecals` controls whether or not bullet hole decals are put on misses when `autoFire` is `False` and `firePeriod` > 0 (i.e. not in laser mode)
 * `renderMuzzleFlash` controls whether or not a muzzle flash is rendered for the weapon
 * `muzzleOffset` is a `Vector3` controlling the offset of the muzzle within the weapon frame
