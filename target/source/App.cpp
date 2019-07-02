@@ -1005,7 +1005,10 @@ bool App::fire(bool destroyImmediately) {
 	// Create the bullet
 	if (experimentConfig.weapon.renderBullets) {
 		CFrame bulletStartFrame = m_weaponFrame;
-		bulletStartFrame.translation += bulletStartFrame.upVector() * 0.1f;
+
+		// TODO: Update this so we load barrel location information from the weapon config
+		//bulletStartFrame.translation += bulletStartFrame.upVector() * 0.1f;
+		bulletStartFrame.translation += experimentConfig.weapon.muzzleOffset;
 
 		// Adjust for the discrepancy between where the gun is and where the player is looking
 		bulletStartFrame.lookAt(aimPoint);

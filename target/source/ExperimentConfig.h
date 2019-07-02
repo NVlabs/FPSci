@@ -456,6 +456,7 @@ public:
 	float damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
 	String fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	///< Sound to play on fire
 	bool renderModel = false;											///< Render a model for the weapon?
+	Vector3 muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec
 		filename = "model/sniper/sniper.obj";
 		preprocess = {
@@ -492,6 +493,7 @@ public:
 			reader.getIfPresent("renderModel", renderModel);
 
 			reader.getIfPresent("modelSpec", modelSpec);
+			reader.getIfPresent("muzzleOffset", muzzleOffset);
 			//model = ArticulatedModel::create(modelSpec, "viewModel");
 			
 			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
