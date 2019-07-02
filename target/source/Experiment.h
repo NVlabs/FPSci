@@ -95,25 +95,37 @@ private:
 class Experiment : public ReferenceCountedObject {
 //class Experiment {
 protected:
-	double m_taskExecutionTime;
-	String m_taskStartTime;
-	String m_taskEndTime;
-	int m_response;
-	int m_clickCount = 0;
-	bool m_hasSession;
+	App* m_app;											///< Pointer to the app
+	ExperimentConfig m_config;							///< This experiment's configuration
+	PsychHelper m_psych;								///< Psych helper for the experiment
 
-	double m_totalRemainingTime = 0;
-	double m_lastMotionChangeAt;
-	double m_scoreboardDuration = 10.0; // show the score for at least this amount of seconds.
-	double m_lastFireAt = 0.f;
+	// Experiment management					
+	int m_response;										///< 0 indicates failure (didn't hit the target), 1 indicates sucess (hit the target)
+	int m_clickCount = 0;								///< Count of total clicks in this trial
+	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
+	String m_feedbackMessage;							///< Message to show when trial complete
 
-	Array<Array<String>> m_playerActions;
-	Array<Array<String>> m_targetTrajectory;
-	Array<Array<String>> m_frameInfo;
-
-	String m_feedbackMessage;
-	Timer timer;
+	// Time-based parameters
+	double m_taskExecutionTime;							///< Task completion time for the most recent trial
+	String m_taskStartTime;								///< Recorded task start timestamp							
+	String m_taskEndTime;								///< Recorded task end timestamp
+	double m_totalRemainingTime = 0;					///< Time remaining in the trial
+	//double m_lastMotionChangeAt;
+	double m_scoreboardDuration = 10.0;					///< Show the score for at least this amount of seconds.
+	double m_lastFireAt = 0.f;							///< Time of the last shot
+	Timer m_timer;										///< Timer used for timing tasks							
 	//Stopwatch stopwatch;			// Could move timer above to stopwatch in future
+
+	// User parameters
+	const float m_userSpawnDistance = 0.0f;				///< Where the user is spawned (in the axis of the target)
+
+	// Target parameters
+	Color3 m_targetColor = Color3::red();				///< Target color
+	
+	// Reported data storage
+	Array<Array<String>> m_playerActions;				///< Storage for player action (hit, miss, aim)
+	Array<Array<String>> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
+	Array<Array<String>> m_frameInfo;					///< Storage for frame info (sdt, idt, rdt)
 
 	Experiment(App* app) : m_app(app) {
 		// secure vector capacity large enough so as to avoid memory allocation time.
@@ -122,8 +134,6 @@ protected:
 	};
 
 public:
-	String mResultFileName;
-	App* m_app;
 	static shared_ptr<Experiment> create(App* app) {
 		return createShared<Experiment>(app);
 	}
@@ -131,7 +141,6 @@ public:
 		shared_ptr<Experiment> texp = create(app);
 		texp->m_psych.mMeasurements = Array<SingleThresholdMeasurement>();
 	}
-
 	/** creates a new target with randomized motion path and gives it to the app */
 	void initTargetAnimation();
 	/** gets the current weapon cooldown as a ratio **/
@@ -154,9 +163,8 @@ public:
 	void accumulatePlayerAction(String action);
 	bool responseReady();
 	bool initPsychHelper();
-	bool moveOn = false;
-	PsychHelper m_psych;
-	ExperimentConfig m_config;
+	bool moveOn = false;								///< Flag indicating session is complete
+	enum PresentationState presentationState;			///< Current presentation state
 
 	/** result recording */
 	void countClick() { m_clickCount++; }

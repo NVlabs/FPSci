@@ -123,13 +123,13 @@ bool Experiment::initPsychHelper()
 
 void Experiment::onInit() {
 	// Initialize presentation states
-	m_app->m_presentationState = PresentationState::initial;
+	presentationState = PresentationState::initial;
 	m_feedbackMessage = "Aim at the target and shoot!";
 
 	m_config = m_app->experimentConfig;									// Setup config from app
 	m_hasSession = initPsychHelper();
 	if (!m_hasSession) {												// Initialize PsychHelper based on the configuration.
-		m_app->m_presentationState = PresentationState::feedback;
+		presentationState = PresentationState::feedback;
 	}
 }
 
@@ -152,12 +152,12 @@ void Experiment::initTargetAnimation() {
 	// Not reference: we don't want it to change after the first call.
 	float visualSize = G3D::Random().common().uniform(m_psych.getParam().val["minVisualSize"], m_psych.getParam().val["maxVisualSize"]);
 
-	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_app->m_spawnDistance, 0.0f, 0.0f);
+	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
 	CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
 	f.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
-	if (m_app->m_presentationState == PresentationState::task) {
+	if (presentationState == PresentationState::task) {
 		float rot_pitch = randSign() * Random::common().uniform(m_psych.getParam().val["minEccV"], m_psych.getParam().val["maxEccV"]);
 		float rot_yaw = randSign() * Random::common().uniform(m_psych.getParam().val["minEccH"], m_psych.getParam().val["maxEccH"]);
 		f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
@@ -165,9 +165,9 @@ void Experiment::initTargetAnimation() {
 
 		if (String(m_psych.getParam().str["jumpEnabled"].c_str()) == "true") {
 			m_app->spawnJumpingTarget(
-				f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
+				f.pointToWorldSpace(Point3(0, 0, -m_app->targetDistance)),
 				visualSize,
-				m_app->m_targetColor,
+				m_targetColor,
 				{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
 				{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"] },
 				{ m_psych.getParam().val["minJumpPeriod"], m_psych.getParam().val["maxJumpPeriod"] },
@@ -179,9 +179,9 @@ void Experiment::initTargetAnimation() {
 		}
 		else {
 			m_app->spawnFlyingTarget(
-				f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
+				f.pointToWorldSpace(Point3(0, 0, -m_app->targetDistance)),
 				visualSize,
-				m_app->m_targetColor,
+				m_targetColor,
 				{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
 				{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"] },
 				initialSpawnPos
@@ -190,11 +190,11 @@ void Experiment::initTargetAnimation() {
 	}
 	else {
 		// Make sure we reset the target color here (avoid color bugs)
-		m_app->m_targetColor = Color3::red().pow(2.0f);
+		m_targetColor = Color3::red().pow(2.0f);
 		m_app->spawnFlyingTarget(
-			f.pointToWorldSpace(Point3(0, 0, -m_app->m_targetDistance)),
+			f.pointToWorldSpace(Point3(0, 0, -m_app->targetDistance)),
 			visualSize,
-			m_app->m_targetColor,
+			m_targetColor,
 			{ 0.0f, 0.0f },
 			{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"] },
 			initialSpawnPos
@@ -209,7 +209,7 @@ void Experiment::initTargetAnimation() {
 
 void Experiment::processResponse()
 {
-	m_taskExecutionTime = timer.getTime();
+	m_taskExecutionTime = m_timer.getTime();
 	m_response = (m_app->m_targetHealth <= 0) ? 1 : 0; // 1 means success, 0 means failure.
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 	m_psych.processResponse(m_response); // process response.
@@ -230,9 +230,9 @@ void Experiment::processResponse()
 void Experiment::updatePresentationState()
 {
 	// This updates presentation state and also deals with data collection when each trial ends.
-	PresentationState currentState = m_app->m_presentationState;
+	PresentationState currentState = presentationState;
 	PresentationState newState;
-	float stateElapsedTime = timer.getTime();
+	float stateElapsedTime = m_timer.getTime();
 
 	newState = currentState;
 
@@ -248,8 +248,8 @@ void Experiment::updatePresentationState()
 	{
 		if (stateElapsedTime > m_config.readyDuration)
 		{
-			m_lastMotionChangeAt = 0;
-			m_app->m_targetColor = Color3::green().pow(2.0f);
+			//m_lastMotionChangeAt = 0;
+			m_targetColor = Color3::green().pow(2.0f);
 			newState = PresentationState::task;
 		}
 	}
@@ -260,7 +260,7 @@ void Experiment::updatePresentationState()
 			m_taskEndTime = Logger::genUniqueTimestamp();
 			processResponse();
 			m_app->clearTargets(); // clear all remaining targets
-			m_app->m_targetColor = Color3::red().pow(2.0f);
+			m_targetColor = Color3::red().pow(2.0f);
 			newState = PresentationState::feedback;
 		}
 	}
@@ -310,11 +310,11 @@ void Experiment::updatePresentationState()
 
 	if (currentState != newState)
 	{ // handle state transition.
-		timer.startTimer();
+		m_timer.startTimer();
 		if (newState == PresentationState::task) {
 			m_taskStartTime = Logger::genUniqueTimestamp();
 		}
-		m_app->m_presentationState = newState;
+		presentationState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
 		if ((newState == PresentationState::task) || (newState == PresentationState::feedback)) {
 			initTargetAnimation();
@@ -328,7 +328,7 @@ void Experiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	updatePresentationState();
 
 	// 2. Record target trajectories, view direction trajectories, and mouse motion.
-	if (m_app->m_presentationState == PresentationState::task)
+	if (presentationState == PresentationState::task)
 	{
 		accumulateTrajectories();
 		accumulateFrameInfo(rdt, sdt, idt);
@@ -400,7 +400,7 @@ void Experiment::accumulateTrajectories()
 {
 	// recording target trajectories
 	Point3 targetAbsolutePosition = m_app->targetArray[0]->frame().translation;
-	Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_app->m_spawnDistance, 0.0f, 0.0f);
+	Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
 	Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
 
 	//// below for 2D direction calculation (azimuth and elevation)

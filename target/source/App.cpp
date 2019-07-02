@@ -307,7 +307,7 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 		jumpSpeedRange,
 		gravityRange,
 		orbitCenter,
-		m_targetDistance
+		targetDistance
 	);
 
 	UniversalMaterial::Specification materialSpecification;
@@ -1103,7 +1103,7 @@ void App::onUserInput(UserInput* ui) {
 	if (ui->keyDown(GKey::LEFT_MOUSE)) {
 		if (experimentConfig.weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
 			// check for hit, add graphics, update target state
-			if (m_presentationState == PresentationState::task) {
+			if (ex->presentationState == PresentationState::task) {
 				if (ex->responseReady()) {
 					fired = true;
                     // count clicks
@@ -1138,7 +1138,7 @@ void App::onUserInput(UserInput* ui) {
 	}
 	
 	// Handle spacebar during feedback
-	if (ui->keyPressed(GKey::SPACE) && (m_presentationState == PresentationState::feedback)) {
+	if (ui->keyPressed(GKey::SPACE) && (ex->presentationState == PresentationState::feedback)) {
 		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
 	}
 

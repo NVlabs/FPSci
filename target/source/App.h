@@ -110,6 +110,10 @@ protected:
 	void updateUser(void);
     void updateUserGUI();
 
+	//	double                          m_t_lastAnimationUpdate;
+	//	double                          m_t_stateStart;
+	//	double                          m_t_lastProjectileShot = -inf();
+
 public:
 	/* Moving from proctected so that Experiment classes can use it. */
 	shared_ptr<GFont>               outputFont;						///< Font used for output
@@ -132,6 +136,8 @@ public:
 
 	shared_ptr<Experiment> ex;										///< Pointer to the experiment
 	shared_ptr<Logger> logger;										///< Pointer to the logger
+
+	const float targetDistance = 1.0f;				///< Actual distance to target
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
@@ -218,8 +224,10 @@ public:
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
 	void clearTargets();
 
+	/** get the current view direction */
+	Point2 getViewDirection();
+	
 	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
-
 	virtual void onInit() override;
 	virtual void onAI() override;
 	virtual void onNetwork() override;
@@ -234,11 +242,9 @@ public:
     virtual void oneFrame() override;
 
 	// variables for experiments
-    const float                     m_targetDistance = 1.0f;
-    const float                     m_spawnDistance = 0.0f;
-    const float                     m_projectileSpeed = 0.0f; // meters per second
-	const float                     m_projectileShotPeriod = 0.3f; // minimum time between two repeated shots
-    const float                     m_projectileSize = 0.5f;
+    //const float                     m_projectileSpeed = 0.0f; // meters per second
+	//const float                     m_projectileShotPeriod = 0.3f; // minimum time between two repeated shots
+    //const float                     m_projectileSize = 0.5f;
 
     //Attempts to bound target within visible space
     //const float                     m_yawBound = 5.0f;
@@ -252,21 +258,11 @@ public:
 		float pixelSize = screenDiagonal / sqrt(resolution.x * resolution.x + resolution.y * resolution.y);
 		Vector2 screenSize = resolution * pixelSize;
 	} m_screenSetting;
-	enum PresentationState          m_presentationState; // which sequence are we in?
-	Color3                          m_targetColor = Color3::red();
-	Color3                          m_reticleColor;
+
+	//Color3                          m_reticleColor;
 	float						    m_targetHealth; // 1 if never hit, 0 if hit. Binary for instant hit weapon, but tracking weapon will continuously reduce it.
-	bool                            m_isTrackingOn; // true if down AND weapon type is tracking, false otherwise.
-
-
-protected:
-	double                          m_t_lastAnimationUpdate;
-	double                          m_t_stateStart;
-	double                          m_t_lastProjectileShot = -inf();
-
-public:
+	//bool                            m_isTrackingOn; // true if down AND weapon type is tracking, false otherwise.
 	bool							m_buttonUp = true;
-	Point2 getViewDirection();
 };
 
 // The "old" way of animation
