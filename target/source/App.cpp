@@ -1067,6 +1067,7 @@ bool App::fire(bool destroyImmediately) {
 
 		// Add the new decal to the scene
 		const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastUniqueID), scene().get(), m_decalModel, decalFrame);
+		newDecal->setCastsShadows(false);
 		scene()->insert(newDecal);
 		m_lastDecal = m_firstDecal;
 		m_firstDecal = newDecal;
