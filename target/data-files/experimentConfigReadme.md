@@ -1,3 +1,15 @@
+# Introduction
+The experiment config is by far the most elaborate of the configuration files. It sets a number of "world" parameters that will be constant across any given experiment. Many high-level parameters are implemented here, though most are optional.
+
+Broad areas of control included in this config file include:
+* Scene, field of view, and rendering parameters
+* Timing for experimental states
+* Universal player parameters like the move rate
+* Information on the weapon to use
+* Session setup and target movement
+
+For a full description of fields see the descriptions below.
+
 # Experiment Config Field Descriptions
 
 There are a number of inputs to experiment config. The following is a description of what each one means, and how it is meant to be used.
