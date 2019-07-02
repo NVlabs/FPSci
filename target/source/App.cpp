@@ -950,7 +950,6 @@ bool App::fire(bool destroyImmediately) {
 
 		if (closestIndex >= 0) {
 			// destroy target
-			aimPoint = ray.origin() + ray.direction() * closest;
 			float damage;
 			if (destroyImmediately) damage = m_targetHealth;
 			else if (experimentConfig.weapon.firePeriod == 0.0f && hitTarget) {		// Check if we are in "laser" mode hit the target last time
@@ -1004,13 +1003,11 @@ bool App::fire(bool destroyImmediately) {
 
 	// Create the bullet
 	if (experimentConfig.weapon.renderBullets) {
+		// Create the bullet start frame from the weapon frame plus muzzle offset
 		CFrame bulletStartFrame = m_weaponFrame;
-
-		// TODO: Update this so we load barrel location information from the weapon config
-		//bulletStartFrame.translation += bulletStartFrame.upVector() * 0.1f;
 		bulletStartFrame.translation += experimentConfig.weapon.muzzleOffset;
 
-		// Adjust for the discrepancy between where the gun is and where the player is looking
+		// Angle the bullet start frame towards the aim point
 		bulletStartFrame.lookAt(aimPoint);
 
 		bulletStartFrame.translation += bulletStartFrame.lookVector() * 2.0f;
