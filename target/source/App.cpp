@@ -411,7 +411,6 @@ void App::makeGUI() {
 
         debugPane->addButton("Spawn", this, &App::spawnRandomTarget);
 		debugPane->setNewChildSize(230.0f, -1.0f, 70.0f);
-
 		c = debugPane->addNumberBox("Framerate", Pointer<float>(
 			[&]() { return 1.0f / float(realTimeTargetDuration()); },
 			[&](float f) {
@@ -422,11 +421,16 @@ void App::makeGUI() {
 				// Only set when there is a change, otherwise the simulation's deltas are confused.
 				setFrameDuration(f, GApp::REAL_TIME);
 			}}), "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f); c->moveBy(SLIDER_SPACING, 0);
-
 			c = debugPane->addNumberBox("Input Lag", &frames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->setEnabled(false); c->moveBy(SLIDER_SPACING, 0);
 			c = debugPane->addNumberBox("Display Lag", &m_displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->moveBy(SLIDER_SPACING, 0);
 			debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles, 1)->moveBy(SLIDER_SPACING, 0);
 			debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(SLIDER_SPACING, 0);
+	} debugPane->endRow();
+	// Add new row w/ player move rate control
+	debugPane->beginRow(); {
+		debugPane->setNewChildSize(150.0f, -1.0f, 70.0f);
+		GuiControl* c = nullptr;
+		c = debugPane->addNumberBox("Move Rate", &(experimentConfig.moveRate), "m/s", GuiTheme::NO_SLIDER, 0.0f, 100.0f, 0.1f);
 	} debugPane->endRow();
 
 
@@ -1058,7 +1062,6 @@ bool App::fire(bool destroyImmediately) {
 		decalFrame.translation += ray.direction() * (hitDist - 0.01f);
 		// Set the decal rotation to match the normal here
 		decalFrame.lookAt(decalFrame.translation - info.normal);
-
 
 		// Only allow 1 miss decal at a time (remove last decal if present)
 		if (notNull(m_lastDecal)) {
