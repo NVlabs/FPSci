@@ -137,8 +137,6 @@ public:
 	shared_ptr<Experiment> ex;										///< Pointer to the experiment
 	shared_ptr<Logger> logger;										///< Pointer to the logger
 
-	const float targetDistance = 1.0f;				///< Actual distance to target
-
 	/** Call to change the reticle. */
 	void setReticle(int r);
 
@@ -182,7 +180,8 @@ public:
 		const Vector2& distanceRange,
 		const Vector2& jumpSpeedRange,
 		const Vector2& gravityRange,
-		Point3 orbitCenter
+		Point3 orbitCenter,
+		float targetDistance
 	);
 
 

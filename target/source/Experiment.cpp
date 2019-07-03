@@ -165,7 +165,7 @@ void Experiment::initTargetAnimation() {
 
 		if (String(m_psych.getParam().str["jumpEnabled"].c_str()) == "true") {
 			m_app->spawnJumpingTarget(
-				f.pointToWorldSpace(Point3(0, 0, -m_app->targetDistance)),
+				f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 				visualSize,
 				m_targetColor,
 				{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
@@ -174,12 +174,13 @@ void Experiment::initTargetAnimation() {
 				{ m_psych.getParam().val["minDistance"], m_psych.getParam().val["maxDistance"] },
 				{ m_psych.getParam().val["minJumpSpeed"], m_psych.getParam().val["maxJumpSpeed"] },
 				{ m_psych.getParam().val["minGravity"], m_psych.getParam().val["maxGravity"] },
-				initialSpawnPos
+				initialSpawnPos,
+				m_targetDistance
 			);
 		}
 		else {
 			m_app->spawnFlyingTarget(
-				f.pointToWorldSpace(Point3(0, 0, -m_app->targetDistance)),
+				f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 				visualSize,
 				m_targetColor,
 				{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
@@ -192,7 +193,7 @@ void Experiment::initTargetAnimation() {
 		// Make sure we reset the target color here (avoid color bugs)
 		m_targetColor = Color3::red().pow(2.0f);
 		m_app->spawnFlyingTarget(
-			f.pointToWorldSpace(Point3(0, 0, -m_app->targetDistance)),
+			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 			visualSize,
 			m_targetColor,
 			{ 0.0f, 0.0f },

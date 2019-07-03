@@ -120,6 +120,7 @@ protected:
 	const float m_userSpawnDistance = 0.0f;				///< Where the user is spawned (in the axis of the target)
 
 	// Target parameters
+	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	Color3 m_targetColor = Color3::red();				///< Target color
 	
 	// Reported data storage
