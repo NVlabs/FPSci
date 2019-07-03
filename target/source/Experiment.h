@@ -98,6 +98,7 @@ protected:
 	App* m_app;											///< Pointer to the app
 	ExperimentConfig m_config;							///< This experiment's configuration
 	PsychHelper m_psych;								///< Psych helper for the experiment
+	shared_ptr<SessionConfig> m_session = nullptr;		///< The session this experiment will run
 
 	// Experiment management					
 	int m_response;										///< 0 indicates failure (didn't hit the target), 1 indicates sucess (hit the target)
@@ -113,8 +114,9 @@ protected:
 	//double m_lastMotionChangeAt;
 	double m_scoreboardDuration = 10.0;					///< Show the score for at least this amount of seconds.
 	double m_lastFireAt = 0.f;							///< Time of the last shot
-	Timer m_timer;										///< Timer used for timing tasks							
-	//Stopwatch stopwatch;			// Could move timer above to stopwatch in future
+	Timer m_timer;										///< Timer used for timing tasks	
+	// Could move timer above to stopwatch in future
+	//Stopwatch stopwatch;			
 
 	// User parameters
 	const float m_userSpawnDistance = 0.0f;				///< Where the user is spawned (in the axis of the target)

@@ -35,10 +35,9 @@ public:
 
 class App : public GApp {
 protected:
-	static const float TARGET_MODEL_ARRAY_SCALING;
-	static const float TARGET_MODEL_ARRAY_OFFSET;
-	/** Length of the history queue for m_frameDurationQueue */
-	static const int MAX_HISTORY_TIMING_FRAMES = 360;
+	static const float TARGET_MODEL_ARRAY_SCALING;						///< Target model scale factor
+	static const float TARGET_MODEL_ARRAY_OFFSET;						///< Target model offset
+	static const int MAX_HISTORY_TIMING_FRAMES = 360;					///< Length of the history queue for m_frameDurationQueue
 	const int                       numReticles = 55;					///< Total count of reticles available to choose from
 
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
@@ -89,12 +88,13 @@ protected:
 	/** Projectile if false         */
 	bool                            m_hitScan = true;					// NOTE: Projectile mode has not been implemented
 
-	int                             m_lastUniqueID = 0;
-
-	bool							m_sceneLoaded = false;				// Indicates whether or not the scene has been loaded (prevents reload)
-	bool							m_loggerRunning = false;
-	HANDLE							m_loggerHandle = 0;
-	String							m_logName;
+	int                             m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
+	bool							m_sceneLoaded = false;				///< Indicates whether or not the scene has been loaded (prevents reload)
+	
+	// Hardware logger specific fields
+	bool							m_loggerRunning = false;			///< Flag to indicate whether a python logger (for HW logger) is running (i.e. needs to be closed)
+	HANDLE							m_loggerHandle = 0;					///< Process handle for the python logger instance (for HW logger) if running
+	String							m_logName;							///< The log name used by the python logger instance (for HW logger) if running
 
 	/** When m_displayLagFrames > 0, 3D frames are delayed in this queue */
 	Array<shared_ptr<Framebuffer>>  m_ldrDelayBufferQueue;
@@ -120,7 +120,6 @@ public:
 	shared_ptr<GFont>               hudFont;						///< Font used in HUD
 	shared_ptr<Texture>             reticleTexture;					///< Texture used for reticle
 	shared_ptr<Texture>             hudTexture;						///< Texture used for HUD
-	bool                            renderHud = false;				///< Controls whether HUD is drawn
 	bool                            emergencyTurbo = false;			///< Lower rendering quality to improve performance
 
 	App(const GApp::Settings& settings = GApp::Settings());

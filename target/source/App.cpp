@@ -404,7 +404,7 @@ void App::makeGUI() {
 		debugPane->addCheckBox("Hitscan", &m_hitScan);
 		debugPane->addCheckBox("Show Bullets", &experimentConfig.weapon.renderBullets);
 		debugPane->addCheckBox("Weapon", &experimentConfig.weapon.renderModel);
-		debugPane->addCheckBox("HUD", &renderHud);
+		debugPane->addCheckBox("HUD", &experimentConfig.showHUD);
 		debugPane->addCheckBox("FPS", &m_renderFPS);
 		debugPane->addCheckBox("Turbo", &emergencyTurbo);
 		static int frames = 0;

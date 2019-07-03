@@ -96,9 +96,9 @@ bool Experiment::initPsychHelper()
 	// Add conditions, one per one initial displacement value.
 	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
 	// Iterate over the sessions here and add a config for each
-	shared_ptr<SessionConfig> sess = m_config.getSessionConfigById(m_app->getDropDownSessId());
-	if (sess == nullptr) return false;
-	Array<Param> params = m_config.getExpConditions(sess->id);
+	m_session = m_config.getSessionConfigById(m_app->getDropDownSessId());
+	if (m_session == nullptr) return false;
+	Array<Param> params = m_config.getExpConditions(m_session->id);
 	for (auto p : params) {
 		// Define properties of psychophysical methods
 		PsychophysicsDesignParameter psychParam;
@@ -117,7 +117,6 @@ bool Experiment::initPsychHelper()
 
 	// call it once all conditions are defined.
 	m_psych.chooseNextCondition();
-
 	return true;
 }
 
@@ -354,12 +353,23 @@ void Experiment::onGraphics2D(RenderDevice* rd)
 
 	// TODO: Feels like the following variables should be members of Experiment:
 	// m_renderHud, m_hudTexture, m_reticleTexture, ...
-	if (m_app->renderHud && !m_app->emergencyTurbo) {
+	if (m_config.showHUD && !m_app->emergencyTurbo) {
 		const Point2 hudCenter(rd->viewport().width() / 2.0f, m_app->hudTexture->height() * scale * 0.48f);
 		Draw::rect2D((m_app->hudTexture->rect2DBounds() * scale - m_app->hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_app->hudTexture);
-		m_app->hudFont->draw2D(rd, "1:36", hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-		m_app->hudFont->draw2D(rd, "86%", hudCenter + Vector2(7, -1), scale * 30, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-		m_app->hudFont->draw2D(rd, "2080", hudCenter + Vector2(125, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		
+		// Create strings for time remaining, progress in sessions, and score
+		float remainingTime = m_config.taskDuration - m_timer.getTime();
+		float printTime = remainingTime > 0 ? remainingTime : 0.0f;
+		String time_string = format("%0.2f", printTime);
+		String prog_string = "";
+		if (m_session != nullptr){
+			prog_string = format("%d", (int)(100.0f*(float)m_psych.mTrialCount / (float)m_session->getTotalTrials())) + "%";
+		}
+		String score_string = format("%d", (int)(10 * m_totalRemainingTime));
+		
+		m_app->hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		m_app->hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale * 30, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+		m_app->hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 	}
 
 	if (!m_feedbackMessage.empty()) {

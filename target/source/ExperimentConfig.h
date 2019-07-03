@@ -617,6 +617,15 @@ public:
 			break;
 		}
 	}
+
+	/** Get the total number of trials in this session */
+	int getTotalTrials(void) {
+		int count = 0;
+		for (TrialCount tc : trials) {
+			count += tc.count;
+		}
+		return count;
+	}
 };
 
 /** Experiment configuration */
@@ -629,6 +638,7 @@ public:
 	float taskDuration = 100000.0f;					///< Maximum time spent in any one task
 	float feedbackDuration = 1.0f;					///< Time in feedback state in seconds
 	float fieldOfView = 103.0f;						///< Field of view (horizontal) for the user
+	bool showHUD = false;							///< Show the Heads Up Display
 	float moveRate = 0.0f;							///< Player move rate (defaults to no motion)
 
 	WeaponConfig weapon;							///< Weapon to be used
@@ -662,6 +672,7 @@ public:
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("fieldOfView", fieldOfView);
+			reader.getIfPresent("showHUD", showHUD);
 			reader.getIfPresent("moveRate", moveRate);
 			reader.getIfPresent("weapon", weapon);
             reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
