@@ -74,11 +74,8 @@ protected:
 	int                             m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
 	int                             m_reticleIndex = numReticles;		///< Start by selecting the last reticle
 	float                           m_sceneBrightness = 1.0f;			///< Scene brightness scale factor
-	//bool                            m_renderViewModel = false;
-	//bool                            m_renderHud = false;
-	bool                            m_renderFPS = false;				
-	//bool                            m_renderHitscan = false;
-    GuiPane*                        m_currentUserPane;
+	bool                            m_renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
+    GuiPane*                        m_currentUserPane;					///< Current user information pane
 
 	// Drop down selection writebacks
 	int								m_ddCurrentUser = 0;				///< Index of current user
@@ -109,10 +106,6 @@ protected:
 	void destroyTarget(int index);
 	void updateUser(void);
     void updateUserGUI();
-
-	//	double                          m_t_lastAnimationUpdate;
-	//	double                          m_t_stateStart;
-	//	double                          m_t_lastProjectileShot = -inf();
 
 public:
 	/* Moving from proctected so that Experiment classes can use it. */
@@ -238,14 +231,6 @@ public:
 	virtual void onUserInput(UserInput* ui) override;
 	virtual void onCleanup() override;
     virtual void oneFrame() override;
-
-	// variables for experiments
-    //const float                     m_projectileSpeed = 0.0f; // meters per second
-	//const float                     m_projectileShotPeriod = 0.3f; // minimum time between two repeated shots
-    //const float                     m_projectileSize = 0.5f;
-
-    //Attempts to bound target within visible space
-    //const float                     m_yawBound = 5.0f;
 	
 	// hardware setting
 	struct ScreenSetting
@@ -259,7 +244,6 @@ public:
 
 	//Color3                          m_reticleColor;
 	float						    m_targetHealth; // 1 if never hit, 0 if hit. Binary for instant hit weapon, but tracking weapon will continuously reduce it.
-	//bool                            m_isTrackingOn; // true if down AND weapon type is tracking, false otherwise.
 	bool							m_buttonUp = true;
 };
 
