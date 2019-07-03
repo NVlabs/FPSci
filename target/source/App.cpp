@@ -53,7 +53,7 @@ void App::onInit() {
 
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
-	hudFont = GFont::fromFile(System::findDataFile("dominant.fnt"));
+	hudFont = GFont::fromFile(System::findDataFile(experimentConfig.hudFont));
 	hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
 	// Check for play mode specific parameters

@@ -638,7 +638,10 @@ public:
 	float taskDuration = 100000.0f;					///< Maximum time spent in any one task
 	float feedbackDuration = 1.0f;					///< Time in feedback state in seconds
 	float fieldOfView = 103.0f;						///< Field of view (horizontal) for the user
+	
 	bool showHUD = false;							///< Show the Heads Up Display
+	String hudFont = "dominant.fn";					///< Font to use for Heads Up Display
+
 	float moveRate = 0.0f;							///< Player move rate (defaults to no motion)
 
 	WeaponConfig weapon;							///< Weapon to be used
@@ -673,6 +676,7 @@ public:
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("fieldOfView", fieldOfView);
 			reader.getIfPresent("showHUD", showHUD);
+			reader.getIfPresent("hudFont", hudFont);
 			reader.getIfPresent("moveRate", moveRate);
 			reader.getIfPresent("weapon", weapon);
             reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
