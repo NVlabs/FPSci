@@ -640,9 +640,13 @@ public:
 	float fieldOfView = 103.0f;						///< Field of view (horizontal) for the user
 	
 	bool showHUD = false;							///< Show the Heads Up Display
-	String hudFont = "dominant.fn";					///< Font to use for Heads Up Display
+	String hudFont = "dominant.fnt";				///< Font to use for Heads Up Display
 
 	float moveRate = 0.0f;							///< Player move rate (defaults to no motion)
+	bool walkMode = false;							///< Whether the player "walks" (true) or "flies" (false)
+	float playerHeight = 0.6f;						///< Height for the player view (in walk mode)
+	float jumpVelocity = 40.0f;						///< Jump velocity for the player
+	Vector3 playerGravity = Vector3(0.0f,-5.0f, 0.0f);	///< Gravity vector
 
 	WeaponConfig weapon;							///< Weapon to be used
 	
@@ -678,6 +682,10 @@ public:
 			reader.getIfPresent("showHUD", showHUD);
 			reader.getIfPresent("hudFont", hudFont);
 			reader.getIfPresent("moveRate", moveRate);
+			reader.getIfPresent("walkMode", walkMode);
+			reader.getIfPresent("playerHeight", playerHeight);
+			reader.getIfPresent("jumpVelocity", jumpVelocity);
+			reader.getIfPresent("playerGravity", playerGravity);
 			reader.getIfPresent("weapon", weapon);
             reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
             reader.getIfPresent("weaponStatusSide", weaponStatusSide);

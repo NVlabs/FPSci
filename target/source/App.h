@@ -13,6 +13,7 @@
 #include "ExperimentConfig.h"
 #include "Experiment.h"
 #include "Logger.h"
+#include "PhysicsScene.h"
 #include <chrono>
 
 class FlyingEntity;
@@ -51,6 +52,8 @@ protected:
 	shared_ptr<ArticulatedModel>	m_explosionModel;					///< Model for target destroyed animation
 	shared_ptr<VisibleEntity>		m_explosion;						///< Model for target destroyed decal
 	RealTime						m_explosionEndTime;					///< Time for end of explosion
+		
+	shared_ptr<PhysicsScene>		m_scene;							///< Pointer to the physics scene
 
 	const int m_MatTableSize = 10;										///< Set this to set # of color "levels"
 	Array<shared_ptr<UniversalMaterial>>	m_materials;				///< This stores the color materials

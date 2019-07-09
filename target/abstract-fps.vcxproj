@@ -134,6 +134,8 @@
     <ClInclude Include="source\Experiment.h" />
     <ClInclude Include="source\ExperimentConfig.h" />
     <ClInclude Include="source\Logger.h" />
+    <ClInclude Include="source\PhysicsScene.h" />
+    <ClInclude Include="source\PlayerEntity.h" />
     <ClInclude Include="source\SingleThresholdMeasurement.h" />
     <ClInclude Include="source\sqlHelpers.h" />
     <ClInclude Include="source\TargetEntity.h" />
@@ -142,6 +144,8 @@
     <ClCompile Include="source\App.cpp" />
     <ClCompile Include="source\Experiment.cpp" />
     <ClCompile Include="source\Logger.cpp" />
+    <ClCompile Include="source\PhysicsScene.cpp" />
+    <ClCompile Include="source\PlayerEntity.cpp" />
     <ClCompile Include="source\SingleThresholdMeasurement.cpp" />
     <ClCompile Include="source\sqlHelpers.cpp" />
     <ClCompile Include="source\TargetEntity.cpp" />

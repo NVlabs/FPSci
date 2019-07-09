@@ -12,6 +12,33 @@
             model = "buildingModel"; 
         }; 
         
+        // Uncomment this for walkMode (PlayerEntity)
+		//player = PlayerEntity {
+        //    model = "playerModel";
+        //    frame = Point3(-13.3, 20, -12.2 ); 
+        //};
+		
+		camera = Camera {
+            frame = CFrame::fromXYZYPRDegrees(  -13.3, 1, -11.2, 0, 0, 0 );
+        
+            depthOfFieldSettings = DepthOfFieldSettings {
+                model = "ARTIST";
+                enabled = false;
+                nearSharpPlaneZ = -1.5;
+            };
+
+            motionBlurSettings = MotionBlurSettings {
+                enabled = false;
+            };
+
+            projection = Projection {
+                nearPlaneZ = -0.2;
+                farPlaneZ = -400;
+                fovDirection = "VERTICAL";
+                fovDegrees = 50;
+            }
+        };
+		
         defaultCamera = Camera { 
             canChange = false; 
             depthOfFieldSettings = DepthOfFieldSettings { 
@@ -50,7 +77,7 @@
                 vignetteBottomStrength = 0.05; 
                 vignetteSizeFraction = 0.17; 
                 vignetteTopStrength = 0.5; 
-            }; 
+            };
             
             frame = CFrame::fromXYZYPRDegrees(47.523, -2.3549, -0.35916, 87.025, 3.163, 0 ); 
             mass = 1; 
@@ -151,7 +178,10 @@
     }; 
     
     models = { 
-      
+        playerModel = MD3Model::Specification { 
+           defaultSkin = MD3Model::Skin("md3/crusader/models/players/Crusader/lower_default.skin", "md3/crusader/models/players/Crusader/upper_default.skin", "md3/crusader/models/players/Crusader/head_default.skin"); 
+           directory = "md3/crusader/models/players/Crusader/"; 
+        }; 
 
         buildingModel = ArticulatedModel::Specification { 
             alphaFilter = "BINARY"; 

@@ -24,6 +24,10 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `showHUD` controls whether or not the HUD is displayed (currently w/ time remaining, percent of session complete, and score)
 * `hudFont` sets the font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/data-files/font`)
 * `moveRate` sets the rate of player motion in m/s, set this parameter to `0` to display player motion
+* `walkMode` sets whether or not we are in "walking" mode that includes graivty and jump vs flying camera mode
+* `playerHeight` sets the height of the player above the ground (for `walkMode=True` only for now)
+* `jumpVelocity` sets the magnitude of the upward impulse introduced by a jump when `walkMode=True`
+* `playerGravity` set the graivty vector that impacts the player when `walkMode=True`
 * `renderWeaponStatus` controls whether or not the weapon cooldown is rendered on the left side of the screen
 * `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](./weapon/weaponConfigReadme.md))
 * `weaponStatusSide` controls which side of the display the weapon status is drawn on (can be `right` or `left`)

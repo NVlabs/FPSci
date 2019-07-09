@@ -1,6 +1,7 @@
 /** \file App.cpp */
 #include "App.h"
 #include "TargetEntity.h"
+#include "PlayerEntity.h"
 
 // Scale and offset for target
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
@@ -18,9 +19,6 @@ void App::onInit() {
 
 	// Initialize the app
 	GApp::onInit();
-
-	// Create a target
-	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);
 
 	// Load per user settings from file
 	userTable = UserTable::load(startupConfig.userConfig());
@@ -46,11 +44,19 @@ void App::onInit() {
 		//SubmitToDisplayMode::BALANCE);
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
 
+	// Setup the scene
+	if (experimentConfig.walkMode) {
+		m_scene = PhysicsScene::create(m_ambientOcclusion);
+		m_scene->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Create the player
+		setScene(m_scene);
+	}
+	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
+
 	// Setup the GUI
 	showRenderingStats = false;
 	makeGUI();
 	developerWindow->videoRecordDialog->setCaptureGui(true);
-
+	   
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
 	hudFont = GFont::fromFile(System::findDataFile(experimentConfig.hudFont));
@@ -119,9 +125,9 @@ void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motion
 
     // Construct a reference frame
     // Remove the vertical component
-    Vector3 Z = -m_debugCamera->frame().lookVector();
+    Vector3 Z = -activeCamera()->frame().lookVector();
     debugPrintf("lookatZ = [%.4f, %.4f, %.4f]\n", Z.x, Z.y, Z.z);
-    debugPrintf("origin  = [%.4f, %.4f, %.4f]\n", m_debugCamera->frame().translation.x, m_debugCamera->frame().translation.y, m_debugCamera->frame().translation.z);
+    debugPrintf("origin  = [%.4f, %.4f, %.4f]\n", activeCamera()->frame().translation.x, activeCamera()->frame().translation.y, activeCamera()->frame().translation.z);
     Z.y = 0.0f;
     Z = Z.direction();
     Vector3 Y = Vector3::unitY();
@@ -131,7 +137,7 @@ void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motion
     Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.5f, 0.5f)).direction();
 
     // Ray from user/camera toward intended spawn location
-    Ray ray = Ray::fromOriginAndDirection(m_debugCamera->frame().translation, dir);
+    Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
 
     //distance = rng.uniform(2.0f, distance - 1.0f);
     const shared_ptr<FlyingEntity>& target =
@@ -176,7 +182,7 @@ void App::spawnRandomTarget() {
 
 	// Construct a reference frame
 	// Remove the vertical component
-	Vector3 Z = -m_debugCamera->frame().lookVector();
+	Vector3 Z = -activeCamera()->frame().lookVector();
 	Z.y = 0.0f;
 	Z = Z.direction();
 	Vector3 Y = Vector3::unitY();
@@ -187,7 +193,7 @@ void App::spawnRandomTarget() {
 		Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
 
 		// Make sure the spawn location is visible
-		Ray ray = Ray::fromOriginAndDirection(m_debugCamera->frame().translation, dir);
+		Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
 		float distance = finf();
 		scene()->intersect(ray, distance);
 
@@ -688,9 +694,17 @@ bool App::pythonMergeLogs(String basename) {
 }
 
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
-	m_debugCamera->setFieldOfView(experimentConfig.fieldOfView * units::degrees(), FOVDirection::HORIZONTAL);
-	//setSceneBrightness(m_sceneBrightness);
-	setActiveCamera(m_debugCamera);
+	// Set the active camera to the player
+	if (experimentConfig.walkMode) {
+		setActiveCamera(m_scene->typedEntity<Camera>("camera"));
+		// For now make the player invisible (prevent issues w/ seeing model from inside)
+		m_scene->typedEntity<PlayerEntity>("player")->setVisible(false);
+		m_scene->setGravity(experimentConfig.playerGravity);
+	}
+	else {
+		setActiveCamera(m_debugCamera);
+	}
+	activeCamera()->setFieldOfView(experimentConfig.fieldOfView * units::degrees(), FOVDirection::HORIZONTAL);
 }
 
 
@@ -725,8 +739,8 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 	}
 
 	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = ! emergencyTurbo;
-	m_debugCamera->filmSettings().setAntialiasingEnabled(! emergencyTurbo);
-	m_debugCamera->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
+	activeCamera()->filmSettings().setAntialiasingEnabled(! emergencyTurbo);
+	activeCamera()->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
 
 	GApp::onGraphics3D(rd, surface);
 
@@ -743,7 +757,7 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
 Point2 App::getViewDirection()
 {   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.
-	Point3 view_cartesian = m_debugCamera->frame().lookVector();
+	Point3 view_cartesian = activeCamera()->frame().lookVector();
 	float az = atan2(- view_cartesian.z, - view_cartesian.x) * 180 / pif();
 	float el = atan2(view_cartesian.y, sqrtf(view_cartesian.x * view_cartesian.x + view_cartesian.z * view_cartesian.z)) * 180 / pif();
 	return Point2(az, el);
@@ -754,7 +768,15 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
 	ex->onSimulation(rdt, sdt, idt);
 
-	GApp::onSimulation(rdt, sdt, idt);
+	// These are all we need from GApp::onSimulation() for walk mode
+	if (experimentConfig.walkMode) {
+		m_widgetManager->onSimulation(rdt, sdt, idt);
+		if (scene()) { scene()->onSimulation(sdt); }
+		if (scene()) { scene()->onSimulation(sdt); }
+	}
+	else {
+		GApp::onSimulation(rdt, sdt, idt);
+	}
 
     // make sure mouse sensitivity is set right
     if (m_userSettingsMode) {
@@ -787,6 +809,17 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 	else {
 		// could update animation here...
+	}
+
+	// Move the player if in walk mode
+	if (experimentConfig.walkMode) {
+		const shared_ptr<PlayerEntity>& p = m_scene->typedEntity<PlayerEntity>("player");
+		if (notNull(p)) {
+			CFrame c = p->frame();
+			c.translation += Vector3(0, experimentConfig.playerHeight, 0);		// Set the player to the right height
+			c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), p->headTilt());
+			activeCamera()->setFrame(c);
+		}
 	}
 
 	// Example GUI dynamic layout code.  Resize the debugWindow to fill
@@ -937,13 +970,13 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 /** Method for handling weapon fire */
 bool App::fire(bool destroyImmediately) {
     BEGIN_PROFILER_EVENT("fire");
-	Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
+	Point3 aimPoint = activeCamera()->frame().translation + activeCamera()->frame().lookVector() * 1000.0f;
 	bool destroyedTarget = false;
 	static bool hitTarget = false;
 	static RealTime lastTime;
 
 	if (m_hitScan) {
-		const Ray& ray = m_debugCamera->frame().lookRay();
+		const Ray& ray = activeCamera()->frame().lookRay();
 
 		float closest = finf();
 		int closestIndex = -1;
@@ -970,7 +1003,7 @@ bool App::fire(bool destroyImmediately) {
 			if (m_targetHealth <= 0) {
 				// create explosion animation
 				CFrame explosionFrame = targetArray[closestIndex]->frame();
-				explosionFrame.rotation = m_debugCamera->frame().rotation;
+				explosionFrame.rotation = activeCamera()->frame().rotation;
 				const shared_ptr<VisibleEntity>& newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModel, explosionFrame);
 				scene()->insert(newExplosion);
 				m_explosion = newExplosion;
@@ -1038,13 +1071,13 @@ bool App::fire(bool destroyImmediately) {
 		}
 		else if(experimentConfig.weapon.firePeriod > 0.0f || !experimentConfig.weapon.autoFire) {
 			m_fireSound->play(0.5f);
-			//m_fireSound->play(m_debugCamera->frame().translation, m_debugCamera->frame().lookVector() * 2.0f, 0.5f);
+			//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
 		}
 	}
 
 	if (experimentConfig.weapon.renderDecals && experimentConfig.weapon.firePeriod > 0.0f && !hitTarget) {
 		// compute world intersection
-		const Ray& ray = m_debugCamera->frame().lookRay();
+		const Ray& ray = activeCamera()->frame().lookRay();
 		float hitDist = finf();
 		Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
 		for (auto projectile : projectileArray) {
@@ -1059,7 +1092,7 @@ bool App::fire(bool destroyImmediately) {
 		Model::HitInfo info;
 		scene()->intersect(ray, hitDist, false, dontHit, info);
 		// Find where to put the decal
-		CFrame decalFrame = m_debugCamera->frame();
+		CFrame decalFrame = activeCamera()->frame();
 		decalFrame.translation += ray.direction() * (hitDist - 0.01f);
 		// Set the decal rotation to match the normal here
 		decalFrame.lookAt(decalFrame.translation - info.normal);
@@ -1094,6 +1127,38 @@ void App::onUserInput(UserInput* ui) {
 	static bool fired = false;
 	GApp::onUserInput(ui);
 	(void)ui;
+
+	if (experimentConfig.walkMode) {
+		const shared_ptr<PlayerEntity>& player = m_scene->typedEntity<PlayerEntity>("player");
+		if (notNull(player)) {
+			const float walkSpeed = experimentConfig.moveRate * units::meters() / units::seconds();
+			const float pixelsPerRevolution = 30;
+			const float   turnRatePerPixel = -pixelsPerRevolution * units::degrees() / (units::seconds());
+			const float   tiltRatePerPixel = -0.2f * units::degrees() / (units::seconds());
+
+			const Vector3& forward = -Vector3::unitZ();
+			const Vector3& right = Vector3::unitX();
+
+			Vector3 linear = Vector3::zero();
+			linear += forward * ui->getY() * walkSpeed;
+			linear += right * ui->getX() * walkSpeed;
+
+			float yaw = ui->mouseDX() * turnRatePerPixel;
+			float pitch = ui->mouseDY() * tiltRatePerPixel;
+
+			static const Vector3 jumpVelocity(0, experimentConfig.jumpVelocity * units::meters() / units::seconds(), 0);
+			if (ui->keyPressed(GKey::SPACE)) {
+				linear += jumpVelocity;
+			}
+			else {
+				linear += Vector3(0, player->desiredOSVelocity().y, 0);
+			}
+
+			// Set the player position
+			player->setDesiredOSVelocity(linear);
+			player->setDesiredAngularVelocity(yaw, pitch);
+		}
+	}
 
 	// Require release between clicks for non-autoFire modes
 	if (ui->keyReleased(GKey::LEFT_MOUSE)) {
@@ -1143,7 +1208,8 @@ void App::onUserInput(UserInput* ui) {
 	}
 	
 	// Handle spacebar during feedback
-	if (ui->keyPressed(GKey::SPACE) && (ex->presentationState == PresentationState::feedback)) {
+	GKey initShootKey = experimentConfig.walkMode ? GKey::LSHIFT : GKey::SPACE;
+	if (ui->keyPressed(initShootKey) && (ex->presentationState == PresentationState::feedback)) {
 		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
 	}
 
@@ -1152,7 +1218,7 @@ void App::onUserInput(UserInput* ui) {
 		setReticle(m_reticleIndex);
 	}
 
-	m_debugCamera->filmSettings().setSensitivity(m_sceneBrightness);
+	activeCamera()->filmSettings().setSensitivity(m_sceneBrightness);
     END_PROFILER_EVENT();
 }
 
@@ -1168,14 +1234,18 @@ void App::destroyTarget(int index) {
 void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {
 	GApp::onPose(surface, surface2D);
 
+	if (experimentConfig.walkMode) {
+		m_scene->poseExceptExcluded(surface, "player");
+	}
+
 	if (experimentConfig.weapon.renderModel) {
 		const float yScale = -0.12f;
 		const float zScale = -yScale * 0.5f;
-		const float lookY = m_debugCamera->frame().lookVector().y;
-		const float prevLookY = m_debugCamera->previousFrame().lookVector().y;
-		m_weaponFrame = m_debugCamera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
+		const float lookY = activeCamera()->frame().lookVector().y;
+		const float prevLookY = activeCamera()->previousFrame().lookVector().y;
+		m_weaponFrame = activeCamera()->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
 		const CFrame prevWeaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f + prevLookY * yScale, -1.1f + prevLookY * zScale, 10, 5);
-		m_viewModel->pose(surface, m_weaponFrame, m_debugCamera->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
+		m_viewModel->pose(surface, m_weaponFrame, activeCamera()->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
 	}
 }
 
@@ -1365,7 +1435,7 @@ void App::oneFrame() {
         // The debug camera is not in the scene, so we have
         // to explicitly pose it. This actually does nothing, but
         // it allows us to trigger the TAA code.
-        m_debugCamera->onPose(m_posed3D);
+		activeCamera()->onPose(m_posed3D);
     } m_poseWatch.tock();
     END_PROFILER_EVENT();
 
