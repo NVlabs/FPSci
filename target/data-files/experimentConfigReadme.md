@@ -39,7 +39,7 @@ There are a number of inputs to experiment config. The following is a descriptio
     * `frameRate` is the frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#Frame-Rate-Modes) below.
     * `expMode` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
     * `trials` is a list of trials referencing the `trials` table above:
-        * `id` is a short name for the trial to affiliate with the `targets` or `reactions` table below
+        * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
         * `count` provides the number of trials in this session
 * `targets` this target config table contains more detailed constraints for path generation for targets:
     * `id` a short string to refer to this target information
