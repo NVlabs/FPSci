@@ -66,11 +66,11 @@ public:
 	/** Add condition
 		\param[in] newConditionParam New condition
 		\param[in] newExpParam New experiment design parameter */
-	void addCondition(Param newConditionParam, PsychophysicsDesignParameter newExpParam);
+	void addCondition(Array<Param> newConditionParams, PsychophysicsDesignParameter newExpParam);
 	/** Pick next condition*/
 	void chooseNextCondition();
 	/** Get current condtion parameter*/
-	Param getParam();
+	Array<Param> getParams();
 	/** Get stimulus level for current trial*/
 	float getStimLevel();
 	/** Process user response and record it in the result file.
@@ -123,8 +123,8 @@ protected:
 
 	// Target parameters
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
-	Color3 m_targetColor = Color3::red();				///< Target color
-	
+	//Color3 m_targetColor = Color3::red();				///< Target color
+
 	// Reported data storage
 	Array<Array<String>> m_playerActions;				///< Storage for player action (hit, miss, aim)
 	Array<Array<String>> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)

@@ -30,10 +30,10 @@
       "frameRate": 360, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -43,10 +43,10 @@
       "frameRate": 360, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -56,10 +56,10 @@
       "frameRate": 240, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -69,10 +69,10 @@
       "frameRate": 240, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -82,10 +82,10 @@
       "frameRate": 120, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -95,10 +95,10 @@
       "frameRate": 120, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -108,10 +108,10 @@
       "frameRate": 60, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -121,10 +121,10 @@
       "frameRate": 60, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -134,10 +134,10 @@
       "frameRate": 360, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -147,10 +147,10 @@
       "frameRate": 360, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -160,10 +160,10 @@
       "frameRate": 240, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -173,10 +173,10 @@
       "frameRate": 240, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -186,10 +186,10 @@
       "frameRate": 120, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -199,10 +199,10 @@
       "frameRate": 120, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -212,10 +212,10 @@
       "frameRate": 60, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -225,10 +225,10 @@
       "frameRate": 60, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -238,10 +238,10 @@
       "frameRate": 360, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -251,10 +251,10 @@
       "frameRate": 360, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -264,10 +264,10 @@
       "frameRate": 240, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -277,10 +277,10 @@
       "frameRate": 240, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -290,10 +290,10 @@
       "frameRate": 120, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -303,10 +303,10 @@
       "frameRate": 120, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -316,10 +316,10 @@
       "frameRate": 60, // Session frame rate (in frames per second)
       "expMode": "training", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 
@@ -329,10 +329,10 @@
       "frameRate": 60, // Session frame rate (in frames per second)
       "expMode": "real", // Experiment mode ("real" or "training")
       "trials": [
-        {"id": "static","count": 5},
-        {"id": "straight_fly","count": 5},
-        {"id": "stray_fly","count": 10},
-        {"id": "strafe_jump","count": 10}
+        {"ids": ["static"],"count": 5},
+        {"ids": ["straight_fly"],"count": 5},
+        {"ids": ["stray_fly"],"count": 10},
+        {"ids": ["strafe_jump"],"count": 10}
       ]
     },
 

@@ -28,10 +28,10 @@
 #include "SingleThresholdMeasurement.h"
 
 // NOTE: Make sure measurementID is a unique number given to each measurement in the experiment.
-SingleThresholdMeasurement::SingleThresholdMeasurement(Param initConditionParam, PsychophysicsDesignParameter initExpParam)
+SingleThresholdMeasurement::SingleThresholdMeasurement(Array<Param> initConditionParam, PsychophysicsDesignParameter initExpParam)
 {
 	mPsyParam = initExpParam;
-	mParam = initConditionParam;
+	TargetParameters = initConditionParam;
 	if (mPsyParam.mMeasuringMethod == DiscreteStaircase)
 	{
 		if (mPsyParam.mIsDefault) // only mMinLevel, mMaxLevel, mMinLevelStepSize were defined
@@ -146,11 +146,6 @@ SingleThresholdMeasurement::SingleThresholdMeasurement(Param initConditionParam,
 float SingleThresholdMeasurement::getCurrentLevel()
 {
 	return mCurrentLevel;
-}
-
-Param SingleThresholdMeasurement::getParam()
-{
-	return mParam;
 }
 
 void SingleThresholdMeasurement::processResponse(int32_t response)

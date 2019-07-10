@@ -27,6 +27,7 @@
 ***************************************************************************/
 #pragma once
 
+#include <G3D/G3D.h>
 #include <time.h>
 #include <vector>
 #include <map>
@@ -89,17 +90,13 @@ class SingleThresholdMeasurement
 public:
 	/** Initialize measurement
 	*/
-	SingleThresholdMeasurement(Param initConditionParam, PsychophysicsDesignParameter initExpParam);
+	SingleThresholdMeasurement(Array<Param> initConditionParam, PsychophysicsDesignParameter initExpParam);
 
 	SingleThresholdMeasurement(){};
 
 	/** Get current level
 	*/
 	float getCurrentLevel();
-
-	/** Get current condition parameter
-	*/
-	Param getParam();
 
 	/** Process response
 		\param[in] response response to process
@@ -123,7 +120,7 @@ public:
 	int32_t mUpCount, mDownCount, mCurrentDirection, mReversalCount, mLimitHitCount; // for SC only
 	std::vector<int32_t> mTrialCounts; // for MCS only
 										// description of condition for the current measurement
-	Param mParam;										///< Parameter storage structure
+	Array<Param> TargetParameters;			///< Parameter storage structure
 
 	bool mIsInitialized = false;
 };

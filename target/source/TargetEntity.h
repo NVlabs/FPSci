@@ -1,10 +1,32 @@
 #pragma once
 #include <G3D/G3D.h>
 
-
-class FlyingEntity : public VisibleEntity {
+class TargetEntity : public VisibleEntity {
 protected:
 
+	float m_health = 1.0f;			///< Target health
+	Color3 m_color = Color3::red();
+
+public:
+
+	/** Getter for health */
+	float health() { 
+		return m_health; 
+	}
+
+	/**Simple routine to do damage */
+	bool doDamage(float damage) {
+		m_health -= damage;
+		return m_health <= 0;
+	}
+
+};
+
+
+class FlyingEntity : public TargetEntity {
+protected:
+
+	float							m_health = 1.0f;
 	/** Angular speed in degress/sec */
 	float                           m_speed = 0.0f;
     /** World space point at center of orbit */
@@ -71,7 +93,7 @@ public:
 };
 
 
-class JumpingEntity : public VisibleEntity {
+class JumpingEntity : public TargetEntity {
 protected:
 
 	// Motion is calculated in three steps.

@@ -124,23 +124,24 @@ void Logger::recordFrameInfo(Array<Array<String>> info) {
 
 void Logger::addConditions(Array<SingleThresholdMeasurement> measurements) {
 	for (int i = 0; i < measurements.size(); ++i) {
-		Param meas = measurements[i].getParam();
-		String jump_enabled = String(meas.str["jumpEnabled"]);
-		Array<String> conditionValues = {
-			String(std::to_string(i)), // this index is uniquely and statically assigned to each SingleThresholdMeasurement.
-			String(std::to_string(meas.val["targetFrameRate"])),
-			String(std::to_string(meas.val["targetFrameLag"])),
-			String(std::to_string(meas.val["minEccH"])),
-			String(std::to_string(meas.val["minEccV"])),
-			String(std::to_string(meas.val["maxEccH"])),
-			String(std::to_string(meas.val["maxEccV"])),
-			String(std::to_string(meas.val["minSpeed"])),
-			String(std::to_string(meas.val["maxSpeed"])),
-			String(std::to_string(meas.val["minMotionChangePeriod"])),
-			String(std::to_string(meas.val["maxMotionChangePeriod"])),
-			"'"+jump_enabled+"'"
-		};
-		insertRowIntoDB(m_db, "Conditions", conditionValues);
+		for (Param meas : measurements[i].TargetParameters) {
+			String jump_enabled = String(meas.str["jumpEnabled"]);
+			Array<String> conditionValues = {
+				String(std::to_string(i)), // this index is uniquely and statically assigned to each SingleThresholdMeasurement.
+				String(std::to_string(meas.val["targetFrameRate"])),
+				String(std::to_string(meas.val["targetFrameLag"])),
+				String(std::to_string(meas.val["minEccH"])),
+				String(std::to_string(meas.val["minEccV"])),
+				String(std::to_string(meas.val["maxEccH"])),
+				String(std::to_string(meas.val["maxEccV"])),
+				String(std::to_string(meas.val["minSpeed"])),
+				String(std::to_string(meas.val["maxSpeed"])),
+				String(std::to_string(meas.val["minMotionChangePeriod"])),
+				String(std::to_string(meas.val["maxMotionChangePeriod"])),
+				"'" + jump_enabled + "'"
+			};
+			insertRowIntoDB(m_db, "Conditions", conditionValues);
+		}
 	}
 }
 

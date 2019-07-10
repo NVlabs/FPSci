@@ -10,6 +10,7 @@
  */
 #pragma once
 #include <G3D/G3D.h>
+#include "TargetEntity.h"
 #include "ExperimentConfig.h"
 #include "Experiment.h"
 #include "Logger.h"
@@ -121,8 +122,11 @@ public:
 	App(const GApp::Settings& settings = GApp::Settings());
 
 	/** Array of all targets in the scene */
-	Array<shared_ptr<VisibleEntity>> targetArray;					///< Array of drawn targets
+	Array<shared_ptr<TargetEntity>> targetArray;					///< Array of drawn targets
 	Array<Projectile>                projectileArray;				///< Arrray of drawn projectiles
+
+	int destroyedTargets = 0;							///< Number of targets destroyed
+
 
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
@@ -213,7 +217,7 @@ public:
     void updateMouseSensitivity();
 
 	/** Fire the weapon - hits targets, draws decals, starts explosions */
-	bool fire(bool destroyImmediately=false);
+	bool fire(bool destroyImmediately=false, shared_ptr<TargetEntity> target=nullptr);
 
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
 	void clearTargets();
@@ -246,7 +250,6 @@ public:
 	} m_screenSetting;
 
 	//Color3                          m_reticleColor;
-	float						    m_targetHealth; // 1 if never hit, 0 if hit. Binary for instant hit weapon, but tracking weapon will continuously reduce it.
 	bool							m_buttonUp = true;
 };
 

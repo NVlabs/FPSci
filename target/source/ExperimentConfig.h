@@ -564,7 +564,7 @@ public:
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */
 class TrialCount {
 public:
-	String id;						///< Trial ID
+	Array<String> ids;						///< Trial ID list
 	unsigned int count = 0;			///< Count of trials to be performed
 
 	TrialCount() {};
@@ -577,7 +577,7 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.get("id", id);
+			reader.get("ids", ids);
 			reader.get("count", count);
 			break;
 		default:
@@ -735,48 +735,52 @@ public:
 	}
 
 	/** Get experiment conditions for a given session (by ID) */
-	Array<Param> getExpConditions(String id) {
+	Array<Array<Param>> getExpConditions(String id) {
 		int idx = getSessionIndex(id);
 		return getExpConditions(idx);
 	}
 
 	/** This is a kludge to quickly create param-based experiment conditions w/ appropriate parameters */
-	Array<Param> getExpConditions(int sessionIndex) {
-		Array<Param> params;
+	Array<Array<Param>> getExpConditions(int sessionIndex) {
+		Array<Array<Param>> sessParams;
 		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
-			String id = sessions[sessionIndex].trials[j].id;
-			// Append training trial
-			Param p;
-			p.add("minEccH", getTargetConfigById(id)->eccH[0]);
-			p.add("minEccV", getTargetConfigById(id)->eccV[0]);
-			p.add("maxEccH", getTargetConfigById(id)->eccH[1]);
-			p.add("maxEccV", getTargetConfigById(id)->eccV[1]);
-			p.add("targetFrameRate", sessions[sessionIndex].frameRate);
-			p.add("targetFrameLag", (float)sessions[sessionIndex].frameDelay);
-			p.add("minVisualSize", getTargetConfigById(id)->visualSize[0]);
-			p.add("maxVisualSize", getTargetConfigById(id)->visualSize[0]);
-			p.add("minMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
-			p.add("maxMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[1]);
-			p.add("minSpeed", getTargetConfigById(id)->speed[0]);
-			p.add("maxSpeed", getTargetConfigById(id)->speed[1]);
-			p.add("minDistance", getTargetConfigById(id)->distance[0]);
-			p.add("maxDistance", getTargetConfigById(id)->distance[1]);
-			p.add("minJumpPeriod", getTargetConfigById(id)->jumpPeriod[0]);
-			p.add("maxJumpPeriod", getTargetConfigById(id)->jumpPeriod[1]);
-			p.add("minJumpSpeed", getTargetConfigById(id)->jumpSpeed[0]);
-			p.add("maxJumpSpeed", getTargetConfigById(id)->jumpSpeed[1]);
-			p.add("minGravity", getTargetConfigById(id)->accelGravity[0]);
-			p.add("maxGravity", getTargetConfigById(id)->accelGravity[1]);
-			p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
-			if (getTargetConfigById(id)->jumpEnabled) {
-				p.add("jumpEnabled", "true");
+			// Append each trial worth of targets
+			Array<Param> targets;
+			for (String id : sessions[sessionIndex].trials[j].ids) {
+				// Append training target
+				Param p;
+				p.add("minEccH", getTargetConfigById(id)->eccH[0]);
+				p.add("minEccV", getTargetConfigById(id)->eccV[0]);
+				p.add("maxEccH", getTargetConfigById(id)->eccH[1]);
+				p.add("maxEccV", getTargetConfigById(id)->eccV[1]);
+				p.add("targetFrameRate", sessions[sessionIndex].frameRate);
+				p.add("targetFrameLag", (float)sessions[sessionIndex].frameDelay);
+				p.add("minVisualSize", getTargetConfigById(id)->visualSize[0]);
+				p.add("maxVisualSize", getTargetConfigById(id)->visualSize[0]);
+				p.add("minMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
+				p.add("maxMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[1]);
+				p.add("minSpeed", getTargetConfigById(id)->speed[0]);
+				p.add("maxSpeed", getTargetConfigById(id)->speed[1]);
+				p.add("minDistance", getTargetConfigById(id)->distance[0]);
+				p.add("maxDistance", getTargetConfigById(id)->distance[1]);
+				p.add("minJumpPeriod", getTargetConfigById(id)->jumpPeriod[0]);
+				p.add("maxJumpPeriod", getTargetConfigById(id)->jumpPeriod[1]);
+				p.add("minJumpSpeed", getTargetConfigById(id)->jumpSpeed[0]);
+				p.add("maxJumpSpeed", getTargetConfigById(id)->jumpSpeed[1]);
+				p.add("minGravity", getTargetConfigById(id)->accelGravity[0]);
+				p.add("maxGravity", getTargetConfigById(id)->accelGravity[1]);
+				p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
+				if (getTargetConfigById(id)->jumpEnabled) {
+					p.add("jumpEnabled", "true");
+				}
+				else {
+					p.add("jumpEnabled", "false");
+				}
+				targets.append(p);
 			}
-			else {
-				p.add("jumpEnabled", "false");
-			}
-			params.append(p);
+			sessParams.append(targets);
 		}
-		return params;
+		return sessParams;
 	}
 
 	/** Get the experiment config from file */
@@ -798,8 +802,8 @@ public:
 				sess.id, sess.frameRate, sess.frameDelay);
 			// Now iterate through each run
 			for (int j = 0; j < sess.trials.size(); j++) {
-				logPrintf("\t\tTrial Run Config: ID = %s, Count = %d\n",
-					sess.trials[j].id, sess.trials[j].count);
+				logPrintf("\t\tTrial Run Config: IDs = %s, Count = %d\n",
+					sess.trials[j].ids, sess.trials[j].count);
 			}
 		}
 		// Iterate through trials and print them

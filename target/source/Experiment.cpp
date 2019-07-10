@@ -28,9 +28,9 @@
 #include "Experiment.h"
 #include "App.h"
 
-void PsychHelper::addCondition(Param newConditionParam, PsychophysicsDesignParameter newPsychParam)
+void PsychHelper::addCondition(Array<Param> newConditionParams, PsychophysicsDesignParameter newPsychParam)
 {
-	SingleThresholdMeasurement m(newConditionParam, newPsychParam);
+	SingleThresholdMeasurement m(newConditionParams, newPsychParam);
 	mMeasurements.push_back(m);
 }
 
@@ -60,9 +60,9 @@ void PsychHelper::chooseNextCondition()
 	std::cout << "Next chosen staircase is: " << mCurrentConditionIndex << '\n';
 }
 
-Param PsychHelper::getParam()
+Array<Param> PsychHelper::getParams()
 {
-	return mMeasurements[mCurrentConditionIndex].getParam();
+	return mMeasurements[mCurrentConditionIndex].TargetParameters;
 }
 
 float PsychHelper::getStimLevel()
@@ -98,18 +98,20 @@ bool Experiment::initPsychHelper()
 	// Iterate over the sessions here and add a config for each
 	m_session = m_config.getSessionConfigById(m_app->getDropDownSessId());
 	if (m_session == nullptr) return false;
-	Array<Param> params = m_config.getExpConditions(m_session->id);
-	for (auto p : params) {
+	Array<Array<Param>> params = m_config.getExpConditions(m_session->id);
+	for (Array<Param> targets : params) {
 		// Define properties of psychophysical methods
 		PsychophysicsDesignParameter psychParam;
 		psychParam.mMeasuringMethod = PsychophysicsMethod::MethodOfConstantStimuli;
 		// Can we remove this?
 		psychParam.mIsDefault = false;
 		// We need something in mStimLevels to run psychphysics...
-		psychParam.mStimLevels.push_back(m_config.taskDuration);		// Shorter task is more difficult. However, we are currently doing unlimited time.
-		psychParam.mMaxTrialCounts.push_back((int)p.val["trialCount"]);		// Get the trial count from the parameters
-		p.add("session", m_app->getDropDownSessId().c_str());
-		m_psych.addCondition(p, psychParam);
+		psychParam.mStimLevels.push_back(m_config.taskDuration);						// Shorter task is more difficult. However, we are currently doing unlimited time.
+		psychParam.mMaxTrialCounts.push_back((int)targets[0].val["trialCount"]);		// Get the trial count from the parameters
+		for (int i = 0; i < targets.size(); i++) {										// Add the session to each target
+			targets[i].add("session", m_app->getDropDownSessId().c_str());
+		}
+		m_psych.addCondition(targets, psychParam);
 	}
 
 	// Update the logger w/ these conditions (IS THIS THE RIGHT PLACE TO DO THIS???)
@@ -149,7 +151,7 @@ float Experiment::randSign() {
 void Experiment::initTargetAnimation() {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
-	float visualSize = G3D::Random().common().uniform(m_psych.getParam().val["minVisualSize"], m_psych.getParam().val["maxVisualSize"]);
+	float visualSize = G3D::Random().common().uniform(m_psych.getParams()[0].val["minVisualSize"], m_psych.getParams()[0].val["maxVisualSize"]);
 
 	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
 	CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
@@ -157,52 +159,55 @@ void Experiment::initTargetAnimation() {
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (presentationState == PresentationState::task) {
-		float rot_pitch = randSign() * Random::common().uniform(m_psych.getParam().val["minEccV"], m_psych.getParam().val["maxEccV"]);
-		float rot_yaw = randSign() * Random::common().uniform(m_psych.getParam().val["minEccH"], m_psych.getParam().val["maxEccH"]);
-		f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
-		f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
+		for (Param target : m_psych.getParams()) {
+			float rot_pitch = randSign() * Random::common().uniform(target.val["minEccV"], target.val["maxEccV"]);
+			float rot_yaw = randSign() * Random::common().uniform(target.val["minEccH"], target.val["maxEccH"]);
+			float visualSize = G3D::Random().common().uniform(target.val["minVisualSize"], target.val["maxVisualSize"]);
 
-		if (String(m_psych.getParam().str["jumpEnabled"].c_str()) == "true") {
-			m_app->spawnJumpingTarget(
-				f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
-				visualSize,
-				m_targetColor,
-				{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
-				{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"] },
-				{ m_psych.getParam().val["minJumpPeriod"], m_psych.getParam().val["maxJumpPeriod"] },
-				{ m_psych.getParam().val["minDistance"], m_psych.getParam().val["maxDistance"] },
-				{ m_psych.getParam().val["minJumpSpeed"], m_psych.getParam().val["maxJumpSpeed"] },
-				{ m_psych.getParam().val["minGravity"], m_psych.getParam().val["maxGravity"] },
-				initialSpawnPos,
-				m_targetDistance
-			);
-		}
-		else {
-			m_app->spawnFlyingTarget(
-				f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
-				visualSize,
-				m_targetColor,
-				{ m_psych.getParam().val["minSpeed"], m_psych.getParam().val["maxSpeed"] },
-				{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"] },
-				initialSpawnPos
-			);
+			f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
+			f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
+
+			if (String(target.str["jumpEnabled"].c_str()) == "true") {
+				m_app->spawnJumpingTarget(
+					f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
+					visualSize,
+					Color3::green().pow(2.0f),
+					{ target.val["minSpeed"], target.val["maxSpeed"] },
+					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
+					{ target.val["minJumpPeriod"], target.val["maxJumpPeriod"] },
+					{ target.val["minDistance"], target.val["maxDistance"] },
+					{ target.val["minJumpSpeed"], target.val["maxJumpSpeed"] },
+					{ target.val["minGravity"], target.val["maxGravity"] },
+					initialSpawnPos,
+					m_targetDistance
+				);
+			}
+			else {
+				m_app->spawnFlyingTarget(
+					f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
+					visualSize,
+					Color3::green().pow(2.0f),
+					{ target.val["minSpeed"], target.val["maxSpeed"] },
+					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
+					initialSpawnPos
+				);
+			}
 		}
 	}
 	else {
 		// Make sure we reset the target color here (avoid color bugs)
-		m_targetColor = Color3::red().pow(2.0f);
 		m_app->spawnFlyingTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 			visualSize,
-			m_targetColor,
+			Color3::red().pow(2.0f),
 			{ 0.0f, 0.0f },
-			{ m_psych.getParam().val["minMotionChangePeriod"], m_psych.getParam().val["maxMotionChangePeriod"] },
+			{ 1000.0f, 1000.f },
 			initialSpawnPos
 		);
 	}
 
-	// Reset health for the target
-	m_app->m_targetHealth = 1.f;
+	// Reset number of destroyed targets
+	m_app->destroyedTargets = 0;
 	// reset click counter
 	m_clickCount = 0;
 }
@@ -210,11 +215,11 @@ void Experiment::initTargetAnimation() {
 void Experiment::processResponse()
 {
 	m_taskExecutionTime = m_timer.getTime();
-	m_response = (m_app->m_targetHealth <= 0) ? 1 : 0; // 1 means success, 0 means failure.
+	m_response = m_app->destroyedTargets; // Number of destroyed targets
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 	m_psych.processResponse(m_response); // process response.
-	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
-	if (m_response == 1) {
+	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters[0].str["session"]);
+	if (m_response == m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters.size()) {
 		m_totalRemainingTime += (double(m_config.taskDuration) - m_taskExecutionTime);
 		if (m_config.getSessionConfigById(sess)->expMode == "training") {
 			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
@@ -232,6 +237,7 @@ void Experiment::updatePresentationState()
 	// This updates presentation state and also deals with data collection when each trial ends.
 	PresentationState currentState = presentationState;
 	PresentationState newState;
+	int remainingTargets = m_app->targetArray.size();
 	float stateElapsedTime = m_timer.getTime();
 
 	newState = currentState;
@@ -249,28 +255,26 @@ void Experiment::updatePresentationState()
 		if (stateElapsedTime > m_config.readyDuration)
 		{
 			//m_lastMotionChangeAt = 0;
-			m_targetColor = Color3::green().pow(2.0f);
 			newState = PresentationState::task;
 		}
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_config.taskDuration) || (m_app->m_targetHealth <= 0) || (m_clickCount == m_config.weapon.maxAmmo))
+		if ((stateElapsedTime > m_config.taskDuration) || (remainingTargets <= 0) || (m_clickCount == m_config.weapon.maxAmmo))
 		{
 			m_taskEndTime = Logger::genUniqueTimestamp();
 			processResponse();
 			m_app->clearTargets(); // clear all remaining targets
-			m_targetColor = Color3::red().pow(2.0f);
 			newState = PresentationState::feedback;
 		}
 	}
 	else if (currentState == PresentationState::feedback)
 	{
-		if ((stateElapsedTime > m_config.feedbackDuration) && (m_app->m_targetHealth <= 0))
+		if ((stateElapsedTime > m_config.feedbackDuration) && (remainingTargets <= 0))
 		{
 			if (m_psych.isComplete()) {
 				m_app->mergeCurrentLogToCurrentDB();
-				m_app->markSessComplete(String(m_psych.getParam().str["session"]));			// Add this session to user's completed sessions
+				m_app->markSessComplete(String(m_psych.getParams()[0].str["session"]));			// Add this session to user's completed sessions
 				m_app->updateSessionDropDown();
 
 				int score = int(m_totalRemainingTime);
@@ -380,7 +384,7 @@ void Experiment::onGraphics2D(RenderDevice* rd)
 
 void Experiment::recordTrialResponse()
 {
-	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
+	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters[0].str["session"]);
 
 	// Trials table. Record trial start time, end time, and task completion time.
 	Array<String> trialValues = {
