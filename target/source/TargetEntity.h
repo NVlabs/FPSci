@@ -3,7 +3,6 @@
 
 class TargetEntity : public VisibleEntity {
 protected:
-
 	float m_health = 1.0f;			///< Target health
 	Color3 m_color = Color3::red();
 
@@ -21,7 +20,6 @@ public:
 	}
 
 };
-
 
 class FlyingEntity : public TargetEntity {
 protected:

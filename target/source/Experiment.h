@@ -163,7 +163,7 @@ public:
 
 	/** queues action with given name to insert into database when trial completes
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */
-	void accumulatePlayerAction(String action);
+	void accumulatePlayerAction(String action, String target="");
 	bool responseReady();
 	bool initPsychHelper();
 	bool moveOn = false;								///< Flag indicating session is complete

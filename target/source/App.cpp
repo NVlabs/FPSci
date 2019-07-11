@@ -1191,13 +1191,13 @@ void App::onUserInput(UserInput* ui) {
 					shared_ptr<TargetEntity> t;
 					bool hitTarget = fire(false, t);				
 					if (hitTarget) {
-                        if (t->health() == 0) {
+                        if (t->health() <= 0) {
                             // Target eliminated, must be 'destroy'.
-                            ex->accumulatePlayerAction("destroy");	
+                            ex->accumulatePlayerAction("destroy", t->name());	
                         }
                         else {
                             // Target 'hit', but still alive.
-                            ex->accumulatePlayerAction("hit");
+                            ex->accumulatePlayerAction("hit", t->name());
                         }
 					}
                     else {
@@ -1212,7 +1212,9 @@ void App::onUserInput(UserInput* ui) {
                 }
 			}
 		}
-		else ex->accumulatePlayerAction("non-task"); // not happening in task state.
+		else {
+			ex->accumulatePlayerAction("non-task"); // not happening in task state.
+		}
 		haveReleased = false;					// Make it known we are no longer in released state
 		m_buttonUp = false;
 	}

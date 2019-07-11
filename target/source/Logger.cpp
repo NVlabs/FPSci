@@ -56,7 +56,7 @@ void Logger::createResultsFile(String filename, String subjectID)
 	// 2. Conditions
 	// create sqlite table
 	Array<Array<String>> conditionColumns = {
-			{ "id", "integer", "PRIMARY KEY"}, // this makes id a key value, requiring it to be unique for each row.
+			{ "trial_id", "integer", "PRIMARY KEY"}, // this makes id a key value, requiring it to be unique for each row.
 			{ "refresh_rate", "real" },
 			{ "added_frame_lag", "real" },
 			{ "min_ecc_h", "real" },
@@ -86,6 +86,7 @@ void Logger::createResultsFile(String filename, String subjectID)
 	// 4. Target_Trajectory, only need to create the table.
 	Array<Array<String>> targetTrajectoryColumns = {
 			{ "time", "text" },
+			{ "id", "text"},
 			{ "position_x", "real" },
 			{ "position_y", "real" },
 			{ "position_z", "real" },
@@ -98,6 +99,7 @@ void Logger::createResultsFile(String filename, String subjectID)
 			{ "event", "text" },
 			{ "position_az", "real" },
 			{ "position_el", "real" },
+			{ "target", "text" },
 	};
 	createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
 
@@ -123,21 +125,21 @@ void Logger::recordFrameInfo(Array<Array<String>> info) {
 }
 
 void Logger::addConditions(Array<SingleThresholdMeasurement> measurements) {
-	for (int i = 0; i < measurements.size(); ++i) {
-		for (Param meas : measurements[i].TargetParameters) {
-			String jump_enabled = String(meas.str["jumpEnabled"]);
+	for (int i = 0; i < measurements.size(); i++) {
+		for (Param tparam : measurements[i].TargetParameters) {
+			String jump_enabled = String(tparam.str["jumpEnabled"]);
 			Array<String> conditionValues = {
 				String(std::to_string(i)), // this index is uniquely and statically assigned to each SingleThresholdMeasurement.
-				String(std::to_string(meas.val["targetFrameRate"])),
-				String(std::to_string(meas.val["targetFrameLag"])),
-				String(std::to_string(meas.val["minEccH"])),
-				String(std::to_string(meas.val["minEccV"])),
-				String(std::to_string(meas.val["maxEccH"])),
-				String(std::to_string(meas.val["maxEccV"])),
-				String(std::to_string(meas.val["minSpeed"])),
-				String(std::to_string(meas.val["maxSpeed"])),
-				String(std::to_string(meas.val["minMotionChangePeriod"])),
-				String(std::to_string(meas.val["maxMotionChangePeriod"])),
+				String(std::to_string(tparam.val["targetFrameRate"])),
+				String(std::to_string(tparam.val["targetFrameLag"])),
+				String(std::to_string(tparam.val["minEccH"])),
+				String(std::to_string(tparam.val["minEccV"])),
+				String(std::to_string(tparam.val["maxEccH"])),
+				String(std::to_string(tparam.val["maxEccV"])),
+				String(std::to_string(tparam.val["minSpeed"])),
+				String(std::to_string(tparam.val["maxSpeed"])),
+				String(std::to_string(tparam.val["minMotionChangePeriod"])),
+				String(std::to_string(tparam.val["maxMotionChangePeriod"])),
 				"'" + jump_enabled + "'"
 			};
 			insertRowIntoDB(m_db, "Conditions", conditionValues);

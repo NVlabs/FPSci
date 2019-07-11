@@ -413,29 +413,31 @@ void Experiment::recordTrialResponse()
 
 void Experiment::accumulateTrajectories()
 {
-	// recording target trajectories
-	Point3 targetAbsolutePosition = m_app->targetArray[0]->frame().translation;
-	Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
-	Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
+	for (shared_ptr<TargetEntity> target : m_app->targetArray) {
+		// recording target trajectories
+		Point3 targetAbsolutePosition = target->frame().translation;
+		Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
+		Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
 
-	//// below for 2D direction calculation (azimuth and elevation)
-	//Point3 t = targetPosition.direction();
-	//float az = atan2(-t.z, -t.x) * 180 / pif();
-	//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
+		//// below for 2D direction calculation (azimuth and elevation)
+		//Point3 t = targetPosition.direction();
+		//float az = atan2(-t.z, -t.x) * 180 / pif();
+		//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
 
-	Array<String> targetTrajectoryValues = {
-		"'" + Logger::genUniqueTimestamp() + "'",
-		String(std::to_string(targetPosition.x)),
-		String(std::to_string(targetPosition.y)),
-		String(std::to_string(targetPosition.z)),
-	};
-	m_targetTrajectory.push_back(targetTrajectoryValues);
-
+		Array<String> targetTrajectoryValues = {
+			"'" + Logger::genUniqueTimestamp() + "'",
+			"'" + target->name() + "'",
+			String(std::to_string(targetPosition.x)),
+			String(std::to_string(targetPosition.y)),
+			String(std::to_string(targetPosition.z)),
+		};
+		m_targetTrajectory.push_back(targetTrajectoryValues);
+	}
 	// recording view direction trajectories
 	accumulatePlayerAction("aim");
 }
 
-void Experiment::accumulatePlayerAction(String action)
+void Experiment::accumulatePlayerAction(String action, String targetName)
 {
 	BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 	// recording target trajectories
@@ -445,6 +447,7 @@ void Experiment::accumulatePlayerAction(String action)
 		"'" + action + "'",
 		String(std::to_string(dir.x)),
 		String(std::to_string(dir.y)),
+		"'" + targetName + "'",
 	};
 	m_playerActions.push_back(playerActionValues);
 	END_PROFILER_EVENT();
