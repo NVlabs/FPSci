@@ -30,7 +30,7 @@ public:
 	static String genFileTimestamp();
 
 	/** Add conditions to an experiment */
-	void addConditions(Array<SingleThresholdMeasurement> measurements);
+	void addTargets(Array<SingleThresholdMeasurement> measurements);
 
 	/** Create a results file */
 	void createResultsFile(String filename, String subjectID);

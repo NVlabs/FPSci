@@ -115,7 +115,7 @@ bool Experiment::initPsychHelper()
 	}
 
 	// Update the logger w/ these conditions (IS THIS THE RIGHT PLACE TO DO THIS???)
-	m_app->logger->addConditions(m_psych.mMeasurements);
+	m_app->logger->addTargets(m_psych.mMeasurements);
 
 	// call it once all conditions are defined.
 	m_psych.chooseNextCondition();

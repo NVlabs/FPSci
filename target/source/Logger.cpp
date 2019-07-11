@@ -53,10 +53,10 @@ void Logger::createResultsFile(String filename, String subjectID)
 	};
 	insertRowIntoDB(m_db, "Experiments", expValues);
 
-	// 2. Conditions
+	// 2. Targets
 	// create sqlite table
-	Array<Array<String>> conditionColumns = {
-			{ "trial_id", "integer", "PRIMARY KEY"}, // this makes id a key value, requiring it to be unique for each row.
+	Array<Array<String>> targetColumns = {
+			{ "trial_id", "integer", "PRIMARY KEY"}, // Trial ID refers to the trial which this target is affiliated with
 			{ "refresh_rate", "real" },
 			{ "added_frame_lag", "real" },
 			{ "min_ecc_h", "real" },
@@ -69,12 +69,12 @@ void Logger::createResultsFile(String filename, String subjectID)
 			{ "max_motion_change_period", "real" },
 			{ "jump_enabled", "text" },
 	};
-	createTableInDB(m_db, "Conditions", conditionColumns); // Primary Key needed for this table.
+	createTableInDB(m_db, "Targets", targetColumns); // Primary Key needed for this table.
 
 	// 3. Trials, only need to create the table.
 	Array<Array<String>> trialColumns = {
-			{ "condition_ID", "integer" },
-			{ "session_ID", "text" },
+			{ "id", "integer" },
+			{ "session_id", "text" },
 			{ "session_mode", "text" },
 			{ "start_time", "text" },
 			{ "end_time", "text" },
@@ -124,12 +124,11 @@ void Logger::recordFrameInfo(Array<Array<String>> info) {
 	insertRowsIntoDB(m_db, "Frame_Info", info);
 }
 
-void Logger::addConditions(Array<SingleThresholdMeasurement> measurements) {
+void Logger::addTargets(Array<SingleThresholdMeasurement> measurements) {
 	for (int i = 0; i < measurements.size(); i++) {
 		for (Param tparam : measurements[i].TargetParameters) {
-			String jump_enabled = String(tparam.str["jumpEnabled"]);
-			Array<String> conditionValues = {
-				String(std::to_string(i)), // this index is uniquely and statically assigned to each SingleThresholdMeasurement.
+			Array<String> targetValues = {
+				String(std::to_string(i)),							// this index is uniquely and statically assigned to each SingleThresholdMeasurement.
 				String(std::to_string(tparam.val["targetFrameRate"])),
 				String(std::to_string(tparam.val["targetFrameLag"])),
 				String(std::to_string(tparam.val["minEccH"])),
@@ -140,9 +139,9 @@ void Logger::addConditions(Array<SingleThresholdMeasurement> measurements) {
 				String(std::to_string(tparam.val["maxSpeed"])),
 				String(std::to_string(tparam.val["minMotionChangePeriod"])),
 				String(std::to_string(tparam.val["maxMotionChangePeriod"])),
-				"'" + jump_enabled + "'"
+				"'" + String(tparam.str["jumpEnabled"]) + "'",
 			};
-			insertRowIntoDB(m_db, "Conditions", conditionValues);
+			insertRowIntoDB(m_db, "Targets", targetValues);
 		}
 	}
 }

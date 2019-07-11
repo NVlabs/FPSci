@@ -1185,9 +1185,7 @@ void App::onUserInput(UserInput* ui) {
 			if (ex->presentationState == PresentationState::task) {
 				if (ex->responseReady()) {
 					fired = true;
-                    // count clicks
-					ex->countClick();	
-                    // fire and process click here
+					ex->countClick();						                    // count clicks
 					shared_ptr<TargetEntity> t;
 					bool hitTarget = fire(false, t);				
 					if (hitTarget) {
