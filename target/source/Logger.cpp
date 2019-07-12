@@ -100,7 +100,7 @@ void Logger::createResultsFile(String filename, String subjectID)
 			{ "event", "text" },
 			{ "position_az", "real" },
 			{ "position_el", "real" },
-			{ "target", "text" },
+			{ "target_id", "text" },
 	};
 	createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
 

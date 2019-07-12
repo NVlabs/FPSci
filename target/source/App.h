@@ -219,7 +219,7 @@ public:
     void updateMouseSensitivity();
 
 	/** Fire the weapon - hits targets, draws decals, starts explosions */
-	bool fire(bool destroyImmediately=false, shared_ptr<TargetEntity> target=nullptr);
+	shared_ptr<TargetEntity> fire(bool destroyImmediately=false);
 
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
 	void clearTargets();

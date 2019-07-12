@@ -970,16 +970,18 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 }
 
 /** Method for handling weapon fire */
-bool App::fire(bool destroyImmediately, shared_ptr<TargetEntity> target) {
+shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
     BEGIN_PROFILER_EVENT("fire");
 	Point3 aimPoint = activeCamera()->frame().translation + activeCamera()->frame().lookVector() * 1000.0f;
 	bool destroyedTarget = false;
 	static bool hitTarget = false;
 	static RealTime lastTime;
+	shared_ptr<TargetEntity> target = nullptr;
 
 	if (m_hitScan) {
-		const Ray& ray = activeCamera()->frame().lookRay();
-
+		const Ray& ray = activeCamera()->frame().lookRay();		// Use the camera lookray for hit detection
+			
+		// Check for closest hit
 		float closest = finf();
 		int closestIndex = -1;
 		for (int t = 0; t < targetArray.size(); ++t) {
@@ -988,14 +990,10 @@ bool App::fire(bool destroyImmediately, shared_ptr<TargetEntity> target) {
 			}
 		}
 
+		// Hit logic
 		if (closestIndex >= 0) {
-			if (notNull(target)) {
-				target = targetArray[closestIndex];
-			}
-			else {
-				shared_ptr<TargetEntity> t = targetArray[closestIndex];
-				target = t;
-			}
+			target = targetArray[closestIndex];			// Assign the target pointer here (not null indicates the hit)
+
 			// destroy target
 			float damage;
 			if (destroyImmediately) damage = target->health();
@@ -1121,7 +1119,7 @@ bool App::fire(bool destroyImmediately, shared_ptr<TargetEntity> target) {
 		m_firstDecal = newDecal;
 	}
     END_PROFILER_EVENT();
-	return hitTarget;
+	return target;
 }
 
 /** Clear all targets one by one */
@@ -1187,10 +1185,9 @@ void App::onUserInput(UserInput* ui) {
 			if (ex->presentationState == PresentationState::task) {
 				if (ex->responseReady()) {
 					fired = true;
-					ex->countClick();						                    // count clicks
-					shared_ptr<TargetEntity> t;
-					bool hitTarget = fire(false, t);				
-					if (hitTarget) {
+					ex->countClick();						        // Count clicks
+					shared_ptr<TargetEntity> t = fire();			// Fire the weapon
+					if (notNull(t)) {								// Check if we hit anything
                         if (t->health() <= 0) {
                             // Target eliminated, must be 'destroy'.
                             ex->accumulatePlayerAction("destroy", t->name());	
