@@ -74,7 +74,7 @@ void Logger::createResultsFile(String filename, String subjectID)
 
 	// 3. Trials, only need to create the table.
 	Array<Array<String>> trialColumns = {
-			{ "id", "integer" },
+			{ "trial_id", "integer" },
 			{ "session_id", "text" },
 			{ "session_mode", "text" },
 			{ "start_time", "text" },
@@ -87,7 +87,7 @@ void Logger::createResultsFile(String filename, String subjectID)
 	// 4. Target_Trajectory, only need to create the table.
 	Array<Array<String>> targetTrajectoryColumns = {
 			{ "time", "text" },
-			{ "id", "text"},
+			{ "target_id", "text"},
 			{ "position_x", "real" },
 			{ "position_y", "real" },
 			{ "position_z", "real" },
@@ -129,9 +129,9 @@ void Logger::addTargets(Array<SingleThresholdMeasurement> measurements) {
 	for (int i = 0; i < measurements.size(); i++) {
 		for (Param tparam : measurements[i].TargetParameters) {
 			Array<String> targetValues = {
-				String(std::to_string(i)),							// this index is uniquely and statically assigned to each SingleThresholdMeasurement.
-				"'" + String(tparam.str["name"]) +"'",
-				String(std::to_string(tparam.val["targetFrameRate"])),
+				String(std::to_string(i)),										// This is the trial ID
+				"'" + String(tparam.str["name"]) +"'",							// This is the target name
+				String(std::to_string(tparam.val["targetFrameRate"])),			
 				String(std::to_string(tparam.val["targetFrameLag"])),
 				String(std::to_string(tparam.val["minEccH"])),
 				String(std::to_string(tparam.val["minEccV"])),
