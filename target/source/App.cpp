@@ -256,12 +256,13 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	const Color3& color,
 	const Vector2& speedRange,
 	const Vector2& motionChangePeriodRange,
-	Point3 orbitCenter)
+	Point3 orbitCenter,
+	String name)
 {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
-
+	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(
-		format("target%03d", ++m_lastUniqueID),
+		nameStr,
 		scene().get(),
 		m_targetModelArray[scaleIndex],
 		CFrame(),
@@ -298,12 +299,13 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	const Vector2& jumpSpeedRange,
 	const Vector2& gravityRange,
 	Point3 orbitCenter,
-	float targetDistance)
+	float targetDistance,
+	String name)
 {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
-
+	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const shared_ptr<JumpingEntity>& target = JumpingEntity::create(
-		format("target%03d", ++m_lastUniqueID),
+		nameStr,
 		scene().get(),
 		m_targetModelArray[scaleIndex],
 		CFrame(),

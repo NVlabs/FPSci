@@ -56,7 +56,8 @@ void Logger::createResultsFile(String filename, String subjectID)
 	// 2. Targets
 	// create sqlite table
 	Array<Array<String>> targetColumns = {
-			{ "trial_id", "integer", "PRIMARY KEY"}, // Trial ID refers to the trial which this target is affiliated with
+			{ "trial_id", "integer"}, // Trial ID refers to the trial which this target is affiliated with
+			{ "target_id", "text" },
 			{ "refresh_rate", "real" },
 			{ "added_frame_lag", "real" },
 			{ "min_ecc_h", "real" },
@@ -129,6 +130,7 @@ void Logger::addTargets(Array<SingleThresholdMeasurement> measurements) {
 		for (Param tparam : measurements[i].TargetParameters) {
 			Array<String> targetValues = {
 				String(std::to_string(i)),							// this index is uniquely and statically assigned to each SingleThresholdMeasurement.
+				"'" + String(tparam.str["name"]) +"'",
 				String(std::to_string(tparam.val["targetFrameRate"])),
 				String(std::to_string(tparam.val["targetFrameLag"])),
 				String(std::to_string(tparam.val["minEccH"])),

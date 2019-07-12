@@ -165,7 +165,8 @@ public:
 		const Color3& color,
 		const Vector2& speedRange,
 		const Vector2& motionChangePeriodRange,
-		Point3 orbitCenter
+		Point3 orbitCenter,
+		String name = ""
 	);
 
 	/** Creates a jumping target */
@@ -180,7 +181,8 @@ public:
 		const Vector2& jumpSpeedRange,
 		const Vector2& gravityRange,
 		Point3 orbitCenter,
-		float targetDistance
+		float targetDistance,
+		String name = ""
 	);
 
 
