@@ -916,18 +916,12 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		// TODO: Is this the right place to call it?
 		ex->onGraphics2D(rd);
 
-		// Target health bar (removed for now)
-		//float healthBarWidth = 0.1f;
-		//float healthBarHeight = 0.01f;
-		//Color3 color = { 1.0f - pow(m_targetHealth, 2.2f), pow(m_targetHealth, 2.2f), 0.0f };
-		//Draw::rect2D(
-		//	Rect2D::xywh(
-		//	(float)m_framebuffer->width() * (0.5f - healthBarWidth / 2),
-		//		(float)m_framebuffer->height() * (0.5f + 0.05f),
-		//		(float)m_framebuffer->width() * healthBarWidth * m_targetHealth,
-		//		(float)m_framebuffer->height() * healthBarHeight
-		//	), rd, color
-		//);
+		// Draw health bars for all targets
+		if (experimentConfig.renderTargetHealthbars) {
+			for (auto const& target : targetArray) {
+				target->drawHealthBar(rd, *m_debugCamera, *m_framebuffer);
+			}
+		}
 
 		// Paint both sides by the width of latency measuring box.
 		Color3 blackColor = Color3::black();
@@ -1018,7 +1012,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 }
 
 
-bool App::fire(bool destroyImmediately) {
+App::FireResult App::fire(bool destroyImmediately) {
     BEGIN_PROFILER_EVENT("fire");
 	Point3 aimPoint = m_debugCamera->frame().translation + m_debugCamera->frame().lookVector() * 1000.0f;
 	bool destroyedTarget = false;
@@ -1040,7 +1034,7 @@ bool App::fire(bool destroyImmediately) {
 			// destroy target
 			aimPoint = ray.origin() + ray.direction() * closest;
 			float damage;
-			if (destroyImmediately) damage = m_targetHealth;
+			if (destroyImmediately) damage = targetArray[closestIndex]->health();
 			else if (experimentConfig.weapon.firePeriod == 0.0f && hitTarget) {		// Check if we are in "laser" mode hit the target last time
 				float dt = static_cast<float>(System::time() - lastTime);
 				damage = experimentConfig.weapon.damagePerSecond * dt;
@@ -1050,8 +1044,8 @@ bool App::fire(bool destroyImmediately) {
 			}
 			lastTime = System::time();
 			hitTarget = true;
-			m_targetHealth -= damage; // TODO: health point should be tracked by Target Entity class (not existing yet).
-			if (m_targetHealth <= 0) {
+			targetArray[closestIndex]->applyDamage(damage);
+			if (targetArray[closestIndex]->isDead()) {
 				// create explosion animation
 				CFrame explosionFrame = targetArray[closestIndex]->frame();
 				explosionFrame.rotation = m_debugCamera->frame().rotation;
@@ -1064,10 +1058,11 @@ bool App::fire(bool destroyImmediately) {
 				hitTarget = false;
 			}
 			else {
+				float targetHealth = targetArray[closestIndex]->health();
                 BEGIN_PROFILER_EVENT("fire/changeColor");
 				    // Use a gamma of 2.2 baseed on sRGB tansfer function (https://en.wikipedia.org/wiki/SRGB)
                     BEGIN_PROFILER_EVENT("fire/colorCreate");
-				        Color3 color = {1.0f-pow(m_targetHealth, 2.2f), pow(m_targetHealth, 2.2f), 0.0f};
+				        Color3 color = {1.0f-pow(targetHealth, 2.2f), pow(targetHealth, 2.2f), 0.0f};
 				        UniversalMaterial::Specification materialSpecification;
 				        materialSpecification.setLambertian(Texture::Specification(color));
 				        materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
@@ -1078,7 +1073,7 @@ bool App::fire(bool destroyImmediately) {
 				        shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(targetArray[closestIndex]->pose()->clone());
                     END_PROFILER_EVENT();
                     BEGIN_PROFILER_EVENT("fire/materialSet");
-						shared_ptr<UniversalMaterial> mat = m_materials[min((int)(m_targetHealth*m_MatTableSize), m_MatTableSize-1)];
+						shared_ptr<UniversalMaterial> mat = m_materials[min((int)(targetHealth*m_MatTableSize), m_MatTableSize-1)];
 				        pose->materialTable.set("core/icosahedron_default", mat);
                     END_PROFILER_EVENT();
                     BEGIN_PROFILER_EVENT("fire/setPose");
@@ -1153,7 +1148,11 @@ bool App::fire(bool destroyImmediately) {
 		m_firstDecal = newDecal;
 	}
     END_PROFILER_EVENT();
-	return hitTarget;
+
+	if (hitTarget) {
+		return destroyedTarget ? FIRE_HIT_DESTROYED : FIRE_HIT;
+	}
+	return FIRE_MISS;
 }
 
 void App::clearTargets() {
@@ -1187,22 +1186,22 @@ void App::onUserInput(UserInput* ui) {
 					fired = true;
                     // count clicks
 					ex->countClick();	
+
                     // fire and process click here
-					bool hitTarget = fire();				
-					if (hitTarget) {
-                        if (m_targetHealth == 0) {
-                            // Target eliminated, must be 'destroy'.
-                            ex->accumulatePlayerAction("destroy");	
-                        }
-                        else {
-                            // Target 'hit', but still alive.
-                            ex->accumulatePlayerAction("hit");
-                        }
+					auto result = fire();
+
+					// Record the results
+					switch (result) {
+					case FIRE_MISS:
+						ex->accumulatePlayerAction("miss");
+						break;
+					case FIRE_HIT:
+						ex->accumulatePlayerAction("hit");
+						break;
+					case FIRE_HIT_DESTROYED:
+						ex->accumulatePlayerAction("destroy");
+						break;
 					}
-                    else {
-                        // Target still present, must be 'miss'.
-                        ex->accumulatePlayerAction("miss");
-                    }
 				}
 				// Avoid accumulating invalid clicks during holds...
                 else {
@@ -1236,6 +1235,8 @@ void App::destroyTarget(int index) {
 	targetArray.fastRemove(index);
 
 	scene()->removeEntity(target->name());
+
+	m_targetsDestroyed++;
 }
 
 void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {

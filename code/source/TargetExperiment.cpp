@@ -113,8 +113,8 @@ void TargetExperiment::initTargetAnimation() {
 		);
 	}
 
-	// Full health for the target
-	m_app->m_targetHealth = 1.f;
+	// Reset destroyed targets at the start of the round
+	m_app->m_targetsDestroyed = 0;
 	// reset click counter
 	m_clickCount = 0;
 
@@ -126,7 +126,7 @@ void TargetExperiment::initTargetAnimation() {
 void TargetExperiment::processResponse()
 {
 	m_taskExecutionTime = m_app->timer.getTime();
-	m_response = (m_app->m_targetHealth <= 0) ? 1 : 0; // 1 means success, 0 means failure.
+	m_response = m_app->m_targetsDestroyed > 0 ? 1 : 0; // 1 means success, 0 means failure.
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 	m_psych.processResponse(m_response); // process response.
 	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].getParam().str["session"]);
@@ -171,7 +171,7 @@ void TargetExperiment::updatePresentationState()
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_config.taskDuration) || (m_app->m_targetHealth <= 0) || (m_clickCount == m_config.weapon.maxAmmo))
+		if ((stateElapsedTime > m_config.taskDuration) || (m_app->m_targetsDestroyed > 0) || (m_clickCount == m_config.weapon.maxAmmo))
 		{
 			m_taskEndTime = Logger::genUniqueTimestamp();
 			processResponse();
@@ -186,7 +186,7 @@ void TargetExperiment::updatePresentationState()
 	}
 	else if (currentState == PresentationState::feedback)
 	{
-		if ((stateElapsedTime > m_config.feedbackDuration) && (m_app->m_targetHealth <= 0))
+		if ((stateElapsedTime > m_config.feedbackDuration) && (m_app->m_targetsDestroyed > 0))
 		{
 			if (m_psych.isComplete()) {
 				m_app->mergeCurrentLogToCurrentDB();

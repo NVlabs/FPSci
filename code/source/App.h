@@ -18,6 +18,8 @@
 #include "Logger.h"
 #include <chrono>
 
+class TargetEntity;
+
 // TODO: This has to be replaced with G3D timer.
 class Timer
 {
@@ -140,6 +142,13 @@ protected:
 	CComPortDriver m_com;
 
 public:
+
+	enum FireResult {
+		FIRE_MISS,
+		FIRE_HIT,
+		FIRE_HIT_DESTROYED,
+	};
+
 	/* Moving from proctected so that Experiment classes can use it. */
 	shared_ptr<GFont>               m_outputFont;
 	shared_ptr<GFont>               m_hudFont;
@@ -152,7 +161,7 @@ public:
 	App(const GApp::Settings& settings = GApp::Settings());
 
 	/** Array of all targets in the scene */
-	Array<shared_ptr<VisibleEntity>> targetArray;
+	Array<shared_ptr<TargetEntity>> targetArray;
 	Array<Projectile>                projectileArray;
 
 	/** Parameter configurations */
@@ -252,7 +261,7 @@ public:
     void updateMouseSensitivity();
 
 	/** Fire the weapon - hits targets, draws decals, starts explosions */
-	bool fire(bool destroyImmediately=false);
+	FireResult fire(bool destroyImmediately=false);
 
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
 	void clearTargets();
@@ -299,10 +308,10 @@ public:
 	enum PresentationState          m_presentationState; // which sequence are we in?
 	Color3                          m_targetColor = Color3::red();
 	Color3                          m_reticleColor;
-	// TODO: m_targetHealth is only relevant to TargetExperiment.
-	float						    m_targetHealth; // 1 if never hit, 0 if hit. Binary for instant hit weapon, but tracking weapon will continuously reduce it.
 	bool                            m_isTrackingOn; // true if down AND weapon type is tracking, false otherwise.
 
+	// Flags the end of the experiment when greater than zero
+	int                             m_targetsDestroyed;
 
 protected:
 	double                          m_t_lastAnimationUpdate;

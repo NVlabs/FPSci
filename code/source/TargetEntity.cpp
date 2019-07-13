@@ -1,5 +1,45 @@
 #include "TargetEntity.h"
 
+TargetEntity::TargetEntity()
+{
+	// Full health for the target
+	m_targetHealth = 0.5f;
+}
+
+void TargetEntity::drawHealthBar(RenderDevice* rd, const Camera& camera, const Framebuffer& framebuffer) const
+{
+	// Project the entity position into image space
+	Rect2D viewport = Rect2D(framebuffer.vector2Bounds());
+	Point3 hudPoint = camera.project(frame().translation, viewport);
+
+	// Abort if the point is behind us
+	if (hudPoint == Point3::inf()) {
+		return;
+	}
+
+	// Offset in pixels
+	const Point3 offset(0.0f, -50.0f, 0.0f);
+	hudPoint += offset;
+
+	// Draws a 
+	const Point2 size(100.0f, 10.0f);
+	const Point2 border(2.0f, 2.0f);
+	const Color3 color = { 1.0f - pow(m_targetHealth, 2.2f), pow(m_targetHealth, 2.2f), 0.0f };
+	const Color3 borderColor = { 0.0f, 0.0f, 0.0f };
+	Draw::rect2D(
+		Rect2D::xywh(hudPoint.xy() - size * 0.5f - border, size + border + border), rd, borderColor
+	);
+	Draw::rect2D(
+		Rect2D::xywh(hudPoint.xy() - size * 0.5f, size * Point2(m_targetHealth, 1.0f)), rd, color
+	);
+}
+
+float TargetEntity::health() const { return m_targetHealth; }
+
+void TargetEntity::applyDamage(float damage) { m_targetHealth -= damage; }
+
+bool TargetEntity::isDead() const { return health() <= 0.0f; }
+
 // Find an arbitrary vector perpendicular to and in equal length as inputV.
 // The sampling distribution is uniform along the circular line, the set of possible candidates of a perpendicular vector.,
 Point3 findPerpendicularVector(Point3 inputV) { // Note that the output vector has equal length as the input vector.

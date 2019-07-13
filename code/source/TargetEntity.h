@@ -1,8 +1,20 @@
 #pragma once
 #include <G3D/G3D.h>
 
+class TargetEntity : public VisibleEntity {
+public:
+	TargetEntity();
+	void drawHealthBar(RenderDevice* rd, const Camera& camera, const Framebuffer& framebuffer) const;
+	float health() const;
+	void applyDamage(float damage);
+	bool isDead() const;
 
-class FlyingEntity : public VisibleEntity {
+protected:
+	// m_targetHealth is only relevant to TargetExperiment.
+	float						    m_targetHealth; // 1 if never hit, 0 if hit. Binary for instant hit weapon, but tracking weapon will continuously reduce it.
+};
+
+class FlyingEntity : public TargetEntity {
 protected:
 
 	/** Angular speed in degress/sec */
@@ -71,7 +83,7 @@ public:
 };
 
 
-class JumpingEntity : public VisibleEntity {
+class JumpingEntity : public TargetEntity {
 protected:
 
 	// Motion is calculated in three steps.

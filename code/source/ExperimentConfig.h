@@ -604,6 +604,7 @@ public:
 	Array<TargetConfig> targets;					// Array of trial configs
 	Array<ReactionConfig> reactions;				// Array of reaction configs
     bool renderWeaponStatus = true;                 // Display weapon cooldown
+	bool renderTargetHealthbars = true;             // Display health bars above targets on the hud
     String weaponStatusSide = "left";               // "right" for right side, otherwise left
     bool renderClickPhoton = true;                  // Render click to photon box
     String clickPhotonSide = "right";               // "right" for right side, otherwise left
@@ -627,7 +628,8 @@ public:
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("weapon", weapon);
-            reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
+			reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
+			reader.getIfPresent("renderTargetHealthbars", renderTargetHealthbars);
             reader.getIfPresent("weaponStatusSide", weaponStatusSide);
             reader.getIfPresent("renderClickPhoton", renderClickPhoton);
             reader.getIfPresent("clickPhotonSide", clickPhotonSide);
