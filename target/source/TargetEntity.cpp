@@ -24,6 +24,37 @@ Point3 rotateToward(Point3 inputV, Point3 destinationV, float ang_deg) {
 	return (cos(ang_deg * pif() / 180.0f) * U + sin(ang_deg * pif() / 180.0f) * V) * inputV.length();
 }
 
+void TargetEntity::drawHealthBar(RenderDevice* rd, const Camera& camera, const Framebuffer& framebuffer, Point2 size, Point3 offset, Color4 borderColor) const
+{
+	// Abort if the target is not in front of the camera 
+	Vector3 diffVector = frame().translation - camera.frame().translation;
+	if (camera.frame().lookRay().direction().dot(diffVector) < 0.0f) {
+		return;
+	}
+
+	// Project entity position into image space
+	Rect2D viewport = Rect2D(framebuffer.vector2Bounds());
+	Point3 hudPoint = camera.project(frame().translation, viewport);
+
+	// Abort if the target is not in the view frustum
+	if (hudPoint == Point3::inf()) {
+		return;
+	}
+	hudPoint += offset;		// Apply offset in pixels
+
+	// Draws a bar (consider moving size/border/colors to config file)
+	const Point2 border(2.0f, 2.0f);
+	const Color3 color = { 1.0f - pow(m_health, 2.2f), pow(m_health, 2.2f), 0.0f };
+
+	Draw::rect2D(
+		Rect2D::xywh(hudPoint.xy() - size * 0.5f - border, size + border + border), rd, borderColor
+	);
+	Draw::rect2D(
+		Rect2D::xywh(hudPoint.xy() - size * 0.5f, size*Point2(m_health, 1.0f)), rd, color
+	);
+
+}
+
 shared_ptr<Entity> FlyingEntity::create
 (const String&                  name,
 	Scene*                         scene,

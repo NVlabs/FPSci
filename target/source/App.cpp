@@ -880,18 +880,15 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		// TODO: Is this the right place to call it?
 		ex->onGraphics2D(rd);
 
-		// Target health bar (removed for now)
-		//float healthBarWidth = 0.1f;
-		//float healthBarHeight = 0.01f;
-		//Color3 color = { 1.0f - pow(m_targetHealth, 2.2f), pow(m_targetHealth, 2.2f), 0.0f };
-		//Draw::rect2D(
-		//	Rect2D::xywh(
-		//	(float)m_framebuffer->width() * (0.5f - healthBarWidth / 2),
-		//		(float)m_framebuffer->height() * (0.5f + 0.05f),
-		//		(float)m_framebuffer->width() * healthBarWidth * m_targetHealth,
-		//		(float)m_framebuffer->height() * healthBarHeight
-		//	), rd, color
-		//);
+		// Draw target health bars
+		if (experimentConfig.showTargetHealthBars) {
+			for (auto const& target : targetArray) {
+				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer, 
+					experimentConfig.targetHealthBarSize, 
+					experimentConfig.targetHealthBarOffset, 
+					experimentConfig.targetHealthBarBorderColor);
+			}
+		}
 
 		// Paint both sides by the width of latency measuring box.
 		Color3 blackColor = Color3::black();
@@ -1019,7 +1016,6 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 				destroyTarget(closestIndex);
 				destroyedTarget = true;
 				destroyedTargets += 1;
-				hitTarget = false;
 			}
 			else {
                 BEGIN_PROFILER_EVENT("fire/changeColor");
@@ -1094,7 +1090,6 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 		}
 		for (auto target : targetArray) {
 			dontHit.append(target);
-
 		}
 
 		// Cast a ray against the scene to get the decal location/normal

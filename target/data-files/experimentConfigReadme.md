@@ -15,11 +15,17 @@ For a full description of fields see the descriptions below.
 There are a number of inputs to experiment config. The following is a description of what each one means, and how it is meant to be used.
 
 * `settingsVersion` refers to the version of the contents of this file, unless you are aware of changes that need to be made, don't change this number.
+
+### Global Settings
 * `appendingDescription` allows the user to annotate these results with a custom string
 * `sceneName` provides the name of the (virtual) scene in which this experiment takes place
+
+### Duration Settings
 * `feedbackDuration` describes the duration of the feedback window between experiments
 * `readyDuration` sets the time before the start of each trial
 * `taskDuration` sets the maximum time over which the task can occur
+
+### Camera/View Settings
 * `fieldOfView` sets the (horizontal) field of view for the user's display
 * `showHUD` controls whether or not the HUD is displayed (currently w/ time remaining, percent of session complete, and score)
 * `hudFont` sets the font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/data-files/font`)
@@ -29,10 +35,20 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `jumpVelocity` sets the magnitude of the upward impulse introduced by a jump when `walkMode=True`
 * `playerGravity` set the graivty vector that impacts the player when `walkMode=True`
 * `renderWeaponStatus` controls whether or not the weapon cooldown is rendered on the left side of the screen
-* `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](./weapon/weaponConfigReadme.md))
 * `weaponStatusSide` controls which side of the display the weapon status is drawn on (can be `right` or `left`)
 * `clickPhotonSide` controls which side of the display the click-to-photon region is drawn on (can be `right` or `left`)
 * `shader` provides the (relative) path of an (optional) shader to run
+
+### Target Rendering
+* `showTargetHealthBars` determines or not whether target health bars are drawn for each target
+* `targetHealthBarSize` sets the size of the health bar (in pixels)
+* `targetHealthBarOffset` sets the (world-space) offset of the health bar relative to the target
+* `targetHealthBarBorderColor` sets the color of the target health bar border (can set alpha = 0 for no border)
+
+### Weapon Configuration
+* `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](./weapon/weaponConfigReadme.md))
+
+### Session Configuration
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
     * `frameDelay` is an (integer) count of frames to delay to control latency
@@ -41,6 +57,8 @@ There are a number of inputs to experiment config. The following is a descriptio
     * `trials` is a list of trials referencing the `trials` table above:
         * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
         * `count` provides the number of trials in this session
+
+### Target Configuration
 * `targets` this target config table contains more detailed constraints for path generation for targets:
     * `id` a short string to refer to this target information
     * `speed` is a vector indictating the minimum ([0]) and maximum ([1]) speeds in angular velocity (in deg/s)

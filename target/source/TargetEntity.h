@@ -8,6 +8,8 @@ protected:
 
 public:
 
+	TargetEntity() {};
+
 	/** Getter for health */
 	float health() { 
 		return m_health; 
@@ -18,6 +20,8 @@ public:
 		m_health -= damage;
 		return m_health <= 0;
 	}
+
+	void drawHealthBar(RenderDevice* rd, const Camera& camera, const Framebuffer& framebuffer, Point2 size, Point3 offset, Color4 borderColor) const;
 
 };
 
