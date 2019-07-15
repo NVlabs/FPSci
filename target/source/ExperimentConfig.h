@@ -659,10 +659,20 @@ public:
 	bool renderClickPhoton = true;                  ///< Render click to photon box
     String clickPhotonSide = "right";               ///< "right" for right side, otherwise left
 	
+	Color3 dummyTargetColor = Color3(1.0, 0.0, 0.0);///< Default "dummy" target color
+	Array<Color3> targetHealthColors = {			///< Target start/end color (based on target health)
+		Color3(0.0, 1.0, 0.0), 
+		Color3(1.0, 0.0, 0.0)
+	};	
 	bool showTargetHealthBars = false;				///< Display a target health bar?
 	Point2 targetHealthBarSize = Point2(100.0f, 10.0f);						///< Health bar size (in pixels)
 	Point3 targetHealthBarOffset = Point3(0.0f, -50.0f, 0.0f);				///< Offset from target to health bar (in pixels)
+	Point2 targetHealthBarBorderSize = Point2(2.0f, 2.0f);					///< Thickness of the target health bar border
 	Color4 targetHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Health bar border color
+	Array<Color4> targetHealthBarColors = {			///< Target health bar start/end color
+		Color4(0.0, 1.0, 0.0, 1.0),
+		Color4(1.0, 0.0, 0.0, 1.0)
+	};
 
 	String shader = "";								///< Option for a custom shader name
 
@@ -700,7 +710,11 @@ public:
 			reader.getIfPresent("showTargetHealthBars", showTargetHealthBars);
 			reader.getIfPresent("targetHealthBarSize", targetHealthBarSize);
 			reader.getIfPresent("targetHealthBarOffset", targetHealthBarOffset);
+			reader.getIfPresent("targetHealthBarBorderSize", targetHealthBarBorderSize);
 			reader.getIfPresent("targetHealthBarBorderColor", targetHealthBarBorderColor);
+			reader.getIfPresent("targetHealthColors", targetHealthColors);
+			reader.getIfPresent("dummyTargetColor", dummyTargetColor);
+			reader.getIfPresent("targetHealthBarColors", targetHealthBarColors);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);

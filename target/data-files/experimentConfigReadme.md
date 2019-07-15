@@ -40,10 +40,14 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `shader` provides the (relative) path of an (optional) shader to run
 
 ### Target Rendering
+* `targetHealthColors` sets the max/min health colors for the target as an array of [`max color`, `min color`] as `Color3`s, if you do not want the target to change color as its health drops, set these values both to the same color
+* `dummyTargetColor` sets the color of the "dummy" targets spawned between trial
 * `showTargetHealthBars` determines or not whether target health bars are drawn for each target
 * `targetHealthBarSize` sets the size of the health bar (in pixels)
 * `targetHealthBarOffset` sets the (world-space) offset of the health bar relative to the target
-* `targetHealthBarBorderColor` sets the color of the target health bar border (can set alpha = 0 for no border)
+* `targetHealthBarBorderSize` sets the size of the border around the target (see `targetHealthBarBorderColor` to set the color as well)
+* `targetHealthBarBorderColor` sets the `Color4` of the target health bar border (can set alpha = 0 for no border)
+* `targetHealthBarColors` sets the max/min health colors for the target health bar as an array of [`max color`, `min color`] as `Color4`. If you are using low alpha values with this field, make sure you also set a low alpha for `targetHealthBarBorderColor` as otherwise this will show through
 
 ### Weapon Configuration
 * `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](./weapon/weaponConfigReadme.md))

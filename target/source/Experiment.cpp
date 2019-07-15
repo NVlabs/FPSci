@@ -173,7 +173,7 @@ void Experiment::initTargetAnimation() {
 				m_app->spawnJumpingTarget(
 					f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 					visualSize,
-					Color3::green().pow(2.0f),
+					m_config.targetHealthColors[0],
 					{ target.val["minSpeed"], target.val["maxSpeed"] },
 					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
 					{ target.val["minJumpPeriod"], target.val["maxJumpPeriod"] },
@@ -189,7 +189,7 @@ void Experiment::initTargetAnimation() {
 				m_app->spawnFlyingTarget(
 					f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 					visualSize,
-					Color3::green().pow(2.0f),
+					m_config.targetHealthColors[0],
 					{ target.val["minSpeed"], target.val["maxSpeed"] },
 					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
 					initialSpawnPos,
@@ -203,7 +203,7 @@ void Experiment::initTargetAnimation() {
 		m_app->spawnFlyingTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 			visualSize,
-			Color3::red().pow(2.0f),
+			m_config.dummyTargetColor.pow(2.0f),
 			{ 0.0f, 0.0f },
 			{ 1000.0f, 1000.f },
 			initialSpawnPos

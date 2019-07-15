@@ -74,7 +74,8 @@ void App::onInit() {
 
 	// Create a series of colored materials to choose from for target health
 	for (int i = 0; i < m_MatTableSize; i++) {
-		Color3 color = { 1.0f - pow((float)i/ m_MatTableSize, 2.2f), pow((float)i / m_MatTableSize, 2.2f), 0.0f };
+		float complete = (float)i/ m_MatTableSize;
+		Color3 color = experimentConfig.targetHealthColors[0]*complete + experimentConfig.targetHealthColors[1]*(1.0-complete);
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
 		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
@@ -885,7 +886,9 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			for (auto const& target : targetArray) {
 				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer, 
 					experimentConfig.targetHealthBarSize, 
-					experimentConfig.targetHealthBarOffset, 
+					experimentConfig.targetHealthBarOffset,
+					experimentConfig.targetHealthBarBorderSize,
+					experimentConfig.targetHealthBarColors,
 					experimentConfig.targetHealthBarBorderColor);
 			}
 		}
@@ -1019,15 +1022,6 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 			}
 			else {
                 BEGIN_PROFILER_EVENT("fire/changeColor");
-				    // Use a gamma of 2.2 baseed on sRGB tansfer function (https://en.wikipedia.org/wiki/SRGB)
-                    BEGIN_PROFILER_EVENT("fire/colorCreate");
-				        Color3 color = {1.0f-pow(target->health(), 2.2f), pow(target->health(), 2.2f), 0.0f};
-				        UniversalMaterial::Specification materialSpecification;
-				        materialSpecification.setLambertian(Texture::Specification(color));
-				        materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-				        materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-                    END_PROFILER_EVENT();
-
                     BEGIN_PROFILER_EVENT("fire/clone");
 				        shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(targetArray[closestIndex]->pose()->clone());
                     END_PROFILER_EVENT();
