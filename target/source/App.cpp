@@ -66,7 +66,7 @@ void App::onInit() {
 	// Check for play mode specific parameters
 	if (startupConfig.playMode) {
 		m_fireSound = Sound::create(System::findDataFile(experimentConfig.weapon.fireSound));
-		m_explosionSound = Sound::create(System::findDataFile("sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav"));
+		m_explosionSound = Sound::create(System::findDataFile(experimentConfig.explosionSound));
 	}
 
 	// Load models and set the reticle

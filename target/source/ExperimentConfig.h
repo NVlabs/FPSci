@@ -666,7 +666,10 @@ public:
 	Array<Color3> targetHealthColors = {			///< Target start/end color (based on target health)
 		Color3(0.0, 1.0, 0.0), 
 		Color3(1.0, 0.0, 0.0)
-	};	
+	};
+
+	String explosionSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
+
 	bool showTargetHealthBars = false;				///< Display a target health bar?
 	Point2 targetHealthBarSize = Point2(100.0f, 10.0f);						///< Health bar size (in pixels)
 	Point3 targetHealthBarOffset = Point3(0.0f, -50.0f, 0.0f);				///< Offset from target to health bar (in pixels)
@@ -719,6 +722,7 @@ public:
             reader.getIfPresent("renderClickPhoton", renderClickPhoton);
             reader.getIfPresent("clickPhotonSide", clickPhotonSide);
 			reader.getIfPresent("shader", shader);
+			reader.getIfPresent("explosionSound", explosionSound);
 			reader.getIfPresent("showTargetHealthBars", showTargetHealthBars);
 			reader.getIfPresent("targetHealthBarSize", targetHealthBarSize);
 			reader.getIfPresent("targetHealthBarOffset", targetHealthBarOffset);
