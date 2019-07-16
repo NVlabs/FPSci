@@ -84,10 +84,6 @@ void App::onInit() {
 		m_materials.append(UniversalMaterial::create(materialSpecification));
 	}
 
-	// Spawn some targets
-	//spawnTarget(Point3(37.6184f, -0.54509f, -2.12245f), 1.0f);
-	//spawnTarget(Point3(39.7f, -2.3f, 2.4f), 1.0f);
-
 	updateMouseSensitivity();			// Update (apply) mouse sensitivity
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
 	updateSessionPress();				// Update session to create results file/start collection
