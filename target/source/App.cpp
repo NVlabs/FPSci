@@ -60,6 +60,7 @@ void App::onInit() {
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
 	hudFont = GFont::fromFile(System::findDataFile(experimentConfig.hudFont));
+	m_combatFont = GFont::fromFile(System::findDataFile(experimentConfig.combatTextFont));
 	hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
 	// Check for play mode specific parameters
@@ -893,6 +894,17 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			}
 		}
 
+		// Draw the combat text
+		if (experimentConfig.showCombatText) {
+			Array<int> toRemove;
+			for (int i = 0; i < m_combatTextList.size(); i++) {
+				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
+				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
+			}
+			// Remove the expired elements here
+			m_combatTextList.removeNulls();
+		}
+
 		// Paint both sides by the width of latency measuring box.
 		Color3 blackColor = Color3::black();
 		Point2 latencyRect = Point2(0.09f, 0.1f);
@@ -994,7 +1006,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 		if (closestIndex >= 0) {
 			target = targetArray[closestIndex];			// Assign the target pointer here (not null indicates the hit)
 
-			// destroy target
+			// Damage the target
 			float damage;
 			if (destroyImmediately) damage = target->health();
 			else if (experimentConfig.weapon.firePeriod == 0.0f && hitTarget) {		// Check if we are in "laser" mode hit the target last time
@@ -1006,6 +1018,21 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 			}
 			lastTime = System::time();
 			hitTarget = true;
+
+			// Check if we need to add combat text for this damage
+			if (experimentConfig.showCombatText) {
+				m_combatTextList.append(FloatingCombatText::create(
+					format("%2.0f", 100*damage),
+					m_combatFont,
+					experimentConfig.combatTextSize,
+					experimentConfig.combatTextColor,
+					experimentConfig.combatTextOutline,
+					experimentConfig.combatTextOffset,
+					experimentConfig.combatTextVelocity,
+					experimentConfig.combatTextFade,
+					experimentConfig.combatTextTimeout));
+				m_combatTextList.last()->setFrame(target->frame());
+			}
 
 			bool destroyed = target->doDamage(damage); // TODO: health point should be tracked by Target Entity class (not existing yet).
 			if (destroyed) {

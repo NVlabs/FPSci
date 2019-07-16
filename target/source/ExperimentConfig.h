@@ -659,6 +659,9 @@ public:
 	bool renderClickPhoton = true;                  ///< Render click to photon box
     String clickPhotonSide = "right";               ///< "right" for right side, otherwise left
 	
+	String shader = "";								///< Option for a custom shader name
+
+	// Target health bars
 	Color3 dummyTargetColor = Color3(1.0, 0.0, 0.0);///< Default "dummy" target color
 	Array<Color3> targetHealthColors = {			///< Target start/end color (based on target health)
 		Color3(0.0, 1.0, 0.0), 
@@ -674,7 +677,16 @@ public:
 		Color4(1.0, 0.0, 0.0, 1.0)
 	};
 
-	String shader = "";								///< Option for a custom shader name
+	// Floating combat text controls
+	bool showCombatText = false;					///< Display floating combat text?
+	String combatTextFont = "dominant.fnt";			///< Font to use for combat text
+	float combatTextSize = 16.0;					///< Font size for floating combat text
+	Color4 combatTextColor = Color4(1.0, 0.0, 0.0, 1.0);		///< The main color for floating combat text
+	Color4 combatTextOutline = Color4(0.0, 0.0, 0.0, 1.0);		///< Combat text outline color
+	Point3 combatTextOffset = Point3(0.0, -10.0, 0.0);			///< Initial offset for combat text
+	Point3 combatTextVelocity = Point3(0.0, -100.0, 0.0);	///< Move rate/vector for combat text
+	float combatTextFade = 0.98;					///< Fade rate for combat text (0 implies don't fade)	
+	float combatTextTimeout = 0.5;					///< Time for combat text to disappear (in seconds)
 
 	ExperimentConfig() {}
 	
@@ -715,6 +727,15 @@ public:
 			reader.getIfPresent("targetHealthColors", targetHealthColors);
 			reader.getIfPresent("dummyTargetColor", dummyTargetColor);
 			reader.getIfPresent("targetHealthBarColors", targetHealthBarColors);
+			reader.getIfPresent("showFloatingCombatText", showCombatText);
+			reader.getIfPresent("floatingCombatTextSize", combatTextSize);
+			reader.getIfPresent("floatingCombatTextFont", combatTextFont);
+			reader.getIfPresent("floatingCombatTextColor", combatTextColor);
+			reader.getIfPresent("floatingCombatTextOutlineColor", combatTextOutline);
+			reader.getIfPresent("floatingCombatTextOffset", combatTextOffset);
+			reader.getIfPresent("floatingCombatTextVelocity", combatTextVelocity);
+			reader.getIfPresent("floatingCombatTextFade", combatTextFade);
+			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);
