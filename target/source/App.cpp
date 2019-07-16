@@ -816,7 +816,8 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		const shared_ptr<PlayerEntity>& p = m_scene->typedEntity<PlayerEntity>("player");
 		if (notNull(p)) {
 			CFrame c = p->frame();
-			c.translation += Vector3(0, experimentConfig.playerHeight, 0);		// Set the player to the right height
+			float height = p->crouched() ? experimentConfig.crouchHeight : experimentConfig.playerHeight;
+			c.translation += Vector3(0, height, 0);		// Set the player to the right height
 			c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), p->headTilt());
 			activeCamera()->setFrame(c);
 		}
@@ -842,10 +843,14 @@ bool App::onEvent(const GEvent& event) {
         return true;
     }
 
-    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::LCTRL)) {
-        Profiler::setEnabled(false);
-        return true;
-    }
+	if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::LCTRL)) {
+		m_scene->typedEntity<PlayerEntity>("player")->setCrouched(true);
+		return true;
+	}
+	if ((event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey::LCTRL)) {
+		m_scene->typedEntity<PlayerEntity>("player")->setCrouched(false);
+		return true;
+	}
 
 	// If you need to track individual UI events, manage them here.
 	// Return true if you want to prevent other parts of the system
@@ -1233,6 +1238,8 @@ void App::onUserInput(UserInput* ui) {
 	if (ui->keyPressed(initShootKey) && (ex->presentationState == PresentationState::feedback)) {
 		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
 	}
+
+	if(ui->keyDown(GKey::LCTRL))
 
 	if (m_lastReticleLoaded != m_reticleIndex) {
 		// Slider was used to change the reticle

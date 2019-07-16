@@ -58,6 +58,13 @@ void PlayerEntity::init(AnyTableReader& propertyTable) {
     init(v, s);
 }
 
+void PlayerEntity::setCrouched(bool crouched) {
+	m_crouched = crouched;
+}
+
+bool PlayerEntity::crouched(void) {
+	return m_crouched;
+}
 
 void PlayerEntity::init(const Vector3& velocity, const Sphere& collisionProxy) {
     m_velocity = velocity;

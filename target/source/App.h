@@ -170,6 +170,8 @@ protected:
     shared_ptr<GuiWindow>           m_userSettingsWindow;
     bool                            m_userSettingsMode = true;
 
+	bool							m_crouched = false;
+
 	/** Called from onInit */
 	void makeGUI();
 	void loadModels();

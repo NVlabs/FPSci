@@ -20,6 +20,8 @@ protected:
     /** Unused for rendering, for use by a fps cam. */
     float           m_headTilt;
 
+	bool			m_crouched = false;					///< Is the player crouched?
+
     PlayerEntity() {}
 
 #ifdef G3D_OSX
@@ -74,6 +76,9 @@ public:
     float headTilt() const {
         return m_headTilt;
     }
+
+	void setCrouched(bool crouched);
+	bool crouched(void);
 
     /** For deserialization from Any / loading from file */
     static shared_ptr<Entity> create 
