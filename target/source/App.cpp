@@ -835,6 +835,15 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 }
 
 bool App::onEvent(const GEvent& event) {
+    // Override 'q', 'z', 'c', and 'e' keys
+    if ((event.type == GEventType::KEY_DOWN) && 
+        (event.key.keysym.sym == 'e'
+            || event.key.keysym.sym == 'z'
+            || event.key.keysym.sym == 'c'
+            || event.key.keysym.sym == 'q')) {
+        return true;
+    }
+
 	// Handle super-class events
 	if (GApp::onEvent(event)) { return true; }
 
