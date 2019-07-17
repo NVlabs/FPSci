@@ -67,7 +67,7 @@ public:
 
 	bool draw(RenderDevice* rd, const Camera& camera, const Framebuffer& framebuffer) {
 		// Abort if the timeout has expired (return false to remove this combat text from the tracked array)
-		float time_existing = System::time() - m_created;
+		float time_existing = static_cast<float>(System::time() - m_created);
 		if (time_existing > m_timeout) {
 			return false;
 		}

@@ -689,8 +689,8 @@ public:
 	Color4 combatTextOutline = Color4(0.0, 0.0, 0.0, 1.0);		///< Combat text outline color
 	Point3 combatTextOffset = Point3(0.0, -10.0, 0.0);			///< Initial offset for combat text
 	Point3 combatTextVelocity = Point3(0.0, -100.0, 0.0);	///< Move rate/vector for combat text
-	float combatTextFade = 0.98;					///< Fade rate for combat text (0 implies don't fade)	
-	float combatTextTimeout = 0.5;					///< Time for combat text to disappear (in seconds)
+	float combatTextFade = 0.98f;					///< Fade rate for combat text (0 implies don't fade)	
+	float combatTextTimeout = 0.5f;					///< Time for combat text to disappear (in seconds)
 
 	ExperimentConfig() {}
 	

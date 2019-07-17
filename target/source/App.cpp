@@ -76,7 +76,7 @@ void App::onInit() {
 	// Create a series of colored materials to choose from for target health
 	for (int i = 0; i < m_MatTableSize; i++) {
 		float complete = (float)i/ m_MatTableSize;
-		Color3 color = experimentConfig.targetHealthColors[0]*complete + experimentConfig.targetHealthColors[1]*(1.0-complete);
+		Color3 color = experimentConfig.targetHealthColors[0]*complete + experimentConfig.targetHealthColors[1]*(1.0f-complete);
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
 		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
