@@ -869,13 +869,15 @@ bool App::onEvent(const GEvent& event) {
         return true;
     }
 
-	if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::LCTRL)) {
-		m_scene->typedEntity<PlayerEntity>("player")->setCrouched(true);
-		return true;
-	}
-	if ((event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey::LCTRL)) {
-		m_scene->typedEntity<PlayerEntity>("player")->setCrouched(false);
-		return true;
+	if(experimentConfig.walkMode){
+		if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::LCTRL)) {
+			m_scene->typedEntity<PlayerEntity>("player")->setCrouched(true);
+			return true;
+		}
+		if ((event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey::LCTRL)) {
+			m_scene->typedEntity<PlayerEntity>("player")->setCrouched(false);
+			return true;
+		}
 	}
 
 	// If you need to track individual UI events, manage them here.
@@ -1194,7 +1196,7 @@ void App::onUserInput(UserInput* ui) {
 	GApp::onUserInput(ui);
 	(void)ui;
 
-	if (experimentConfig.walkMode) {
+	if (experimentConfig.walkMode && !m_userSettingsMode) {
 		const shared_ptr<PlayerEntity>& player = m_scene->typedEntity<PlayerEntity>("player");
 		if (notNull(player)) {
 			const float walkSpeed = experimentConfig.moveRate * units::meters() / units::seconds();
