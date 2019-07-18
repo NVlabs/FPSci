@@ -687,26 +687,38 @@ public:
 
 	String explosionSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
 
-	bool showTargetHealthBars = false;				///< Display a target health bar?
+	// Player health bar
+	bool showPlayerHealthBar = false;										///< Display a player health bar?
+	Point2 playerHealthBarSize = Point2(200.0f, 20.0f);						///< Player health bar size (in pixels)
+	Point2 playerHealthBarPos = Point2(10.0f, 74.0f);						///< Player health bar position (in pixels)
+	Point2 playerHealthBarBorderSize = Point2(2.0f, 2.0f);					///< Player health bar border size
+	Color4 playerHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Player health bar border color
+	Array<Color4> playerHealthBarColors = {									///< Player health bar start/end colors
+		Color4(0.0, 1.0, 0.0, 1.0),
+		Color4(1.0, 0.0, 0.0, 1.0)
+	};
+
+	// Target health bars
+	bool showTargetHealthBars = false;										///< Display a target health bar?
 	Point2 targetHealthBarSize = Point2(100.0f, 10.0f);						///< Health bar size (in pixels)
 	Point3 targetHealthBarOffset = Point3(0.0f, -50.0f, 0.0f);				///< Offset from target to health bar (in pixels)
 	Point2 targetHealthBarBorderSize = Point2(2.0f, 2.0f);					///< Thickness of the target health bar border
 	Color4 targetHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Health bar border color
-	Array<Color4> targetHealthBarColors = {			///< Target health bar start/end color
+	Array<Color4> targetHealthBarColors = {									///< Target health bar start/end color
 		Color4(0.0, 1.0, 0.0, 1.0),
 		Color4(1.0, 0.0, 0.0, 1.0)
 	};
 
 	// Floating combat text controls
-	bool showCombatText = false;					///< Display floating combat text?
-	String combatTextFont = "dominant.fnt";			///< Font to use for combat text
-	float combatTextSize = 16.0;					///< Font size for floating combat text
+	bool showCombatText = false;								///< Display floating combat text?
+	String combatTextFont = "dominant.fnt";						///< Font to use for combat text
+	float combatTextSize = 16.0;								///< Font size for floating combat text
 	Color4 combatTextColor = Color4(1.0, 0.0, 0.0, 1.0);		///< The main color for floating combat text
 	Color4 combatTextOutline = Color4(0.0, 0.0, 0.0, 1.0);		///< Combat text outline color
 	Point3 combatTextOffset = Point3(0.0, -10.0, 0.0);			///< Initial offset for combat text
-	Point3 combatTextVelocity = Point3(0.0, -100.0, 0.0);	///< Move rate/vector for combat text
-	float combatTextFade = 0.98f;					///< Fade rate for combat text (0 implies don't fade)	
-	float combatTextTimeout = 0.5f;					///< Time for combat text to disappear (in seconds)
+	Point3 combatTextVelocity = Point3(0.0, -100.0, 0.0);		///< Move rate/vector for combat text
+	float combatTextFade = 0.98f;								///< Fade rate for combat text (0 implies don't fade)	
+	float combatTextTimeout = 0.5f;								///< Time for combat text to disappear (in seconds)
 
 	ExperimentConfig() {}
 	
@@ -741,6 +753,14 @@ public:
             reader.getIfPresent("clickPhotonSide", clickPhotonSide);
 			reader.getIfPresent("shader", shader);
 			reader.getIfPresent("explosionSound", explosionSound);
+
+			reader.getIfPresent("showPlayerHealthBar", showPlayerHealthBar);
+			reader.getIfPresent("playerHealthBarSize", playerHealthBarSize);
+			reader.getIfPresent("playerHealthBarPosition", playerHealthBarPos);
+			reader.getIfPresent("playerHealthBarBorderSize", playerHealthBarBorderSize);
+			reader.getIfPresent("playerHealthBarBorderColor", playerHealthBarBorderColor);
+			reader.getIfPresent("playerHealthBarColors", playerHealthBarColors);
+			
 			reader.getIfPresent("showTargetHealthBars", showTargetHealthBars);
 			reader.getIfPresent("targetHealthBarSize", targetHealthBarSize);
 			reader.getIfPresent("targetHealthBarOffset", targetHealthBarOffset);
@@ -749,6 +769,7 @@ public:
 			reader.getIfPresent("targetHealthColors", targetHealthColors);
 			reader.getIfPresent("dummyTargetColor", dummyTargetColor);
 			reader.getIfPresent("targetHealthBarColors", targetHealthBarColors);
+			
 			reader.getIfPresent("showFloatingCombatText", showCombatText);
 			reader.getIfPresent("floatingCombatTextSize", combatTextSize);
 			reader.getIfPresent("floatingCombatTextFont", combatTextFont);

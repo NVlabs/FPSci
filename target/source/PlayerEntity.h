@@ -21,6 +21,7 @@ protected:
     float           m_headTilt;
 
 	bool			m_crouched = false;					///< Is the player crouched?
+	float			m_health = 1.0f;					///< Player health storage
 
     PlayerEntity() {}
 
@@ -79,6 +80,9 @@ public:
 
 	void setCrouched(bool crouched);
 	bool crouched(void);
+
+	float health(void);
+	bool doDamage(float damage);
 
     /** For deserialization from Any / loading from file */
     static shared_ptr<Entity> create 

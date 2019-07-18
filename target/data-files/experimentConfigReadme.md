@@ -27,8 +27,6 @@ There are a number of inputs to experiment config. The following is a descriptio
 
 ### Camera/View Settings
 * `fieldOfView` sets the (horizontal) field of view for the user's display
-* `showHUD` controls whether or not the HUD is displayed (currently w/ time remaining, percent of session complete, and score)
-* `hudFont` sets the font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/data-files/font`)
 * `moveRate` sets the rate of player motion in m/s, set this parameter to `0` to display player motion
 * `walkMode` sets whether or not we are in "walking" mode that includes graivty and jump vs flying camera mode
 * `playerHeight` sets the height of the player above the ground (for `walkMode=True` only for now)
@@ -38,6 +36,16 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `weaponStatusSide` controls which side of the display the weapon status is drawn on (can be `right` or `left`)
 * `clickPhotonSide` controls which side of the display the click-to-photon region is drawn on (can be `right` or `left`)
 * `shader` provides the (relative) path of an (optional) shader to run
+
+#### HUD settings
+* `showHUD` controls whether or not the HUD is displayed (currently w/ time remaining, percent of session complete, and score)
+* `hudFont` sets the font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/data-files/font`)
+* `showPlayerHealthBar` determines whether or not a player health bar is drawn to the HUD
+* `playerHealthBarSize` sets the size of the player health bar (in pixels)
+* `playerHealthBarPosition` sets the position of the player health bar (in pixels from the top right of the screen)
+* `playerHealthBarBorderSize` sets the width of the player health bar border
+* `playerHealthBarBorderColor` sets the `Color4` of the player health bar border
+* `playerHealthBarColors` sets the max/min health colors for the player health bar as an array of [`max color`, `min color`] as `Color4`. If you are using low alpha values with this field, make sure you consider the alpha value for `playerHealthBarBorderColor` as well.
 
 ### Target Rendering
 * `targetHealthColors` sets the max/min health colors for the target as an array of [`max color`, `min color`] as `Color3`s, if you do not want the target to change color as its health drops, set these values both to the same color
@@ -88,7 +96,7 @@ There are a number of inputs to experiment config. The following is a descriptio
     * `jumpPeriod` is a vector indicating the minimum ([0]) and maximum ([1]) period to wait between jumps (in seconds)
     * `jumpSpeed` is a vector indicating the minimum ([0]) and maximum([1]) angular speed with which to jump (in deg/s)
     * `accelGravity` is the min ([0])/max ([1]) acceleration due to gravity during the jump (in m/s^2)
-
+    * `modelSpec` is an `Any` that constructs an `ArticulatedModel` similar to that used in the [the weapon config readme](./weapon/weaponConfigReadme.md). For now this spec needs to point to an `obj` file with a model named `core/icosahedron_default`.
 ## Frame Rate Modes
 The `frameRate` parameter in any given session config can be used in 3 different modes:
 * If the `frameRate` parameter is set to a value >> refresh rate of the display (we suggest `8192fps`), then the program runs in "unlocked" mode wherein as many frames as can be drawn are rendered per displayed frame. This is the common mode of operation in many modern games.

@@ -76,6 +76,14 @@ void PlayerEntity::init(const Vector3& velocity, const Sphere& collisionProxy) {
     m_headTilt              = 0;
 }
 
+bool PlayerEntity::doDamage(float damage) {
+	m_health -= damage;
+	return m_health <= 0;
+}
+
+float PlayerEntity::health() {
+	return m_health;
+}
 
 Any PlayerEntity::toAny(const bool forceAll) const {
     Any a = VisibleEntity::toAny(forceAll);

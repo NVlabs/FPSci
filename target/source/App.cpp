@@ -988,6 +988,20 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 				), rd, cornerColor
 			);
 		}
+
+		// Draw the player health bar
+		if (experimentConfig.showPlayerHealthBar) {
+			const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
+			const Point2 location = experimentConfig.playerHealthBarPos + Point2((int)(m_framebuffer->width() * latencyRect.x), 0) ;
+			const Point2 size = experimentConfig.playerHealthBarSize;
+			const Point2 border = experimentConfig.playerHealthBarBorderSize;
+			const Color4 borderColor = experimentConfig.playerHealthBarBorderColor;
+			const Color4 color = experimentConfig.playerHealthBarColors[1] * (1.0f - health) + experimentConfig.playerHealthBarColors[0] * health;
+
+			Draw::rect2D(Rect2D::xywh(location - border, size + border + border), rd, borderColor);
+			Draw::rect2D(Rect2D::xywh(location, size*Point2(health, 1.0f)), rd, color);
+		}
+
 	} rd->pop2D();
 
 	if (experimentConfig.shader != "") {
