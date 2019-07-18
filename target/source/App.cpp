@@ -989,17 +989,33 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			);
 		}
 
-		// Draw the player health bar
-		if (experimentConfig.showHUD && experimentConfig.showPlayerHealthBar) {
-			const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
-			const Point2 location = experimentConfig.playerHealthBarPos + Point2((int)(m_framebuffer->width() * latencyRect.x), 0) ;
-			const Point2 size = experimentConfig.playerHealthBarSize;
-			const Point2 border = experimentConfig.playerHealthBarBorderSize;
-			const Color4 borderColor = experimentConfig.playerHealthBarBorderColor;
-			const Color4 color = experimentConfig.playerHealthBarColors[1] * (1.0f - health) + experimentConfig.playerHealthBarColors[0] * health;
+		// Draw the HUD elements
+		if (experimentConfig.showHUD) {
+			// Draw the player health bar
+			if (experimentConfig.showPlayerHealthBar) {
+				const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
+				const Point2 location = experimentConfig.playerHealthBarPos + Point2((int)(m_framebuffer->width() * latencyRect.x), 0);
+				const Point2 size = experimentConfig.playerHealthBarSize;
+				const Point2 border = experimentConfig.playerHealthBarBorderSize;
+				const Color4 borderColor = experimentConfig.playerHealthBarBorderColor;
+				const Color4 color = experimentConfig.playerHealthBarColors[1] * (1.0f - health) + experimentConfig.playerHealthBarColors[0] * health;
 
-			Draw::rect2D(Rect2D::xywh(location - border, size + border + border), rd, borderColor);
-			Draw::rect2D(Rect2D::xywh(location, size*Point2(health, 1.0f)), rd, color);
+				Draw::rect2D(Rect2D::xywh(location - border, size + border + border), rd, borderColor);
+				Draw::rect2D(Rect2D::xywh(location, size*Point2(health, 1.0f)), rd, color);
+			}
+			// Draw the ammo indicator
+			if (experimentConfig.showAmmo) {
+				Point2 lowerRight = Point2(m_framebuffer->width(), m_framebuffer->height());
+				hudFont->draw2D(rd,
+					format("%d/%d", ex->remainingAmmo(), experimentConfig.weapon.maxAmmo),
+					lowerRight - Point2((int)(m_framebuffer->width() * latencyRect.x), 0) - experimentConfig.ammoPosition,
+					experimentConfig.ammoSize,
+					experimentConfig.ammoColor,
+					experimentConfig.ammoOutlineColor,
+					GFont::XALIGN_RIGHT,
+					GFont::YALIGN_BOTTOM
+				);
+			}
 		}
 
 	} rd->pop2D();

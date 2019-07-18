@@ -653,18 +653,22 @@ public:
 	float readyDuration = 0.5f;						///< Time in ready state in seconds
 	float taskDuration = 100000.0f;					///< Maximum time spent in any one task
 	float feedbackDuration = 1.0f;					///< Time in feedback state in seconds
-	float fieldOfView = 103.0f;						///< Field of view (horizontal) for the user
 	
-	bool showHUD = false;							///< Master control for all HUD elements
-	bool showBanner = false;						///< Show the banner display
-	String hudFont = "dominant.fnt";				///< Font to use for Heads Up Display
-
+	// View parameters
+	float fieldOfView = 103.0f;						///< Field of view (horizontal) for the user
 	float moveRate = 0.0f;							///< Player move rate (defaults to no motion)
 	bool walkMode = false;							///< Whether the player "walks" (true) or "flies" (false)
 	float playerHeight = 0.6f;						///< Height for the player view (in walk mode)
 	float crouchHeight = 0.3f;						///< Height for the player view (during crouch in walk mode)
 	float jumpVelocity = 40.0f;						///< Jump velocity for the player
-	Vector3 playerGravity = Vector3(0.0f,-5.0f, 0.0f);	///< Gravity vector
+	Vector3 playerGravity = Vector3(0.0f, -5.0f, 0.0f);	///< Gravity vector
+
+	// HUD parameters
+	bool showHUD = false;							///< Master control for all HUD elements
+	bool showBanner = false;						///< Show the banner display
+	float bannerLargeFontSize = 30.0f;				///< Banner percent complete font size
+	float bannerSmallFontSize = 14.0f;				///< Banner detail font size
+	String hudFont = "dominant.fnt";				///< Font to use for Heads Up Display
 
 	WeaponConfig weapon;							///< Weapon to be used
 	
@@ -699,6 +703,13 @@ public:
 		Color4(1.0, 0.0, 0.0, 1.0)
 	};
 
+	// Weapon status
+	bool showAmmo = false;													///< Display remaining ammo
+	Point2 ammoPosition = Point2(10.0f, 64.0f);								///< Position of the ammo indicator text
+	float ammoSize = 24.0f;													///< Font size for ammo indicator text
+	Color4 ammoColor = Color4(1.0, 1.0, 1.0, 1.0);							///< Color for ammo indicator text
+	Color4 ammoOutlineColor = Color4(0.0, 0.0, 0.0, 1.0);					///< Outline color for ammo indicator text
+	
 	// Target health bars
 	bool showTargetHealthBars = false;										///< Display a target health bar?
 	Point2 targetHealthBarSize = Point2(100.0f, 10.0f);						///< Health bar size (in pixels)
@@ -763,6 +774,12 @@ public:
 			reader.getIfPresent("playerHealthBarBorderColor", playerHealthBarBorderColor);
 			reader.getIfPresent("playerHealthBarColors", playerHealthBarColors);
 			
+			reader.getIfPresent("showAmmo", showAmmo);
+			reader.getIfPresent("ammoPosition", ammoPosition);
+			reader.getIfPresent("ammoSize", ammoSize);
+			reader.getIfPresent("ammoColor", ammoColor);
+			reader.getIfPresent("ammoOutlineColor", ammoOutlineColor);
+
 			reader.getIfPresent("showTargetHealthBars", showTargetHealthBars);
 			reader.getIfPresent("targetHealthBarSize", targetHealthBarSize);
 			reader.getIfPresent("targetHealthBarOffset", targetHealthBarOffset);

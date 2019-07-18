@@ -378,9 +378,9 @@ void Experiment::onGraphics2D(RenderDevice* rd)
 		}
 		String score_string = format("%d", (int)(10 * m_totalRemainingTime));
 		
-		m_app->hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-		m_app->hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale * 30, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-		m_app->hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale * 20, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		m_app->hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale, scale * m_config.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		m_app->hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale * m_config.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+		m_app->hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale * m_config.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 	}
 
 	if (!m_feedbackMessage.empty()) {
@@ -483,4 +483,8 @@ bool Experiment::responseReady() {
 double Experiment::weaponCooldownPercent() {
 	if (m_config.weapon.firePeriod == 0.0f) return 1.0;
 	return min((System::time() - m_lastFireAt) / m_config.weapon.firePeriod, 1.0);
+}
+
+int Experiment::remainingAmmo() {
+	return m_config.weapon.maxAmmo - m_clickCount;
 }

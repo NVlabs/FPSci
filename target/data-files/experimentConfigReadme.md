@@ -37,16 +37,27 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `clickPhotonSide` controls which side of the display the click-to-photon region is drawn on (can be `right` or `left`)
 * `shader` provides the (relative) path of an (optional) shader to run
 
-#### HUD settings
+### HUD settings
 * `showHUD` is the master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator)
 * `showBanner` controls whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score)
-* `hudFont` sets the font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/data-files/font`)
+* `bannerLargeFontSize` sets the "large" font for the percent complete in the banner
+* `bannerSmallFontSize` sets the "small" font for the time remaining and score
+* `hudFont` sets the font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/data-files/font`). We suggest using a fixed width font (such as `console.fnt`) for HUD elements
+
+#### Player Health Bar
 * `showPlayerHealthBar` determines whether or not a player health bar is drawn to the HUD
 * `playerHealthBarSize` sets the size of the player health bar (in pixels)
 * `playerHealthBarPosition` sets the position of the player health bar (in pixels from the top right of the screen)
 * `playerHealthBarBorderSize` sets the width of the player health bar border
 * `playerHealthBarBorderColor` sets the `Color4` of the player health bar border
 * `playerHealthBarColors` sets the max/min health colors for the player health bar as an array of [`max color`, `min color`] as `Color4`. If you are using low alpha values with this field, make sure you consider the alpha value for `playerHealthBarBorderColor` as well.
+
+#### Ammo Indicator
+* `showAmmo` controls whether the ammo indicator is drawn in the HUD
+* `ammoPostion` controls the position of the ammo indicator as an offset from the bottom right of the display
+* `ammoSize` sets the font size for the ammo indicator
+* `ammoColor` sets the (foreground) color for the ammo indicator as a `Color4`. If applying low alpha values here, consider also applying these to `ammoOutlineColor` to create a true transparency to the text
+* `ammoOutlineColor` sets the outline color for the ammo indicator as a `Color4`
 
 ### Target Rendering
 * `targetHealthColors` sets the max/min health colors for the target as an array of [`max color`, `min color`] as `Color3`s, if you do not want the target to change color as its health drops, set these values both to the same color

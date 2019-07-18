@@ -148,6 +148,8 @@ public:
 	void initTargetAnimation();
 	/** gets the current weapon cooldown as a ratio **/
 	double weaponCooldownPercent();
+	int remainingAmmo();
+
 	/** randomly returns either +1 or -1 **/
 	float randSign();
 	void updatePresentationState();
