@@ -990,7 +990,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		}
 
 		// Draw the player health bar
-		if (experimentConfig.showPlayerHealthBar) {
+		if (experimentConfig.showHUD && experimentConfig.showPlayerHealthBar) {
 			const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
 			const Point2 location = experimentConfig.playerHealthBarPos + Point2((int)(m_framebuffer->width() * latencyRect.x), 0) ;
 			const Point2 size = experimentConfig.playerHealthBarSize;

@@ -38,7 +38,8 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `shader` provides the (relative) path of an (optional) shader to run
 
 #### HUD settings
-* `showHUD` controls whether or not the HUD is displayed (currently w/ time remaining, percent of session complete, and score)
+* `showHUD` is the master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator)
+* `showBanner` controls whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score)
 * `hudFont` sets the font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/data-files/font`)
 * `showPlayerHealthBar` determines whether or not a player health bar is drawn to the HUD
 * `playerHealthBarSize` sets the size of the player health bar (in pixels)

@@ -364,7 +364,7 @@ void Experiment::onGraphics2D(RenderDevice* rd)
 
 	// TODO: Feels like the following variables should be members of Experiment (or should this be moved into the App?)
 	// m_renderHud, m_hudTexture, m_reticleTexture, ...
-	if (m_config.showHUD && !m_app->emergencyTurbo) {
+	if (m_config.showHUD && m_config.showBanner && !m_app->emergencyTurbo) {
 		const Point2 hudCenter(rd->viewport().width() / 2.0f, m_app->hudTexture->height() * scale * 0.48f);
 		Draw::rect2D((m_app->hudTexture->rect2DBounds() * scale - m_app->hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_app->hudTexture);
 		

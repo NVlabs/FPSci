@@ -655,7 +655,8 @@ public:
 	float feedbackDuration = 1.0f;					///< Time in feedback state in seconds
 	float fieldOfView = 103.0f;						///< Field of view (horizontal) for the user
 	
-	bool showHUD = false;							///< Show the Heads Up Display
+	bool showHUD = false;							///< Master control for all HUD elements
+	bool showBanner = false;						///< Show the banner display
 	String hudFont = "dominant.fnt";				///< Font to use for Heads Up Display
 
 	float moveRate = 0.0f;							///< Player move rate (defaults to no motion)
@@ -739,6 +740,7 @@ public:
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("fieldOfView", fieldOfView);
 			reader.getIfPresent("showHUD", showHUD);
+			reader.getIfPresent("showBanner", showBanner);
 			reader.getIfPresent("hudFont", hudFont);
 			reader.getIfPresent("moveRate", moveRate);
 			reader.getIfPresent("walkMode", walkMode);
