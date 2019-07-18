@@ -45,11 +45,9 @@ void App::onInit() {
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
 
 	// Setup the scene
-	if (experimentConfig.walkMode) {
-		m_scene = PhysicsScene::create(m_ambientOcclusion);
-		m_scene->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Create the player
-		setScene(m_scene);
-	}
+	m_scene = PhysicsScene::create(m_ambientOcclusion);
+	setScene(m_scene);
+	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
 	// Setup the GUI

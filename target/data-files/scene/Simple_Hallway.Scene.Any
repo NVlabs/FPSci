@@ -12,11 +12,10 @@
             model = "buildingModel"; 
         }; 
         
-        // Uncomment this for walkMode (PlayerEntity)
-		//player = PlayerEntity {
-        //    model = "playerModel";
-        //    frame = Point3(-13.3, 20, -12.2 ); 
-        //};
+		player = PlayerEntity {
+            model = "playerModel";
+            frame = Point3(-13.3, 20, -12.2 ); 
+        };
 		
 		camera = Camera {
             frame = CFrame::fromXYZYPRDegrees(  -13.3, 1, -11.2, 0, 0, 0 );
