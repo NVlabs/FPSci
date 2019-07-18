@@ -109,7 +109,7 @@ bool Experiment::initPsychHelper()
 		psychParam.mStimLevels.push_back(m_config.taskDuration);						// Shorter task is more difficult. However, we are currently doing unlimited time.
 		psychParam.mMaxTrialCounts.push_back((int)targets[0].val["trialCount"]);		// Get the trial count from the parameters
 		for (int i = 0; i < targets.size(); i++) {										// Add the session to each target
-			const char* sess = m_app->getDropDownSessId().c_str();
+			const char* sess = m_session->id.c_str();
 			targets[i].add("name", format("%s_%d", sess, i).c_str());
 			targets[i].add("session", sess);
 		}
@@ -182,6 +182,7 @@ void Experiment::initTargetAnimation() {
 					{ target.val["minGravity"], target.val["maxGravity"] },
 					initialSpawnPos,
 					m_targetDistance,
+					String(target.str["id"]),
 					String(target.str["name"])
 				);
 			}
@@ -193,6 +194,7 @@ void Experiment::initTargetAnimation() {
 					{ target.val["minSpeed"], target.val["maxSpeed"] },
 					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
 					initialSpawnPos,
+					String(target.str["id"]),
 					String(target.str["name"])
 				);
 			}
@@ -206,7 +208,8 @@ void Experiment::initTargetAnimation() {
 			m_config.dummyTargetColor.pow(2.0f),
 			{ 0.0f, 0.0f },
 			{ 1000.0f, 1000.f },
-			initialSpawnPos
+			initialSpawnPos,
+			"dummy"
 		);
 	}
 

@@ -131,7 +131,9 @@ protected:
 	GuiLabel*						m_cm360Label;						///< Label for cm/360 field
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
-	Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models
+	//Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models
+	Table<String, Array<shared_ptr<ArticulatedModel>>> m_targetModels;
+	const int m_modelScaleCount = 20;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
 	Queue<float>                    m_frameDurationQueue;				///< Queue for history of frrame times
@@ -225,7 +227,7 @@ public:
 	void spawnRandomTarget();
 
 	/** Creates a spinning target */
-	shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red());
+	shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red(), String modelName= "model/target/target.obj");
 
 	/** Creates a flying target */
 	shared_ptr<FlyingEntity> spawnFlyingTarget(
@@ -235,6 +237,7 @@ public:
 		const Vector2& speedRange,
 		const Vector2& motionChangePeriodRange,
 		Point3 orbitCenter,
+		String modelName,
 		String name = ""
 	);
 
@@ -251,6 +254,7 @@ public:
 		const Vector2& gravityRange,
 		Point3 orbitCenter,
 		float targetDistance,
+		String modelName,
 		String name = ""
 	);
 

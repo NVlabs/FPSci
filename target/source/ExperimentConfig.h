@@ -528,6 +528,21 @@ public:
 	Array<float> jumpPeriod = { 2.0f, 2.0f };				///< Range of time period between jumps in seconds
 	Array<float> jumpSpeed = { 2.0f, 5.5f };				///< Range of jump speeds in meters/s
 	Array<float> accelGravity = { 9.8f, 9.8f };				///< Range of acceleration due to gravity in meters/s^2
+
+	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
+		filename = "model/target/target.obj";
+		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
+					allowVertexMerging = true;
+					forceComputeNormals = false;
+					forceComputeTangents = false;
+					forceVertexMerging = true;
+					maxEdgeLength = inf;
+					maxNormalWeldAngleDegrees = 0;
+					maxSmoothAngleDegrees = 0;
+		};
+		scale = 0.25;
+	});
+
 	//Array<Vector3> path;		// Unused, to dictate a motion path...
 	//String explosionSound;	// TODO: Add target explosion sound string here and use it for m_explosionSound
 
@@ -553,6 +568,7 @@ public:
 			reader.getIfPresent("jumpSpeed", jumpSpeed);
 			reader.getIfPresent("jumpPeriod", jumpPeriod);
 			reader.getIfPresent("accelGravity", accelGravity);
+			reader.getIfPresent("modelSpec", modelSpec);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
@@ -779,7 +795,9 @@ public:
 	// Get a pointer to a target config by ID
 	shared_ptr<TargetConfig> getTargetConfigById(String id) {
 		for (int i = 0; i < targets.size(); i++) {
-			if (!targets[i].id.compare(id)) return std::make_shared<TargetConfig>(targets[i]);
+			if (!targets[i].id.compare(id)) {
+				return std::make_shared<TargetConfig>(targets[i]);
+			}
 		}
 		return nullptr;
 	}
@@ -820,6 +838,7 @@ public:
 				p.add("minGravity", getTargetConfigById(id)->accelGravity[0]);
 				p.add("maxGravity", getTargetConfigById(id)->accelGravity[1]);
 				p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
+				p.add("id", id.c_str());
 				if (getTargetConfigById(id)->jumpEnabled) {
 					p.add("jumpEnabled", "true");
 				}

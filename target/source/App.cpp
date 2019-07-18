@@ -220,10 +220,10 @@ void App::spawnRandomTarget() {
 }
 
 /** Spawn a flying entity target */
-shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color) {
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
+shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color, String modelName) {
+	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
 
-	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModelArray[scaleIndex], CFrame());
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModels[modelName][scaleIndex], CFrame());
 
 	UniversalMaterial::Specification materialSpecification;
 	materialSpecification.setLambertian(Texture::Specification(color));
@@ -255,14 +255,15 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	const Vector2& speedRange,
 	const Vector2& motionChangePeriodRange,
 	Point3 orbitCenter,
+	String id,
 	String name)
 {
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
+	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
 	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(
 		nameStr,
 		scene().get(),
-		m_targetModelArray[scaleIndex],
+		m_targetModels[id][scaleIndex],
 		CFrame(),
 		speedRange,
 		motionChangePeriodRange,
@@ -298,14 +299,15 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	const Vector2& gravityRange,
 	Point3 orbitCenter,
 	float targetDistance,
+	String id,
 	String name)
 {
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_targetModelArray.length() - 1);
+	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
 	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const shared_ptr<JumpingEntity>& target = JumpingEntity::create(
 		nameStr,
 		scene().get(),
-		m_targetModelArray[scaleIndex],
+		m_targetModels[id][scaleIndex],
 		CFrame(),
 		speedRange,
 		motionChangePeriodRange,
@@ -380,21 +382,36 @@ void App::loadModels() {
 
 	m_explosionModel = ArticulatedModel::create(explosionSpec, "explosionModel");
 
-	for (int i = 0; i <= 20; ++i) {
-		const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
-		m_targetModelArray.push(ArticulatedModel::create(Any::parse(format(STR(ArticulatedModel::Specification{
-			filename = "model/target/target.obj";
-			cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings {
-				allowVertexMerging = true;
-				forceComputeNormals = false;
-				forceComputeTangents = false;
-				forceVertexMerging = true;
-				maxEdgeLength = inf;
-				maxNormalWeldAngleDegrees = 0;
-				maxSmoothAngleDegrees = 0;
-			};
-			scale = %f;
-			};), scale))));
+	// Add all the unqiue targets to this list
+	Table<String, Any> toBuild;
+	for (TargetConfig target : experimentConfig.targets) {
+		toBuild.set(target.id, target.modelSpec);
+	}
+	// Append the basic model automatically (used for dummy targets for now)
+	toBuild.set("dummy", PARSE_ANY(ArticulatedModel::Specification{
+		filename = "model/target/target.obj";
+		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
+					allowVertexMerging = true;
+					forceComputeNormals = false;
+					forceComputeTangents = false;
+					forceVertexMerging = true;
+					maxEdgeLength = inf;
+					maxNormalWeldAngleDegrees = 0;
+					maxSmoothAngleDegrees = 0;
+		};
+		scale = 0.25;
+	}));
+
+	// Scale the models into the m_targetModel table
+	for (String id : toBuild.getKeys()) {
+		Array<shared_ptr<ArticulatedModel>> models;
+		for (int i = 0; i <= m_modelScaleCount; ++i) {
+			const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
+			Any spec = toBuild.get(id);
+			spec.set("scale", scale);
+			models.push(ArticulatedModel::create(spec));
+		}
+		m_targetModels.set(id, models);
 	}
 }
 
