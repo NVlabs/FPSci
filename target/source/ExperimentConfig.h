@@ -878,6 +878,7 @@ public:
 				p.add("maxJumpSpeed", target->jumpSpeed[1]);
 				p.add("minGravity", target->accelGravity[0]);
 				p.add("maxGravity", target->accelGravity[1]);
+				p.add("trial_idx", (float)j);
 				p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
 				p.add("id", id.c_str());
 				String modelName = target->modelSpec["filename"];

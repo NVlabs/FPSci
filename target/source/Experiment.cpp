@@ -110,7 +110,7 @@ bool Experiment::initPsychHelper()
 		psychParam.mMaxTrialCounts.push_back((int)targets[0].val["trialCount"]);		// Get the trial count from the parameters
 		for (int i = 0; i < targets.size(); i++) {										// Add the session to each target
 			const char* sess = m_session->id.c_str();
-			targets[i].add("name", format("%s_%d", sess, i).c_str());
+			targets[i].add("name", format("%s_%d_%s_%d", sess, (int)targets[i].val["trial_idx"], targets[i].str["id"], i).c_str());
 			targets[i].add("session", sess);
 		}
 		m_psych.addCondition(targets, psychParam);
