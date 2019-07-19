@@ -222,11 +222,13 @@ void Experiment::initTargetAnimation() {
 void Experiment::processResponse()
 {
 	m_taskExecutionTime = m_timer.getTime();
-	m_response = m_app->destroyedTargets; // Number of destroyed targets
+	int totalTargets = m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters.size();
+	m_response = totalTargets - m_app->destroyedTargets; // Number of targets remaining
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 	m_psych.processResponse(m_response); // process response.
 	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters[0].str["session"]);
-	if (m_response == m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters.size()) {
+	// Check for whether all targets have been destroyed
+	if (m_response == 0) {
 		m_totalRemainingTime += (double(m_config.taskDuration) - m_taskExecutionTime);
 		if (m_config.getSessionConfigById(sess)->expMode == "training") {
 			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
