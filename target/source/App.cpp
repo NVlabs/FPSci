@@ -700,7 +700,7 @@ bool App::pythonMergeLogs(String basename) {
 	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
 
-	String cmd = "pythonw.exe ../scripts/\"event logger\"/software/event_log_insert.py " + eventFile + " " + dbFile;	
+	String cmd = "python ../scripts/\"event logger\"/software/event_log_insert.py " + eventFile + " " + dbFile;	
 	LPSTR command = LPSTR(cmd.c_str());
 	if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
 		logPrintf("Failed to merge results: %s\n", GetLastErrorString());
