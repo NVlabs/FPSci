@@ -68,7 +68,8 @@ There are a number of inputs to experiment config. The following is a descriptio
 
 ### Target Rendering
 * `targetHealthColors` sets the max/min health colors for the target as an array of [`max color`, `min color`] as `Color3`s, if you do not want the target to change color as its health drops, set these values both to the same color
-* `dummyTargetColor` sets the color of the "dummy" targets spawned between trial
+* `dummyTargetColor` sets the color of the "dummy" targets spawned between trials
+* `dummyTargetSize` set the size of the "dummy" targets spawned between trials
 
 #### Health Bars
 * `showTargetHealthBars` determines whether or not target health bars are drawn for each target

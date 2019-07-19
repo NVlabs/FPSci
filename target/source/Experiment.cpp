@@ -153,8 +153,6 @@ float Experiment::randSign() {
 void Experiment::initTargetAnimation() {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
-	float visualSize = G3D::Random().common().uniform(m_psych.getParams()[0].val["minVisualSize"], m_psych.getParams()[0].val["maxVisualSize"]);
-
 	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
 	CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
 	f.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
@@ -204,8 +202,8 @@ void Experiment::initTargetAnimation() {
 		// Make sure we reset the target color here (avoid color bugs)
 		m_app->spawnFlyingTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
-			visualSize,
-			m_config.dummyTargetColor.pow(2.0f),
+			m_config.dummyTargetSize,
+			m_config.dummyTargetColor,
 			{ 0.0f, 0.0f },
 			{ 1000.0f, 1000.f },
 			initialSpawnPos,

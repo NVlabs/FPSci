@@ -689,8 +689,11 @@ public:
 
 	String shader = "";								///< Option for a custom shader name
 
-	// Target health bars
+	// Dummy target
+	float dummyTargetSize = 0.01f;					///< Size of the dummy target
 	Color3 dummyTargetColor = Color3(1.0, 0.0, 0.0);///< Default "dummy" target color
+	
+	// Target health bars
 	Array<Color3> targetHealthColors = {			///< Target start/end color (based on target health)
 		Color3(0.0, 1.0, 0.0), 
 		Color3(1.0, 0.0, 0.0)
@@ -803,8 +806,10 @@ public:
 			reader.getIfPresent("targetHealthBarBorderSize", targetHealthBarBorderSize);
 			reader.getIfPresent("targetHealthBarBorderColor", targetHealthBarBorderColor);
 			reader.getIfPresent("targetHealthColors", targetHealthColors);
-			reader.getIfPresent("dummyTargetColor", dummyTargetColor);
 			reader.getIfPresent("targetHealthBarColors", targetHealthBarColors);
+			
+			reader.getIfPresent("dummyTargetSize", dummyTargetSize);
+			reader.getIfPresent("dummyTargetColor", dummyTargetColor);
 			
 			reader.getIfPresent("showFloatingCombatText", showCombatText);
 			reader.getIfPresent("floatingCombatTextSize", combatTextSize);
