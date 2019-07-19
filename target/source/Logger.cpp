@@ -69,6 +69,7 @@ void Logger::createResultsFile(String filename, String subjectID)
 			{ "min_motion_change_period", "real" },
 			{ "max_motion_change_period", "real" },
 			{ "jump_enabled", "text" },
+			{ "model", "text" }
 	};
 	createTableInDB(m_db, "Targets", targetColumns); // Primary Key needed for this table.
 
@@ -142,6 +143,7 @@ void Logger::addTargets(Array<SingleThresholdMeasurement> measurements) {
 				String(std::to_string(tparam.val["minMotionChangePeriod"])),
 				String(std::to_string(tparam.val["maxMotionChangePeriod"])),
 				"'" + String(tparam.str["jumpEnabled"]) + "'",
+				"'" + String(tparam.str["model"] + "'")
 			};
 			insertRowIntoDB(m_db, "Targets", targetValues);
 		}

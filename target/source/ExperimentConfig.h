@@ -857,29 +857,32 @@ public:
 			for (String id : sessions[sessionIndex].trials[j].ids) {
 				// Append training target
 				Param p;
-				p.add("minEccH", getTargetConfigById(id)->eccH[0]);
-				p.add("minEccV", getTargetConfigById(id)->eccV[0]);
-				p.add("maxEccH", getTargetConfigById(id)->eccH[1]);
-				p.add("maxEccV", getTargetConfigById(id)->eccV[1]);
+				shared_ptr<TargetConfig> target = getTargetConfigById(id);
+				p.add("minEccH", target->eccH[0]);
+				p.add("minEccV", target->eccV[0]);
+				p.add("maxEccH", target->eccH[1]);
+				p.add("maxEccV", target->eccV[1]);
 				p.add("targetFrameRate", sessions[sessionIndex].frameRate);
 				p.add("targetFrameLag", (float)sessions[sessionIndex].frameDelay);
-				p.add("minVisualSize", getTargetConfigById(id)->visualSize[0]);
-				p.add("maxVisualSize", getTargetConfigById(id)->visualSize[0]);
-				p.add("minMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[0]);
-				p.add("maxMotionChangePeriod", getTargetConfigById(id)->motionChangePeriod[1]);
-				p.add("minSpeed", getTargetConfigById(id)->speed[0]);
-				p.add("maxSpeed", getTargetConfigById(id)->speed[1]);
-				p.add("minDistance", getTargetConfigById(id)->distance[0]);
-				p.add("maxDistance", getTargetConfigById(id)->distance[1]);
-				p.add("minJumpPeriod", getTargetConfigById(id)->jumpPeriod[0]);
-				p.add("maxJumpPeriod", getTargetConfigById(id)->jumpPeriod[1]);
-				p.add("minJumpSpeed", getTargetConfigById(id)->jumpSpeed[0]);
-				p.add("maxJumpSpeed", getTargetConfigById(id)->jumpSpeed[1]);
-				p.add("minGravity", getTargetConfigById(id)->accelGravity[0]);
-				p.add("maxGravity", getTargetConfigById(id)->accelGravity[1]);
+				p.add("minVisualSize", target->visualSize[0]);
+				p.add("maxVisualSize", target->visualSize[0]);
+				p.add("minMotionChangePeriod", target->motionChangePeriod[0]);
+				p.add("maxMotionChangePeriod", target->motionChangePeriod[1]);
+				p.add("minSpeed", target->speed[0]);
+				p.add("maxSpeed", target->speed[1]);
+				p.add("minDistance", target->distance[0]);
+				p.add("maxDistance", target->distance[1]);
+				p.add("minJumpPeriod", target->jumpPeriod[0]);
+				p.add("maxJumpPeriod", target->jumpPeriod[1]);
+				p.add("minJumpSpeed", target->jumpSpeed[0]);
+				p.add("maxJumpSpeed", target->jumpSpeed[1]);
+				p.add("minGravity", target->accelGravity[0]);
+				p.add("maxGravity", target->accelGravity[1]);
 				p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
 				p.add("id", id.c_str());
-				if (getTargetConfigById(id)->jumpEnabled) {
+				String modelName = target->modelSpec["filename"];
+				p.add("model", modelName.c_str());
+				if (target->jumpEnabled) {
 					p.add("jumpEnabled", "true");
 				}
 				else {
