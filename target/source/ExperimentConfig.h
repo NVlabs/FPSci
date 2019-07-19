@@ -704,7 +704,7 @@ public:
 	// Player health bar
 	bool showPlayerHealthBar = false;										///< Display a player health bar?
 	Point2 playerHealthBarSize = Point2(200.0f, 20.0f);						///< Player health bar size (in pixels)
-	Point2 playerHealthBarPos = Point2(10.0f, 74.0f);						///< Player health bar position (in pixels)
+	Point2 playerHealthBarPos = Point2(74.0f, 74.0f);						///< Player health bar position (in pixels)
 	Point2 playerHealthBarBorderSize = Point2(2.0f, 2.0f);					///< Player health bar border size
 	Color4 playerHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Player health bar border color
 	Array<Color4> playerHealthBarColors = {									///< Player health bar start/end colors
@@ -714,7 +714,7 @@ public:
 
 	// Weapon status
 	bool showAmmo = false;													///< Display remaining ammo
-	Point2 ammoPosition = Point2(10.0f, 64.0f);								///< Position of the ammo indicator text
+	Point2 ammoPosition = Point2(64.0f, 64.0f);								///< Position of the ammo indicator text
 	float ammoSize = 24.0f;													///< Font size for ammo indicator text
 	Color4 ammoColor = Color4(1.0, 1.0, 1.0, 1.0);							///< Color for ammo indicator text
 	Color4 ammoOutlineColor = Color4(0.0, 0.0, 0.0, 1.0);					///< Outline color for ammo indicator text
