@@ -719,7 +719,7 @@ void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	else {
 		setActiveCamera(m_debugCamera);
 	}
-	activeCamera()->setFieldOfView(experimentConfig.fieldOfView * units::degrees(), FOVDirection::HORIZONTAL);
+	activeCamera()->setFieldOfView(experimentConfig.hFoV * units::degrees(), FOVDirection::HORIZONTAL);
 }
 
 

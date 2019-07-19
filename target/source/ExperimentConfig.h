@@ -655,7 +655,7 @@ public:
 	float feedbackDuration = 1.0f;					///< Time in feedback state in seconds
 	
 	// View parameters
-	float fieldOfView = 103.0f;						///< Field of view (horizontal) for the user
+	float hFoV = 103.0f;							///< Field of view (horizontal) for the user
 	float moveRate = 0.0f;							///< Player move rate (defaults to no motion)
 	bool walkMode = false;							///< Whether the player "walks" (true) or "flies" (false)
 	float playerHeight = 0.6f;						///< Height for the player view (in walk mode)
@@ -749,7 +749,7 @@ public:
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
-			reader.getIfPresent("fieldOfView", fieldOfView);
+			reader.getIfPresent("horizontalFieldOfView", hFoV);
 			reader.getIfPresent("showHUD", showHUD);
 			reader.getIfPresent("showBanner", showBanner);
 			reader.getIfPresent("hudFont", hudFont);

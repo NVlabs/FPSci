@@ -26,7 +26,7 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `taskDuration` sets the maximum time over which the task can occur
 
 ### Camera/View Settings
-* `fieldOfView` sets the (horizontal) field of view for the user's display
+* `horizontalFieldOfView` sets the (horizontal) field of view for the user's display (in degrees), to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)
 * `moveRate` sets the rate of player motion in m/s, set this parameter to `0` to display player motion
 * `walkMode` sets whether or not we are in "walking" mode that includes graivty and jump vs flying camera mode
 * `playerHeight` sets the height of the player above the ground (for `walkMode=True` only for now)
