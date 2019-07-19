@@ -994,7 +994,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			// Draw the player health bar
 			if (experimentConfig.showPlayerHealthBar) {
 				const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
-				const Point2 location = experimentConfig.playerHealthBarPos + Point2((int)(m_framebuffer->width() * latencyRect.x), 0);
+				const Point2 location = experimentConfig.playerHealthBarPos;
 				const Point2 size = experimentConfig.playerHealthBarSize;
 				const Point2 border = experimentConfig.playerHealthBarBorderSize;
 				const Color4 borderColor = experimentConfig.playerHealthBarBorderColor;
@@ -1008,7 +1008,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 				Point2 lowerRight = Point2(m_framebuffer->width(), m_framebuffer->height());
 				hudFont->draw2D(rd,
 					format("%d/%d", ex->remainingAmmo(), experimentConfig.weapon.maxAmmo),
-					lowerRight - Point2((int)(m_framebuffer->width() * latencyRect.x), 0) - experimentConfig.ammoPosition,
+					lowerRight - experimentConfig.ammoPosition,
 					experimentConfig.ammoSize,
 					experimentConfig.ammoColor,
 					experimentConfig.ammoOutlineColor,
