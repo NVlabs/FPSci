@@ -680,7 +680,13 @@ public:
     
 	bool renderClickPhoton = true;                  ///< Render click to photon box
     String clickPhotonSide = "right";               ///< "right" for right side, otherwise left
-	
+	Point2 clickPhotonSize = Point2(0.05f, 0.035f);	///< Size of the click-to-photon area (ratio of screen space)
+	float clickPhotonVertPos = 0.5f;				///< Percentage of the screen down to locate the box
+	Array<Color3> clickPhotonColors = {				///< Colors to apply to click to photon box
+		Color3::white() * 0.2f,
+		Color3::white() * 0.8f
+	};
+
 	String shader = "";								///< Option for a custom shader name
 
 	// Target health bars
@@ -744,28 +750,37 @@ public:
 		case 1:
 			reader.getIfPresent("appendingDescription", appendingDescription);
 			reader.getIfPresent("sceneName", sceneName);
+			
 			reader.get("sessions", sessions);
 			reader.get("targets", targets);
+			
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
+			
 			reader.getIfPresent("horizontalFieldOfView", hFoV);
-			reader.getIfPresent("showHUD", showHUD);
-			reader.getIfPresent("showBanner", showBanner);
-			reader.getIfPresent("hudFont", hudFont);
 			reader.getIfPresent("moveRate", moveRate);
 			reader.getIfPresent("walkMode", walkMode);
 			reader.getIfPresent("playerHeight", playerHeight);
 			reader.getIfPresent("crouchHeight", crouchHeight);
 			reader.getIfPresent("jumpVelocity", jumpVelocity);
 			reader.getIfPresent("playerGravity", playerGravity);
+			
 			reader.getIfPresent("weapon", weapon);
             reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
             reader.getIfPresent("weaponStatusSide", weaponStatusSide);
-            reader.getIfPresent("renderClickPhoton", renderClickPhoton);
+            
+			reader.getIfPresent("renderClickPhoton", renderClickPhoton);
             reader.getIfPresent("clickPhotonSide", clickPhotonSide);
+			reader.getIfPresent("clickPhotonSize", clickPhotonSize);
+			reader.getIfPresent("clickPhotonVertPos", clickPhotonVertPos);
+			reader.getIfPresent("clickPhotonColors", clickPhotonColors);
+
 			reader.getIfPresent("shader", shader);
-			reader.getIfPresent("explosionSound", explosionSound);
+
+			reader.getIfPresent("showHUD", showHUD);
+			reader.getIfPresent("showBanner", showBanner);
+			reader.getIfPresent("hudFont", hudFont);
 
 			reader.getIfPresent("showPlayerHealthBar", showPlayerHealthBar);
 			reader.getIfPresent("playerHealthBarSize", playerHealthBarSize);
@@ -779,6 +794,8 @@ public:
 			reader.getIfPresent("ammoSize", ammoSize);
 			reader.getIfPresent("ammoColor", ammoColor);
 			reader.getIfPresent("ammoOutlineColor", ammoOutlineColor);
+
+			reader.getIfPresent("explosionSound", explosionSound);
 
 			reader.getIfPresent("showTargetHealthBars", showTargetHealthBars);
 			reader.getIfPresent("targetHealthBarSize", targetHealthBarSize);

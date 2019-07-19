@@ -59,6 +59,13 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `ammoColor` sets the (foreground) color for the ammo indicator as a `Color4`. If applying low alpha values here, consider also applying these to `ammoOutlineColor` to create a true transparency to the text
 * `ammoOutlineColor` sets the outline color for the ammo indicator as a `Color4`
 
+#### Click to Photon Monitoring
+* `renderClickPhoton` controls whether or not the click-to-photon indicator box is drawn to the screen
+* `clickPhotonSide` controls which side of the display (`left` vs `right`) the click-to-photon indicator box is drawn on
+* `clickPhotonVertPos` controls the vertical position of the click-to-photon output box on the `clickPhotonSide` of the display
+* `clickPhotonSize` controls the size of the click-to-photon box as a ratio of total screen size
+* `clickPhotonColors` provides the mouse up/down colors for the click-to-photon indicator box as an array of `Color3`. The order is [mouse down color, mouse up color]
+
 ### Target Rendering
 * `targetHealthColors` sets the max/min health colors for the target as an array of [`max color`, `min color`] as `Color3`s, if you do not want the target to change color as its health drops, set these values both to the same color
 * `dummyTargetColor` sets the color of the "dummy" targets spawned between trial
@@ -109,6 +116,7 @@ There are a number of inputs to experiment config. The following is a descriptio
     * `jumpSpeed` is a vector indicating the minimum ([0]) and maximum([1]) angular speed with which to jump (in deg/s)
     * `accelGravity` is the min ([0])/max ([1]) acceleration due to gravity during the jump (in m/s^2)
     * `modelSpec` is an `Any` that constructs an `ArticulatedModel` similar to that used in the [the weapon config readme](./weapon/weaponConfigReadme.md). For now this spec needs to point to an `obj` file with a model named `core/icosahedron_default`.
+
 ## Frame Rate Modes
 The `frameRate` parameter in any given session config can be used in 3 different modes:
 * If the `frameRate` parameter is set to a value >> refresh rate of the display (we suggest `8192fps`), then the program runs in "unlocked" mode wherein as many frames as can be drawn are rendered per displayed frame. This is the common mode of operation in many modern games.

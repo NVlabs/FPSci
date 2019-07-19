@@ -933,24 +933,23 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		}
 
 		// Paint both sides by the width of latency measuring box.
-		Color3 blackColor = Color3::black();
-		Point2 latencyRect = Point2(0.09f, 0.1f);
-		Draw::rect2D(
-			Rect2D::xywh(
-				(float)m_framebuffer->width() * 0.0f,
-				(float)m_framebuffer->height() * 0.0f,
-				(float)m_framebuffer->width() * latencyRect.x,
-				(float)m_framebuffer->height()
-			), rd, blackColor
-		);
-		Draw::rect2D(
-			Rect2D::xywh(
-				(float)m_framebuffer->width() * (1.0f - latencyRect.x),
-				(float)m_framebuffer->height() * 0.0f,
-				(float)m_framebuffer->width() * latencyRect.x,
-				(float)m_framebuffer->height()
-			), rd, blackColor
-		);
+		Point2 latencyRect = experimentConfig.clickPhotonSize;
+		//Draw::rect2D(
+		//	Rect2D::xywh(
+		//		(float)m_framebuffer->width() * 0.0f,
+		//		(float)m_framebuffer->height() * 0.0f,
+		//		(float)m_framebuffer->width() * latencyRect.x,
+		//		(float)m_framebuffer->height()
+		//	), rd, Color3::black()
+		//);
+		//Draw::rect2D(
+		//	Rect2D::xywh(
+		//		(float)m_framebuffer->width() * (1.0f - latencyRect.x),
+		//		(float)m_framebuffer->height() * 0.0f,
+		//		(float)m_framebuffer->width() * latencyRect.x,
+		//		(float)m_framebuffer->height()
+		//	), rd, Color3::black()
+		//);
 
         // weapon ready status
         if (experimentConfig.renderWeaponStatus) {
@@ -959,10 +958,12 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
                 // swap side
                 boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
             }
+
+			// Draw the "active" cooldown box
             Draw::rect2D(
                 Rect2D::xywh(
                 boxLeft,
-                    (float)m_framebuffer->height() * (float)(ex->weaponCooldownPercent()),
+                 (float)m_framebuffer->height() * (float)(ex->weaponCooldownPercent()),
                     (float)m_framebuffer->width() * latencyRect.x,
                     (float)m_framebuffer->height() * (float)(1.0 - ex->weaponCooldownPercent())
                 ), rd, Color3::white() * 0.8f
@@ -971,18 +972,17 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 		// Click to photon latency measuring corner box
 		if (experimentConfig.renderClickPhoton) {
-            float boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
-            if (experimentConfig.clickPhotonSide != "right") {
+			float boxLeft = 0.0f;
+            if (experimentConfig.clickPhotonSide == "right") {
                 // swap side
-                boxLeft = (float)m_framebuffer->width() * 0.0f;
+				boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
             }
-			Color3 cornerColor = (m_buttonUp) ? Color3::white() * 0.2f : Color3::white() * 0.8f;
-			//Draw::rect2D(rd->viewport().wh() / 10.0f, rd, cornerColor);
-			//Draw::rect2D(Rect2D::xywh((float)window()->width() * 0.925f, (float)window()->height() * 0.0f, (float)window()->width() * 0.075f, (float)window()->height() * 0.15f), rd, cornerColor);
+			// Draw the "active" box
+			Color3 cornerColor = (m_buttonUp) ? experimentConfig.clickPhotonColors[0] : experimentConfig.clickPhotonColors[1];
 			Draw::rect2D(
 				Rect2D::xywh(
 					boxLeft,
-					(float)m_framebuffer->height() * (0.5f - latencyRect.y / 2),
+					(float)m_framebuffer->height() * (experimentConfig.clickPhotonVertPos - latencyRect.y / 2),
 					(float)m_framebuffer->width() * latencyRect.x,
 					(float)m_framebuffer->height() * latencyRect.y
 				), rd, cornerColor
