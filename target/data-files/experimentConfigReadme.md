@@ -63,7 +63,7 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `renderClickPhoton` controls whether or not the click-to-photon indicator box is drawn to the screen
 * `clickPhotonSide` controls which side of the display (`left` vs `right`) the click-to-photon indicator box is drawn on
 * `clickPhotonVertPos` controls the vertical position of the click-to-photon output box on the `clickPhotonSide` of the display
-* `clickPhotonSizeX` and `clickPhotonSizeY` controls the size of the click-to-photon box as a ratio of total screen size
+* `clickPhotonSize` controls the size of the click-to-photon box as a ratio of total screen size
 * `clickPhotonColors` provides the mouse up/down colors for the click-to-photon indicator box as an array of `Color3`. The order is [mouse down color, mouse up color]
 
 ### Target Rendering
