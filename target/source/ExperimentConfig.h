@@ -775,8 +775,7 @@ public:
             
 			reader.getIfPresent("renderClickPhoton", renderClickPhoton);
             reader.getIfPresent("clickPhotonSide", clickPhotonSide);
-			reader.getIfPresent("clickPhotonSizeX", clickPhotonSize[0]);
-			reader.getIfPresent("clickPhotonSizeY", clickPhotonSize[1]);
+			reader.getIfPresent("clickPhotonSize", clickPhotonSize);
 			reader.getIfPresent("clickPhotonVertPos", clickPhotonVertPos);
 			reader.getIfPresent("clickPhotonColors", clickPhotonColors);
 

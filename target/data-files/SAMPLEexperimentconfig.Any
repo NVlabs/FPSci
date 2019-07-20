@@ -11,6 +11,7 @@
   "readyDuration": 0.25, // Time allocated for preparing for trial
   "taskDuration": 6.0, // Maximum duration allowed for completion of the task
   "horizontalFieldOfView": 103.0, // Field of view (horizontal) for the user
+  "clickPhotonSize":  Point2(0.1, 0.1),
   
   // Basic weapon configuration
   "weapon": {
