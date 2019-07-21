@@ -1217,18 +1217,14 @@ void App::onUserInput(UserInput* ui) {
 			const float pixelsPerRevolution = 30;
 			const float   turnRatePerPixel = -pixelsPerRevolution * units::degrees() / (units::seconds());
 			const float   tiltRatePerPixel = -0.2f * units::degrees() / (units::seconds());
-
-			const Vector3& forward = -Vector3::unitZ();
-			const Vector3& right = Vector3::unitX();
-
-			Vector3 linear = Vector3::zero();
-			linear += forward * ui->getY() * walkSpeed;
-			linear += right * ui->getX() * walkSpeed;
-
-			float yaw = ui->mouseDX() * turnRatePerPixel;
-			float pitch = ui->mouseDY() * tiltRatePerPixel;
-
 			static const Vector3 jumpVelocity(0, experimentConfig.jumpVelocity * units::meters() / units::seconds(), 0);
+
+			// Get walking speed here (and normalize if necessary)
+			Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
+			if (linear.magnitude() > 0) {
+				linear = linear.direction() * walkSpeed;
+			}
+			// Add jump here (if needed)
 			if (ui->keyPressed(GKey::SPACE)) {
 				linear += jumpVelocity;
 			}
@@ -1236,7 +1232,11 @@ void App::onUserInput(UserInput* ui) {
 				linear += Vector3(0, player->desiredOSVelocity().y, 0);
 			}
 
-			// Set the player position
+			// Get the mouse rotation here
+			float yaw = ui->mouseDX() * turnRatePerPixel;
+			float pitch = ui->mouseDY() * tiltRatePerPixel;
+
+			// Set the player translation/view velocities
 			player->setDesiredOSVelocity(linear);
 			player->setDesiredAngularVelocity(yaw, pitch);
 		}
