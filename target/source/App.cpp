@@ -953,21 +953,42 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
         // weapon ready status
         if (experimentConfig.renderWeaponStatus) {
-            float boxLeft = (float)m_framebuffer->width() * 0.0f;
-            if (experimentConfig.weaponStatusSide == "right") {
-                // swap side
-                boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
-            }
-
 			// Draw the "active" cooldown box
-            Draw::rect2D(
-                Rect2D::xywh(
-                boxLeft,
-                 (float)m_framebuffer->height() * (float)(ex->weaponCooldownPercent()),
-                    (float)m_framebuffer->width() * latencyRect.x,
-                    (float)m_framebuffer->height() * (float)(1.0 - ex->weaponCooldownPercent())
-                ), rd, Color3::white() * 0.8f
-            );
+			if (experimentConfig.cooldownMode == "box") {
+				float boxLeft = (float)m_framebuffer->width() * 0.0f;
+				if (experimentConfig.weaponStatusSide == "right") {
+					// swap side
+					boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
+				}
+				Draw::rect2D(
+					Rect2D::xywh(
+						boxLeft,
+						(float)m_framebuffer->height() * (float)(ex->weaponCooldownPercent()),
+						(float)m_framebuffer->width() * latencyRect.x,
+						(float)m_framebuffer->height() * (float)(1.0 - ex->weaponCooldownPercent())
+					), rd, Color3::white() * 0.8f
+				);
+			}
+			else if (experimentConfig.cooldownMode == "ring") {
+				// Draw cooldown "ring" instead of box
+				const float iRad = experimentConfig.cooldownInnerRadius;
+				const float oRad = iRad + experimentConfig.cooldownThickness;
+				const int segments = experimentConfig.cooldownSubdivisions;
+				int segsToLight = (1 - ex->weaponCooldownPercent())*segments;
+				// Create the segments
+				for (int i = 0; i < segsToLight; i++) {
+					const float inc = 2 * pi() / segments;
+					const float theta = i * inc;
+					Vector2 center = Vector2(m_framebuffer->width() / 2, m_framebuffer->height() / 2);
+					Array<Vector2> verts = {
+						center + Vector2(oRad*cos(theta), oRad*sin(theta)),
+						center + Vector2(oRad*cos(theta + inc), oRad*sin(theta + inc)),
+						center + Vector2(iRad*cos(theta + inc), iRad*sin(theta + inc)),
+						center + Vector2(iRad*cos(theta), iRad*sin(theta))
+					};
+					Draw::poly2D(verts, rd, experimentConfig.cooldownColor);
+				}
+			}
         }
 
 		// Click to photon latency measuring corner box
@@ -1214,7 +1235,7 @@ void App::onUserInput(UserInput* ui) {
 		const shared_ptr<PlayerEntity>& player = m_scene->typedEntity<PlayerEntity>("player");
 		if (notNull(player)) {
 			const float walkSpeed = experimentConfig.moveRate * units::meters() / units::seconds();
-			const float pixelsPerRevolution = 30;
+			const float pixelsPerRevolution = 10;
 			const float   turnRatePerPixel = -pixelsPerRevolution * units::degrees() / (units::seconds());
 			const float   tiltRatePerPixel = -0.2f * units::degrees() / (units::seconds());
 			static const Vector3 jumpVelocity(0, experimentConfig.jumpVelocity * units::meters() / units::seconds(), 0);

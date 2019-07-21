@@ -46,9 +46,6 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `playerHeight` sets the height of the player above the ground (for `walkMode=True` only for now)
 * `jumpVelocity` sets the magnitude of the upward impulse introduced by a jump when `walkMode=True`
 * `playerGravity` set the graivty vector that impacts the player when `walkMode=True`
-* `renderWeaponStatus` controls whether or not the weapon cooldown is rendered on the left side of the screen
-* `weaponStatusSide` controls which side of the display the weapon status is drawn on (can be `right` or `left`)
-* `clickPhotonSide` controls which side of the display the click-to-photon region is drawn on (can be `right` or `left`)
 * `shader` provides the (relative) path of an (optional) shader to run
 
 ```
@@ -59,10 +56,7 @@ There are a number of inputs to experiment config. The following is a descriptio
 "playerHeight":  0.6,                       // Normal player height for walk mode
 "crouchHeight": 0.3,                        // Crouch height for walk mode
 "playerGravity": Vector3(0.0, -5.0, 0.0),   // Player gravity for walk mode
-"renderWeaponStatus": true,                 // Show the cooldown indicator
-"weaponStatusSide: "left",                  // Place the weapon status on the left
-"clickPhotonSide": "right",                 // Click to photon tool on the right
-"shader": "[your shader].pix"               // Default is "" or no shader
+"shader": "[your shader].pix",              // Default is "" or no shader
 ```
 
 ### HUD settings
@@ -115,6 +109,25 @@ There are a number of inputs to experiment config. The following is a descriptio
 "ammoOutlineColor": Color4(0.0,0.0,0.0,1.0),        // Set the outline/background color for the ammo indicator
 ```
 
+#### Weapon Cooldown
+* `renderWeaponStatus` controls whether or not the weapon cooldown is rendered on the left side of the screen
+* `cooldownMode` controls the type of display used for weapon cooldown ("ring" or "box")
+* `weaponStatusSide` controls which side of the display the weapon status is drawn on (can be `right` or `left`), this only applies in "box" mode
+* `cooldownInnerRadius` controls the inner radius of the cooldown ring in "ring" mode (in pixels)
+* `cooldownThickness` controls the thickness of the cooldown ring in "ring" mode (in pixels)
+* `cooldownSubdivisions` allows the user to set the number of subdivisions/faces in the draw ring
+* `cooldownColor` sets the (active) `Color4` of the ring segments, by default they are not drawn when inactive
+
+```
+"renderWeaponStatus": true,                 // Show the cooldown indicator
+"cooldownMode": "ring",                     // Use a ring indicator (other option is "box")
+"weaponStatusSide: "left",                  // Place the weapon status on the left
+"cooldownInnerRadius": 40.0,                // 40 pixel ring radius
+"cooldownThickness": 10.0,                  // 10 pixel ring thickness
+"cooldownSubdivisions": 64,                 // 64 subdivisions (good enough to look like a circle)
+"cooldownColor": Color4(1.0,1.0,1.0,0.75),  // White w/ 75% alpha
+```
+
 #### Click to Photon Monitoring
 * `renderClickPhoton` controls whether or not the click-to-photon indicator box is drawn to the screen
 * `clickPhotonSide` controls which side of the display (`left` vs `right`) the click-to-photon indicator box is drawn on
@@ -130,7 +143,7 @@ There are a number of inputs to experiment config. The following is a descriptio
 "clickPhotonColors": [                  // Array of mouse up/down colors
     Color3(0.2,0.2,0.2),                // Avoid using black-->white for better gray-to-gray timing
     Color3(0.8,0.8,0.8)
-]
+],
 ```
 
 ### Target Rendering

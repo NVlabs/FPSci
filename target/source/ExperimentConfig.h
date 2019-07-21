@@ -673,10 +673,7 @@ public:
 	WeaponConfig weapon;							///< Weapon to be used
 	
 	Array<SessionConfig> sessions;					///< Array of sessions
-	Array<TargetConfig> targets;					///< Array of trial configs
-    
-	bool renderWeaponStatus = true;                 ///< Display weapon cooldown
-    String weaponStatusSide = "left";               ///< "right" for right side, otherwise left
+	Array<TargetConfig> targets;					///< Array of trial configs\  
     
 	bool renderClickPhoton = true;                  ///< Render click to photon box
     String clickPhotonSide = "right";               ///< "right" for right side, otherwise left
@@ -719,6 +716,14 @@ public:
 	Color4 ammoColor = Color4(1.0, 1.0, 1.0, 1.0);							///< Color for ammo indicator text
 	Color4 ammoOutlineColor = Color4(0.0, 0.0, 0.0, 1.0);					///< Outline color for ammo indicator text
 	
+	bool renderWeaponStatus = true;											///< Display weapon cooldown
+	String cooldownMode = "ring";											///< Currently "ring" and "box" are supported
+	String weaponStatusSide = "left";										///< Only applied in "box" mode, can be "right" or "left"
+	float cooldownInnerRadius = 40.0f;										///< Inner radius for cooldown ring
+	float cooldownThickness = 10.0f;										///< Thickness of cooldown ring
+	int cooldownSubdivisions = 64;											///< Number of polygon divisions in the "ring"
+	Color4 cooldownColor = Color4(1.0f, 1.0f, 1.0f, 0.75f);					///< Cooldown ring color when active (transparent when inactive)
+
 	// Target health bars
 	bool showTargetHealthBars = false;										///< Display a target health bar?
 	Point2 targetHealthBarSize = Point2(100.0f, 10.0f);						///< Health bar size (in pixels)
@@ -770,8 +775,6 @@ public:
 			reader.getIfPresent("playerGravity", playerGravity);
 			
 			reader.getIfPresent("weapon", weapon);
-            reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
-            reader.getIfPresent("weaponStatusSide", weaponStatusSide);
             
 			reader.getIfPresent("renderClickPhoton", renderClickPhoton);
             reader.getIfPresent("clickPhotonSide", clickPhotonSide);
@@ -797,6 +800,14 @@ public:
 			reader.getIfPresent("ammoSize", ammoSize);
 			reader.getIfPresent("ammoColor", ammoColor);
 			reader.getIfPresent("ammoOutlineColor", ammoOutlineColor);
+
+			reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
+			reader.getIfPresent("weaponStatusSide", weaponStatusSide);
+			reader.getIfPresent("cooldownMode", cooldownMode);
+			reader.getIfPresent("cooldownInnerRadius", cooldownInnerRadius);
+			reader.getIfPresent("cooldownThickness", cooldownThickness);
+			reader.getIfPresent("cooldownSubdivisions", cooldownSubdivisions);
+			reader.getIfPresent("cooldownColor", cooldownColor);
 
 			reader.getIfPresent("explosionSound", explosionSound);
 
