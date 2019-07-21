@@ -10,6 +10,8 @@ Each entry in the user table contains the following fields:
 * `sessions` a list of sessions to be completed, in order
 * `completedSessions` a list of sessions completed by any given user
 
+Refer to the [SAMPLEuserstatus.Any file](SAMPLEuserstatus.Any) for an example of these settings.
+
 The `sessions` list above can be used to control session ordering (this is an ordered list). If random ordering is desired a quick script can be written to read all users from the `userconfig.Any` file and write a new sequence of sessions for each user present.
 
 Once all the items from the `sessions` list are present in the `completedSessions` list the experiment is considered "done" for this user. At this point, if a user wants to re-run the experiment they need to open the `userstatus.Any` file and delete all items from their `completedSessions` list. Alternatively if new trials will be run for all users a new copy of the file (w/ empty `completedSessions` lists for all users) can be copy-pasted over the full one.

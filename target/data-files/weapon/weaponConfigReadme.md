@@ -19,6 +19,29 @@ This file provides information about the weapon to be used in the experiment. De
 * `renderDecals` controls whether or not bullet hole decals are put on misses when `autoFire` is `False` and `firePeriod` > 0 (i.e. not in laser mode)
 * `renderMuzzleFlash` controls whether or not a muzzle flash is rendered for the weapon
 * `muzzleOffset` is a `Vector3` controlling the offset of the muzzle within the weapon frame
+
+**Example**
+```
+"maxAmmo": 10000,           // Maximum ammo for the weapon
+"firePeriod": 0.5,          // Fire twice a second max
+"autoFire": false,          // Automatic firing if mouse is held
+"damagePerSecond": 2.0,     // 2 damage/s * 0.5 s/shot = 1 damage/shot
+"fireSound": "sound/42108__marcuslee__Laser_Wrath_6.wav",       // The sound to fire
+"renderModel": true,        // Default is false,
+"modelSpec": ArticulatedModel::Specification{			        // Default model
+	filename = "model/sniper/sniper.obj";
+	preprocess = {
+		transformGeometry(all(), Matrix4::yawDegrees(90));
+		transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
+	};
+	scale = 0.25;
+},
+"renderBullets": true,      // Default is false
+"bulletSpeed": 1.0,         // Bullets move at 1m/s
+"renderDecals": true,       // Draw hit decals on walls for misses
+"renderMuzzleFlash": false, // Draw a muzzle flash
+"muzzleOffset": Vector3(0.0,-0.8,0.0)        // Add an offset here to correct the barrel location (default is [0,0,0])
+```
  
 # Weapon Modes and Damage
 There were several common "modes" that motivated the weapon configuration information provided in the experimentconfig. These are outlined below:

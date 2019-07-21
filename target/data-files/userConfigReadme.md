@@ -12,6 +12,8 @@ Each entry in the user table contains the following fields:
 * `mouseDPI` the mouse DPI used for the player
 * `cmp360` the mouse sensitivity for the user (measured in cm/360°)
 
+Refer to the [SAMPLEuserconfig.Any file](SAMPLEuserconfig.Any) for an example of these settings.
+
 ## Sensitivity Measure (cm/360°)
 Many games use arbitrary mouse sensitivity measures (i.e. 0-10 or low, mid, high scale) to set mouse sensitivity based on iterative player testing (i.e. choose a setting, test whether it meets your needs, adjust the setting accordingly). Unfortunately this means that mouse sensitivity settings can often not be easily translated between applications without a tool to convert between the settings values.
 
