@@ -1234,12 +1234,14 @@ void App::onUserInput(UserInput* ui) {
 	if (experimentConfig.walkMode && !m_userSettingsMode) {
 		const shared_ptr<PlayerEntity>& player = m_scene->typedEntity<PlayerEntity>("player");
 		if (notNull(player)) {
+			double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
+			// additional correction factor based on few samples - TODO: need more careful setup to study this
+			mouseSensitivity = mouseSensitivity * 0.1; // Need to tune this
 			const float walkSpeed = experimentConfig.moveRate * units::meters() / units::seconds();
-			const float pixelsPerRevolution = 10;
-			const float   turnRatePerPixel = -pixelsPerRevolution * units::degrees() / (units::seconds());
-			const float   tiltRatePerPixel = -0.2f * units::degrees() / (units::seconds());
+			const float   turnRatePerPixel = -mouseSensitivity * units::radians() / (units::seconds());
+			const float   tiltRatePerPixel = pi()/180.0f * turnRatePerPixel;			// Not sure why this would be the corret scale factor, but "looks right"
 			static const Vector3 jumpVelocity(0, experimentConfig.jumpVelocity * units::meters() / units::seconds(), 0);
-
+		   
 			// Get walking speed here (and normalize if necessary)
 			Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
 			if (linear.magnitude() > 0) {
