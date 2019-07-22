@@ -978,13 +978,13 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 				// Create the segments
 				for (int i = 0; i < segsToLight; i++) {
 					const float inc = 2 * pi() / segments;
-					const float theta = i * inc;
+					const float theta = -i * inc;
 					Vector2 center = Vector2(m_framebuffer->width() / 2, m_framebuffer->height() / 2);
 					Array<Vector2> verts = {
-						center + Vector2(oRad*cos(theta), oRad*sin(theta)),
-						center + Vector2(oRad*cos(theta + inc), oRad*sin(theta + inc)),
-						center + Vector2(iRad*cos(theta + inc), iRad*sin(theta + inc)),
-						center + Vector2(iRad*cos(theta), iRad*sin(theta))
+						center + Vector2(oRad*sin(theta), -oRad*cos(theta)),
+						center + Vector2(oRad*sin(theta + inc), -oRad*cos(theta + inc)),
+						center + Vector2(iRad*sin(theta + inc), -iRad*cos(theta + inc)),
+						center + Vector2(iRad*sin(theta), -iRad*cos(theta))
 					};
 					Draw::poly2D(verts, rd, experimentConfig.cooldownColor);
 				}
