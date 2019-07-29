@@ -299,6 +299,8 @@ public:
 
 	/** get the current view direction */
 	Point2 getViewDirection();
+
+	Point3 getPlayerLocation();
 	
 	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
 	virtual void onInit() override;

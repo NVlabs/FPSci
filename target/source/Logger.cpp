@@ -98,9 +98,12 @@ void Logger::createResultsFile(String filename, String subjectID)
 	// 5. Player_Action, only need to create the table.
 	Array<Array<String>> viewTrajectoryColumns = {
 			{ "time", "text" },
-			{ "event", "text" },
 			{ "position_az", "real" },
 			{ "position_el", "real" },
+			{ "position_x", "real"},
+			{ "position_y", "real"},
+			{ "position_z", "real"},
+			{ "event", "text" },
 			{ "target_id", "text" },
 	};
 	createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);

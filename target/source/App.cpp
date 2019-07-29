@@ -778,6 +778,11 @@ Point2 App::getViewDirection()
 	return Point2(az, el);
 }
 
+Point3 App::getPlayerLocation()
+{
+	return activeCamera()->frame().translation;
+}
+
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.

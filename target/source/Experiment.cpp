@@ -449,11 +449,15 @@ void Experiment::accumulatePlayerAction(String action, String targetName)
 	BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 	// recording target trajectories
 	Point2 dir = m_app->getViewDirection();
+	Point3 loc = m_app->getPlayerLocation();
 	Array<String> playerActionValues = {
 		"'" + Logger::genUniqueTimestamp() + "'",
-		"'" + action + "'",
 		String(std::to_string(dir.x)),
 		String(std::to_string(dir.y)),
+		String(std::to_string(loc.x)),
+		String(std::to_string(loc.y)),
+		String(std::to_string(loc.z)),
+		"'" + action + "'",
 		"'" + targetName + "'",
 	};
 	m_playerActions.push_back(playerActionValues);
