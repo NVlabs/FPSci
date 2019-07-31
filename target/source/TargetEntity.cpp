@@ -24,6 +24,21 @@ Point3 rotateToward(Point3 inputV, Point3 destinationV, float ang_deg) {
 	return (cos(ang_deg * pif() / 180.0f) * U + sin(ang_deg * pif() / 180.0f) * V) * inputV.length();
 }
 
+shared_ptr<TargetEntity> TargetEntity::create(	
+	Array<Destination>				dests, 										
+	const String&					name,
+	Scene*							scene,
+	const shared_ptr<Model>&		model,
+	const CFrame&					position,
+	Point3							offset)
+{
+	const shared_ptr<TargetEntity>& target = createShared<TargetEntity>();
+	target->Entity::init(name, scene, CFrame(dests[0].position), shared_ptr<Entity::Track>(), true, true);
+	target->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
+	target->TargetEntity::init(dests, offset);
+	return target;
+}
+
 void TargetEntity::drawHealthBar(RenderDevice* rd, const Camera& camera, const Framebuffer& framebuffer, Point2 size, Point3 offset, Point2 border, Array<Color4> colors, Color4 borderColor) const
 {
 	// Abort if the target is not in front of the camera 
@@ -52,6 +67,49 @@ void TargetEntity::drawHealthBar(RenderDevice* rd, const Camera& camera, const F
 		Rect2D::xywh(hudPoint.xy() - size * 0.5f, size*Point2(m_health, 1.0f)), rd, color
 	);
 
+}
+
+void TargetEntity::setDestinations(const Array<Destination> destinationArray) {
+	destinations = destinationArray;
+}
+
+void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
+	// Check whether we have any destinations yet...
+	if (destinations.size() < 2)
+		return;
+
+	SimTime time = fmod(absoluteTime, getPathTime());			// Compute a local time (modulus the path time)
+	
+	// Check if its time to move to the next segment
+	while(time < destinations[destinationIdx].time || time >= destinations[destinationIdx+1].time) {
+		destinationIdx++;										// Increment the destination index
+		destinationIdx %= destinations.size();					// Wrap if time goes over (works well for looped paths)
+	}
+	
+	// Get the current and next destination index
+	Destination currDest = destinations[destinationIdx];
+	Destination nextDest = destinations[(destinationIdx + 1) % destinations.size()];
+
+	// Compute the position by interpolating
+	float duration = nextDest.time - currDest.time;			// Get the total time for this "step
+	duration = max(duration, 0.0f);							// In "wrap" case immediately teleport back to start (0 duration step)
+	
+	float prog = 1.0f;										// By default make the "full step"
+	if (duration > 0.0f) {
+		// Handle time "wrap" case here
+		if (nextDest.time < time) {
+			time -= getPathTime();							// Fix the "wrap" math for prog below
+		}
+		prog = (nextDest.time - time) / duration;			// Get the ratio of time in this step completed
+	}
+
+	debugAssert(prog >= 0.0f);
+	debugAssert(prog <= 1.0f);
+	
+	Point3 delta = currDest.position - nextDest.position; 	// Get the delta vector to move along
+
+	// Set the new position
+	m_frame.translation = (prog*delta) + currDest.position + offset;
 }
 
 shared_ptr<Entity> FlyingEntity::create

@@ -105,7 +105,6 @@ void PlayerEntity::onPose(Array<shared_ptr<Surface> >& surfaceArray) {
 //static const Point3 MAX_POS(10, 5, 0);
 void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     // Do not call Entity::onSimulation; that will override with spline animation
-
     if (! isNaN(deltaTime) && (deltaTime > 0)) {
         m_previousFrame = m_frame;
     }
@@ -120,7 +119,6 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
         m_headTilt = clamp(m_headTilt + m_desiredPitchVelocity, -80 * units::degrees(), 80 * units::degrees());
     }
-
 }
 
 

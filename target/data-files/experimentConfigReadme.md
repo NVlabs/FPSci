@@ -230,9 +230,26 @@ There are a number of inputs to experiment config. The following is a descriptio
     * `jumpSpeed` is a vector indicating the minimum ([0]) and maximum([1]) angular speed with which to jump (in deg/s)
     * `accelGravity` is the min ([0])/max ([1]) acceleration due to gravity during the jump (in m/s^2)
     * `modelSpec` is an `Any` that constructs an `ArticulatedModel` similar to that used in the [the weapon config readme](./weapon/weaponConfigReadme.md). For now this spec needs to point to an `obj` file with a model named `core/icosahedron_default`.
+    * `destinations` is an array of `Destination` types each of which contains:
+      * `t` the time (in seconds) for this point in the path
+      * `xyz` the position for this point in the path
 
 ## Frame Rate Modes
 The `frameRate` parameter in any given session config can be used in 3 different modes:
 * If the `frameRate` parameter is set to a value >> refresh rate of the display (we suggest `8192fps`), then the program runs in "unlocked" mode wherein as many frames as can be drawn are rendered per displayed frame. This is the common mode of operation in many modern games.
 * If the `frameRate` parameter is set close to the refresh rate of the display then the programs runs in "fixed" frame rate mode, wherein the drawn frames are limited to the rate provided
 * If `frameRate = 0` then this indicates "default" mode, wherein the default frame rate settings for the window are applied. This should be equivalent to the "unlocked" mode for most systems. This is the default setting if you do not specify a frame rate in the file.
+
+## Target Paths (Using Destinations)
+The `destinations` array within the target object overrides much of the default motion behavior in the target motion controls. Once a destinations array (including more than 2 destiantions) is specified all other motion parameters are considered unused. Once a `destinations` array is specified only the following fields from the [target configuration](###-Target-Configuration) apply:
+
+* `id`
+* `visualSize`
+* `modelSpec`
+
+When specifying a `destinations` array there are several key assumptions worth noting:
+* All interpolation between points is linear w/ time. This means that velocity can be controlled using either timing or point location, points do not need to be uniformly sampled (i.e. any two destinations may have arbitrary time between them)
+* The default behavior is to "loop" paths once they are complete to avoid requiring paths to match trial times, this will include a discontinuity (jump) in the target motion if the path is not a closed loop. If you want to avoid this behavior we suggest creating closed loop paths and including a duplicate beginning/end sample to guarantee smooth motion
+* Time values can be specified at any precision, but the `oneFrame()` loop rate (ideally the frame rate) sets the "resampling" rate for this path, destinations whose time values are spaced by less than a frame time are not recommended
+
+Currently the destination time values are specified as an increasing time base (i.e. 0.0 on the first destination up to the total time); however, in the future we could move towards/also include time deltas to allow for faster editing of files.

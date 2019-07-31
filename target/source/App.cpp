@@ -5,7 +5,7 @@
 
 // Scale and offset for target
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
-const float App::TARGET_MODEL_ARRAY_OFFSET = 40;
+const float App::TARGET_MODEL_ARRAY_OFFSET = 20;
 
 /** global startup config - sets playMode and experiment/user paths */
 StartupConfig startupConfig;
@@ -243,6 +243,34 @@ shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, b
 	target->setShouldBeSaved(false);
 	targetArray.append(target);
 	scene()->insert(target);
+	return target;
+}
+
+shared_ptr<TargetEntity> App::spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color,
+	 String id, String name) {	
+	// Create the target
+	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
+	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], CFrame(), position);
+
+	// Setup the texture
+	UniversalMaterial::Specification materialSpecification;
+	materialSpecification.setLambertian(Texture::Specification(color));
+	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+	
+	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
+
+	// Apply texture/position to target
+	target->setPose(amPose);
+	target->setFrame(position);
+	target->setShouldBeSaved(false);
+
+	// Add target to array and scene
+	targetArray.append(target);
+	scene()->insert(target);
+
 	return target;
 }
 

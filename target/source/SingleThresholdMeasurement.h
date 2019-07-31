@@ -32,6 +32,7 @@
 #include <vector>
 #include <map>
 #include <stdint.h>
+#include "TargetEntity.h"
 
 /** Psychophysics method types
 */
@@ -57,6 +58,7 @@ struct Param
 	std::map<std::string, float> val;
 	std::map<std::string, std::string> str;
 	std::map<std::string, std::vector<float>> val_vec;
+	Array<Destination> destinations;
 
 	void add(std::string s, float f) {
 		val.insert(std::pair<std::string, float>(s, f));
@@ -66,6 +68,10 @@ struct Param
 	}
 	void add(std::string str_key, std::string str_val) {
 		str.insert(std::pair<std::string, std::string>(str_key, str_val));
+	}
+
+	void add(Array<Destination> dests) {
+		destinations = dests;
 	}
 
 	Param() {

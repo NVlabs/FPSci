@@ -1,14 +1,69 @@
 #pragma once
 #include <G3D/G3D.h>
 
+struct Destination{
+public:
+	Point3 position = Point3(0,0,0);
+	SimTime time = 0.0;
+
+	Destination() {
+		position = Point3(0, 0, 0);
+		time = 0.0;
+	}
+	
+	Destination(Point3 pos, SimTime t) {
+		position = pos;
+		time = t;
+	}
+
+	Destination(const Any& any) {
+		int settingsVersion = 1;
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.get("t", time);
+			reader.get("xyz", position);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in Destination configuration");
+			break;
+		}
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["t"] = time;
+		a["xyz"] = position;
+		return a;
+	}
+};
+
 class TargetEntity : public VisibleEntity {
 protected:
 	float m_health = 1.0f;			///< Target health
 	Color3 m_color = Color3::red();
+	Array<Destination> destinations;
+	int destinationIdx = 0;
+	Point3 offset;
 
 public:
+	TargetEntity() {}
 
-	TargetEntity() {};
+	static shared_ptr<TargetEntity> create(
+		Array<Destination>				dests,
+		const String&					name,
+		Scene*							scene,
+		const shared_ptr<Model>&		model,
+		const CFrame&					position,
+		Point3							offset);
+
+	void init(Array<Destination> dests, Point3 staticOffset = Point3(0.0, 0.0, 0.0)) {
+		setDestinations(dests);
+		offset = staticOffset;
+		destinationIdx = 0;
+	}
 
 	/** Getter for health */
 	float health() { 
@@ -21,7 +76,13 @@ public:
 		return m_health <= 0;
 	}
 
+	float getPathTime() {
+		return destinations.last().time;
+	}
+
 	void drawHealthBar(RenderDevice* rd, const Camera& camera, const Framebuffer& framebuffer, Point2 size, Point3 offset, Point2 border, Array<Color4> colors, Color4 borderColor) const;
+	virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;
+	void setDestinations(const Array<Destination> destinationArray);
 
 };
 

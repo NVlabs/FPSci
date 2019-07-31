@@ -133,7 +133,7 @@ protected:
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	//Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_targetModels;
-	const int m_modelScaleCount = 20;
+	const int m_modelScaleCount = 30;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
 	Queue<float>                    m_frameDurationQueue;				///< Queue for history of frrame times
@@ -222,6 +222,8 @@ public:
     @param radius world-space distance to target
     @param scale size of target TODO: is this radius or diameter in meters?*/
     void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
+
+	shared_ptr<TargetEntity> spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color, String id, String name="");
 
 	/** Creates a random target in front of the player */
 	void spawnRandomTarget();

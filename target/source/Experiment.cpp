@@ -167,7 +167,19 @@ void Experiment::initTargetAnimation() {
 			f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
 			f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
 
-			if (String(target.str["jumpEnabled"].c_str()) == "true") {
+			// Check for case w/ destination array
+			if (target.val["destCount"] > 0.0) {
+				m_app->spawnDestTarget(
+					f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
+					target.destinations,
+					visualSize,
+					m_config.targetHealthColors[0],
+					String(target.str["id"]),
+					String(target.str["name"])
+				);
+			}
+			// Otherwise check if this is a jumping target
+			else if (String(target.str["jumpEnabled"].c_str()) == "true") {
 				m_app->spawnJumpingTarget(
 					f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 					visualSize,
@@ -209,6 +221,9 @@ void Experiment::initTargetAnimation() {
 			initialSpawnPos,
 			"dummy"
 		);
+
+		// TODO: Remove this testing new target type
+		//m_app->spawnTestTarget(initialSpawnPos);
 	}
 
 	// Reset number of destroyed targets

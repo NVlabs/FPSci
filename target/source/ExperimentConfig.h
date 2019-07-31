@@ -528,6 +528,7 @@ public:
 	Array<float> jumpPeriod = { 2.0f, 2.0f };				///< Range of time period between jumps in seconds
 	Array<float> jumpSpeed = { 2.0f, 5.5f };				///< Range of jump speeds in meters/s
 	Array<float> accelGravity = { 9.8f, 9.8f };				///< Range of acceleration due to gravity in meters/s^2
+	Array<Destination> destinations;						///< Array of destinations to traverse
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
@@ -569,6 +570,7 @@ public:
 			reader.getIfPresent("jumpPeriod", jumpPeriod);
 			reader.getIfPresent("accelGravity", accelGravity);
 			reader.getIfPresent("modelSpec", modelSpec);
+			reader.getIfPresent("destinations", destinations);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
@@ -914,6 +916,8 @@ public:
 				p.add("trial_idx", (float)j);
 				p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
 				p.add("id", id.c_str());
+				p.add("destCount", (float)target->destinations.size());
+				p.destinations = target->destinations;
 				String modelName = target->modelSpec["filename"];
 				p.add("model", modelName.c_str());
 				if (target->jumpEnabled) {
