@@ -1264,34 +1264,40 @@ void App::onUserInput(UserInput* ui) {
 	GApp::onUserInput(ui);
 	(void)ui;
 
-	if (experimentConfig.walkMode && !m_userSettingsMode) {
+	if (experimentConfig.walkMode) {
 		const shared_ptr<PlayerEntity>& player = m_scene->typedEntity<PlayerEntity>("player");
-		if (notNull(player)) {
-			double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
-			const float walkSpeed = experimentConfig.moveRate * units::meters() / units::seconds();
-			static const Vector3 jumpVelocity(0, experimentConfig.jumpVelocity * units::meters() / units::seconds(), 0);
-		   
-			// Get walking speed here (and normalize if necessary)
-			Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
-			if (linear.magnitude() > 0) {
-				linear = linear.direction() * walkSpeed;
-			}
-			// Add jump here (if needed)
-			if (ui->keyPressed(GKey::SPACE)) {
-				linear += jumpVelocity;
-			}
-			else {
-				linear += Vector3(0, player->desiredOSVelocity().y, 0);
-			}
+		if (!m_userSettingsMode) {
+			if (notNull(player)) {
+				double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
+				const float walkSpeed = experimentConfig.moveRate * units::meters() / units::seconds();
+				static const Vector3 jumpVelocity(0, experimentConfig.jumpVelocity * units::meters() / units::seconds(), 0);
 
-			// Get the mouse rotation here
-			Vector2 mouseRotate = ui->mouseDXY() * mouseSensitivity / 2000.0f;
-			float yaw = mouseRotate.x;
-			float pitch = mouseRotate.y;
+				// Get walking speed here (and normalize if necessary)
+				Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
+				if (linear.magnitude() > 0) {
+					linear = linear.direction() * walkSpeed;
+				}
+				// Add jump here (if needed)
+				if (ui->keyPressed(GKey::SPACE)) {
+					linear += jumpVelocity;
+				}
+				else {
+					linear += Vector3(0, player->desiredOSVelocity().y, 0);
+				}
 
-			// Set the player translation/view velocities
-			player->setDesiredOSVelocity(linear);
-			player->setDesiredAngularVelocity(yaw, pitch);
+				// Get the mouse rotation here
+				Vector2 mouseRotate = ui->mouseDXY() * mouseSensitivity / 2000.0f;
+				float yaw = mouseRotate.x;
+				float pitch = mouseRotate.y;
+
+				// Set the player translation/view velocities
+				player->setDesiredOSVelocity(linear);
+				player->setDesiredAngularVelocity(yaw, pitch);
+			}
+		}
+		else {	// Zero the player velocity and rotation when in the setting menu
+			player->setDesiredOSVelocity(Vector3::zero());
+			player->setDesiredAngularVelocity(0.0, 0.0);
 		}
 	}
 
