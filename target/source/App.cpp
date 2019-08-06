@@ -865,6 +865,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		if (notNull(p)) {
 			CFrame c = p->frame();
 			float height = p->crouched() ? experimentConfig.crouchHeight : experimentConfig.playerHeight;
+			height = p->heightOffset(height);
 			c.translation += Vector3(0, height, 0);		// Set the player to the right height
 			c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), p->headTilt());
 			activeCamera()->setFrame(c);
@@ -894,7 +895,6 @@ bool App::onEvent(const GEvent& event) {
 
 	// Handle super-class events
 	if (GApp::onEvent(event)) { return true; }
-
     if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::KP_MINUS)) {
         quitRequest();
         return true;

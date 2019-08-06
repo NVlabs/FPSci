@@ -78,6 +78,8 @@ public:
         return m_headTilt;
     }
 
+	float heightOffset(float height);
+
 	void setCrouched(bool crouched);
 	bool crouched(void);
 

@@ -66,6 +66,10 @@ bool PlayerEntity::crouched(void) {
 	return m_crouched;
 }
 
+float PlayerEntity::heightOffset(float height) {
+	return height - m_collisionProxySphere.radius;
+}
+
 void PlayerEntity::init(const Vector3& velocity, const Sphere& collisionProxy) {
     m_velocity = velocity;
     m_collisionProxySphere = collisionProxy;
