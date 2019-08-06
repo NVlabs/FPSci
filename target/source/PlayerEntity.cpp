@@ -114,10 +114,10 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     //m_frame.translation += m_velocity * (float)deltaTime;
     if (! isNaN(deltaTime)) {
         slideMove(deltaTime);
-        m_heading           += m_desiredYawVelocity * (float)deltaTime;
-        m_frame.rotation     = Matrix3::fromAxisAngle(Vector3::unitY(), m_heading);
+		m_heading += m_desiredYawVelocity;	// *(float)deltaTime;		// Don't scale by time here
+        m_frame.rotation     = Matrix3::fromAxisAngle(Vector3::unitY(), -m_heading);
 
-        m_headTilt = clamp(m_headTilt + m_desiredPitchVelocity, -80 * units::degrees(), 80 * units::degrees());
+        m_headTilt = clamp(m_headTilt - m_desiredPitchVelocity, -80 * units::degrees(), 80 * units::degrees());
     }
 }
 

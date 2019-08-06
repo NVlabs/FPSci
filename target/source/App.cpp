@@ -1268,11 +1268,7 @@ void App::onUserInput(UserInput* ui) {
 		const shared_ptr<PlayerEntity>& player = m_scene->typedEntity<PlayerEntity>("player");
 		if (notNull(player)) {
 			double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
-			// additional correction factor based on few samples - TODO: need more careful setup to study this
-			mouseSensitivity = mouseSensitivity * 0.1; // Need to tune this
 			const float walkSpeed = experimentConfig.moveRate * units::meters() / units::seconds();
-			const float   turnRatePerPixel = -mouseSensitivity * units::radians() / (units::seconds());
-			const float   tiltRatePerPixel = pi()/180.0f * turnRatePerPixel;			// Not sure why this would be the corret scale factor, but "looks right"
 			static const Vector3 jumpVelocity(0, experimentConfig.jumpVelocity * units::meters() / units::seconds(), 0);
 		   
 			// Get walking speed here (and normalize if necessary)
@@ -1289,8 +1285,9 @@ void App::onUserInput(UserInput* ui) {
 			}
 
 			// Get the mouse rotation here
-			float yaw = ui->mouseDX() * turnRatePerPixel;
-			float pitch = ui->mouseDY() * tiltRatePerPixel;
+			Vector2 mouseRotate = ui->mouseDXY() * mouseSensitivity / 2000.0f;
+			float yaw = mouseRotate.x;
+			float pitch = mouseRotate.y;
 
 			// Set the player translation/view velocities
 			player->setDesiredOSVelocity(linear);
