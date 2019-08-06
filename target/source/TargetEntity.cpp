@@ -102,14 +102,11 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		}
 		prog = (nextDest.time - time) / duration;			// Get the ratio of time in this step completed
 	}
-
-	debugAssert(prog >= 0.0f);
-	debugAssert(prog <= 1.0f);
 	
 	Point3 delta = currDest.position - nextDest.position; 	// Get the delta vector to move along
 
 	// Set the new position
-	m_frame.translation = (prog*delta) + currDest.position + offset;
+	setFrame((prog*delta) + currDest.position + offset);
 }
 
 shared_ptr<Entity> FlyingEntity::create

@@ -529,6 +529,7 @@ public:
 	Array<float> jumpSpeed = { 2.0f, 5.5f };				///< Range of jump speeds in meters/s
 	Array<float> accelGravity = { 9.8f, 9.8f };				///< Range of acceleration due to gravity in meters/s^2
 	Array<Destination> destinations;						///< Array of destinations to traverse
+	String destSpace = "world";								///< Space to use for destinations (implies offset) can be "world" or "player"
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
@@ -570,6 +571,7 @@ public:
 			reader.getIfPresent("jumpPeriod", jumpPeriod);
 			reader.getIfPresent("accelGravity", accelGravity);
 			reader.getIfPresent("modelSpec", modelSpec);
+			reader.getIfPresent("destSpace", destSpace);
 			reader.getIfPresent("destinations", destinations);
 			break;
 		default:
@@ -917,6 +919,7 @@ public:
 				p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
 				p.add("id", id.c_str());
 				p.add("destCount", (float)target->destinations.size());
+				p.add("destSpace", target->destSpace.c_str());
 				p.destinations = target->destinations;
 				String modelName = target->modelSpec["filename"];
 				p.add("model", modelName.c_str());

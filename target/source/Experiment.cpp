@@ -169,8 +169,9 @@ void Experiment::initTargetAnimation() {
 
 			// Check for case w/ destination array
 			if (target.val["destCount"] > 0.0) {
+				Point3 offset = (target.str["destSpace"] == "world") ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 				m_app->spawnDestTarget(
-					f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
+					offset,
 					target.destinations,
 					visualSize,
 					m_config.targetHealthColors[0],
