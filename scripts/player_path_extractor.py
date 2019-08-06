@@ -23,8 +23,8 @@ rows = c.fetchall()
 # Extract time stamps and xyz coordinates
 t = []
 xyz = []
-t0 = datetime.strptime(rows[0][0], IN_LOG_TIME_FORMAT)
-for row in rows:
+t0 = datetime.strptime(rows[10][0], IN_LOG_TIME_FORMAT)
+for row in rows[10:]:
     t.append((datetime.strptime(row[0], IN_LOG_TIME_FORMAT)-t0).total_seconds())
     xyz.append([row[1], row[2], row[3]])
 
