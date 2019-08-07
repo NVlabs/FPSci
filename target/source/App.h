@@ -130,6 +130,17 @@ protected:
 	GuiLabel*						m_mouseDPILabel;					///< Label for mouse DPI field
 	GuiLabel*						m_cm360Label;						///< Label for cm/360 field
 
+	Array<Destination> m_waypoints;			///< Store way points for path creation here
+	Array<DebugID> m_waypointIDs;			///< Storage for IDs for point spheres
+	Array<DebugID> m_arrowIDs;				///< Storage for IDs for connecting arrows	
+	float m_waypointDelay = 1.0;			///< Store the delay between way points here
+	float m_waypointTime = 0.0;				///< Accumulate time
+	
+
+	const Color4 m_waypointColor = Color4(0.0, 1.0, 0.0, 0.7);	///< Color for waypoint visualization
+	const float m_waypointRad = 0.1;
+	const float m_waypointConnectRad = 0.02;
+
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	//Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_targetModels;
@@ -196,8 +207,7 @@ public:
 	Array<shared_ptr<TargetEntity>> targetArray;					///< Array of drawn targets
 	Array<Projectile>                projectileArray;				///< Arrray of drawn projectiles
 
-	int destroyedTargets = 0;							///< Number of targets destroyed
-
+	int destroyedTargets = 0;										///< Number of targets destroyed
 
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
@@ -209,6 +219,11 @@ public:
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
+
+	void dropWaypoint();
+	void removeLastWaypoint();
+	void clearWaypoints();
+	void exportWaypoints();
 
 	/** Increment the current reticle index */
 	void nextReticle() {

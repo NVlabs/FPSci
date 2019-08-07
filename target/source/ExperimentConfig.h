@@ -543,7 +543,7 @@ public:
 					maxSmoothAngleDegrees = 0;
 		};
 		scale = 0.25;
-	});
+		});
 
 	//Array<Vector3> path;		// Unused, to dictate a motion path...
 	//String explosionSound;	// TODO: Add target explosion sound string here and use it for m_explosionSound
@@ -579,6 +579,30 @@ public:
 			break;
 		}
 	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["id"] = id;
+		if (destinations.size() > 0) {
+			a["visualSize"] = visualSize;
+			a["destSpace"] = destSpace;
+			a["destinations"] = destinations;
+		}
+		else {
+			a["elevationLocked"] = elevLocked;
+			a["distance"] = distance;
+			a["motionChangePeriod"] = motionChangePeriod;
+			a["visualSize"] = visualSize;
+			a["eccH"] = eccH;
+			a["eccV"] = eccV;
+			a["jumpEnabled"] = jumpEnabled;
+			a["jumpPeriod"] = jumpPeriod;
+			a["accelGravity"] = accelGravity;
+			a["modelSpec"] = modelSpec;
+		}
+
+		return a;
+	};
 };
 
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */

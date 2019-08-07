@@ -482,6 +482,13 @@ void App::makeGUI() {
 		GuiControl* c = nullptr;
 		c = debugPane->addNumberBox("Move Rate", &(experimentConfig.moveRate), "m/s", GuiTheme::NO_SLIDER, 0.0f, 100.0f, 0.1f);
 	} debugPane->endRow();
+	debugPane->beginRow();{
+		debugPane->addButton("Drop waypoint", this, &App::dropWaypoint);
+		debugPane->addNumberBox("Delay", &m_waypointDelay, "s");
+		debugPane->addButton("Remove last waypoint", this, &App::removeLastWaypoint);
+		debugPane->addButton("Clear waypoints", this, &App::clearWaypoints);
+		debugPane->addButton("Export waypoints", this, &App::exportWaypoints);
+	} debugPane->endRow();
 
 
     // set up user settings window
@@ -508,6 +515,57 @@ void App::makeGUI() {
 
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+}
+
+void App::dropWaypoint(void) {
+	// Create the destination
+	Point3 xyz = activeCamera()->frame().translation;
+	Destination dest = Destination(xyz, m_waypointTime);
+	
+	// If this isn't the first point, connect it to the last one with a line
+	if (m_waypoints.size() > 0) {
+		Point3 lastPos = m_waypoints.last().position;
+		Vector3 vector = xyz - lastPos;
+		shared_ptr<CylinderShape> shape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(lastPos, xyz, m_waypointConnectRad)));
+		DebugID arrowID = debugDraw(shape, finf(), m_waypointColor, Color4::clear());
+		m_arrowIDs.append(arrowID);
+	}
+
+	// Draw the waypoint
+	DebugID pointID = debugDraw(Sphere(xyz, m_waypointRad), finf(), m_waypointColor, Color4::clear());
+	
+	// Update the arrays and time tracking
+	m_waypoints.append(dest);
+	m_waypointIDs.append(pointID);
+	m_waypointTime += m_waypointDelay;
+
+	logPrintf("Dropped waypoint... Time: %f, XYZ:[%f,%f,%f]\n", dest.time, dest.position[0], dest.position[1], dest.position[2]);
+}
+
+void App::removeLastWaypoint(void) {
+	m_waypoints.remove(m_waypoints.size() - 1);
+	removeDebugShape(m_waypointIDs.last());
+	m_waypointIDs.remove(m_waypointIDs.size() - 1);
+}
+
+void App::clearWaypoints(void) {
+	m_waypoints.clear();
+	for (DebugID id : m_waypointIDs) {
+		removeDebugShape(id);
+	}
+	m_waypointIDs.clear();
+	for (DebugID id : m_arrowIDs) {
+		removeDebugShape(id);
+	}
+	m_arrowIDs.clear();
+}
+
+void App::exportWaypoints(void) {
+	TargetConfig t = TargetConfig();
+	t.id = "test";
+	t.destSpace = "world";
+	t.destinations = m_waypoints;
+	t.toAny().save("target.Any");
 }
 
 void App::userSaveButtonPress(void) {
@@ -872,7 +930,14 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 }
 
 bool App::onEvent(const GEvent& event) {
-    // Override 'q', 'z', 'c', and 'e' keys
+	if (!startupConfig.playMode && (event.type == GEventType::KEY_DOWN) &&
+		(event.key.keysym.sym == 'q'))
+	{
+		dropWaypoint();
+		return true;
+	}
+	
+	// Override 'q', 'z', 'c', and 'e' keys
     if ((event.type == GEventType::KEY_DOWN) && 
         (event.key.keysym.sym == 'e'
             || event.key.keysym.sym == 'z'
