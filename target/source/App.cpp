@@ -738,15 +738,10 @@ bool App::pythonMergeLogs(String basename) {
 
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	// Set the active camera to the player
-	if (experimentConfig.walkMode) {
-		setActiveCamera(m_scene->typedEntity<Camera>("camera"));
-		// For now make the player invisible (prevent issues w/ seeing model from inside)
-		m_scene->typedEntity<PlayerEntity>("player")->setVisible(false);
-		m_scene->setGravity(experimentConfig.playerGravity);
-	}
-	else {
-		setActiveCamera(m_debugCamera);
-	}
+	setActiveCamera(m_scene->typedEntity<Camera>("camera"));
+	// For now make the player invisible (prevent issues w/ seeing model from inside)
+	m_scene->typedEntity<PlayerEntity>("player")->setVisible(false);
+	m_scene->setGravity(experimentConfig.playerGravity);
 	activeCamera()->setFieldOfView(experimentConfig.hFoV * units::degrees(), FOVDirection::HORIZONTAL);
 }
 
@@ -817,14 +812,9 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	ex->onSimulation(rdt, sdt, idt);
 
 	// These are all we need from GApp::onSimulation() for walk mode
-	if (experimentConfig.walkMode) {
-		m_widgetManager->onSimulation(rdt, sdt, idt);
-		if (scene()) { scene()->onSimulation(sdt); }
-		if (scene()) { scene()->onSimulation(sdt); }
-	}
-	else {
-		GApp::onSimulation(rdt, sdt, idt);
-	}
+	m_widgetManager->onSimulation(rdt, sdt, idt);
+	if (scene()) { scene()->onSimulation(sdt); }
+	if (scene()) { scene()->onSimulation(sdt); }
 
     // make sure mouse sensitivity is set right
     if (m_userSettingsMode) {
@@ -860,16 +850,14 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 
 	// Move the player if in walk mode
-	if (experimentConfig.walkMode) {
-		const shared_ptr<PlayerEntity>& p = m_scene->typedEntity<PlayerEntity>("player");
-		if (notNull(p)) {
-			CFrame c = p->frame();
-			float height = p->crouched() ? experimentConfig.crouchHeight : experimentConfig.playerHeight;
-			height = p->heightOffset(height);
-			c.translation += Vector3(0, height, 0);		// Set the player to the right height
-			c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), p->headTilt());
-			activeCamera()->setFrame(c);
-		}
+	const shared_ptr<PlayerEntity>& p = m_scene->typedEntity<PlayerEntity>("player");
+	if (notNull(p)) {
+		CFrame c = p->frame();
+		float height = p->crouched() ? experimentConfig.crouchHeight : experimentConfig.playerHeight;
+		height = p->heightOffset(height);
+		c.translation += Vector3(0, height, 0);		// Set the player to the right height
+		c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), p->headTilt());
+		activeCamera()->setFrame(c);
 	}
 
 	// Example GUI dynamic layout code.  Resize the debugWindow to fill
@@ -900,15 +888,15 @@ bool App::onEvent(const GEvent& event) {
         return true;
     }
 
-	if(experimentConfig.walkMode){
-		if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::LCTRL)) {
-			m_scene->typedEntity<PlayerEntity>("player")->setCrouched(true);
-			return true;
-		}
-		if ((event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey::LCTRL)) {
-			m_scene->typedEntity<PlayerEntity>("player")->setCrouched(false);
-			return true;
-		}
+	
+	// Handle crouch here
+	if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::LCTRL)) {
+		m_scene->typedEntity<PlayerEntity>("player")->setCrouched(true);
+		return true;
+	}
+	if ((event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey::LCTRL)) {
+		m_scene->typedEntity<PlayerEntity>("player")->setCrouched(false);
+		return true;
 	}
 
 	// If you need to track individual UI events, manage them here.
@@ -1264,41 +1252,41 @@ void App::onUserInput(UserInput* ui) {
 	GApp::onUserInput(ui);
 	(void)ui;
 
-	if (experimentConfig.walkMode) {
-		const shared_ptr<PlayerEntity>& player = m_scene->typedEntity<PlayerEntity>("player");
-		if (!m_userSettingsMode) {
-			if (notNull(player)) {
-				double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
-				const float walkSpeed = experimentConfig.moveRate * units::meters() / units::seconds();
-				static const Vector3 jumpVelocity(0, experimentConfig.jumpVelocity * units::meters() / units::seconds(), 0);
+	const shared_ptr<PlayerEntity>& player = m_scene->typedEntity<PlayerEntity>("player");
+	if (!m_userSettingsMode) {
+		if (notNull(player)) {
+			// Copied from old FPM code
+			double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
+			mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
+			const float walkSpeed = experimentConfig.moveRate * units::meters() / units::seconds();
+			static const Vector3 jumpVelocity(0, experimentConfig.jumpVelocity * units::meters() / units::seconds(), 0);
 
-				// Get walking speed here (and normalize if necessary)
-				Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
-				if (linear.magnitude() > 0) {
-					linear = linear.direction() * walkSpeed;
-				}
-				// Add jump here (if needed)
-				if (ui->keyPressed(GKey::SPACE)) {
-					linear += jumpVelocity;
-				}
-				else {
-					linear += Vector3(0, player->desiredOSVelocity().y, 0);
-				}
-
-				// Get the mouse rotation here
-				Vector2 mouseRotate = ui->mouseDXY() * mouseSensitivity / 2000.0f;
-				float yaw = mouseRotate.x;
-				float pitch = mouseRotate.y;
-
-				// Set the player translation/view velocities
-				player->setDesiredOSVelocity(linear);
-				player->setDesiredAngularVelocity(yaw, pitch);
+			// Get walking speed here (and normalize if necessary)
+			Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
+			if (linear.magnitude() > 0) {
+				linear = linear.direction() * walkSpeed;
 			}
+			// Add jump here (if needed)
+			if (ui->keyPressed(GKey::SPACE)) {
+				linear += jumpVelocity;
+			}
+			else {
+				linear += Vector3(0, player->desiredOSVelocity().y, 0);
+			}
+
+			// Get the mouse rotation here
+			Vector2 mouseRotate = ui->mouseDXY() * mouseSensitivity / 2000.0f;
+			float yaw = mouseRotate.x;
+			float pitch = mouseRotate.y;
+
+			// Set the player translation/view velocities
+			player->setDesiredOSVelocity(linear);
+			player->setDesiredAngularVelocity(yaw, pitch);
 		}
-		else {	// Zero the player velocity and rotation when in the setting menu
-			player->setDesiredOSVelocity(Vector3::zero());
-			player->setDesiredAngularVelocity(0.0, 0.0);
-		}
+	}
+	else {	// Zero the player velocity and rotation when in the setting menu
+		player->setDesiredOSVelocity(Vector3::zero());
+		player->setDesiredAngularVelocity(0.0, 0.0);
 	}
 
 	// Require release between clicks for non-autoFire modes
@@ -1349,7 +1337,7 @@ void App::onUserInput(UserInput* ui) {
 	}
 	
 	// Handle spacebar during feedback
-	GKey initShootKey = experimentConfig.walkMode ? GKey::LSHIFT : GKey::SPACE;
+	GKey initShootKey = GKey::LSHIFT;
 	if (ui->keyPressed(initShootKey) && (ex->presentationState == PresentationState::feedback)) {
 		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
 	}
@@ -1377,9 +1365,7 @@ void App::destroyTarget(int index) {
 void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {
 	GApp::onPose(surface, surface2D);
 
-	if (experimentConfig.walkMode) {
-		m_scene->poseExceptExcluded(surface, "player");
-	}
+	m_scene->poseExceptExcluded(surface, "player");
 
 	if (experimentConfig.weapon.renderModel) {
 		const float yScale = -0.12f;

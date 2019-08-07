@@ -661,9 +661,8 @@ public:
 	// View parameters
 	float hFoV = 103.0f;							///< Field of view (horizontal) for the user
 	float moveRate = 0.0f;							///< Player move rate (defaults to no motion)
-	bool walkMode = false;							///< Whether the player "walks" (true) or "flies" (false)
-	float playerHeight = 0.6f;						///< Height for the player view (in walk mode)
-	float crouchHeight = 0.3f;						///< Height for the player view (during crouch in walk mode)
+	float playerHeight = 1.5f;						///< Height for the player view (in walk mode)
+	float crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
 	float jumpVelocity = 40.0f;						///< Jump velocity for the player
 	Vector3 playerGravity = Vector3(0.0f, -5.0f, 0.0f);	///< Gravity vector
 
@@ -772,7 +771,6 @@ public:
 			
 			reader.getIfPresent("horizontalFieldOfView", hFoV);
 			reader.getIfPresent("moveRate", moveRate);
-			reader.getIfPresent("walkMode", walkMode);
 			reader.getIfPresent("playerHeight", playerHeight);
 			reader.getIfPresent("crouchHeight", crouchHeight);
 			reader.getIfPresent("jumpVelocity", jumpVelocity);

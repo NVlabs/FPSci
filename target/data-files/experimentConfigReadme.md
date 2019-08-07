@@ -42,20 +42,19 @@ There are a number of inputs to experiment config. The following is a descriptio
 ### Camera/View Settings
 * `horizontalFieldOfView` sets the (horizontal) field of view for the user's display (in degrees), to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)
 * `moveRate` sets the rate of player motion in m/s, set this parameter to `0` to display player motion
-* `walkMode` sets whether or not we are in "walking" mode that includes graivty and jump vs flying camera mode
-* `playerHeight` sets the height of the player above the ground (for `walkMode=True` only for now)
-* `jumpVelocity` sets the magnitude of the upward impulse introduced by a jump when `walkMode=True`
-* `playerGravity` set the graivty vector that impacts the player when `walkMode=True`
+* `playerHeight` sets the height of the player above the ground when "standing"
+* `crouchHeight` set the height of the player when crouched (set equal to `playerHeight` for no crouch)
+* `jumpVelocity` sets the magnitude of the upward impulse introduced by a jump (set to 0 for no jump)
+* `playerGravity` set the graivty vector that impacts the player
 * `shader` provides the (relative) path of an (optional) shader to run
 
 ```
 "horizontalFieldOfView":  103.0,            // Field of view (horizontal) for the user in degrees
 "moveRate": 0.0,                            // Player move rate (0 for no motion)
-"walkMode": false,                          // "Walk" emulation mode (uses collision and gravity)
-"jumpVelocity": 40.0,                       // Jump velocity for walk mode
-"playerHeight":  0.6,                       // Normal player height for walk mode
-"crouchHeight": 0.3,                        // Crouch height for walk mode
-"playerGravity": Vector3(0.0, -5.0, 0.0),   // Player gravity for walk mode
+"jumpVelocity": 40.0,                       // Jump velocity
+"playerHeight":  1.5,                       // Normal player height
+"crouchHeight": 0.8,                        // Crouch height
+"playerGravity": Vector3(0.0, -5.0, 0.0),   // Player gravity
 "shader": "[your shader].pix",              // Default is "" or no shader
 ```
 
