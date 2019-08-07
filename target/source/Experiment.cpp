@@ -127,7 +127,7 @@ bool Experiment::initPsychHelper()
 void Experiment::onInit() {
 	// Initialize presentation states
 	presentationState = PresentationState::initial;
-	m_feedbackMessage = "Aim at the target and shoot!";
+	m_feedbackMessage = "Click to spawn a target, then shoot it!";
 
 	m_config = m_app->experimentConfig;									// Setup config from app
 	m_hasSession = initPsychHelper();
@@ -401,7 +401,7 @@ void Experiment::onGraphics2D(RenderDevice* rd)
 
 	if (!m_feedbackMessage.empty()) {
 		m_app->outputFont->draw2D(rd, m_feedbackMessage.c_str(),
-			(Point2((float)m_app->window()->width() / 2 - 40, (float)m_app->window()->height() / 2 + 40) * scale).floor(), floor(20.0f * scale), Color3::yellow());
+			(Point2((float)m_app->window()->width() / 2, (float)m_app->window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
 	}
 }
 
