@@ -23,6 +23,8 @@ protected:
 	bool			m_crouched = false;					///< Is the player crouched?
 	float			m_health = 1.0f;					///< Player health storage
 
+	bool			m_inContact = false;				///< Is the player in contact w/ anything?
+
     PlayerEntity() {}
 
 #ifdef G3D_OSX
@@ -82,6 +84,7 @@ public:
 
 	void setCrouched(bool crouched);
 	bool crouched(void);
+	bool inContact(void);
 
 	float health(void);
 	bool doDamage(float damage);

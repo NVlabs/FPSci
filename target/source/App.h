@@ -168,6 +168,8 @@ protected:
 	/** Projectile if false         */
 	bool                            m_hitScan = true;					// NOTE: Projectile mode has not been implemented
 
+	RealTime						m_lastJumpTime = 0.0f;				///< Time of last jump
+
 	int                             m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
 	bool							m_sceneLoaded = false;				///< Indicates whether or not the scene has been loaded (prevents reload)
 	

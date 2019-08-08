@@ -1332,8 +1332,13 @@ void App::onUserInput(UserInput* ui) {
 				linear = linear.direction() * walkSpeed;
 			}
 			// Add jump here (if needed)
-			if (ui->keyPressed(GKey::SPACE)) {
-				linear += jumpVelocity;
+			float timeSinceLastJump = System::time() - m_lastJumpTime;
+			if (ui->keyPressed(GKey::SPACE) && timeSinceLastJump > experimentConfig.jumpInterval) {
+				// Allow jumping if jumpTouch = False or if jumpTouch = True and the player is in contact w/ the map
+				if (!experimentConfig.jumpTouch || player->inContact()) {
+					linear += jumpVelocity;
+					m_lastJumpTime = System::time();
+				}
 			}
 			else {
 				linear += Vector3(0, player->desiredOSVelocity().y, 0);

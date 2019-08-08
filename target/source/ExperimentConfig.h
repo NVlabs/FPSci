@@ -688,6 +688,8 @@ public:
 	float playerHeight = 1.5f;						///< Height for the player view (in walk mode)
 	float crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
 	float jumpVelocity = 40.0f;						///< Jump velocity for the player
+	float jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
+	bool jumpTouch = true;							///< Require the player to be touch a surface to jump?
 	Vector3 playerGravity = Vector3(0.0f, -5.0f, 0.0f);	///< Gravity vector
 
 	// HUD parameters
@@ -798,6 +800,8 @@ public:
 			reader.getIfPresent("playerHeight", playerHeight);
 			reader.getIfPresent("crouchHeight", crouchHeight);
 			reader.getIfPresent("jumpVelocity", jumpVelocity);
+			reader.getIfPresent("jumpInterval", jumpInterval);
+			reader.getIfPresent("jumpTouch", jumpTouch);
 			reader.getIfPresent("playerGravity", playerGravity);
 			
 			reader.getIfPresent("weapon", weapon);

@@ -45,6 +45,8 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `playerHeight` sets the height of the player above the ground when "standing"
 * `crouchHeight` set the height of the player when crouched (set equal to `playerHeight` for no crouch)
 * `jumpVelocity` sets the magnitude of the upward impulse introduced by a jump (set to 0 for no jump)
+* `jumpInterval` sets the minimum time between player jumps in seconds (set to 0 for no limiting)
+* `jumpTouch` sets whether or not the player needs to be in contact w/ a surface to jump
 * `playerGravity` set the graivty vector that impacts the player
 * `shader` provides the (relative) path of an (optional) shader to run
 
@@ -52,6 +54,8 @@ There are a number of inputs to experiment config. The following is a descriptio
 "horizontalFieldOfView":  103.0,            // Field of view (horizontal) for the user in degrees
 "moveRate": 0.0,                            // Player move rate (0 for no motion)
 "jumpVelocity": 40.0,                       // Jump velocity
+"jumpInterval": 0.5,                        // Minimum jump interval
+"jumpTouch": true,                          // Require touch for jump
 "playerHeight":  1.5,                       // Normal player height
 "crouchHeight": 0.8,                        // Crouch height
 "playerGravity": Vector3(0.0, -5.0, 0.0),   // Player gravity

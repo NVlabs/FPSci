@@ -66,6 +66,10 @@ bool PlayerEntity::crouched(void) {
 	return m_crouched;
 }
 
+bool PlayerEntity::inContact(void) {
+	return m_inContact;
+}
+
 float PlayerEntity::heightOffset(float height) {
 	return height - m_collisionProxySphere.radius;
 }
@@ -230,7 +234,7 @@ void PlayerEntity::slideMove(SimTime timeLeft) {
         Vector3 collisionNormal;
         Point3 collisionPoint;
 
-        const bool collided = 
+		m_inContact =
             findFirstCollision(triArray, velocity, stepTime, collisionNormal, collisionPoint);
 #       ifdef TRACE_COLLISIONS
             debugPrintf("  stepTime = %f\n", stepTime);
@@ -242,7 +246,7 @@ void PlayerEntity::slideMove(SimTime timeLeft) {
         // Early out of loop when debugging
         //if (! runSimulation) { return; }
         
-        if (collided) {
+        if (m_inContact) {
 #           ifdef TRACE_COLLISIONS
                 debugPrintf("  Collision C=%s, n=%s; position after=%s)\n", 
                             collisionPoint.toString().c_str(),
