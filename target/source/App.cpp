@@ -430,11 +430,26 @@ void App::loadModels() {
 
 	// Scale the models into the m_targetModel table
 	for (String id : toBuild.getKeys()) {
+		// Get the bounding box to scale to size rather than arbitrary factor
+		Any spec = toBuild.get(id);
+		shared_ptr<ArticulatedModel> size_model = ArticulatedModel::create(ArticulatedModel::Specification(spec));
+		Array<shared_ptr<Surface>> arrayModel;
+		ArticulatedModel::Pose pose;
+		size_model->pose(arrayModel, CFrame(), CFrame(), nullptr, &pose, &pose, Surface::ExpressiveLightScatteringProperties());
+		// Get the box and extents here
+		AABox bbox;
+		size_model->getBoundingBox(bbox);
+		Vector3 extent = bbox.extent();
+		logPrintf("%20s bounding box: [%2.2f, %2.2f, %2.2f]\n", id.c_str(), extent[0], extent[1], extent[2]);
+
+		// Setup scale so that default model is 1m across
+		float default_scale = 1.0f / extent[0];
+
 		Array<shared_ptr<ArticulatedModel>> models;
 		for (int i = 0; i <= m_modelScaleCount; ++i) {
 			const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
 			Any spec = toBuild.get(id);
-			spec.set("scale", scale);
+			spec.set("scale", scale*default_scale);
 			models.push(ArticulatedModel::create(spec));
 		}
 		m_targetModels.set(id, models);

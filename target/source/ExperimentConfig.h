@@ -523,7 +523,7 @@ public:
 	Array<float> speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
 	Array<float> eccH = { 5.0f, 15.0f };					///< Range of initial horizontal eccentricity
 	Array<float> eccV = { 0.0f, 2.0f };						///< Range of initial vertical eccentricity
-	Array<float> visualSize = { 0.02f, 0.02f };				///< Visual size of the target (in degrees)
+	Array<float> visualSize = { 0.2f, 0.2f };				///< Visual size of the target (in degrees)
 	bool jumpEnabled = false;								///< Flag indicating whether the target jumps
 	Array<float> jumpPeriod = { 2.0f, 2.0f };				///< Range of time period between jumps in seconds
 	Array<float> jumpSpeed = { 2.0f, 5.5f };				///< Range of jump speeds in meters/s
