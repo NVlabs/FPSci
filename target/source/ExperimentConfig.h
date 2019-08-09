@@ -542,7 +542,6 @@ public:
 					maxNormalWeldAngleDegrees = 0;
 					maxSmoothAngleDegrees = 0;
 		};
-		scale = 0.25;
 		});
 
 	//Array<Vector3> path;		// Unused, to dictate a motion path...
