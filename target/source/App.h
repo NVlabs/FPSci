@@ -137,6 +137,10 @@ protected:
 	float m_waypointTime = 0.0;				///< Accumulate time
 	
 
+	bool m_recordMotion = false;			///< Player motion recording
+	int m_recordMode = 0;					///< Recording mode
+	float m_recordInterval = 0.1;			///< Recording interval (either time or distance)
+	RealTime m_recordStart = nan();			///< Start time for recording
 	const Color4 m_waypointColor = Color4(0.0, 1.0, 0.0, 0.7);	///< Color for waypoint visualization
 	const float m_waypointRad = 0.1;
 	const float m_waypointConnectRad = 0.02;
@@ -223,6 +227,7 @@ public:
 	void setReticle(int r);
 
 	void dropWaypoint();
+	void dropWaypoint(Destination dest);
 	void removeLastWaypoint();
 	void clearWaypoints();
 	void exportWaypoints();

@@ -497,6 +497,11 @@ void App::makeGUI() {
 		debugPane->addButton("Remove last waypoint", this, &App::removeLastWaypoint);
 		debugPane->addButton("Clear waypoints", this, &App::clearWaypoints);
 		debugPane->addButton("Export waypoints", this, &App::exportWaypoints);
+		debugPane->addCheckBox("Record motion", &m_recordMotion);
+		debugPane->addDropDownList("Mode",
+			Array<GuiText> {GuiText("Fixed Distance"), GuiText("Fixed Time")},
+			&m_recordMode);
+		debugPane->addNumberBox("Interval", &m_recordInterval);
 	} debugPane->endRow();
 
 
@@ -530,24 +535,28 @@ void App::dropWaypoint(void) {
 	// Create the destination
 	Point3 xyz = activeCamera()->frame().translation;
 	Destination dest = Destination(xyz, m_waypointTime);
-	
+	dropWaypoint(dest);
+	m_waypointTime += m_waypointDelay;
+}
+
+void App::dropWaypoint(Destination dest) {
 	// If this isn't the first point, connect it to the last one with a line
 	if (m_waypoints.size() > 0) {
 		Point3 lastPos = m_waypoints.last().position;
-		Vector3 vector = xyz - lastPos;
-		shared_ptr<CylinderShape> shape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(lastPos, xyz, m_waypointConnectRad)));
+		Vector3 vector = dest.position - lastPos;
+		shared_ptr<CylinderShape> shape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(lastPos, dest.position, m_waypointConnectRad)));
 		DebugID arrowID = debugDraw(shape, finf(), m_waypointColor, Color4::clear());
 		m_arrowIDs.append(arrowID);
 	}
 
-	// Draw the waypoint
-	DebugID pointID = debugDraw(Sphere(xyz, m_waypointRad), finf(), m_waypointColor, Color4::clear());
-	
+	// Draw the waypoint (as a sphere)
+	DebugID pointID = debugDraw(Sphere(dest.position, m_waypointRad), finf(), m_waypointColor, Color4::clear());
+
 	// Update the arrays and time tracking
 	m_waypoints.append(dest);
 	m_waypointIDs.append(pointID);
-	m_waypointTime += m_waypointDelay;
 
+	// Print to the log
 	logPrintf("Dropped waypoint... Time: %f, XYZ:[%f,%f,%f]\n", dest.time, dest.position[0], dest.position[1], dest.position[2]);
 }
 
@@ -843,8 +852,8 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 		rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
 	}
 
-	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = ! emergencyTurbo;
-	activeCamera()->filmSettings().setAntialiasingEnabled(! emergencyTurbo);
+	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !emergencyTurbo;
+	activeCamera()->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
 	activeCamera()->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
 
 	GApp::onGraphics3D(rd, surface);
@@ -863,7 +872,7 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 Point2 App::getViewDirection()
 {   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.
 	Point3 view_cartesian = activeCamera()->frame().lookVector();
-	float az = atan2(- view_cartesian.z, - view_cartesian.x) * 180 / pif();
+	float az = atan2(-view_cartesian.z, -view_cartesian.x) * 180 / pif();
 	float el = atan2(view_cartesian.y, sqrtf(view_cartesian.x * view_cartesian.x + view_cartesian.z * view_cartesian.z)) * 180 / pif();
 	return Point2(az, el);
 }
@@ -883,10 +892,10 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	if (scene()) { scene()->onSimulation(sdt); }
 	if (scene()) { scene()->onSimulation(sdt); }
 
-    // make sure mouse sensitivity is set right
-    if (m_userSettingsMode) {
-        updateMouseSensitivity();
-    }
+	// make sure mouse sensitivity is set right
+	if (m_userSettingsMode) {
+		updateMouseSensitivity();
+	}
 
 	const RealTime now = System::time();
 	for (int p = 0; p < projectileArray.size(); ++p) {
@@ -925,6 +934,34 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		c.translation += Vector3(0, height, 0);		// Set the player to the right height
 		c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), p->headTilt());
 		activeCamera()->setFrame(c);
+	}
+
+	// Handle player motion recording here (if we are doing so w/ playMode=False)
+	if (m_recordMotion) {
+		// Get the start time here if needed (this is the first iteration after enable)
+		if (isnan(m_recordStart)) {
+			m_recordStart = now;
+			dropWaypoint(Destination(p->frame().translation, 0.0f));
+		}
+		else {
+			RealTime t = now - m_recordStart;
+			float distance = (m_waypoints.last().position - p->frame().translation).magnitude();
+			switch (m_recordMode) {
+			case 0: // This is fixed distance mode, check if we've moved "far enough" to drop a new waypoint
+				if (distance > m_recordInterval) {
+					dropWaypoint(Destination(p->frame().translation, t));
+				}
+				break;
+			case 1: // This is fixed time mode, check if we are beyond the sampling interval and need a new waypoint
+				if ((t - m_waypoints.last().time) > m_recordInterval) {
+					dropWaypoint(Destination(p->frame().translation, t));
+				}
+				break;
+			}
+		}
+	}
+	else {
+		m_recordStart = nan();
 	}
 
 	// Example GUI dynamic layout code.  Resize the debugWindow to fill
