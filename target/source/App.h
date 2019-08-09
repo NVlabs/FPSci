@@ -134,7 +134,6 @@ protected:
 	Array<DebugID> m_waypointIDs;			///< Storage for IDs for point spheres
 	Array<DebugID> m_arrowIDs;				///< Storage for IDs for connecting arrows	
 	float m_waypointDelay = 1.0;			///< Store the delay between way points here
-	float m_waypointTime = 0.0;				///< Accumulate time
 	
 
 	bool m_recordMotion = false;			///< Player motion recording
@@ -231,6 +230,8 @@ public:
 	void removeLastWaypoint();
 	void clearWaypoints();
 	void exportWaypoints();
+	void loadWaypoints();
+	void setWaypoints(Array<Destination> waypoints);
 
 	/** Increment the current reticle index */
 	void nextReticle() {

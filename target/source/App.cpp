@@ -502,6 +502,7 @@ void App::makeGUI() {
 			Array<GuiText> {GuiText("Fixed Distance"), GuiText("Fixed Time")},
 			&m_recordMode);
 		debugPane->addNumberBox("Interval", &m_recordInterval);
+		debugPane->addButton("Load path", this, &App::loadWaypoints);
 	} debugPane->endRow();
 
 
@@ -531,14 +532,16 @@ void App::makeGUI() {
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 }
 
+/** Drop a single waypoint at the current position */
 void App::dropWaypoint(void) {
 	// Create the destination
 	Point3 xyz = activeCamera()->frame().translation;
-	Destination dest = Destination(xyz, m_waypointTime);
+	SimTime time = m_waypoints.size() == 0 ? 0.0 : m_waypoints.last().time + m_waypointDelay;
+	Destination dest = Destination(xyz, time);
 	dropWaypoint(dest);
-	m_waypointTime += m_waypointDelay;
 }
 
+/** Drop a single waypoint at the destination provided */
 void App::dropWaypoint(Destination dest) {
 	// If this isn't the first point, connect it to the last one with a line
 	if (m_waypoints.size() > 0) {
@@ -560,12 +563,23 @@ void App::dropWaypoint(Destination dest) {
 	logPrintf("Dropped waypoint... Time: %f, XYZ:[%f,%f,%f]\n", dest.time, dest.position[0], dest.position[1], dest.position[2]);
 }
 
+/** Clear just the last waypoint */
 void App::removeLastWaypoint(void) {
-	m_waypoints.remove(m_waypoints.size() - 1);
-	removeDebugShape(m_waypointIDs.last());
-	m_waypointIDs.remove(m_waypointIDs.size() - 1);
+	if (m_waypoints.size() > 0) {
+		// Remove the actual waypoint from the array
+		m_waypoints.remove(m_waypoints.size() - 1);
+		// Clear the drawn sphere
+		removeDebugShape(m_waypointIDs.last());
+		m_waypointIDs.remove(m_waypointIDs.size() - 1);
+		// Clear the connecting arrow
+		if (m_arrowIDs.size() > 0) {
+			removeDebugShape(m_arrowIDs.last());
+			m_arrowIDs.remove(m_arrowIDs.size() - 1);
+		}
+	}
 }
 
+/** Clear all waypoints */
 void App::clearWaypoints(void) {
 	m_waypoints.clear();
 	for (DebugID id : m_waypointIDs) {
@@ -578,12 +592,36 @@ void App::clearWaypoints(void) {
 	m_arrowIDs.clear();
 }
 
+/** Export waypoints to a .Any file */
 void App::exportWaypoints(void) {
 	TargetConfig t = TargetConfig();
 	t.id = "test";
 	t.destSpace = "world";
 	t.destinations = m_waypoints;
-	t.toAny().save("target.Any");
+	t.toAny().save("target.Any");		// Use a default name for now
+}
+
+/** Load waypoints from a .Any file */
+void App::loadWaypoints(void) {
+	String fname;
+	bool gotName = FileDialog::getFilename(fname, "Any", false);
+	if (!gotName) return;
+
+	m_recordMotion = false;		// Stop recording (if doing so)
+	clearWaypoints();			// Clear the current waypoints
+
+	TargetConfig t = TargetConfig::load(fname);	// Load the target config
+	if (t.destinations.size() > 0) {
+		setWaypoints(t.destinations);
+	}
+}
+
+/** Set/visualize the input waypoint array */
+void App::setWaypoints(Array<Destination> waypoints) {
+	m_waypoints = waypoints;
+	for (Destination d : waypoints) {
+		dropWaypoint(d);
+	}
 }
 
 void App::userSaveButtonPress(void) {

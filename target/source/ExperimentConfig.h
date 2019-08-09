@@ -602,6 +602,10 @@ public:
 
 		return a;
 	};
+
+	static TargetConfig load(String filename) {
+		return TargetConfig(Any::fromFile(System::findDataFile(filename)));
+	}
 };
 
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */
