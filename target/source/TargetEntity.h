@@ -1,6 +1,9 @@
 #pragma once
 #include <G3D/G3D.h>
 
+//#define DRAW_BOUNDING_SPHERES	1		// Uncomment this to draw bounding spheres (useful for target sizing)
+#define BOUNDING_SPHERE_RADIUS	0.5		///< Use a 0.5m radius for sizing here
+
 struct Destination{
 public:
 	Point3 position = Point3(0,0,0);

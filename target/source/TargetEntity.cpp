@@ -104,9 +104,12 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	}
 	
 	Point3 delta = currDest.position - nextDest.position; 	// Get the delta vector to move along
+	setFrame((prog*delta) + currDest.position + offset);	// Set the new positions
 
-	// Set the new position
-	setFrame((prog*delta) + currDest.position + offset);
+#ifdef DRAW_BOUNDING_SPHERES
+	// Draw a 1m sphere at this position
+	debugDraw(Sphere(m_frame, BOUNDING_SPHERE_RADIUS), 0.0f, Color4::clear(), Color3::black());
+#endif
 }
 
 shared_ptr<Entity> FlyingEntity::create
@@ -292,6 +295,10 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			m_frame.translation = m_orbitCenter + (cos(angleChange) * U + sin(angleChange) * V) * radius;
 		}
 	}
+#ifdef DRAW_BOUNDING_SPHERES
+	// Draw a 1m sphere at this position
+	debugDraw(Sphere(m_frame.translation, BOUNDING_SPHERE_RADIUS), 0.0f, Color4::clear(), Color3::black());
+#endif
 }
 
 
@@ -521,5 +528,9 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		m_jumpTimer -= t;
 		m_motionChangeTimer -= t;
 	}
+#ifdef DRAW_BOUNDING_SPHERES
+	// Draw a 1m sphere at this position
+	debugDraw(Sphere(m_frame.translation, BOUNDING_SPHERE_RADIUS), 0.0f, Color4::clear(), Color3::black());
+#endif
 }
 
