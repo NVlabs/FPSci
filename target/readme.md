@@ -12,6 +12,8 @@ A `session` is the next level of task grouping in the application. A session con
 
 A `trial` is the lowest level grouping of task in the application. From a user-perspective the trial represents a single target being spawned, traveling, and either being shot or missed within a given time period. In specifying trials the developer enters trial groups, which are sets of trials specified using a trial type id and count for one or multiple trial types.
 
+For more general information related to `abstract-fps` check out the [documentation directory](./documentation).
+
 # Config `.Any` Files
 As mentioned above a variety of `.Any` files (similar to JSON file format) are used to control the behavior of the application. These files are as follows:
 
