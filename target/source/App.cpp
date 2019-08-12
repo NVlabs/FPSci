@@ -496,13 +496,20 @@ void App::makeGUI() {
 		debugPane->addNumberBox("Delay", &m_waypointDelay, "s");
 		debugPane->addButton("Remove last waypoint", this, &App::removeLastWaypoint);
 		debugPane->addButton("Clear waypoints", this, &App::clearWaypoints);
-		debugPane->addButton("Export waypoints", this, &App::exportWaypoints);
+		// Load and save
+		debugPane->addButton("Load path", this, &App::loadWaypoints);
+		debugPane->addButton("Save path", this, &App::exportWaypoints);
+		debugPane->addTextBox("Filename", &m_waypointFile);
+		// Record player path
 		debugPane->addCheckBox("Record motion", &m_recordMotion);
 		debugPane->addDropDownList("Mode",
 			Array<GuiText> {GuiText("Fixed Distance"), GuiText("Fixed Time")},
 			&m_recordMode);
 		debugPane->addNumberBox("Interval", &m_recordInterval);
-		debugPane->addButton("Load path", this, &App::loadWaypoints);
+		debugPane->addNumberBox("Time Scale", &m_recordTimeScaling);
+		// Preview waypoints
+		debugPane->addButton("Preview", this, &App::previewWaypoints);
+		debugPane->addButton("Stop Preview", this, &App::stopPreview);
 	} debugPane->endRow();
 
 
@@ -532,7 +539,6 @@ void App::makeGUI() {
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
 }
 
-/** Drop a single waypoint at the current position */
 void App::dropWaypoint(void) {
 	// Create the destination
 	Point3 xyz = activeCamera()->frame().translation;
@@ -541,7 +547,6 @@ void App::dropWaypoint(void) {
 	dropWaypoint(dest);
 }
 
-/** Drop a single waypoint at the destination provided */
 void App::dropWaypoint(Destination dest) {
 	// If this isn't the first point, connect it to the last one with a line
 	if (m_waypoints.size() > 0) {
@@ -563,7 +568,6 @@ void App::dropWaypoint(Destination dest) {
 	logPrintf("Dropped waypoint... Time: %f, XYZ:[%f,%f,%f]\n", dest.time, dest.position[0], dest.position[1], dest.position[2]);
 }
 
-/** Clear just the last waypoint */
 void App::removeLastWaypoint(void) {
 	if (m_waypoints.size() > 0) {
 		// Remove the actual waypoint from the array
@@ -579,7 +583,6 @@ void App::removeLastWaypoint(void) {
 	}
 }
 
-/** Clear all waypoints */
 void App::clearWaypoints(void) {
 	m_waypoints.clear();
 	for (DebugID id : m_waypointIDs) {
@@ -592,16 +595,14 @@ void App::clearWaypoints(void) {
 	m_arrowIDs.clear();
 }
 
-/** Export waypoints to a .Any file */
 void App::exportWaypoints(void) {
 	TargetConfig t = TargetConfig();
 	t.id = "test";
 	t.destSpace = "world";
 	t.destinations = m_waypoints;
-	t.toAny().save("target.Any");		// Use a default name for now
+	t.toAny().save(m_waypointFile);		// Save the file
 }
 
-/** Load waypoints from a .Any file */
 void App::loadWaypoints(void) {
 	String fname;
 	bool gotName = FileDialog::getFilename(fname, "Any", false);
@@ -616,11 +617,30 @@ void App::loadWaypoints(void) {
 	}
 }
 
-/** Set/visualize the input waypoint array */
 void App::setWaypoints(Array<Destination> waypoints) {
 	m_waypoints = waypoints;
 	for (Destination d : waypoints) {
 		dropWaypoint(d);
+	}
+}
+
+void App::previewWaypoints(void) {
+	// Check if a preview target exists, if so remove it
+	if (m_previewIdx >= 0) {
+		destroyTarget(m_previewIdx);
+		m_previewIdx = -1;
+	}
+	if (m_waypoints.size() > 1) {
+		// Create a new target and set its index
+		spawnDestTarget(Vector3::zero(), m_waypoints, 1.0, Color3::white(), "dummy", "preview");
+		m_previewIdx = targetArray.size() - 1;
+	}
+}
+
+void App::stopPreview(void) {
+	if (m_previewIdx >= 0) {			// Check if a preview target exists
+		destroyTarget(m_previewIdx);	// Destory the target
+		m_previewIdx = -1;				// Use -1 value to indicate no preview present
 	}
 }
 
@@ -979,20 +999,25 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		// Get the start time here if needed (this is the first iteration after enable)
 		if (isnan(m_recordStart)) {
 			m_recordStart = now;
+			clearWaypoints();		// Just clear the waypoints for now
 			dropWaypoint(Destination(p->frame().translation, 0.0f));
 		}
 		else {
-			RealTime t = now - m_recordStart;
+			float t = now - m_recordStart;
 			float distance = (m_waypoints.last().position - p->frame().translation).magnitude();
 			switch (m_recordMode) {
 			case 0: // This is fixed distance mode, check if we've moved "far enough" to drop a new waypoint
 				if (distance > m_recordInterval) {
+					// Use the m_waypointDelay to meter out time when in constant distance mode
+					t = m_waypoints.size() * m_waypointDelay;
 					dropWaypoint(Destination(p->frame().translation, t));
 				}
 				break;
 			case 1: // This is fixed time mode, check if we are beyond the sampling interval and need a new waypoint
-				if ((t - m_waypoints.last().time) > m_recordInterval) {
-					dropWaypoint(Destination(p->frame().translation, t));
+				if ((t - m_lastRecordTime) > m_recordInterval) {
+					m_lastRecordTime = t;
+					// Apply the recording time-scaling here (after checking for record interval)
+					dropWaypoint(Destination(p->frame().translation, t/m_recordTimeScaling));
 				}
 				break;
 			}
@@ -1000,6 +1025,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 	else {
 		m_recordStart = nan();
+		m_lastRecordTime = 0.0;
 	}
 
 	// Example GUI dynamic layout code.  Resize the debugWindow to fill

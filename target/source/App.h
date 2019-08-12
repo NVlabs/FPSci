@@ -133,16 +133,23 @@ protected:
 	Array<Destination> m_waypoints;			///< Store way points for path creation here
 	Array<DebugID> m_waypointIDs;			///< Storage for IDs for point spheres
 	Array<DebugID> m_arrowIDs;				///< Storage for IDs for connecting arrows	
-	float m_waypointDelay = 1.0;			///< Store the delay between way points here
+	float m_waypointDelay = 0.5;			///< Store the delay between way points here
 	
-
 	bool m_recordMotion = false;			///< Player motion recording
 	int m_recordMode = 0;					///< Recording mode
 	float m_recordInterval = 0.1;			///< Recording interval (either time or distance)
 	RealTime m_recordStart = nan();			///< Start time for recording
+	int m_previewIdx = -1;					///< Index of the preview target in the targetArray
+	float m_lastRecordTime = 0.0;			///< Time storage for recording
+	float m_recordTimeScaling = 1.0;		///< Time scaling for time-based recording
+	String m_waypointFile = "target.Any";	///< Filename for save/load
+	
+	// Internal controls for waypoint visualization
 	const Color4 m_waypointColor = Color4(0.0, 1.0, 0.0, 0.7);	///< Color for waypoint visualization
-	const float m_waypointRad = 0.1;
-	const float m_waypointConnectRad = 0.02;
+	const float m_waypointRad = 0.1;							///< Waypoint sphere radius
+	const float m_waypointConnectRad = 0.02;					///< Waypoint connecting rod radius
+	
+
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	//Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models
@@ -225,13 +232,24 @@ public:
 	/** Call to change the reticle. */
 	void setReticle(int r);
 
+	/** Drop a single waypoint at the current position */
 	void dropWaypoint();
+	/** Drop a single waypoint at the destination provided */
 	void dropWaypoint(Destination dest);
+	/** Clear just the last waypoint */
 	void removeLastWaypoint();
+	/** Clear all waypoints */
 	void clearWaypoints();
+	/** Export waypoints to a .Any file */
 	void exportWaypoints();
+	/** Load waypoints from a .Any file */
 	void loadWaypoints();
+	/** Set/visualize the input waypoint array */
 	void setWaypoints(Array<Destination> waypoints);
+	/** Preview the waypoints with a moving target */
+	void previewWaypoints();
+	/** Stop the preview */
+	void stopPreview();
 
 	/** Increment the current reticle index */
 	void nextReticle() {
