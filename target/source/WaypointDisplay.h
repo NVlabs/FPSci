@@ -30,7 +30,6 @@ protected:
 	class TreeDisplay : public GuiControl {
 	public:
 		shared_ptr<GFont> m_icon;
-		size_t m_selected;
 		int m_selectedIdx = -1;
 		WaypointDisplayConfig m_config;
 		shared_ptr<Array<Destination>> m_waypoints;
@@ -50,6 +49,11 @@ public:
 	int getSelected() {
 		return m_treeDisplay->m_selectedIdx;
 	}
+
+	void setSelected(int idx) {
+		m_treeDisplay->m_selectedIdx = idx;
+	}
+
 	virtual void setManager(WidgetManager* manager);
 	static shared_ptr<WaypointDisplay> create(const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints);
 };

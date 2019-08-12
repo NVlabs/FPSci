@@ -6,13 +6,11 @@ bool WaypointDisplay::TreeDisplay::onEvent(const GEvent & event) {
 	}
 	WaypointDisplay* window = dynamic_cast<WaypointDisplay*>(this->window());
 	Vector2 mousePositionDeBumped = event.mousePosition() - Vector2(window->m_scrollPane->horizontalOffset(), window->m_scrollPane->verticalOffset());
-	m_selectedIdx = -1;
 	if (event.type == GEventType::MOUSE_BUTTON_DOWN && (m_rect.contains(mousePositionDeBumped))) {
 		float y = 0;
 		for (int i = 0; i < m_waypoints->size(); ++i) {
 			Destination d = (*m_waypoints)[i];
 			if (Rect2D::xyxy(m_config.tree_indent, y, float(m_config.tree_display_width_px), y + m_config.tree_height).contains(event.mousePosition())) {
-					m_selected = d.hash();
 					m_selectedIdx = i;
 					return true;
 			}
@@ -26,7 +24,6 @@ WaypointDisplay::TreeDisplay::TreeDisplay(GuiWindow* w, WaypointDisplayConfig co
 	m_config = config;
 	m_waypoints = waypoints;
 	m_icon = GFont::fromFile(System::findDataFile("icon.fnt"));
-	m_selected = -1;
 }
 
 void WaypointDisplay::TreeDisplay::render(RenderDevice* rd, const shared_ptr<GuiTheme>& theme, bool ancestorsEnabled) const {
@@ -35,7 +32,7 @@ void WaypointDisplay::TreeDisplay::render(RenderDevice* rd, const shared_ptr<Gui
 	for (int i = 0; i < m_waypoints->size(); i++) {
 		Destination d = (*m_waypoints)[i];
 		// Handle selection here
-		if (m_selected == d.hash()) {
+		if (i == m_selectedIdx) {
 			theme->renderSelection(Rect2D::xywh(0, y, float(m_config.tree_display_width_px), m_config.tree_height));
 		}
 		// Draw the fields

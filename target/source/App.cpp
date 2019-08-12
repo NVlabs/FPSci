@@ -1009,12 +1009,12 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// Handle developer mode features here
 	if (!startupConfig.playMode) {
-		// Handle highlighting
+		// Handle highlighting for selected target
 		int selIdx = m_waypointWindow->getSelected();
-		if (m_waypointWindow->visible() && selIdx >= 0) {
+		if (selIdx >= 0) {
 			Destination d = m_waypoints[selIdx];
 			removeDebugShape(m_highlighted);
-			m_highlighted = debugDraw(Sphere(d.position, m_waypointRad*1.1), finf(), m_highlightColor, Color4::clear());
+			m_highlighted = debugDraw(Sphere(d.position, m_waypointRad*1.1), finf(), Color4::clear(), m_highlightColor);
 		}
 
 		// Handle player motion recording here (if we are doing so w/ playMode=False)
@@ -1536,6 +1536,22 @@ void App::onUserInput(UserInput* ui) {
 		else {
 			ex->accumulatePlayerAction("non-task"); // not happening in task state.
 		}
+
+		// Check for developer mode editing here
+		if (!startupConfig.playMode) {
+			const shared_ptr<Camera> cam = activeCamera();
+			// Crude hit-scane here w/ spheres
+			for (int i = 0; i < m_waypoints.size(); i++) {
+				Sphere pt = Sphere(m_waypoints[i].position, m_waypointRad);
+				float distance = (m_waypoints[i].position - cam->frame().translation).magnitude();	// Get distance to the target
+				const Point3 center = cam->frame().translation + cam->frame().lookRay().direction()*distance;
+					Sphere probe = Sphere(center, m_waypointRad / 2);
+				if (pt.intersects(probe)) {
+					m_waypointWindow->setSelected(i);			
+				}
+			}
+		}
+
 		haveReleased = false;					// Make it known we are no longer in released state
 		m_buttonUp = false;
 	}
