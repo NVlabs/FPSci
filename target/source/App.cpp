@@ -2,6 +2,7 @@
 #include "App.h"
 #include "TargetEntity.h"
 #include "PlayerEntity.h"
+#include "WaypointDisplay.h"
 
 // Scale and offset for target
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
@@ -457,6 +458,12 @@ void App::makeGUI() {
 	developerWindow->cameraControlWindow->setVisible(!startupConfig.playMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
 
+	// Setup the config
+	WaypointDisplayConfig config = WaypointDisplayConfig();
+	m_waypointWindow = WaypointDisplay::create(GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm")), config, (shared_ptr<Array<Destination>>)&m_waypoints);
+	m_waypointWindow->setVisible(false);
+	this->addWidget(m_waypointWindow);
+
 	const float SLIDER_SPACING = 35;
 	debugPane->beginRow(); {
 		debugPane->addCheckBox("Hitscan", &m_hitScan);
@@ -510,6 +517,8 @@ void App::makeGUI() {
 		// Preview waypoints
 		debugPane->addButton("Preview", this, &App::previewWaypoints);
 		debugPane->addButton("Stop Preview", this, &App::stopPreview);
+		// Open the manager pane
+		debugPane->addButton("Show Manager", this, &App::showWaypointManager);
 	} debugPane->endRow();
 
 
@@ -642,6 +651,10 @@ void App::stopPreview(void) {
 		destroyTarget(m_previewIdx);	// Destory the target
 		m_previewIdx = -1;				// Use -1 value to indicate no preview present
 	}
+}
+
+void App::showWaypointManager() {
+	m_waypointWindow->setVisible(true);
 }
 
 void App::userSaveButtonPress(void) {
@@ -994,44 +1007,55 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		activeCamera()->setFrame(c);
 	}
 
-	// Handle player motion recording here (if we are doing so w/ playMode=False)
-	if (m_recordMotion) {
-		// Get the start time here if needed (this is the first iteration after enable)
-		if (isnan(m_recordStart)) {
-			m_recordStart = now;
-			clearWaypoints();		// Just clear the waypoints for now
-			dropWaypoint(Destination(p->frame().translation, 0.0f));
+	// Handle developer mode features here
+	if (!startupConfig.playMode) {
+		// Handle highlighting
+		int selIdx = m_waypointWindow->getSelected();
+		if (m_waypointWindow->visible() && selIdx >= 0) {
+			Destination d = m_waypoints[selIdx];
+			removeDebugShape(m_highlighted);
+			m_highlighted = debugDraw(Sphere(d.position, m_waypointRad*1.1), finf(), m_highlightColor, Color4::clear());
 		}
-		else {
-			float t = now - m_recordStart;
-			float distance = (m_waypoints.last().position - p->frame().translation).magnitude();
-			switch (m_recordMode) {
-			case 0: // This is fixed distance mode, check if we've moved "far enough" to drop a new waypoint
-				if (distance > m_recordInterval) {
-					// Use the m_waypointDelay to meter out time when in constant distance mode
-					t = m_waypoints.size() * m_waypointDelay;
-					dropWaypoint(Destination(p->frame().translation, t));
+
+		// Handle player motion recording here (if we are doing so w/ playMode=False)
+		if (m_recordMotion) {
+			// Get the start time here if needed (this is the first iteration after enable)
+			if (isnan(m_recordStart)) {
+				m_recordStart = now;
+				clearWaypoints();		// Just clear the waypoints for now
+				dropWaypoint(Destination(p->frame().translation, 0.0f));
+			}
+			else {
+				float t = now - m_recordStart;
+				float distance = (m_waypoints.last().position - p->frame().translation).magnitude();
+				switch (m_recordMode) {
+				case 0: // This is fixed distance mode, check if we've moved "far enough" to drop a new waypoint
+					if (distance > m_recordInterval) {
+						// Use the m_waypointDelay to meter out time when in constant distance mode
+						t = m_waypoints.size() * m_waypointDelay;
+						dropWaypoint(Destination(p->frame().translation, t));
+					}
+					break;
+				case 1: // This is fixed time mode, check if we are beyond the sampling interval and need a new waypoint
+					if ((t - m_lastRecordTime) > m_recordInterval) {
+						m_lastRecordTime = t;
+						// Apply the recording time-scaling here (after checking for record interval)
+						dropWaypoint(Destination(p->frame().translation, t / m_recordTimeScaling));
+					}
+					break;
 				}
-				break;
-			case 1: // This is fixed time mode, check if we are beyond the sampling interval and need a new waypoint
-				if ((t - m_lastRecordTime) > m_recordInterval) {
-					m_lastRecordTime = t;
-					// Apply the recording time-scaling here (after checking for record interval)
-					dropWaypoint(Destination(p->frame().translation, t/m_recordTimeScaling));
-				}
-				break;
 			}
 		}
-	}
-	else {
-		m_recordStart = nan();
-		m_lastRecordTime = 0.0;
-	}
+		else {
+			m_recordStart = nan();
+			m_lastRecordTime = 0.0;
+		}
 
-	// Example GUI dynamic layout code.  Resize the debugWindow to fill
-	// the screen horizontally.
-	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
-
+		// Example GUI dynamic layout code.  Resize the debugWindow to fill
+		// the screen horizontally.
+		debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+	}
+	   
 	// Check for completed session
 	if (ex->moveOn) {
 		String nextSess = userStatusTable.getNextSession(userTable.currentUser);

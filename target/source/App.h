@@ -16,6 +16,7 @@
 #include "Logger.h"
 #include "PhysicsScene.h"
 #include <chrono>
+#include "WaypointDisplay.h"
 
 class FlyingEntity;
 class JumpingEntity;
@@ -134,7 +135,10 @@ protected:
 	Array<DebugID> m_waypointIDs;			///< Storage for IDs for point spheres
 	Array<DebugID> m_arrowIDs;				///< Storage for IDs for connecting arrows	
 	float m_waypointDelay = 0.5;			///< Store the delay between way points here
-	
+	shared_ptr<WaypointDisplay> m_waypointWindow;
+	DebugID m_highlighted;					///< ID for the waypoint window highlighter
+
+
 	bool m_recordMotion = false;			///< Player motion recording
 	int m_recordMode = 0;					///< Recording mode
 	float m_recordInterval = 0.1;			///< Recording interval (either time or distance)
@@ -146,10 +150,9 @@ protected:
 	
 	// Internal controls for waypoint visualization
 	const Color4 m_waypointColor = Color4(0.0, 1.0, 0.0, 0.7);	///< Color for waypoint visualization
+	const Color4 m_highlightColor = Color4(1.0, 1.0, 0.0, 1.0);	///< Highlight color
 	const float m_waypointRad = 0.1;							///< Waypoint sphere radius
 	const float m_waypointConnectRad = 0.02;					///< Waypoint connecting rod radius
-	
-
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	//Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models
@@ -250,6 +253,8 @@ public:
 	void previewWaypoints();
 	/** Stop the preview */
 	void stopPreview();
+	/** Show the waypoint manager */
+	void showWaypointManager();
 
 	/** Increment the current reticle index */
 	void nextReticle() {

@@ -139,6 +139,7 @@
     <ClInclude Include="source\SingleThresholdMeasurement.h" />
     <ClInclude Include="source\sqlHelpers.h" />
     <ClInclude Include="source\TargetEntity.h" />
+    <ClInclude Include="source\WaypointDisplay.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp" />
@@ -149,6 +150,7 @@
     <ClCompile Include="source\SingleThresholdMeasurement.cpp" />
     <ClCompile Include="source\sqlHelpers.cpp" />
     <ClCompile Include="source\TargetEntity.cpp" />
+    <ClCompile Include="source\WaypointDisplay.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resources.rc" />

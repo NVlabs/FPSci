@@ -41,6 +41,10 @@ public:
 		a["xyz"] = position;
 		return a;
 	}
+
+	size_t hash(void) {
+		return HashTrait<Point3>::hashCode(position) ^ (int)time;
+	}
 };
 
 class TargetEntity : public VisibleEntity {
