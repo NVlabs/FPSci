@@ -66,9 +66,9 @@ WaypointDisplay::WaypointDisplay(const shared_ptr<GuiTheme>& theme, WaypointDisp
 	GuiPane* pane = GuiWindow::pane();
 
 	// Setup the row labels
-	GuiLabel* a = pane->addLabel("Index"); a->setWidth(config.idx_column_width_px);
-	GuiLabel* b = pane->addLabel("Time"); b->setWidth(config.time_column_width_px); b->moveRightOf(a); a = b;
-	b = pane->addLabel("Position"); b->setWidth(config.xyz_column_width_px); b->moveRightOf(a); a = b;
+	GuiLabel* a = pane->addLabel("Index"); a->setWidth(config.idx_column_width_px + config.tree_indent);
+	GuiLabel* b = pane->addLabel("Time"); b->setWidth(config.time_column_width_px + config.tree_indent); b->moveRightOf(a); a = b;
+	b = pane->addLabel("Position"); b->setWidth(config.xyz_column_width_px + config.tree_indent); b->moveRightOf(a); a = b;
 
 	// Create the tree display
 	m_treeDisplay = new TreeDisplay(this, config, waypoints);
