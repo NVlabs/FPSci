@@ -1,5 +1,4 @@
 #include "PlayerEntity.h"
-
 #include "PhysicsScene.h"
 
 // Print lots of debugging info
@@ -121,10 +120,9 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     //m_velocity = m_frame.vectorToWorldSpace(m_desiredOSVelocity);
     //m_frame.translation += m_velocity * (float)deltaTime;
     if (! isNaN(deltaTime)) {
-        slideMove(deltaTime);
+        m_inContact = slideMove(deltaTime);
 		m_heading += m_desiredYawVelocity;	// *(float)deltaTime;		// Don't scale by time here
         m_frame.rotation     = Matrix3::fromAxisAngle(Vector3::unitY(), -m_heading);
-
         m_headTilt = clamp(m_headTilt - m_desiredPitchVelocity, -80 * units::degrees(), 80 * units::degrees());
     }
 }
@@ -136,73 +134,76 @@ void PlayerEntity::getConservativeCollisionTris(Array<Tri>& triArray, const Vect
     ((PhysicsScene*)m_scene)->staticIntersectSphere(nearby, triArray);
 
 #   ifdef SHOW_COLLISIONS
-        //debugDraw(new SphereShape(nearby), 0, Color4::clear(), Color3::black());
-        debugDraw(new MeshShape(triArray), 0, Color3::cyan(), Color3::blue());
+		//MeshShape mesh = MeshShape(triArray);
+        //debugDraw(mesh.vertexArray(), mesh.indexArray(), 0, Color3::cyan(), Color3::blue());
 #   endif
 }
 
 
 bool PlayerEntity::findFirstCollision
-(const Array<Tri>&    triArray, 
- const Vector3&       velocity, 
- float&               stepTime, 
- Vector3&             collisionNormal,
- Point3&              collisionPoint) const {
+(const Array<Tri>&    triArray,
+	const Vector3&       velocity,
+	float&               stepTime,
+	Vector3&             collisionNormal,
+	Point3&              collisionPoint) const {
 
-    bool collision = false;
+	bool collision = false;
+	const Sphere& startSphere = collisionProxy();
+	for (int t = 0; t < triArray.size(); ++t) {
 
-    const Sphere& startSphere = collisionProxy();
-    for (int t = 0; t < triArray.size(); ++t) {
+		const Tri& tri = triArray[t];
+		const CPUVertexArray& cpuVertexArray = ((PhysicsScene*)m_scene)->vertexArrayOfCollisionTree();
+		Triangle triangle(tri.position(cpuVertexArray, 0), tri.position(cpuVertexArray, 1), tri.position(cpuVertexArray, 2));
+		Vector3 C;
+		const float d =
+			CollisionDetection::collisionTimeForMovingSphereFixedTriangle
+			(startSphere, velocity, triangle, C);
 
-        const Tri& tri = triArray[t];
-        const CPUVertexArray& cpuVertexArray = ((PhysicsScene*)m_scene)->vertexArrayOfCollisionTree();
-        Triangle triangle(tri.position(cpuVertexArray,0),tri.position(cpuVertexArray,1), tri.position(cpuVertexArray,2));
-        Vector3 C;
-        const float d = 
-            CollisionDetection::collisionTimeForMovingSphereFixedTriangle
-            (startSphere, velocity, triangle, C);
-        
-        if (d < stepTime) {
-            // Found a new collision sooner than the previous one.
-            const Vector3& centerAtCollisionTime = startSphere.center + velocity * d;
-             
-            const Vector3& delta = centerAtCollisionTime - C;
+		if (d < stepTime) {
+			// Found a new collision sooner than the previous one.
+			const Vector3& centerAtCollisionTime = startSphere.center + velocity * d;
 
-            // Distance from sphere to collision point; if this is less than the sphere radius,
-            // the collision was interpenetarat
-            const float r = delta.length();
-            const Vector3& n = delta / r;
+			const Vector3& delta = centerAtCollisionTime - C;
 
-            static const float epsilon = 0.000001f;
-            const bool interpenetration = (r < startSphere.radius - epsilon);
-            const bool rightDirection   = (dot(n, velocity) < -epsilon);
+			// Distance from sphere to collision point; if this is less than the sphere radius,
+			// the collision was interpenetarat
+			const float r = delta.length();
+			const Vector3& n = delta / r;
 
-            if (interpenetration || rightDirection) {
-                // Normal to the sphere at the collision point
-                collisionNormal = n;
-                collisionPoint  = C;
-                stepTime        = d;
-                collision       = true;
-            }
-        }
-    }
+			static const float epsilon = 0.000001f;
+			const bool interpenetration = (r < startSphere.radius - epsilon);
+			const bool rightDirection   = (dot(n, velocity) < -epsilon);
 
+			if (interpenetration || rightDirection) {
+				// Normal to the sphere at the collision point
+				collisionNormal = n;
+				collisionPoint  = C;
+				stepTime        = d;
+				collision       = true;
+			}
+		}
+	}
+	
 #   ifdef SHOW_COLLISIONS
-        if (collision) {
-            if (collisionNormal.y < 0.99f) {
-                //runSimulation = false;
-                const float duration = 1.0f;
-                debugDraw(new SphereShape(Sphere(collisionPoint, 0.1f)), duration, Color3::red(), Color4::clear());
-                debugDraw(new ArrowShape(collisionPoint, collisionNormal), duration, Color3::red(), Color4::clear());
-            }
-        }
+	if (collision) {
+		if (collisionNormal.y < 0.99f) {
+			//runSimulation = false;
+			const float duration = 1.0f;
+			ArrowShape arrow = ArrowShape(collisionPoint, collisionNormal);
+			debugDraw(Sphere(collisionPoint, 0.1f), duration, Color3::red(), Color4::clear());
+			debugDraw(arrow.vertexArray(), arrow.indexArray(), duration, Color3::red(), Color4::clear());
+		}
+		else {
+			debugDraw(Sphere(collisionPoint, 0.2f), 1.0f, Color3::cyan(), Color4::clear());
+		}
+	}
 #   endif
 
-    return collision;
+	return collision;
 }
 
 
-void PlayerEntity::slideMove(SimTime timeLeft) { 
+bool PlayerEntity::slideMove(SimTime timeLeft) { 
     static const float epsilon = 0.0001f;
 
     // Use constant velocity gravity (!)
@@ -229,13 +230,15 @@ void PlayerEntity::slideMove(SimTime timeLeft) {
         debugPrintf("Initial velocity = %s; position = %s\n", velocity.toString().c_str(),  m_frame.translation.toString().c_str());
 #   endif
     int iterations = 0;
+	bool collided = false;
     while ((timeLeft > epsilon) && (velocity.length() > epsilon)) {
         float stepTime = float(timeLeft);
         Vector3 collisionNormal;
         Point3 collisionPoint;
 
-		m_inContact =
-            findFirstCollision(triArray, velocity, stepTime, collisionNormal, collisionPoint);
+		bool collision = findFirstCollision(triArray, velocity, stepTime, collisionNormal, collisionPoint);
+		collided |= collision;
+
 #       ifdef TRACE_COLLISIONS
             debugPrintf("  stepTime = %f\n", stepTime);
 #       endif
@@ -246,7 +249,7 @@ void PlayerEntity::slideMove(SimTime timeLeft) {
         // Early out of loop when debugging
         //if (! runSimulation) { return; }
         
-        if (m_inContact) {
+        if (collision) {
 #           ifdef TRACE_COLLISIONS
                 debugPrintf("  Collision C=%s, n=%s; position after=%s)\n", 
                             collisionPoint.toString().c_str(),
@@ -275,12 +278,15 @@ void PlayerEntity::slideMove(SimTime timeLeft) {
 #           ifdef SHOW_COLLISIONS
             if (collisionNormal.y < 0.95f) {
                 float duration = 1.0f;
-                debugDraw(new ArrowShape(collisionPoint, velocity), duration, Color3::green());
-                debugDraw(new ArrowShape(collisionPoint, vPerp),    duration, Color3::yellow());
-                debugDraw(new ArrowShape(collisionPoint, vPar),     duration, Color3::blue());
+				ArrowShape a1 = ArrowShape(collisionPoint, velocity);
+				ArrowShape a2 = ArrowShape(collisionPoint, vPerp);
+				ArrowShape a3 = ArrowShape(collisionPoint, vPar);
+				debugDraw(a1.vertexArray(), a1.indexArray(), duration, Color3::green());
+                debugDraw(a2.vertexArray(), a2.indexArray(), duration, Color3::yellow());
+                debugDraw(a3.vertexArray(), a3.indexArray(), duration, Color3::blue());
                 if (duration == finf()) {
                     // Pause so we can see the result
-                    runSimulation = false;
+                    //runSimulation = false;
                 }
             }
 #           endif
@@ -295,7 +301,8 @@ void PlayerEntity::slideMove(SimTime timeLeft) {
 #       endif
 
         ++iterations;
-        timeLeft -= stepTime;           
+        timeLeft -= stepTime;
     }
+	return collided;
     //screenPrintf("%d collision iterations", iterations);
 }

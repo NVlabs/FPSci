@@ -67,7 +67,7 @@ public:
     /** Moves linearly for deltaTime using the current
      m_desiredLinearVelocity, decreasing velocity as needed to avoid
      collisions.  Called from onSimulation(). */
-    void slideMove(SimTime deltaTime);
+    bool slideMove(SimTime deltaTime);
 
 
     /** In world space */
