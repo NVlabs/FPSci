@@ -494,9 +494,9 @@ void App::makeGUI() {
 	} debugPane->endRow();
 	// Add new row w/ player move rate control
 	debugPane->beginRow(); {
-		debugPane->setNewChildSize(150.0f, -1.0f, 70.0f);
-		GuiControl* c = nullptr;
-		c = debugPane->addNumberBox("Move Rate", &(experimentConfig.moveRate), "m/s", GuiTheme::NO_SLIDER, 0.0f, 100.0f, 0.1f);
+		debugPane->setNewChildSize(200.0f, -1.0f, 70.0f);
+		debugPane->addNumberBox("Height", &(experimentConfig.playerHeight), "m", GuiTheme::LINEAR_SLIDER, 0.0f, 3.0f, 0.1f)->moveBy(SLIDER_SPACING, 0);
+		debugPane->addNumberBox("Move Rate", &(experimentConfig.moveRate), "m/s", GuiTheme::NO_SLIDER, 0.0f, 100.0f, 0.1f);
 	} debugPane->endRow();
 	debugPane->beginRow();{
 		debugPane->addButton("Drop waypoint", this, &App::dropWaypoint);
@@ -557,20 +557,22 @@ void App::dropWaypoint(void) {
 	dropWaypoint(dest, Point3(0, -m_waypointVertOffset, 0));
 }
 
-void App::dropWaypoint(Destination dest, Point3 drawOffset) {
+void App::dropWaypoint(Destination dest, Point3 offset) {
+	// Apply the offset
+	dest.position += offset;
+
 	// If this isn't the first point, connect it to the last one with a line
 	if (m_waypoints.size() > 0) {
-		Point3 lastPos = m_waypoints.last().position;
 		shared_ptr<CylinderShape> shape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
-			lastPos+drawOffset, 
-			dest.position+drawOffset, 
+			m_waypoints.last().position,
+			dest.position, 
 			m_waypointConnectRad)));
 		DebugID arrowID = debugDraw(shape, finf(), m_waypointColor, Color4::clear());
 		m_arrowIDs.append(arrowID);
 	}
 
 	// Draw the waypoint (as a sphere)
-	DebugID pointID = debugDraw(Sphere(dest.position+drawOffset, m_waypointRad), finf(), m_waypointColor, Color4::clear());
+	DebugID pointID = debugDraw(Sphere(dest.position, m_waypointRad), finf(), m_waypointColor, Color4::clear());
 
 	// Update the arrays and time tracking
 	m_waypoints.append(dest);

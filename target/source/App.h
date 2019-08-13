@@ -239,7 +239,7 @@ public:
 	/** Drop a single waypoint at the current position */
 	void dropWaypoint();
 	/** Drop a single waypoint at the destination provided */
-	void dropWaypoint(Destination dest, Point3 drawOffset = Point3::zero());
+	void dropWaypoint(Destination dest, Point3 offset = Point3::zero());
 	/** Clear just the last waypoint */
 	void removeLastWaypoint();
 	/** Clear all waypoints */
