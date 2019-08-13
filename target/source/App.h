@@ -137,11 +137,12 @@ protected:
 	float m_waypointDelay = 0.5;			///< Store the delay between way points here
 	shared_ptr<WaypointDisplay> m_waypointWindow;
 	DebugID m_highlighted;					///< ID for the waypoint window highlighter
-
+	int m_grab = -1;						///< Grabbed index
 
 	bool m_recordMotion = false;			///< Player motion recording
 	int m_recordMode = 0;					///< Recording mode
 	float m_recordInterval = 0.1;			///< Recording interval (either time or distance)
+	float m_waypointVertOffset = 0.2;		///< Offset between camera and target position
 	RealTime m_recordStart = nan();			///< Start time for recording
 	int m_previewIdx = -1;					///< Index of the preview target in the targetArray
 	float m_lastRecordTime = 0.0;			///< Time storage for recording
@@ -238,7 +239,7 @@ public:
 	/** Drop a single waypoint at the current position */
 	void dropWaypoint();
 	/** Drop a single waypoint at the destination provided */
-	void dropWaypoint(Destination dest);
+	void dropWaypoint(Destination dest, Point3 drawOffset = Point3::zero());
 	/** Clear just the last waypoint */
 	void removeLastWaypoint();
 	/** Clear all waypoints */

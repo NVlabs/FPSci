@@ -501,6 +501,7 @@ void App::makeGUI() {
 	debugPane->beginRow();{
 		debugPane->addButton("Drop waypoint", this, &App::dropWaypoint);
 		debugPane->addNumberBox("Delay", &m_waypointDelay, "s");
+		debugPane->addNumberBox("Height Offset", &m_waypointVertOffset, "m");
 		debugPane->addButton("Remove last waypoint", this, &App::removeLastWaypoint);
 		debugPane->addButton("Clear waypoints", this, &App::clearWaypoints);
 		// Load and save
@@ -553,21 +554,23 @@ void App::dropWaypoint(void) {
 	Point3 xyz = activeCamera()->frame().translation;
 	SimTime time = m_waypoints.size() == 0 ? 0.0 : m_waypoints.last().time + m_waypointDelay;
 	Destination dest = Destination(xyz, time);
-	dropWaypoint(dest);
+	dropWaypoint(dest, Point3(0, -m_waypointVertOffset, 0));
 }
 
-void App::dropWaypoint(Destination dest) {
+void App::dropWaypoint(Destination dest, Point3 drawOffset) {
 	// If this isn't the first point, connect it to the last one with a line
 	if (m_waypoints.size() > 0) {
 		Point3 lastPos = m_waypoints.last().position;
-		Vector3 vector = dest.position - lastPos;
-		shared_ptr<CylinderShape> shape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(lastPos, dest.position, m_waypointConnectRad)));
+		shared_ptr<CylinderShape> shape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
+			lastPos+drawOffset, 
+			dest.position+drawOffset, 
+			m_waypointConnectRad)));
 		DebugID arrowID = debugDraw(shape, finf(), m_waypointColor, Color4::clear());
 		m_arrowIDs.append(arrowID);
 	}
 
 	// Draw the waypoint (as a sphere)
-	DebugID pointID = debugDraw(Sphere(dest.position, m_waypointRad), finf(), m_waypointColor, Color4::clear());
+	DebugID pointID = debugDraw(Sphere(dest.position+drawOffset, m_waypointRad), finf(), m_waypointColor, Color4::clear());
 
 	// Update the arrays and time tracking
 	m_waypoints.append(dest);
@@ -1015,6 +1018,10 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			Destination d = m_waypoints[selIdx];
 			removeDebugShape(m_highlighted);
 			m_highlighted = debugDraw(Sphere(d.position, m_waypointRad*1.1), finf(), Color4::clear(), m_highlightColor);
+		}
+
+		if (m_grab != -1) {
+			// Handle the grab and move here?
 		}
 
 		// Handle player motion recording here (if we are doing so w/ playMode=False)
@@ -1496,6 +1503,7 @@ void App::onUserInput(UserInput* ui) {
 	// Require release between clicks for non-autoFire modes
 	if (ui->keyReleased(GKey::LEFT_MOUSE)) {
 		m_buttonUp = true;
+		m_grab = -1;
 		if (!experimentConfig.weapon.autoFire) {
 			haveReleased = true;
 			fired = false;
@@ -1540,15 +1548,28 @@ void App::onUserInput(UserInput* ui) {
 		// Check for developer mode editing here
 		if (!startupConfig.playMode) {
 			const shared_ptr<Camera> cam = activeCamera();
+			float closest = 1e6;
+			int closestIdx = -1;
 			// Crude hit-scane here w/ spheres
 			for (int i = 0; i < m_waypoints.size(); i++) {
 				Sphere pt = Sphere(m_waypoints[i].position, m_waypointRad);
 				float distance = (m_waypoints[i].position - cam->frame().translation).magnitude();	// Get distance to the target
 				const Point3 center = cam->frame().translation + cam->frame().lookRay().direction()*distance;
-					Sphere probe = Sphere(center, m_waypointRad / 2);
-				if (pt.intersects(probe)) {
-					m_waypointWindow->setSelected(i);			
+					Sphere probe = Sphere(center, m_waypointRad / 4);
+					// Get closest intersection
+					if (pt.intersects(probe) && distance < closest) {
+						closestIdx = i;
+						closest = distance;
 				}
+			}
+			if (closestIdx != -1) {							// We are "hitting" this item
+				m_waypointWindow->setSelected(closestIdx);
+				if (m_grab == -1) {
+					m_grab = closestIdx;					// Set the "grab" flag
+				}
+			}
+			else {											// Clear the "grab" flag
+				m_grab = -1;
 			}
 		}
 
