@@ -35,16 +35,20 @@ Any PhysicsScene::load(const String& sceneName, const LoadOptions& loadOptions) 
         const Any& physics = resultAny["Physics"];
         AnyTableReader physicsTable(physics);
         physicsTable.getIfPresent("gravity", m_gravity);
+		physicsTable.getIfPresent("minHeight", m_resetHeight);
     }
     
     // Set the initial positions
-    Array<shared_ptr<Surface> > collisionSurfaces;
+	float minHeight = 1e6;
+    Array<shared_ptr<Surface>> collisionSurfaces;
     for (int e = 0; e < m_entityArray.size(); ++e) {
         shared_ptr<VisibleEntity> entity = dynamic_pointer_cast<VisibleEntity>(m_entityArray[e]);
-        if (notNull(entity) && ! entity->canChange()) {
-            entity->onSimulation(0, 0);
-            entity->onPose(collisionSurfaces);
-        }
+		if (notNull(entity)) {
+			if (!entity->canChange()) {
+				entity->onSimulation(0, 0);
+				entity->onPose(collisionSurfaces);
+			}
+		}
     }
     
     m_collisionTree->setContents(collisionSurfaces, IMAGE_STORAGE_CURRENT);

@@ -3,6 +3,9 @@
 { 
     defaultCamera = "defaultCamera"; 
     description = ""; 
+	Physics = {
+		minHeight = -10.0;
+	},
     entities = { 
         building = VisibleEntity { 
             canCauseCollisions = true; 

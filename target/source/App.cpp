@@ -894,6 +894,12 @@ void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	// For now make the player invisible (prevent issues w/ seeing model from inside)
 	m_scene->typedEntity<PlayerEntity>("player")->setVisible(false);
 	m_scene->setGravity(experimentConfig.playerGravity);
+	// Capture these variables here
+	m_resetHeight = m_scene->resetHeight();
+	if (isnan(m_resetHeight)) {
+		m_resetHeight = -1e6;
+	}
+	m_spawnPosition = activeCamera()->frame().translation;
 	activeCamera()->setFieldOfView(experimentConfig.hFoV * units::degrees(), FOVDirection::HORIZONTAL);
 }
 
@@ -1005,6 +1011,11 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	const shared_ptr<PlayerEntity>& p = m_scene->typedEntity<PlayerEntity>("player");
 	if (notNull(p)) {
 		CFrame c = p->frame();
+		// Check for "off map" condition and reset position here...
+		if (c.translation.y < m_resetHeight) {
+			c.translation = m_spawnPosition;
+			p->setFrame(c);
+		}
 		float height = p->crouched() ? experimentConfig.crouchHeight : experimentConfig.playerHeight;
 		height = p->heightOffset(height);
 		c.translation += Vector3(0, height, 0);		// Set the player to the right height

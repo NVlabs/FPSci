@@ -149,6 +149,9 @@ protected:
 	float m_recordTimeScaling = 1.0;		///< Time scaling for time-based recording
 	String m_waypointFile = "target.Any";	///< Filename for save/load
 	
+	float m_resetHeight;					///< Height at which to reset player location (fell through floor)
+	Point3 m_spawnPosition;					///< Position for player spawn
+
 	// Internal controls for waypoint visualization
 	const Color4 m_waypointColor = Color4(0.0, 1.0, 0.0, 0.7);	///< Color for waypoint visualization
 	const Color4 m_highlightColor = Color4(1.0, 1.0, 0.0, 1.0);	///< Highlight color

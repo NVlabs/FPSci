@@ -7,6 +7,7 @@
 class PhysicsScene : public Scene {
 protected:
     Vector3 m_gravity;
+	float m_resetHeight = fnan();
 
     /** Polygons of all non-dynamic entitys */
     shared_ptr<TriTree>                     m_collisionTree;
@@ -24,6 +25,10 @@ public:
     void setGravity(const Vector3& newGravity) {
         m_gravity = newGravity;
     }
+
+	float resetHeight() {
+		return m_resetHeight;
+	}
 
     Vector3 gravity() const {
         return m_gravity;
