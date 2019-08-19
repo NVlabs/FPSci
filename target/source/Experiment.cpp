@@ -370,6 +370,7 @@ void Experiment::onUserInput(UserInput* ui)
 void Experiment::onGraphics2D(RenderDevice* rd)
 {
 	const float scale = rd->viewport().width() / 1920.0f;
+	const float vscale = rd->viewport().height() / 1080.0f;
 	rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 	// Reticle
@@ -381,7 +382,7 @@ void Experiment::onGraphics2D(RenderDevice* rd)
 	// TODO: Feels like the following variables should be members of Experiment (or should this be moved into the App?)
 	// m_renderHud, m_hudTexture, m_reticleTexture, ...
 	if (m_config.showHUD && m_config.showBanner && !m_app->emergencyTurbo) {
-		const Point2 hudCenter(rd->viewport().width() / 2.0f, m_app->hudTexture->height() * scale * 0.48f);
+		const Point2 hudCenter(rd->viewport().width() / 2.0f, m_config.bannerVertVisible*m_app->hudTexture->height() * vscale + m_app->debugMenuHeight() + 74.0f);
 		Draw::rect2D((m_app->hudTexture->rect2DBounds() * scale - m_app->hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_app->hudTexture);
 		
 		// Create strings for time remaining, progress in sessions, and score
