@@ -1,6 +1,9 @@
 #include "PlayerEntity.h"
 #include "PhysicsScene.h"
 
+// Disable collisions
+// #define NO_COLLISIONS
+
 // Print lots of debugging info
 //#define TRACE_COLLISIONS
 
@@ -109,7 +112,6 @@ void PlayerEntity::onPose(Array<shared_ptr<Surface> >& surfaceArray) {
 
 
 /** Maximum coordinate values for the player ship */
-//static const Point3 MAX_POS(10, 5, 0);
 void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     // Do not call Entity::onSimulation; that will override with spline animation
     if (! isNaN(deltaTime) && (deltaTime > 0)) {
@@ -117,8 +119,6 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     }
     simulatePose(absoluteTime, deltaTime);
 
-    //m_velocity = m_frame.vectorToWorldSpace(m_desiredOSVelocity);
-    //m_frame.translation += m_velocity * (float)deltaTime;
     if (! isNaN(deltaTime)) {
         m_inContact = slideMove(deltaTime);
 		m_heading += m_desiredYawVelocity;	// *(float)deltaTime;		// Don't scale by time here
@@ -132,11 +132,6 @@ void PlayerEntity::getConservativeCollisionTris(Array<Tri>& triArray, const Vect
     Sphere nearby = collisionProxy();
     nearby.radius += velocity.length() * deltaTime;
     ((PhysicsScene*)m_scene)->staticIntersectSphere(nearby, triArray);
-
-#   ifdef SHOW_COLLISIONS
-		//MeshShape mesh = MeshShape(triArray);
-        //debugDraw(mesh.vertexArray(), mesh.indexArray(), 0, Color3::cyan(), Color3::blue());
-#   endif
 }
 
 
@@ -205,6 +200,7 @@ bool PlayerEntity::findFirstCollision
 
 bool PlayerEntity::slideMove(SimTime timeLeft) { 
     static const float epsilon = 0.0001f;
+	Point3 loc;
 
     // Use constant velocity gravity (!)
     alwaysAssertM(((PhysicsScene*)m_scene)->gravity().x == 0.0f && ((PhysicsScene*)m_scene)->gravity().z == 0.0f, 
@@ -218,8 +214,9 @@ bool PlayerEntity::slideMove(SimTime timeLeft) {
     getConservativeCollisionTris(triArray, velocity, (float)timeLeft);
     
     // Trivial implementation that ignores collisions:
-#   if 0
-        m_frame.translation += velocity  * timeLeft;
+#   if NO_COLLISIONS
+		loc = m_frame.translation + velocity  * timeLeft;
+		setFrame(loc);
         return;
 #   endif
 
@@ -242,9 +239,11 @@ bool PlayerEntity::slideMove(SimTime timeLeft) {
 #       ifdef TRACE_COLLISIONS
             debugPrintf("  stepTime = %f\n", stepTime);
 #       endif
+
         // Advance to just before the collision
         stepTime = max(0.0f, stepTime - epsilon * 0.5f);
-        m_frame.translation += velocity * stepTime;
+		loc = m_frame.translation + velocity * stepTime;
+		setFrame(loc);
 
         // Early out of loop when debugging
         //if (! runSimulation) { return; }
@@ -254,7 +253,7 @@ bool PlayerEntity::slideMove(SimTime timeLeft) {
                 debugPrintf("  Collision C=%s, n=%s; position after=%s)\n", 
                             collisionPoint.toString().c_str(),
                             collisionNormal.toString().c_str(),
-                            m_frame.translation.toString().c_str());
+							loc.toString().c_str());
 #           endif
             if (collisionProxy().contains(collisionPoint)) {
                 // Interpenetration. This is bad because the
@@ -262,12 +261,13 @@ bool PlayerEntity::slideMove(SimTime timeLeft) {
                 // uses that to rise up steps.  Place the sphere
                 // adjacent to the triangle and eliminate all velocity
                 // towards the triangle.
-                m_frame.translation = collisionPoint + collisionNormal * (m_collisionProxySphere.radius + epsilon * 2.0f);
+               loc = collisionPoint + collisionNormal * (m_collisionProxySphere.radius + epsilon * 2.0f);
+			   setFrame(loc);
 
                 
 #               ifdef TRACE_COLLISIONS
                     debugPrintf("  Interpenetration detected.  Position after = %s\n",
-                        m_frame.translation.toString().c_str());
+                        loc.toString().c_str());
 #               endif
             }
                 
@@ -303,6 +303,7 @@ bool PlayerEntity::slideMove(SimTime timeLeft) {
         ++iterations;
         timeLeft -= stepTime;
     }
+	
 	return collided;
     //screenPrintf("%d collision iterations", iterations);
 }

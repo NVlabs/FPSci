@@ -495,8 +495,10 @@ void App::makeGUI() {
 	// Add new row w/ player move rate control
 	debugPane->beginRow(); {
 		debugPane->setNewChildSize(200.0f, -1.0f, 70.0f);
-		debugPane->addNumberBox("Height", &(experimentConfig.playerHeight), "m", GuiTheme::LINEAR_SLIDER, 0.0f, 3.0f, 0.1f)->moveBy(SLIDER_SPACING, 0);
-		debugPane->addNumberBox("Move Rate", &(experimentConfig.moveRate), "m/s", GuiTheme::NO_SLIDER, 0.0f, 100.0f, 0.1f);
+		debugPane->addNumberBox("Height", &(experimentConfig.playerHeight), "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f, 0.1f);
+		debugPane->addNumberBox("Crouch", &(experimentConfig.crouchHeight), "m", GuiTheme::LINEAR_SLIDER, 0.1f, 3.0f, 0.1f)->moveBy(SLIDER_SPACING, 0);
+		debugPane->addNumberBox("Move Rate", &(experimentConfig.moveRate), "m/s", GuiTheme::NO_SLIDER, 0.0f, 100.0f, 0.1f)->moveBy(SLIDER_SPACING, 0);
+		debugPane->addButton("Set Start Pos", this, &App::exportScene)->moveBy(10, 0);
 	} debugPane->endRow();
 	debugPane->beginRow();{
 		debugPane->addButton("Drop waypoint", this, &App::dropWaypoint);
@@ -508,6 +510,13 @@ void App::makeGUI() {
 		debugPane->addButton("Load path", this, &App::loadWaypoints);
 		debugPane->addButton("Save path", this, &App::exportWaypoints);
 		debugPane->addTextBox("Filename", &m_waypointFile);
+		// Preview waypoints
+		debugPane->addButton("Preview", this, &App::previewWaypoints);
+		debugPane->addButton("Stop Preview", this, &App::stopPreview);
+		// Open the manager pane
+		debugPane->addButton("Show Manager", this, &App::showWaypointManager);
+	} debugPane->endRow();
+	debugPane->beginRow(); {
 		// Record player path
 		debugPane->addCheckBox("Record motion", &m_recordMotion);
 		debugPane->addDropDownList("Mode",
@@ -515,13 +524,7 @@ void App::makeGUI() {
 			&m_recordMode);
 		debugPane->addNumberBox("Interval", &m_recordInterval);
 		debugPane->addNumberBox("Time Scale", &m_recordTimeScaling);
-		// Preview waypoints
-		debugPane->addButton("Preview", this, &App::previewWaypoints);
-		debugPane->addButton("Stop Preview", this, &App::stopPreview);
-		// Open the manager pane
-		debugPane->addButton("Show Manager", this, &App::showWaypointManager);
-	} debugPane->endRow();
-
+	}debugPane->endRow();
 
     // set up user settings window
     m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, 
@@ -547,6 +550,7 @@ void App::makeGUI() {
 
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+	m_debugMenuHeight = startupConfig.playMode ? 0.0 : debugWindow->rect().height();
 }
 
 void App::dropWaypoint(void) {
@@ -656,6 +660,13 @@ void App::stopPreview(void) {
 		destroyTarget(m_previewIdx);	// Destory the target
 		m_previewIdx = -1;				// Use -1 value to indicate no preview present
 	}
+}
+
+void App::exportScene() {
+	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
+	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
+	String filename = Scene::sceneNameToFilename(experimentConfig.sceneName);
+	scene()->toAny().save(filename);
 }
 
 void App::showWaypointManager() {
@@ -1007,7 +1018,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		// could update animation here...
 	}
 
-	// Move the player if in walk mode
+	// Move the player
 	const shared_ptr<PlayerEntity>& p = m_scene->typedEntity<PlayerEntity>("player");
 	if (notNull(p)) {
 		CFrame c = p->frame();
@@ -1252,10 +1263,12 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 		// Draw the HUD elements
 		if (experimentConfig.showHUD) {
+			const float vscale = rd->viewport().height() / (1080.0);
+
 			// Draw the player health bar
 			if (experimentConfig.showPlayerHealthBar) {
 				const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
-				const Point2 location = experimentConfig.playerHealthBarPos;
+				const Point2 location = Point2(experimentConfig.playerHealthBarPos.x, experimentConfig.playerHealthBarPos.y+m_debugMenuHeight*vscale);
 				const Point2 size = experimentConfig.playerHealthBarSize;
 				const Point2 border = experimentConfig.playerHealthBarBorderSize;
 				const Color4 borderColor = experimentConfig.playerHealthBarBorderColor;

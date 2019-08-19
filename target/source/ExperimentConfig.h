@@ -698,6 +698,7 @@ public:
 	// HUD parameters
 	bool showHUD = false;							///< Master control for all HUD elements
 	bool showBanner = false;						///< Show the banner display
+	float bannerVertVisible = 0.41f;				///< Vertical banner visibility
 	float bannerLargeFontSize = 30.0f;				///< Banner percent complete font size
 	float bannerSmallFontSize = 14.0f;				///< Banner detail font size
 	String hudFont = "dominant.fnt";				///< Font to use for Heads Up Display

@@ -175,6 +175,7 @@ protected:
 	int                             m_reticleIndex = numReticles;		///< Start by selecting the last reticle
 	float                           m_sceneBrightness = 1.0f;			///< Scene brightness scale factor
 	bool                            m_renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
+	float							m_debugMenuHeight = 0.0f;			///< Height of the debug menu when playMode=False
     GuiPane*                        m_currentUserPane;					///< Current user information pane
 
 	// Drop down selection writebacks
@@ -259,6 +260,12 @@ public:
 	void stopPreview();
 	/** Show the waypoint manager */
 	void showWaypointManager();
+	/** Save scene w/ updated player position */
+	void exportScene();
+
+	float debugMenuHeight() {
+		return m_debugMenuHeight;
+	}
 
 	/** Increment the current reticle index */
 	void nextReticle() {
