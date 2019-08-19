@@ -58,6 +58,7 @@ void Logger::createResultsFile(String filename, String subjectID)
 	Array<Array<String>> targetColumns = {
 			{ "trial_id", "integer"}, // Trial ID refers to the trial which this target is affiliated with
 			{ "target_id", "text" },
+			{ "type", "text"},
 			{ "refresh_rate", "real" },
 			{ "added_frame_lag", "real" },
 			{ "min_ecc_h", "real" },
@@ -132,9 +133,11 @@ void Logger::recordFrameInfo(Array<Array<String>> info) {
 void Logger::addTargets(Array<SingleThresholdMeasurement> measurements) {
 	for (int i = 0; i < measurements.size(); i++) {
 		for (Param tparam : measurements[i].TargetParameters) {
+			const String type = (tparam.val["destCount"] > 0) ? "waypoint" : "parametrized";
 			Array<String> targetValues = {
 				String(std::to_string(i)),										// This is the trial ID
 				"'" + String(tparam.str["name"]) +"'",							// This is the target name
+				"'" + type + "'",
 				String(std::to_string(tparam.val["targetFrameRate"])),			
 				String(std::to_string(tparam.val["targetFrameLag"])),
 				String(std::to_string(tparam.val["minEccH"])),
