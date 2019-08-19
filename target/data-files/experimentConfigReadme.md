@@ -41,7 +41,7 @@ There are a number of inputs to experiment config. The following is a descriptio
 
 ### Camera/View Settings
 * `horizontalFieldOfView` sets the (horizontal) field of view for the user's display (in degrees), to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)
-* `moveRate` sets the rate of player motion in m/s, set this parameter to `0` to display player motion
+* `moveRate` sets the rate of player motion in m/s, set this parameter to `0` to disable player motion
 * `playerHeight` sets the height of the player above the ground when "standing"
 * `crouchHeight` set the height of the player when crouched (set equal to `playerHeight` for no crouch)
 * `jumpVelocity` sets the magnitude of the upward impulse introduced by a jump (set to 0 for no jump)
