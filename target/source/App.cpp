@@ -475,7 +475,7 @@ void App::makeGUI() {
 		static int frames = 0;
 		GuiControl* c = nullptr;
 
-        debugPane->addButton("Spawn", this, &App::spawnRandomTarget);
+        //debugPane->addButton("Spawn", this, &App::spawnRandomTarget);
 		debugPane->setNewChildSize(230.0f, -1.0f, 70.0f);
 		c = debugPane->addNumberBox("Framerate", Pointer<float>(
 			[&]() { return 1.0f / float(realTimeTargetDuration()); },
@@ -487,7 +487,7 @@ void App::makeGUI() {
 				// Only set when there is a change, otherwise the simulation's deltas are confused.
 				setFrameDuration(f, GApp::REAL_TIME);
 			}}), "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f); c->moveBy(SLIDER_SPACING, 0);
-			c = debugPane->addNumberBox("Input Lag", &frames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->setEnabled(false); c->moveBy(SLIDER_SPACING, 0);
+			//c = debugPane->addNumberBox("Input Lag", &frames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->setEnabled(false); c->moveBy(SLIDER_SPACING, 0);
 			c = debugPane->addNumberBox("Display Lag", &m_displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->moveBy(SLIDER_SPACING, 0);
 			debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles, 1)->moveBy(SLIDER_SPACING, 0);
 			debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(SLIDER_SPACING, 0);
@@ -1608,8 +1608,6 @@ void App::onUserInput(UserInput* ui) {
 	if (ui->keyPressed(initShootKey) && (ex->presentationState == PresentationState::feedback)) {
 		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
 	}
-
-	if(ui->keyDown(GKey::LCTRL))
 
 	if (m_lastReticleLoaded != m_reticleIndex) {
 		// Slider was used to change the reticle
