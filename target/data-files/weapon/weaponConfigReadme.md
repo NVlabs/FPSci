@@ -12,6 +12,7 @@ This file provides information about the weapon to be used in the experiment. De
 * `autoFire` controls whether or not the weapon fires when the left mouse is held, or requires release between fire
 * `damagePerSecond` controls the damage done by the weapon per second, when `firePeriod` > 0 the damage per round is set by `damagePerSecond`*`firePeriod`, when `firePeriod` is 0 and `autoFire` is `True` damage is computed based on time hitting the target.
 * `fireSound` is the filename/location of the audio clip to use for the weapon firing
+* `fireSoundVol` is the volume to play the `fireSound` clip with
 * `renderModel` controls whether or not a weapon model is rendered in the first-person view
 * `modelSpec` provides an `ArticulatedModel` Any specification for the weapon being used
 * `renderBullets` controls whether or not bullets are rendered from the barrel of the weapon when fired
@@ -27,6 +28,7 @@ This file provides information about the weapon to be used in the experiment. De
 "autoFire": false,          // Automatic firing if mouse is held
 "damagePerSecond": 2.0,     // 2 damage/s * 0.5 s/shot = 1 damage/shot
 "fireSound": "sound/42108__marcuslee__Laser_Wrath_6.wav",       // The sound to fire
+"fireSoundVol": 0.5f,
 "renderModel": true,        // Default is false,
 "modelSpec": ArticulatedModel::Specification{			        // Default model
 	filename = "model/sniper/sniper.obj";

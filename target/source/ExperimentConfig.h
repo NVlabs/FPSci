@@ -458,6 +458,7 @@ public:
 	bool autoFire = false;												///< Fire repeatedly when mouse is held? (set true for laser mode)
 	float damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
 	String fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	///< Sound to play on fire
+	float fireSoundVol = 0.5f;											///< Volume for fire sound
 	bool renderModel = false;											///< Render a model for the weapon?
 	Vector3 muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec
@@ -733,6 +734,7 @@ public:
 	};
 
 	String explosionSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
+	float explosionSoundVol = 10.0f;
 
 	// Player health bar
 	bool showPlayerHealthBar = false;										///< Display a player health bar?
@@ -846,7 +848,8 @@ public:
 			reader.getIfPresent("cooldownSubdivisions", cooldownSubdivisions);
 			reader.getIfPresent("cooldownColor", cooldownColor);
 
-            reader.getIfPresent("explosionSound", explosionSound);
+			reader.getIfPresent("explosionSound", explosionSound);
+			reader.getIfPresent("explosionSoundVol", explosionSoundVol);
 
 			reader.getIfPresent("showTargetHealthBars", showTargetHealthBars);
 			reader.getIfPresent("targetHealthBarSize", targetHealthBarSize);

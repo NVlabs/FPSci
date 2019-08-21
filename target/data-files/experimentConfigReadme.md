@@ -153,6 +153,8 @@ There are a number of inputs to experiment config. The following is a descriptio
 * `targetHealthColors` sets the max/min health colors for the target as an array of [`max color`, `min color`] as `Color3`s, if you do not want the target to change color as its health drops, set these values both to the same color
 * `dummyTargetColor` sets the color of the "dummy" targets spawned between trials
 * `dummyTargetSize` set the size of the "dummy" targets spawned between trials
+* `explosionSound` sets the sound to play when a target is destroyed
+* `explosionSoundVol` sets the volume of the explosion sound to play
 
 ```
 "targetHealthColors": [                     // Array of two colors to interpolate between for health
@@ -161,6 +163,9 @@ There are a number of inputs to experiment config. The following is a descriptio
 ],
 "dummyTargetColor": Color3(1.0,1.0,1.0),    // Draw the dummy targets (return to "0" view direction)
 "dummyTargetSize": 0.01,                    // This is a scale factor for the model
+"explosionSound": "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav",
+"explosionSoundVol": 10.0f,
+
 ```
 
 #### Health Bars
