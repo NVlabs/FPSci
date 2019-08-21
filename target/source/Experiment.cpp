@@ -127,7 +127,7 @@ bool Experiment::initPsychHelper()
 void Experiment::onInit() {
 	// Initialize presentation states
 	presentationState = PresentationState::initial;
-	m_feedbackMessage = "Click to spawn a target, then shoot it!";
+	m_feedbackMessage = "Click to spawn a target, then use shift on red target to begin.";
 
 	m_config = m_app->experimentConfig;									// Setup config from app
 	m_hasSession = initPsychHelper();
