@@ -548,13 +548,13 @@ void App::makeGUI() {
 
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
-	m_debugMenuHeight = startupConfig.playMode ? 0.0 : debugWindow->rect().height();
+	m_debugMenuHeight = startupConfig.playMode ? 0.0f : debugWindow->rect().height();
 }
 
 void App::dropWaypoint(void) {
 	// Create the destination
 	Point3 xyz = activeCamera()->frame().translation;
-	SimTime time = m_waypoints.size() == 0 ? 0.0 : m_waypoints.last().time + m_waypointDelay;
+	SimTime time = m_waypoints.size() == 0 ? 0.0f : m_waypoints.last().time + m_waypointDelay;
 	Destination dest = Destination(xyz, time);
 	dropWaypoint(dest, Point3(0, -m_waypointVertOffset, 0));
 }
@@ -1039,7 +1039,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		if (selIdx >= 0) {
 			Destination d = m_waypoints[selIdx];
 			removeDebugShape(m_highlighted);
-			m_highlighted = debugDraw(Sphere(d.position, m_waypointRad*1.1), finf(), Color4::clear(), m_highlightColor);
+			m_highlighted = debugDraw(Sphere(d.position, m_waypointRad*1.1f), finf(), Color4::clear(), m_highlightColor);
 		}
 
 		if (m_grab != -1) {
@@ -1055,7 +1055,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 				dropWaypoint(Destination(p->frame().translation, 0.0f));
 			}
 			else {
-				float t = now - m_recordStart;
+				SimTime t = static_cast<SimTime>(now - m_recordStart);
 				float distance = (m_waypoints.last().position - p->frame().translation).magnitude();
 				switch (m_recordMode) {
 				case 0: // This is fixed distance mode, check if we've moved "far enough" to drop a new waypoint
@@ -1223,12 +1223,12 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 				const float iRad = experimentConfig.cooldownInnerRadius;
 				const float oRad = iRad + experimentConfig.cooldownThickness;
 				const int segments = experimentConfig.cooldownSubdivisions;
-				int segsToLight = (1 - ex->weaponCooldownPercent())*segments;
+				int segsToLight = static_cast<int>((1 - ex->weaponCooldownPercent())*segments);
 				// Create the segments
 				for (int i = 0; i < segsToLight; i++) {
-					const float inc = 2 * pi() / segments;
+					const float inc = static_cast<float>(2 * pi() / segments);
 					const float theta = -i * inc;
-					Vector2 center = Vector2(m_framebuffer->width() / 2, m_framebuffer->height() / 2);
+					Vector2 center = Vector2(m_framebuffer->width() / 2.0f, m_framebuffer->height() / 2.0f);
 					Array<Vector2> verts = {
 						center + Vector2(oRad*sin(theta), -oRad*cos(theta)),
 						center + Vector2(oRad*sin(theta + inc), -oRad*cos(theta + inc)),
@@ -1261,7 +1261,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 		// Draw the HUD elements
 		if (experimentConfig.showHUD) {
-			const float vscale = rd->viewport().height() / (1080.0);
+			const float vscale = rd->viewport().height() / (1080.0f);
 
 			// Draw the player health bar
 			if (experimentConfig.showPlayerHealthBar) {
@@ -1277,7 +1277,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			}
 			// Draw the ammo indicator
 			if (experimentConfig.showAmmo) {
-				Point2 lowerRight = Point2(m_framebuffer->width(), m_framebuffer->height());
+				Point2 lowerRight = Point2(static_cast<float>(m_framebuffer->width()), static_cast<float>(m_framebuffer->height()));
 				hudFont->draw2D(rd,
 					format("%d/%d", ex->remainingAmmo(), experimentConfig.weapon.maxAmmo),
 					lowerRight - experimentConfig.ammoPosition,
@@ -1496,7 +1496,7 @@ void App::onUserInput(UserInput* ui) {
 				linear = linear.direction() * walkSpeed;
 			}
 			// Add jump here (if needed)
-			float timeSinceLastJump = System::time() - m_lastJumpTime;
+			RealTime timeSinceLastJump = System::time() - m_lastJumpTime;
 			if (ui->keyPressed(GKey::SPACE) && timeSinceLastJump > experimentConfig.jumpInterval) {
 				// Allow jumping if jumpTouch = False or if jumpTouch = True and the player is in contact w/ the map
 				if (!experimentConfig.jumpTouch || player->inContact()) {
@@ -1509,7 +1509,7 @@ void App::onUserInput(UserInput* ui) {
 			}
 
 			// Get the mouse rotation here
-			Vector2 mouseRotate = ui->mouseDXY() * mouseSensitivity / 2000.0f;
+			Vector2 mouseRotate = ui->mouseDXY() * (float)mouseSensitivity / 2000.0f;
 			float yaw = mouseRotate.x;
 			float pitch = mouseRotate.y;
 
@@ -1601,7 +1601,7 @@ void App::onUserInput(UserInput* ui) {
 	}
 	
 	// Handle spacebar during feedback
-	GKey initShootKey = GKey::LSHIFT;
+    GKey initShootKey = GKey::LSHIFT;
 	if (ui->keyPressed(initShootKey) && (ex->presentationState == PresentationState::feedback)) {
 		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
 	}

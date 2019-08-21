@@ -141,8 +141,8 @@ protected:
 
 	bool m_recordMotion = false;			///< Player motion recording
 	int m_recordMode = 0;					///< Recording mode
-	float m_recordInterval = 0.1;			///< Recording interval (either time or distance)
-	float m_waypointVertOffset = 0.2;		///< Offset between camera and target position
+	float m_recordInterval = 0.1f;			///< Recording interval (either time or distance)
+	float m_waypointVertOffset = 0.2f;		///< Offset between camera and target position
 	RealTime m_recordStart = nan();			///< Start time for recording
 	int m_previewIdx = -1;					///< Index of the preview target in the targetArray
 	float m_lastRecordTime = 0.0;			///< Time storage for recording
@@ -153,10 +153,10 @@ protected:
 	Point3 m_spawnPosition;					///< Position for player spawn
 
 	// Internal controls for waypoint visualization
-	const Color4 m_waypointColor = Color4(0.0, 1.0, 0.0, 0.7);	///< Color for waypoint visualization
-	const Color4 m_highlightColor = Color4(1.0, 1.0, 0.0, 1.0);	///< Highlight color
-	const float m_waypointRad = 0.1;							///< Waypoint sphere radius
-	const float m_waypointConnectRad = 0.02;					///< Waypoint connecting rod radius
+	const Color4 m_waypointColor = Color4(0.0f, 1.0f, 0.0f, 0.7f);	///< Color for waypoint visualization
+	const Color4 m_highlightColor = Color4(1.0f, 1.0f, 0.0f, 1.0f);	///< Highlight color
+	const float m_waypointRad = 0.1f;							///< Waypoint sphere radius
+	const float m_waypointConnectRad = 0.02f;					///< Waypoint connecting rod radius
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	//Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models

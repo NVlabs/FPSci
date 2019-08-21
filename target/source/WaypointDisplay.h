@@ -12,7 +12,7 @@ struct WaypointDisplayConfig {
 	float time_column_width_px = 100;
 	float xyz_column_width_px = 250;
 
-	WaypointDisplayConfig(int width = 400, float height = 400, float line_height=15, float indent = 16, float idx_column_width = 50, float time_column_width = 100, float xyz_column_width = 250) {
+	WaypointDisplayConfig(int width = 400, int height = 400, float line_height=15, float indent = 16, float idx_column_width = 50, float time_column_width = 100, float xyz_column_width = 250) {
 		tree_display_width_px = width;
 		tree_display_height_px = height;
 		tree_height = line_height;
