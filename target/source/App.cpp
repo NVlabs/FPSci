@@ -63,10 +63,8 @@ void App::onInit() {
 	hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
 	// Check for play mode specific parameters
-	if (startupConfig.playMode) {
-		m_fireSound = Sound::create(System::findDataFile(experimentConfig.weapon.fireSound));
-		m_explosionSound = Sound::create(System::findDataFile(experimentConfig.explosionSound));
-	}
+	m_fireSound = Sound::create(System::findDataFile(experimentConfig.weapon.fireSound));
+	m_explosionSound = Sound::create(System::findDataFile(experimentConfig.explosionSound));
 
 	// Load models and set the reticle
 	loadModels();
@@ -1421,15 +1419,14 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 		scene()->insert(bullet);
 	}
 
-	if (startupConfig.playMode) {
-		if (destroyedTarget) {
-			m_explosionSound->play(10.0f);
-			//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
-		}
-		else if(experimentConfig.weapon.firePeriod > 0.0f || !experimentConfig.weapon.autoFire) {
-			m_fireSound->play(0.5f);
-			//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
-		}
+    // play sounds
+    if (destroyedTarget) {
+		m_explosionSound->play(10.0f);
+		//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
+	}
+	else if(experimentConfig.weapon.firePeriod > 0.0f || !experimentConfig.weapon.autoFire) {
+		m_fireSound->play(0.5f);
+		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
 	}
 
 	if (experimentConfig.weapon.renderDecals && experimentConfig.weapon.firePeriod > 0.0f && !hitTarget) {
@@ -1943,7 +1940,7 @@ int main(int argc, const char* argv[]) {
 
 	{
 		G3DSpecification spec;
-		spec.audio = startupConfig.playMode;
+        spec.audio = startupConfig.audioEnable;
 		initGLG3D(spec);
 	}
 

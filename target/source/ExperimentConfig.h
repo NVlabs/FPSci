@@ -9,6 +9,7 @@ public:
     bool playMode = true;					///< Sets whether the experiment is run in full-screen "playMode" (true for real data)
     String experimentConfigPath = "";		///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
     String userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
+    bool audioEnable = true;                ///< Audio on/off
 
     StartupConfig() {};
 
@@ -23,6 +24,7 @@ public:
             reader.getIfPresent("playMode", playMode);
             reader.getIfPresent("experimentConfigPath", experimentConfigPath);
             reader.getIfPresent("userConfigPath", userConfigPath);
+            reader.getIfPresent("audioEnable", audioEnable);
             break;
         default:
             debugPrintf("Settings version '%d' not recognized in StartupConfig.\n", settingsVersion);
@@ -36,6 +38,7 @@ public:
         a["playMode"] = playMode;
         a["experimentConfigPath"] = experimentConfigPath;
         a["userConfigPath"] = userConfigPath;
+        a["audioEnable"] = audioEnable;
         return a;
     }
 
@@ -843,7 +846,7 @@ public:
 			reader.getIfPresent("cooldownSubdivisions", cooldownSubdivisions);
 			reader.getIfPresent("cooldownColor", cooldownColor);
 
-			reader.getIfPresent("explosionSound", explosionSound);
+            reader.getIfPresent("explosionSound", explosionSound);
 
 			reader.getIfPresent("showTargetHealthBars", showTargetHealthBars);
 			reader.getIfPresent("targetHealthBarSize", targetHealthBarSize);
