@@ -586,6 +586,7 @@ void App::dropWaypoint(Destination dest, Point3 offset) {
 
 void App::removeLastWaypoint(void) {
 	if (m_waypoints.size() > 0) {
+		int lastIdx = m_waypoints.size() - 1;
 		// Remove the actual waypoint from the array
 		m_waypoints.remove(m_waypoints.size() - 1);
 		// Clear the drawn sphere
@@ -595,6 +596,10 @@ void App::removeLastWaypoint(void) {
 		if (m_arrowIDs.size() > 0) {
 			removeDebugShape(m_arrowIDs.last());
 			m_arrowIDs.remove(m_arrowIDs.size() - 1);
+		}
+		if (m_waypointWindow->getSelected() == lastIdx) {
+			removeDebugShape(m_highlighted);
+			m_waypointWindow->setSelected(-1);
 		}
 	}
 }
@@ -609,6 +614,9 @@ void App::clearWaypoints(void) {
 		removeDebugShape(id);
 	}
 	m_arrowIDs.clear();
+	// Clear the highlighted shape
+	removeDebugShape(m_highlighted);
+	m_waypointWindow->setSelected(-1);
 }
 
 void App::exportWaypoints(void) {
