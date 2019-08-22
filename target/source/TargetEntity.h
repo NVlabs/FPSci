@@ -54,6 +54,7 @@ protected:
 	Array<Destination> destinations;
 	int destinationIdx = 0;
 	Point3 offset;
+	RealTime m_spawnTime = 0;
 
 public:
 	TargetEntity() {}
@@ -83,6 +84,7 @@ public:
 		return m_health <= 0;
 	}
 
+	/**Get the total time for a path*/
 	float getPathTime() {
 		return destinations.last().time;
 	}

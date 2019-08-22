@@ -78,7 +78,8 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	if (destinations.size() < 2)
 		return;
 
-	SimTime time = fmod(absoluteTime, getPathTime());			// Compute a local time (modulus the path time)
+	if (m_spawnTime == 0) m_spawnTime = absoluteTime;
+	SimTime time = fmod(absoluteTime-m_spawnTime, getPathTime());			// Compute a local time (modulus the path time)
 	
 	// Check if its time to move to the next segment
 	while(time < destinations[destinationIdx].time || time >= destinations[destinationIdx+1].time) {
