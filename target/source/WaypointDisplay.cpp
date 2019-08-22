@@ -55,7 +55,7 @@ void WaypointDisplay::TreeDisplay::render(RenderDevice* rd, const shared_ptr<Gui
 WaypointDisplay::WaypointDisplay(const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) :
 	GuiWindow("Waypoint Manager",
 		theme,
-		Rect2D::xywh(5, 5, config.tree_display_width_px + 10, config.tree_display_height_px+10),
+		Rect2D::xywh(5, 5, (float)config.tree_display_width_px + 10, (float)config.tree_display_height_px+10),
 		GuiTheme::NORMAL_WINDOW_STYLE,
 		GuiWindow::HIDE_ON_CLOSE)
 {
@@ -70,11 +70,11 @@ WaypointDisplay::WaypointDisplay(const shared_ptr<GuiTheme>& theme, WaypointDisp
 	// Create the tree display
 	m_treeDisplay = new TreeDisplay(this, config, waypoints);
 	m_treeDisplay->moveBy(0, -5);		// Dunno why this happens...
-	m_treeDisplay->setSize(config.tree_display_width_px, config.tree_display_height_px);
+	m_treeDisplay->setSize((float)config.tree_display_width_px, (float)config.tree_display_height_px);
 
 	// Create the scroll pane
 	m_scrollPane = pane->addScrollPane(true, true);
-	m_scrollPane->setSize(m_treeDisplay->rect().width()+10, config.tree_display_height_px+10);
+	m_scrollPane->setSize((float)m_treeDisplay->rect().width()+10, (float)config.tree_display_height_px+10);
 	m_scrollPane->viewPane()->addCustom(m_treeDisplay);
 	pack();
 }
