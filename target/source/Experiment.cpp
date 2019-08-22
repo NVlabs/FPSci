@@ -150,6 +150,20 @@ float Experiment::randSign() {
 	}
 }
 
+void Experiment::randomizePosition(shared_ptr<TargetEntity> target) {
+	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
+	CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
+	f.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
+
+	Param tParam = m_psych.getParams()[target->paramIdx()];
+	float rot_pitch = randSign() * Random::common().uniform(tParam.val["minEccV"], tParam.val["maxEccV"]);
+	float rot_yaw = randSign() * Random::common().uniform(tParam.val["minEccH"], tParam.val["maxEccH"]);
+	f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
+	f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
+	Point3 loc = f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+	target->setFrame(loc);
+}
+
 void Experiment::initTargetAnimation() {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
@@ -159,7 +173,8 @@ void Experiment::initTargetAnimation() {
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (presentationState == PresentationState::task) {
-		for (Param target : m_psych.getParams()) {
+		for (int i = 0; i < m_psych.getParams().size(); i++) {
+			Param target = m_psych.getParams()[i];
 			float rot_pitch = randSign() * Random::common().uniform(target.val["minEccV"], target.val["maxEccV"]);
 			float rot_yaw = randSign() * Random::common().uniform(target.val["minEccH"], target.val["maxEccH"]);
 			float visualSize = G3D::Random().common().uniform(target.val["minVisualSize"], target.val["maxVisualSize"]);
@@ -176,6 +191,8 @@ void Experiment::initTargetAnimation() {
 					visualSize,
 					m_config.targetHealthColors[0],
 					String(target.str["id"]),
+					i,
+					(int)target.val["respawns"],
 					String(target.str["name"])
 				);
 			}
@@ -194,6 +211,8 @@ void Experiment::initTargetAnimation() {
 					initialSpawnPos,
 					m_targetDistance,
 					String(target.str["id"]),
+					i,
+					(int) target.val["respawns"],
 					String(target.str["name"])
 				);
 			}
@@ -206,6 +225,8 @@ void Experiment::initTargetAnimation() {
 					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
 					initialSpawnPos,
 					String(target.str["id"]),
+					i,
+					(int)target.val["respawns"],
 					String(target.str["name"])
 				);
 			}
@@ -220,7 +241,8 @@ void Experiment::initTargetAnimation() {
 			{ 0.0f, 0.0f },
 			{ 1000.0f, 1000.f },
 			initialSpawnPos,
-			"dummy"
+			"dummy",
+			0
 		);
 
 		// TODO: Remove this testing new target type
@@ -236,7 +258,7 @@ void Experiment::initTargetAnimation() {
 void Experiment::processResponse()
 {
 	m_taskExecutionTime = m_timer.getTime();
-	int totalTargets = m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters.size();
+	int totalTargets = m_psych.mMeasurements[m_psych.mCurrentConditionIndex].totalTargetCount();
 	m_response = totalTargets - m_app->destroyedTargets; // Number of targets remaining
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 	m_psych.processResponse(m_response); // process response.

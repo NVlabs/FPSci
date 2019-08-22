@@ -144,6 +144,7 @@ public:
 		shared_ptr<Experiment> texp = create(app);
 		texp->m_psych.mMeasurements = Array<SingleThresholdMeasurement>();
 	}
+	void randomizePosition(shared_ptr<TargetEntity> target);
 	/** creates a new target with randomized motion path and gives it to the app */
 	void initTargetAnimation();
 	/** gets the current weapon cooldown as a ratio **/

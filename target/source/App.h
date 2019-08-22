@@ -280,7 +280,7 @@ public:
     @param scale size of target TODO: is this radius or diameter in meters?*/
     void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
 
-	shared_ptr<TargetEntity> spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color, String id, String name="");
+	shared_ptr<TargetEntity> spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color, String id, int paramIdx, int respawns = 0, String name="");
 
 	/** Creates a random target in front of the player */
 	void spawnRandomTarget();
@@ -297,6 +297,8 @@ public:
 		const Vector2& motionChangePeriodRange,
 		Point3 orbitCenter,
 		String modelName,
+		int paramIdx,
+		int respawns = 0,
 		String name = ""
 	);
 
@@ -314,6 +316,8 @@ public:
 		Point3 orbitCenter,
 		float targetDistance,
 		String modelName,
+		int paramIdx,
+		int respawns = 0,
 		String name = ""
 	);
 

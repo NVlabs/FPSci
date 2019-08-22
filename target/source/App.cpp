@@ -246,11 +246,11 @@ shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, b
 }
 
 shared_ptr<TargetEntity> App::spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color,
-	 String id, String name) {	
+	 String id, int paramIdx, int respawns, String name) {	
 	// Create the target
 	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], CFrame(), position);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], CFrame(), paramIdx, position, respawns);
 
 	// Setup the texture
 	UniversalMaterial::Specification materialSpecification;
@@ -281,6 +281,8 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	const Vector2& motionChangePeriodRange,
 	Point3 orbitCenter,
 	String id,
+	int paramIdx,
+	int respawns,
 	String name)
 {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
@@ -292,7 +294,9 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 		CFrame(),
 		speedRange,
 		motionChangePeriodRange,
-		orbitCenter
+		orbitCenter,
+		paramIdx,
+		respawns
 	);
 
 	UniversalMaterial::Specification materialSpecification;
@@ -325,6 +329,8 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	Point3 orbitCenter,
 	float targetDistance,
 	String id,
+	int paramIdx,
+	int respawns,
 	String name)
 {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
@@ -341,7 +347,9 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 		jumpSpeedRange,
 		gravityRange,
 		orbitCenter,
-		targetDistance
+		targetDistance,
+		paramIdx,
+		respawns
 	);
 
 	UniversalMaterial::Specification materialSpecification;
@@ -656,7 +664,7 @@ void App::previewWaypoints(void) {
 	}
 	if (m_waypoints.size() > 1) {
 		// Create a new target and set its index
-		spawnDestTarget(Vector3::zero(), m_waypoints, 1.0, Color3::white(), "dummy", "preview");
+		spawnDestTarget(Vector3::zero(), m_waypoints, 1.0, Color3::white(), "dummy", 0, 0, "preview");
 		m_previewIdx = targetArray.size() - 1;
 	}
 }
@@ -1371,8 +1379,9 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 				m_combatTextList.last()->setFrame(target->frame());
 			}
 
-			bool destroyed = target->doDamage(damage); // TODO: health point should be tracked by Target Entity class (not existing yet).
-			if (destroyed) {
+			destroyedTarget = target->doDamage(damage);
+			bool respawned = false;
+			if (destroyedTarget) {
 				// create explosion animation
 				CFrame explosionFrame = targetArray[closestIndex]->frame();
 				explosionFrame.rotation = activeCamera()->frame().rotation;
@@ -1380,11 +1389,19 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 				scene()->insert(newExplosion);
 				m_explosion = newExplosion;
 				m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
-				destroyTarget(closestIndex);
-				destroyedTarget = true;
 				destroyedTargets += 1;
+				respawned = target->respawn();
+				// check for respawn
+				if (!respawned) {
+					// This is the final respawn
+					destroyTarget(closestIndex);
+				}
 			}
-			else {
+			if(!destroyedTarget || respawned)  {
+				// Handle randomizing position of non-destination targets here
+				if (target->destinations().size() == 0) {
+					ex->randomizePosition(target);
+				}
                 BEGIN_PROFILER_EVENT("fire/changeColor");
                     BEGIN_PROFILER_EVENT("fire/clone");
 				        shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(targetArray[closestIndex]->pose()->clone());

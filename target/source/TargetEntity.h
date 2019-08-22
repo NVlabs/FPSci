@@ -49,12 +49,14 @@ public:
 
 class TargetEntity : public VisibleEntity {
 protected:
-	float m_health = 1.0f;			///< Target health
-	Color3 m_color = Color3::red();
-	Array<Destination> destinations;
-	int destinationIdx = 0;
-	Point3 offset;
-	RealTime m_spawnTime = 0;
+	float m_health			= 1.0f;				///< Target health
+	Color3 m_color			= Color3::red();	///< Default color
+	Array<Destination> m_destinations;			///< Array of destinations to visit
+	int destinationIdx		= 0;				///< Current index into the destination array
+	Point3 m_offset;							///< Offset for initial spawn
+	SimTime m_spawnTime		= 0;				///< Time initiatlly spawned
+	int m_respawnCount		= 0;				///< Number of times to respawn
+	int m_paramIdx			= -1;				///< Parameter index of this item
 
 public:
 	TargetEntity() {}
@@ -65,17 +67,16 @@ public:
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
 		const CFrame&					position,
-		Point3							offset);
+		int								paramIdx,
+		Point3							offset=Point3::zero(),
+		int								respawns=0);
 
-	void init(Array<Destination> dests, Point3 staticOffset = Point3(0.0, 0.0, 0.0)) {
+	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount=0) {
 		setDestinations(dests);
-		offset = staticOffset;
+		m_offset = staticOffset;
+		m_respawnCount = respawnCount;
+		m_paramIdx = paramIdx;
 		destinationIdx = 0;
-	}
-
-	/** Getter for health */
-	float health() { 
-		return m_health; 
 	}
 
 	/**Simple routine to do damage */
@@ -83,11 +84,23 @@ public:
 		m_health -= damage;
 		return m_health <= 0;
 	}
-
-	/**Get the total time for a path*/
-	float getPathTime() {
-		return destinations.last().time;
+	
+	bool respawn() {
+		if (m_respawnCount > 0) {
+			m_respawnCount -= 1;
+			m_spawnTime = 0;		// Reset the path (only works for destination target)
+			m_health = 1.0f;		// Reset the health
+		}
+		return (m_respawnCount>0);
 	}
+
+	/** Getter for health */
+	float health() { return m_health; }
+	/**Get the total time for a path*/
+	float getPathTime() { return m_destinations.last().time; }
+	Array<Destination> destinations() { return m_destinations; }
+	int respawnsRemaining() { return m_respawnCount; }
+	int paramIdx() { return m_paramIdx; }
 
 	void drawHealthBar(RenderDevice* rd, const Camera& camera, const Framebuffer& framebuffer, Point2 size, Point3 offset, Point2 border, Array<Color4> colors, Color4 borderColor) const;
 	virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;
@@ -119,7 +132,7 @@ protected:
 
 	void init();
 
-	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter);
+	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter, int paramIdx, int respawns = 0);
 
 public:
 
@@ -136,25 +149,27 @@ public:
     (const String&                  name,
      Scene*                         scene,
      AnyTableReader&                propertyTable,
-     const ModelTable&              modelTable,
-     const Scene::LoadOptions&      loadOptions);
+     const ModelTable&				modelTable,
+     const Scene::LoadOptions&		loadOptions);
 
 	/** For programmatic construction at runtime */
 	static shared_ptr<FlyingEntity> create
-	(const String&                  name,
-		Scene*                         scene,
-		const shared_ptr<Model>&       model,
-		const CFrame&                  position);
+	(const String&						name,
+		Scene*							scene,
+		const shared_ptr<Model>&		model,
+		const CFrame&					position);
 
 	/** For programmatic construction at runtime */
 	static shared_ptr<FlyingEntity> create
-	(const String&                  name,
-		Scene*                         scene,
-		const shared_ptr<Model>&       model,
-		const CFrame&                  position,
-		const Vector2&                 speedRange,
-		const Vector2&                 motionChangePeriodRange,
-		Point3                         orbitCenter);
+	(const String&						name,
+		Scene*							scene,
+		const shared_ptr<Model>&		model,
+		const CFrame&					position,
+		const Vector2&				    speedRange,
+		const Vector2&					motionChangePeriodRange,
+		Point3							orbitCenter,
+		int								paramIdx,
+		int								respawns=0);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
         modify at least the name of the Table returned by the base class, which will be "Entity"
@@ -227,10 +242,16 @@ protected:
         const Vector2& jumpSpeedRange,
         const Vector2& gravityRange,
 		Point3 orbitCenter,
-		float orbitRadius
+		float orbitRadius,
+		int paramIdx,
+		int respawns = 0
 	);
 
 public:
+	bool respawn() {
+		TargetEntity::respawn();
+		m_isFirstFrame = true;
+	}
 
 	/** For deserialization from Any / loading from file */
 	static shared_ptr<Entity> create 
@@ -242,18 +263,20 @@ public:
 
 	/** For programmatic construction at runtime */
 	static shared_ptr<JumpingEntity> create
-	(const String&                  name,
-		Scene*                         scene,
-		const shared_ptr<Model>&       model,
-		const CFrame&                  position,
-        const Vector2&                 speedRange,
-        const Vector2&                 motionChangePeriodRange,
-        const Vector2&                 jumpPeriodRange,
-		const Vector2&                 distanceRange,
-		const Vector2&                 jumpSpeedRange,
-        const Vector2&                 gravityRange,
-		Point3                         orbitCenter,
-		float                          orbitRadius);
+	(const String&						name,
+		Scene*							scene,
+		const shared_ptr<Model>&		model,
+		const CFrame&					position,
+        const Vector2&					speedRange,
+        const Vector2&					motionChangePeriodRange,
+        const Vector2&					jumpPeriodRange,
+		const Vector2&					distanceRange,
+		const Vector2&					jumpSpeedRange,
+        const Vector2&					gravityRange,
+		Point3							orbitCenter,
+		float							orbitRadius,
+		int								paramIdx,
+		int								respawns=0);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
 		modify at least the name of the Table returned by the base class, which will be "Entity"

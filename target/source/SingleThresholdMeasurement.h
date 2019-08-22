@@ -127,6 +127,13 @@ public:
 	std::vector<int32_t> mTrialCounts; // for MCS only
 										// description of condition for the current measurement
 	Array<Param> TargetParameters;			///< Parameter storage structure
+	int totalTargetCount() {
+		int count = 0;
+		for (Param t : TargetParameters) {
+			count += (int)t.val["respawns"];
+		}
+		return count;
+	}
 
 	bool mIsInitialized = false;
 };

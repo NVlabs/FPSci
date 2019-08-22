@@ -227,8 +227,9 @@ There are a number of inputs to experiment config. The following is a descriptio
 ### Target Configuration
 * `targets` this target config table contains more detailed constraints for path generation for targets:
     * `id` a short string to refer to this target information
-    * `speed` is a vector indictating the minimum ([0]) and maximum ([1]) speeds in angular velocity (in deg/s)
+    * `respawnCount` is an integer providing the number of respawns to occur. For non-respawning items use `0` or leave unspecified.
     * `visualSize` is a vector indicating the minimum ([0]) and maximum ([1]) visual size for the target (in deg)
+    * `speed` is a vector indictating the minimum ([0]) and maximum ([1]) speeds in angular velocity (in deg/s)
     * `distance` is the distance to this target (in meters)
     * `elevationLocked` indicates whether or not the target is locked to its initial elevation
     * `eccH/V` are controls for min ([0])/max([1]) horizontal/vertical eccentricity for target initial position (in deg)
@@ -253,6 +254,7 @@ The `destinations` array within the target object overrides much of the default 
 
 * `id`
 * `visualSize`
+* `respawnCount`
 * `modelSpec`
 
 When specifying a `destinations` array there are several key assumptions worth noting:

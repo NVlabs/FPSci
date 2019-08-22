@@ -534,6 +534,7 @@ public:
 	Array<float> accelGravity = { 9.8f, 9.8f };				///< Range of acceleration due to gravity in meters/s^2
 	Array<Destination> destinations;						///< Array of destinations to traverse
 	String destSpace = "world";								///< Space to use for destinations (implies offset) can be "world" or "player"
+	int	respawnCount = 0;									///< Number of times to respawn
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
@@ -576,6 +577,7 @@ public:
 			reader.getIfPresent("modelSpec", modelSpec);
 			reader.getIfPresent("destSpace", destSpace);
 			reader.getIfPresent("destinations", destinations);
+			reader.getIfPresent("respawnCount", respawnCount);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
@@ -586,8 +588,10 @@ public:
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
 		a["id"] = id;
+		a["respawnCount"] = respawnCount;
+		a["visualSize"] = visualSize;
+		a["modelSpec"] = modelSpec;
 		if (destinations.size() > 0) {
-			a["visualSize"] = visualSize;
 			a["destSpace"] = destSpace;
 			a["destinations"] = destinations;
 		}
@@ -601,7 +605,6 @@ public:
 			a["jumpEnabled"] = jumpEnabled;
 			a["jumpPeriod"] = jumpPeriod;
 			a["accelGravity"] = accelGravity;
-			a["modelSpec"] = modelSpec;
 		}
 
 		return a;
@@ -956,6 +959,7 @@ public:
 				p.add("id", id.c_str());
 				p.add("destCount", (float)target->destinations.size());
 				p.add("destSpace", target->destSpace.c_str());
+				p.add("respawns", (float)target->respawnCount);
 				p.destinations = target->destinations;
 				String modelName = target->modelSpec["filename"];
 				p.add("model", modelName.c_str());

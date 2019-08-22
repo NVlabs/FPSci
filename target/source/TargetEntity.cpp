@@ -30,12 +30,14 @@ shared_ptr<TargetEntity> TargetEntity::create(
 	Scene*							scene,
 	const shared_ptr<Model>&		model,
 	const CFrame&					position,
-	Point3							offset)
+	int								paramIdx,
+	Point3							offset,
+	int								respawns)
 {
 	const shared_ptr<TargetEntity>& target = createShared<TargetEntity>();
 	target->Entity::init(name, scene, CFrame(dests[0].position), shared_ptr<Entity::Track>(), true, true);
 	target->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	target->TargetEntity::init(dests, offset);
+	target->TargetEntity::init(dests, paramIdx, offset, respawns);
 	return target;
 }
 
@@ -70,26 +72,26 @@ void TargetEntity::drawHealthBar(RenderDevice* rd, const Camera& camera, const F
 }
 
 void TargetEntity::setDestinations(const Array<Destination> destinationArray) {
-	destinations = destinationArray;
+	m_destinations = destinationArray;
 }
 
 void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	// Check whether we have any destinations yet...
-	if (destinations.size() < 2)
+	if (m_destinations.size() < 2)
 		return;
 
 	if (m_spawnTime == 0) m_spawnTime = absoluteTime;
 	SimTime time = fmod(absoluteTime-m_spawnTime, getPathTime());			// Compute a local time (modulus the path time)
 	
 	// Check if its time to move to the next segment
-	while(time < destinations[destinationIdx].time || time >= destinations[destinationIdx+1].time) {
+	while(time < m_destinations[destinationIdx].time || time >= m_destinations[destinationIdx+1].time) {
 		destinationIdx++;										// Increment the destination index
-		destinationIdx %= destinations.size();					// Wrap if time goes over (works well for looped paths)
+		destinationIdx %= m_destinations.size();					// Wrap if time goes over (works well for looped paths)
 	}
 	
 	// Get the current and next destination index
-	Destination currDest = destinations[destinationIdx];
-	Destination nextDest = destinations[(destinationIdx + 1) % destinations.size()];
+	Destination currDest = m_destinations[destinationIdx];
+	Destination nextDest = m_destinations[(destinationIdx + 1) % m_destinations.size()];
 
 	// Compute the position by interpolating
 	float duration = nextDest.time - currDest.time;			// Get the total time for this "step
@@ -105,7 +107,7 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	}
 	
 	Point3 delta = currDest.position - nextDest.position; 	// Get the delta vector to move along
-	setFrame((prog*delta) + currDest.position + offset);	// Set the new positions
+	setFrame((prog*delta) + currDest.position + m_offset);	// Set the new positions
 
 #ifdef DRAW_BOUNDING_SPHERES
 	// Draw a 1m sphere at this position
@@ -160,7 +162,9 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	const CFrame&                           position,
 	const Vector2&                          speedRange,
 	const Vector2&                          motionChangePeriodRange,
-	Point3                                  orbitCenter) {
+	Point3                                  orbitCenter,
+	int										paramIdx,
+	int										respawns) {
 
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
 	const shared_ptr<FlyingEntity>& flyingEntity = createShared<FlyingEntity>();
@@ -168,7 +172,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	// Initialize each base class, which parses its own fields
 	flyingEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
 	flyingEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, orbitCenter);
+	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, orbitCenter, paramIdx, respawns);
 
 	return flyingEntity;
 }
@@ -184,10 +188,12 @@ void FlyingEntity::init() {
 }
 
 
-void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter) {
+void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter, int paramIdx, int respawns) {
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
 	m_orbitCenter = orbitCenter;
+	m_paramIdx = paramIdx;
+	m_respawnCount = respawns;
 }
 
 void FlyingEntity::setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter) {
@@ -337,7 +343,9 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 	const Vector2&                          jumpSpeedRange,
 	const Vector2&                          gravityRange,
 	Point3                                  orbitCenter,
-	float                                   orbitRadius) {
+	float                                   orbitRadius,
+	int										paramIdx,
+	int										respawns) {
 
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
 	const shared_ptr<JumpingEntity>& jumpingEntity = createShared<JumpingEntity>();
@@ -353,7 +361,9 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 		jumpSpeedRange,
 		gravityRange,
 		orbitCenter,
-		orbitRadius);
+		orbitRadius,
+		paramIdx,
+		respawns);
 
 	return jumpingEntity;
 }
@@ -369,15 +379,17 @@ void JumpingEntity::init() {
 }
 
 void JumpingEntity::init(
-    const Vector2& angularSpeedRange,
-    const Vector2& motionChangePeriodRange,
-    const Vector2& jumpPeriodRange,
+	const Vector2& angularSpeedRange,
+	const Vector2& motionChangePeriodRange,
+	const Vector2& jumpPeriodRange,
 	const Vector2& distanceRange,
-    const Vector2& jumpSpeedRange,
-    const Vector2& gravityRange,
+	const Vector2& jumpSpeedRange,
+	const Vector2& gravityRange,
 	Point3 orbitCenter,
-	float orbitRadius
-){
+	float orbitRadius,
+	int paramIdx,
+	int respawns)
+{
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
 	m_jumpPeriodRange = jumpPeriodRange;
@@ -385,6 +397,8 @@ void JumpingEntity::init(
 	m_jumpSpeedRange = jumpSpeedRange;
 	m_gravityRange = gravityRange;
 	m_orbitCenter = orbitCenter;
+	m_respawnCount = respawns;
+	m_paramIdx = paramIdx;
 
 	m_orbitRadius = orbitRadius;
 	float angularSpeed = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
