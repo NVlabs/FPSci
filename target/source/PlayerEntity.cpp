@@ -54,7 +54,7 @@ shared_ptr<Entity> PlayerEntity::create
 void PlayerEntity::init(AnyTableReader& propertyTable) {
    // Get values from Any
     Vector3 v;
-    float heading;
+	float heading = m_heading;
     propertyTable.getIfPresent("heading", heading);
     propertyTable.getIfPresent("velocity", v);
     Sphere s(1.5f);
