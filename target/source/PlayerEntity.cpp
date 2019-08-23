@@ -52,12 +52,15 @@ shared_ptr<Entity> PlayerEntity::create
 
 
 void PlayerEntity::init(AnyTableReader& propertyTable) {
+   // Get values from Any
     Vector3 v;
+    float heading;
+    propertyTable.getIfPresent("heading", heading);
     propertyTable.getIfPresent("velocity", v);
     Sphere s(1.5f);
     propertyTable.getIfPresent("collisionSphere", s);
-
-    init(v, s);
+    // Create the player
+    init(v, s, heading);
 }
 
 void PlayerEntity::setCrouched(bool crouched) {
@@ -76,13 +79,13 @@ float PlayerEntity::heightOffset(float height) {
 	return height - m_collisionProxySphere.radius;
 }
 
-void PlayerEntity::init(const Vector3& velocity, const Sphere& collisionProxy) {
+void PlayerEntity::init(const Vector3& velocity, const Sphere& collisionProxy, float heading) {
     m_velocity = velocity;
     m_collisionProxySphere = collisionProxy;
     m_desiredOSVelocity     = Vector3::zero();
     m_desiredYawVelocity    = 0;
     m_desiredPitchVelocity  = 0;
-    m_heading               = 0;
+    m_heading               = heading;
     m_headTilt              = 0;
 }
 
@@ -98,18 +101,15 @@ float PlayerEntity::health() {
 Any PlayerEntity::toAny(const bool forceAll) const {
     Any a = VisibleEntity::toAny(forceAll);
     a.setName("PlayerEntity");
-
+    a["heading"] = m_heading;
     a["velocity"] = m_velocity;
     a["collisionSphere"] = m_collisionProxySphere;
-
     return a;
 }
     
- 
 void PlayerEntity::onPose(Array<shared_ptr<Surface> >& surfaceArray) {
     VisibleEntity::onPose(surfaceArray);
 }
-
 
 /** Maximum coordinate values for the player ship */
 void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {

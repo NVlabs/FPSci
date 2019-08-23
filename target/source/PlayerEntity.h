@@ -16,7 +16,7 @@ protected:
     float           m_desiredPitchVelocity;
 
     // Radians
-    float           m_heading;
+    float           m_heading = 0.0f;
     /** Unused for rendering, for use by a fps cam. */
     float           m_headTilt;
 
@@ -33,7 +33,7 @@ protected:
 #endif
     void init(AnyTableReader& propertyTable);
     
-    void init(const Vector3& velocity, const Sphere& collisionSphere);
+    void init(const Vector3& velocity, const Sphere& collisionSphere, float heading=0);
 #ifdef G3D_OSX
     #pragma clang diagnostic pop
 #endif
