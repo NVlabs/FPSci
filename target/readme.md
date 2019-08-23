@@ -24,6 +24,8 @@ As mentioned above a variety of `.Any` files (similar to JSON file format) are u
 * [`weaponconfig.Any`](./data-files/weapon/weaponConfigReadme.md) can be optionally included (using the `#include("filename")` option in the .Any format) to allow quick swap of weapons across multiple configs
 * [`systemconfig.Any`](./data-files/systemConfigReadme.md) optionally configures an attached hardware click-to-photon monitor and provides (as output) specs from the system the application is being run on
 
+All configuration files referenced above can be found within the [`data-files`](./data-files) directory.
+
 ## Managing Configurations
 One reason for using the modular `.Any` file configuration structure shown above is the ability to track multiple experiments/sessions/trials without a need to perform major edits on the files. For example, an `experimentconfig.Any` file can either be renamed or can make use of the `#include("[filename]")` syntax provided by G3D's `.Any` parsing to include entire `.Any` files as sections in a larger file.
 
