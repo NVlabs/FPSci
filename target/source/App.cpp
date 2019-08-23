@@ -841,7 +841,7 @@ void App::updateSession(String id) {
 	}
 	// Create the results file here (but how do we make sure user set up name?)
 	else {
-		logger->createResultsFile(m_logName + ".db", userTable.currentUser);
+		logger->createResultsFile(m_logName + ".db", userTable.currentUser, experimentConfig.appendingDescription);
 		logPrintf("Created results file: %s.db\n", m_logName.c_str());
 	}
 

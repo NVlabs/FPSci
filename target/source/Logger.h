@@ -33,7 +33,7 @@ public:
 	void addTargets(Array<SingleThresholdMeasurement> measurements);
 
 	/** Create a results file */
-	void createResultsFile(String filename, String subjectID);
+	void createResultsFile(String filename, String subjectID, String description="None");
 
 	/** Record an array of target locations */
 	void recordTargetTrajectory(Array<Array<String>> trajectory);

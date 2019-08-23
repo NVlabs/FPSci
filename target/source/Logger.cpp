@@ -20,7 +20,7 @@ String Logger::genFileTimestamp() {
 	return String(timeStr);
 }
 
-void Logger::createResultsFile(String filename, String subjectID)
+void Logger::createResultsFile(String filename, String subjectID, String description)
 {
 	// generate folder result_data if it does not exist.
 	if (!FileSystem::isDirectory(String("../results"))) {
@@ -43,13 +43,15 @@ void Logger::createResultsFile(String filename, String subjectID)
 		// format: column name, data type, sqlite modifier(s)
 			{ "time", "text", "NOT NULL" },
 			{ "subjectID", "text", "NOT NULL" },
+			{ "appendingDescription", "text"}
 	};
 	createTableInDB(m_db, "Experiments", expColumns); // no need of Primary Key for this table.
 
 	// populate table
 	Array<String> expValues = {
 		"'"+timeStr+"'",
-		"'"+subjectID+"'"
+		"'"+subjectID+"'",
+		"'"+description+"'"
 	};
 	insertRowIntoDB(m_db, "Experiments", expValues);
 
