@@ -20,3 +20,19 @@ In addition the following files are included in this directory:
 * `icon.png` and `icon.ico` are files affiliated with the application's icon
 * `done.png` is a done banner (currently unused in the experiment)
 * `reticle.png` is an unused reticle
+
+## Included Documentation
+The following documentation is included here.
+
+### Configuration Files
+* [`experimentConfigReadme.md`](experimentConfigReadme.md) - A guide to the `experimentconfig.Any` file
+* [`startupConfigReadme.md`](startupConfigReadme.md) - A guide to the `startupconfig.Any` file
+* [`userConfigReadme.md`](userConfigReadme.md) - A guide to the `userconfig.Any` file
+* [`userStatusReadme.md`](userStatusReadme.md) - A guide to the `userstatus.Any` file
+* [`weaponConfigReadme.md`](./weapon/weaponConfigReadme.md) - A guide to weapon configurations in `experimentconfig.Any`
+
+### Scene Files
+More information on scene files is available in the [scene readme](./scene/readme.md).
+
+### Model Files
+More information on model files is available in the [model readme](./model/readme.md).

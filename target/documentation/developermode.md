@@ -15,6 +15,10 @@ Features include:
 * Dynamic reticle selection
 * Dynamic brightness (exposure) control
 * Waypoint-based [target path creation](./patheditor.md)
+* Initialization of player position and view direction
 
 ## Enabling Developer Mode
 As mentioned above, all that needs to be done to enabled developer mode is modifying the `playMode` field in [`startupconfig.Any`](../data-files/startupconfig.Any) to `True`, then running the application to enter developer mode.
+
+## Player Position Initialization
+Once in developer mode the initial player position can be set by pressing `Esc` or `Tab` to enter the pause menu (pointer mode) then clicking the `Set Start Pos` button while positioned/aiming in your desired initial location/direction.
