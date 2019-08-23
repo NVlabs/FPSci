@@ -534,7 +534,7 @@ public:
 	Array<float> accelGravity = { 9.8f, 9.8f };				///< Range of acceleration due to gravity in meters/s^2
 	Array<Destination> destinations;						///< Array of destinations to traverse
 	String destSpace = "world";								///< Space to use for destinations (implies offset) can be "world" or "player"
-	int	respawnCount = 0;									///< Number of times to respawn
+	float respawnCount = 0.0f;								///< Number of times to respawn
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
