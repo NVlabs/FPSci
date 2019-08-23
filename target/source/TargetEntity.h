@@ -86,7 +86,12 @@ public:
 	}
 	
 	bool respawn() {
-		if (m_respawnCount > 0) {
+		if (m_respawnCount == -1) {
+			m_spawnTime = 0;
+			m_health = 1.0f;
+			return true;		// Infinite respawn target
+		}
+		else if (m_respawnCount > 0) {
 			m_respawnCount -= 1;
 			m_spawnTime = 0;		// Reset the path (only works for destination target)
 			m_health = 1.0f;		// Reset the health

@@ -130,6 +130,7 @@ public:
 	int totalTargetCount() {
 		int count = 0;
 		for (Param t : TargetParameters) {
+			if (t.val["respawns"] == -1) return MAXINT;		// Ininite spawn case
 			count += (int)t.val["respawns"];
 		}
 		return count;
