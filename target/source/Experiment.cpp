@@ -169,7 +169,6 @@ void Experiment::initTargetAnimation() {
 	// Not reference: we don't want it to change after the first call.
 	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
 	CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
-	f.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (presentationState == PresentationState::task) {
@@ -179,6 +178,7 @@ void Experiment::initTargetAnimation() {
 			float rot_yaw = randSign() * Random::common().uniform(target.val["minEccH"], target.val["maxEccH"]);
 			float visualSize = G3D::Random().common().uniform(target.val["minVisualSize"], target.val["maxVisualSize"]);
 
+			f.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
 			f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
 			f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
 
