@@ -242,6 +242,7 @@ There are a number of inputs to experiment config. The following is a descriptio
     * `destinations` is an array of `Destination` types each of which contains:
       * `t` the time (in seconds) for this point in the path
       * `xyz` the position for this point in the path
+    * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets)
 
 ## Frame Rate Modes
 The `frameRate` parameter in any given session config can be used in 3 different modes:
