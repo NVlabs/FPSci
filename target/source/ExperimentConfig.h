@@ -535,6 +535,7 @@ public:
 	Array<Destination> destinations;						///< Array of destinations to traverse
 	String destSpace = "world";								///< Space to use for destinations (implies offset) can be "world" or "player"
 	float respawnCount = 0.0f;								///< Number of times to respawn
+	AABox bbox = AABox();
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
@@ -578,6 +579,7 @@ public:
 			reader.getIfPresent("destSpace", destSpace);
 			reader.getIfPresent("destinations", destinations);
 			reader.getIfPresent("respawnCount", respawnCount);
+			reader.getIfPresent("bounds", bbox);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
@@ -961,6 +963,7 @@ public:
 				p.add("destSpace", target->destSpace.c_str());
 				p.add("respawns", (float)target->respawnCount);
 				p.destinations = target->destinations;
+				p.bounds = target->bbox;
 				String modelName = target->modelSpec["filename"];
 				p.add("model", modelName.c_str());
 				if (target->jumpEnabled) {

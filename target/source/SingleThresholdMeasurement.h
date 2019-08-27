@@ -59,6 +59,7 @@ struct Param
 	std::map<std::string, std::string> str;
 	std::map<std::string, std::vector<float>> val_vec;
 	Array<Destination> destinations;
+	AABox bounds;
 
 	void add(std::string s, float f) {
 		val.insert(std::pair<std::string, float>(s, f));

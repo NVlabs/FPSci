@@ -58,6 +58,10 @@ protected:
 	int m_respawnCount		= 0;				///< Number of times to respawn
 	int m_paramIdx			= -1;				///< Parameter index of this item
 
+	// Only used for flying/jumping entities
+	SimTime m_nextChangeTime = 0;
+	Vector3 m_velocity = Vector3::zero();
+
 public:
 	TargetEntity() {}
 
@@ -99,6 +103,10 @@ public:
 		return (m_respawnCount>0);
 	}
 
+	void resetMotionParams() {
+		m_nextChangeTime = 0;
+	}
+
 	/** Getter for health */
 	float health() { return m_health; }
 	/**Get the total time for a path*/
@@ -115,8 +123,6 @@ public:
 
 class FlyingEntity : public TargetEntity {
 protected:
-
-	float							m_health = 1.0f;
 	/** Angular speed in degress/sec */
 	float                           m_speed = 0.0f;
     /** World space point at center of orbit */
@@ -132,6 +138,10 @@ protected:
         removed from the queue.*/
     Queue<Point3>                   m_destinationPoints;
 
+	AABox m_bounds = AABox();
+
+	bool m_worldSpace = false;
+
 	FlyingEntity() {}
     void init(AnyTableReader& propertyTable);
 
@@ -143,6 +153,11 @@ public:
 
     /** Destinations must be no more than 170 degrees apart to avoid ambiguity in movement direction */
     void setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter);
+
+	void setWorldSpace(bool worldSpace) { m_worldSpace = worldSpace; }
+
+	void setBounds(AABox bounds) { m_bounds = bounds; }
+	AABox bounds() { return m_bounds; }
 
 	void setSpeed(float speed) {
 		m_speed = speed;
@@ -232,6 +247,9 @@ protected:
 
 	/** check first frame */
 	bool                            m_isFirstFrame = true;
+	bool							m_worldSpace = false;
+
+	AABox m_bounds = AABox();
 
 	JumpingEntity() {}
 
@@ -257,6 +275,11 @@ public:
 		TargetEntity::respawn();
 		m_isFirstFrame = true;
 	}
+
+	void setWorldSpace(bool worldSpace) { m_worldSpace = worldSpace; }
+
+	void setBounds(AABox bounds) { m_bounds = bounds; }
+	AABox bounds() { return m_bounds; }
 
 	/** For deserialization from Any / loading from file */
 	static shared_ptr<Entity> create 

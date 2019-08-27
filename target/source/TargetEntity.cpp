@@ -236,70 +236,95 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
 	simulatePose(absoluteTime, deltaTime);
 
-	while ((deltaTime > 0.000001f) && m_angularSpeedRange[0] > 0.0f) {
-		if (m_destinationPoints.empty()) {
-			float motionChangePeriod = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
-			float angularSpeed = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
-			float angularDistance = motionChangePeriod * angularSpeed;
-			angularDistance = angularDistance > 170.f ? 170.0f : angularDistance; // replace with 170 deg if larger than 170.
-
-			// [m/s] = [m/radians] * [radians/s]
-			const float radius = (m_frame.translation - m_orbitCenter).length();
-			m_speed = radius * (angularSpeed * pif() / 180.0f);
-
-			// relative position to orbit center
-			Point3 relPos = m_frame.translation - m_orbitCenter;
-			// find a vector perpendicular to the current position
-			Point3 perpen = findPerpendicularVector(relPos);
-			// calculate destination point
-			Point3 dest = m_orbitCenter + rotateToward(relPos, perpen, angularDistance);
-			// add destination point.
-			m_destinationPoints.pushBack(dest);
+	if (m_worldSpace) {
+		Point3 pos = m_frame.translation;
+		// Handle world-space target here
+		// Check for change in direction
+		if (absoluteTime > m_nextChangeTime) {
+			// Update the next change time
+			float motionChangeTime = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
+			m_nextChangeTime = absoluteTime + motionChangeTime;
+			// Velocity to use for this next interval
+			float vel = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+			m_velocity = vel * (m_bounds.randomInteriorPoint()- m_frame.translation).direction();
+		
+		}
+		// Check for whether the target has "left" the bounds
+		else if (!m_bounds.contains(pos)) {
+			m_velocity = Vector3(-m_velocity.x, -m_velocity.y, -m_velocity.z);
 		}
 
-		if ((m_frame.translation - m_destinationPoints[0]).length() < 0.001f) {
-			// Retire this destination. We are almost at the destination (linear and geodesic distances 
-			// are the same when small), and the following math will be numerically imprecise if we
-			// use such a close destination.
-			m_destinationPoints.popFront();
-		}
-		else {
-			const Point3 destinationPoint = m_destinationPoints[0];
-			const Point3 currentPoint = m_frame.translation;
+		// Update the position and set the frame
+		pos += m_velocity*deltaTime;		
+		setFrame(pos);
+	}
+	else {
+		// Handle non-world space (player projection here)
+		while ((deltaTime > 0.000001f) && m_angularSpeedRange[0] > 0.0f) {
+			if (m_destinationPoints.empty()) {
+				float motionChangePeriod = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
+				float angularSpeed = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+				float angularDistance = motionChangePeriod * angularSpeed;
+				angularDistance = angularDistance > 170.f ? 170.0f : angularDistance; // replace with 170 deg if larger than 170.
 
-			// Transform to directions
-			const float radius = (destinationPoint - m_orbitCenter).length();
-			const Vector3& destinationVector = (destinationPoint - m_orbitCenter).direction();
-			const Vector3& currentVector = (currentPoint - m_orbitCenter).direction();
+				// [m/s] = [m/radians] * [radians/s]
+				const float radius = (m_frame.translation - m_orbitCenter).length();
+				m_speed = radius * (angularSpeed * pif() / 180.0f);
 
-			// The direction is always "from current to destination", so we can use acos here
-			// and not worry about it being unsigned.
-			const float projection = currentVector.dot(destinationVector);
-			const float destinationAngle = G3D::acos(projection);
+				// relative position to orbit center
+				Point3 relPos = m_frame.translation - m_orbitCenter;
+				// find a vector perpendicular to the current position
+				Point3 perpen = findPerpendicularVector(relPos);
+				// calculate destination point
+				Point3 dest = m_orbitCenter + rotateToward(relPos, perpen, angularDistance);
+				// add destination point.
+				m_destinationPoints.pushBack(dest);
+			}
 
-			// [radians/s] = [m/s] / [m/radians]
-			const float angularSpeed = m_speed / radius;
-
-			// [rad] = [rad/s] * [s] 
-			float angleChange = angularSpeed * deltaTime;
-
-			if (angleChange > destinationAngle) {
-				// We'll reach the destination before the time step ends.
-				// Record how much time was consumed by this step.
-				deltaTime -= destinationAngle / angularSpeed;
-				angleChange = destinationAngle;
+			if ((m_frame.translation - m_destinationPoints[0]).length() < 0.001f) {
+				// Retire this destination. We are almost at the destination (linear and geodesic distances 
+				// are the same when small), and the following math will be numerically imprecise if we
+				// use such a close destination.
 				m_destinationPoints.popFront();
 			}
 			else {
-				// Consumed the entire time step
-				deltaTime = 0;
+				const Point3 destinationPoint = m_destinationPoints[0];
+				const Point3 currentPoint = m_frame.translation;
+
+				// Transform to directions
+				const float radius = (destinationPoint - m_orbitCenter).length();
+				const Vector3& destinationVector = (destinationPoint - m_orbitCenter).direction();
+				const Vector3& currentVector = (currentPoint - m_orbitCenter).direction();
+
+				// The direction is always "from current to destination", so we can use acos here
+				// and not worry about it being unsigned.
+				const float projection = currentVector.dot(destinationVector);
+				const float destinationAngle = G3D::acos(projection);
+
+				// [radians/s] = [m/s] / [m/radians]
+				const float angularSpeed = m_speed / radius;
+
+				// [rad] = [rad/s] * [s] 
+				float angleChange = angularSpeed * deltaTime;
+
+				if (angleChange > destinationAngle) {
+					// We'll reach the destination before the time step ends.
+					// Record how much time was consumed by this step.
+					deltaTime -= destinationAngle / angularSpeed;
+					angleChange = destinationAngle;
+					m_destinationPoints.popFront();
+				}
+				else {
+					// Consumed the entire time step
+					deltaTime = 0;
+				}
+
+				// Transform to spherical coordinates in the plane of the arc
+				const Vector3& U = currentVector;
+				const Vector3& V = (destinationVector - currentVector * projection).direction();
+
+				setFrame(m_orbitCenter + (cos(angleChange) * U + sin(angleChange) * V) * radius);
 			}
-
-			// Transform to spherical coordinates in the plane of the arc
-			const Vector3& U = currentVector;
-			const Vector3& V = (destinationVector - currentVector * projection).direction();
-
-			m_frame.translation = m_orbitCenter + (cos(angleChange) * U + sin(angleChange) * V) * radius;
 		}
 	}
 #ifdef DRAW_BOUNDING_SPHERES

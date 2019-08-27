@@ -156,11 +156,20 @@ void Experiment::randomizePosition(shared_ptr<TargetEntity> target) {
 	f.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
 
 	Param tParam = m_psych.getParams()[target->paramIdx()];
-	float rot_pitch = randSign() * Random::common().uniform(tParam.val["minEccV"], tParam.val["maxEccV"]);
-	float rot_yaw = randSign() * Random::common().uniform(tParam.val["minEccH"], tParam.val["maxEccH"]);
-	f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
-	f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
-	Point3 loc = f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+	bool isWorldSpace = tParam.str["destSpace"] == "world";
+	Point3 loc;
+
+	if (isWorldSpace) {
+		loc = tParam.bounds.randomInteriorPoint();		// Set a random position in the bounds
+		target->resetMotionParams();					// Reset the target motion behavior
+	}
+	else {
+		float rot_pitch = randSign() * Random::common().uniform(tParam.val["minEccV"], tParam.val["maxEccV"]);
+		float rot_yaw = randSign() * Random::common().uniform(tParam.val["minEccH"], tParam.val["maxEccH"]);
+		f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
+		f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
+		loc = f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+	}
 	target->setFrame(loc);
 }
 
@@ -177,6 +186,8 @@ void Experiment::initTargetAnimation() {
 			float rot_pitch = randSign() * Random::common().uniform(target.val["minEccV"], target.val["maxEccV"]);
 			float rot_yaw = randSign() * Random::common().uniform(target.val["minEccH"], target.val["maxEccH"]);
 			float visualSize = G3D::Random().common().uniform(target.val["minVisualSize"], target.val["maxVisualSize"]);
+			bool isWorldSpace = target.str["destSpace"] == "world";
+
 
 			f.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
 			f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
@@ -184,7 +195,7 @@ void Experiment::initTargetAnimation() {
 
 			// Check for case w/ destination array
 			if (target.val["destCount"] > 0.0) {
-				Point3 offset = (target.str["destSpace"] == "world") ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+				Point3 offset =isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 				m_app->spawnDestTarget(
 					offset,
 					target.destinations,
@@ -198,8 +209,9 @@ void Experiment::initTargetAnimation() {
 			}
 			// Otherwise check if this is a jumping target
 			else if (String(target.str["jumpEnabled"].c_str()) == "true") {
-				m_app->spawnJumpingTarget(
-					f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
+				Point3 offset = isWorldSpace ? target.bounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+				shared_ptr<JumpingEntity> t = m_app->spawnJumpingTarget(
+					offset,
 					visualSize,
 					m_config.targetHealthColors[0],
 					{ target.val["minSpeed"], target.val["maxSpeed"] },
@@ -215,10 +227,15 @@ void Experiment::initTargetAnimation() {
 					(int) target.val["respawns"],
 					String(target.str["name"])
 				);
+				t->setWorldSpace(isWorldSpace);
+				if (isWorldSpace) {
+					t->setBounds(target.bounds);
+				}
 			}
 			else {
-				m_app->spawnFlyingTarget(
-					f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
+				Point3 offset = isWorldSpace ? target.bounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+				shared_ptr<FlyingEntity> t = m_app->spawnFlyingTarget(
+					offset,
 					visualSize,
 					m_config.targetHealthColors[0],
 					{ target.val["minSpeed"], target.val["maxSpeed"] },
@@ -229,6 +246,10 @@ void Experiment::initTargetAnimation() {
 					(int)target.val["respawns"],
 					String(target.str["name"])
 				);
+				t->setWorldSpace(isWorldSpace);
+				if (isWorldSpace) {
+					t->setBounds(target.bounds);
+				}
 			}
 		}
 	}
