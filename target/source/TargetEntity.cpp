@@ -462,111 +462,171 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		m_simulatedPos = m_frame.translation;
 		m_standingHeight = m_frame.translation.y;
 		m_isFirstFrame = false;
+		m_acc.y = -Random::common().uniform(m_gravityRange[0], m_gravityRange[1]);
+		m_jumpSpeed = Random::common().uniform(m_jumpSpeedRange[0], m_jumpSpeedRange[1]);
 	}
 
-	while (deltaTime > 0.000001f) {
-		/// Decide time step size for motion simulation.
-		// Calculate remaining time until next state change for motion and jump
-		float nextJumpStateChange;
+	if (m_worldSpace) {
+		// Implement world-space target logic here
+		Point3 pos = m_frame.translation;			// Get the starting position
+		// Check for time for motion (direction) change
+		if (absoluteTime > m_nextChangeTime) {
+			// Update the next change time
+			float motionChangeTime = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
+			m_nextChangeTime = absoluteTime + motionChangeTime;
+			// Velocity to use for this next interval
+			float vel = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+			m_velocity = vel * (m_bounds.randomInteriorPoint() - m_frame.translation).direction();
+		}
+		// Check for time for jump
+		if (absoluteTime > m_nextJumpTime && !m_inJump) {
+			m_standingHeight = pos.y;
+			m_inJump = true;				// Note we are in the jump
+			m_jumpTime = absoluteTime;
+		}
+		
+		// Add the velocity
+		pos += m_velocity * deltaTime;
+
+		// Check for whether the target has "left" the bounds
+		float height = pos.y;
 		if (m_inJump) {
-			// Find when the current jump ends from now. We need to solve a kinematic equation here.
-			// 0 = a * t ^ 2 + 2 * v * t + (y - y0)
-			// a: acceleration, t: time, v: velocity, y: height, y0: standing height (before jump started)
-			// The equation comes with one positive and one negative solution. Ignore negative (it's "when did the jump start?")
-			// The following is the positive solution. Note that a is negative (- g).
-			// t = - v / a - sqrt(v ^ 2 - ah + ah0) / a
-			nextJumpStateChange =
-				- m_speed.y / m_acc.y
-				- sqrtf(m_speed.y * m_speed.y - m_acc.y * m_simulatedPos.y + m_acc.y * m_standingHeight) / m_acc.y;
-			int aa = 1;
+			pos.y = m_standingHeight;
 		}
-		else {
-			nextJumpStateChange = m_jumpTimer;
+		if (!m_bounds.contains(pos)) {
+			m_velocity = Vector3(-m_velocity.x, -m_velocity.y, -m_velocity.z);
 		}
-		// Decide time step size t where motion state is consistent.
-		float t = G3D::min(deltaTime, m_motionChangeTimer, nextJumpStateChange);
-
-		/// Update position, planar component
-		Point3 planar_center = Point3(m_orbitCenter.x, m_standingHeight, m_orbitCenter.z);
-		Point3 planar_pos = Point3(m_simulatedPos.x, m_standingHeight, m_simulatedPos.z); // purely rotation component of the position vector
-		float radius = (planar_pos - planar_center).length();
-		float d;
 		if (m_inJump) {
-			d = m_speed.x * t + m_acc.x * t * t / 2; // metric distance to travel.
+			pos.y = height;
 		}
-		else {
-			d = m_speed.x * t;
-		}
-		float angularDistance = d / radius; // unit is radian
-		// Calculate the position.
-		Point3 U = (planar_pos - planar_center).direction();
-		// Find a perpendicular vector toward the direction of rotation.
-		Point3 V;
-		V = U.cross(Point3(0.f, 1.f, 0.f));
-		Point3 o = m_orbitCenter + (cos(angularDistance) * U + sin(angularDistance) * V) * radius;
-		m_simulatedPos.x = o.x;
-		m_simulatedPos.z = o.z;
 
-		/// Update position, jump component
+		// Check for jump condition
 		if (m_inJump) {
-			m_simulatedPos.y = 0.5f * m_acc.y * t * t + m_speed.y * t + m_simulatedPos.y;
-		}
-
-		/// Update animated position.
-		// Project to the spherical surface, and update the frame translation vector.
-		Point3 relativePos = m_simulatedPos - m_orbitCenter;
-		m_frame.translation = relativePos.direction() * m_orbitRadius + m_orbitCenter;
-
-		/// Update velocity
-		if (m_inJump) {
-			m_speed = m_speed + m_acc * t;
-			if ((m_planarSpeedGoal > 0 && m_speed.x > m_planarSpeedGoal) || (m_planarSpeedGoal < 0 && m_speed.x < m_planarSpeedGoal)) {
-				m_speed.x = m_planarSpeedGoal;
-			}
-		}
-
-		/// Update motion state (includes updating acceleration)
-		if (t == m_motionChangeTimer) { // changing motion direction
-			float new_AngularSpeedGoal = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
-			float new_planarSpeedGoal = m_orbitRadius * (new_AngularSpeedGoal * pif() / 180.0f);
-			// change direction
-			if (m_planarSpeedGoal > 0) {
-				new_planarSpeedGoal = -new_planarSpeedGoal;
-			}
-			// assign as the new speed goal
-			m_planarSpeedGoal = new_planarSpeedGoal;
-			if (m_inJump) { // if in jump, flip planar acceleration direction
-				m_acc.x = sign(m_planarSpeedGoal) * m_planarAcc;
-			}
-			else { // if not in jump, immediately apply direction change
-				m_speed.x = m_planarSpeedGoal;
-			}
-			m_motionChangeTimer = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
-		}
-		if (t == nextJumpStateChange) { // either starting or finishing jump
-			if (m_inJump) { // finishing jump
-				m_simulatedPos.y = m_standingHeight; // hard-set to non-jumping height.
-				m_acc.y = 0; // remove gravity effect
-				m_speed.x = m_planarSpeedGoal; // instantly gain the running speed. (general behavior in games)
+			SimTime dt = absoluteTime - m_jumpTime;
+			float jumpTime = -m_jumpSpeed / m_acc.y
+				- sqrtf(m_jumpSpeed*m_jumpSpeed - m_acc.y * pos.y + m_acc.y * m_standingHeight) / m_acc.y;
+			// Check if jump is over (time-based)
+			if (dt > jumpTime) {
 				m_inJump = false;
-				m_jumpTimer = Random::common().uniform(m_jumpPeriodRange[0], m_jumpPeriodRange[1]);
+				m_jumpTime = 0;
+				// Schedule the next jump here
+				float nextJump = Random::common().uniform(m_jumpPeriodRange[0], m_jumpPeriodRange[1]);
+				m_nextJumpTime = absoluteTime + nextJump;
 			}
-			else { // starting jump
-				m_acc.x = sign(m_planarSpeedGoal) * m_planarAcc;
-				float gravity = - Random::common().uniform(m_gravityRange[0], m_gravityRange[1]);
-				float jumpSpeed = Random::common().uniform(m_jumpSpeedRange[0], m_jumpSpeedRange[1]);
-				float distance = Random::common().uniform(m_distanceRange[0], m_distanceRange[1]);
-				m_acc.y = gravity * m_orbitRadius / distance;
-				m_speed.y = jumpSpeed * m_orbitRadius / distance;
-				m_planarAcc = m_acc.y / 3.f;
-				m_inJump = true;
+			else {
+				// Attempt jump simulation here
+				pos.y += 0.5f * m_acc.y * dt * dt + m_jumpSpeed * dt;
 			}
 		}
 
-		/// decrement deltaTime and timers by t
-		deltaTime -= t;
-		m_jumpTimer -= t;
-		m_motionChangeTimer -= t;
+		// Update the position
+		setFrame(pos);
+	}
+	else {
+		while (deltaTime > 0.000001f) {
+			/// Decide time step size for motion simulation.
+			// Calculate remaining time until next state change for motion and jump
+			float nextJumpStateChange;
+			if (m_inJump) {
+				// Find when the current jump ends from now. We need to solve a kinematic equation here.
+				// 0 = a * t ^ 2 + 2 * v * t + (y - y0)
+				// a: acceleration, t: time, v: velocity, y: height, y0: standing height (before jump started)
+				// The equation comes with one positive and one negative solution. Ignore negative (it's "when did the jump start?")
+				// The following is the positive solution. Note that a is negative (- g).
+				// t = - v / a - sqrt(v ^ 2 - ah + ah0) / a
+				nextJumpStateChange =
+					-m_speed.y / m_acc.y
+					- sqrtf(m_speed.y * m_speed.y - m_acc.y * m_simulatedPos.y + m_acc.y * m_standingHeight) / m_acc.y;
+				int aa = 1;
+			}
+			else {
+				nextJumpStateChange = m_jumpTimer;
+			}
+			// Decide time step size t where motion state is consistent.
+			float t = G3D::min(deltaTime, m_motionChangeTimer, nextJumpStateChange);
+
+			/// Update position, planar component
+			Point3 planar_center = Point3(m_orbitCenter.x, m_standingHeight, m_orbitCenter.z);
+			Point3 planar_pos = Point3(m_simulatedPos.x, m_standingHeight, m_simulatedPos.z); // purely rotation component of the position vector
+			float radius = (planar_pos - planar_center).length();
+			float d;
+			if (m_inJump) {
+				d = m_speed.x * t + m_acc.x * t * t / 2; // metric distance to travel.
+			}
+			else {
+				d = m_speed.x * t;
+			}
+			float angularDistance = d / radius; // unit is radian
+			// Calculate the position.
+			Point3 U = (planar_pos - planar_center).direction();
+			// Find a perpendicular vector toward the direction of rotation.
+			Point3 V;
+			V = U.cross(Point3(0.f, 1.f, 0.f));
+			Point3 o = m_orbitCenter + (cos(angularDistance) * U + sin(angularDistance) * V) * radius;
+			m_simulatedPos.x = o.x;
+			m_simulatedPos.z = o.z;
+
+			/// Update position, jump component
+			if (m_inJump) {
+				m_simulatedPos.y = 0.5f * m_acc.y * t * t + m_speed.y * t + m_simulatedPos.y;
+			}
+
+			/// Update animated position.
+			// Project to the spherical surface, and update the frame translation vector.
+			Point3 relativePos = m_simulatedPos - m_orbitCenter;
+			m_frame.translation = relativePos.direction() * m_orbitRadius + m_orbitCenter;
+
+			/// Update velocity
+			if (m_inJump) {
+				m_speed = m_speed + m_acc * t;
+				if ((m_planarSpeedGoal > 0 && m_speed.x > m_planarSpeedGoal) || (m_planarSpeedGoal < 0 && m_speed.x < m_planarSpeedGoal)) {
+					m_speed.x = m_planarSpeedGoal;
+				}
+			}
+
+			/// Update motion state (includes updating acceleration)
+			if (t == m_motionChangeTimer) { // changing motion direction
+				float new_AngularSpeedGoal = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+				float new_planarSpeedGoal = m_orbitRadius * (new_AngularSpeedGoal * pif() / 180.0f);
+				// change direction
+				if (m_planarSpeedGoal > 0) {
+					new_planarSpeedGoal = -new_planarSpeedGoal;
+				}
+				// assign as the new speed goal
+				m_planarSpeedGoal = new_planarSpeedGoal;
+				if (m_inJump) { // if in jump, flip planar acceleration direction
+					m_acc.x = sign(m_planarSpeedGoal) * m_planarAcc;
+				}
+				else { // if not in jump, immediately apply direction change
+					m_speed.x = m_planarSpeedGoal;
+				}
+				m_motionChangeTimer = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
+			}
+			if (t == nextJumpStateChange) { // either starting or finishing jump
+				if (m_inJump) { // finishing jump
+					m_simulatedPos.y = m_standingHeight; // hard-set to non-jumping height.
+					m_acc.y = 0; // remove gravity effect
+					m_speed.x = m_planarSpeedGoal; // instantly gain the running speed. (general behavior in games)
+					m_inJump = false;
+					m_jumpTimer = Random::common().uniform(m_jumpPeriodRange[0], m_jumpPeriodRange[1]);
+				}
+				else { // starting jump
+					m_acc.x = sign(m_planarSpeedGoal) * m_planarAcc;
+					float gravity = -Random::common().uniform(m_gravityRange[0], m_gravityRange[1]);
+					float jumpSpeed = Random::common().uniform(m_jumpSpeedRange[0], m_jumpSpeedRange[1]);
+					float distance = Random::common().uniform(m_distanceRange[0], m_distanceRange[1]);
+					m_acc.y = gravity * m_orbitRadius / distance;
+					m_speed.y = jumpSpeed * m_orbitRadius / distance;
+					m_planarAcc = m_acc.y / 3.f;
+					m_inJump = true;
+				}
+			}
+
+			/// decrement deltaTime and timers by t
+			deltaTime -= t;
+			m_jumpTimer -= t;
+			m_motionChangeTimer -= t;
+		}
 	}
 #ifdef DRAW_BOUNDING_SPHERES
 	// Draw a 1m sphere at this position

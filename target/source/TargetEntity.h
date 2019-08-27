@@ -57,6 +57,7 @@ protected:
 	SimTime m_spawnTime		= 0;				///< Time initiatlly spawned
 	int m_respawnCount		= 0;				///< Number of times to respawn
 	int m_paramIdx			= -1;				///< Parameter index of this item
+	bool m_worldSpace		= false;			///< World space coordiantes?
 
 	// Only used for flying/jumping entities
 	SimTime m_nextChangeTime = 0;
@@ -82,6 +83,8 @@ public:
 		m_paramIdx = paramIdx;
 		destinationIdx = 0;
 	}
+
+	void setWorldSpace(bool worldSpace) { m_worldSpace = worldSpace; }
 
 	/**Simple routine to do damage */
 	bool doDamage(float damage) {
@@ -140,8 +143,6 @@ protected:
 
 	AABox m_bounds = AABox();
 
-	bool m_worldSpace = false;
-
 	FlyingEntity() {}
     void init(AnyTableReader& propertyTable);
 
@@ -153,8 +154,6 @@ public:
 
     /** Destinations must be no more than 170 degrees apart to avoid ambiguity in movement direction */
     void setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter);
-
-	void setWorldSpace(bool worldSpace) { m_worldSpace = worldSpace; }
 
 	void setBounds(AABox bounds) { m_bounds = bounds; }
 	AABox bounds() { return m_bounds; }
@@ -218,6 +217,7 @@ protected:
 	/** Parameters reset every time motion change or jump happens */
 	float                           m_planarSpeedGoal; // the speed value m_speed tries to approach.
 	Point2                          m_acc;
+	float							m_jumpSpeed;
 
 	/** World space point at center of orbit */
 	Point3                          m_orbitCenter;
@@ -229,6 +229,7 @@ protected:
 
 	/** jump state */
 	bool                            m_inJump;
+	SimTime							m_jumpTime;
 	float                           m_standingHeight;
 
 	/** Angular Speed Range (deg/s) x=min y=max */
@@ -247,8 +248,7 @@ protected:
 
 	/** check first frame */
 	bool                            m_isFirstFrame = true;
-	bool							m_worldSpace = false;
-
+	SimTime							m_nextJumpTime = 0;
 	AABox m_bounds = AABox();
 
 	JumpingEntity() {}
@@ -275,8 +275,6 @@ public:
 		TargetEntity::respawn();
 		m_isFirstFrame = true;
 	}
-
-	void setWorldSpace(bool worldSpace) { m_worldSpace = worldSpace; }
 
 	void setBounds(AABox bounds) { m_bounds = bounds; }
 	AABox bounds() { return m_bounds; }
