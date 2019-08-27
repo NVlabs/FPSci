@@ -152,8 +152,6 @@ float Experiment::randSign() {
 
 void Experiment::randomizePosition(shared_ptr<TargetEntity> target) {
 	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
-	CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
-	f.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
 
 	Param tParam = m_psych.getParams()[target->paramIdx()];
 	bool isWorldSpace = tParam.str["destSpace"] == "world";
@@ -166,8 +164,7 @@ void Experiment::randomizePosition(shared_ptr<TargetEntity> target) {
 	else {
 		float rot_pitch = randSign() * Random::common().uniform(tParam.val["minEccV"], tParam.val["maxEccV"]);
 		float rot_yaw = randSign() * Random::common().uniform(tParam.val["minEccH"], tParam.val["maxEccH"]);
-		f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
-		f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
+		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw, rot_pitch, 0.0f);
 		loc = f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 	}
 	target->setFrame(loc);
@@ -188,10 +185,7 @@ void Experiment::initTargetAnimation() {
 			float visualSize = G3D::Random().common().uniform(target.val["minVisualSize"], target.val["maxVisualSize"]);
 			bool isWorldSpace = target.str["destSpace"] == "world";
 
-
-			f.lookAt(Point3(0.0f, 0.0f, -1.0f)); // look at the -z direction
-			f = (f.toMatrix4() * Matrix4::pitchDegrees(rot_pitch)).approxCoordinateFrame();
-			f = (f.toMatrix4() * Matrix4::yawDegrees(rot_yaw)).approxCoordinateFrame();
+			f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw, rot_pitch, 0.0f);
 
 			// Check for case w/ destination array
 			if (target.val["destCount"] > 0.0) {
