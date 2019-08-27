@@ -11,7 +11,7 @@ Scene files specify the following aspects of the in-game experience:
 One set of parameters controlled from within the `scene.Any` file is the initial spawn location and heading of the player. These are specified using the `frame` and `heading` fields of the `PlayerEntity`.
 
 * `frame` can be specified either as a full `CFrame` or as a position using a `Point3` type. If the frame is specified as a `CFrame` the rotation will be ignored in favor of `heading` as specified below
-* `heading` is a float specifying the distance to rotate from the "initial" position (in degrees, counter clockwise)
+* `heading` is a float specifying the distance to rotate from the "initial" position (in radians, counter clockwise, specified in the range 0-2π)
 * `model` is a pointer to a 3D model type for the player specified elsewhere in the `scene.Any` file
 * `collisionSphere` is a `Sphere` specified as a radius (in meters) for the geometry to use to detect collisions
 

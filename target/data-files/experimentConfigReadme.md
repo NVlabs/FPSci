@@ -224,6 +224,37 @@ There are a number of inputs to experiment config. The following is a descriptio
         * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
         * `count` provides the number of trials in this session
 
+#### Session Configuration Example
+An example session configuration snippet is included below:
+
+```
+"sessions" : [
+    {
+        "id" : "test-session",
+        "frameDelay" : 3,           // Frame delay (in frames)
+        "frameRate" : 60,           // Frame/update rate (in Hz)
+        "expMode" : "test",         // This is an arbitrary string tag (for now)
+        "trials" : [
+            {
+                "ids" : ["simple_target"],                                  // Single target example
+                "count": 20,
+            },
+            {
+                "ids" : ["simple_target", "world-space paramtetric", "example_target", "example_target"],
+                "count" : 5
+            }
+        ]
+    },
+    {
+        "id" : "minimal-session",       // This session uses default 0 frameDelay and unlocked frame rate
+        "trials" : [
+            "ids" : ["simple_target", "destination-based"],
+            "count" : 10
+        ]
+    },
+],
+```
+
 ### Target Configuration
 * `targets` this target config table contains more detailed constraints for path generation for targets:
     * `id` a short string to refer to this target information
@@ -243,6 +274,44 @@ There are a number of inputs to experiment config. The following is a descriptio
       * `t` the time (in seconds) for this point in the path
       * `xyz` the position for this point in the path
     * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets)
+    * `bounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
+
+#### Target Configuration Example
+An example target configuration snippet is provided below:
+
+```
+targets = [
+    {
+        "id": "simple_target",
+        "visualSize" : [0.5, 0.5],          // 0.5m size
+        "respawnCount" : 0,                 // Don't respawn
+        "speed": [1.0, 3.0],                // 1-3m/s speed
+        "eccH" : [5.0, 15.0],               // 5-15° initial spawn location (horizontal)
+        "eccV" : [0.0, 5.0],                // 0-5° intitial spawn location (vertical)
+    },
+    {
+        "id": "world-space paramtetric",
+        "destSpace" : "world",              // This is a world-space target
+        "bounds" : AABox {
+                Point3(-8.5, 0.5, -11.5),   // It is important these are specified in "increasing order"
+                Point3(-6.5, 1.5, -7.5)     // All x,y,z coordinates must be greater than those above
+        },
+        "visualSize" : [0.3, 1.0],          // Visual size between 0.3-1m
+        "respawnCount" : -1,                // Respawn forever
+    },
+    {
+        "id" : "destination-based",
+        "destSpace" : "world",              // Important this is specified here
+        "destinations" : {
+            {"t": 0.0, "xyz": Vector3(0.00, 0.00, 0.00)},
+            {"t": 0.1, "xyz": Vector3(0.00, 1.00, 0.00)},
+            ...
+            {"t": 10.2, "xyz": Vector3(10.1, 1.01, -100.3)}
+        },
+    },
+    #include("example_target.Any"),         // Example of including an external .Any file
+],
+```
 
 ## Frame Rate Modes
 The `frameRate` parameter in any given session config can be used in 3 different modes:
@@ -264,3 +333,27 @@ When specifying a `destinations` array there are several key assumptions worth n
 * Time values can be specified at any precision, but the `oneFrame()` loop rate (ideally the frame rate) sets the "resampling" rate for this path, destinations whose time values are spaced by less than a frame time are not recommended
 
 Currently the destination time values are specified as an increasing time base (i.e. 0.0 on the first destination up to the total time); however, in the future we could move towards/also include time deltas to allow for faster editing of files.
+
+## Bounding Boxes (`G3D::AABox` Serialization)
+The `G3D::AABox` is a 3D, axis-aligned bounding box useful for specifying regions of the scene in which a player/target can move.
+
+### (De)serializing `G3D::AABox`es from `.Any` files
+Like many G3D native objects the `G3D::AABox` supports direct (de)serialization from `.Any` using a simple definition. Any table value in the `.Any` which starts with an `AABox {}` specification will deserialize to a `G3D::AABox` object.
+
+Within the `AABox{}` definition, only 2 points need be specified (a lower and upper corner, in that order) to produce a `G3D:AABox`.
+
+### Note on Order of Specification
+The `G3D::AABox` implementation seems to work bets when then `AABox` any specification lists the "lower" corner before the "upper". That is that all 3 coordinates of the first provided corner are _less than or equal to_ the 3 coordinates of the second provided corner.
+
+Thus we always recommend specifying the `TargetConfig`'s `bounds` field as follows:
+
+```
+...
+    "bounds" : AABox {
+        Point3(x1, y1, z1),
+        Point3(x2, y2, z2)
+    }
+...
+```
+
+Where `x1 < x2`, `y1 < y2`, and `z1 < z2`. Negative coordinates are not treated any differently here (do not use the magnitude of the points, just their values).

@@ -79,6 +79,7 @@ Many 2D/3D G3D primitives support direct serialization from `.Any` to allow addi
 |Vector3 |`test = Vector3(1.0,1.0,1.0)`   |
 |Color3  |`test = Color3(1.0,1.0,1.0)`    |
 |Color4  |`test = Color4(1.0,1.0,1.0,1.0)`|
+|AABox   |`test = AABox{Point3(...), Point3(...)`|
 
 ### Higher Order Data Structures
 In addition to the primitive types described above, `.Any` also supports organizatin of these types into higher-order data structures like arrays, and tables.
