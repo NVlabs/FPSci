@@ -1399,7 +1399,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 			}
 			if(!destroyedTarget || respawned)  {
 				// Handle randomizing position of non-destination targets here
-				if (target->destinations().size() == 0) {
+				if (target->destinations().size() == 0 && respawned) {
 					ex->randomizePosition(target);
 				}
                 BEGIN_PROFILER_EVENT("fire/changeColor");
