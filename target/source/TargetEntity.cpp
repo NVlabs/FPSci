@@ -509,6 +509,7 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			if (dt > jumpTime) {
 				m_inJump = false;
 				m_jumpTime = 0;
+				pos.y = m_standingHeight;		// Reset to the original height
 				// Schedule the next jump here
 				float nextJump = Random::common().uniform(m_jumpPeriodRange[0], m_jumpPeriodRange[1]);
 				m_nextJumpTime = absoluteTime + nextJump;
