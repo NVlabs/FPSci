@@ -348,6 +348,7 @@
     {
       "id": "static",
     "elevationLocked": false,
+    "destSpace": "player",
       "speed": [ 0, 0 ],
       "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
@@ -357,7 +358,8 @@
     },
     {
       "id": "straight_fly",
-    "elevationLocked": false,
+      "elevationLocked": false,
+      "destSpace": "player",
       "speed": [ 8, 15 ],
       "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
@@ -367,7 +369,8 @@
     },
     {
       "id": "stray_fly",
-    "elevationLocked": false,
+      "elevationLocked": false,
+      "destSpace": "player",
       "speed": [ 8, 15 ],
       "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
@@ -378,6 +381,7 @@
     {
       "id": "strafe_jump",
       "elevationLocked": true,
+      "destSpace": "player",
       "speed": [ 8, 15 ],
       "visualSize": [ 0.01, 0.01 ],
       "eccH": [ 5.0, 15.0 ],
