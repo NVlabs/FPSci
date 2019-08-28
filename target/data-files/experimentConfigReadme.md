@@ -273,7 +273,7 @@ An example session configuration snippet is included below:
     * `destinations` is an array of `Destination` types each of which contains:
       * `t` the time (in seconds) for this point in the path
       * `xyz` the position for this point in the path
-    * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets)
+    * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
     * `bounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
 
 #### Target Configuration Example
@@ -283,6 +283,7 @@ An example target configuration snippet is provided below:
 targets = [
     {
         "id": "simple_target",
+        "destSpace" : "player",             // This is a player-centered-spherical-space target
         "visualSize" : [0.5, 0.5],          // 0.5m size
         "respawnCount" : 0,                 // Don't respawn
         "speed": [1.0, 3.0],                // 1-3m/s speed
