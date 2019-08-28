@@ -579,7 +579,12 @@ public:
 			reader.getIfPresent("destSpace", destSpace);
 			reader.getIfPresent("destinations", destinations);
 			reader.getIfPresent("respawnCount", respawnCount);
-			reader.getIfPresent("bounds", bbox);
+			if (destSpace == "world" && destinations.size() == 0) {
+				reader.get("bounds", bbox);
+			}
+			else {
+				reader.getIfPresent("bounds", bbox);
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
