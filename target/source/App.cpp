@@ -1115,6 +1115,9 @@ bool App::onEvent(const GEvent& event) {
 		dropWaypoint();
 		return true;
 	}
+	else if (!startupConfig.playMode && (event.type == GEventType::KEY_DOWN) && event.key.keysym.sym == 'r') {
+		m_recordMotion = !m_recordMotion;
+	}
 	
 	// Override 'q', 'z', 'c', and 'e' keys
     if ((event.type == GEventType::KEY_DOWN) && 
@@ -1132,7 +1135,7 @@ bool App::onEvent(const GEvent& event) {
         return true;
     }
 
-	
+
 	// Handle crouch here
 	if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::LCTRL)) {
 		m_scene->typedEntity<PlayerEntity>("player")->setCrouched(true);
@@ -1711,6 +1714,12 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
 
 			outputFont->draw2D(rd, msg, (Point2(30, 28) * scale).floor(), floor(20.0f * scale), Color3::yellow());
+		}
+
+		// Handle recording indicator
+		if (m_recordMotion) {
+			Draw::point(Point2(window()->width()*0.9 - 15.0f, 20.0f+m_debugMenuHeight*scale), rd, Color3::red(), 10.0f);
+			outputFont->draw2D(rd, "Recording Position", Point2(window()->width()*0.9, m_debugMenuHeight*scale), 25.0f, Color3::red());
 		}
 
 	} rd->pop2D();
