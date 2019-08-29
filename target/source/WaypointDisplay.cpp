@@ -74,7 +74,7 @@ WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, Wa
 	}; pane->endRow();
 	// Removing waypoints
 	pane->beginRow(); {
-		pane->addButton("Remove waypoint");
+		pane->addButton("Remove waypoint", m_app, &App::removeHighlighted);
 		pane->addButton("Remove last", m_app, &App::removeLastWaypoint);
 		pane->addButton("Clear all", m_app, &App::clearWaypoints);
 	} pane->endRow();

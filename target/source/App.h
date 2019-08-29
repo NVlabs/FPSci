@@ -246,7 +246,8 @@ public:
 	/** Drop a single waypoint at the destination provided */
 	void dropWaypoint(Destination dest, Point3 offset = Point3::zero());
 	/** Remove a particular waypoint */
-	void removeWaypoint(int idx);
+	bool removeWaypoint(int idx);
+	void removeHighlighted();
 	/** Clear just the last waypoint */
 	void removeLastWaypoint();
 	/** Clear all waypoints */

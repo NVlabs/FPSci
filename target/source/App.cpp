@@ -571,59 +571,52 @@ void App::dropWaypoint(Destination dest, Point3 offset) {
 	logPrintf("Dropped waypoint... Time: %f, XYZ:[%f,%f,%f]\n", dest.time, dest.position[0], dest.position[1], dest.position[2]);
 }
 
-void App::removeWaypoint(int idx) {
+void App::removeHighlighted(void) {
+	// Remove the selected waypoint
+	removeWaypoint(m_waypointWindow->getSelected());
+}
+
+bool App::removeWaypoint(int idx) {
 	// Check for valid idx
-	if (m_waypoints.size() > idx) {
-		// Remove the waypoint and its debug shape
-		m_waypoints.remove(idx);
-		removeDebugShape(m_waypointIDs[idx]);
-		m_waypointIDs.remove(idx);
+	if (idx >= 0 && idx < m_waypoints.size()) {
 		// Check if we are not at the first or last point
 		if (idx > 0 && idx < m_waypoints.lastIndex()) {
-			// Remove the arrow to this point
+			// Remove the arrows to and from this point
 			removeDebugShape(m_arrowIDs[idx]);
 			removeDebugShape(m_arrowIDs[idx-1]);
 			m_arrowIDs.remove(idx-1, 2);
+			// Draw a new arrow "around" the point
 			shared_ptr<CylinderShape> shape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
 				m_waypoints[idx-1].position,
-				m_waypoints[idx].position,
+				m_waypoints[idx+1].position,
 				m_waypointConnectRad)));
 			DebugID arrowID = debugDraw(shape, finf(), m_waypointColor, Color4::clear());
-			m_arrowIDs.insert(arrowID, idx-1);
+			m_arrowIDs.insert(idx-1, arrowID);
 		}
-		// Otherwise check if we are at the last index
-		else if (idx == m_waypoints.lastIndex()) {
+		// Otherwise check if we are at the last index (just remove the arrow to this point)
+		else if (idx == m_waypoints.lastIndex() && idx > 0) {
 			// Remove the arrow from this point
-			removeDebugShape(m_arrowIDs[idx - 1]);
-			m_arrowIDs.remove(idx-1);
+			removeDebugShape(m_arrowIDs.last());
+			m_arrowIDs.remove(m_arrowIDs.lastIndex());
 		}
-		// Otherwise we are at the first index
-		else {
-			removeDebugShape(m_arrowIDs[idx]);
-			m_arrowIDs.remove(idx);
 
-		}
-		
+		// Remove the waypoint and its debug shape
+		removeDebugShape(m_waypointIDs[idx]);
+		m_waypointIDs.fastRemove(idx);
+		m_waypoints.fastRemove(idx);
+
+		// Get rid of the debug highlight and clear selection
+		m_waypointWindow->setSelected(-1);
+		removeDebugShape(m_highlighted);
+		return true;
 	}
+	else 
+		return false;
 }
 
 void App::removeLastWaypoint(void) {
 	if (m_waypoints.size() > 0) {
-		int lastIdx = m_waypoints.size() - 1;
-		// Remove the actual waypoint from the array
-		m_waypoints.remove(m_waypoints.size() - 1);
-		// Clear the drawn sphere
-		removeDebugShape(m_waypointIDs.last());
-		m_waypointIDs.remove(m_waypointIDs.size() - 1);
-		// Clear the connecting arrow
-		if (m_arrowIDs.size() > 0) {
-			removeDebugShape(m_arrowIDs.last());
-			m_arrowIDs.remove(m_arrowIDs.size() - 1);
-		}
-		if (m_waypointWindow->getSelected() == lastIdx) {
-			removeDebugShape(m_highlighted);
-			m_waypointWindow->setSelected(-1);
-		}
+		removeWaypoint(m_waypoints.lastIndex());
 	}
 }
 
@@ -1124,14 +1117,22 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 }
 
 bool App::onEvent(const GEvent& event) {
-	if (!startupConfig.playMode && (event.type == GEventType::KEY_DOWN) &&
-		(event.key.keysym.sym == 'q'))
-	{
-		dropWaypoint();
-		return true;
-	}
-	else if (!startupConfig.playMode && (event.type == GEventType::KEY_DOWN) && event.key.keysym.sym == 'r') {
-		recordMotion = !recordMotion;
+	if (!startupConfig.playMode) {
+		// Use 'q' to drop a waypoint
+		if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == 'q')) {
+			dropWaypoint();
+			return true;
+		}
+		// Use 'r' to toggle recording of player motion
+		if ((event.type == GEventType::KEY_DOWN) && event.key.keysym.sym == 'r') {
+			recordMotion = !recordMotion;
+			return true;
+		}
+		// Use '1' to callup the waypoint manager
+		if ((event.type == GEventType::KEY_DOWN) && event.key.keysym.sym == '1') {
+			m_waypointWindow->setVisible(!m_waypointWindow->visible());
+			return true;
+		}
 	}
 	
 	// Override 'q', 'z', 'c', and 'e' keys
