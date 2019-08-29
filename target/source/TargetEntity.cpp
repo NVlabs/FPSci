@@ -249,9 +249,26 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			m_velocity = vel * (m_bounds.randomInteriorPoint()- m_frame.translation).direction();
 		
 		}
-		// Check for whether the target has "left" the bounds
+		// Check for whether the target has "left" the bounds, if so "reflect" it about the wall
 		else if (!m_bounds.contains(pos)) {
-			m_velocity = Vector3(-m_velocity.x, -m_velocity.y, -m_velocity.z);
+			if (pos.x >= m_bounds.high().x) {
+				m_velocity.x = -abs(m_velocity.x);
+			}
+			else if (pos.x <= m_bounds.low().x) {
+				m_velocity.x = abs(m_velocity.x);
+			}
+			if (pos.y >= m_bounds.high().y) {
+				m_velocity.y = -abs(m_velocity.y);
+			}
+			else if (pos.y <= m_bounds.low().y) {
+				m_velocity.y = abs(m_velocity.y);
+			}
+			if (pos.z >= m_bounds.high().z) {
+				m_velocity.z = -abs(m_velocity.z);
+			}
+			else if (pos.z <= m_bounds.low().z) {
+				m_velocity.z = abs(m_velocity.z);
+			}
 		}
 
 		// Update the position and set the frame
