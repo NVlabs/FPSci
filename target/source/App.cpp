@@ -466,7 +466,7 @@ void App::makeGUI() {
 
 	// Setup the config
 	WaypointDisplayConfig config = WaypointDisplayConfig();
-	m_waypointWindow = WaypointDisplay::create(GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm")), config, (shared_ptr<Array<Destination>>)&m_waypoints);
+	m_waypointWindow = WaypointDisplay::create(this, GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm")), config, (shared_ptr<Array<Destination>>)&m_waypoints);
 	m_waypointWindow->setVisible(false);
 	this->addWidget(m_waypointWindow);
 
@@ -506,30 +506,9 @@ void App::makeGUI() {
 		debugPane->addNumberBox("Move Rate", &(experimentConfig.moveRate), "m/s", GuiTheme::NO_SLIDER, 0.0f, 100.0f, 0.1f)->moveBy(SLIDER_SPACING, 0);
 		debugPane->addButton("Set Start Pos", this, &App::exportScene)->moveBy(10, 0);
 	} debugPane->endRow();
-	debugPane->beginRow();{
-		debugPane->addButton("Drop waypoint", this, &App::dropWaypoint);
-		debugPane->addNumberBox("Delay", &m_waypointDelay, "s");
-		debugPane->addNumberBox("Height Offset", &m_waypointVertOffset, "m");
-		debugPane->addButton("Remove last waypoint", this, &App::removeLastWaypoint);
-		debugPane->addButton("Clear waypoints", this, &App::clearWaypoints);
-		// Load and save
-		debugPane->addButton("Load path", this, &App::loadWaypoints);
-		debugPane->addButton("Save path", this, &App::exportWaypoints);
-		debugPane->addTextBox("Filename", &m_waypointFile);
-		// Preview waypoints
-		debugPane->addButton("Preview", this, &App::previewWaypoints);
-		debugPane->addButton("Stop Preview", this, &App::stopPreview);
-		// Open the manager pane
-		debugPane->addButton("Show Manager", this, &App::showWaypointManager);
-	} debugPane->endRow();
 	debugPane->beginRow(); {
-		// Record player path
-		debugPane->addCheckBox("Record motion", &m_recordMotion);
-		debugPane->addDropDownList("Mode",
-			Array<GuiText> {GuiText("Fixed Distance"), GuiText("Fixed Time")},
-			&m_recordMode);
-		debugPane->addNumberBox("Interval", &m_recordInterval);
-		debugPane->addNumberBox("Time Scale", &m_recordTimeScaling);
+		// Open the manager pane
+		debugPane->addButton("Waypoint Manager", this, &App::showWaypointManager);
 	}debugPane->endRow();
 
     // set up user settings window
@@ -562,9 +541,9 @@ void App::makeGUI() {
 void App::dropWaypoint(void) {
 	// Create the destination
 	Point3 xyz = activeCamera()->frame().translation;
-	SimTime time = m_waypoints.size() == 0 ? 0.0f : m_waypoints.last().time + m_waypointDelay;
+	SimTime time = m_waypoints.size() == 0 ? 0.0f : m_waypoints.last().time + waypointDelay;
 	Destination dest = Destination(xyz, time);
-	dropWaypoint(dest, Point3(0, -m_waypointVertOffset, 0));
+	dropWaypoint(dest, Point3(0, -waypointVertOffset, 0));
 }
 
 void App::dropWaypoint(Destination dest, Point3 offset) {
@@ -590,6 +569,42 @@ void App::dropWaypoint(Destination dest, Point3 offset) {
 
 	// Print to the log
 	logPrintf("Dropped waypoint... Time: %f, XYZ:[%f,%f,%f]\n", dest.time, dest.position[0], dest.position[1], dest.position[2]);
+}
+
+void App::removeWaypoint(int idx) {
+	// Check for valid idx
+	if (m_waypoints.size() > idx) {
+		// Remove the waypoint and its debug shape
+		m_waypoints.remove(idx);
+		removeDebugShape(m_waypointIDs[idx]);
+		m_waypointIDs.remove(idx);
+		// Check if we are not at the first or last point
+		if (idx > 0 && idx < m_waypoints.lastIndex()) {
+			// Remove the arrow to this point
+			removeDebugShape(m_arrowIDs[idx]);
+			removeDebugShape(m_arrowIDs[idx-1]);
+			m_arrowIDs.remove(idx-1, 2);
+			shared_ptr<CylinderShape> shape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
+				m_waypoints[idx-1].position,
+				m_waypoints[idx].position,
+				m_waypointConnectRad)));
+			DebugID arrowID = debugDraw(shape, finf(), m_waypointColor, Color4::clear());
+			m_arrowIDs.insert(arrowID, idx-1);
+		}
+		// Otherwise check if we are at the last index
+		else if (idx == m_waypoints.lastIndex()) {
+			// Remove the arrow from this point
+			removeDebugShape(m_arrowIDs[idx - 1]);
+			m_arrowIDs.remove(idx-1);
+		}
+		// Otherwise we are at the first index
+		else {
+			removeDebugShape(m_arrowIDs[idx]);
+			m_arrowIDs.remove(idx);
+
+		}
+		
+	}
 }
 
 void App::removeLastWaypoint(void) {
@@ -632,7 +647,7 @@ void App::exportWaypoints(void) {
 	t.id = "test";
 	t.destSpace = "world";
 	t.destinations = m_waypoints;
-	t.toAny().save(m_waypointFile);		// Save the file
+	t.toAny().save(waypointFile);		// Save the file
 }
 
 void App::loadWaypoints(void) {
@@ -640,7 +655,7 @@ void App::loadWaypoints(void) {
 	bool gotName = FileDialog::getFilename(fname, "Any", false);
 	if (!gotName) return;
 
-	m_recordMotion = false;		// Stop recording (if doing so)
+	recordMotion = false;		// Stop recording (if doing so)
 	clearWaypoints();			// Clear the current waypoints
 
 	TargetConfig t = TargetConfig::load(fname);	// Load the target config
@@ -1063,7 +1078,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		}
 
 		// Handle player motion recording here (if we are doing so w/ playMode=False)
-		if (m_recordMotion) {
+		if (recordMotion) {
 			// Get the start time here if needed (this is the first iteration after enable)
 			if (isnan(m_recordStart)) {
 				m_recordStart = now;
@@ -1073,19 +1088,19 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			else {
 				SimTime t = static_cast<SimTime>(now - m_recordStart);
 				float distance = (m_waypoints.last().position - p->frame().translation).magnitude();
-				switch (m_recordMode) {
+				switch (recordMode) {
 				case 0: // This is fixed distance mode, check if we've moved "far enough" to drop a new waypoint
-					if (distance > m_recordInterval) {
+					if (distance > recordInterval) {
 						// Use the m_waypointDelay to meter out time when in constant distance mode
-						t = m_waypoints.size() * m_waypointDelay;
+						t = m_waypoints.size() * waypointDelay;
 						dropWaypoint(Destination(p->frame().translation, t));
 					}
 					break;
 				case 1: // This is fixed time mode, check if we are beyond the sampling interval and need a new waypoint
-					if ((t - m_lastRecordTime) > m_recordInterval) {
+					if ((t - m_lastRecordTime) > recordInterval) {
 						m_lastRecordTime = t;
 						// Apply the recording time-scaling here (after checking for record interval)
-						dropWaypoint(Destination(p->frame().translation, t / m_recordTimeScaling));
+						dropWaypoint(Destination(p->frame().translation, t / recordTimeScaling));
 					}
 					break;
 				}
@@ -1116,7 +1131,7 @@ bool App::onEvent(const GEvent& event) {
 		return true;
 	}
 	else if (!startupConfig.playMode && (event.type == GEventType::KEY_DOWN) && event.key.keysym.sym == 'r') {
-		m_recordMotion = !m_recordMotion;
+		recordMotion = !recordMotion;
 	}
 	
 	// Override 'q', 'z', 'c', and 'e' keys
@@ -1717,7 +1732,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 		}
 
 		// Handle recording indicator
-		if (m_recordMotion) {
+		if (recordMotion) {
 			Draw::point(Point2(window()->width()*0.9 - 15.0f, 20.0f+m_debugMenuHeight*scale), rd, Color3::red(), 10.0f);
 			outputFont->draw2D(rd, "Recording Position", Point2(window()->width()*0.9, m_debugMenuHeight*scale), 25.0f, Color3::red());
 		}

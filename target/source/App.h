@@ -134,20 +134,13 @@ protected:
 	Array<Destination> m_waypoints;			///< Store way points for path creation here
 	Array<DebugID> m_waypointIDs;			///< Storage for IDs for point spheres
 	Array<DebugID> m_arrowIDs;				///< Storage for IDs for connecting arrows	
-	float m_waypointDelay = 0.5;			///< Store the delay between way points here
 	shared_ptr<WaypointDisplay> m_waypointWindow;
 	DebugID m_highlighted;					///< ID for the waypoint window highlighter
 	int m_grab = -1;						///< Grabbed index
-
-	bool m_recordMotion = false;			///< Player motion recording
-	int m_recordMode = 0;					///< Recording mode
-	float m_recordInterval = 0.1f;			///< Recording interval (either time or distance)
-	float m_waypointVertOffset = 0.2f;		///< Offset between camera and target position
+		
 	RealTime m_recordStart = nan();			///< Start time for recording
 	int m_previewIdx = -1;					///< Index of the preview target in the targetArray
 	float m_lastRecordTime = 0.0;			///< Time storage for recording
-	float m_recordTimeScaling = 1.0;		///< Time scaling for time-based recording
-	String m_waypointFile = "target.Any";	///< Filename for save/load
 	
 	float m_resetHeight;					///< Height at which to reset player location (fell through floor)
 	Point3 m_spawnPosition;					///< Position for player spawn
@@ -237,6 +230,14 @@ public:
 	shared_ptr<Experiment> ex;										///< Pointer to the experiment
 	shared_ptr<Logger> logger;										///< Pointer to the logger
 
+	float waypointDelay = 0.5;			///< Store the delay between way points here
+	float waypointVertOffset = 0.2f;	///< Offset between camera and target position
+	String waypointFile = "target.Any";	///< Filename for save/load
+	bool recordMotion = false;			///< Player motion recording
+	int recordMode = 0;					///< Recording mode
+	float recordInterval = 0.1f;		///< Recording interval (either time or distance)
+	float recordTimeScaling = 1.0;		///< Time scaling for time-based recording
+	
 	/** Call to change the reticle. */
 	void setReticle(int r);
 
@@ -244,6 +245,8 @@ public:
 	void dropWaypoint();
 	/** Drop a single waypoint at the destination provided */
 	void dropWaypoint(Destination dest, Point3 offset = Point3::zero());
+	/** Remove a particular waypoint */
+	void removeWaypoint(int idx);
 	/** Clear just the last waypoint */
 	void removeLastWaypoint();
 	/** Clear all waypoints */

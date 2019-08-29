@@ -1,4 +1,5 @@
 #include "WaypointDisplay.h"
+#include "App.h"
 
 bool WaypointDisplay::TreeDisplay::onEvent(const GEvent & event) {
 	if (!m_visible) {
@@ -52,15 +53,53 @@ void WaypointDisplay::TreeDisplay::render(RenderDevice* rd, const shared_ptr<Gui
 	const_cast<GuiContainer*>(m_parent)->setHeight(y);
 }
 
-WaypointDisplay::WaypointDisplay(const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) :
+WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) :
 	GuiWindow("Waypoint Manager",
 		theme,
 		Rect2D::xywh(5, 5, (float)config.tree_display_width_px + 10, (float)config.tree_display_height_px+10),
 		GuiTheme::NORMAL_WINDOW_STYLE,
 		GuiWindow::HIDE_ON_CLOSE)
 {
+	// Store the app pointer 
+	m_app = app;
+
 	// Create a pane
 	GuiPane* pane = GuiWindow::pane();
+
+	// Basic control
+	pane->beginRow(); {
+		pane->addButton("Drop waypoint", m_app, &App::dropWaypoint);
+		pane->addNumberBox("Delay", &m_app->waypointDelay, "s");
+		pane->addNumberBox("Height Offset", &m_app->waypointVertOffset, "m");
+	}; pane->endRow();
+	// Removing waypoints
+	pane->beginRow(); {
+		pane->addButton("Remove waypoint");
+		pane->addButton("Remove last", m_app, &App::removeLastWaypoint);
+		pane->addButton("Clear all", m_app, &App::clearWaypoints);
+	} pane->endRow();
+	// File control
+	pane->beginRow(); {
+		pane->addTextBox("Filename", &m_app->waypointFile);
+		pane->addButton("Load", m_app, &App::loadWaypoints);
+		pane->addButton("Save", m_app, &App::exportWaypoints);
+	} pane->endRow();
+	// Preview
+	pane->beginRow(); {
+		pane->addButton("Preview", m_app, &App::previewWaypoints);
+		pane->addButton("Stop Preview", m_app, &App::stopPreview);
+	} pane->endRow();
+	// Recording
+	pane->beginRow(); {
+		pane->addCheckBox("Record motion", &m_app->recordMotion);
+		pane->addDropDownList("Record Mode",
+			Array<GuiText> {GuiText("Fixed Distance"), GuiText("Fixed Time")},
+			&m_app->recordMode);
+	} pane->endRow();
+	pane->beginRow();{
+		pane->addNumberBox("Interval", &m_app->recordInterval);
+		pane->addNumberBox("Time Scale", &m_app->recordTimeScaling, "x");
+	} pane->endRow();
 
 	// Setup the row labels
 	GuiLabel* a = pane->addLabel("Index"); a->setWidth(config.idx_column_width_px + config.tree_indent);
@@ -79,8 +118,8 @@ WaypointDisplay::WaypointDisplay(const shared_ptr<GuiTheme>& theme, WaypointDisp
 	pack();
 }
 
-shared_ptr<WaypointDisplay> WaypointDisplay::create(const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) {
-	return createShared<WaypointDisplay>(theme, config, waypoints);
+shared_ptr<WaypointDisplay> WaypointDisplay::create(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) {
+	return createShared<WaypointDisplay>(app, theme, config, waypoints);
 }
 
 void WaypointDisplay::setManager(WidgetManager *manager) {

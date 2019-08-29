@@ -2,6 +2,8 @@
 #include <G3D/G3D.h>
 #include "TargetEntity.h"
 
+class App;
+
 struct WaypointDisplayConfig {
 	// Formatting parameters
 	int tree_display_width_px = 400;
@@ -12,7 +14,13 @@ struct WaypointDisplayConfig {
 	float time_column_width_px = 100;
 	float xyz_column_width_px = 250;
 
-	WaypointDisplayConfig(int width = 400, int height = 400, float line_height=15, float indent = 16, float idx_column_width = 50, float time_column_width = 100, float xyz_column_width = 250) {
+	WaypointDisplayConfig(	int width = 400, 
+							int height = 400, 
+							float line_height=15, 
+							float indent = 16, 
+							float idx_column_width = 50, 
+							float time_column_width = 100, 
+							float xyz_column_width = 250) {
 		tree_display_width_px = width;
 		tree_display_height_px = height;
 		tree_height = line_height;
@@ -42,8 +50,9 @@ protected:
 
 	GuiScrollPane*	m_scrollPane;
 	TreeDisplay*	m_treeDisplay;
+	App* m_app;
 
-	WaypointDisplay(const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints);
+	WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints);
 public:
 
 	int getSelected() {
@@ -55,5 +64,5 @@ public:
 	}
 
 	virtual void setManager(WidgetManager* manager);
-	static shared_ptr<WaypointDisplay> create(const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints);
+	static shared_ptr<WaypointDisplay> create(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints);
 };
