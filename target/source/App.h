@@ -17,6 +17,7 @@
 #include "PhysicsScene.h"
 #include <chrono>
 #include "WaypointDisplay.h"
+#include "PlayerControls.h"
 
 class FlyingEntity;
 class JumpingEntity;
@@ -135,6 +136,7 @@ protected:
 	Array<DebugID> m_waypointIDs;			///< Storage for IDs for point spheres
 	Array<DebugID> m_arrowIDs;				///< Storage for IDs for connecting arrows	
 	shared_ptr<WaypointDisplay> m_waypointWindow;
+	shared_ptr<PlayerControls> m_playerWindow;
 	DebugID m_highlighted;					///< ID for the waypoint window highlighter
 	int m_grab = -1;						///< Grabbed index
 		
@@ -264,6 +266,8 @@ public:
 	void stopPreview();
 	/** Show the waypoint manager */
 	void showWaypointManager();
+	/** Show the player controls */
+	void showPlayerControls();
 	/** Save scene w/ updated player position */
 	void exportScene();
 

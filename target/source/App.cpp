@@ -2,7 +2,6 @@
 #include "App.h"
 #include "TargetEntity.h"
 #include "PlayerEntity.h"
-#include "WaypointDisplay.h"
 
 // Scale and offset for target
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
@@ -464,11 +463,16 @@ void App::makeGUI() {
 	developerWindow->cameraControlWindow->setVisible(!startupConfig.playMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
 
-	// Setup the config
+	// Setup the waypoint config/display
 	WaypointDisplayConfig config = WaypointDisplayConfig();
 	m_waypointWindow = WaypointDisplay::create(this, GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm")), config, (shared_ptr<Array<Destination>>)&m_waypoints);
 	m_waypointWindow->setVisible(false);
 	this->addWidget(m_waypointWindow);
+
+	// Setup the player control
+	m_playerWindow = PlayerControls::create(this, GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm")));
+	m_playerWindow->setVisible(false);
+	this->addWidget(m_playerWindow);
 
 	const float SLIDER_SPACING = 35;
 	debugPane->beginRow(); {
@@ -499,15 +503,16 @@ void App::makeGUI() {
 			debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(SLIDER_SPACING, 0);
 	} debugPane->endRow();
 	// Add new row w/ player move rate control
+	//debugPane->beginRow(); {
+	//	debugPane->setNewChildSize(200.0f, -1.0f, 70.0f);
+	//	debugPane->addNumberBox("Height", &(experimentConfig.playerHeight), "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f, 0.1f);
+	//	debugPane->addNumberBox("Crouch", &(experimentConfig.crouchHeight), "m", GuiTheme::LINEAR_SLIDER, 0.1f, 3.0f, 0.1f)->moveBy(SLIDER_SPACING, 0);
+	//	debugPane->addNumberBox("Move Rate", &(experimentConfig.moveRate), "m/s", GuiTheme::NO_SLIDER, 0.0f, 100.0f, 0.1f)->moveBy(SLIDER_SPACING, 0);
+	//	debugPane->addButton("Set Start Pos", this, &App::exportScene)->moveBy(10, 0);
+	//} debugPane->endRow();
+	// Open sub-window panes here...
 	debugPane->beginRow(); {
-		debugPane->setNewChildSize(200.0f, -1.0f, 70.0f);
-		debugPane->addNumberBox("Height", &(experimentConfig.playerHeight), "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f, 0.1f);
-		debugPane->addNumberBox("Crouch", &(experimentConfig.crouchHeight), "m", GuiTheme::LINEAR_SLIDER, 0.1f, 3.0f, 0.1f)->moveBy(SLIDER_SPACING, 0);
-		debugPane->addNumberBox("Move Rate", &(experimentConfig.moveRate), "m/s", GuiTheme::NO_SLIDER, 0.0f, 100.0f, 0.1f)->moveBy(SLIDER_SPACING, 0);
-		debugPane->addButton("Set Start Pos", this, &App::exportScene)->moveBy(10, 0);
-	} debugPane->endRow();
-	debugPane->beginRow(); {
-		// Open the manager pane
+		debugPane->addButton("Player Controls", this, &App::showPlayerControls);
 		debugPane->addButton("Waypoint Manager", this, &App::showWaypointManager);
 	}debugPane->endRow();
 
@@ -693,6 +698,10 @@ void App::exportScene() {
 
 void App::showWaypointManager() {
 	m_waypointWindow->setVisible(true);
+}
+
+void App::showPlayerControls() {
+	m_playerWindow->setVisible(true);
 }
 
 void App::userSaveButtonPress(void) {
