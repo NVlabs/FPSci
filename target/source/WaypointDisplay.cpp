@@ -69,8 +69,10 @@ WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, Wa
 	// Basic control
 	pane->beginRow(); {
 		pane->addButton("Drop waypoint", m_app, &App::dropWaypoint);
-		pane->addNumberBox("Delay", &m_app->waypointDelay, "s");
-		pane->addNumberBox("Height Offset", &m_app->waypointVertOffset, "m");
+		auto c = pane->addNumberBox("Delay", &m_app->waypointDelay, "s");
+		c->setCaptionWidth(40.0f);
+		c->setWidth(120.0f);
+		pane->addNumberBox("Height Offset", &m_app->waypointVertOffset, "m")->setWidth(150.0f);
 	}; pane->endRow();
 	// Removing waypoints
 	pane->beginRow(); {
@@ -80,9 +82,11 @@ WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, Wa
 	} pane->endRow();
 	// File control
 	pane->beginRow(); {
-		pane->addTextBox("Filename", &m_app->waypointFile);
 		pane->addButton("Load", m_app, &App::loadWaypoints);
 		pane->addButton("Save", m_app, &App::exportWaypoints);
+		auto t = pane->addTextBox("Filename", &m_app->waypointFile);
+		t->setCaptionWidth(60.0f);
+		t->setWidth(180.0f);
 	} pane->endRow();
 	// Preview
 	pane->beginRow(); {
@@ -97,8 +101,12 @@ WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, Wa
 			&m_app->recordMode);
 	} pane->endRow();
 	pane->beginRow();{
-		pane->addNumberBox("Interval", &m_app->recordInterval);
-		pane->addNumberBox("Time Scale", &m_app->recordTimeScaling, "x");
+		auto c = pane->addNumberBox("Interval", &m_app->recordInterval);
+		c->setCaptionWidth(50.0f);
+		c->setWidth(120.0f);
+		c = pane->addNumberBox("Time Scale", &m_app->recordTimeScaling, "x");
+		c->setCaptionWidth(80.0f);
+		c->setWidth(150.0f);
 	} pane->endRow();
 
 	// Setup the row labels
