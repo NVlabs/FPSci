@@ -67,7 +67,7 @@ void App::onInit() {
 
 	// Load models and set the reticle
 	loadModels();
-	setReticle(m_reticleIndex);
+	setReticle(reticleIndex);
 
 	// Create a series of colored materials to choose from for target health
 	for (int i = 0; i < m_MatTableSize; i++) {
@@ -463,57 +463,29 @@ void App::makeGUI() {
 	developerWindow->cameraControlWindow->setVisible(!startupConfig.playMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
 
+	shared_ptr<GuiTheme> theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
+
 	// Setup the waypoint config/display
 	WaypointDisplayConfig config = WaypointDisplayConfig();
-	m_waypointWindow = WaypointDisplay::create(this, GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm")), config, (shared_ptr<Array<Destination>>)&m_waypoints);
+	m_waypointWindow = WaypointDisplay::create(this, theme, config, (shared_ptr<Array<Destination>>)&m_waypoints);
 	m_waypointWindow->setVisible(false);
 	this->addWidget(m_waypointWindow);
 
 	// Setup the player control
-	m_playerWindow = PlayerControls::create(this, GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm")));
+	m_playerWindow = PlayerControls::create(this, theme);
 	m_playerWindow->setVisible(false);
 	this->addWidget(m_playerWindow);
 
-	const float SLIDER_SPACING = 35;
-	debugPane->beginRow(); {
-		debugPane->addCheckBox("Hitscan", &m_hitScan);
-		debugPane->addCheckBox("Show Bullets", &experimentConfig.weapon.renderBullets);
-		debugPane->addCheckBox("Weapon", &experimentConfig.weapon.renderModel);
-		debugPane->addCheckBox("HUD", &experimentConfig.showHUD);
-		debugPane->addCheckBox("FPS", &m_renderFPS);
-		debugPane->addCheckBox("Turbo", &emergencyTurbo);
-		static int frames = 0;
-		GuiControl* c = nullptr;
+	// Setup the render control
+	m_renderWindow = RenderControls::create(this, theme);
+	m_renderWindow->setVisible(false);
+	this->addWidget(m_renderWindow);
 
-        //debugPane->addButton("Spawn", this, &App::spawnRandomTarget);
-		debugPane->setNewChildSize(230.0f, -1.0f, 70.0f);
-		c = debugPane->addNumberBox("Framerate", Pointer<float>(
-			[&]() { return 1.0f / float(realTimeTargetDuration()); },
-			[&](float f) {
-			// convert to seconds from fps
-			f = 1.0f / f;
-			const float current = (float)realTimeTargetDuration();
-			if (abs(f - current) > 1e-5f) {
-				// Only set when there is a change, otherwise the simulation's deltas are confused.
-				setFrameDuration(f, GApp::REAL_TIME);
-			}}), "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f); c->moveBy(SLIDER_SPACING, 0);
-			//c = debugPane->addNumberBox("Input Lag", &frames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->setEnabled(false); c->moveBy(SLIDER_SPACING, 0);
-			c = debugPane->addNumberBox("Display Lag", &m_displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60); c->moveBy(SLIDER_SPACING, 0);
-			debugPane->addNumberBox("Reticle", &m_reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles, 1)->moveBy(SLIDER_SPACING, 0);
-			debugPane->addNumberBox("Brightness", &m_sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f)->moveBy(SLIDER_SPACING, 0);
-	} debugPane->endRow();
-	// Add new row w/ player move rate control
-	//debugPane->beginRow(); {
-	//	debugPane->setNewChildSize(200.0f, -1.0f, 70.0f);
-	//	debugPane->addNumberBox("Height", &(experimentConfig.playerHeight), "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f, 0.1f);
-	//	debugPane->addNumberBox("Crouch", &(experimentConfig.crouchHeight), "m", GuiTheme::LINEAR_SLIDER, 0.1f, 3.0f, 0.1f)->moveBy(SLIDER_SPACING, 0);
-	//	debugPane->addNumberBox("Move Rate", &(experimentConfig.moveRate), "m/s", GuiTheme::NO_SLIDER, 0.0f, 100.0f, 0.1f)->moveBy(SLIDER_SPACING, 0);
-	//	debugPane->addButton("Set Start Pos", this, &App::exportScene)->moveBy(10, 0);
-	//} debugPane->endRow();
 	// Open sub-window panes here...
 	debugPane->beginRow(); {
-		debugPane->addButton("Player Controls", this, &App::showPlayerControls);
-		debugPane->addButton("Waypoint Manager", this, &App::showWaypointManager);
+		debugPane->addButton("Render Controls [1]", this, &App::showRenderControls);
+		debugPane->addButton("Player Controls [2]", this, &App::showPlayerControls);
+		debugPane->addButton("Waypoint Manager [3]", this, &App::showWaypointManager);
 	}debugPane->endRow();
 
     // set up user settings window
@@ -704,6 +676,10 @@ void App::showPlayerControls() {
 	m_playerWindow->setVisible(true);
 }
 
+void App::showRenderControls() {
+	m_renderWindow->setVisible(true);
+}
+
 void App::userSaveButtonPress(void) {
 	// Save the any file
 	Any a = Any(userTable);
@@ -814,7 +790,7 @@ void App::updateSession(String id) {
 		// Print message to log
 		logPrintf("User selected session: %s. Updating now...\n", id);
 		// apply frame lag
-		m_displayLagFrames = sessConfig->frameDelay;
+		displayLagFrames = sessConfig->frameDelay;
 
 		// Set a maximum *finite* frame rate
 		float dt = 0;
@@ -960,18 +936,18 @@ void App::onNetwork() {
 
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
-    if (m_displayLagFrames > 0) {
+    if (displayLagFrames > 0) {
 		// Need one more frame in the queue than we have frames of delay, to hold the current frame
-		if (m_ldrDelayBufferQueue.size() <= m_displayLagFrames) {
+		if (m_ldrDelayBufferQueue.size() <= displayLagFrames) {
 			// Allocate new textures
-			for (int i = m_displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
+			for (int i = displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
 				m_ldrDelayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
 			}
-			debugAssert(m_ldrDelayBufferQueue.size() == m_displayLagFrames + 1);
+			debugAssert(m_ldrDelayBufferQueue.size() == displayLagFrames + 1);
 		}
 
 		// When the display lag changes, we must be sure to be within range
-		m_currentDelayBufferIndex = min(m_displayLagFrames, m_currentDelayBufferIndex);
+		m_currentDelayBufferIndex = min(displayLagFrames, m_currentDelayBufferIndex);
 
 		rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
 	}
@@ -982,12 +958,12 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
 	GApp::onGraphics3D(rd, surface);
 
-	if (m_displayLagFrames > 0) {
+	if (displayLagFrames > 0) {
 		// Display the delayed frame
 		rd->popState();
 		rd->push2D(); {
 			// Advance the pointer to the next, which is also the oldest frame
-			m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (m_displayLagFrames + 1);
+			m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (displayLagFrames + 1);
 			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrDelayBufferQueue[m_currentDelayBufferIndex]->texture(0), Sampler::buffer());
 		} rd->pop2D();
 	}
@@ -1126,21 +1102,45 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 }
 
 bool App::onEvent(const GEvent& event) {
+	if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::ESCAPE || event.key.keysym.sym == GKey::TAB)) {
+		m_userSettingsMode = !m_userSettingsMode;
+		m_userSettingsWindow->setVisible(m_userSettingsMode);
+		if (m_userSettingsMode) {
+			// set focus so buttons properly highlight
+			m_widgetManager->setFocusedWidget(m_userSettingsWindow);
+		}
+		// switch to first or 3rd person mode
+		updateMouseSensitivity();
+		return true;
+	}
+
+	// Handle playMode=False shortcuts here...
 	if (!startupConfig.playMode) {
-		// Use 'q' to drop a waypoint
-		if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == 'q')) {
-			dropWaypoint();
-			return true;
-		}
-		// Use 'r' to toggle recording of player motion
-		if ((event.type == GEventType::KEY_DOWN) && event.key.keysym.sym == 'r') {
-			recordMotion = !recordMotion;
-			return true;
-		}
-		// Use '1' to callup the waypoint manager
-		if ((event.type == GEventType::KEY_DOWN) && event.key.keysym.sym == '1') {
-			m_waypointWindow->setVisible(!m_waypointWindow->visible());
-			return true;
+		if (event.type == GEventType::KEY_DOWN) {
+			bool foundKey = true;
+			switch (event.key.keysym.sym) {
+			case 'q':							// Use 'q' to drop a waypoint
+				dropWaypoint();
+				break;
+			case 'r':							// Use 'r' to toggle recording of player motion
+				recordMotion = !recordMotion;
+				break;
+			case '1':							// Use '1' to toggle the rendering controls
+				m_renderWindow->setVisible(!m_renderWindow->visible());
+				break;
+			case '2':							// Use '2' to toggle the player controls
+				m_playerWindow->setVisible(!m_playerWindow->visible());
+				break;
+			case '3':							// Use '3' to toggle the waypoint manager
+				m_waypointWindow->setVisible(!m_waypointWindow->visible());
+				break;
+			default:
+				foundKey = false;
+				break;
+			}
+			if (foundKey) {
+				return true;
+			}
 		}
 	}
 	
@@ -1155,11 +1155,11 @@ bool App::onEvent(const GEvent& event) {
 
 	// Handle super-class events
 	if (GApp::onEvent(event)) { return true; }
+
     if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::KP_MINUS)) {
         quitRequest();
         return true;
     }
-
 
 	// Handle crouch here
 	if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::LCTRL)) {
@@ -1171,26 +1171,6 @@ bool App::onEvent(const GEvent& event) {
 		return true;
 	}
 
-	// If you need to track individual UI events, manage them here.
-	// Return true if you want to prevent other parts of the system
-	// from observing this specific event.
-	//
-	// For example,
-	// if ((event.type == GEventType::GUI_ACTION) && (event.gui.control == m_button)) { ... return true; }
-	// if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::TAB)) { ... return true; }
-	// if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == 'p')) { ... return true; }
-
-    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::ESCAPE || event.key.keysym.sym == GKey::TAB)) {
-        m_userSettingsMode = !m_userSettingsMode;
-        m_userSettingsWindow->setVisible(m_userSettingsMode);
-        if (m_userSettingsMode) {
-            // set focus so buttons properly highlight
-            m_widgetManager->setFocusedWidget(m_userSettingsWindow);
-        }
-        // switch to first or 3rd person mode
-        updateMouseSensitivity();
-        return true;
-    }
 	return false;
 }
 
@@ -1657,14 +1637,14 @@ void App::onUserInput(UserInput* ui) {
     GKey initShootKey = GKey::LSHIFT;
 	if (ui->keyPressed(initShootKey) && (ex->presentationState == PresentationState::feedback)) {
 		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
-	}
+	}	
 
-	if (m_lastReticleLoaded != m_reticleIndex) {
+	if (m_lastReticleLoaded != reticleIndex) {
 		// Slider was used to change the reticle
-		setReticle(m_reticleIndex);
+		setReticle(reticleIndex);
 	}
 
-	activeCamera()->filmSettings().setSensitivity(m_sceneBrightness);
+	activeCamera()->filmSettings().setSensitivity(sceneBrightness);
     END_PROFILER_EVENT();
 }
 
@@ -1724,7 +1704,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 		const float scale = rd->viewport().width() / 1920.0f;
 
 		// FPS display (faster than the full stats widget)
-		if (m_renderFPS) {
+		if (renderFPS) {
 			String msg;
 
 			if (window()->settings().refreshRate > 0) {
@@ -1756,9 +1736,9 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 /** Set the currently reticle by index */
 void App::setReticle(int r) {
-	m_lastReticleLoaded = m_reticleIndex = clamp(0, r, numReticles);
+	m_lastReticleLoaded = reticleIndex = clamp(0, r, numReticles);
 	if (r < numReticles) {
-		reticleTexture = Texture::fromFile(System::findDataFile(format("gui/reticle/reticle-%03d.png", m_reticleIndex)));
+		reticleTexture = Texture::fromFile(System::findDataFile(format("gui/reticle/reticle-%03d.png", reticleIndex)));
 	}
 	else {
 		// This special case is added to allow a custom reticle not in the gui/reticle/reticle-[x].png format

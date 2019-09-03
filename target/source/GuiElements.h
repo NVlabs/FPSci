@@ -66,3 +66,20 @@ public:
 	virtual void setManager(WidgetManager* manager);
 	static shared_ptr<WaypointDisplay> create(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints);
 };
+
+class PlayerControls : public GuiWindow {
+protected:
+	App *m_app;
+	PlayerControls(App *app, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
+
+public:
+	static shared_ptr<PlayerControls> create(App* app, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
+};
+
+class RenderControls : public GuiWindow {
+protected:
+	App *m_app;
+	RenderControls(App* app, const shared_ptr<GuiTheme>& theme, float width=400.0f, float height=10.0f);
+public:
+	static shared_ptr<RenderControls> create(App* app, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
+};

@@ -16,8 +16,7 @@
 #include "Logger.h"
 #include "PhysicsScene.h"
 #include <chrono>
-#include "WaypointDisplay.h"
-#include "PlayerControls.h"
+#include "GuiElements.h"
 
 class FlyingEntity;
 class JumpingEntity;
@@ -105,7 +104,6 @@ protected:
 	static const float TARGET_MODEL_ARRAY_SCALING;						///< Target model scale factor
 	static const float TARGET_MODEL_ARRAY_OFFSET;						///< Target model offset
 	static const int MAX_HISTORY_TIMING_FRAMES = 360;					///< Length of the history queue for m_frameDurationQueue
-	const int                       numReticles = 55;					///< Total count of reticles available to choose from
 
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
 	shared_ptr<Sound>               m_fireSound;						///< Sound for weapon firing
@@ -137,6 +135,7 @@ protected:
 	Array<DebugID> m_arrowIDs;				///< Storage for IDs for connecting arrows	
 	shared_ptr<WaypointDisplay> m_waypointWindow;
 	shared_ptr<PlayerControls> m_playerWindow;
+	shared_ptr<RenderControls> m_renderWindow;
 	DebugID m_highlighted;					///< ID for the waypoint window highlighter
 	int m_grab = -1;						///< Grabbed index
 		
@@ -163,13 +162,9 @@ protected:
 
 	/** Coordinate frame of the weapon, updated in onPose() */
 	CFrame                          m_weaponFrame;						///< Frame for the weapon
-	int                             m_displayLagFrames = 0;				///< Count of frames of latency to add
 
 	/** Used to detect GUI changes to m_reticleIndex */
 	int                             m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
-	int                             m_reticleIndex = numReticles;		///< Start by selecting the last reticle
-	float                           m_sceneBrightness = 1.0f;			///< Scene brightness scale factor
-	bool                            m_renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
 	float							m_debugMenuHeight = 0.0f;			///< Height of the debug menu when playMode=False
     GuiPane*                        m_currentUserPane;					///< Current user information pane
 
@@ -239,7 +234,13 @@ public:
 	int recordMode = 0;					///< Recording mode
 	float recordInterval = 0.1f;		///< Recording interval (either time or distance)
 	float recordTimeScaling = 1.0;		///< Time scaling for time-based recording
-	
+
+	bool renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
+	int  displayLagFrames = 0;			///< Count of frames of latency to add
+	const int numReticles = 55;			///< Total count of reticles available to choose from
+	int  reticleIndex = numReticles;	///< Start by selecting the last reticle
+	float sceneBrightness = 1.0f;		///< Scene brightness scale factor
+
 	/** Call to change the reticle. */
 	void setReticle(int r);
 
@@ -268,6 +269,8 @@ public:
 	void showWaypointManager();
 	/** Show the player controls */
 	void showPlayerControls();
+	/** Show the render controls */
+	void showRenderControls();
 	/** Save scene w/ updated player position */
 	void exportScene();
 
@@ -277,7 +280,7 @@ public:
 
 	/** Increment the current reticle index */
 	void nextReticle() {
-		setReticle((m_reticleIndex + 1) % (numReticles+1));
+		setReticle((reticleIndex + 1) % (numReticles+1));
 	}
 
     /** Creates a random target with motion based on parameters 

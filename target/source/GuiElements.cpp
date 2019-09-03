@@ -1,4 +1,4 @@
-#include "WaypointDisplay.h"
+#include "GuiElements.h"
 #include "App.h"
 
 bool WaypointDisplay::TreeDisplay::onEvent(const GEvent & event) {
@@ -56,7 +56,7 @@ void WaypointDisplay::TreeDisplay::render(RenderDevice* rd, const shared_ptr<Gui
 WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) :
 	GuiWindow("Waypoint Manager",
 		theme,
-		Rect2D::xywh(5, 5, (float)config.tree_display_width_px + 10, (float)config.tree_display_height_px+10),
+		Rect2D::xywh(0, 0, (float)config.tree_display_width_px + 10, (float)config.tree_display_height_px+10),
 		GuiTheme::NORMAL_WINDOW_STYLE,
 		GuiWindow::HIDE_ON_CLOSE)
 {
@@ -109,6 +109,7 @@ WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, Wa
 		c->setWidth(150.0f);
 	} pane->endRow();
 
+
 	// Setup the row labels
 	GuiLabel* a = pane->addLabel("Index"); a->setWidth(config.idx_column_width_px + config.tree_indent);
 	GuiLabel* b = pane->addLabel("Time"); b->setWidth(config.time_column_width_px + config.tree_indent); b->moveRightOf(a); a = b;
@@ -124,6 +125,9 @@ WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, Wa
 	m_scrollPane->setSize((float)m_treeDisplay->rect().width()+10, (float)config.tree_display_height_px+10);
 	m_scrollPane->viewPane()->addCustom(m_treeDisplay);
 	pack();
+
+	// Move to right location
+	moveTo(Vector2(app->window()->width() - rect().width() - 10, 50));
 }
 
 shared_ptr<WaypointDisplay> WaypointDisplay::create(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) {
@@ -137,4 +141,91 @@ void WaypointDisplay::setManager(WidgetManager *manager) {
 		///float osWindowWidth = (float)manager->window()->width();
 		///setRect(Rect2D::xywh(osWindowWidth - rect().width(), 40, rect().width(), rect().height()));
 	}
+}
+
+PlayerControls::PlayerControls(App *app, const shared_ptr<GuiTheme>& theme, float width, float height) :
+	GuiWindow("Player Controls", theme, Rect2D::xywh(5, 5, width, height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
+{
+	m_app = app;
+
+	// Create the GUI pane
+	GuiPane* pane = GuiWindow::pane();
+
+	pane->beginRow(); {
+		auto  c = pane->addNumberBox("Player Height", &m_app->experimentConfig.playerHeight, "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f);
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width*0.95);
+	} pane->endRow();
+	pane->beginRow(); {
+		auto c = pane->addNumberBox("Player Crouch Height", &m_app->experimentConfig.crouchHeight, "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f);
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width*0.95);
+	} pane->endRow();
+	pane->beginRow(); {
+		auto c = pane->addNumberBox("Move Rate", &m_app->experimentConfig.moveRate, "m/s", GuiTheme::LINEAR_SLIDER, 0.0f, 30.0f);
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width*0.95);
+	}pane->endRow();
+	pane->beginRow(); {
+		pane->addButton("Set Start Position", m_app, &App::exportScene);
+	} pane->endRow();
+
+	pack();
+	moveTo(Vector2(0, 480));
+}
+
+shared_ptr<PlayerControls> PlayerControls::create(App* app, const shared_ptr<GuiTheme>& theme, float width, float height) {
+	return createShared<PlayerControls>(app, theme, width, height);
+}
+
+RenderControls::RenderControls(App* app, const shared_ptr<GuiTheme>& theme, float width, float height) :
+	GuiWindow("Render Controls", theme, Rect2D::xywh(5,5,width,height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
+{
+	m_app = app;
+	
+	// Create the GUI pane
+	GuiPane* pane = GuiWindow::pane();
+
+	pane->beginRow(); {
+		pane->addCheckBox("Show Bullets", &m_app->experimentConfig.weapon.renderBullets);
+		pane->addCheckBox("Show Weapon", &m_app->experimentConfig.weapon.renderModel);
+		pane->addCheckBox("Show HUD", &m_app->experimentConfig.showHUD);
+
+	} pane->endRow();
+	pane->beginRow(); {
+		pane->addCheckBox("Show FPS", &m_app->renderFPS);
+		pane->addCheckBox("Turbo mode", &m_app->emergencyTurbo);
+	}pane->endRow();
+	pane->beginRow(); {
+		auto c = pane->addNumberBox("Framerate", Pointer<float>(
+			[&]() { return 1.0f / float(m_app->realTimeTargetDuration()); },
+			[&](float f) {
+			// convert to seconds from fps
+			f = 1.0f / f;
+			const float current = (float)m_app->realTimeTargetDuration();
+			if (abs(f - current) > 1e-5f) {
+				// Only set when there is a change, otherwise the simulation's deltas are confused.
+				m_app->setFrameDuration(f, GApp::REAL_TIME);
+			}}), "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f);
+		c->setWidth(width*0.95);
+	} pane->endRow();
+	pane->beginRow(); {
+		auto  c = pane->addNumberBox("Display Lag", &m_app->displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60);
+		c->setWidth(width*0.95);
+	}pane->endRow();
+	pane->beginRow(); {
+		auto c = pane->addNumberBox("Reticle", &m_app->reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, m_app->numReticles, 1);
+		c->setWidth(width*0.95);
+	}
+	pane->beginRow();{
+		auto c = pane->addNumberBox("Brightness", &m_app->sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f);
+		c->setWidth(width*0.95);
+	} pane->endRow();
+
+	pack();
+	moveTo(Vector2(0, 300));
+}
+
+shared_ptr<RenderControls> RenderControls::create(App* app, const shared_ptr<GuiTheme>& theme, float width, float height) {
+	return createShared<RenderControls>(app, theme, width, height);
 }
