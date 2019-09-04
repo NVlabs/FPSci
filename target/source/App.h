@@ -137,7 +137,6 @@ protected:
 	shared_ptr<PlayerControls> m_playerWindow;
 	shared_ptr<RenderControls> m_renderWindow;
 	DebugID m_highlighted;					///< ID for the waypoint window highlighter
-	int m_grab = -1;						///< Grabbed index
 		
 	RealTime m_recordStart = nan();			///< Start time for recording
 	int m_previewIdx = -1;					///< Index of the preview target in the targetArray
@@ -149,8 +148,11 @@ protected:
 	// Internal controls for waypoint visualization
 	const Color4 m_waypointColor = Color4(0.0f, 1.0f, 0.0f, 0.7f);	///< Color for waypoint visualization
 	const Color4 m_highlightColor = Color4(1.0f, 1.0f, 0.0f, 1.0f);	///< Highlight color
-	const float m_waypointRad = 0.1f;							///< Waypoint sphere radius
-	const float m_waypointConnectRad = 0.02f;					///< Waypoint connecting rod radius
+	const float m_waypointRad = 0.1f;								///< Waypoint sphere radius
+	const float m_waypointConnectRad = 0.02f;						///< Waypoint connecting rod radius
+
+	Vector3	 m_waypointMoveMask = Vector3::zero();					///< Mask for moving waypoints
+	Vector3  m_waypointMoveRate = Vector3(0.01, 0.01, 0.01);		///< Movement rate (m/s) for targets
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	//Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models
@@ -250,6 +252,7 @@ public:
 	void dropWaypoint(Destination dest, Point3 offset = Point3::zero());
 	/** Remove a particular waypoint */
 	bool removeWaypoint(int idx);
+	bool updateWaypoint(Destination dest, int idx=-1);
 	void removeHighlighted();
 	/** Clear just the last waypoint */
 	void removeLastWaypoint();

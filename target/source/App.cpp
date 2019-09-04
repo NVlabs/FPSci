@@ -548,6 +548,71 @@ void App::dropWaypoint(Destination dest, Point3 offset) {
 	logPrintf("Dropped waypoint... Time: %f, XYZ:[%f,%f,%f]\n", dest.time, dest.position[0], dest.position[1], dest.position[2]);
 }
 
+bool App::updateWaypoint(Destination dest, int idx) {
+	// Check for valid indexing
+	if (idx < 0) {
+		idx = m_waypointWindow->getSelected();	// Use the selected item if no index is passed in
+	}
+	else if (idx > m_waypoints.lastIndex()) 
+		return false;							// If the index is too high don't update
+
+	// Handle drawing highlight
+	if(m_highlighted != m_waypointIDs[idx]){
+		removeDebugShape(m_highlighted);
+		m_highlighted = debugDraw(Sphere(dest.position, m_waypointRad*1.1f), finf(), Color4::clear(), m_highlightColor);
+	}
+
+	// Skip points w/ no change
+	if (dest.position == m_waypoints[idx].position) {
+		return true;
+	}
+
+	// Array management
+	m_waypoints[idx] = dest;
+
+	// Remove the waypoint debugDraw, then replace it w/ a new one
+	DebugID pointID = m_waypointIDs[idx];
+	removeDebugShape(pointID);
+	pointID = debugDraw(Sphere(dest.position, m_waypointRad), finf(), m_waypointColor, Color4::clear());
+	m_waypointIDs[idx] = pointID;
+
+	// Update the arrows around this point
+	if (idx > 0 && idx < m_waypoints.lastIndex()) {
+		shared_ptr<CylinderShape> toShape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
+			m_waypoints[idx - 1].position,
+			dest.position,
+			m_waypointConnectRad)));
+		shared_ptr<CylinderShape> fromShape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
+			dest.position,
+			m_waypoints[idx + 1].position,
+			m_waypointConnectRad)));
+		// Internal point (2 arrows to update)
+		removeDebugShape(m_arrowIDs[idx - 1]);
+		removeDebugShape(m_arrowIDs[idx]);
+		m_arrowIDs[idx-1] = debugDraw(toShape, finf(), m_waypointColor, Color4::clear());
+		m_arrowIDs[idx] = debugDraw(fromShape, finf(), m_waypointColor, Color4::clear());
+	}
+	else if (idx == m_waypoints.lastIndex()) {
+		shared_ptr<CylinderShape> toShape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
+			m_waypoints[idx - 1].position,
+			dest.position,
+			m_waypointConnectRad)));
+		// Last point (just remove "to" arrow)
+		removeDebugShape(m_arrowIDs[idx - 1]);
+		m_arrowIDs[idx - 1] = debugDraw(toShape, finf(), m_waypointColor, Color4::clear());
+	}
+	else if (idx == 0) {
+		shared_ptr<CylinderShape> fromShape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
+			dest.position,
+			m_waypoints[idx + 1].position,
+			m_waypointConnectRad)));
+		// First point (just remove the "from" arrow)
+		removeDebugShape(m_arrowIDs[idx]);
+		m_arrowIDs[idx] = debugDraw(fromShape, finf(), m_waypointColor, Color4::clear());
+	}
+	return true;
+}
+
 void App::removeHighlighted(void) {
 	// Remove the selected waypoint
 	removeWaypoint(m_waypointWindow->getSelected());
@@ -1046,13 +1111,11 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		// Handle highlighting for selected target
 		int selIdx = m_waypointWindow->getSelected();
 		if (selIdx >= 0) {
-			Destination d = m_waypoints[selIdx];
-			removeDebugShape(m_highlighted);
-			m_highlighted = debugDraw(Sphere(d.position, m_waypointRad*1.1f), finf(), Color4::clear(), m_highlightColor);
-		}
-
-		if (m_grab != -1) {
-			// Handle the grab and move here?
+			// Handle position update
+			Destination dest = m_waypoints[selIdx];
+			dest.position += m_waypointMoveRate * m_waypointMoveMask;
+			// This handles drawing the "highlight"
+			updateWaypoint(dest);
 		}
 
 		// Handle player motion recording here (if we are doing so w/ playMode=False)
@@ -1118,13 +1181,17 @@ bool App::onEvent(const GEvent& event) {
 	if (!startupConfig.playMode) {
 		if (event.type == GEventType::KEY_DOWN) {
 			bool foundKey = true;
+			int selIdx = m_waypointWindow->getSelected();
 			switch (event.key.keysym.sym) {
+			// Handle "hot keys" here
 			case 'q':							// Use 'q' to drop a waypoint
 				dropWaypoint();
 				break;
 			case 'r':							// Use 'r' to toggle recording of player motion
 				recordMotion = !recordMotion;
 				break;
+
+			// Handle shortcuts for opening sub-menus here
 			case '1':							// Use '1' to toggle the rendering controls
 				m_renderWindow->setVisible(!m_renderWindow->visible());
 				break;
@@ -1134,9 +1201,57 @@ bool App::onEvent(const GEvent& event) {
 			case '3':							// Use '3' to toggle the waypoint manager
 				m_waypointWindow->setVisible(!m_waypointWindow->visible());
 				break;
+			case GKey::PAGEUP:
+				m_waypointMoveMask += Vector3(0, 1, 0);
+				break;
+			case GKey::PAGEDOWN:
+				m_waypointMoveMask += Vector3(0, -1, 0);
+				break;
+			case GKey::HOME:
+				m_waypointMoveMask += Vector3(0, 0, 1);
+				break;
+			case GKey::END:
+				m_waypointMoveMask += Vector3(0, 0, -1);
+				break;
+			case GKey::INSERT:
+				m_waypointMoveMask += Vector3(1, 0, 0);
+				break;
+			case GKey::DELETE:
+				m_waypointMoveMask += Vector3(-1, 0, 0);
+				break;
+			// Handle unknown keypress here...
 			default:
 				foundKey = false;
 				break;
+			}
+			if (foundKey) {
+				return true;
+			}
+		}
+		else if (event.type == GEventType::KEY_UP) {
+			bool foundKey = true;
+			// Handle release for waypoint keys here...
+			switch (event.key.keysym.sym) {
+			case GKey::PAGEUP:
+				m_waypointMoveMask -= Vector3(0, 1, 0);
+				break;
+			case GKey::PAGEDOWN:
+				m_waypointMoveMask -= Vector3(0, -1, 0);
+				break;
+			case GKey::HOME:
+				m_waypointMoveMask -= Vector3(0, 0, 1);
+				break;
+			case GKey::END:
+				m_waypointMoveMask -= Vector3(0, 0, -1);
+				break;
+			case GKey::INSERT:
+				m_waypointMoveMask -= Vector3(1, 0, 0);
+				break;
+			case GKey::DELETE:
+				m_waypointMoveMask -= Vector3(-1, 0, 0);
+				break;
+			default: 
+				foundKey = false;
 			}
 			if (foundKey) {
 				return true;
@@ -1559,7 +1674,6 @@ void App::onUserInput(UserInput* ui) {
 	// Require release between clicks for non-autoFire modes
 	if (ui->keyReleased(GKey::LEFT_MOUSE)) {
 		m_buttonUp = true;
-		m_grab = -1;
 		if (!experimentConfig.weapon.autoFire) {
 			haveReleased = true;
 			fired = false;
@@ -1620,12 +1734,6 @@ void App::onUserInput(UserInput* ui) {
 			}
 			if (closestIdx != -1) {							// We are "hitting" this item
 				m_waypointWindow->setSelected(closestIdx);
-				if (m_grab == -1) {
-					m_grab = closestIdx;					// Set the "grab" flag
-				}
-			}
-			else {											// Clear the "grab" flag
-				m_grab = -1;
 			}
 		}
 
