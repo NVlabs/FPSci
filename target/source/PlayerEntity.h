@@ -5,8 +5,7 @@
 
 class PlayerEntity : public VisibleEntity {
 protected:
-
-    Vector3         m_velocity;
+	float			m_jumpVelocity = 0.0f;
     Vector3         m_desiredOSVelocity;
     /** In object-space */
     Sphere          m_collisionProxySphere;

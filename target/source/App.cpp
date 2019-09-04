@@ -1652,9 +1652,6 @@ void App::onUserInput(UserInput* ui) {
 					m_lastJumpTime = System::time();
 				}
 			}
-			else {
-				linear += Vector3(0, player->desiredOSVelocity().y, 0);
-			}
 
 			// Get the mouse rotation here
 			Vector2 mouseRotate = ui->mouseDXY() * (float)mouseSensitivity / 2000.0f;

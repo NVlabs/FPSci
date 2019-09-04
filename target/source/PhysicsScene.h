@@ -1,7 +1,4 @@
 #pragma once
-#ifndef PhysicsScene_h
-#define PhysicsScene_h
-
 #include <G3D/G3D.h>
 
 class PhysicsScene : public Scene {
@@ -50,6 +47,3 @@ public:
      Any toAny() const;
 
 };
-
-#endif
-

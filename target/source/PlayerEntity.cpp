@@ -56,7 +56,6 @@ void PlayerEntity::init(AnyTableReader& propertyTable) {
     Vector3 v;
 	float heading = m_heading;
     propertyTable.getIfPresent("heading", heading);
-    propertyTable.getIfPresent("velocity", v);
     Sphere s(1.5f);
     propertyTable.getIfPresent("collisionSphere", s);
     // Create the player
@@ -80,7 +79,6 @@ float PlayerEntity::heightOffset(float height) {
 }
 
 void PlayerEntity::init(const Vector3& velocity, const Sphere& collisionProxy, float heading) {
-    m_velocity = velocity;
     m_collisionProxySphere = collisionProxy;
     m_desiredOSVelocity     = Vector3::zero();
     m_desiredYawVelocity    = 0;
@@ -102,7 +100,6 @@ Any PlayerEntity::toAny(const bool forceAll) const {
     Any a = VisibleEntity::toAny(forceAll);
     a.setName("PlayerEntity");
     a["heading"] = m_heading;
-    a["velocity"] = m_velocity;
     a["collisionSphere"] = m_collisionProxySphere;
     return a;
 }
@@ -199,20 +196,31 @@ bool PlayerEntity::findFirstCollision
 }
 
 
-bool PlayerEntity::slideMove(SimTime timeLeft) { 
+bool PlayerEntity::slideMove(SimTime deltaTime) { 
     static const float epsilon = 0.0001f;
 	Point3 loc;
 
-    // Use constant velocity gravity (!)
+	// Only allow y-axis gravity for now
     alwaysAssertM(((PhysicsScene*)m_scene)->gravity().x == 0.0f && ((PhysicsScene*)m_scene)->gravity().z == 0.0f, 
                             "We assume gravity points along the y axis to simplify implementation");
     
-    m_desiredOSVelocity.y = max( ((PhysicsScene*)m_scene)->gravity().y, m_desiredOSVelocity.y + ((PhysicsScene*)m_scene)->gravity().y);
-    // Initial velocity
-    Vector3 velocity = frame().vectorToWorldSpace(m_desiredOSVelocity) + ((PhysicsScene*)m_scene)->gravity();
+	Vector3 velocity = frame().vectorToWorldSpace(m_desiredOSVelocity);
 
+	// Apply the velocity using a terminal velocity of about 5.4s of acceleration (human is ~53m/s w/ 9.8m/s^2)
+	if (m_desiredOSVelocity.y > 0) {
+		// Jump occurring, need to track this
+		m_jumpVelocity = m_desiredOSVelocity.y;
+	}
+	// Already in a jump, apply gravity and enforce terminal velocity
+	m_jumpVelocity += ((PhysicsScene*)m_scene)->gravity().y*deltaTime;
+	if (abs(m_jumpVelocity) > 0) {
+		// Enforce terminal velocity here
+		m_jumpVelocity = m_jumpVelocity / abs(m_jumpVelocity) * min(abs(m_jumpVelocity), abs(5.4f*((PhysicsScene*)m_scene)->gravity().y));
+		velocity.y = m_jumpVelocity;
+	}
+	
     Array<Tri> triArray;
-    getConservativeCollisionTris(triArray, velocity, (float)timeLeft);
+    getConservativeCollisionTris(triArray, velocity, (float)deltaTime);
     
     // Trivial implementation that ignores collisions:
 #   if NO_COLLISIONS
@@ -229,8 +237,8 @@ bool PlayerEntity::slideMove(SimTime timeLeft) {
 #   endif
     int iterations = 0;
 	bool collided = false;
-    while ((timeLeft > epsilon) && (velocity.length() > epsilon)) {
-        float stepTime = float(timeLeft);
+    while ((deltaTime > epsilon) && (velocity.length() > epsilon)) {
+        float stepTime = float(deltaTime);
         Vector3 collisionNormal;
         Point3 collisionPoint;
 
@@ -302,7 +310,7 @@ bool PlayerEntity::slideMove(SimTime timeLeft) {
 #       endif
 
         ++iterations;
-        timeLeft -= stepTime;
+        deltaTime -= stepTime;
     }
 	
 	return collided;
