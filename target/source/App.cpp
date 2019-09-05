@@ -1829,7 +1829,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 		// Handle recording indicator
 		if (recordMotion) {
 			Draw::point(Point2(window()->width()*0.9 - 15.0f, 20.0f+m_debugMenuHeight*scale), rd, Color3::red(), 10.0f);
-			outputFont->draw2D(rd, "Recording Position", Point2(window()->width()*0.9, m_debugMenuHeight*scale), 25.0f, Color3::red());
+			outputFont->draw2D(rd, "Recording Position", Point2(window()->width()*0.9, m_debugMenuHeight*scale), 20.0f, Color3::red());
 		}
 
 	} rd->pop2D();
