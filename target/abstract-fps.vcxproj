@@ -136,6 +136,7 @@
     <ClInclude Include="source\Logger.h" />
     <ClInclude Include="source\PhysicsScene.h" />
     <ClInclude Include="source\PlayerEntity.h" />
+    <ClInclude Include="source\PyLogger.h" />
     <ClInclude Include="source\SingleThresholdMeasurement.h" />
     <ClInclude Include="source\sqlHelpers.h" />
     <ClInclude Include="source\TargetEntity.h" />
