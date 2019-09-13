@@ -818,6 +818,9 @@ String App::getDropDownUserId(void) {
 }
 
 void App::markSessComplete(String sessId) {
+	if (m_pyLogger != nullptr) {
+		m_pyLogger->mergeLogToDb();
+	}
 	// Add the session id to completed session array
 	userStatusTable.addCompletedSession(userTable.currentUser, sessId);
 	// Save the file to any
@@ -831,21 +834,6 @@ shared_ptr<UserConfig> App::getCurrUser(void) {
 
 void App::updateSessionPress(void) {
 	updateSession(getDropDownSessId());
-}
-
-String GetLastErrorString() {
-	DWORD error = GetLastError();
-	if (error){
-		LPVOID lpMsgBuf;
-		DWORD bufLen = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL);
-		if (bufLen){
-			LPCSTR lpMsgStr = (LPCSTR)lpMsgBuf;
-			std::string result(lpMsgStr, lpMsgStr + bufLen);
-			LocalFree(lpMsgBuf);
-			return String(result);
-		}
-	}
-	return String();
 }
 
 void App::updateSession(String id) {
@@ -881,89 +869,35 @@ void App::updateSession(String id) {
 
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::load();
-	m_logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
+	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
 	if (sysConfig.hasLogger) {
-		// Handle running logger if we need to (terminate then merge results)
-		if (m_loggerRunning) {
-			killPythonLogger();
-			pythonMergeLogs(m_logName);
+		if (m_pyLogger == nullptr) {
+			m_pyLogger = PythonLogger::create(sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
+		}
+		else {
+			// Handle running logger if we need to (terminate then merge results)
+			m_pyLogger->mergeLogToDb();
 		}
 		// Run a new logger if we need to
-		runPythonLogger(m_logName, sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
+		m_pyLogger->run(logName);
 	}
 
 	// Initialize the experiment (this creates the results file)
-	ex->onInit(m_logName+".db", userTable.currentUser, experimentConfig.appendingDescription);
+	ex->onInit(logName+".db", userTable.currentUser, experimentConfig.appendingDescription);
 	// Don't create a results file for a user w/ no sessions left
 	if (m_sessDropDown->numElements() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
 	}
 	else {
-		logPrintf("Created results file: %s.db\n", m_logName.c_str());
+		logPrintf("Created results file: %s.db\n", logName.c_str());
 	}
-}
-
-void App::mergeCurrentLogToCurrentDB() {
-	if (m_loggerRunning) {
-		killPythonLogger();
-		pythonMergeLogs(m_logName);
-	}
-}
-
-void App::runPythonLogger(String logName, String com, bool hasSync, String syncComPort = "") {
-	// Variables for creating process/getting handle
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
-	ZeroMemory(&pi, sizeof(pi));
-
-	// Come up w/ command string
-	String cmd = "python ../scripts/\"event logger\"/software/event_logger.py " + com + " \"" + logName + "\"";
-	if (hasSync) cmd += " " + syncComPort;
-
-    logPrintf("Running python command: '%s'\n", cmd.c_str());
-
-	LPSTR command = LPSTR(cmd.c_str());
-	if (!CreateProcess(NULL, command, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
-		logPrintf("Failed to start logger: %s\n", GetLastErrorString());
-	}
-	// Update logger management variables
-	m_loggerRunning = true;
-	m_loggerHandle = pi.hProcess;
-}
-
-void App::killPythonLogger() {
-	if (m_loggerRunning) TerminateProcess(m_loggerHandle, 0);
-	m_loggerRunning = false;
 }
 
 void App::quitRequest() {
-    setExitCode(0);
-	mergeCurrentLogToCurrentDB();
-    //killPythonLogger();
-}
-
-bool App::pythonMergeLogs(String basename) {
-	String dbFile = basename + ".db";
-	String eventFile = basename + "_event.csv";
-
-	// If we can't find either the db output file or the csv input return false
-	if (!FileSystem::exists(dbFile) || !FileSystem::exists(eventFile)) return false;
-
-	// Variables for creating process/getting handle
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
-	ZeroMemory(&pi, sizeof(pi));
-
-	String cmd = "python ../scripts/\"event logger\"/software/event_log_insert.py " + eventFile + " " + dbFile;	
-	LPSTR command = LPSTR(cmd.c_str());
-	if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
-		logPrintf("Failed to merge results: %s\n", GetLastErrorString());
+	if (m_pyLogger != nullptr) {
+		m_pyLogger->mergeLogToDb();
 	}
-	return true;
+    setExitCode(0);
 }
 
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {

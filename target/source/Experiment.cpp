@@ -333,7 +333,6 @@ void Experiment::updatePresentationState()
 		{
 			if (m_psych.isComplete()) {
 				m_logger->closeResultsFile();													// Close the current results file
-				m_app->mergeCurrentLogToCurrentDB();
 				m_app->markSessComplete(String(m_psych.getParams()[0].str["session"]));			// Add this session to user's completed sessions
 				m_app->updateSessionDropDown();
 

@@ -17,6 +17,7 @@
 #include "PhysicsScene.h"
 #include <chrono>
 #include "GuiElements.h"
+#include "PyLogger.h"
 
 class FlyingEntity;
 class JumpingEntity;
@@ -182,11 +183,8 @@ protected:
 
 	int                             m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
 	bool							m_sceneLoaded = false;				///< Indicates whether or not the scene has been loaded (prevents reload)
-	
-	// Hardware logger specific fields
-	bool							m_loggerRunning = false;			///< Flag to indicate whether a python logger (for HW logger) is running (i.e. needs to be closed)
-	HANDLE							m_loggerHandle = 0;					///< Process handle for the python logger instance (for HW logger) if running
-	String							m_logName;							///< The log name used by the python logger instance (for HW logger) if running
+
+	shared_ptr<PythonLogger>		m_pyLogger = nullptr;
 
 	/** When m_displayLagFrames > 0, 3D frames are delayed in this queue */
 	Array<shared_ptr<Framebuffer>>  m_ldrDelayBufferQueue;
@@ -337,8 +335,6 @@ public:
 
     /** callback for saving user config */
 	void userSaveButtonPress(void);
-	/** used by experiment class to finish data logging */
-	void mergeCurrentLogToCurrentDB();
 
 	Array<String> updateSessionDropDown(void);
 
@@ -354,13 +350,8 @@ public:
 
 	void updateSession(String id);
 
-	void runPythonLogger(String logName, String com, bool hasSync, String syncComPort);
-
-	void killPythonLogger();
     void quitRequest();
-
-	bool pythonMergeLogs(String basename);
-    
+	   
 	/** opens the user settings window */
     void openUserSettingsWindow();
 
