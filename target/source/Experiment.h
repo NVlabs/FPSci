@@ -31,6 +31,7 @@
 #include "SingleThresholdMeasurement.h"
 #include "ExperimentConfig.h"
 #include "sqlHelpers.h"
+#include "Logger.h"
 #include <ctime>
 
 class App;
@@ -99,6 +100,7 @@ protected:
 	ExperimentConfig m_config;							///< This experiment's configuration
 	PsychHelper m_psych;								///< Psych helper for the experiment
 	shared_ptr<SessionConfig> m_session = nullptr;		///< The session this experiment will run
+	shared_ptr<Logger> m_logger = nullptr;				///< Output results logger
 
 	// Experiment management					
 	int m_response;										///< 0 indicates failure (didn't hit the target), 1 indicates sucess (hit the target)
@@ -154,7 +156,7 @@ public:
 	/** randomly returns either +1 or -1 **/
 	float randSign();
 	void updatePresentationState();
-	void onInit();
+	void onInit(String filename, String userName, String description);
 	void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
 	void processResponse();
 	void recordTrialResponse();
@@ -170,7 +172,7 @@ public:
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */
 	void accumulatePlayerAction(String action, String target="");
 	bool responseReady();
-	bool initPsychHelper();
+	bool initPsychHelper(String id);
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState presentationState;			///< Current presentation state
 

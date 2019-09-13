@@ -227,7 +227,6 @@ public:
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
 
 	shared_ptr<Experiment> ex;										///< Pointer to the experiment
-	shared_ptr<Logger> logger;										///< Pointer to the logger
 
 	float waypointDelay = 0.5;			///< Store the delay between way points here
 	float waypointVertOffset = 0.2f;	///< Offset between camera and target position

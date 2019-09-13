@@ -69,17 +69,6 @@ void App::onInit() {
 	loadModels();
 	setReticle(reticleIndex);
 
-	// Create a series of colored materials to choose from for target health
-	for (int i = 0; i < m_MatTableSize; i++) {
-		float complete = (float)i/ m_MatTableSize;
-		Color3 color = experimentConfig.targetHealthColors[0]*complete + experimentConfig.targetHealthColors[1]*(1.0f-complete);
-		UniversalMaterial::Specification materialSpecification;
-		materialSpecification.setLambertian(Texture::Specification(color));
-		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-		m_materials.append(UniversalMaterial::create(materialSpecification));
-	}
-
 	updateMouseSensitivity();			// Update (apply) mouse sensitivity
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
 	updateSessionPress();				// Update session to create results file/start collection
@@ -453,6 +442,17 @@ void App::loadModels() {
 			models.push(ArticulatedModel::create(spec));
 		}
 		m_targetModels.set(id, models);
+	}
+
+	// Create a series of colored materials to choose from for target health
+	for (int i = 0; i < m_MatTableSize; i++) {
+		float complete = (float)i / m_MatTableSize;
+		Color3 color = experimentConfig.targetHealthColors[0] * complete + experimentConfig.targetHealthColors[1] * (1.0f - complete);
+		UniversalMaterial::Specification materialSpecification;
+		materialSpecification.setLambertian(Texture::Specification(color));
+		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+		m_materials.append(UniversalMaterial::create(materialSpecification));
 	}
 }
 
@@ -872,7 +872,6 @@ void App::updateSession(String id) {
 
 	// Initialize the experiment (session) and logger
 	ex = Experiment::create(this);
-	logger = Logger::create();
 
 	// Load the experiment scene if we haven't already (target only)
 	if (!m_sceneLoaded) {
@@ -893,22 +892,18 @@ void App::updateSession(String id) {
 		runPythonLogger(m_logName, sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
 	}
 
+	// Initialize the experiment (this creates the results file)
+	ex->onInit(m_logName+".db", userTable.currentUser, experimentConfig.appendingDescription);
 	// Don't create a results file for a user w/ no sessions left
 	if (m_sessDropDown->numElements() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
 	}
-	// Create the results file here (but how do we make sure user set up name?)
 	else {
-		logger->createResultsFile(m_logName + ".db", userTable.currentUser, experimentConfig.appendingDescription);
 		logPrintf("Created results file: %s.db\n", m_logName.c_str());
 	}
-
-	// TODO: Remove the following by invoking a call back.
-	ex->onInit();
 }
 
 void App::mergeCurrentLogToCurrentDB() {
-	logger->closeResultsFile();
 	if (m_loggerRunning) {
 		killPythonLogger();
 		pythonMergeLogs(m_logName);

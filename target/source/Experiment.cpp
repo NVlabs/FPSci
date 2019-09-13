@@ -91,14 +91,10 @@ bool PsychHelper::isComplete() // did the experiment end?
 	return allMeasurementComplete;
 }
 
-bool Experiment::initPsychHelper()
+bool Experiment::initPsychHelper(String id)
 {
-	// Add conditions, one per one initial displacement value.
-	// TODO: This must smartly iterate for every combination of an arbitrary number of arrays.
 	// Iterate over the sessions here and add a config for each
-	m_session = m_config.getSessionConfigById(m_app->getDropDownSessId());
-	if (m_session == nullptr) return false;
-	Array<Array<Param>> params = m_config.getExpConditions(m_session->id);
+	Array<Array<Param>> params = m_config.getExpConditions(id);
 	for (Array<Param> targets : params) {
 		// Define properties of psychophysical methods
 		PsychophysicsDesignParameter psychParam;
@@ -109,7 +105,7 @@ bool Experiment::initPsychHelper()
 		psychParam.mStimLevels.push_back(m_config.taskDuration);						// Shorter task is more difficult. However, we are currently doing unlimited time.
 		psychParam.mMaxTrialCounts.push_back((int)targets[0].val["trialCount"]);		// Get the trial count from the parameters
 		for (int i = 0; i < targets.size(); i++) {										// Add the session to each target
-			const char* sess = m_session->id.c_str();
+			const char* sess = id.c_str();
 			targets[i].add("name", format("%s_%d_%s_%d", sess, (int)targets[i].val["trial_idx"], targets[i].str["id"], i).c_str());
 			targets[i].add("session", sess);
 		}
@@ -117,21 +113,29 @@ bool Experiment::initPsychHelper()
 	}
 
 	// Update the logger w/ these conditions (IS THIS THE RIGHT PLACE TO DO THIS???)
-	m_app->logger->addTargets(m_psych.mMeasurements);
+	m_logger->addTargets(m_psych.mMeasurements);
 
 	// call it once all conditions are defined.
 	m_psych.chooseNextCondition();
 	return true;
 }
 
-void Experiment::onInit() {
+void Experiment::onInit(String filename, String userName, String description) {
 	// Initialize presentation states
 	presentationState = PresentationState::initial;
 	m_feedbackMessage = "Click to spawn a target, then use shift on red target to begin.";
 
 	m_config = m_app->experimentConfig;									// Setup config from app
-	m_hasSession = initPsychHelper();
-	if (!m_hasSession) {												// Initialize PsychHelper based on the configuration.
+	m_session = m_config.getSessionConfigById(m_app->getDropDownSessId());
+
+	// Setup the logger and create results file
+	m_logger = Logger::create();
+	m_logger->createResultsFile(filename, userName, description);
+
+	if (m_session != nullptr) {
+		initPsychHelper(m_session->id);
+	}
+	else {												// Initialize PsychHelper based on the configuration.
 		presentationState = PresentationState::feedback;
 	}
 }
@@ -328,6 +332,7 @@ void Experiment::updatePresentationState()
 		if ((stateElapsedTime > m_config.feedbackDuration) && (remainingTargets <= 0))
 		{
 			if (m_psych.isComplete()) {
+				m_logger->closeResultsFile();													// Close the current results file
 				m_app->mergeCurrentLogToCurrentDB();
 				m_app->markSessComplete(String(m_psych.getParams()[0].str["session"]));			// Add this session to user's completed sessions
 				m_app->updateSessionDropDown();
@@ -408,18 +413,18 @@ void Experiment::recordTrialResponse()
 		String(std::to_string(m_taskExecutionTime)),
 		String(std::to_string(m_response))
 	};
-	m_app->logger->recordTrialResponse(trialValues);
+	m_logger->recordTrialResponse(trialValues);
 
 	// Target_Trajectory table. Write down the recorded target trajectories.
-	m_app->logger->recordTargetTrajectory(m_targetTrajectory);
+	m_logger->recordTargetTrajectory(m_targetTrajectory);
 	m_targetTrajectory.clear();
 
 	// Player_Action table. Write down the recorded player actions.
-	m_app->logger->recordPlayerActions(m_playerActions);
+	m_logger->recordPlayerActions(m_playerActions);
 	m_playerActions.clear();
 
 	// Frame_Info table. Write down all frame info.
-	m_app->logger->recordFrameInfo(m_frameInfo);
+	m_logger->recordFrameInfo(m_frameInfo);
 	m_frameInfo.clear();
 }
 
