@@ -155,14 +155,16 @@ public:
 	float randSign();
 	void updatePresentationState();
 	void onInit();
-	void onGraphics3D(RenderDevice * rd, Array<shared_ptr<Surface>>& surface);
 	void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
-	void onUserInput(UserInput * ui);
-	void onGraphics2D(RenderDevice * rd);
 	void processResponse();
 	void recordTrialResponse();
 	void accumulateTrajectories();
 	void accumulateFrameInfo(RealTime rdt, float sdt, float idt);
+
+	float getRemainingTime();
+	float getProgress();
+	int getScore();
+	String getFeedbackMessage();
 
 	/** queues action with given name to insert into database when trial completes
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */

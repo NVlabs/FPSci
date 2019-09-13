@@ -1294,8 +1294,15 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 	GApp::onPostProcessHDR3DEffects(rd);
 
 	rd->push2D(); {
-		// TODO: Is this the right place to call it?
-		ex->onGraphics2D(rd);
+		const float scale = rd->viewport().width() / 1920.0f;
+		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+
+		// Reticle
+		Draw::rect2D(
+			(reticleTexture->rect2DBounds() * scale - reticleTexture->vector2Bounds() * scale / 2.0f) / 2.0f + rd->viewport().wh() / 2.0f,
+			rd, Color3::green(), reticleTexture);
+
+
 
 		// Draw target health bars
 		if (experimentConfig.showTargetHealthBars) {
@@ -1322,24 +1329,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 		// Paint both sides by the width of latency measuring box.
 		Point2 latencyRect = experimentConfig.clickPhotonSize;
-		//Draw::rect2D(
-		//	Rect2D::xywh(
-		//		(float)m_framebuffer->width() * 0.0f,
-		//		(float)m_framebuffer->height() * 0.0f,
-		//		(float)m_framebuffer->width() * latencyRect.x,
-		//		(float)m_framebuffer->height()
-		//	), rd, Color3::black()
-		//);
-		//Draw::rect2D(
-		//	Rect2D::xywh(
-		//		(float)m_framebuffer->width() * (1.0f - latencyRect.x),
-		//		(float)m_framebuffer->height() * 0.0f,
-		//		(float)m_framebuffer->width() * latencyRect.x,
-		//		(float)m_framebuffer->height()
-		//	), rd, Color3::black()
-		//);
-
-        // weapon ready status
+		// weapon ready status
         if (experimentConfig.renderWeaponStatus) {
 			// Draw the "active" cooldown box
 			if (experimentConfig.cooldownMode == "box") {
@@ -1426,6 +1416,32 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 					GFont::XALIGN_RIGHT,
 					GFont::YALIGN_BOTTOM
 				);
+			}
+
+			if (experimentConfig.showBanner && !emergencyTurbo) {
+				const Point2 hudCenter(rd->viewport().width() / 2.0f, experimentConfig.bannerVertVisible*hudTexture->height() * vscale + debugMenuHeight() + 74.0f);
+				Draw::rect2D((hudTexture->rect2DBounds() * scale - hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), hudTexture);
+
+				// Create strings for time remaining, progress in sessions, and score
+				float remainingTime = ex->getRemainingTime();
+				float printTime = remainingTime > 0 ? remainingTime : 0.0f;
+				String time_string = format("%0.2f", printTime);
+				float prog = ex->getProgress();
+				String prog_string = "";
+				if (!isnan(prog)) {
+					prog_string = format("%d", (int)(100.0f*ex->getProgress())) + "%";
+				}
+				String score_string = format("%d", (int)(10 * ex->getScore()));
+
+				hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale, scale * experimentConfig.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+				hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale * experimentConfig.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+				hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale * experimentConfig.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+			}
+
+			String message = ex->getFeedbackMessage();
+			if (!message.empty()) {
+				outputFont->draw2D(rd, message.c_str(),
+					(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
 			}
 		}
 

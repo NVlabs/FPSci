@@ -136,11 +136,6 @@ void Experiment::onInit() {
 	}
 }
 
-void Experiment::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface)
-{
-	// seems like nothing necessary?
-}
-
 float Experiment::randSign() {
 	if (Random::common().uniform() > 0.5) {
 		return 1;
@@ -399,50 +394,6 @@ void Experiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	}
 }
 
-void Experiment::onUserInput(UserInput* ui)
-{
-	// nothing here, handled in App::onUserInput
-}
-
-void Experiment::onGraphics2D(RenderDevice* rd)
-{
-	const float scale = rd->viewport().width() / 1920.0f;
-	const float vscale = rd->viewport().height() / 1080.0f;
-	rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-
-	// Reticle
-	Draw::rect2D(
-		(m_app->reticleTexture->rect2DBounds() * scale - m_app->reticleTexture->vector2Bounds() * scale / 2.0f) / 2.0f + rd->viewport().wh() / 2.0f,
-		rd, Color3::green(), m_app->reticleTexture
-	);
-
-	// TODO: Feels like the following variables should be members of Experiment (or should this be moved into the App?)
-	// m_renderHud, m_hudTexture, m_reticleTexture, ...
-	if (m_config.showHUD && m_config.showBanner && !m_app->emergencyTurbo) {
-		const Point2 hudCenter(rd->viewport().width() / 2.0f, m_config.bannerVertVisible*m_app->hudTexture->height() * vscale + m_app->debugMenuHeight() + 74.0f);
-		Draw::rect2D((m_app->hudTexture->rect2DBounds() * scale - m_app->hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), m_app->hudTexture);
-		
-		// Create strings for time remaining, progress in sessions, and score
-		float remainingTime = m_config.taskDuration - m_timer.getTime();
-		float printTime = remainingTime > 0 ? remainingTime : 0.0f;
-		String time_string = format("%0.2f", printTime);
-		String prog_string = "";
-		if (m_session != nullptr){
-			prog_string = format("%d", (int)(100.0f*(float)m_psych.mTrialCount / (float)m_session->getTotalTrials())) + "%";
-		}
-		String score_string = format("%d", (int)(10 * m_totalRemainingTime));
-		
-		m_app->hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale, scale * m_config.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-		m_app->hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale * m_config.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-		m_app->hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale * m_config.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-	}
-
-	if (!m_feedbackMessage.empty()) {
-		m_app->outputFont->draw2D(rd, m_feedbackMessage.c_str(),
-			(Point2((float)m_app->window()->width() / 2, (float)m_app->window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-	}
-}
-
 void Experiment::recordTrialResponse()
 {
 	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters[0].str["session"]);
@@ -545,4 +496,24 @@ double Experiment::weaponCooldownPercent() {
 
 int Experiment::remainingAmmo() {
 	return m_config.weapon.maxAmmo - m_clickCount;
+}
+
+
+float Experiment::getRemainingTime() {
+	return m_config.taskDuration - m_timer.getTime();
+}
+
+float Experiment::getProgress() {
+	if (m_session != nullptr) {
+		return m_psych.mTrialCount / (float)m_session->getTotalTrials();
+	}
+	return fnan();
+}
+
+int Experiment::getScore() {
+	return 10 * m_totalRemainingTime;
+}
+
+String Experiment::getFeedbackMessage() {
+	return m_feedbackMessage;
 }
