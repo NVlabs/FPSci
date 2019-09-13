@@ -93,7 +93,7 @@ public:
 private:
 };
 
-class Experiment : public ReferenceCountedObject {
+class Session : public ReferenceCountedObject {
 //class Experiment {
 protected:
 	App* m_app;											///< Pointer to the app
@@ -132,18 +132,18 @@ protected:
 	Array<Array<String>> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
 	Array<Array<String>> m_frameInfo;					///< Storage for frame info (sdt, idt, rdt)
 
-	Experiment(App* app) : m_app(app) {
+	Session(App* app) : m_app(app) {
 		// secure vector capacity large enough so as to avoid memory allocation time.
 		m_playerActions.reserve(5000);
 		m_targetTrajectory.reserve(5000);
 	};
 
 public:
-	static shared_ptr<Experiment> create(App* app) {
-		return createShared<Experiment>(app);
+	static shared_ptr<Session> create(App* app) {
+		return createShared<Session>(app);
 	}
-	static shared_ptr<Experiment> create_empty(App* app) {
-		shared_ptr<Experiment> texp = create(app);
+	static shared_ptr<Session> create_empty(App* app) {
+		shared_ptr<Session> texp = create(app);
 		texp->m_psych.mMeasurements = Array<SingleThresholdMeasurement>();
 	}
 	void randomizePosition(shared_ptr<TargetEntity> target);
@@ -163,7 +163,7 @@ public:
 	void accumulateTrajectories();
 	void accumulateFrameInfo(RealTime rdt, float sdt, float idt);
 
-	float getRemainingTime();
+	float getRemainingTrialTime();
 	float getProgress();
 	int getScore();
 	String getFeedbackMessage();

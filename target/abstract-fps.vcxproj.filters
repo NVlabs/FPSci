@@ -36,9 +36,6 @@
     <ClInclude Include="source\SingleThresholdMeasurement.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\Experiment.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="source\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -52,6 +49,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="source\PyLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Session.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -68,9 +68,6 @@
     <ClCompile Include="source\SingleThresholdMeasurement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\Experiment.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="source\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -81,6 +78,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\GuiElements.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Session.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

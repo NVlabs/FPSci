@@ -859,7 +859,7 @@ void App::updateSession(String id) {
 	clearTargets();
 
 	// Initialize the experiment (session) and logger
-	ex = Experiment::create(this);
+	sess = Session::create(this);
 
 	// Load the experiment scene if we haven't already (target only)
 	if (!m_sceneLoaded) {
@@ -883,7 +883,7 @@ void App::updateSession(String id) {
 	}
 
 	// Initialize the experiment (this creates the results file)
-	ex->onInit(logName+".db", userTable.currentUser, experimentConfig.appendingDescription);
+	sess->onInit(logName+".db", userTable.currentUser, experimentConfig.appendingDescription);
 	// Don't create a results file for a user w/ no sessions left
 	if (m_sessDropDown->numElements() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
@@ -979,7 +979,7 @@ Point3 App::getPlayerLocation()
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
-	ex->onSimulation(rdt, sdt, idt);
+	sess->onSimulation(rdt, sdt, idt);
 
 	// These are all we need from GApp::onSimulation() for walk mode
 	m_widgetManager->onSimulation(rdt, sdt, idt);
@@ -1087,7 +1087,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 	   
 	// Check for completed session
-	if (ex->moveOn) {
+	if (sess->moveOn) {
 		String nextSess = userStatusTable.getNextSession(userTable.currentUser);
 		updateSession(nextSess);
 	}
@@ -1270,9 +1270,9 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 				Draw::rect2D(
 					Rect2D::xywh(
 						boxLeft,
-						(float)m_framebuffer->height() * (float)(ex->weaponCooldownPercent()),
+						(float)m_framebuffer->height() * (float)(sess->weaponCooldownPercent()),
 						(float)m_framebuffer->width() * latencyRect.x,
-						(float)m_framebuffer->height() * (float)(1.0 - ex->weaponCooldownPercent())
+						(float)m_framebuffer->height() * (float)(1.0 - sess->weaponCooldownPercent())
 					), rd, Color3::white() * 0.8f
 				);
 			}
@@ -1281,7 +1281,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 				const float iRad = experimentConfig.cooldownInnerRadius;
 				const float oRad = iRad + experimentConfig.cooldownThickness;
 				const int segments = experimentConfig.cooldownSubdivisions;
-				int segsToLight = static_cast<int>((1 - ex->weaponCooldownPercent())*segments);
+				int segsToLight = static_cast<int>((1 - sess->weaponCooldownPercent())*segments);
 				// Create the segments
 				for (int i = 0; i < segsToLight; i++) {
 					const float inc = static_cast<float>(2 * pi() / segments);
@@ -1337,7 +1337,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			if (experimentConfig.showAmmo) {
 				Point2 lowerRight = Point2(static_cast<float>(m_framebuffer->width()), static_cast<float>(m_framebuffer->height()));
 				hudFont->draw2D(rd,
-					format("%d/%d", ex->remainingAmmo(), experimentConfig.weapon.maxAmmo),
+					format("%d/%d", sess->remainingAmmo(), experimentConfig.weapon.maxAmmo),
 					lowerRight - experimentConfig.ammoPosition,
 					experimentConfig.ammoSize,
 					experimentConfig.ammoColor,
@@ -1352,22 +1352,22 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 				Draw::rect2D((hudTexture->rect2DBounds() * scale - hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), hudTexture);
 
 				// Create strings for time remaining, progress in sessions, and score
-				float remainingTime = ex->getRemainingTime();
+				float remainingTime = sess->getRemainingTrialTime();
 				float printTime = remainingTime > 0 ? remainingTime : 0.0f;
 				String time_string = format("%0.2f", printTime);
-				float prog = ex->getProgress();
+				float prog = sess->getProgress();
 				String prog_string = "";
 				if (!isnan(prog)) {
-					prog_string = format("%d", (int)(100.0f*ex->getProgress())) + "%";
+					prog_string = format("%d", (int)(100.0f*sess->getProgress())) + "%";
 				}
-				String score_string = format("%d", (int)(10 * ex->getScore()));
+				String score_string = format("%d", (int)(10 * sess->getScore()));
 
 				hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale, scale * experimentConfig.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 				hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale * experimentConfig.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
 				hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale * experimentConfig.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 			}
 
-			String message = ex->getFeedbackMessage();
+			String message = sess->getFeedbackMessage();
 			if (!message.empty()) {
 				outputFont->draw2D(rd, message.c_str(),
 					(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
@@ -1468,7 +1468,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 			if(!destroyedTarget || respawned)  {
 				// Handle randomizing position of non-destination targets here
 				if (target->destinations().size() == 0 && respawned) {
-					ex->randomizePosition(target);
+					sess->randomizePosition(target);
 				}
                 BEGIN_PROFILER_EVENT("fire/changeColor");
                     BEGIN_PROFILER_EVENT("fire/clone");
@@ -1626,35 +1626,35 @@ void App::onUserInput(UserInput* ui) {
 	if (ui->keyDown(GKey::LEFT_MOUSE)) {
 		if (experimentConfig.weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
 			// check for hit, add graphics, update target state
-			if (ex->presentationState == PresentationState::task) {
-				if (ex->responseReady()) {
+			if (sess->presentationState == PresentationState::task) {
+				if (sess->responseReady()) {
 					fired = true;
-					ex->countClick();						        // Count clicks
+					sess->countClick();						        // Count clicks
 					shared_ptr<TargetEntity> t = fire();			// Fire the weapon
 					if (notNull(t)) {								// Check if we hit anything
                         if (t->health() <= 0) {
                             // Target eliminated, must be 'destroy'.
-                            ex->accumulatePlayerAction("destroy", t->name());	
+                            sess->accumulatePlayerAction("destroy", t->name());	
                         }
                         else {
                             // Target 'hit', but still alive.
-                            ex->accumulatePlayerAction("hit", t->name());
+                            sess->accumulatePlayerAction("hit", t->name());
                         }
 					}
                     else {
                         // Target still present, must be 'miss'.
-                        ex->accumulatePlayerAction("miss");
+                        sess->accumulatePlayerAction("miss");
                     }
 				}
 				// Avoid accumulating invalid clicks during holds...
                 else {
                     // Invalid click since the trial isn't ready for response
-                    ex->accumulatePlayerAction("invalid");
+                    sess->accumulatePlayerAction("invalid");
                 }
 			}
 		}
 		else {
-			ex->accumulatePlayerAction("non-task"); // not happening in task state.
+			sess->accumulatePlayerAction("non-task"); // not happening in task state.
 		}
 
 		// Check for developer mode editing here
@@ -1685,7 +1685,7 @@ void App::onUserInput(UserInput* ui) {
 	
 	// Handle spacebar during feedback
     GKey initShootKey = GKey::LSHIFT;
-	if (ui->keyPressed(initShootKey) && (ex->presentationState == PresentationState::feedback)) {
+	if (ui->keyPressed(initShootKey) && (sess->presentationState == PresentationState::feedback)) {
 		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
 	}	
 

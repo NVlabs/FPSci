@@ -131,7 +131,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="source\App.h" />
-    <ClInclude Include="source\Experiment.h" />
+    <ClInclude Include="source\Session.h" />
     <ClInclude Include="source\ExperimentConfig.h" />
     <ClInclude Include="source\Logger.h" />
     <ClInclude Include="source\PhysicsScene.h" />
@@ -144,7 +144,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp" />
-    <ClCompile Include="source\Experiment.cpp" />
+    <ClCompile Include="source\Session.cpp" />
     <ClCompile Include="source\Logger.cpp" />
     <ClCompile Include="source\PhysicsScene.cpp" />
     <ClCompile Include="source\PlayerEntity.cpp" />

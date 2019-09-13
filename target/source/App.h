@@ -12,7 +12,7 @@
 #include <G3D/G3D.h>
 #include "TargetEntity.h"
 #include "ExperimentConfig.h"
-#include "Experiment.h"
+#include "Session.h"
 #include "Logger.h"
 #include "PhysicsScene.h"
 #include <chrono>
@@ -22,7 +22,7 @@
 class FlyingEntity;
 class JumpingEntity;
 
-// An enum that tracks presentation state within a trial. Duration defined in experiment.h
+// An enum that tracks presentation state within a trial. Duration defined in session.h
 // ready: ready scene that happens before beginning of a task.
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
@@ -224,7 +224,7 @@ public:
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
 
-	shared_ptr<Experiment> ex;										///< Pointer to the experiment
+	shared_ptr<Session> sess;										///< Pointer to the experiment
 
 	float waypointDelay = 0.5;			///< Store the delay between way points here
 	float waypointVertOffset = 0.2f;	///< Offset between camera and target position
@@ -337,18 +337,13 @@ public:
 	void userSaveButtonPress(void);
 
 	Array<String> updateSessionDropDown(void);
-
 	String getDropDownSessId(void);
+	void markSessComplete(String id);
+	void updateSessionPress(void);
+	void updateSession(String id);
 
 	String getDropDownUserId(void);
-
-	void markSessComplete(String id);
-
 	shared_ptr<UserConfig> getCurrUser(void);
-
-	void updateSessionPress(void);
-
-	void updateSession(String id);
 
     void quitRequest();
 	   

@@ -25,7 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
-#include "Experiment.h"
+#include "Session.h"
 #include "App.h"
 
 void PsychHelper::addCondition(Array<Param> newConditionParams, PsychophysicsDesignParameter newPsychParam)
@@ -91,7 +91,7 @@ bool PsychHelper::isComplete() // did the experiment end?
 	return allMeasurementComplete;
 }
 
-bool Experiment::initPsychHelper(String id)
+bool Session::initPsychHelper(String id)
 {
 	// Iterate over the sessions here and add a config for each
 	Array<Array<Param>> params = m_config.getExpConditions(id);
@@ -120,7 +120,7 @@ bool Experiment::initPsychHelper(String id)
 	return true;
 }
 
-void Experiment::onInit(String filename, String userName, String description) {
+void Session::onInit(String filename, String userName, String description) {
 	// Initialize presentation states
 	presentationState = PresentationState::initial;
 	m_feedbackMessage = "Click to spawn a target, then use shift on red target to begin.";
@@ -140,7 +140,7 @@ void Experiment::onInit(String filename, String userName, String description) {
 	}
 }
 
-float Experiment::randSign() {
+float Session::randSign() {
 	if (Random::common().uniform() > 0.5) {
 		return 1;
 	}
@@ -149,7 +149,7 @@ float Experiment::randSign() {
 	}
 }
 
-void Experiment::randomizePosition(shared_ptr<TargetEntity> target) {
+void Session::randomizePosition(shared_ptr<TargetEntity> target) {
 	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
 
 	Param tParam = m_psych.getParams()[target->paramIdx()];
@@ -169,7 +169,7 @@ void Experiment::randomizePosition(shared_ptr<TargetEntity> target) {
 	target->setFrame(loc);
 }
 
-void Experiment::initTargetAnimation() {
+void Session::initTargetAnimation() {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
 	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
@@ -269,7 +269,7 @@ void Experiment::initTargetAnimation() {
 	m_clickCount = 0;
 }
 
-void Experiment::processResponse()
+void Session::processResponse()
 {
 	m_taskExecutionTime = m_timer.getTime();
 	int totalTargets = m_psych.mMeasurements[m_psych.mCurrentConditionIndex].totalTargetCount();
@@ -291,7 +291,7 @@ void Experiment::processResponse()
 	}
 }
 
-void Experiment::updatePresentationState()
+void Session::updatePresentationState()
 {
 	// This updates presentation state and also deals with data collection when each trial ends.
 	PresentationState currentState = presentationState;
@@ -385,7 +385,7 @@ void Experiment::updatePresentationState()
 	}
 }
 
-void Experiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
+void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 {
 	// 1. Update presentation state and send task performance to psychophysics library.
 	updatePresentationState();
@@ -398,7 +398,7 @@ void Experiment::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	}
 }
 
-void Experiment::recordTrialResponse()
+void Session::recordTrialResponse()
 {
 	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters[0].str["session"]);
 
@@ -427,7 +427,7 @@ void Experiment::recordTrialResponse()
 	m_frameInfo.clear();
 }
 
-void Experiment::accumulateTrajectories()
+void Session::accumulateTrajectories()
 {
 	for (shared_ptr<TargetEntity> target : m_app->targetArray) {
 		// recording target trajectories
@@ -453,7 +453,7 @@ void Experiment::accumulateTrajectories()
 	accumulatePlayerAction("aim");
 }
 
-void Experiment::accumulatePlayerAction(String action, String targetName)
+void Session::accumulatePlayerAction(String action, String targetName)
 {
 	BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 	// recording target trajectories
@@ -473,7 +473,7 @@ void Experiment::accumulatePlayerAction(String action, String targetName)
 	END_PROFILER_EVENT();
 }
 
-void Experiment::accumulateFrameInfo(RealTime t, float sdt, float idt) {
+void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 	Array<String> frameValues = {
 		"'" + Logger::genUniqueTimestamp() + "'",
 		String(std::to_string(idt)),
@@ -482,7 +482,7 @@ void Experiment::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 	m_frameInfo.push_back(frameValues);
 }
 
-bool Experiment::responseReady() {
+bool Session::responseReady() {
 	double timeNow = System::time();
 	if ((timeNow - m_lastFireAt) > (m_config.weapon.firePeriod)) {
 		m_lastFireAt = timeNow;
@@ -493,31 +493,31 @@ bool Experiment::responseReady() {
 	}
 }
 
-double Experiment::weaponCooldownPercent() {
+double Session::weaponCooldownPercent() {
 	if (m_config.weapon.firePeriod == 0.0f) return 1.0;
 	return min((System::time() - m_lastFireAt) / m_config.weapon.firePeriod, 1.0);
 }
 
-int Experiment::remainingAmmo() {
+int Session::remainingAmmo() {
 	return m_config.weapon.maxAmmo - m_clickCount;
 }
 
 
-float Experiment::getRemainingTime() {
+float Session::getRemainingTrialTime() {
 	return m_config.taskDuration - m_timer.getTime();
 }
 
-float Experiment::getProgress() {
+float Session::getProgress() {
 	if (m_session != nullptr) {
 		return m_psych.mTrialCount / (float)m_session->getTotalTrials();
 	}
 	return fnan();
 }
 
-int Experiment::getScore() {
+int Session::getScore() {
 	return 10 * m_totalRemainingTime;
 }
 
-String Experiment::getFeedbackMessage() {
+String Session::getFeedbackMessage() {
 	return m_feedbackMessage;
 }
