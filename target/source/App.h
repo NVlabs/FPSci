@@ -19,9 +19,6 @@
 #include "GuiElements.h"
 #include "PyLogger.h"
 
-class FlyingEntity;
-class JumpingEntity;
-
 // An enum that tracks presentation state within a trial. Duration defined in session.h
 // ready: ready scene that happens before beginning of a task.
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
