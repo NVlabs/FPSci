@@ -2,20 +2,19 @@
 *.pyc
 */.vs
 */x64
-*/results
-*/data-files/debugging_db.db
-*/data-files/g3d-license.txt
-*/data-files/log.txt
-*/data-files/*.db
-*/data-files/*.csv
-*/data-files/*.pdn
-*/data-files/result_data
-*/data-files/experimentconfig.Any
-*/data-files/userconfig.Any
-*/data-files/systemconfig.Any
-*/data-files/startupconfig.Any
-*/data-files/userstatus.Any
-"*/scripts/event logger/software/Logs"
-*/scripts/configs/*.Any
+data-files/debugging_db.db
+data-files/g3d-license.txt
+data-files/log.txt
+data-files/*.db
+data-files/*.csv
+data-files/*.pdn
+data-files/result_data
+data-files/experimentconfig.Any
+data-files/userconfig.Any
+data-files/systemconfig.Any
+data-files/startupconfig.Any
+data-files/userstatus.Any
+"scripts/event logger/software/Logs"
+scripts/configs/*.Any
 results/
-*/data-files/sound
+data-files/sound
