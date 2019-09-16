@@ -1,7 +1,7 @@
 .vscode
 *.pyc
-*/.vs
-*/x64
+.vs
+x64
 data-files/debugging_db.db
 data-files/g3d-license.txt
 data-files/log.txt
