@@ -12,6 +12,8 @@ The solution file (`FirstPersonScience.sln`) can build and run using [Visual Stu
 ## Instructions for configuring and running an experiment
 `FirstPersonScience` implements a simple mouse-controlled view model with a variety of parameters controllable through various `.Any` files (more on this below). The scene, weapon, target size/behavior, and frame rate/latency controls are all available via this interface.
 
+When running the keypad `-` button can be pressed to exit the application, or you can press `TAB` or `ESC` to toggle the user configuration menu, which has a quit button in it.
+
 ### Organization and Terminology
 Since `FirstPersonScience` was developed for use in scientific studies it adopts somewhat standard experimental terminology from psychophysics for much of its organization. This section describes the various levels of control in the application and provides the terminology by which they will be referred to for the remainder of this documentation.
 
