@@ -1,7 +1,7 @@
 # Introduction
 The user status file tracks all user infomration specific to a given experiment (unlike the [userconfig.Any](./userConfigReadme.md) file which tracks experiment-indepdent user settings). 
 
-The user status is the primary mechanism by which sessions are ordered and progress is tracked in the `abstract-fps` application. Similarly to the [`userconfig.Any`](./userConfigReadme.md) this file controls per-user actions using a user table and also records completed sessions so that the application can track user progress over multiple runtimes.
+The user status is the primary mechanism by which sessions are ordered and progress is tracked in `FirstPersonScience`. Similarly to the [`userconfig.Any`](./userConfigReadme.md) this file controls per-user actions using a user table and also records completed sessions so that the application can track user progress over multiple runtimes.
 
 # User Table
 Each entry in the user table contains the following fields:

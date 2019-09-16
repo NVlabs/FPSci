@@ -1,5 +1,5 @@
 # System Configuration
-The system configuration file plays a dual role in the abstract-fps application. First it provides configuration information related to the hardware setup of the machine (namely whether a hardware click-to-photon logger is present and if so which COM port it uses). Second it records the system parameters from the experiment for later analysis.
+The system configuration file plays a dual role in `FirstPersonScience`. First it provides configuration information related to the hardware setup of the machine (namely whether a hardware click-to-photon logger is present and if so which COM port it uses). Second it records the system parameters from the experiment for later analysis.
 
 ## Input Fields
 The following fields are input to the `systemconfig.Any` file:

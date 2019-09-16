@@ -1,5 +1,5 @@
 # Introduction
-The user config is the mechanism by which users are registered and provide their input sensitivity in the `abstract-fps` application.
+The user config is the mechanism by which users are registered and provide their input sensitivity in `FirstPersonScience`.
 
 The high-level `userconfig.Any` file provides the `currentUser` (the default user when launching the application), together with a `users` table that contains per subject mouse DPI and sensitiviy (in cm/360°).
 

@@ -1,5 +1,5 @@
 # Introduction
-The startup config is the highest level configuration file provided to the `abstract-fps` application. This file specifies the experiment configuration path, as well as the user configuration path and play mode.
+The startup config is the highest level configuration file provided to `FirstPersonScience`. This file specifies the experiment configuration path, as well as the user configuration path and play mode.
 
 ## Fields
 The following fields are valid for a startupconfig.Any file:
