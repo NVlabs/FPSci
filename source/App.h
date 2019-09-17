@@ -179,7 +179,7 @@ protected:
 	RealTime						m_lastJumpTime = 0.0f;				///< Time of last jump
 
 	int                             m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
-	bool							m_sceneLoaded = false;				///< Indicates whether or not the scene has been loaded (prevents reload)
+	String							m_loadedScene = "";
 
 	shared_ptr<PythonLogger>		m_pyLogger = nullptr;
 
@@ -220,6 +220,8 @@ public:
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
+	shared_ptr<SessionConfig>		sessConfig = nullptr;			///< Current session config
+
 
 	shared_ptr<Session> sess;										///< Pointer to the experiment
 
@@ -349,6 +351,7 @@ public:
 
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
+	void updateMoveRate(float rate);
 
 	/** Fire the weapon - hits targets, draws decals, starts explosions */
 	shared_ptr<TargetEntity> fire(bool destroyImmediately=false);

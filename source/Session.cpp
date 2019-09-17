@@ -281,12 +281,12 @@ void Session::processResponse()
 	// Check for whether all targets have been destroyed
 	if (m_response == 0) {
 		m_totalRemainingTime += (double(m_config.taskDuration) - m_taskExecutionTime);
-		if (m_config.getSessionConfigById(sess)->expMode == "training") {
+		if (m_config.getSessionConfigById(sess)->sessDescription == "training") {
 			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
 		}
 	}
 	else {
-		if (m_config.getSessionConfigById(sess)->expMode == "training") {
+		if (m_config.getSessionConfigById(sess)->sessDescription == "training") {
 			m_feedbackMessage = "Failure!";
 		}
 	}
@@ -407,7 +407,7 @@ void Session::recordTrialResponse()
 	Array<String> trialValues = {
 		String(std::to_string(m_psych.mCurrentConditionIndex)),
 		"'" + sess + "'",
-		"'" + m_config.getSessionConfigById(sess)->expMode + "'",
+		"'" + m_config.getSessionConfigById(sess)->sessDescription + "'",
 		"'" + m_taskStartTime + "'",
 		"'" + m_taskEndTime + "'",
 		String(std::to_string(m_taskExecutionTime)),

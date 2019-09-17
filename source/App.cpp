@@ -7,6 +7,8 @@
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
 const float App::TARGET_MODEL_ARRAY_OFFSET = 20;
 
+shared_ptr<FpsConfig> SessionConfig::defaultConfig;
+
 /** global startup config - sets playMode and experiment/user paths */
 StartupConfig startupConfig;
 
@@ -57,19 +59,14 @@ void App::onInit() {
 	   
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
-	hudFont = GFont::fromFile(System::findDataFile(experimentConfig.hudFont));
-	m_combatFont = GFont::fromFile(System::findDataFile(experimentConfig.combatTextFont));
 	hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
-
-	// Check for play mode specific parameters
-	m_fireSound = Sound::create(System::findDataFile(experimentConfig.weapon.fireSound));
-	m_explosionSound = Sound::create(System::findDataFile(experimentConfig.explosionSound));
 
 	// Load models and set the reticle
 	loadModels();
 	setReticle(reticleIndex);
 
 	updateMouseSensitivity();			// Update (apply) mouse sensitivity
+	updateMoveRate(experimentConfig.moveRate);
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
 	updateSessionPress();				// Update session to create results file/start collection
 }
@@ -98,8 +95,13 @@ void App::updateMouseSensitivity() {
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
     }
 	// Control player motion using the experiment config parameter
-	fpm->setMoveRate(experimentConfig.moveRate);
+	//fpm->setMoveRate(sessConfig->moveRate);
     fpm->setTurnRate(mouseSensitivity);
+}
+
+void App::updateMoveRate(float rate) {
+	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+	fpm->setMoveRate(rate);
 }
 
 /** Spawn a randomly parametrized target */
@@ -781,7 +783,7 @@ Array<String> App::updateSessionDropDown(void) {
 	shared_ptr<UserSessionStatus> userStatus = userStatusTable.getUserStatus(userId);
 	// If we have a user that doesn't have specified sessions
 	if (userStatus == nullptr) {
-		// Create a new user session status w/ no progress and default order (from experimentconfig.Any)
+		// Create a new user session status w/ no progress and default order
 		logPrintf("User %s not found. Creating a new user w/ default session ordering.\n", userId);
 		UserSessionStatus newStatus = UserSessionStatus();
 		newStatus.id = userId;
@@ -837,9 +839,12 @@ void App::updateSessionPress(void) {
 }
 
 void App::updateSession(String id) {
+	// Initialize the experiment (session) and logger
+	sess = Session::create(this);
+
 	if (!id.empty()) {
 		// Get the new session config
-		shared_ptr<SessionConfig> sessConfig = experimentConfig.getSessionConfigById(id);
+		sessConfig = experimentConfig.getSessionConfigById(id);
 		// Print message to log
 		logPrintf("User selected session: %s. Updating now...\n", id);
 		// apply frame lag
@@ -853,19 +858,48 @@ void App::updateSession(String id) {
 
 		// Update session drop-down selection
 		m_sessDropDown->setSelectedValue(id);
+
+		// Load (session dependent) fonts
+		hudFont = GFont::fromFile(System::findDataFile(sessConfig->hudFont));
+		m_combatFont = GFont::fromFile(System::findDataFile(sessConfig->combatTextFont));
+
+		// Load the experiment scene if we haven't already (target only)
+		if (sessConfig->sceneName != m_loadedScene) {
+			loadScene(sessConfig->sceneName);
+			m_loadedScene = sessConfig->sceneName;
+		}
+
+		// Check for play mode specific parameters
+		m_fireSound = Sound::create(System::findDataFile(sessConfig->weapon.fireSound));
+		m_explosionSound = Sound::create(System::findDataFile(sessConfig->explosionSound));
+
+		// Update weapon model
+		m_viewModel = ArticulatedModel::create(sessConfig->weapon.modelSpec, "viewModel");
+
+		// Create a series of colored materials to choose from for target health
+		for (int i = 0; i < m_MatTableSize; i++) {
+			float complete = (float)i / m_MatTableSize;
+			Color3 color = sessConfig->targetHealthColors[0] * complete + sessConfig->targetHealthColors[1] * (1.0f - complete);
+			UniversalMaterial::Specification materialSpecification;
+			materialSpecification.setLambertian(Texture::Specification(color));
+			materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+			materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+			m_materials.append(UniversalMaterial::create(materialSpecification));
+		}
+
+		// Player parameters
+		updateMoveRate(sessConfig->moveRate);
+	}
+	else {
+		// Load the experiment scene if no session is provided
+		if (m_loadedScene == "") {
+			loadScene(experimentConfig.sceneName);
+			m_loadedScene = experimentConfig.sceneName;
+		}
 	}
 
 	// Make sure all targets are cleared
 	clearTargets();
-
-	// Initialize the experiment (session) and logger
-	sess = Session::create(this);
-
-	// Load the experiment scene if we haven't already (target only)
-	if (!m_sceneLoaded) {
-		loadScene(experimentConfig.sceneName);
-		m_sceneLoaded = true;
-	}
 
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::load();
@@ -883,7 +917,7 @@ void App::updateSession(String id) {
 	}
 
 	// Initialize the experiment (this creates the results file)
-	sess->onInit(logName+".db", userTable.currentUser, experimentConfig.appendingDescription);
+	sess->onInit(logName+".db", userTable.currentUser, experimentConfig.expDescription + "/" + sessConfig->sessDescription);
 	// Don't create a results file for a user w/ no sessions left
 	if (m_sessDropDown->numElements() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
@@ -901,18 +935,25 @@ void App::quitRequest() {
 }
 
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
+	// Pick between experiment and session settings
+	Vector3 grav = experimentConfig.playerGravity;
+	float FoV = experimentConfig.hFoV;
+	if (sessConfig != nullptr) {
+		grav = sessConfig->playerGravity;
+		FoV = sessConfig->hFoV;
+	}
 	// Set the active camera to the player
 	setActiveCamera(m_scene->typedEntity<Camera>("camera"));
 	// For now make the player invisible (prevent issues w/ seeing model from inside)
 	m_scene->typedEntity<PlayerEntity>("player")->setVisible(false);
-	m_scene->setGravity(experimentConfig.playerGravity);
+	m_scene->setGravity(grav);
 	// Capture these variables here
 	m_resetHeight = m_scene->resetHeight();
 	if (isnan(m_resetHeight)) {
 		m_resetHeight = -1e6;
 	}
 	m_spawnPosition = activeCamera()->frame().translation;
-	activeCamera()->setFieldOfView(experimentConfig.hFoV * units::degrees(), FOVDirection::HORIZONTAL);
+	activeCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
 }
 
 
@@ -1006,7 +1047,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		}
 		else {
 			// Animate
-			projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * experimentConfig.weapon.bulletSpeed);
+			projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * sessConfig->weapon.bulletSpeed);
 		}
 	}
 
@@ -1028,7 +1069,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			c.translation = m_spawnPosition;
 			p->setFrame(c);
 		}
-		float height = p->crouched() ? experimentConfig.crouchHeight : experimentConfig.playerHeight;
+		float height = p->crouched() ? sessConfig->crouchHeight : sessConfig->playerHeight;
 		height = p->heightOffset(height);
 		c.translation += Vector3(0, height, 0);		// Set the player to the right height
 		c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), p->headTilt());
@@ -1234,19 +1275,19 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 
 		// Draw target health bars
-		if (experimentConfig.showTargetHealthBars) {
+		if (sessConfig->showTargetHealthBars) {
 			for (auto const& target : targetArray) {
 				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer, 
-					experimentConfig.targetHealthBarSize, 
-					experimentConfig.targetHealthBarOffset,
-					experimentConfig.targetHealthBarBorderSize,
-					experimentConfig.targetHealthBarColors,
-					experimentConfig.targetHealthBarBorderColor);
+					sessConfig->targetHealthBarSize,
+					sessConfig->targetHealthBarOffset,
+					sessConfig->targetHealthBarBorderSize,
+					sessConfig->targetHealthBarColors,
+					sessConfig->targetHealthBarBorderColor);
 			}
 		}
 
 		// Draw the combat text
-		if (experimentConfig.showCombatText) {
+		if (sessConfig->showCombatText) {
 			Array<int> toRemove;
 			for (int i = 0; i < m_combatTextList.size(); i++) {
 				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
@@ -1257,13 +1298,13 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		}
 
 		// Paint both sides by the width of latency measuring box.
-		Point2 latencyRect = experimentConfig.clickPhotonSize;
+		Point2 latencyRect = sessConfig->clickPhotonSize;
 		// weapon ready status
-        if (experimentConfig.renderWeaponStatus) {
+        if (sessConfig->renderWeaponStatus) {
 			// Draw the "active" cooldown box
-			if (experimentConfig.cooldownMode == "box") {
+			if (sessConfig->cooldownMode == "box") {
 				float boxLeft = (float)m_framebuffer->width() * 0.0f;
-				if (experimentConfig.weaponStatusSide == "right") {
+				if (sessConfig->weaponStatusSide == "right") {
 					// swap side
 					boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
 				}
@@ -1276,11 +1317,11 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 					), rd, Color3::white() * 0.8f
 				);
 			}
-			else if (experimentConfig.cooldownMode == "ring") {
+			else if (sessConfig->cooldownMode == "ring") {
 				// Draw cooldown "ring" instead of box
-				const float iRad = experimentConfig.cooldownInnerRadius;
-				const float oRad = iRad + experimentConfig.cooldownThickness;
-				const int segments = experimentConfig.cooldownSubdivisions;
+				const float iRad = sessConfig->cooldownInnerRadius;
+				const float oRad = iRad + sessConfig->cooldownThickness;
+				const int segments = sessConfig->cooldownSubdivisions;
 				int segsToLight = static_cast<int>((1 - sess->weaponCooldownPercent())*segments);
 				// Create the segments
 				for (int i = 0; i < segsToLight; i++) {
@@ -1293,24 +1334,24 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 						center + Vector2(iRad*sin(theta + inc), -iRad*cos(theta + inc)),
 						center + Vector2(iRad*sin(theta), -iRad*cos(theta))
 					};
-					Draw::poly2D(verts, rd, experimentConfig.cooldownColor);
+					Draw::poly2D(verts, rd, sessConfig->cooldownColor);
 				}
 			}
         }
 
 		// Click to photon latency measuring corner box
-		if (experimentConfig.renderClickPhoton) {
+		if (sessConfig->renderClickPhoton) {
 			float boxLeft = 0.0f;
-            if (experimentConfig.clickPhotonSide == "right") {
+            if (sessConfig->clickPhotonSide == "right") {
                 // swap side
 				boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
             }
 			// Draw the "active" box
-			Color3 cornerColor = (m_buttonUp) ? experimentConfig.clickPhotonColors[0] : experimentConfig.clickPhotonColors[1];
+			Color3 cornerColor = (m_buttonUp) ? sessConfig->clickPhotonColors[0] : sessConfig->clickPhotonColors[1];
 			Draw::rect2D(
 				Rect2D::xywh(
 					boxLeft,
-					(float)m_framebuffer->height() * (experimentConfig.clickPhotonVertPos - latencyRect.y / 2),
+					(float)m_framebuffer->height() * (sessConfig->clickPhotonVertPos - latencyRect.y / 2),
 					(float)m_framebuffer->width() * latencyRect.x,
 					(float)m_framebuffer->height() * latencyRect.y
 				), rd, cornerColor
@@ -1318,37 +1359,37 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		}
 
 		// Draw the HUD elements
-		if (experimentConfig.showHUD) {
+		if (sessConfig->showHUD) {
 			const float vscale = rd->viewport().height() / (1080.0f);
 
 			// Draw the player health bar
-			if (experimentConfig.showPlayerHealthBar) {
+			if (sessConfig->showPlayerHealthBar) {
 				const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
-				const Point2 location = Point2(experimentConfig.playerHealthBarPos.x, experimentConfig.playerHealthBarPos.y+m_debugMenuHeight*vscale);
-				const Point2 size = experimentConfig.playerHealthBarSize;
-				const Point2 border = experimentConfig.playerHealthBarBorderSize;
-				const Color4 borderColor = experimentConfig.playerHealthBarBorderColor;
-				const Color4 color = experimentConfig.playerHealthBarColors[1] * (1.0f - health) + experimentConfig.playerHealthBarColors[0] * health;
+				const Point2 location = Point2(sessConfig->playerHealthBarPos.x, sessConfig->playerHealthBarPos.y+m_debugMenuHeight*vscale);
+				const Point2 size = sessConfig->playerHealthBarSize;
+				const Point2 border = sessConfig->playerHealthBarBorderSize;
+				const Color4 borderColor = sessConfig->playerHealthBarBorderColor;
+				const Color4 color = sessConfig->playerHealthBarColors[1] * (1.0f - health) + sessConfig->playerHealthBarColors[0] * health;
 
 				Draw::rect2D(Rect2D::xywh(location - border, size + border + border), rd, borderColor);
 				Draw::rect2D(Rect2D::xywh(location, size*Point2(health, 1.0f)), rd, color);
 			}
 			// Draw the ammo indicator
-			if (experimentConfig.showAmmo) {
+			if (sessConfig->showAmmo) {
 				Point2 lowerRight = Point2(static_cast<float>(m_framebuffer->width()), static_cast<float>(m_framebuffer->height()));
 				hudFont->draw2D(rd,
-					format("%d/%d", sess->remainingAmmo(), experimentConfig.weapon.maxAmmo),
-					lowerRight - experimentConfig.ammoPosition,
-					experimentConfig.ammoSize,
-					experimentConfig.ammoColor,
-					experimentConfig.ammoOutlineColor,
+					format("%d/%d", sess->remainingAmmo(), sessConfig->weapon.maxAmmo),
+					lowerRight - sessConfig->ammoPosition,
+					sessConfig->ammoSize,
+					sessConfig->ammoColor,
+					sessConfig->ammoOutlineColor,
 					GFont::XALIGN_RIGHT,
 					GFont::YALIGN_BOTTOM
 				);
 			}
 
-			if (experimentConfig.showBanner && !emergencyTurbo) {
-				const Point2 hudCenter(rd->viewport().width() / 2.0f, experimentConfig.bannerVertVisible*hudTexture->height() * vscale + debugMenuHeight() + 74.0f);
+			if (sessConfig->showBanner && !emergencyTurbo) {
+				const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->bannerVertVisible*hudTexture->height() * vscale + debugMenuHeight() + 74.0f);
 				Draw::rect2D((hudTexture->rect2DBounds() * scale - hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), hudTexture);
 
 				// Create strings for time remaining, progress in sessions, and score
@@ -1362,9 +1403,9 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 				}
 				String score_string = format("%d", (int)(10 * sess->getScore()));
 
-				hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale, scale * experimentConfig.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-				hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale * experimentConfig.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-				hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale * experimentConfig.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+				hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale, scale * sessConfig->bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+				hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale * sessConfig->bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+				hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale * sessConfig->bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 			}
 
 			String message = sess->getFeedbackMessage();
@@ -1376,7 +1417,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 	} rd->pop2D();
 
-	if (experimentConfig.shader != "") {
+	if (sessConfig->shader != "") {
 		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
 		// latency queue copy
 			
@@ -1389,7 +1430,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			Args args;
 			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
 			args.setRect(rd->viewport());
-			LAUNCH_SHADER(experimentConfig.shader, args);
+			LAUNCH_SHADER(sessConfig->shader, args);
 		} rd->pop2D();
 	}
 }
@@ -1422,28 +1463,28 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 			// Damage the target
 			float damage;
 			if (destroyImmediately) damage = target->health();
-			else if (experimentConfig.weapon.firePeriod == 0.0f && hitTarget) {		// Check if we are in "laser" mode hit the target last time
+			else if (sessConfig->weapon.firePeriod == 0.0f && hitTarget) {		// Check if we are in "laser" mode hit the target last time
 				float dt = static_cast<float>(System::time() - lastTime);
-				damage = experimentConfig.weapon.damagePerSecond * dt;
+				damage = sessConfig->weapon.damagePerSecond * dt;
 			}
 			else {																// If we're not in "laser" mode then damage/shot is just damage/second * second/shot
-				damage = experimentConfig.weapon.damagePerSecond * experimentConfig.weapon.firePeriod;
+				damage = sessConfig->weapon.damagePerSecond * sessConfig->weapon.firePeriod;
 			}
 			lastTime = System::time();
 			hitTarget = true;
 
 			// Check if we need to add combat text for this damage
-			if (experimentConfig.showCombatText) {
+			if (sessConfig->showCombatText) {
 				m_combatTextList.append(FloatingCombatText::create(
 					format("%2.0f", 100*damage),
 					m_combatFont,
-					experimentConfig.combatTextSize,
-					experimentConfig.combatTextColor,
-					experimentConfig.combatTextOutline,
-					experimentConfig.combatTextOffset,
-					experimentConfig.combatTextVelocity,
-					experimentConfig.combatTextFade,
-					experimentConfig.combatTextTimeout));
+					sessConfig->combatTextSize,
+					sessConfig->combatTextColor,
+					sessConfig->combatTextOutline,
+					sessConfig->combatTextOffset,
+					sessConfig->combatTextVelocity,
+					sessConfig->combatTextFade,
+					sessConfig->combatTextTimeout));
 				m_combatTextList.last()->setFrame(target->frame());
 			}
 
@@ -1488,10 +1529,10 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 	}
 
 	// Create the bullet
-	if (experimentConfig.weapon.renderBullets) {
+	if (sessConfig->weapon.renderBullets) {
 		// Create the bullet start frame from the weapon frame plus muzzle offset
 		CFrame bulletStartFrame = m_weaponFrame;
-		bulletStartFrame.translation += experimentConfig.weapon.muzzleOffset;
+		bulletStartFrame.translation += sessConfig->weapon.muzzleOffset;
 
 		// Angle the bullet start frame towards the aim point
 		bulletStartFrame.lookAt(aimPoint);
@@ -1514,15 +1555,15 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 
     // play sounds
     if (destroyedTarget) {
-		m_explosionSound->play(experimentConfig.explosionSoundVol);
+		m_explosionSound->play(sessConfig->explosionSoundVol);
 		//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
 	}
-	else if(experimentConfig.weapon.firePeriod > 0.0f || !experimentConfig.weapon.autoFire) {
-		m_fireSound->play(experimentConfig.weapon.fireSoundVol);
+	else if(sessConfig->weapon.firePeriod > 0.0f || !sessConfig->weapon.autoFire) {
+		m_fireSound->play(sessConfig->weapon.fireSoundVol);
 		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
 	}
 
-	if (experimentConfig.weapon.renderDecals && experimentConfig.weapon.firePeriod > 0.0f && !hitTarget) {
+	if (sessConfig->weapon.renderDecals && sessConfig->weapon.firePeriod > 0.0f && !hitTarget) {
 		// compute world intersection
 		const Ray& ray = activeCamera()->frame().lookRay();
 		float hitDist = finf();
@@ -1580,8 +1621,8 @@ void App::onUserInput(UserInput* ui) {
 			// Copied from old FPM code
 			double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
 			mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
-			const float walkSpeed = experimentConfig.moveRate * units::meters() / units::seconds();
-			static const Vector3 jumpVelocity(0, experimentConfig.jumpVelocity * units::meters() / units::seconds(), 0);
+			const float walkSpeed = sessConfig->moveRate * units::meters() / units::seconds();
+			static const Vector3 jumpVelocity(0, sessConfig->jumpVelocity * units::meters() / units::seconds(), 0);
 
 			// Get walking speed here (and normalize if necessary)
 			Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
@@ -1590,9 +1631,9 @@ void App::onUserInput(UserInput* ui) {
 			}
 			// Add jump here (if needed)
 			RealTime timeSinceLastJump = System::time() - m_lastJumpTime;
-			if (ui->keyPressed(GKey::SPACE) && timeSinceLastJump > experimentConfig.jumpInterval) {
+			if (ui->keyPressed(GKey::SPACE) && timeSinceLastJump > sessConfig->jumpInterval) {
 				// Allow jumping if jumpTouch = False or if jumpTouch = True and the player is in contact w/ the map
-				if (!experimentConfig.jumpTouch || player->inContact()) {
+				if (!sessConfig->jumpTouch || player->inContact()) {
 					linear += jumpVelocity;
 					m_lastJumpTime = System::time();
 				}
@@ -1616,7 +1657,7 @@ void App::onUserInput(UserInput* ui) {
 	// Require release between clicks for non-autoFire modes
 	if (ui->keyReleased(GKey::LEFT_MOUSE)) {
 		m_buttonUp = true;
-		if (!experimentConfig.weapon.autoFire) {
+		if (!sessConfig->weapon.autoFire) {
 			haveReleased = true;
 			fired = false;
 		}
@@ -1624,7 +1665,7 @@ void App::onUserInput(UserInput* ui) {
 
 	// Handle the mouse down events
 	if (ui->keyDown(GKey::LEFT_MOUSE)) {
-		if (experimentConfig.weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
+		if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
 			// check for hit, add graphics, update target state
 			if (sess->presentationState == PresentationState::task) {
 				if (sess->responseReady()) {
@@ -1712,7 +1753,7 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 
 	m_scene->poseExceptExcluded(surface, "player");
 
-	if (experimentConfig.weapon.renderModel) {
+	if (sessConfig->weapon.renderModel) {
 		const float yScale = -0.12f;
 		const float zScale = -yScale * 0.5f;
 		const float lookY = activeCamera()->frame().lookVector().y;
