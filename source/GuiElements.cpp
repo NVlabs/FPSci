@@ -154,17 +154,17 @@ PlayerControls::PlayerControls(App *app, const shared_ptr<GuiTheme>& theme, floa
 	pane->beginRow(); {
 		auto  c = pane->addNumberBox("Player Height", &m_app->experimentConfig.playerHeight, "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f);
 		c->setCaptionWidth(width / 2);
-		c->setWidth(width*0.95);
+		c->setWidth(width*0.95f);
 	} pane->endRow();
 	pane->beginRow(); {
 		auto c = pane->addNumberBox("Player Crouch Height", &m_app->experimentConfig.crouchHeight, "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f);
 		c->setCaptionWidth(width / 2);
-		c->setWidth(width*0.95);
+		c->setWidth(width*0.95f);
 	} pane->endRow();
 	pane->beginRow(); {
 		auto c = pane->addNumberBox("Move Rate", &m_app->experimentConfig.moveRate, "m/s", GuiTheme::LINEAR_SLIDER, 0.0f, 30.0f);
 		c->setCaptionWidth(width / 2);
-		c->setWidth(width*0.95);
+		c->setWidth(width*0.95f);
 	}pane->endRow();
 	pane->beginRow(); {
 		pane->addButton("Set Start Position", m_app, &App::exportScene);
@@ -207,19 +207,19 @@ RenderControls::RenderControls(App* app, const shared_ptr<GuiTheme>& theme, floa
 				// Only set when there is a change, otherwise the simulation's deltas are confused.
 				m_app->setFrameDuration(f, GApp::REAL_TIME);
 			}}), "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f);
-		c->setWidth(width*0.95);
+		c->setWidth(width*0.95f);
 	} pane->endRow();
 	pane->beginRow(); {
 		auto  c = pane->addNumberBox("Display Lag", &m_app->displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60);
-		c->setWidth(width*0.95);
+		c->setWidth(width*0.95f);
 	}pane->endRow();
 	pane->beginRow(); {
 		auto c = pane->addNumberBox("Reticle", &m_app->reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, m_app->numReticles, 1);
-		c->setWidth(width*0.95);
+		c->setWidth(width*0.95f);
 	}
 	pane->beginRow();{
 		auto c = pane->addNumberBox("Brightness", &m_app->sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f);
-		c->setWidth(width*0.95);
+		c->setWidth(width*0.95f);
 	} pane->endRow();
 
 	pack();

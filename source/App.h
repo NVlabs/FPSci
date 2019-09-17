@@ -150,7 +150,7 @@ protected:
 	const float m_waypointConnectRad = 0.02f;						///< Waypoint connecting rod radius
 
 	Vector3	 m_waypointMoveMask = Vector3::zero();					///< Mask for moving waypoints
-	Vector3  m_waypointMoveRate = Vector3(0.01, 0.01, 0.01);		///< Movement rate (m/s) for targets
+	Vector3  m_waypointMoveRate = Vector3(0.01f, 0.01f, 0.01f);		///< Movement rate (m/s) for targets
 
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	//Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models

@@ -515,7 +515,7 @@ float Session::getProgress() {
 }
 
 int Session::getScore() {
-	return 10 * m_totalRemainingTime;
+	return (int)(10.0 * m_totalRemainingTime);
 }
 
 String Session::getFeedbackMessage() {
