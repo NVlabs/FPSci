@@ -49,3 +49,4 @@ A quick guide is provided below to this repository structure:
 * [`data-files`](./data-files) holds scene and model files as well as the `.Any` files to configure the experiment
 * [`documentation`](./documentation) contains documentation to aid experiment designers
 * [`scripts`](./scripts) contains some useful scripts for developers including some basic data analysis
+* `results` is created when executing `FirstPersonScience` and holds the results `.db` files from each experiment
