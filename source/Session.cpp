@@ -132,7 +132,8 @@ void Session::onInit(String filename, String userName, String description) {
 	m_logger = Logger::create();
 	m_logger->createResultsFile(filename, userName, description);
 
-	if (m_session != nullptr) {
+	m_hasSession = m_session != nullptr;
+	if (m_hasSession) {
 		initPsychHelper(m_session->id);
 	}
 	else {												// Initialize PsychHelper based on the configuration.
