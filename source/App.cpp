@@ -944,6 +944,11 @@ void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	}
 	// Set the active camera to the player
 	setActiveCamera(m_scene->typedEntity<Camera>("camera"));
+    // make sure the scene has a "player" entity
+    if (isNull(m_scene->typedEntity<PlayerEntity>("player"))) {
+        shared_ptr<Entity> newPlayer = PlayerEntity::create("player", &(*scene()), CFrame::fromXYZYPRDegrees(0.0f, 0.0f, 0.0f), nullptr);
+        m_scene->insert(newPlayer);
+    }
 	// For now make the player invisible (prevent issues w/ seeing model from inside)
 	m_scene->typedEntity<PlayerEntity>("player")->setVisible(false);
 	m_scene->setGravity(grav);
