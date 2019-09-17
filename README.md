@@ -49,6 +49,3 @@ A quick guide is provided below to this repository structure:
 * [`data-files`](./data-files) holds scene and model files as well as the `.Any` files to configure the experiment
 * [`documentation`](./documentation) contains documentation to aid experiment designers
 * [`scripts`](./scripts) contains some useful scripts for developers including some basic data analysis
-
-## Progress tracking document (Nvidia employees only - maybe deprecated)
-https://docs.google.com/spreadsheets/d/1rxkRC-GVi-nCIIElz8XpO-7lhCwv9De2x2wF_ZM9Vnk/edit?usp=sharing
