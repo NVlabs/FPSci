@@ -51,54 +51,12 @@ public:
 	};
 };
 
-/** A class representing a psychophysical experiment
-*/
-class PsychHelper
-{
-public:
-	PsychHelper() {
-		srand((unsigned int)time(NULL));
-	}
-
-	/////////////////////////// initialization ///////////////////////////
-	// Add all the conditions you want.
-	//////////////////////////////////////////////////////////////////////
-
-	/** Add condition
-		\param[in] newConditionParam New condition
-		\param[in] newExpParam New experiment design parameter */
-	void addCondition(Array<Param> newConditionParams, PsychophysicsDesignParameter newExpParam);
-	/** Pick next condition*/
-	void chooseNextCondition();
-	/** Get current condtion parameter*/
-	Array<Param> getParams();
-	/** Get stimulus level for current trial*/
-	float getStimLevel();
-	/** Process user response and record it in the result file.
-		\param[in] response Integer indicating user response */
-	void processResponse(int32_t response);
-	/** Check whether experiment is complete*/
-	bool isComplete();
-	/** Reset the experiment state*/
-	//void clear();
-	Array<SingleThresholdMeasurement> mMeasurements;
-	int32_t mCurrentConditionIndex = 0;
-	int32_t mTrialCount = 0;
-	/** Description of an experiment: Any information that could be useful
-		in future, in case an experiment grows while piloting or when
-		between-experiment analysis becomes necessary later.
-	*/
-	Param mExpDesc;
-
-private:
-};
-
 class Session : public ReferenceCountedObject {
 //class Experiment {
 protected:
 	App* m_app;											///< Pointer to the app
 	ExperimentConfig m_config;							///< This experiment's configuration
-	PsychHelper m_psych;								///< Psych helper for the experiment
+	//PsychHelper m_psych;								///< Psych helper for the experiment
 	shared_ptr<SessionConfig> m_session = nullptr;		///< The session this experiment will run
 	shared_ptr<Logger> m_logger = nullptr;				///< Output results logger
 
@@ -107,6 +65,11 @@ protected:
 	int m_clickCount = 0;								///< Count of total clicks in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
 	String m_feedbackMessage;							///< Message to show when trial complete
+
+
+	int m_currTrialIdx;									///< Current trial
+	Array<int> m_remaining;								///< Completed flags
+	Array<Array<Param>> m_trialParams;					///< Trial (target) parameters
 
 	// Time-based parameters
 	double m_taskExecutionTime;							///< Task completion time for the most recent trial
@@ -144,7 +107,7 @@ public:
 	}
 	static shared_ptr<Session> create_empty(App* app) {
 		shared_ptr<Session> texp = create(app);
-		texp->m_psych.mMeasurements = Array<SingleThresholdMeasurement>();
+		//texp->m_psych.mMeasurements = Array<SingleThresholdMeasurement>();
 	}
 	void randomizePosition(shared_ptr<TargetEntity> target);
 	/** creates a new target with randomized motion path and gives it to the app */
@@ -152,6 +115,10 @@ public:
 	/** gets the current weapon cooldown as a ratio **/
 	double weaponCooldownPercent();
 	int remainingAmmo();
+
+	void addTrial(Array<Param> params);
+	bool isComplete();
+	void nextCondition();
 
 	/** randomly returns either +1 or -1 **/
 	float randSign();
@@ -172,7 +139,7 @@ public:
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */
 	void accumulatePlayerAction(String action, String target="");
 	bool responseReady();
-	bool initPsychHelper(String id);
+	bool setupTrialParams(Array<Array<Param>> params);
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState presentationState;			///< Current presentation state
 

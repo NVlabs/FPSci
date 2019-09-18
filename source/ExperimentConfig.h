@@ -1031,6 +1031,7 @@ public:
 				p.add("trial_idx", (float)j);
 				p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
 				p.add("id", id.c_str());
+				p.add("sessionID", sessions[sessionIndex].id.c_str());
 				p.add("destCount", (float)target->destinations.size());
 				p.add("destSpace", target->destSpace.c_str());
 				p.add("respawns", (float)target->respawnCount);

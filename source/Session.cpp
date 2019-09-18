@@ -28,95 +28,44 @@
 #include "Session.h"
 #include "App.h"
 
-void PsychHelper::addCondition(Array<Param> newConditionParams, PsychophysicsDesignParameter newPsychParam)
-{
-	SingleThresholdMeasurement m(newConditionParams, newPsychParam);
-	mMeasurements.push_back(m);
+void Session::addTrial(Array<Param> params) {
+	m_remaining.append(params[0].val["trialCount"]);
+	m_trialParams.append(params);
 }
 
-void PsychHelper::chooseNextCondition()
-{
-	// Choose any staircase whose progress ratio is minimum
-	float minimumProgressRatio = 1;
-	// Find minimum progress ratio
-	for (int32_t i = 0; i < (int32_t)mMeasurements.size(); i++)
-	{
-		if (mMeasurements[i].getProgressRatio() < minimumProgressRatio)
-		{
-			minimumProgressRatio = mMeasurements[i].getProgressRatio();
+void Session::nextCondition() {
+	Array<int> unrunTrialIdxs;
+	for (int i = 0; i < m_remaining.size(); i++) {
+		if (m_remaining[i] > 0) {
+			unrunTrialIdxs.append(i);
 		}
 	}
-	// Make a vector with all the measurement cells with minimum progress ratio
-	std::vector<int32_t> validIndex;
-	for (int32_t i = 0; i < (int32_t)mMeasurements.size(); i++)
-	{
-		if (mMeasurements[i].getProgressRatio() == minimumProgressRatio)
-		{
-			validIndex.push_back(i);
-		}
+	m_currTrialIdx = unrunTrialIdxs[rand() % unrunTrialIdxs.size()];
+}
+
+bool Session::isComplete() {
+	bool allTrialsComplete = true;
+	for (int remaining : m_remaining) {
+		allTrialsComplete &= (remaining == 0);
 	}
-	// Now choose any one from validIndex
-	mCurrentConditionIndex = validIndex[rand() % (int32_t)validIndex.size()];
-	std::cout << "Next chosen staircase is: " << mCurrentConditionIndex << '\n';
+	return allTrialsComplete;
 }
 
-Array<Param> PsychHelper::getParams()
+bool Session::setupTrialParams(Array<Array<Param>> params)
 {
-	return mMeasurements[mCurrentConditionIndex].TargetParameters;
-}
-
-float PsychHelper::getStimLevel()
-{
-	return mMeasurements[mCurrentConditionIndex].getCurrentLevel();
-}
-
-void PsychHelper::processResponse(int32_t response)
-{
-	// Process the response.
-	mMeasurements[mCurrentConditionIndex].processResponse(response);
-	mTrialCount++;
-}
-
-bool PsychHelper::isComplete() // did the experiment end?
-{
-	bool allMeasurementComplete = true;
-	for (int32_t i = 0; i < (int32_t)mMeasurements.size(); i++)
-	{
-		if (!mMeasurements[i].isComplete()) // if any one staircase is incomplete, set allSCCompleted to false and break.
-		{
-			allMeasurementComplete = false;
-			break;
-		}
-	}
-	return allMeasurementComplete;
-}
-
-bool Session::initPsychHelper(String id)
-{
-	// Iterate over the sessions here and add a config for each
-	Array<Array<Param>> params = m_config.getExpConditions(id);
 	for (Array<Param> targets : params) {
-		// Define properties of psychophysical methods
-		PsychophysicsDesignParameter psychParam;
-		psychParam.mMeasuringMethod = PsychophysicsMethod::MethodOfConstantStimuli;
-		// Can we remove this?
-		psychParam.mIsDefault = false;
-		// We need something in mStimLevels to run psychphysics...
-		psychParam.mStimLevels.push_back(m_config.taskDuration);						// Shorter task is more difficult. However, we are currently doing unlimited time.
-		psychParam.mMaxTrialCounts.push_back((int)targets[0].val["trialCount"]);		// Get the trial count from the parameters
 		for (int i = 0; i < targets.size(); i++) {										// Add the session to each target
-			const char* sess = id.c_str();
+			std::string sess = targets[i].str["sessionID"];
 			targets[i].add("name", format("%s_%d_%s_%d", sess, (int)targets[i].val["trial_idx"], targets[i].str["id"], i).c_str());
-			targets[i].add("session", sess);
 		}
-		m_psych.addCondition(targets, psychParam);
+		addTrial(targets);
 	}
 
 	// Update the logger w/ these conditions (IS THIS THE RIGHT PLACE TO DO THIS???)
-	m_logger->addTargets(m_psych.mMeasurements);
+	m_logger->addTargets(m_trialParams);
 
-	// call it once all conditions are defined.
-	m_psych.chooseNextCondition();
+	// Select the first condition
+	nextCondition();
 	return true;
 }
 
@@ -134,7 +83,9 @@ void Session::onInit(String filename, String userName, String description) {
 
 	m_hasSession = m_session != nullptr;
 	if (m_hasSession) {
-		initPsychHelper(m_session->id);
+		// Iterate over the sessions here and add a config for each
+		Array<Array<Param>> params = m_config.getExpConditions(m_session->id);
+		setupTrialParams(params);
 	}
 	else {												// Initialize PsychHelper based on the configuration.
 		presentationState = PresentationState::feedback;
@@ -153,7 +104,7 @@ float Session::randSign() {
 void Session::randomizePosition(shared_ptr<TargetEntity> target) {
 	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
 
-	Param tParam = m_psych.getParams()[target->paramIdx()];
+	Param tParam = m_trialParams[m_currTrialIdx][target->paramIdx()];
 	bool isWorldSpace = tParam.str["destSpace"] == "world";
 	Point3 loc;
 
@@ -178,8 +129,8 @@ void Session::initTargetAnimation() {
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (presentationState == PresentationState::task) {
-		for (int i = 0; i < m_psych.getParams().size(); i++) {
-			Param target = m_psych.getParams()[i];
+		for (int i = 0; i < m_trialParams[m_currTrialIdx].size(); i++) {
+			Param target = m_trialParams[m_currTrialIdx][i];
 			float rot_pitch = randSign() * Random::common().uniform(target.val["minEccV"], target.val["maxEccV"]);
 			float rot_yaw = randSign() * Random::common().uniform(target.val["minEccH"], target.val["maxEccH"]);
 			float visualSize = G3D::Random().common().uniform(target.val["minVisualSize"], target.val["maxVisualSize"]);
@@ -273,11 +224,24 @@ void Session::initTargetAnimation() {
 void Session::processResponse()
 {
 	m_taskExecutionTime = m_timer.getTime();
-	int totalTargets = m_psych.mMeasurements[m_psych.mCurrentConditionIndex].totalTargetCount();
+	// Get total target count here
+	int totalTargets = 0;
+	for (Param t : m_trialParams[m_currTrialIdx]) {
+		if (t.val["respawns"] == -1) {
+			totalTargets = MAXINT;		// Ininite spawn case
+			break;
+		}
+		else {
+			totalTargets += (int)t.val["respawns"];
+		}
+	}		
 	m_response = totalTargets - m_app->destroyedTargets; // Number of targets remaining
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
-	m_psych.processResponse(m_response); // process response.
-	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters[0].str["session"]);
+	
+	m_remaining[m_currTrialIdx] -= 1;
+
+	String sess = String(m_trialParams[m_currTrialIdx][0].str["sessionID"]);
+
 	// Check for whether all targets have been destroyed
 	if (m_response == 0) {
 		m_totalRemainingTime += (double(m_config.taskDuration) - m_taskExecutionTime);
@@ -332,18 +296,18 @@ void Session::updatePresentationState()
 	{
 		if ((stateElapsedTime > m_config.feedbackDuration) && (remainingTargets <= 0))
 		{
-			if (m_psych.isComplete()) {
-				m_logger->closeResultsFile();													// Close the current results file
-				m_app->markSessComplete(String(m_psych.getParams()[0].str["session"]));			// Add this session to user's completed sessions
+			if (isComplete()) {
+				m_logger->closeResultsFile();																// Close the current results file
+				m_app->markSessComplete(String(m_trialParams[m_currTrialIdx][0].str["sessionID"]));			// Add this session to user's completed sessions
 				m_app->updateSessionDropDown();
 
 				int score = int(m_totalRemainingTime);
-				m_feedbackMessage = format("Session complete! You scored %d!", score); // Update the feedback message
+				m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
 				newState = PresentationState::scoreboard;
 			}
 			else {
 				m_feedbackMessage = "";
-				m_psych.chooseNextCondition();
+				nextCondition();
 				newState = PresentationState::ready;
 			}
 		}
@@ -401,11 +365,12 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 
 void Session::recordTrialResponse()
 {
-	String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters[0].str["session"]);
+	//String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters[0].str["session"]);
+	String sess = String(m_trialParams[m_currTrialIdx][0].str["sessionID"]);
 
 	// Trials table. Record trial start time, end time, and task completion time.
 	Array<String> trialValues = {
-		String(std::to_string(m_psych.mCurrentConditionIndex)),
+		String(std::to_string(m_currTrialIdx)),
 		"'" + sess + "'",
 		"'" + m_config.getSessionConfigById(sess)->sessDescription + "'",
 		"'" + m_taskStartTime + "'",
@@ -510,7 +475,11 @@ float Session::getRemainingTrialTime() {
 
 float Session::getProgress() {
 	if (m_session != nullptr) {
-		return m_psych.mTrialCount / (float)m_session->getTotalTrials();
+		int completed = 0;
+		for (bool c : m_remaining) {
+			if (c) completed++;
+		}
+		return completed / (float)m_session->getTotalTrials();
 	}
 	return fnan();
 }
