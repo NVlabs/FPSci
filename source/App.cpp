@@ -2093,7 +2093,7 @@ int main(int argc, const char* argv[]) {
 
     // V-sync off always
 	settings.window.asynchronous = true;
-	settings.window.caption = "NVIDIA Abstract FPS";
+	settings.window.caption = "First Person Science";
 	settings.window.refreshRate = -1;
 	settings.window.defaultIconFilename = "icon.png";
 
