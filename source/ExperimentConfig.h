@@ -1,7 +1,7 @@
 #pragma once
 
 #include <G3D/G3D.h>
-#include "SingleThresholdMeasurement.h"
+#include "Param.h"
 
 /** Configure how the application should start */
 class StartupConfig {

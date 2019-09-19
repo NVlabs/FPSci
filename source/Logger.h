@@ -1,7 +1,7 @@
 #pragma once
 #include <G3D/G3D.h>
 #include <ctime>
-#include "SingleThresholdMeasurement.h"
+#include "Param.h"
 #include "sqlHelpers.h"
 
 /** Simple class to log data from trials */

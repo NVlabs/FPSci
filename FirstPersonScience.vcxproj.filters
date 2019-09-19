@@ -33,9 +33,6 @@
     <ClInclude Include="source\TargetEntity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\SingleThresholdMeasurement.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="source\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -54,6 +51,9 @@
     <ClInclude Include="source\Session.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="source\Param.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp">
@@ -63,9 +63,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\TargetEntity.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\SingleThresholdMeasurement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\Logger.cpp">
