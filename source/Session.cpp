@@ -365,7 +365,6 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 
 void Session::recordTrialResponse()
 {
-	//String sess = String(m_psych.mMeasurements[m_psych.mCurrentConditionIndex].TargetParameters[0].str["session"]);
 	String sess = String(m_trialParams[m_currTrialIdx][0].str["sessionID"]);
 
 	// Trials table. Record trial start time, end time, and task completion time.
