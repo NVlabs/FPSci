@@ -83,9 +83,19 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.get("HasLogger", hasLogger);
+			try {
+				reader.get("HasLogger", hasLogger);
+			}
+			catch (Any::KeyNotFound e) {
+				throw "System config must specify the \"HasLogger\" flag!";
+			}
 			reader.getIfPresent("LoggerComPort", loggerComPort);
-			reader.get("HasSync", hasSync);
+			try {
+				reader.get("HasSync", hasSync);
+			}
+			catch (Any::KeyNotFound e) {
+				throw "System config must specify the \"HasSync\" flag!";
+			}
 			reader.getIfPresent("SyncComPort", syncComPort);
 			break;
 		default:
@@ -257,7 +267,12 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("currentUser", currentUser);
-			reader.get("users", users);
+			try {
+				reader.get("users", users);
+			}
+			catch (Any::KeyNotFound e){
+				throw "The \"users\" array must be specified in the user configuration file!";
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in UserTable.\n", settingsVersion);
@@ -343,7 +358,12 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.get("id", id);
+			try {
+				reader.get("id", id);
+			}
+			catch (Any::KeyNotFound e) {
+				throw "All user status fields must include the user ID!";
+			}
 			reader.getIfPresent("sessions", sessionOrder);
 			reader.getIfPresent("completedSessions", completedSessions);
 			break;
@@ -378,7 +398,12 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.get("users", userInfo);
+			try {
+				reader.get("users", userInfo);
+			}
+			catch (Any::KeyNotFound e) {
+				throw "The \"users\" array must be present in the user status file!";
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in UserStatus.\n", settingsVersion);
@@ -563,7 +588,12 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.get("id", id);
+			try {
+				reader.get("id", id);
+			}
+			catch (Any::KeyNotFound e) {
+				throw "An \"id\" field must be provided for every target config!";
+			}
 			reader.getIfPresent("elevationLocked", elevLocked);
 			reader.getIfPresent("distance", distance);
 			reader.getIfPresent("motionChangePeriod", motionChangePeriod);
@@ -580,7 +610,12 @@ public:
 			reader.getIfPresent("destinations", destinations);
 			reader.getIfPresent("respawnCount", respawnCount);
 			if (destSpace == "world" && destinations.size() == 0) {
-				reader.get("bounds", bbox);
+				try {
+					reader.get("bounds", bbox);
+				}
+				catch(Any::KeyNotFound e) {
+					throw format("A world-space target must either specify destinations or a bounding box. See target: \"%s\"", id);
+				}
 			}
 			else {
 				reader.getIfPresent("bounds", bbox);
@@ -638,8 +673,18 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.get("ids", ids);
-			reader.get("count", count);
+			try {
+				reader.get("ids", ids);
+			}
+			catch (Any::KeyNotFound e) {
+				throw "An \"ids\" field must be provided for each set of trials!";
+			}
+			try {
+				reader.get("count", count);
+			}
+			catch (Any::KeyNotFound e) {
+				throw "A \"count\" field must be provided for each set of trials!";
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -650,6 +695,7 @@ public:
 
 class FpsConfig {
 public:
+	int	settingsVersion = 1;					///< Settings version
 	String sceneName = "FPSci Simple Hallway";	///< Scene name
 
 	// Rendering parameters
@@ -746,41 +792,15 @@ public:
 	Point3 combatTextVelocity = Point3(0.0, -100.0, 0.0);		///< Move rate/vector for combat text
 	float combatTextFade = 0.98f;								///< Fade rate for combat text (0 implies don't fade)	
 	float combatTextTimeout = 0.5f;								///< Time for combat text to disappear (in seconds)
-};
 
-/** Configuration for a session worth of trials */
-class SessionConfig : public FpsConfig {
-public:
-	String id;									///< Session ID
-	String  sessDescription = "training";		///< String indicating whether session is training or real
-	Array<TrialCount> trials;					///< Array of trials (and their counts) to be performed
-	static shared_ptr<FpsConfig> defaultConfig;
-
-	SessionConfig() {
-		frameRate = 240.0f;
-		frameDelay = 0;
-	};
-
-	/** Load from Any */
-	SessionConfig(const Any& any) {
-		int settingsVersion = 1;
+	void load(const Any& any) {
 		AnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
-
-		// Load the defaults from the experiment
-		*(FpsConfig*)this = *defaultConfig;
-
 		switch (settingsVersion) {
 		case 1:
-			// Unique session info
-			reader.getIfPresent("id", id);
-			reader.getIfPresent("description", sessDescription);
-			reader.get("trials", trials);
-
-			// Generic info
+			reader.getIfPresent("sceneName", sceneName);
 			reader.getIfPresent("frameRate", frameRate);
 			reader.getIfPresent("frameDelay", frameDelay);
-			reader.getIfPresent("sceneName", sceneName);
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
@@ -840,6 +860,53 @@ public:
 			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
 			break;
 		default:
+			debugPrintf("Settings version '%d' not recognized in FpsConfig.\n", settingsVersion);
+			break;
+		}
+	}
+	
+	FpsConfig(const Any& any) {
+		load(any);
+	}
+
+	FpsConfig(const Any& any, shared_ptr<FpsConfig> defaultConfig) {
+		*this = *defaultConfig;
+		load(any);
+	}
+
+	FpsConfig() {}
+};
+
+/** Configuration for a session worth of trials */
+class SessionConfig : public FpsConfig {
+public:
+	String id;									///< Session ID
+	String  sessDescription = "training";		///< String indicating whether session is training or real
+	Array<TrialCount> trials;					///< Array of trials (and their counts) to be performed
+	static shared_ptr<FpsConfig> defaultConfig;
+
+	SessionConfig() {
+		frameRate = 240.0f;
+		frameDelay = 0;
+	};
+
+	/** Load from Any */
+	SessionConfig(const Any& any) : FpsConfig(any, defaultConfig) {
+		AnyTableReader reader(any);
+		switch (settingsVersion) {
+		case 1:
+			// Unique session info
+			reader.getIfPresent("id", id);
+			reader.getIfPresent("description", sessDescription);
+			try {
+				reader.get("trials", trials);
+			}
+			catch (Any::KeyNotFound e) {
+				throw format("A \"trials\" array must be specified with each session! See session: \"%s\"", id);
+			}
+
+			break;
+		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
 			break;
 		}
@@ -869,84 +936,29 @@ public:
 	ExperimentConfig() {}
 	
 	/** Load from Any */
-	ExperimentConfig(const Any& any) {
-		int settingsVersion = 1; // used to allow different version numbers to be loaded differently
+	ExperimentConfig(const Any& any) : FpsConfig(any) {
 		AnyTableReader reader(any);
-		reader.getIfPresent("settingsVersion", settingsVersion);
-
 		switch (settingsVersion) {
 		case 1:
 			// Experiment-specific info
-			reader.get("targets", targets);
+			try {
+				reader.get("targets", targets);
+			}
+			catch (Any::KeyNotFound e) {
+				throw "At least one target must be specified for the experiment!";
+			}
 			reader.getIfPresent("description", expDescription);
 			reader.getIfPresent("dummyTargetSize", dummyTargetSize);
 			reader.getIfPresent("dummyTargetColor", dummyTargetColor);
-			
-			// Generic info
-			reader.getIfPresent("sceneName", sceneName);
-			reader.getIfPresent("frameRate", frameRate);
-			reader.getIfPresent("frameDelay", frameDelay);
-			reader.getIfPresent("feedbackDuration", feedbackDuration);
-			reader.getIfPresent("readyDuration", readyDuration);
-			reader.getIfPresent("taskDuration", taskDuration);
-			reader.getIfPresent("horizontalFieldOfView", hFoV);
-			reader.getIfPresent("moveRate", moveRate);
-			reader.getIfPresent("playerHeight", playerHeight);
-			reader.getIfPresent("crouchHeight", crouchHeight);
-			reader.getIfPresent("jumpVelocity", jumpVelocity);
-			reader.getIfPresent("jumpInterval", jumpInterval);
-			reader.getIfPresent("jumpTouch", jumpTouch);
-			reader.getIfPresent("playerGravity", playerGravity);
-			reader.getIfPresent("weapon", weapon);
-			reader.getIfPresent("renderClickPhoton", renderClickPhoton);
-            reader.getIfPresent("clickPhotonSide", clickPhotonSide);
-			reader.getIfPresent("clickPhotonSize", clickPhotonSize);
-			reader.getIfPresent("clickPhotonVertPos", clickPhotonVertPos);
-			reader.getIfPresent("clickPhotonColors", clickPhotonColors);
-			reader.getIfPresent("shader", shader);
-			reader.getIfPresent("showHUD", showHUD);
-			reader.getIfPresent("showBanner", showBanner);
-			reader.getIfPresent("hudFont", hudFont);
-			reader.getIfPresent("showPlayerHealthBar", showPlayerHealthBar);
-			reader.getIfPresent("playerHealthBarSize", playerHealthBarSize);
-			reader.getIfPresent("playerHealthBarPosition", playerHealthBarPos);
-			reader.getIfPresent("playerHealthBarBorderSize", playerHealthBarBorderSize);
-			reader.getIfPresent("playerHealthBarBorderColor", playerHealthBarBorderColor);
-			reader.getIfPresent("playerHealthBarColors", playerHealthBarColors);
-			reader.getIfPresent("showAmmo", showAmmo);
-			reader.getIfPresent("ammoPosition", ammoPosition);
-			reader.getIfPresent("ammoSize", ammoSize);
-			reader.getIfPresent("ammoColor", ammoColor);
-			reader.getIfPresent("ammoOutlineColor", ammoOutlineColor);
-			reader.getIfPresent("renderWeaponStatus", renderWeaponStatus);
-			reader.getIfPresent("weaponStatusSide", weaponStatusSide);
-			reader.getIfPresent("cooldownMode", cooldownMode);
-			reader.getIfPresent("cooldownInnerRadius", cooldownInnerRadius);
-			reader.getIfPresent("cooldownThickness", cooldownThickness);
-			reader.getIfPresent("cooldownSubdivisions", cooldownSubdivisions);
-			reader.getIfPresent("cooldownColor", cooldownColor);
-			reader.getIfPresent("explosionSound", explosionSound);
-			reader.getIfPresent("explosionSoundVol", explosionSoundVol);
-			reader.getIfPresent("showTargetHealthBars", showTargetHealthBars);
-			reader.getIfPresent("targetHealthBarSize", targetHealthBarSize);
-			reader.getIfPresent("targetHealthBarOffset", targetHealthBarOffset);
-			reader.getIfPresent("targetHealthBarBorderSize", targetHealthBarBorderSize);
-			reader.getIfPresent("targetHealthBarBorderColor", targetHealthBarBorderColor);
-			reader.getIfPresent("targetHealthColors", targetHealthColors);
-			reader.getIfPresent("targetHealthBarColors", targetHealthBarColors);
-			reader.getIfPresent("showFloatingCombatText", showCombatText);
-			reader.getIfPresent("floatingCombatTextSize", combatTextSize);
-			reader.getIfPresent("floatingCombatTextFont", combatTextFont);
-			reader.getIfPresent("floatingCombatTextColor", combatTextColor);
-			reader.getIfPresent("floatingCombatTextOutlineColor", combatTextOutline);
-			reader.getIfPresent("floatingCombatTextOffset", combatTextOffset);
-			reader.getIfPresent("floatingCombatTextVelocity", combatTextVelocity);
-			reader.getIfPresent("floatingCombatTextFade", combatTextFade);
-			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
 
 			// Get the sessions
 			SessionConfig::defaultConfig = (shared_ptr<FpsConfig>)(this);
-			reader.get("sessions", sessions);
+			try {
+				reader.get("sessions", sessions);
+			}
+			catch (Any::KeyNotFound e) {
+				throw "The \"sessions\" array must be provided as part of the experiment config!";
+			}
 
 			break;
 		default:
