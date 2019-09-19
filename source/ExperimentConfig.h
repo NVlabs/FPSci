@@ -547,7 +547,7 @@ public:
 					maxEdgeLength = inf;
 					maxNormalWeldAngleDegrees = 0;
 					maxSmoothAngleDegrees = 0;
-		};
+		    };
 		});
 
 	//Array<Vector3> path;		// Unused, to dictate a motion path...
@@ -650,7 +650,7 @@ public:
 
 class FpsConfig {
 public:
-	String sceneName = "eSports Simple Hallway";	///< Scene name
+	String sceneName = "FPSci Simple Hallway";	///< Scene name
 
 	// Rendering parameters
 	float	frameRate = 0.0f;						///< Target (goal) frame rate (in Hz)

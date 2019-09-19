@@ -6,7 +6,7 @@
 
   // General settings for the experiment
   "appendingDescription": "default", // Description of this file
-  "sceneName": "eSports Simple Hallway", // Maybe don't need this? Or maybe this ends up belonging to individual trials
+  "sceneName": "FPSci Simple Hallway", // Maybe don't need this? Or maybe this ends up belonging to individual trials
   "feedbackDuration": 0.0, // Time allocated for providing user feedback
   "readyDuration": 0.25, // Time allocated for preparing for trial
   "taskDuration": 6.0, // Maximum duration allowed for completion of the task
