@@ -774,12 +774,12 @@ public:
 		case 1:
 			// Unique session info
 			reader.getIfPresent("id", id);
-			reader.getIfPresent("frameRate", frameRate);
-			reader.getIfPresent("frameDelay", frameDelay);
 			reader.getIfPresent("description", sessDescription);
 			reader.get("trials", trials);
 
 			// Generic info
+			reader.getIfPresent("frameRate", frameRate);
+			reader.getIfPresent("frameDelay", frameDelay);
 			reader.getIfPresent("sceneName", sceneName);
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
