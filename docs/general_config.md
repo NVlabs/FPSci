@@ -1,14 +1,19 @@
 # General Configuration Parameters
 FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable parameters that can be set at either the "experiment" or "session" level. This document describes these parameters and gives examples of their usage.
 
-## Setting Version
-* `settingsVersion` refers to the version of the contents of this file, unless you are aware of changes that need to be made, don't change this number.
+## Settings Version
+| Parameter Name     |Units| Description                                                        |
+|--------------------|-----|--------------------------------------------------------------------|
+|`settingsVersion`   |N/A  |The version of the contents of this file, unless you are aware of changes that need to be made, don't change this number. |
 ```
 "settingsVersion": 1,     // Used for file parsing (do not change unless you are introducing a new any parser)
 ```
 
 ## Scene Control
-* `sceneName` provides the name of the (virtual) scene in which this experiment takes place
+| Parameter Name     |Units| Description                                                            |
+|--------------------|-----|------------------------------------------------------------------------|
+|`sceneName`         |name |The `name` of the (virtual) scene (not necessarily the filename!)       |
+
 ```
 "sceneName": "eSports Simple Hallway",              // Default scene
 ```
@@ -17,9 +22,12 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 * `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](../data-files/weapon/weaponConfigReadme.md))
 
 ## Duration Settings
-* `feedbackDuration` describes the duration of the feedback window between experiments
-* `readyDuration` sets the time before the start of each trial
-* `taskDuration` sets the maximum time over which the task can occur
+
+| Parameter Name     |Units| Description                                                        |
+|--------------------|-----|--------------------------------------------------------------------|
+|`feedbackDuration`  |s    |The duration of the feedback window between experiments             |
+|`readyDuration`     |s    |The time before the start of each trial                             |
+|`taskDuration`      |s    |The maximum time over which the task can occur                      |
 
 ```
 "feedbackDuration": 1.0,    // Time allocated for providing user feedback
@@ -27,10 +35,12 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 "taskDuration": 100000.0,   // Maximum duration allowed for completion of the task
 ```
 ## Rendering Settings
-* `horizontalFieldOfView` sets the (horizontal) field of view for the user's display (in degrees), to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)
-* `frameDelay` is an (integer) count of frames to delay to control latency
-* `frameRate` is the frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#Frame-Rate-Modes) below.
-* `shader` provides the (relative) path of an (optional) shader to run
+| Parameter Name            |Units  | Description                                                        |
+|---------------------------|-------|--------------------------------------------------------------------|
+|`horizontalFieldOfView`    |°      |The (horizontal) field of view for the user's display, to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)|
+|`frameDelay`               |frames | An (integer) count of frames to delay to control latency           |
+|`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#Frame-Rate-Modes) below.|
+|`shader`                   |file    | The (relative) path/filename of an (optional) shader to run (as a `.pix`) |
 
 ```
 "horizontalFieldOfView":  103.0,            // Field of view (horizontal) for the user in degrees
@@ -40,13 +50,15 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ```
 
 ## Player Controls
-* `moveRate` sets the rate of player motion in m/s, set this parameter to `0` to disable player motion
-* `playerHeight` sets the height of the player above the ground when "standing"
-* `crouchHeight` set the height of the player when crouched (set equal to `playerHeight` for no crouch)
-* `jumpVelocity` sets the magnitude of the upward impulse introduced by a jump (set to 0 for no jump)
-* `jumpInterval` sets the minimum time between player jumps in seconds (set to 0 for no limiting)
-* `jumpTouch` sets whether or not the player needs to be in contact w/ a surface to jump
-* `playerGravity` set the graivty vector that impacts the player
+| Parameter Name     |Units| Description                                                                        |
+|--------------------|-----|------------------------------------------------------------------------------------|
+|`moveRate`          |m/s  | The rate of player motion, set this parameter to `0` to disable player motion      |
+|`playerHeight`      |m    | The height of the player above the ground when "standing"                          |
+|`crouchHeight`      |m    | The height of the player when crouched (set equal to `playerHeight` for no crouch) |
+|`jumpVelocity`      |m/s  | The magnitude of the upward impulse introduced by a jump (set to 0 for no jump)    |
+|`jumpInterval`      |s    | The minimum time between player jumps in seconds (set to 0 for no limiting)        |
+|`jumpTouch`         |bool | Whether or not the player needs to be in contact w/ a surface to jump              |
+|`playerGravity`     |m/s^2| The graivty vector that impacts the player
 
 ```
 "moveRate": 0.0,                            // Player move rate (0 for no motion)
@@ -59,11 +71,13 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ```
 
 ## HUD settings
-* `showHUD` is the master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator)
-* `showBanner` controls whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score)
-* `bannerLargeFontSize` sets the "large" font for the percent complete in the banner
-* `bannerSmallFontSize` sets the "small" font for the time remaining and score
-* `hudFont` sets the font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/data-files/font`). We suggest using a fixed width font (such as `console.fnt`) for HUD elements
+| Parameter Name        |Units| Description                                                                        |
+|-----------------------|-----|------------------------------------------------------------------------------------|
+|`showHUD`              |bool | The master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator) |
+|`showBanner`           |bool | Whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score)     |
+|`bannerLargeFontSize`  |pt   | The "large" font for the percent complete in the banner
+|`bannerSmallFontSize`  |pt   | The "small" font for the time remaining and score
+|`hudFont`              |file | The font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/  data-files/font`). We suggest using a fixed width font (such as `console.fnt`) for HUD elements|
 
 ```
 "showHUD":  true,               // Show the player HUD (banner, ammo, health bar)
@@ -74,12 +88,14 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ```
 
 ### Player Health Bar
-* `showPlayerHealthBar` determines whether or not a player health bar is drawn to the HUD
-* `playerHealthBarSize` sets the size of the player health bar (in pixels)
-* `playerHealthBarPosition` sets the position of the player health bar (in pixels from the top right of the screen)
-* `playerHealthBarBorderSize` sets the width of the player health bar border
-* `playerHealthBarBorderColor` sets the `Color4` of the player health bar border
-* `playerHealthBarColors` sets the max/min health colors for the player health bar as an array of [`max color`, `min color`] as `Color4`. If you are using low alpha values with this field, make sure you consider the alpha value for `playerHealthBarBorderColor` as well.
+| Parameter Name                |Units          | Description                                                                        |
+|-------------------------------|---------------|------------------------------------------------------------------------------------|
+|`showPlayerHealthBar`          |bool           | Whether or not a player health bar is drawn to the HUD                             |
+|`playerHealthBarSize`          |`Point2`(px)   | The size of the player health bar                                                  |
+|`playerHealthBarPosition`      |`Point2`(px)   | The position of the player health bar (from the top right of the screen)           |
+|`playerHealthBarBorderSize`    |`Point2`(px)   | The width of the player health bar border                                          |
+|`playerHealthBarBorderColor`   |`Color4`       | The color of the player health bar border                                          |
+|`playerHealthBarColors`        |[`Color4`, `Color4`] | The max/min health colors for the player health bar as an array of [`max color`, `min color`]. If you are using low alpha values with this field, make sure you consider the alpha value for `playerHealthBarBorderColor` as well.|
 
 ```
 "showPlayerHealthBar":  true,                               // Show the player health bar (default is false)      
@@ -94,11 +110,13 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ```
 
 ### Ammo Indicator
-* `showAmmo` controls whether the ammo indicator is drawn in the HUD
-* `ammoPostion` controls the position of the ammo indicator as an offset from the bottom right of the display
-* `ammoSize` sets the font size for the ammo indicator
-* `ammoColor` sets the (foreground) color for the ammo indicator as a `Color4`. If applying low alpha values here, consider also applying these to `ammoOutlineColor` to create a true transparency to the text
-* `ammoOutlineColor` sets the outline color for the ammo indicator as a `Color4`
+| Parameter Name     |Units         | Description                                                                            |
+|--------------------|--------------|----------------------------------------------------------------------------------------|
+|`showAmmo`          |bool          | Whether the ammo indicator is drawn in the HUD                                         |
+|`ammoPostion`       |`Point2`(px)  | The position of the ammo indicator (as an offset from the bottom right of the display) |
+|`ammoSize`          |pt            | The font size for the ammo indicator                                                   |
+|`ammoColor`         |`Color4`      | The (foreground) color for the ammo indicator. If applying low alpha values here, consider also applying these to `ammoOutlineColor` to create a true transparency to the text. |
+|`ammoOutlineColor`  |`Color4`      | The outline color for the ammo indicator.                                              |
 
 ```
 "showAmmo":  true,                                  // Show the ammo indicator (default is false)
@@ -109,13 +127,15 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ```
 
 ### Weapon Cooldown
-* `renderWeaponStatus` controls whether or not the weapon cooldown is rendered on the left side of the screen
-* `cooldownMode` controls the type of display used for weapon cooldown ("ring" or "box")
-* `weaponStatusSide` controls which side of the display the weapon status is drawn on (can be `right` or `left`), this only applies in "box" mode
-* `cooldownInnerRadius` controls the inner radius of the cooldown ring in "ring" mode (in pixels)
-* `cooldownThickness` controls the thickness of the cooldown ring in "ring" mode (in pixels)
-* `cooldownSubdivisions` allows the user to set the number of subdivisions/faces in the draw ring
-* `cooldownColor` sets the (active) `Color4` of the ring segments, by default they are not drawn when inactive
+| Parameter Name        |Units| Description                                                                             |
+|-----------------------|-----|-----------------------------------------------------------------------------------------|
+|`renderWeaponStatus`   |bool | Whether or not the weapon cooldown is rendered                                          |
+|`cooldownMode`         |`"ring"` or `"box"` | The type of display used for weapon cooldown                             |
+|`weaponStatusSide`     |`"right"` or `"left"`| Which side of the display the weapon status is drawn on in "box" mode   |
+|`cooldownInnerRadius`  |px   | The inner radius of the cooldown ring in "ring" mode                                    |
+|`cooldownThickness`    |px   | The thickness of the cooldown ring in "ring" mode                                       |
+|`cooldownSubdivisions` |int  | The number of subdivisions/faces in the draw ring in "ring" mode                        |
+|`cooldownColor`        |`Color4`| The (active) `Color4` of the ring segments, by default they are not drawn when inactive|
 
 ```
 "renderWeaponStatus": true,                 // Show the cooldown indicator
@@ -128,11 +148,13 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ```
 
 ## Click to Photon Monitoring
-* `renderClickPhoton` controls whether or not the click-to-photon indicator box is drawn to the screen
-* `clickPhotonSide` controls which side of the display (`left` vs `right`) the click-to-photon indicator box is drawn on
-* `clickPhotonVertPos` controls the vertical position of the click-to-photon output box on the `clickPhotonSide` of the display
-* `clickPhotonSize` controls the size of the click-to-photon box as a ratio of total screen size
-* `clickPhotonColors` provides the mouse up/down colors for the click-to-photon indicator box as an array of `Color3`. The order is [mouse down color, mouse up color]
+| Parameter Name     |Units                 | Description                                                                        |
+|--------------------|----------------------|------------------------------------------------------------------------------------|
+|`renderClickPhoton` |bool                  | Whether or not the click-to-photon indicator box is drawn to the screen            |
+|`clickPhotonSide`   |`"right"` or `"left"` | Which side of the display (`left` vs `right`) the click-to-photon indicator box is drawn on |
+|`clickPhotonSize`   |`Point2`(ratio)       | The size of the click-to-photon box as a ratio of total screen size               |
+|`clickPhotonVertPos`|ratio                 | The vertical position of the click-to-photon output box on the `clickPhotonSide` of the display |
+|`clickPhotonColors` |[`Color3`, `Color3`]  | The mouse up/down colors for the click-to-photon indicator box, order is [mouse down color, mouse up color] |
 
 ```
 "renderClickPhoton": true,              // Draw the click to photon box
@@ -146,11 +168,13 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ```
 
 ## Target Rendering
-* `targetHealthColors` sets the max/min health colors for the target as an array of [`max color`, `min color`] as `Color3`s, if you do not want the target to change color as its health drops, set these values both to the same color
-* `dummyTargetColor` sets the color of the "dummy" targets spawned between trials
-* `dummyTargetSize` set the size of the "dummy" targets spawned between trials
-* `explosionSound` sets the sound to play when a target is destroyed
-* `explosionSoundVol` sets the volume of the explosion sound to play
+| Parameter Name        |Units                  | Description                                                                        |
+|-----------------------|-----------------------|------------------------------------------------------------------------------------|
+|`targetHealthColors`   |[`Color3`, `Color3`]   | The max/min health colors for the target as an array of [`max color`, `min color`], if you do not want the target to change color as its health drops, set these values both to the same color                                                  |
+|`dummyTargetColor`     |`Color3`               | The color of the "dummy" targets spawned between trials                            |
+|`dummyTargetSize`      |m                      | The size of the "dummy" targets spawned between trials                             |
+|`explosionSound`       |file                   | The sound to play when a target is destroyed                                       |
+|`explosionSoundVol`    |ratio                  | The volume of the explosion sound to play                                          |
 
 ```
 "targetHealthColors": [                     // Array of two colors to interpolate between for health
@@ -165,12 +189,14 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ```
 
 ### Target Health Bars
-* `showTargetHealthBars` determines whether or not target health bars are drawn for each target
-* `targetHealthBarSize` sets the size of the health bar (in pixels)
-* `targetHealthBarOffset` sets the offset of the health bar relative to the target (in pixels)
-* `targetHealthBarBorderSize` sets the size of the border around the target (see `targetHealthBarBorderColor` to set the color as well)
-* `targetHealthBarBorderColor` sets the `Color4` of the target health bar border (can set alpha = 0 for no border)
-* `targetHealthBarColors` sets the max/min health colors for the target health bar as an array of [`max color`, `min color`] as `Color4`. If you are using low alpha values with this field, make sure you also set a low alpha for `targetHealthBarBorderColor` as otherwise this will show through
+| Parameter Name                |Units          | Description                                                                           |
+|-------------------------------|---------------|---------------------------------------------------------------------------------------|
+|`showTargetHealthBars`         |bool           | Whether or not target health bars are drawn for each target                           |
+|`targetHealthBarSize`          |`Point2`(px)   | The size of the health bar                                                            |
+|`targetHealthBarOffset`        |`Point3`(px)   | The offset of the health bar relative to the target                                   |
+|`targetHealthBarBorderSize`    |`Point2`(px)   | The size of the border around the target (see `targetHealthBarBorderColor` to set the color as well) |
+|`targetHealthBarBorderColor`   |`Color4`       | The target health bar border (can set alpha = 0 for no border)                        |
+|`targetHealthBarColors`        |[`Color4`, `Color4`] | The max/min health colors for the target health bar as an array of [`max color`, `min color`] . If you are using low alpha values with this field, make sure you also set a low alpha for `targetHealthBarBorderColor` as otherwise this will show through |
 
 ```
 "showTargetHealthBars": true,                               // Turn on target health bars (default is false)
@@ -185,15 +211,17 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ```
 
 ### Floating Combat Text
-* `showFloatingCombatText` determines whether or not combat text is drawn for hit targets
-* `floatingCombatTextSize` controls the size of the font in point
-* `floatingCombatTextFont` controls the font used for the floating combat text (as a `Color4`)
-* `floatingCombatTextColor` controls the (foreground) combat text color (as a `Color4`)
-* `floatingCombatTextOutlineColor` controls the color of the combat text outline
-* `floatingCombatTextOffset` controls the initial offset of the text from the center of the target as a `Point3`
-* `floatingCombatTextVelocity` controls the velocity vector for combat text (once it is spawned) as a `Point3`
-* `floatingCombatTextFade` provides a (compounded) alpha fade for the text and it's outline
-* `floatingCombatTextTimeout` controls the timeout for the combat text in seconds
+| Parameter Name                    |Units          | Description                                                                           |
+|-----------------------------------|---------------|---------------------------------------------------------------------------------------|
+|`showFloatingCombatText`           |bool           | Whether or not combat text is drawn for hit targets                                   |
+|`floatingCombatTextSize`           |pt             | The size of the combat text font                                                      |
+|`floatingCombatTextFont`           |font           | The font used for the floating combat text (as an `.fnt` file)                        |   
+|`floatingCombatTextColor`          |`Color4`       | The (foreground) combat text color                                                    |
+|`floatingCombatTextOutlineColor`   |`Color4`       | The color of the combat text outline                                                  |
+|`floatingCombatTextOffset`         |`Point3`(px)   | The initial offset of the text from the center of the target                          |
+|`floatingCombatTextVelocity`       |`Point3`(px/s) | The velocity vector for combat text (once it is spawned)                              |
+|`floatingCombatTextFade`           |ratio          | A (compounded) alpha fade for the text and it's outline (1 will stay disable)         |
+|`floatingCombatTextTimeout`        |s              | The timeout for the combat text in seconds                                            |
 
 ```
 "showFloatingCombatText": true,                             // Show floating combat text (default is false)
@@ -209,6 +237,13 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 
 # Frame Rate Modes
 The `frameRate` parameter in any given session config can be used in 3 different modes:
+
+|Set frame rate         |Resulting mode |
+|-----------------------|---------------|
+|>> Refresh rate        |Unlocked mode  |
+|Close to refresh rate  |Fixed mode     |
+|0                      |Default mode   |
+
 * If the `frameRate` parameter is set to a value >> refresh rate of the display (we suggest `8192fps`), then the program runs in "unlocked" mode wherein as many frames as can be drawn are rendered per displayed frame. This is the common mode of operation in many modern games.
 * If the `frameRate` parameter is set close to the refresh rate of the display then the programs runs in "fixed" frame rate mode, wherein the drawn frames are limited to the rate provided
 * If `frameRate = 0` then this indicates "default" mode, wherein the default frame rate settings for the window are applied. This should be equivalent to the "unlocked" mode for most systems. This is the default setting if you do not specify a frame rate in the file.
