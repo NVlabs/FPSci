@@ -25,14 +25,14 @@ In addition the following files are included in this directory:
 The following documentation is included here.
 
 ### Configuration Files
-* [`experimentConfigReadme.md`](experimentConfigReadme.md) - A guide to the `experimentconfig.Any` file
-* [`startupConfigReadme.md`](startupConfigReadme.md) - A guide to the `startupconfig.Any` file
-* [`userConfigReadme.md`](userConfigReadme.md) - A guide to the `userconfig.Any` file
-* [`userStatusReadme.md`](userStatusReadme.md) - A guide to the `userstatus.Any` file
-* [`weaponConfigReadme.md`](./weapon/weaponConfigReadme.md) - A guide to weapon configurations in `experimentconfig.Any`
+* [`experimentConfigReadme.md`](../docs/experimentConfigReadme.md) - A guide to the `experimentconfig.Any` file
+* [`startupConfigReadme.md`](../docs/startupConfigReadme.md) - A guide to the `startupconfig.Any` file
+* [`userConfigReadme.md`](../docs/userConfigReadme.md) - A guide to the `userconfig.Any` file
+* [`userStatusReadme.md`](../docs/userStatusReadme.md) - A guide to the `userstatus.Any` file
+* [`weaponConfigReadme.md`](../docs/weaponConfigReadme.md) - A guide to weapon configurations in `experimentconfig.Any`
 
 ### Scene Files
-More information on scene files is available in the [scene readme](./scene/readme.md).
+More information on scene files is available in the [scene readme](scene/readme.md).
 
 ### Model Files
-More information on model files is available in the [model readme](./model/readme.md).
+More information on model files is available in the [model readme](model/readme.md).

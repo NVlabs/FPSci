@@ -3,6 +3,9 @@ The user status file tracks all user infomration specific to a given experiment 
 
 The user status is the primary mechanism by which sessions are ordered and progress is tracked in `FirstPersonScience`. Similarly to the [`userconfig.Any`](./userConfigReadme.md) this file controls per-user actions using a user table and also records completed sessions so that the application can track user progress over multiple runtimes.
 
+## File Location
+The [`userstatus.Any` file](../data-files/userconfig.Any) is located in the [`data-files` directory](../data-files) at the root of the project. If no `userstatus.Any` file is present at startup the application copies [`SAMPLEuserstatus.Any`](../data-files/SAMPLEuserstatus.Any) to `userstatus.Any`.
+
 # User Table
 Each entry in the user table contains the following fields:
 
@@ -10,7 +13,7 @@ Each entry in the user table contains the following fields:
 * `sessions` a list of sessions to be completed, in order
 * `completedSessions` a list of sessions completed by any given user
 
-Refer to the [SAMPLEuserstatus.Any file](SAMPLEuserstatus.Any) for an example of these settings.
+Refer to the [SAMPLEuserstatus.Any file](../data-files/SAMPLEuserstatus.Any) for an example of these settings.
 
 The `sessions` list above can be used to control session ordering (this is an ordered list). If random ordering is desired a quick script can be written to read all users from the `userconfig.Any` file and write a new sequence of sessions for each user present.
 

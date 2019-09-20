@@ -5,6 +5,9 @@ The high-level `userconfig.Any` file provides the `currentUser` (the default use
 
 The user config is setup to work across multiple experiments (i.e. it does not have any information specific to an `experimentconfig.Any` file contained within in). For per user session ordering see the [`userStatus.Any`](./userStatusReadme.md).
 
+## File Location
+The [`userconfig.Any` file](../data-files/userconfig.Any) is located in the [`data-files` directory](../data-files/) at the root of the project. If no `userconfig.Any` file is present the application copies [`SAMPLEuserconfig.Any`](../data-files/SAMPLEuserconfig.Any) to `userconfig.Any`.
+
 # User Table
 Each entry in the user table contains the following fields:
 
@@ -14,7 +17,7 @@ Each entry in the user table contains the following fields:
 
 Refer to the [SAMPLEuserconfig.Any file](SAMPLEuserconfig.Any) for an example of these settings.
 
-## Sensitivity Measure (cm/360°)
+### Sensitivity Measure (cm/360°)
 Many games use arbitrary mouse sensitivity measures (i.e. 0-10 or low, mid, high scale) to set mouse sensitivity based on iterative player testing (i.e. choose a setting, test whether it meets your needs, adjust the setting accordingly). Unfortunately this means that mouse sensitivity settings can often not be easily translated between applications without a tool to convert between the settings values.
 
 The unit of mouse sensitivity measure selected for abstract-fps is `cm/360°`. This measure reports the (linear) distance the mouse needs to travel in order to produce a full 360° rotation of the player view in game (typically in the horizontal direction). The idea being that a given player could measure this distance for their game of choice and then quickly transfer the setting into the abstract-fps application.

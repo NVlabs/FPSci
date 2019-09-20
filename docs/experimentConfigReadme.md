@@ -10,9 +10,12 @@ Broad areas of control included in this config file include:
 
 For a full description of fields see the descriptions below. Along with each subsection an example configuration is provided. In many cases the example values below are the defaults provided in these field values. Where this is not the case the default will be indicated in the comments.
 
+## File Location
+The [`experimentconfig.Any` file](../data-files/experimentconfig.Any) is located in the [`data-files`](../data-files/) directory at the root of the project. If no `experimentconfig.Any` file is present at startup, [`SAMPLEexperimentconfig.Any`](../data-files/SAMPLEexperimentconfig.Any) is copied to `experimentconfig.Any`.
+
 # Experiment Config Field Descriptions
 
-The experment config supports inclusion of any of the configuration parameters documented in the [general configuration parameter guide](../docs/general_config.md). In addition to these common parameters, there are a number of unique inputs to experiment config. The following is a description of what each one means, and how it is meant to be used.
+The experment config supports inclusion of any of the configuration parameters documented in the [general configuration parameter guide](general_config.md). In addition to these common parameters, there are a number of unique inputs to experiment config. The following is a description of what each one means, and how it is meant to be used.
 
 * `description` allows the user to annotate this experiment's results with a custom string
 ```
@@ -20,7 +23,7 @@ The experment config supports inclusion of any of the configuration parameters d
 ```
 
 ### Session Configuration
-Each session can specify any of the [general configuration parameters](../docs/general_config.md) used in the experiment config above to create experimental conditions. In addition to these general parameters each session also has a few unique parameters documented below.
+Each session can specify any of the [general configuration parameters](general_config.md) used in the experiment config above to create experimental conditions. In addition to these general parameters each session also has a few unique parameters documented below.
 
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
@@ -75,7 +78,7 @@ An example session configuration snippet is included below:
     * `jumpPeriod` is a vector indicating the minimum ([0]) and maximum ([1]) period to wait between jumps (in seconds)
     * `jumpSpeed` is a vector indicating the minimum ([0]) and maximum([1]) angular speed with which to jump (in deg/s)
     * `accelGravity` is the min ([0])/max ([1]) acceleration due to gravity during the jump (in m/s^2)
-    * `modelSpec` is an `Any` that constructs an `ArticulatedModel` similar to that used in the [the weapon config readme](./weapon/weaponConfigReadme.md). For now this spec needs to point to an `obj` file with a model named `core/icosahedron_default`.
+    * `modelSpec` is an `Any` that constructs an `ArticulatedModel` similar to that used in the [the weapon config readme](weaponConfigReadme.md). For now this spec needs to point to an `obj` file with a model named `core/icosahedron_default`.
     * `destinations` is an array of `Destination` types each of which contains:
       * `t` the time (in seconds) for this point in the path
       * `xyz` the position for this point in the path

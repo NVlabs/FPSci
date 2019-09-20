@@ -1,7 +1,14 @@
 # Introduction
-The weapon config allows for a modular configuration of the weapon used during an [experiment](../experimentConfigReadme.md). Weapon configurations can either be inlined into the [`experimentconfig.Any`](../SAMPLEexperimentconfig.Any#L16) or included as independent `.Any` file using the `#include("file.Any")` directive in the experiment configuration file to refer to a `[filename].weapon.Any` file (or any other `.Any` file including a weapon). If you plan to regularly change weapons we suggest using the later approach.
+The weapon config allows for a modular configuration of the weapon used during an [experiment](experimentConfigReadme.md). Weapon configurations can either be inlined into the [`experimentconfig.Any`](../data-files/SAMPLEexperimentconfig.Any#L16) or included as independent `.Any` file using the `#include("file.Any")` directive in the experiment configuration file to refer to a `[filename].weapon.Any` file (or any other `.Any` file including a weapon). If you plan to regularly change weapons we suggest using the later approach.
 
 In the future support for a weapon editor might be offered as part of the application.
+
+## File Location(s)
+The [`data-files/weapon` directory](../data-files/weapon) contains some default weapon configurations as stand-alone `.Any` files. These file can be included using the supported `.Any` `#include` construct as shown below:
+
+```
+"weapon" : #include("[weapon file name].Any");
+```
 
 # Weapon Config Field Descriptions
 

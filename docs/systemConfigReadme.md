@@ -1,7 +1,10 @@
 # System Configuration
 The system configuration file plays a dual role in `FirstPersonScience`. First it provides configuration information related to the hardware setup of the machine (namely whether a hardware click-to-photon logger is present and if so which COM port it uses). Second it records the system parameters from the experiment for later analysis.
 
-## Input Fields
+## File Location
+The [`systemconfig.Any` file](../data-files/systemconfig.Any) is located in the [`data-files` directory](../data-files/) at the top of the project. If no `systemconfig.Any` file is present at startup the application copies [`SAMPLEsystemconfig.Any`](../data-files/SAMPLEsystemconfig.Any) to `systemconfig.Any`.
+
+# Input Fields
 The following fields are input to the `systemconfig.Any` file:
 
 * `HasLogger` indicates whether this system will perform any click-to-photon logging, when set to `false` this parameter disables all calls to hardware logging scripts.
@@ -11,7 +14,7 @@ The following fields are input to the `systemconfig.Any` file:
 
 Refer to the [SAMPLEsystemconifg.Any file](SAMPLEsystemconfig.Any) for an example of this.
 
-## Output Fields
+# Output Fields
 The following fields are written by the application as output from the `systemconfig.Any` file:
 
 * `CPU` is the reported name of the CPU being run on
