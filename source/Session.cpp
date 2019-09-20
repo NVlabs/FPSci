@@ -74,17 +74,14 @@ void Session::onInit(String filename, String userName, String description) {
 	presentationState = PresentationState::initial;
 	m_feedbackMessage = "Click to spawn a target, then use shift on red target to begin.";
 
-	m_config = m_app->experimentConfig;									// Setup config from app
-	m_session = m_config.getSessionConfigById(m_app->getDropDownSessId());
-
 	// Setup the logger and create results file
 	m_logger = Logger::create();
 	m_logger->createResultsFile(filename, userName, description);
 
-	m_hasSession = m_session != nullptr;
+	m_hasSession = m_config != nullptr;
 	if (m_hasSession) {
 		// Iterate over the sessions here and add a config for each
-		Array<Array<Param>> params = m_config.getExpConditions(m_session->id);
+		Array<Array<Param>> params = m_app->experimentConfig.getExpConditions(m_config->id);
 		setupTrialParams(params);
 	}
 	else {												// Initialize PsychHelper based on the configuration.
@@ -145,7 +142,7 @@ void Session::initTargetAnimation() {
 					offset,
 					target.destinations,
 					visualSize,
-					m_config.targetHealthColors[0],
+					m_config->targetHealthColors[0],
 					String(target.str["id"]),
 					i,
 					(int)target.val["respawns"],
@@ -158,7 +155,7 @@ void Session::initTargetAnimation() {
 				shared_ptr<JumpingEntity> t = m_app->spawnJumpingTarget(
 					offset,
 					visualSize,
-					m_config.targetHealthColors[0],
+					m_config->targetHealthColors[0],
 					{ target.val["minSpeed"], target.val["maxSpeed"] },
 					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
 					{ target.val["minJumpPeriod"], target.val["maxJumpPeriod"] },
@@ -182,7 +179,7 @@ void Session::initTargetAnimation() {
 				shared_ptr<FlyingEntity> t = m_app->spawnFlyingTarget(
 					offset,
 					visualSize,
-					m_config.targetHealthColors[0],
+					m_config->targetHealthColors[0],
 					{ target.val["minSpeed"], target.val["maxSpeed"] },
 					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
 					initialSpawnPos,
@@ -202,21 +199,18 @@ void Session::initTargetAnimation() {
 		// Make sure we reset the target color here (avoid color bugs)
 		m_app->spawnFlyingTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
-			m_config.dummyTargetSize,
-			m_config.dummyTargetColor,
+			m_config->dummyTargetSize,
+			m_config->dummyTargetColor,
 			{ 0.0f, 0.0f },
 			{ 1000.0f, 1000.f },
 			initialSpawnPos,
 			"dummy",
 			0
 		);
-
-		// TODO: Remove this testing new target type
-		//m_app->spawnTestTarget(initialSpawnPos);
 	}
 
 	// Reset number of destroyed targets
-	m_app->destroyedTargets = 0;
+	m_destroyedTargets = 0;
 	// reset click counter
 	m_clickCount = 0;
 }
@@ -235,7 +229,7 @@ void Session::processResponse()
 			totalTargets += (int)t.val["respawns"];
 		}
 	}		
-	m_response = totalTargets - m_app->destroyedTargets; // Number of targets remaining
+	m_response = totalTargets - m_destroyedTargets; // Number of targets remaining
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 	
 	m_remaining[m_currTrialIdx] -= 1;
@@ -244,13 +238,13 @@ void Session::processResponse()
 
 	// Check for whether all targets have been destroyed
 	if (m_response == 0) {
-		m_totalRemainingTime += (double(m_config.taskDuration) - m_taskExecutionTime);
-		if (m_config.getSessionConfigById(sess)->sessDescription == "training") {
+		m_totalRemainingTime += (double(m_config->taskDuration) - m_taskExecutionTime);
+		if (m_config->sessDescription == "training") {
 			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
 		}
 	}
 	else {
-		if (m_config.getSessionConfigById(sess)->sessDescription == "training") {
+		if (m_config->sessDescription == "training") {
 			m_feedbackMessage = "Failure!";
 		}
 	}
@@ -276,7 +270,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::ready)
 	{
-		if (stateElapsedTime > m_config.readyDuration)
+		if (stateElapsedTime > m_config->readyDuration)
 		{
 			//m_lastMotionChangeAt = 0;
 			newState = PresentationState::task;
@@ -284,7 +278,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_config.taskDuration) || (remainingTargets <= 0) || (m_clickCount == m_config.weapon.maxAmmo))
+		if ((stateElapsedTime > m_config->taskDuration) || (remainingTargets <= 0) || (m_clickCount == m_config->weapon.maxAmmo))
 		{
 			m_taskEndTime = Logger::genUniqueTimestamp();
 			processResponse();
@@ -294,7 +288,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::feedback)
 	{
-		if ((stateElapsedTime > m_config.feedbackDuration) && (remainingTargets <= 0))
+		if ((stateElapsedTime > m_config->feedbackDuration) && (remainingTargets <= 0))
 		{
 			if (isComplete()) {
 				m_logger->closeResultsFile();																// Close the current results file
@@ -371,7 +365,7 @@ void Session::recordTrialResponse()
 	Array<String> trialValues = {
 		String(std::to_string(m_currTrialIdx)),
 		"'" + sess + "'",
-		"'" + m_config.getSessionConfigById(sess)->sessDescription + "'",
+		"'" + m_config->sessDescription + "'",
 		"'" + m_taskStartTime + "'",
 		"'" + m_taskEndTime + "'",
 		String(std::to_string(m_taskExecutionTime)),
@@ -448,8 +442,9 @@ void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 }
 
 bool Session::responseReady() {
+	if (isNull(m_config)) return false;
 	double timeNow = System::time();
-	if ((timeNow - m_lastFireAt) > (m_config.weapon.firePeriod)) {
+	if ((timeNow - m_lastFireAt) > (m_config->weapon.firePeriod)) {
 		m_lastFireAt = timeNow;
 		return true;
 	}
@@ -459,26 +454,27 @@ bool Session::responseReady() {
 }
 
 double Session::weaponCooldownPercent() {
-	if (m_config.weapon.firePeriod == 0.0f) return 1.0;
-	return min((System::time() - m_lastFireAt) / m_config.weapon.firePeriod, 1.0);
+	if (isNull(m_config)) return 0.0;
+	if (m_config->weapon.firePeriod == 0.0f) return 1.0;
+	return min((System::time() - m_lastFireAt) / m_config->weapon.firePeriod, 1.0);
 }
 
 int Session::remainingAmmo() {
-	return m_config.weapon.maxAmmo - m_clickCount;
+	return m_config->weapon.maxAmmo - m_clickCount;
 }
 
 
 float Session::getRemainingTrialTime() {
-	return m_config.taskDuration - m_timer.getTime();
+	return m_config->taskDuration - m_timer.getTime();
 }
 
 float Session::getProgress() {
-	if (m_session != nullptr) {
+	if (notNull(m_config)) {
 		int completed = 0;
 		for (bool c : m_remaining) {
 			if (c) completed++;
 		}
-		return completed / (float)m_session->getTotalTrials();
+		return completed / (float)m_config->getTotalTrials();
 	}
 	return fnan();
 }

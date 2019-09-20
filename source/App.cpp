@@ -839,12 +839,13 @@ void App::updateSessionPress(void) {
 }
 
 void App::updateSession(String id) {
-	// Initialize the experiment (session) and logger
-	sess = Session::create(this);
+
 
 	if (!id.empty()) {
 		// Get the new session config
 		sessConfig = experimentConfig.getSessionConfigById(id);
+		// Initialize the experiment (session) and logger
+		sess = Session::create(this, sessConfig);
 		// Print message to log
 		logPrintf("User selected session: %s. Updating now...\n", id);
 		// apply frame lag
@@ -1503,7 +1504,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 				scene()->insert(newExplosion);
 				m_explosion = newExplosion;
 				m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
-				destroyedTargets += 1;
+				sess->countDestroy();
 				respawned = target->respawn();
 				// check for respawn
 				if (!respawned) {

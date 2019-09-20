@@ -214,8 +214,6 @@ public:
 	Array<shared_ptr<TargetEntity>> targetArray;					///< Array of drawn targets
 	Array<Projectile>                projectileArray;				///< Arrray of drawn projectiles
 
-	int destroyedTargets = 0;										///< Number of targets destroyed
-
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments

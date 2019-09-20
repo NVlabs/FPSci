@@ -793,6 +793,10 @@ public:
 	float combatTextFade = 0.98f;								///< Fade rate for combat text (0 implies don't fade)	
 	float combatTextTimeout = 0.5f;								///< Time for combat text to disappear (in seconds)
 
+	// Dummy target
+	float dummyTargetSize = 0.01f;						///< Size of the dummy target
+	Color3 dummyTargetColor = Color3(1.0, 0.0, 0.0);	///< Default "dummy" target color
+
 	void load(const Any& any) {
 		AnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
@@ -858,6 +862,8 @@ public:
 			reader.getIfPresent("floatingCombatTextVelocity", combatTextVelocity);
 			reader.getIfPresent("floatingCombatTextFade", combatTextFade);
 			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
+			reader.getIfPresent("dummyTargetSize", dummyTargetSize);
+			reader.getIfPresent("dummyTargetColor", dummyTargetColor);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in FpsConfig.\n", settingsVersion);
@@ -904,7 +910,6 @@ public:
 			catch (Any::KeyNotFound e) {
 				throw format("A \"trials\" array must be specified with each session! See session: \"%s\"", id);
 			}
-
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -920,6 +925,8 @@ public:
 		}
 		return count;
 	}
+
+
 };
 
 /** Experiment configuration */
@@ -927,11 +934,7 @@ class ExperimentConfig : public FpsConfig {
 public:
 	String expDescription;								///< Experiment description
 	Array<SessionConfig> sessions;						///< Array of sessions
-	Array<TargetConfig> targets;						///< Array of trial configs 
-    
-	// Dummy target
-	float dummyTargetSize = 0.01f;						///< Size of the dummy target
-	Color3 dummyTargetColor = Color3(1.0, 0.0, 0.0);	///< Default "dummy" target color
+	Array<TargetConfig> targets;						///< Array of trial configs   
 
 	ExperimentConfig() {}
 	
@@ -941,16 +944,14 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			// Experiment-specific info
+			reader.getIfPresent("description", expDescription);
+			// Get the targets
 			try {
 				reader.get("targets", targets);
 			}
 			catch (Any::KeyNotFound e) {
 				throw "At least one target must be specified for the experiment!";
 			}
-			reader.getIfPresent("description", expDescription);
-			reader.getIfPresent("dummyTargetSize", dummyTargetSize);
-			reader.getIfPresent("dummyTargetColor", dummyTargetColor);
-
 			// Get the sessions
 			SessionConfig::defaultConfig = (shared_ptr<FpsConfig>)(this);
 			try {
@@ -959,7 +960,6 @@ public:
 			catch (Any::KeyNotFound e) {
 				throw "The \"sessions\" array must be provided as part of the experiment config!";
 			}
-
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);

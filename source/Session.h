@@ -55,17 +55,15 @@ class Session : public ReferenceCountedObject {
 //class Experiment {
 protected:
 	App* m_app;											///< Pointer to the app
-	ExperimentConfig m_config;							///< This experiment's configuration
-	//PsychHelper m_psych;								///< Psych helper for the experiment
-	shared_ptr<SessionConfig> m_session = nullptr;		///< The session this experiment will run
+	shared_ptr<SessionConfig> m_config = nullptr;		///< The session this experiment will run
 	shared_ptr<Logger> m_logger = nullptr;				///< Output results logger
 
 	// Experiment management					
 	int m_response;										///< 0 indicates failure (didn't hit the target), 1 indicates sucess (hit the target)
+	int m_destroyedTargets = 0;							///< Number of destroyed target
 	int m_clickCount = 0;								///< Count of total clicks in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
 	String m_feedbackMessage;							///< Message to show when trial complete
-
 
 	int m_currTrialIdx;									///< Current trial
 	Array<int> m_remaining;								///< Completed flags
@@ -95,20 +93,18 @@ protected:
 	Array<Array<String>> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
 	Array<Array<String>> m_frameInfo;					///< Storage for frame info (sdt, idt, rdt)
 
-	Session(App* app) : m_app(app) {
+	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app) {
+		m_config = config;
 		// secure vector capacity large enough so as to avoid memory allocation time.
 		m_playerActions.reserve(5000);
 		m_targetTrajectory.reserve(5000);
 	};
 
 public:
-	static shared_ptr<Session> create(App* app) {
-		return createShared<Session>(app);
+	static shared_ptr<Session> create(App* app, shared_ptr<SessionConfig> config) {
+		return createShared<Session>(app, config);
 	}
-	static shared_ptr<Session> create_empty(App* app) {
-		shared_ptr<Session> texp = create(app);
-		//texp->m_psych.mMeasurements = Array<SingleThresholdMeasurement>();
-	}
+
 	void randomizePosition(shared_ptr<TargetEntity> target);
 	/** creates a new target with randomized motion path and gives it to the app */
 	void initTargetAnimation();
@@ -129,6 +125,10 @@ public:
 	void recordTrialResponse();
 	void accumulateTrajectories();
 	void accumulateFrameInfo(RealTime rdt, float sdt, float idt);
+
+	void countDestroy() {
+		m_destroyedTargets += 1;
+	}
 
 	float getRemainingTrialTime();
 	float getProgress();
