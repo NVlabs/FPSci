@@ -68,10 +68,10 @@ public:
 	int displayYSize;		///< The vertical size of the display in mm
 
 	// Input parameters
-	bool hasLogger;			///< Indicates that a hardware logger is present in the system
-	String loggerComPort;	///< Indicates the COM port that the logger is on when hasLogger = True
-	bool hasSync;			///< Indicates that a hardware sync will occur via serial card DTR signal
-	String syncComPort;		///< Indicates the COM port that the sync is on when hasSync = True
+	bool hasLogger = false;			///< Indicates that a hardware logger is present in the system
+	String loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
+	bool hasSync = false;			///< Indicates that a hardware sync will occur via serial card DTR signal
+	String syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
 
 	SystemConfig() {};
 
@@ -127,17 +127,18 @@ public:
 
 	/** Load a system config from file */
 	static SystemConfig load() {
-		// if file not found, copy from the sample config file
+		// if file not found, create a default system config
 		if (!FileSystem::exists("systemconfig.Any")) { 
-			FileSystem::copyFile(System::findDataFile("SAMPLEsystemconfig.Any"), "systemconfig.Any");
+			SystemConfig config = SystemConfig();		// Create the default
+			config.getSystemInfo();						// Get system info
+			config.toAny().save("systemconfig.Any");	// Save a file
+			return config;
 		}
 		return Any::fromFile(System::findDataFile("systemconfig.Any"));
 	}
 
 	/** Get the system info using (windows) calls */
 	void getSystemInfo(void) {
-		SystemConfig system;
-
 		// Get CPU name string
 		int cpuInfo[4] = { -1 };
 		unsigned nExIds, i = 0;
@@ -324,10 +325,14 @@ public:
 	}
 
 	/** Simple rotine to get the UserTable Any structure from file */
-	static Any load(String filename) {
-		// load user setting from file
-		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, copy from the sample config file.
-			FileSystem::copyFile(System::findDataFile("SAMPLEuserconfig.Any").c_str(), "userconfig.Any");
+	static UserTable load(String filename) {
+		// Create default UserConfig file
+		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
+			UserTable defTable = UserTable();
+			defTable.users.append(UserConfig());			// Append one default user
+			defTable.currentUser = defTable.users[0].id;	// Set this as the current user
+			defTable.toAny().save("userconfig.Any");		// Save the .any file
+			return defTable;
 		}
 		return Any::fromFile(System::findDataFile(filename));
 	}
@@ -344,7 +349,7 @@ public:
 /** Class for handling user status */
 class UserSessionStatus {
 public:
-	String id;										///< User ID
+	String id = "anon";								///< User ID
 	Array<String> sessionOrder = {};				///< Array containing session ordering
 	Array<String> completedSessions = {};			///< Array containing all completed session ids for this user
 
@@ -421,8 +426,11 @@ public:
 
 	/** Get the user status table from file */
 	static UserStatusTable load(void) {
-		if (!FileSystem::exists("userstatus.Any")) { // if file not found, copy from the sample config file.
-			FileSystem::copyFile(System::findDataFile("SAMPLEuserstatus.Any"), "userstatus.Any");
+		if (!FileSystem::exists("userstatus.Any")) { // if file not found, create a default userstatus.Any
+			UserStatusTable defStatus = UserStatusTable();			// Create empty status
+			defStatus.userInfo.append(UserSessionStatus());			// Add single "default" user
+			defStatus.toAny().save("userstatus.Any");				// Save .any file
+			return defStatus;
 		}
 		return Any::fromFile(System::findDataFile("userstatus.Any"));
 	}
@@ -515,17 +523,17 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("id", id);
+
 			reader.getIfPresent("maxAmmo", maxAmmo);
 			reader.getIfPresent("firePeriod", firePeriod);
 			reader.getIfPresent("autoFire", autoFire);
 			reader.getIfPresent("damagePerSecond", damagePerSecond);
+			
 			reader.getIfPresent("fireSound", fireSound);
-			reader.getIfPresent("renderModel", renderModel);
 
+			reader.getIfPresent("renderModel", renderModel);
 			reader.getIfPresent("modelSpec", modelSpec);
 			reader.getIfPresent("muzzleOffset", muzzleOffset);
-			//model = ArticulatedModel::create(modelSpec, "viewModel");
-			
 			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
 			reader.getIfPresent("renderDecals", renderDecals);
 			reader.getIfPresent("renderBullets", renderBullets);
@@ -539,6 +547,30 @@ public:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
 			break;
 		}
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["id"] = id;
+		a["maxAmmo"] = maxAmmo;
+		a["firePeriod"] = firePeriod;
+		a["autoFire"] = autoFire;
+		a["damagePerSecond"] = damagePerSecond;
+		
+		a["fireSound"] = fireSound;
+
+		a["renderModel"] = renderModel;
+		a["modelSpec"] = modelSpec;
+		a["muzzleOffset"] = muzzleOffset;
+		a["renderMuzzleFlash"] = renderMuzzleFlash;
+		a["renderDecals"] = renderDecals;
+		a["renderBullets"] = renderBullets;
+		a["bulletSpeed"] = bulletSpeed;
+
+		a["fireSpread"] = fireSpread;
+		a["damageRollOffAim"] = damageRollOffAim;
+		a["damageRollOffDistance"] = damageRollOffDistance;
+		return a;
 	}
 };
 
@@ -575,7 +607,6 @@ public:
 		    };
 		});
 
-	//Array<Vector3> path;		// Unused, to dictate a motion path...
 	//String explosionSound;	// TODO: Add target explosion sound string here and use it for m_explosionSound
 
 	TargetConfig() {}
@@ -648,7 +679,6 @@ public:
 			a["jumpPeriod"] = jumpPeriod;
 			a["accelGravity"] = accelGravity;
 		}
-
 		return a;
 	};
 
@@ -660,8 +690,8 @@ public:
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */
 class TrialCount {
 public:
-	Array<String> ids;						///< Trial ID list
-	unsigned int count = 0;			///< Count of trials to be performed
+	Array<String> ids;		///< Trial ID list
+	int count = 0;			///< Count of trials to be performed
 
 	TrialCount() {};
 
@@ -691,16 +721,23 @@ public:
 			break;
 		}
 	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["ids"] = ids;
+		a["count"] = count;
+		return a;
+	}
 };
 
 class FpsConfig : public ReferenceCountedObject {
 public:
-	int	settingsVersion = 1;					///< Settings version
-	String sceneName = "FPSci Simple Hallway";	///< Scene name
+	int	settingsVersion = 1;						///< Settings version
+	String sceneName = "FPSci Simple Hallway";		///< Scene name
 
 	// Rendering parameters
-	float	frameRate = 0.0f;						///< Target (goal) frame rate (in Hz)
-	unsigned int frameDelay = 0;					///< Integer frame delay (in frames)
+	float frameRate = 0.0f;							///< Target (goal) frame rate (in Hz)
+	int frameDelay = 0;								///< Integer frame delay (in frames)
 	String shader = "";								///< Option for a custom shader name
 
 	// Timing parameters
@@ -716,7 +753,7 @@ public:
 	float jumpVelocity = 40.0f;						///< Jump velocity for the player
 	float jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
 	bool jumpTouch = true;							///< Require the player to be touch a surface to jump?
-	Vector3 playerGravity = Vector3(0.0f, -5.0f, 0.0f);	///< Gravity vector
+	Vector3 playerGravity = Vector3(0.0f, -5.0f, 0.0f);		///< Gravity vector
 
 	WeaponConfig weapon;							///< Weapon to be used
 
@@ -880,6 +917,73 @@ public:
 		load(any);
 	}
 
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["sceneName"] = sceneName;
+		a["frameRate"] = frameRate;
+		a["frameDelay"] = frameDelay;
+		a["feedbackDuration"] = feedbackDuration;
+		a["readyDuration"] = readyDuration;
+		a["taskDuration"] = taskDuration;
+		a["horizontalFieldOfView"] = hFoV;
+		a["moveRate"] = moveRate;
+		a["playerHeight"] = playerHeight;
+		a["crouchHeight"] = crouchHeight;
+		a["jumpVelocity"] = jumpVelocity;
+		a["jumpInterval"] = jumpInterval;
+		a["jumpTouch"] = jumpTouch;
+		a["playerGravity"] = playerGravity;
+		a["weapon"] =  weapon;
+		a["renderClickPhoton"] = renderClickPhoton;
+		a["clickPhotonSide"] = clickPhotonSide;
+		a["clickPhotonSize"] = clickPhotonSize;
+		a["clickPhotonVertPos"] = clickPhotonVertPos;
+		a["clickPhotonColors"] = clickPhotonColors;
+		a["shader"] = shader;
+		a["showHUD"] = showHUD;
+		a["showBanner"] = showBanner;
+		a["hudFont"] = hudFont;
+		a["showPlayerHealthBar"] = showPlayerHealthBar;
+		a["playerHealthBarSize"] = playerHealthBarSize;
+		a["playerHealthBarPosition"] = playerHealthBarPos;
+		a["playerHealthBarBorderSize"] = playerHealthBarBorderSize;
+		a["playerHealthBarBorderColor"] = playerHealthBarBorderColor;
+		a["playerHealthBarColors"] = playerHealthBarColors;
+		a["showAmmo"] = showAmmo;
+		a["ammoPosition"] = ammoPosition;
+		a["ammoSize"] = ammoSize;
+		a["ammoColor"] = ammoColor;
+		a["ammoOutlineColor"] = ammoOutlineColor;
+		a["renderWeaponStatus"] = renderWeaponStatus;
+		a["weaponStatusSide"] = weaponStatusSide;
+		a["cooldownMode"] = cooldownMode;
+		a["cooldownInnerRadius"] = cooldownInnerRadius;
+		a["cooldownThickness"] = cooldownThickness;
+		a["cooldownSubdivisions"] = cooldownSubdivisions;
+		a["cooldownColor"] = cooldownColor;
+		a["explosionSound"] = explosionSound;
+		a["explosionSoundVol"] = explosionSoundVol;
+		a["showTargetHealthBars"] = showTargetHealthBars;
+		a["targetHealthBarSize"] = targetHealthBarSize;
+		a["targetHealthBarOffset"] = targetHealthBarOffset;
+		a["targetHealthBarBorderSize"] = targetHealthBarBorderSize;
+		a["targetHealthBarBorderColor"] = targetHealthBarBorderColor;
+		a["targetHealthColors"] = targetHealthColors;
+		a["targetHealthBarColors"] = targetHealthBarColors;
+		a["showFloatingCombatText"] = showCombatText;
+		a["floatingCombatTextSize"] = combatTextSize;
+		a["floatingCombatTextFont"] = combatTextFont;
+		a["floatingCombatTextColor"] = combatTextColor;
+		a["floatingCombatTextOutlineColor"] = combatTextOutline;
+		a["floatingCombatTextOffset"] = combatTextOffset;
+		a["floatingCombatTextVelocity"] = combatTextVelocity;
+		a["floatingCombatTextFade"] = combatTextFade;
+		a["floatingCombatTextTimeout"] = combatTextTimeout;
+		a["dummyTargetSize"] = dummyTargetSize;
+		a["dummyTargetColor"] = dummyTargetColor;
+		return a;
+	}
+
 	FpsConfig() {}
 };
 
@@ -891,10 +995,7 @@ public:
 	Array<TrialCount> trials;					///< Array of trials (and their counts) to be performed
 	static shared_ptr<FpsConfig> defaultConfig;
 
-	SessionConfig() {
-		frameRate = 240.0f;
-		frameDelay = 0;
-	};
+	SessionConfig() {};
 
 	static shared_ptr<SessionConfig> create() {
 		return createShared<SessionConfig>();
@@ -921,6 +1022,16 @@ public:
 		}
 	}
 
+	Any toAny(const bool forceAll = true) const {
+		// Get the base any config
+		Any a = ((FpsConfig*)this)->toAny();
+		// Update w/ the session-specific fields
+		a["id"] = id;
+		a["description"] = sessDescription;
+		a["trials"] = trials;
+		return a;
+	}
+
 	/** Get the total number of trials in this session */
 	int getTotalTrials(void) {
 		int count = 0;
@@ -929,8 +1040,6 @@ public:
 		}
 		return count;
 	}
-
-
 };
 
 /** Experiment configuration */
@@ -1068,10 +1177,22 @@ public:
 		return sessParams;
 	}
 
+	Any toAny(const bool forceAll = true) const {
+		// Get the base any config
+		Any a = ((FpsConfig*)this)->toAny();
+		// Write the experiment configuration-specific 
+		a["description"] = expDescription;
+		a["targets"] = targets;
+		a["sessions"] = sessions;
+		return a;
+	}
+
 	/** Get the experiment config from file */
 	static ExperimentConfig load(String filename) {
-		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, copy from the sample config file.
-			FileSystem::copyFile(System::findDataFile("SAMPLEexperimentconfig.Any"), "experimentconfig.Any");
+		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, build a default
+			ExperimentConfig ex = ExperimentConfig();
+			ex.toAny().save("experimentconfig.Any");
+			return ex;
 		}
 		return Any::fromFile(System::findDataFile(filename));
 	}
