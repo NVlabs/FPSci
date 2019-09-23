@@ -52,7 +52,6 @@ public:
 };
 
 class Session : public ReferenceCountedObject {
-//class Experiment {
 protected:
 	App* m_app;											///< Pointer to the app
 	shared_ptr<SessionConfig> m_config = nullptr;		///< The session this experiment will run
