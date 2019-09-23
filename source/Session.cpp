@@ -40,6 +40,7 @@ void Session::nextCondition() {
 			unrunTrialIdxs.append(i);
 		}
 	}
+	if (unrunTrialIdxs.size() == 0) return;
 	m_currTrialIdx = unrunTrialIdxs[rand() % unrunTrialIdxs.size()];
 }
 
@@ -78,14 +79,14 @@ void Session::onInit(String filename, String userName, String description) {
 	m_logger = Logger::create();
 	m_logger->createResultsFile(filename, userName, description);
 
-	m_hasSession = m_config != nullptr;
+	// Check for valid session
 	if (m_hasSession) {
 		// Iterate over the sessions here and add a config for each
 		Array<Array<Param>> params = m_app->experimentConfig.getExpConditions(m_config->id);
 		setupTrialParams(params);
 	}
-	else {												// Initialize PsychHelper based on the configuration.
-		presentationState = PresentationState::feedback;
+	else {	// Invalid session, move to displaying message
+		presentationState = PresentationState::scoreboard;
 	}
 }
 
@@ -312,17 +313,21 @@ void Session::updatePresentationState()
 			m_app->openUserSettingsWindow();
 			if (m_hasSession) {
 				m_app->userSaveButtonPress();												// Press the save button for the user...
-				Array<String> remaining = m_app->updateSessionDropDown();
+				Array<String> remaining = m_app		->updateSessionDropDown();
 				if (remaining.size() == 0) {
 					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
+					moveOn = false;
 				}
 				else {
 					m_feedbackMessage = "Session Complete!"; // Update the feedback message
 					moveOn = true;														// Check for session complete (signal start of next session)
 				}
 			}
-			else
-				m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
+		}
+		else {
+			newState = PresentationState::complete;
+			m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
+			moveOn = false;
 		}
 	}
 
@@ -442,7 +447,7 @@ void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 }
 
 bool Session::responseReady() {
-	if (isNull(m_config)) return false;
+	if (isNull(m_config)) return true;
 	double timeNow = System::time();
 	if ((timeNow - m_lastFireAt) > (m_config->weapon.firePeriod)) {
 		m_lastFireAt = timeNow;
@@ -454,7 +459,7 @@ bool Session::responseReady() {
 }
 
 double Session::weaponCooldownPercent() {
-	if (isNull(m_config)) return 0.0;
+	if (isNull(m_config)) return 1.0;
 	if (m_config->weapon.firePeriod == 0.0f) return 1.0;
 	return min((System::time() - m_lastFireAt) / m_config->weapon.firePeriod, 1.0);
 }

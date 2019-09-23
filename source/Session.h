@@ -95,12 +95,23 @@ protected:
 
 	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app) {
 		m_config = config;
+		m_hasSession = notNull(m_config);
 		// secure vector capacity large enough so as to avoid memory allocation time.
 		m_playerActions.reserve(5000);
 		m_targetTrajectory.reserve(5000);
 	};
 
+	Session(App* app) : m_app(app){
+		// secure vector capacity large enough so as to avoid memory allocation time.
+		m_playerActions.reserve(5000);
+		m_targetTrajectory.reserve(5000);
+		m_hasSession = false;
+	}
+
 public:
+	static shared_ptr<Session> create(App* app) {
+		return createShared<Session>(app);
+	}
 	static shared_ptr<Session> create(App* app, shared_ptr<SessionConfig> config) {
 		return createShared<Session>(app, config);
 	}

@@ -839,65 +839,57 @@ void App::updateSessionPress(void) {
 }
 
 void App::updateSession(String id) {
-
-
+	// Check for a valid ID
 	if (!id.empty()) {
-		// Get the new session config
-		sessConfig = experimentConfig.getSessionConfigById(id);
-		// Initialize the experiment (session) and logger
-		sess = Session::create(this, sessConfig);
-		// Print message to log
-		logPrintf("User selected session: %s. Updating now...\n", id);
-		// apply frame lag
-		displayLagFrames = sessConfig->frameDelay;
-
-		// Set a maximum *finite* frame rate
-		float dt = 0;
-		if (sessConfig->frameRate > 0) dt = 1.0f / sessConfig->frameRate;
-		else dt = 1.0f / float(window()->settings().refreshRate);
-		setFrameDuration(dt, GApp::REAL_TIME);
-
-		// Update session drop-down selection
-		m_sessDropDown->setSelectedValue(id);
-
-		// Load (session dependent) fonts
-		hudFont = GFont::fromFile(System::findDataFile(sessConfig->hudFont));
-		m_combatFont = GFont::fromFile(System::findDataFile(sessConfig->combatTextFont));
-
-		// Load the experiment scene if we haven't already (target only)
-		if (sessConfig->sceneName != m_loadedScene) {
-			loadScene(sessConfig->sceneName);
-			m_loadedScene = sessConfig->sceneName;
-		}
-
-		// Check for play mode specific parameters
-		m_fireSound = Sound::create(System::findDataFile(sessConfig->weapon.fireSound));
-		m_explosionSound = Sound::create(System::findDataFile(sessConfig->explosionSound));
-
-		// Update weapon model
-		m_viewModel = ArticulatedModel::create(sessConfig->weapon.modelSpec, "viewModel");
-
-		// Create a series of colored materials to choose from for target health
-		for (int i = 0; i < m_MatTableSize; i++) {
-			float complete = (float)i / m_MatTableSize;
-			Color3 color = sessConfig->targetHealthColors[0] * complete + sessConfig->targetHealthColors[1] * (1.0f - complete);
-			UniversalMaterial::Specification materialSpecification;
-			materialSpecification.setLambertian(Texture::Specification(color));
-			materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-			materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-			m_materials.append(UniversalMaterial::create(materialSpecification));
-		}
-
-		// Player parameters
-		updateMoveRate(sessConfig->moveRate);
+		sessConfig = experimentConfig.getSessionConfigById(id);						// Get the new session config
+		logPrintf("User selected session: %s. Updating now...\n", id);				// Print message to log
+		m_sessDropDown->setSelectedValue(id);										// Update session drop-down selection
+		sess = Session::create(this, sessConfig);									// Create the session
 	}
 	else {
-		// Load the experiment scene if no session is provided
-		if (m_loadedScene == "") {
-			loadScene(experimentConfig.sceneName);
-			m_loadedScene = experimentConfig.sceneName;
-		}
+		sessConfig = SessionConfig::create();										// Create a dummy session
+		sess = Session::create(this);											
 	}
+	   
+	// Apply frame lag
+	displayLagFrames = sessConfig->frameDelay;
+
+	// Set a maximum *finite* frame rate
+	float dt = 0;
+	if (sessConfig->frameRate > 0) dt = 1.0f / sessConfig->frameRate;
+	else dt = 1.0f / float(window()->settings().refreshRate);
+	setFrameDuration(dt, GApp::REAL_TIME);
+
+	// Load (session dependent) fonts
+	hudFont = GFont::fromFile(System::findDataFile(sessConfig->hudFont));
+	m_combatFont = GFont::fromFile(System::findDataFile(sessConfig->combatTextFont));
+
+	// Load the experiment scene if we haven't already (target only)
+	if (sessConfig->sceneName != m_loadedScene) {
+		loadScene(sessConfig->sceneName);
+		m_loadedScene = sessConfig->sceneName;
+	}
+
+	// Check for play mode specific parameters
+	m_fireSound = Sound::create(System::findDataFile(sessConfig->weapon.fireSound));
+	m_explosionSound = Sound::create(System::findDataFile(sessConfig->explosionSound));
+
+	// Update weapon model
+	m_viewModel = ArticulatedModel::create(sessConfig->weapon.modelSpec, "viewModel");
+
+	// Create a series of colored materials to choose from for target health
+	for (int i = 0; i < m_MatTableSize; i++) {
+		float complete = (float)i / m_MatTableSize;
+		Color3 color = sessConfig->targetHealthColors[0] * complete + sessConfig->targetHealthColors[1] * (1.0f - complete);
+		UniversalMaterial::Specification materialSpecification;
+		materialSpecification.setLambertian(Texture::Specification(color));
+		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+		m_materials.append(UniversalMaterial::create(materialSpecification));
+	}
+
+	// Player parameters
+	updateMoveRate(sessConfig->moveRate);
 
 	// Make sure all targets are cleared
 	clearTargets();
@@ -1278,12 +1270,10 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			(reticleTexture->rect2DBounds() * scale - reticleTexture->vector2Bounds() * scale / 2.0f) / 2.0f + rd->viewport().wh() / 2.0f,
 			rd, Color3::green(), reticleTexture);
 
-
-
 		// Draw target health bars
 		if (sessConfig->showTargetHealthBars) {
 			for (auto const& target : targetArray) {
-				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer, 
+				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
 					sessConfig->targetHealthBarSize,
 					sessConfig->targetHealthBarOffset,
 					sessConfig->targetHealthBarBorderSize,
@@ -1306,7 +1296,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		// Paint both sides by the width of latency measuring box.
 		Point2 latencyRect = sessConfig->clickPhotonSize;
 		// weapon ready status
-        if (sessConfig->renderWeaponStatus) {
+		if (sessConfig->renderWeaponStatus) {
 			// Draw the "active" cooldown box
 			if (sessConfig->cooldownMode == "box") {
 				float boxLeft = (float)m_framebuffer->width() * 0.0f;
@@ -1335,23 +1325,23 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 					const float theta = -i * inc;
 					Vector2 center = Vector2(m_framebuffer->width() / 2.0f, m_framebuffer->height() / 2.0f);
 					Array<Vector2> verts = {
-						center + Vector2(oRad*sin(theta), -oRad*cos(theta)),
-						center + Vector2(oRad*sin(theta + inc), -oRad*cos(theta + inc)),
-						center + Vector2(iRad*sin(theta + inc), -iRad*cos(theta + inc)),
-						center + Vector2(iRad*sin(theta), -iRad*cos(theta))
+						center + Vector2(oRad*sin(theta), -oRad * cos(theta)),
+						center + Vector2(oRad*sin(theta + inc), -oRad * cos(theta + inc)),
+						center + Vector2(iRad*sin(theta + inc), -iRad * cos(theta + inc)),
+						center + Vector2(iRad*sin(theta), -iRad * cos(theta))
 					};
 					Draw::poly2D(verts, rd, sessConfig->cooldownColor);
 				}
 			}
-        }
+		}
 
 		// Click to photon latency measuring corner box
 		if (sessConfig->renderClickPhoton) {
 			float boxLeft = 0.0f;
-            if (sessConfig->clickPhotonSide == "right") {
-                // swap side
+			if (sessConfig->clickPhotonSide == "right") {
+				// swap side
 				boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
-            }
+			}
 			// Draw the "active" box
 			Color3 cornerColor = (m_buttonUp) ? sessConfig->clickPhotonColors[0] : sessConfig->clickPhotonColors[1];
 			Draw::rect2D(
@@ -1371,7 +1361,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			// Draw the player health bar
 			if (sessConfig->showPlayerHealthBar) {
 				const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
-				const Point2 location = Point2(sessConfig->playerHealthBarPos.x, sessConfig->playerHealthBarPos.y+m_debugMenuHeight*vscale);
+				const Point2 location = Point2(sessConfig->playerHealthBarPos.x, sessConfig->playerHealthBarPos.y + m_debugMenuHeight * vscale);
 				const Point2 size = sessConfig->playerHealthBarSize;
 				const Point2 border = sessConfig->playerHealthBarBorderSize;
 				const Color4 borderColor = sessConfig->playerHealthBarBorderColor;
@@ -1413,12 +1403,13 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 				hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale * sessConfig->bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
 				hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale * sessConfig->bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 			}
+		}
 
-			String message = sess->getFeedbackMessage();
-			if (!message.empty()) {
-				outputFont->draw2D(rd, message.c_str(),
-					(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-			}
+		// Handle the feedback message
+		String message = sess->getFeedbackMessage();
+		if (!message.empty()) {
+			outputFont->draw2D(rd, message.c_str(),
+				(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
 		}
 
 	} rd->pop2D();
@@ -1663,7 +1654,7 @@ void App::onUserInput(UserInput* ui) {
 	// Require release between clicks for non-autoFire modes
 	if (ui->keyReleased(GKey::LEFT_MOUSE)) {
 		m_buttonUp = true;
-		if (!sessConfig->weapon.autoFire) {
+			if (!sessConfig->weapon.autoFire) {
 			haveReleased = true;
 			fired = false;
 		}

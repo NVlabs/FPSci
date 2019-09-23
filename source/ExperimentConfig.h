@@ -693,7 +693,7 @@ public:
 	}
 };
 
-class FpsConfig {
+class FpsConfig : public ReferenceCountedObject {
 public:
 	int	settingsVersion = 1;					///< Settings version
 	String sceneName = "FPSci Simple Hallway";	///< Scene name
@@ -895,6 +895,10 @@ public:
 		frameRate = 240.0f;
 		frameDelay = 0;
 	};
+
+	static shared_ptr<SessionConfig> create() {
+		return createShared<SessionConfig>();
+	}
 
 	/** Load from Any */
 	SessionConfig(const Any& any) : FpsConfig(any, defaultConfig) {
