@@ -7,7 +7,7 @@
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
 const float App::TARGET_MODEL_ARRAY_OFFSET = 20;
 
-shared_ptr<FpsConfig> SessionConfig::defaultConfig;
+FpsConfig SessionConfig::defaultConfig;
 
 /** global startup config - sets playMode and experiment/user paths */
 StartupConfig startupConfig;

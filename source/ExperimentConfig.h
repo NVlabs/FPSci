@@ -494,14 +494,16 @@ public:
 	float fireSoundVol = 0.5f;											///< Volume for fire sound
 	bool renderModel = false;											///< Render a model for the weapon?
 	Vector3 muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
-	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec
-		filename = "model/sniper/sniper.obj";
-		preprocess = {
-			transformGeometry(all(), Matrix4::yawDegrees(90));
-			transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
-		};
-		scale = 0.25;
-		});
+	ArticulatedModel::Specification modelSpec = ArticulatedModel::Specification(		///< Basic model spec
+		PARSE_ANY(ArticulatedModel::Specification{
+			filename = "model/sniper/sniper.obj";
+			preprocess = {
+				transformGeometry(all(), Matrix4::yawDegrees(90));
+				transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
+			};
+			scale = 0.25;
+		};)
+	);
 	bool renderMuzzleFlash = false;										///< Render a muzzle flash when the weapon fires?
 	bool renderDecals = true;											///< Render decals when the shots miss?
 	bool renderBullets = false;											///< Render bullets leaving the weapon
@@ -755,7 +757,7 @@ public:
 	bool jumpTouch = true;							///< Require the player to be touch a surface to jump?
 	Vector3 playerGravity = Vector3(0.0f, -5.0f, 0.0f);		///< Gravity vector
 
-	WeaponConfig weapon;							///< Weapon to be used
+	WeaponConfig weapon = WeaponConfig();			///< Weapon to be used
 
 	// HUD parameters
 	bool showHUD = false;							///< Master control for all HUD elements
@@ -834,6 +836,18 @@ public:
 	float dummyTargetSize = 0.01f;						///< Size of the dummy target
 	Color3 dummyTargetColor = Color3(1.0, 0.0, 0.0);	///< Default "dummy" target color
 
+	// Constructors
+	FpsConfig(const Any& any) {
+		load(any);
+	}
+
+	FpsConfig(const Any& any, FpsConfig defaultConfig) {
+		*this = defaultConfig;
+		load(any);
+	}
+
+	FpsConfig() {}
+
 	void load(const Any& any) {
 		AnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
@@ -907,18 +921,10 @@ public:
 			break;
 		}
 	}
-	
-	FpsConfig(const Any& any) {
-		load(any);
-	}
-
-	FpsConfig(const Any& any, shared_ptr<FpsConfig> defaultConfig) {
-		*this = *defaultConfig;
-		load(any);
-	}
 
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
+		a["settingsVersion"] = settingsVersion;
 		a["sceneName"] = sceneName;
 		a["frameRate"] = frameRate;
 		a["frameDelay"] = frameDelay;
@@ -983,8 +989,6 @@ public:
 		a["dummyTargetColor"] = dummyTargetColor;
 		return a;
 	}
-
-	FpsConfig() {}
 };
 
 /** Configuration for a session worth of trials */
@@ -993,9 +997,9 @@ public:
 	String id;									///< Session ID
 	String  sessDescription = "training";		///< String indicating whether session is training or real
 	Array<TrialCount> trials;					///< Array of trials (and their counts) to be performed
-	static shared_ptr<FpsConfig> defaultConfig;
+	static FpsConfig defaultConfig;
 
-	SessionConfig() {};
+	SessionConfig() : FpsConfig(defaultConfig) {};
 
 	static shared_ptr<SessionConfig> create() {
 		return createShared<SessionConfig>();
@@ -1066,7 +1070,7 @@ public:
 				throw "At least one target must be specified for the experiment!";
 			}
 			// Get the sessions
-			SessionConfig::defaultConfig = (shared_ptr<FpsConfig>)(this);
+			SessionConfig::defaultConfig = (FpsConfig)(*this);
 			try {
 				reader.get("sessions", sessions);
 			}
@@ -1192,6 +1196,7 @@ public:
 		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, build a default
 			ExperimentConfig ex = ExperimentConfig();
 			ex.toAny().save("experimentconfig.Any");
+			SessionConfig::defaultConfig = (FpsConfig)ex;
 			return ex;
 		}
 		return Any::fromFile(System::findDataFile(filename));

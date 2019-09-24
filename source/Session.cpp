@@ -465,11 +465,13 @@ double Session::weaponCooldownPercent() {
 }
 
 int Session::remainingAmmo() {
+	if (isNull(m_config)) return 100;
 	return m_config->weapon.maxAmmo - m_clickCount;
 }
 
 
 float Session::getRemainingTrialTime() {
+	if (isNull(m_config)) return 10.0;
 	return m_config->taskDuration - m_timer.getTime();
 }
 
