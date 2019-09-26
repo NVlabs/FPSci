@@ -58,6 +58,7 @@ protected:
 	int m_respawnCount		= 0;				///< Number of times to respawn
 	int m_paramIdx			= -1;				///< Parameter index of this item
 	bool m_worldSpace		= false;			///< World space coordiantes?
+	int m_scaleIdx = 0;
 
 	// Only used for flying/jumping entities
 	SimTime m_nextChangeTime = 0;
@@ -71,16 +72,18 @@ public:
 		const String&					name,
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
+		float							scaleIdx,
 		const CFrame&					position,
 		int								paramIdx,
 		Point3							offset=Point3::zero(),
 		int								respawns=0);
 
-	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount=0) {
+	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount=0, int scaleIdx=0) {
 		setDestinations(dests);
 		m_offset = staticOffset;
 		m_respawnCount = respawnCount;
 		m_paramIdx = paramIdx;
+		m_scaleIdx = scaleIdx;
 		destinationIdx = 0;
 	}
 
@@ -108,6 +111,10 @@ public:
 
 	void resetMotionParams() {
 		m_nextChangeTime = 0;
+	}
+
+	int scaleIndex() {
+		return m_scaleIdx;
 	}
 
 	/** Getter for health */
@@ -148,7 +155,7 @@ protected:
 
 	void init();
 
-	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter, int paramIdx, int respawns = 0);
+	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter, int paramIdx, int respawns = 0, int scaleIdx=0);
 
 public:
 
@@ -183,6 +190,7 @@ public:
 	(const String&						name,
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
+		int								scaleIdx,
 		const CFrame&					position,
 		const Vector2&				    speedRange,
 		const Vector2&					motionChangePeriodRange,
@@ -267,7 +275,8 @@ protected:
 		Point3 orbitCenter,
 		float orbitRadius,
 		int paramIdx,
-		int respawns = 0
+		int respawns = 0,
+		int scaleIdx=0
 	);
 
 public:
@@ -292,6 +301,7 @@ public:
 	(const String&						name,
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
+		int								scaleIdx,
 		const CFrame&					position,
         const Vector2&					speedRange,
         const Vector2&					motionChangePeriodRange,

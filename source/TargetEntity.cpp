@@ -29,6 +29,7 @@ shared_ptr<TargetEntity> TargetEntity::create(
 	const String&					name,
 	Scene*							scene,
 	const shared_ptr<Model>&		model,
+	float							scale,
 	const CFrame&					position,
 	int								paramIdx,
 	Point3							offset,
@@ -37,7 +38,7 @@ shared_ptr<TargetEntity> TargetEntity::create(
 	const shared_ptr<TargetEntity>& target = createShared<TargetEntity>();
 	target->Entity::init(name, scene, CFrame(dests[0].position), shared_ptr<Entity::Track>(), true, true);
 	target->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	target->TargetEntity::init(dests, paramIdx, offset, respawns);
+	target->TargetEntity::init(dests, paramIdx, offset, respawns, scale);
 	return target;
 }
 
@@ -159,6 +160,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 (const String&                           name,
 	Scene*                                  scene,
 	const shared_ptr<Model>&                model,
+	int										scaleIdx,
 	const CFrame&                           position,
 	const Vector2&                          speedRange,
 	const Vector2&                          motionChangePeriodRange,
@@ -172,7 +174,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	// Initialize each base class, which parses its own fields
 	flyingEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
 	flyingEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, orbitCenter, paramIdx, respawns);
+	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, orbitCenter, paramIdx, respawns, scaleIdx);
 
 	return flyingEntity;
 }
@@ -188,12 +190,13 @@ void FlyingEntity::init() {
 }
 
 
-void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter, int paramIdx, int respawns) {
+void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter, int paramIdx, int respawns, int scaleIdx) {
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
 	m_orbitCenter = orbitCenter;
 	m_paramIdx = paramIdx;
 	m_respawnCount = respawns;
+	m_scaleIdx = scaleIdx;
 }
 
 void FlyingEntity::setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter) {
@@ -377,6 +380,7 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 (const String&                           name,
 	Scene*                                  scene,
 	const shared_ptr<Model>&                model,
+	int										scaleIdx,
 	const CFrame&                           position,
     const Vector2&                          angularSpeedRange,
     const Vector2&                          motionChangePeriodRange,
@@ -405,7 +409,8 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 		orbitCenter,
 		orbitRadius,
 		paramIdx,
-		respawns);
+		respawns,
+		scaleIdx);
 
 	return jumpingEntity;
 }
@@ -430,7 +435,8 @@ void JumpingEntity::init(
 	Point3 orbitCenter,
 	float orbitRadius,
 	int paramIdx,
-	int respawns)
+	int respawns,
+	int scaleIdx)
 {
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
@@ -441,6 +447,7 @@ void JumpingEntity::init(
 	m_orbitCenter = orbitCenter;
 	m_respawnCount = respawns;
 	m_paramIdx = paramIdx;
+	m_scaleIdx = scaleIdx;
 
 	m_orbitRadius = orbitRadius;
 	float angularSpeed = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);

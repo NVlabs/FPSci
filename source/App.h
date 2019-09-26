@@ -114,7 +114,6 @@ protected:
 	shared_ptr<ArticulatedModel>	m_decalModel;						///< Model for the miss decal
 	shared_ptr<VisibleEntity>		m_lastDecal;						///< Model for the last decal we created
 	shared_ptr<VisibleEntity>		m_firstDecal;						///< Model for the first decal we created
-	shared_ptr<ArticulatedModel>	m_explosionModel;					///< Model for target destroyed animation
 	shared_ptr<VisibleEntity>		m_explosion;						///< Model for target destroyed decal
 	RealTime						m_explosionEndTime;					///< Time for end of explosion
 		
@@ -155,6 +154,8 @@ protected:
 	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
 	//Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_targetModels;
+	Array<shared_ptr<ArticulatedModel>> m_explosionModels;
+
 	const int m_modelScaleCount = 30;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */

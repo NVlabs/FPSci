@@ -240,7 +240,7 @@ shared_ptr<TargetEntity> App::spawnDestTarget(const Point3 position, Array<Desti
 	// Create the target
 	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], CFrame(), paramIdx, position, respawns);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], scaleIndex, CFrame(), paramIdx, position, respawns);
 
 	// Setup the texture
 	UniversalMaterial::Specification materialSpecification;
@@ -281,6 +281,7 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 		nameStr,
 		scene().get(),
 		m_targetModels[id][scaleIndex],
+		scaleIndex,
 		CFrame(),
 		speedRange,
 		motionChangePeriodRange,
@@ -329,6 +330,7 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 		nameStr,
 		scene().get(),
 		m_targetModels[id][scaleIndex],
+		scaleIndex,
 		CFrame(),
 		speedRange,
 		motionChangePeriodRange,
@@ -389,22 +391,6 @@ void App::loadModels() {
 
 	m_decalModel = ArticulatedModel::create(decalSpec, "decalModel");
 
-	const static Any explosionSpec = PARSE_ANY(ArticulatedModel::Specification{
-		filename = "ifs/square.ifs";
-		preprocess = {
-			transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
-			//scaleAndOffsetTexCoord0(all(), 0.0769, 0);
-			setMaterial(all(), UniversalMaterial::Specification{
-				lambertian = Texture::Specification {
-					//filename = "explosion_01_strip13.png";
-					filename = "explosion_01.png";
-					encoding = Color3(1, 1, 1);
-				};
-			});
-		}; });
-
-	m_explosionModel = ArticulatedModel::create(explosionSpec, "explosionModel");
-
 	// Add all the unqiue targets to this list
 	Table<String, Any> toBuild;
 	for (TargetConfig target : experimentConfig.targets) {
@@ -424,6 +410,27 @@ void App::loadModels() {
 		};
 		scale = 0.25;
 	}));
+
+	// Setup the explosion specification
+	Any explosionSpec = PARSE_ANY(ArticulatedModel::Specification{
+		filename = "ifs/square.ifs";
+		preprocess = {
+			transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
+			//scaleAndOffsetTexCoord0(all(), 0.0769, 0);
+			setMaterial(all(), UniversalMaterial::Specification{
+				lambertian = Texture::Specification {
+					//filename = "explosion_01_strip13.png";
+					filename = "explosion_01.png";
+					encoding = Color3(1, 1, 1);
+				};
+			});
+		}; 
+	});
+	for (int i = 0; i < m_modelScaleCount; i++) {
+		const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
+		explosionSpec.set("scale", scale*20.0f);
+		m_explosionModels.push(ArticulatedModel::create(explosionSpec));
+	}
 
 	// Scale the models into the m_targetModel table
 	for (String id : toBuild.getKeys()) {
@@ -1492,7 +1499,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 				// create explosion animation
 				CFrame explosionFrame = targetArray[closestIndex]->frame();
 				explosionFrame.rotation = activeCamera()->frame().rotation;
-				const shared_ptr<VisibleEntity>& newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModel, explosionFrame);
+				const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModels[target->scaleIndex()], explosionFrame);
 				scene()->insert(newExplosion);
 				m_explosion = newExplosion;
 				m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
