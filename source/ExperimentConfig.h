@@ -1144,7 +1144,7 @@ public:
 				p.add("targetFrameRate", sessions[sessionIndex].frameRate);
 				p.add("targetFrameLag", (float)sessions[sessionIndex].frameDelay);
 				p.add("minVisualSize", target->visualSize[0]);
-				p.add("maxVisualSize", target->visualSize[0]);
+				p.add("maxVisualSize", target->visualSize[1]);
 				p.add("minMotionChangePeriod", target->motionChangePeriod[0]);
 				p.add("maxMotionChangePeriod", target->motionChangePeriod[1]);
 				p.add("minSpeed", target->speed[0]);
