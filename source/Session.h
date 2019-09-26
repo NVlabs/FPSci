@@ -73,20 +73,15 @@ protected:
 	String m_taskStartTime;								///< Recorded task start timestamp							
 	String m_taskEndTime;								///< Recorded task end timestamp
 	double m_totalRemainingTime = 0;					///< Time remaining in the trial
-	//double m_lastMotionChangeAt;
 	double m_scoreboardDuration = 10.0;					///< Show the score for at least this amount of seconds.
 	double m_lastFireAt = 0.f;							///< Time of the last shot
 	Timer m_timer;										///< Timer used for timing tasks	
 	// Could move timer above to stopwatch in future
 	//Stopwatch stopwatch;			
 
-	// User parameters
-	const float m_userSpawnDistance = 0.0f;				///< Where the user is spawned (in the axis of the target)
-
 	// Target parameters
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
-	//Color3 m_targetColor = Color3::red();				///< Target color
-
+	
 	// Reported data storage
 	Array<Array<String>> m_playerActions;				///< Storage for player action (hit, miss, aim)
 	Array<Array<String>> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
@@ -108,6 +103,8 @@ protected:
 	}
 
 public:
+	float initialHeadingRadians = 0.0f;
+
 	static shared_ptr<Session> create(App* app) {
 		return createShared<Session>(app);
 	}

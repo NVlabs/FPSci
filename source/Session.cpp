@@ -100,7 +100,7 @@ float Session::randSign() {
 }
 
 void Session::randomizePosition(shared_ptr<TargetEntity> target) {
-	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
+	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation;
 
 	Param tParam = m_trialParams[m_currTrialIdx][target->paramIdx()];
 	bool isWorldSpace = tParam.str["destSpace"] == "world";
@@ -122,8 +122,9 @@ void Session::randomizePosition(shared_ptr<TargetEntity> target) {
 void Session::initTargetAnimation() {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
-	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
-	CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, 0.0f, 0.0f, 0.0f);
+	//static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
+	const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation;
+	CFrame f = CFrame::fromXYZYPRRadians(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians, 0.0f, 0.0f);
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (presentationState == PresentationState::task) {
@@ -134,7 +135,7 @@ void Session::initTargetAnimation() {
 			float visualSize = G3D::Random().common().uniform(target.val["minVisualSize"], target.val["maxVisualSize"]);
 			bool isWorldSpace = target.str["destSpace"] == "world";
 
-			f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw, rot_pitch, 0.0f);
+			CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw- (initialHeadingRadians * 180 / pi()), rot_pitch, 0.0f);
 
 			// Check for case w/ destination array
 			if (target.val["destCount"] > 0.0) {
@@ -273,7 +274,6 @@ void Session::updatePresentationState()
 	{
 		if (stateElapsedTime > m_config->readyDuration)
 		{
-			//m_lastMotionChangeAt = 0;
 			newState = PresentationState::task;
 		}
 	}
@@ -396,7 +396,7 @@ void Session::accumulateTrajectories()
 	for (shared_ptr<TargetEntity> target : m_app->targetArray) {
 		// recording target trajectories
 		Point3 targetAbsolutePosition = target->frame().translation;
-		Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
+		Point3 initialSpawnPos = m_app->activeCamera()->frame().translation;
 		Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
 
 		//// below for 2D direction calculation (azimuth and elevation)

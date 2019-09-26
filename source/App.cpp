@@ -850,7 +850,7 @@ void App::updateSession(String id) {
 		sessConfig = SessionConfig::create();										// Create a dummy session
 		sess = Session::create(this);											
 	}
-	   
+	
 	// Apply frame lag
 	displayLagFrames = sessConfig->frameDelay;
 
@@ -889,6 +889,7 @@ void App::updateSession(String id) {
 	}
 
 	// Player parameters
+	sess->initialHeadingRadians = scene()->typedEntity<PlayerEntity>("player")->heading();
 	updateMoveRate(sessConfig->moveRate);
 
 	// Make sure all targets are cleared

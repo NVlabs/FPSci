@@ -54,7 +54,7 @@ shared_ptr<Entity> PlayerEntity::create
 void PlayerEntity::init(AnyTableReader& propertyTable) {
    // Get values from Any
     Vector3 v;
-	float heading = m_heading;
+	float heading = m_headingRadians;
     propertyTable.getIfPresent("heading", heading);
     Sphere s(1.5f);
     propertyTable.getIfPresent("collisionSphere", s);
@@ -83,7 +83,7 @@ void PlayerEntity::init(const Vector3& velocity, const Sphere& collisionProxy, f
     m_desiredOSVelocity     = Vector3::zero();
     m_desiredYawVelocity    = 0;
     m_desiredPitchVelocity  = 0;
-    m_heading               = heading;
+    m_headingRadians               = heading;
     m_headTilt              = 0;
 }
 
@@ -99,7 +99,7 @@ float PlayerEntity::health() {
 Any PlayerEntity::toAny(const bool forceAll) const {
     Any a = VisibleEntity::toAny(forceAll);
     a.setName("PlayerEntity");
-    a["heading"] = m_heading;
+    a["heading"] = m_headingRadians;
     a["collisionSphere"] = m_collisionProxySphere;
     return a;
 }
@@ -118,9 +118,9 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
     if (! isNaN(deltaTime)) {
         m_inContact = slideMove(deltaTime);
-		m_heading += m_desiredYawVelocity;	// *(float)deltaTime;		// Don't scale by time here
-		m_heading = mod1(m_heading / (2 * pif())) * 2 * pif();
-        m_frame.rotation     = Matrix3::fromAxisAngle(Vector3::unitY(), -m_heading);
+		m_headingRadians += m_desiredYawVelocity;	// *(float)deltaTime;		// Don't scale by time here
+		m_headingRadians = mod1(m_headingRadians / (2 * pif())) * 2 * pif();
+        m_frame.rotation     = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians);
         m_headTilt = clamp(m_headTilt - m_desiredPitchVelocity, -80 * units::degrees(), 80 * units::degrees());
     }
 }

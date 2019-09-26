@@ -15,7 +15,7 @@ protected:
     float           m_desiredPitchVelocity;
 
     // Radians
-    float           m_heading = 0.0f;
+    float           m_headingRadians = 0.0f;
     /** Unused for rendering, for use by a fps cam. */
     float           m_headTilt;
 
@@ -87,6 +87,10 @@ public:
 
 	float health(void);
 	bool doDamage(float damage);
+
+	float heading() {
+		return m_headingRadians;
+	}
 
     /** For deserialization from Any / loading from file */
     static shared_ptr<Entity> create 

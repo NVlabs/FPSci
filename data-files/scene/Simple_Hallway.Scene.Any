@@ -18,6 +18,7 @@
 		player = PlayerEntity {
             model = "playerModel";
             frame = Point3(47.522999, -2.3549, -0.35916	);
+			heading = -1.5707963267948966192313216916398;
         };
 		
 		camera = Camera {
