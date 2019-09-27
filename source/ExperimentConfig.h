@@ -692,8 +692,9 @@ public:
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */
 class TrialCount {
 public:
-	Array<String> ids;		///< Trial ID list
-	int count = 0;			///< Count of trials to be performed
+	Array<String> ids;			///< Trial ID list
+	int count = 0;				///< Count of trials to be performed
+	static int defaultCount;	///< Default count to use
 
 	TrialCount() {};
 
@@ -703,6 +704,7 @@ public:
 		AnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
 
+
 		switch (settingsVersion) {
 		case 1:
 			try {
@@ -711,12 +713,15 @@ public:
 			catch (Any::KeyNotFound e) {
 				throw "An \"ids\" field must be provided for each set of trials!";
 			}
-			try {
-				reader.get("count", count);
+			if (!reader.getIfPresent("count", count)) {
+				count = defaultCount;
 			}
-			catch (Any::KeyNotFound e) {
-				throw "A \"count\" field must be provided for each set of trials!";
-			}
+			//try {
+			//	reader.get("count", count);
+			//}
+			//catch (Any::KeyNotFound e) {
+			//	throw "A \"count\" field must be provided for each set of trials!";
+			//}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -746,6 +751,9 @@ public:
 	float readyDuration = 0.5f;						///< Time in ready state in seconds
 	float taskDuration = 100000.0f;					///< Maximum time spent in any one task
 	float feedbackDuration = 1.0f;					///< Time in feedback state in seconds
+
+	// Trial count
+	int defaultTrialCount = 5;						///< Default trial count
 
 	// View parameters
 	float hFoV = 103.0f;							///< Field of view (horizontal) for the user
@@ -803,7 +811,7 @@ public:
 	Color4 cooldownColor = Color4(1.0f, 1.0f, 1.0f, 0.75f);					///< Cooldown ring color when active (transparent when inactive)
 
 	// Target health bars
-	Array<Color3> targetHealthColors = {			///< Target start/end color (based on target health)
+	Array<Color3> targetHealthColors = {									///< Target start/end color (based on target health)
 		Color3(0.0, 1.0, 0.0),
 		Color3(1.0, 0.0, 0.0)
 	};
@@ -833,8 +841,8 @@ public:
 	float combatTextTimeout = 0.5f;								///< Time for combat text to disappear (in seconds)
 
 	// Dummy target
-	float dummyTargetSize = 0.01f;						///< Size of the dummy target
-	Color3 dummyTargetColor = Color3(1.0, 0.0, 0.0);	///< Default "dummy" target color
+	float dummyTargetSize = 0.01f;								///< Size of the dummy target
+	Color3 dummyTargetColor = Color3(1.0, 0.0, 0.0);			///< Default "dummy" target color
 
 	// Constructors
 	FpsConfig(const Any& any) {
@@ -859,6 +867,7 @@ public:
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
+			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
 			reader.getIfPresent("horizontalFieldOfView", hFoV);
 			reader.getIfPresent("moveRate", moveRate);
 			reader.getIfPresent("playerHeight", playerHeight);
@@ -931,6 +940,7 @@ public:
 		a["feedbackDuration"] = feedbackDuration;
 		a["readyDuration"] = readyDuration;
 		a["taskDuration"] = taskDuration;
+		a["defaultTrialCount"] = defaultTrialCount;
 		a["horizontalFieldOfView"] = hFoV;
 		a["moveRate"] = moveRate;
 		a["playerHeight"] = playerHeight;
@@ -1007,6 +1017,7 @@ public:
 
 	/** Load from Any */
 	SessionConfig(const Any& any) : FpsConfig(any, defaultConfig) {
+		TrialCount::defaultCount = defaultTrialCount;
 		AnyTableReader reader(any);
 		switch (settingsVersion) {
 		case 1:

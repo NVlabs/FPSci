@@ -8,6 +8,7 @@ const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
 const float App::TARGET_MODEL_ARRAY_OFFSET = 20;
 
 FpsConfig SessionConfig::defaultConfig;
+int TrialCount::defaultCount;
 
 /** global startup config - sets playMode and experiment/user paths */
 StartupConfig startupConfig;
