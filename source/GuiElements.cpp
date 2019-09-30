@@ -211,29 +211,17 @@ RenderControls::RenderControls(FpsConfig config, bool drawFps, bool turbo, int r
 	}pane->endRow();
 	pane->beginRow(); {
 		auto c = pane->addNumberBox("Framerate", &frameRate);//Pointer<float>(
-			//[&]() { return 1.0f / float(m_app->realTimeTargetDuration()); },
-			//[&](float f) {
-			//// convert to seconds from fps
-			//f = 1.0f / f;
-			//const float current = (float)m_app->realTimeTargetDuration();
-			//if (abs(f - current) > 1e-5f) {
-			//	// Only set when there is a change, otherwise the simulation's deltas are confused.
-			//	m_app->setFrameDuration(f, GApp::REAL_TIME);
-			//}}), "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f);
 		c->setWidth(width*0.95f);
 	} pane->endRow();
 	pane->beginRow(); {
-		//auto  c = pane->addNumberBox("Display Lag", &m_app->displayLagFrames, "f", GuiTheme::LINEAR_SLIDER, 0, 60);
 		auto c = pane->addNumberBox("Display Lag", &frameDelay, "f", GuiTheme::LINEAR_SLIDER, 0, 60);
 		c->setWidth(width*0.95f);
 	}pane->endRow();
 	pane->beginRow(); {
-		//auto c = pane->addNumberBox("Reticle", &m_app->reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, m_app->numReticles, 1);
 		auto c = pane->addNumberBox("Reticle", &reticleIdx, "", GuiTheme::LINEAR_SLIDER, 0, numReticles, 1);
 		c->setWidth(width*0.95f);
 	}
 	pane->beginRow();{
-		//auto c = pane->addNumberBox("Brightness", &m_app->sceneBrightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f);
 		auto c = pane->addNumberBox("Brightness", &brightness, "x", GuiTheme::LOG_SLIDER, 0.01f, 2.0f);
 		c->setWidth(width*0.95f);
 	} pane->endRow();
