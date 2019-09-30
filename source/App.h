@@ -339,7 +339,7 @@ public:
 	void markSessComplete(String id);
 	void updateSessionPress(void);
 	void updateSession(String id);
-	void presentQuestion(Question question, String title="Feedback");
+	void presentQuestion(Question question);
 
 	String getDropDownUserId(void);
 	shared_ptr<UserConfig> getCurrUser(void);

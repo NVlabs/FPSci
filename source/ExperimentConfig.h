@@ -747,6 +747,7 @@ public:
 	Type type = Type::None;
 	String prompt = "";
 	Array<String> options;
+	String title = "Feedback";
 	String result = "";
 
 	Question() {};
@@ -782,7 +783,7 @@ public:
 			if(!reader.getIfPresent("prompt", prompt)){
 				throw "A \prompt\" field must be provided with every question!";
 			}
- 
+			reader.getIfPresent("title", title);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in Question.\n", settingsVersion);

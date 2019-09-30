@@ -827,13 +827,13 @@ String App::getDropDownUserId(void) {
 	return m_userDropDown->get(m_ddCurrentUser);
 }
 
-void App::presentQuestion(Question question, String title) {
+void App::presentQuestion(Question question) {
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
-		dialog = SelectionDialog::create(question.prompt, question.options, theme, title);
+		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title);
 		break;
 	case Question::Type::Entry:
-		dialog = TextEntryDialog::create(question.prompt, theme, title);
+		dialog = TextEntryDialog::create(question.prompt, theme, question.title);
 		break;
 	default:
 		throw "Unknown question type!";
