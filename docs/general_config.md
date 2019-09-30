@@ -70,6 +70,37 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 "playerGravity": Vector3(0.0, -5.0, 0.0),   // Player gravity
 ```
 
+## Feedback Questions
+In addition to supporting in-app performance-based reporting the application also includes `.Any` configurable prompts that can be configured from the experiment or session level. Currently `MultipleChoice` and (text) `Entry` questions are supported, though more support could be added for other question types.
+
+Questions are configured on a per experiment/session basis using the `questions` array within the general config parameters. Each element of the `questions` array specifies the following:
+
+| Parameter Name        | Units | Description                                                                      |
+|-----------------------|-------|----------------------------------------------------------------------------------|
+|`type`                 |N/A    | The question type (required), can be `"MultipleChoice"` or (text) `"Entry"`      |
+|`prompt`               |N/A    | The question prompt (required), a string to present the user with                |
+|`title`                |N/A    | The title for the feedback prompt                                                |
+|`options`              |Array<String>| An array of `String` options for `MultipleChoice` questions only           |
+
+The user can specify one or more questions using the `questions` array, as demonstrated below.
+
+```
+"questions" : [
+    {
+        "type": "Entry",
+        "prompt": "Write some text!",
+        "title": "Example text entry"
+    },
+    {
+        "type": "MultipleChoice",
+        "prompt": "Choose an option!",
+        "options": ["A", "B", "C"]
+    }
+]
+```
+
+Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log.
+
 ## HUD settings
 | Parameter Name        |Units| Description                                                                        |
 |-----------------------|-----|------------------------------------------------------------------------------------|
