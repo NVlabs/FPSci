@@ -482,12 +482,12 @@ void App::makeGUI() {
 	this->addWidget(m_waypointWindow);
 
 	// Setup the player control
-	m_playerWindow = PlayerControls::create(this, theme);
+	m_playerWindow = PlayerControls::create((FpsConfig)experimentConfig, std::bind(&App::exportScene, this), theme);
 	m_playerWindow->setVisible(false);
 	this->addWidget(m_playerWindow);
 
 	// Setup the render control
-	m_renderWindow = RenderControls::create(this, theme);
+	m_renderWindow = RenderControls::create((FpsConfig)experimentConfig, renderFPS, emergencyTurbo, reticleIndex, numReticles, sceneBrightness, theme);
 	m_renderWindow->setVisible(false);
 	this->addWidget(m_renderWindow);
 
@@ -1085,6 +1085,28 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// Handle developer mode features here
 	if (!startupConfig.playMode) {
+		// Copy over dynamic elements
+		sessConfig->playerHeight = m_playerWindow->playerHeight;
+		sessConfig->crouchHeight = m_playerWindow->crouchHeight;
+		sessConfig->moveRate = m_playerWindow->moveRate;
+
+		sessConfig->showHUD = m_renderWindow->showHud;
+		sessConfig->weapon.renderModel = m_renderWindow->showWeapon;
+		sessConfig->weapon.renderBullets = m_renderWindow->showBullets;
+		
+		renderFPS = m_renderWindow->showFps;
+		emergencyTurbo = m_renderWindow->turboMode;
+
+		sessConfig->frameRate = m_renderWindow->frameRate;
+		float dt = 0;
+		if (sessConfig->frameRate > 0) dt = 1.0f / sessConfig->frameRate;
+		else dt = 1.0f / float(window()->settings().refreshRate);
+		setFrameDuration(dt, GApp::REAL_TIME);
+		displayLagFrames = m_renderWindow->frameDelay;
+
+		reticleIndex = m_renderWindow->reticleIdx;
+		sceneBrightness = m_renderWindow->brightness;
+
 		// Handle highlighting for selected target
 		int selIdx = m_waypointWindow->getSelected();
 		if (selIdx >= 0) {

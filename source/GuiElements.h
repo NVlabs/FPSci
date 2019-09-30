@@ -1,5 +1,6 @@
 #pragma once
 #include <G3D/G3D.h>
+#include "ExperimentConfig.h"
 #include "TargetEntity.h"
 
 class App;
@@ -69,17 +70,32 @@ public:
 
 class PlayerControls : public GuiWindow {
 protected:
-	App *m_app;
-	PlayerControls(App *app, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
+	PlayerControls(FpsConfig config, std::function<void()> exportCallback,
+		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
 
 public:
-	static shared_ptr<PlayerControls> create(App* app, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
+	float playerHeight;
+	float crouchHeight;
+	float moveRate;
+	GuiControl::Callback exportScene;
+	static shared_ptr<PlayerControls> create(FpsConfig config, std::function<void()> exportCallback,
+		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
 };
 
 class RenderControls : public GuiWindow {
 protected:
-	App *m_app;
-	RenderControls(App* app, const shared_ptr<GuiTheme>& theme, float width=400.0f, float height=10.0f);
+	RenderControls(FpsConfig config, bool drawFps, bool turbo, int reticleIdx, int numReticles, float brightness,
+		const shared_ptr<GuiTheme>& theme, float width=400.0f, float height=10.0f);
 public:
-	static shared_ptr<RenderControls> create(App* app, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
+	bool showBullets;
+	bool showWeapon;
+	bool showHud;
+	bool showFps;
+	bool turboMode;
+	float frameRate;
+	int frameDelay;
+	int reticleIdx;
+	float brightness;
+	static shared_ptr<RenderControls> create(FpsConfig config, bool drawFps, bool turbo, int reticleIdx, int numReticles, float brightness,
+		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
 };

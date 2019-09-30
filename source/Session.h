@@ -36,7 +36,6 @@
 
 class App;
 
-
 // Simple timer for measuring time offsets
 class Timer
 {

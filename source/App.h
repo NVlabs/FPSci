@@ -219,7 +219,7 @@ public:
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
-	shared_ptr<SessionConfig>		sessConfig = nullptr;			///< Current session config
+	shared_ptr<SessionConfig>		sessConfig = SessionConfig::create();			///< Current session config
 
 
 	shared_ptr<Session> sess;										///< Pointer to the experiment
