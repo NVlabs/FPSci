@@ -292,13 +292,36 @@ void Session::updatePresentationState()
 		if ((stateElapsedTime > m_config->feedbackDuration) && (remainingTargets <= 0))
 		{
 			if (isComplete()) {
-				m_logger->closeResultsFile();																// Close the current results file
-				m_app->markSessComplete(String(m_trialParams[m_currTrialIdx][0].str["sessionID"]));			// Add this session to user's completed sessions
-				m_app->updateSessionDropDown();
+				// Pop up dialog here if we need to
+				if (m_config->questions.size() > 0 && m_currQuestionIdx < m_config->questions.size()) {
+					if (m_currQuestionIdx == -1){
+						m_currQuestionIdx = 0;
+						m_app->presentQuestion(m_config->questions[m_currQuestionIdx]);
+					}
+					else if (!m_app->dialog->visible()) {		// Check for whether dialog is closed (otherwise we are waiting for input)
+						if (m_app->dialog->complete) {
+							String result = m_app->dialog->result;										// TODO: Log result here...
+							m_currQuestionIdx++;				// Present the next question (if there is one)
+							if (m_currQuestionIdx < m_config->questions.size()) {
+								m_app->presentQuestion(m_config->questions[m_currQuestionIdx]);
+							}
+						}
+						else {
+							// Relaunch the same dialog (this wasn't completed)
+							m_app->presentQuestion(m_config->questions[m_currQuestionIdx]);
+						}
+					}
+				}
+				else {
+					m_logger->closeResultsFile();																// Close the current results file
+					m_app->markSessComplete(String(m_trialParams[m_currTrialIdx][0].str["sessionID"]));			// Add this session to user's completed sessions
+					m_app->updateSessionDropDown();
 
-				int score = int(m_totalRemainingTime);
-				m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
-				newState = PresentationState::scoreboard;
+					int score = int(m_totalRemainingTime);
+					m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
+					m_currQuestionIdx = -1;
+					newState = PresentationState::scoreboard;
+				}
 			}
 			else {
 				m_feedbackMessage = "";

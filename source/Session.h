@@ -32,6 +32,7 @@
 #include "ExperimentConfig.h"
 #include "sqlHelpers.h"
 #include "Logger.h"
+#include "Dialogs.h"
 #include <ctime>
 
 class App;
@@ -64,6 +65,7 @@ protected:
 	String m_feedbackMessage;							///< Message to show when trial complete
 
 	int m_currTrialIdx;									///< Current trial
+	int m_currQuestionIdx = -1;							///< Current question index
 	Array<int> m_remaining;								///< Completed flags
 	Array<Array<Param>> m_trialParams;					///< Trial (target) parameters
 

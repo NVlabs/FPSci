@@ -191,8 +191,6 @@ protected:
     shared_ptr<GuiWindow>           m_userSettingsWindow;
     bool                            m_userSettingsMode = true;
 
-	bool							m_crouched = false;
-
 	/** Called from onInit */
 	void makeGUI();
 	void loadModels();
@@ -207,6 +205,7 @@ public:
 	Array<shared_ptr<GFont>>		floatingCombatText;				///< Floating combat text array
 	shared_ptr<Texture>             reticleTexture;					///< Texture used for reticle
 	shared_ptr<Texture>             hudTexture;						///< Texture used for HUD
+	shared_ptr<GuiTheme>			theme;	
 	bool                            emergencyTurbo = false;			///< Lower rendering quality to improve performance
 
 	App(const GApp::Settings& settings = GApp::Settings());
@@ -220,6 +219,7 @@ public:
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
 	shared_ptr<SessionConfig>		sessConfig = SessionConfig::create();			///< Current session config
+	shared_ptr<G3Dialog>			dialog;							///< Dialog box
 
 
 	shared_ptr<Session> sess;										///< Pointer to the experiment
@@ -339,6 +339,7 @@ public:
 	void markSessComplete(String id);
 	void updateSessionPress(void);
 	void updateSession(String id);
+	void presentQuestion(Question question, String title="Feedback");
 
 	String getDropDownUserId(void);
 	shared_ptr<UserConfig> getCurrUser(void);

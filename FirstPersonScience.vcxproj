@@ -142,6 +142,7 @@
     <ClInclude Include="source\sqlHelpers.h" />
     <ClInclude Include="source\TargetEntity.h" />
     <ClInclude Include="source\GuiElements.h" />
+    <ClInclude Include="source\Dialogs.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp" />

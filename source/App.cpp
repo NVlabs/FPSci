@@ -473,7 +473,7 @@ void App::makeGUI() {
 	developerWindow->cameraControlWindow->setVisible(!startupConfig.playMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
 
-	shared_ptr<GuiTheme> theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
+	theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
 
 	// Setup the waypoint config/display
 	WaypointDisplayConfig config = WaypointDisplayConfig();
@@ -825,6 +825,22 @@ String App::getDropDownSessId(void) {
 
 String App::getDropDownUserId(void) {
 	return m_userDropDown->get(m_ddCurrentUser);
+}
+
+void App::presentQuestion(Question question, String title) {
+	switch (question.type) {
+	case Question::Type::MultipleChoice:
+		dialog = SelectionDialog::create(question.prompt, question.options, theme, title);
+		break;
+	case Question::Type::Entry:
+		dialog = TextEntryDialog::create(question.prompt, theme, title);
+		break;
+	default:
+		throw "Unknown question type!";
+		break;
+	}
+	this->addWidget(dialog);
+	openUserSettingsWindow();
 }
 
 void App::markSessComplete(String sessId) {

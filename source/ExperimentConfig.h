@@ -737,6 +737,61 @@ public:
 	}
 };
 
+class Question {
+public:
+	enum Type {
+		None,
+		MultipleChoice,
+		Entry
+	};
+	Type type = Type::None;
+	String prompt = "";
+	Array<String> options;
+	String result = "";
+
+	Question() {};
+
+	Question(const Any& any) {
+		int settingsVersion = 1;
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		String typeStr;
+
+		switch (settingsVersion) {
+		case 1:
+			// Get the question type
+			if (!reader.getIfPresent("type", typeStr)) {
+				throw "A \"type\" field must be provided with every question!";
+			}
+			// Pase the type and get options for multiple choice
+			if (!typeStr.compare("MultipleChoice")) {
+				type = Type::MultipleChoice;
+				if (!reader.getIfPresent("options", options)) {
+					throw "An \"options\" Array must be specified with \"MultipleChoice\" style questions!";
+				}
+			}
+			else if (!typeStr.compare("Entry")) {
+				type = Type::Entry;
+			}
+			else {
+				throw format("Unrecognized question \"type\" String \"%s\". Valid options are \"MultipleChoice\" or \"Entry\"", typeStr);
+			}
+
+			// Get the question prompt
+			if(!reader.getIfPresent("prompt", prompt)){
+				throw "A \prompt\" field must be provided with every question!";
+			}
+ 
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in Question.\n", settingsVersion);
+			break;
+		}
+	}
+
+};
+
 class FpsConfig : public ReferenceCountedObject {
 public:
 	int	settingsVersion = 1;						///< Settings version
@@ -844,6 +899,9 @@ public:
 	float dummyTargetSize = 0.01f;								///< Size of the dummy target
 	Color3 dummyTargetColor = Color3(1.0, 0.0, 0.0);			///< Default "dummy" target color
 
+	// Questions
+	Array<Question> questions;
+
 	// Constructors
 	FpsConfig(const Any& any) {
 		load(any);
@@ -924,6 +982,7 @@ public:
 			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
 			reader.getIfPresent("dummyTargetSize", dummyTargetSize);
 			reader.getIfPresent("dummyTargetColor", dummyTargetColor);
+			reader.getIfPresent("questions", questions);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in FpsConfig.\n", settingsVersion);
