@@ -99,15 +99,18 @@ protected:
 	{
 		GuiPane *pane = GuiWindow::pane();
 		pane->beginRow(); {
-			pane->addLabel(m_prompt, G3D::GFont::XALIGN_CENTER);
+			auto l = pane->addLabel(m_prompt);
+			l->setSize(size[0], 50.0f);
 		} pane->endRow();
 
 		pane->beginRow(); {
-			pane->addMultiLineTextBox("", &result);
+			auto textBox = pane->addMultiLineTextBox("", &result);
+			textBox->setSize(size[0], size[1] - 100.0f);
 		} pane->endRow();
 
 		pane->beginRow(); {
-			pane->addButton("Submit", std::bind(&TextEntryDialog::submitCallback, this));
+			auto b = pane->addButton("Submit", std::bind(&TextEntryDialog::submitCallback, this));
+			b->setSize(size[0], 50.0f);
 		}
 		pack();
 	}
