@@ -221,7 +221,7 @@ public:
     UserConfig(const Any& any) {
         int settingsVersion = 1; // used to allow different version numbers to be loaded differently
         AnyTableReader reader(any);
-        reader.getIfPresent("settingsVersion", settingsVersion)
+		reader.getIfPresent("settingsVersion", settingsVersion);
         switch (settingsVersion) {
         case 1:
             reader.getIfPresent("id", id);
