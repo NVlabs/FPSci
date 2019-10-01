@@ -300,7 +300,8 @@ void Session::updatePresentationState()
 					}
 					else if (!m_app->dialog->visible()) {		// Check for whether dialog is closed (otherwise we are waiting for input)
 						if (m_app->dialog->complete) {
-							String result = m_app->dialog->result;										// TODO: Log result here...
+							m_config->questions[m_currQuestionIdx].result = m_app->dialog->result;					// Store response w/ quesiton
+							m_logger->addQuestion(m_config->questions[m_currQuestionIdx], m_config->id);
 							m_currQuestionIdx++;				// Present the next question (if there is one)
 							if (m_currQuestionIdx < m_config->questions.size()) {
 								m_app->presentQuestion(m_config->questions[m_currQuestionIdx]);

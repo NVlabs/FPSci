@@ -49,9 +49,9 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 
 	// populate table
 	Array<String> expValues = {
-		"'"+timeStr+"'",
-		"'"+subjectID+"'",
-		"'"+description+"'"
+		"'" + timeStr + "'",
+		"'" + subjectID + "'",
+		"'" + description + "'"
 	};
 	insertRowIntoDB(m_db, "Experiments", expValues);
 
@@ -118,6 +118,14 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 			{"sdt", "real"},
 	};
 	createTableInDB(m_db, "Frame_Info", frameInfoColumns);
+
+	// 7. Question responses
+	Array<Array<String>> questionColumns = {
+		{"Session", "text"},
+		{"Question", "text"},
+		{"Response", "text"}
+	};
+	createTableInDB(m_db, "Questions", questionColumns);
 }
 
 void Logger::recordTargetTrajectory(Array<Array<String>> trajectory) {
@@ -160,6 +168,15 @@ void Logger::addTargets(Array<Array<Param>> targetParams) {
 
 void Logger::recordTrialResponse(Array<String> values) {
 	insertRowIntoDB(m_db, "Trials", values);
+}
+
+void Logger::addQuestion(Question q, String session) {
+	Array<String> rowContents = {
+		"'" + session + "'",
+		"'" + q.prompt + "'",
+		"'" + q.result + "'"
+	};
+	insertRowIntoDB(m_db, "Questions", rowContents);
 }
 
 void Logger::closeResultsFile() {

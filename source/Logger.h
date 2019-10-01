@@ -2,6 +2,7 @@
 #include <G3D/G3D.h>
 #include <ctime>
 #include "Param.h"
+#include "ExperimentConfig.h"
 #include "sqlHelpers.h"
 
 /** Simple class to log data from trials */
@@ -43,4 +44,7 @@ public:
 
 	/** Record an array of frame timing info */
 	void recordFrameInfo(Array<Array<String>> info);
+		
+	/** Record a question and its response */
+	void addQuestion(Question question, String session);
 };
