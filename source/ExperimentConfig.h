@@ -83,17 +83,11 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			try {
-				reader.get("HasLogger", hasLogger);
-			}
-			catch (Any::KeyNotFound e) {
+			if(!reader.getIfPresent("HasLogger", hasLogger)){
 				throw "System config must specify the \"HasLogger\" flag!";
 			}
 			reader.getIfPresent("LoggerComPort", loggerComPort);
-			try {
-				reader.get("HasSync", hasSync);
-			}
-			catch (Any::KeyNotFound e) {
+			if(!reader.getIfPresent("HasSync", hasSync)){
 				throw "System config must specify the \"HasSync\" flag!";
 			}
 			reader.getIfPresent("SyncComPort", syncComPort);
@@ -268,10 +262,7 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("currentUser", currentUser);
-			try {
-				reader.get("users", users);
-			}
-			catch (Any::KeyNotFound e){
+			if(!reader.getIfPresent("users", users)){
 				throw "The \"users\" array must be specified in the user configuration file!";
 			}
 			break;
@@ -363,10 +354,7 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			try {
-				reader.get("id", id);
-			}
-			catch (Any::KeyNotFound e) {
+			if(!reader.getIfPresent("id", id)){
 				throw "All user status fields must include the user ID!";
 			}
 			reader.getIfPresent("sessions", sessionOrder);
@@ -403,10 +391,7 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			try {
-				reader.get("users", userInfo);
-			}
-			catch (Any::KeyNotFound e) {
+			if(!reader.getIfPresent("users", userInfo)){
 				throw "The \"users\" array must be present in the user status file!";
 			}
 			break;
@@ -621,10 +606,7 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			try {
-				reader.get("id", id);
-			}
-			catch (Any::KeyNotFound e) {
+			if(!reader.getIfPresent("id", id)){
 				throw "An \"id\" field must be provided for every target config!";
 			}
 			reader.getIfPresent("elevationLocked", elevLocked);
@@ -643,10 +625,7 @@ public:
 			reader.getIfPresent("destinations", destinations);
 			reader.getIfPresent("respawnCount", respawnCount);
 			if (destSpace == "world" && destinations.size() == 0) {
-				try {
-					reader.get("bounds", bbox);
-				}
-				catch(Any::KeyNotFound e) {
+				if(!reader.getIfPresent("bounds", bbox)){
 					throw format("A world-space target must either specify destinations or a bounding box. See target: \"%s\"", id);
 				}
 			}
@@ -707,21 +686,12 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			try {
-				reader.get("ids", ids);
-			}
-			catch (Any::KeyNotFound e) {
+			if(!reader.getIfPresent("ids", ids)){
 				throw "An \"ids\" field must be provided for each set of trials!";
 			}
 			if (!reader.getIfPresent("count", count)) {
 				count = defaultCount;
 			}
-			//try {
-			//	reader.get("count", count);
-			//}
-			//catch (Any::KeyNotFound e) {
-			//	throw "A \"count\" field must be provided for each set of trials!";
-			//}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -1091,10 +1061,7 @@ public:
 			// Unique session info
 			reader.getIfPresent("id", id);
 			reader.getIfPresent("description", sessDescription);
-			try {
-				reader.get("trials", trials);
-			}
-			catch (Any::KeyNotFound e) {
+			if (!reader.getIfPresent("trials", trials)){
 				throw format("A \"trials\" array must be specified with each session! See session: \"%s\"", id);
 			}
 			break;
@@ -1140,19 +1107,12 @@ public:
 		case 1:
 			// Experiment-specific info
 			reader.getIfPresent("description", expDescription);
-			// Get the targets
-			try {
-				reader.get("targets", targets);
-			}
-			catch (Any::KeyNotFound e) {
+			if(!reader.getIfPresent("targets", targets)){												// Get the targets (required)
+
 				throw "At least one target must be specified for the experiment!";
 			}
-			// Get the sessions
-			SessionConfig::defaultConfig = (FpsConfig)(*this);
-			try {
-				reader.get("sessions", sessions);
-			}
-			catch (Any::KeyNotFound e) {
+			SessionConfig::defaultConfig = (FpsConfig)(*this);											// Setup the default configuration here
+			if(!reader.getIfPresent("sessions", sessions)){												// Get the sessions (required)
 				throw "The \"sessions\" array must be provided as part of the experiment config!";
 			}
 			break;
