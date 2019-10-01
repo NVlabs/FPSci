@@ -1041,7 +1041,7 @@ public:
 class SessionConfig : public FpsConfig {
 public:
 	String id;									///< Session ID
-	String  sessDescription = "training";		///< String indicating whether session is training or real
+	String  sessDescription = "Session";		///< String indicating whether session is training or real
 	Array<TrialCount> trials;					///< Array of trials (and their counts) to be performed
 	static FpsConfig defaultConfig;
 
@@ -1093,7 +1093,7 @@ public:
 /** Experiment configuration */
 class ExperimentConfig : public FpsConfig {
 public:
-	String expDescription;								///< Experiment description
+	String expDescription = "Experiment";				///< Experiment description
 	Array<SessionConfig> sessions;						///< Array of sessions
 	Array<TargetConfig> targets;						///< Array of trial configs   
 
