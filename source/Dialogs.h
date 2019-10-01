@@ -4,6 +4,7 @@
 // Internal class for ease of use
 class G3Dialog : public GuiWindow {
 protected:
+	String m_prompt;
 	G3Dialog(const shared_ptr<GuiTheme> theme, String title = "Dialog", Point2 pos = Point2(200.f, 200.0f), Point2 size = Point2(400.0f, 200.0f)) :
 		GuiWindow(title, theme, Rect2D::xywh(pos, size), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE) {};
 public:
@@ -20,7 +21,6 @@ public:
 // N-way selection dialog
 class SelectionDialog : public G3Dialog {
 protected:
-	String m_message;
 	Array<String> m_options;
 	Array<std::function<void()>> m_callbacks;
 	
@@ -30,13 +30,15 @@ protected:
 		setVisible(false);
 	}
 
-	SelectionDialog(String message, Array<String> options, const shared_ptr<GuiTheme>& theme,
-		String title = "Selection", Point2 size = Point2(400.0f, 400.0f), Point2 pos = Point2(200.0f, 200.0f),	int itemsPerRow = 3) :
-		m_message(message), m_options(options), G3Dialog(theme, title, pos, size)
+	SelectionDialog(String prompt, Array<String> options, const shared_ptr<GuiTheme>& theme,
+		String title = "Selection", Point2 size = Point2(400.0f, 400.0f), Point2 pos = Point2(200.0f, 200.0f),	int itemsPerRow = 3, GFont::XAlign promptAlign = GFont::XALIGN_CENTER) :
+		G3Dialog(theme, title, pos, size)
 	{
+		m_prompt = prompt;
+		m_options = options;
 		GuiPane *pane = GuiWindow::pane();
 		pane->beginRow(); {
-			pane->addLabel(m_message, G3D::GFont::XALIGN_CENTER);
+			pane->addLabel(m_prompt, promptAlign);
 		} pane->endRow();
 		// Create option buttons
 		int cnt = 0;
@@ -57,10 +59,10 @@ protected:
 	};
 
 public:
-	static shared_ptr<SelectionDialog> create(String message,  Array<String> options, const shared_ptr<GuiTheme> theme, 
+	static shared_ptr<SelectionDialog> create(String prompt,  Array<String> options, const shared_ptr<GuiTheme> theme, 
 		String title = "Selection", Point2 size = Point2(400.0f, 200.0f), Point2 position = Point2(200.0f, 200.0f),	int itemsPerRow	= 3) 
 	{
-		return createShared<SelectionDialog>(message, options, theme, title, size, position, itemsPerRow);
+		return createShared<SelectionDialog>(prompt, options, theme, title, size, position, itemsPerRow);
 	}
 };
 
@@ -85,9 +87,7 @@ public:
 };
 
 class TextEntryDialog : public G3Dialog {
-protected:
-	String m_prompt;
-	
+protected:	
 	void submitCallback() {
 		complete = true;
 		setVisible(false);
@@ -95,8 +95,9 @@ protected:
 
 	TextEntryDialog(String prompt, const shared_ptr<GuiTheme> theme, 
 		String title = "Dialog", Point2 position = Point2(200.0f, 200.0f), Point2 size = Point2(400.0f, 200.0f)) :
-		m_prompt(prompt), G3Dialog(theme, title, position, size) 
+		G3Dialog(theme, title, position, size) 
 	{
+		m_prompt = prompt;
 		GuiPane *pane = GuiWindow::pane();
 		pane->beginRow(); {
 			auto l = pane->addLabel(m_prompt);
@@ -119,5 +120,18 @@ public:
 		String title = "Dialog", Point2 position = Point2(200.0f, 200.0f), Point2 size = Point2(400.0f, 300.0f)) 
 	{
 		return createShared<TextEntryDialog>(prompt, theme, title, position, size);
+	}
+};
+
+class RatingDialog : public SelectionDialog {
+protected:
+	RatingDialog(String prompt, Array<String> levels, const shared_ptr<GuiTheme> theme,
+		String title = "Dialog", Point2 position = Point2(200.0f, 200.0f), Point2 size = Point2(400.0f, 200.0f)) :
+		SelectionDialog(prompt, levels, theme, title, size, position, levels.size(), GFont::XALIGN_LEFT) {}
+public:
+	static shared_ptr<RatingDialog> create(String prompt, Array<String> levels, const shared_ptr<GuiTheme> theme,
+		String title = "Dialog", Point2 position = Point2(200.0f, 200.0f), Point2 size = Point2(400.0f, 200.0f))
+	{
+		return createShared<RatingDialog>(prompt, levels, theme, title, position, size);
 	}
 };

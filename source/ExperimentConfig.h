@@ -742,7 +742,8 @@ public:
 	enum Type {
 		None,
 		MultipleChoice,
-		Entry
+		Entry,
+		Rating
 	};
 	Type type = Type::None;
 	String prompt = "";
@@ -774,6 +775,12 @@ public:
 			}
 			else if (!typeStr.compare("Entry")) {
 				type = Type::Entry;
+			}
+			else if (!typeStr.compare("Rating")) {
+				type = Type::Rating;
+				if (!reader.getIfPresent("options", options)) {
+					throw "An \"options\" Array must be specified with \"Rating\" style questions!";
+				}
 			}
 			else {
 				throw format("Unrecognized question \"type\" String \"%s\". Valid options are \"MultipleChoice\" or \"Entry\"", typeStr);

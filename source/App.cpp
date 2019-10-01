@@ -835,6 +835,9 @@ void App::presentQuestion(Question question) {
 	case Question::Type::Entry:
 		dialog = TextEntryDialog::create(question.prompt, theme, question.title);
 		break;
+	case Question::Type::Rating:
+		dialog = RatingDialog::create(question.prompt, question.options, theme, question.title);
+		break;
 	default:
 		throw "Unknown question type!";
 		break;
