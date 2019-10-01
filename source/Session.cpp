@@ -292,26 +292,25 @@ void Session::updatePresentationState()
 		if ((stateElapsedTime > m_config->feedbackDuration) && (remainingTargets <= 0))
 		{
 			if (isComplete()) {
-				// Pop up dialog here if we need to
-				if (m_config->questions.size() > 0 && m_currQuestionIdx < m_config->questions.size()) {
+				if (m_config->questions.size() > 0 && m_currQuestionIdx < m_config->questions.size()) {			// Pop up question dialog(s) here if we need to
+
 					if (m_currQuestionIdx == -1){
 						m_currQuestionIdx = 0;
 						m_app->presentQuestion(m_config->questions[m_currQuestionIdx]);
 					}
-					else if (!m_app->dialog->visible()) {		// Check for whether dialog is closed (otherwise we are waiting for input)
-						if (m_app->dialog->complete) {
-							m_config->questions[m_currQuestionIdx].result = m_app->dialog->result;					// Store response w/ quesiton
-							m_logger->addQuestion(m_config->questions[m_currQuestionIdx], m_config->id);
-							m_currQuestionIdx++;				// Present the next question (if there is one)
-							if (m_currQuestionIdx < m_config->questions.size()) {
+					else if (!m_app->dialog->visible()) {														// Check for whether dialog is closed (otherwise we are waiting for input)
+						if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
+							m_config->questions[m_currQuestionIdx].result = m_app->dialog->result;				// Store response w/ quesiton
+							m_logger->addQuestion(m_config->questions[m_currQuestionIdx], m_config->id);		// Log the question and its answer
+							m_currQuestionIdx++;																// Present the next question (if there is one)
+							if (m_currQuestionIdx < m_config->questions.size()) {								// Double check we have a next question before launching the next question
 								m_app->presentQuestion(m_config->questions[m_currQuestionIdx]);
 							}
 						}
 						else {
-							// Relaunch the same dialog (this wasn't completed)
-							m_app->presentQuestion(m_config->questions[m_currQuestionIdx]);
-						}
-					}
+							m_app->presentQuestion(m_config->questions[m_currQuestionIdx]);						// Relaunch the same dialog (this wasn't completed)
+						}	
+					}	
 				}
 				else {
 					m_logger->closeResultsFile();																// Close the current results file
