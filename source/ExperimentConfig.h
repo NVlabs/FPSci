@@ -221,8 +221,7 @@ public:
     UserConfig(const Any& any) {
         int settingsVersion = 1; // used to allow different version numbers to be loaded differently
         AnyTableReader reader(any);
-        reader.getIfPresent("settingsVersion", settingsVersion);
-
+        reader.getIfPresent("settingsVersion", settingsVersion)
         switch (settingsVersion) {
         case 1:
             reader.getIfPresent("id", id);
@@ -820,7 +819,7 @@ public:
 	};
 
 	// Click-to-photon
-	bool renderClickPhoton = true;                  ///< Render click to photon box
+	bool renderClickPhoton = false;                 ///< Render click to photon box
 	String clickPhotonSide = "right";               ///< "right" for right side, otherwise left
 	Point2 clickPhotonSize = Point2(0.05f, 0.035f);	///< Size of the click-to-photon area (ratio of screen space)
 	float clickPhotonVertPos = 0.5f;				///< Percentage of the screen down to locate the box
