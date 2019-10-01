@@ -866,8 +866,8 @@ void App::updateSessionPress(void) {
 }
 
 void App::updateSession(String id) {
-	// Check for a valid ID
-	if (!id.empty()) {
+	// Check for a valid ID (non-emtpy and 
+	if (!id.empty() && experimentConfig.getSessIds().contains(id)) {
 		sessConfig = experimentConfig.getSessionConfigById(id);						// Get the new session config
 		logPrintf("User selected session: %s. Updating now...\n", id);				// Print message to log
 		m_sessDropDown->setSelectedValue(id);										// Update session drop-down selection
@@ -1056,6 +1056,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// make sure mouse sensitivity is set right
 	if (m_userSettingsMode) {
 		updateMouseSensitivity();
+		m_userSettingsWindow->setVisible(m_userSettingsMode);		// Make sure window stays coherent w/ user settings mode
 	}
 
 	const RealTime now = System::time();
@@ -1183,18 +1184,6 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 }
 
 bool App::onEvent(const GEvent& event) {
-	if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::ESCAPE || event.key.keysym.sym == GKey::TAB)) {
-		m_userSettingsMode = !m_userSettingsMode;
-		m_userSettingsWindow->setVisible(m_userSettingsMode);
-		if (m_userSettingsMode) {
-			// set focus so buttons properly highlight
-			m_widgetManager->setFocusedWidget(m_userSettingsWindow);
-		}
-		// switch to first or 3rd person mode
-		updateMouseSensitivity();
-		return true;
-	}
-
 	// Handle playMode=False shortcuts here...
 	if (!startupConfig.playMode) {
 		if (event.type == GEventType::KEY_DOWN) {
@@ -1277,33 +1266,43 @@ bool App::onEvent(const GEvent& event) {
 		}
 	}
 	
-	// Override 'q', 'z', 'c', and 'e' keys
-    if ((event.type == GEventType::KEY_DOWN) && 
-        (event.key.keysym.sym == 'e'
-            || event.key.keysym.sym == 'z'
-            || event.key.keysym.sym == 'c'
-            || event.key.keysym.sym == 'q')) {
-        return true;
-    }
+	// Handle normal keypresses
+	if (event.type == GEventType::KEY_DOWN) {
+		if (event.key.keysym.sym == GKey::ESCAPE || event.key.keysym.sym == GKey::TAB) {
+			m_userSettingsMode = !m_userSettingsMode;
+			m_userSettingsWindow->setVisible(m_userSettingsMode);
+			if (m_userSettingsMode) {
+				// set focus so buttons properly highlight
+				m_widgetManager->setFocusedWidget(m_userSettingsWindow);
+			}
+			// switch to first or 3rd person mode
+			updateMouseSensitivity();
+			return true;
+		}
 
-	// Handle super-class events
-	if (GApp::onEvent(event)) { return true; }
-
-    if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::KP_MINUS)) {
-        quitRequest();
-        return true;
-    }
-
-	// Handle crouch here
-	if ((event.type == GEventType::KEY_DOWN) && (event.key.keysym.sym == GKey::LCTRL)) {
-		m_scene->typedEntity<PlayerEntity>("player")->setCrouched(true);
-		return true;
+		// Override 'q', 'z', 'c', and 'e' keys
+		else if ((event.key.keysym.sym == 'e'
+			|| event.key.keysym.sym == 'z'
+			|| event.key.keysym.sym == 'c'
+			|| event.key.keysym.sym == 'q')) {
+			return true;
+		}
+		else if (event.key.keysym.sym == GKey::KP_MINUS) {
+			quitRequest();
+			return true;
+		}
+		else if (event.key.keysym.sym == GKey::LCTRL) {
+			m_scene->typedEntity<PlayerEntity>("player")->setCrouched(true);
+			return true;
+		}
 	}
-	if ((event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey::LCTRL)) {
+	else if ((event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey::LCTRL)) {
 		m_scene->typedEntity<PlayerEntity>("player")->setCrouched(false);
 		return true;
 	}
 
+	// Handle super-class events
+	if (GApp::onEvent(event)) { return true; }
 	return false;
 }
 
@@ -1714,7 +1713,7 @@ void App::onUserInput(UserInput* ui) {
 	if (ui->keyDown(GKey::LEFT_MOUSE)) {
 		if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
 			// check for hit, add graphics, update target state
-			if (sess->presentationState == PresentationState::task) {
+			if ((sess->presentationState == PresentationState::task) && !m_userSettingsMode) {
 				if (sess->responseReady()) {
 					fired = true;
 					sess->countClick();						        // Count clicks
