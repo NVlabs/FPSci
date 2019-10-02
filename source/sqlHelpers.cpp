@@ -97,7 +97,7 @@ void insertRowsIntoDB(sqlite3* db, String tableName, Array<Array<String>> value_
 			insertC += ";";
 		}
 	}
-	logPrintf("Inserting rows into %s table with SQL query:%s\n\n", tableName.c_str(), insertC.c_str());
+	//logPrintf("Inserting rows into %s table with SQL query:%s\n\n", tableName.c_str(), insertC.c_str());
 	sql_stmt(db, insertC);
 }
 
