@@ -363,7 +363,9 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 }
 
 void App::loadModels() {
-	m_viewModel = ArticulatedModel::create(experimentConfig.weapon.modelSpec, "viewModel");
+	if (experimentConfig.weapon.renderModel) {
+		m_viewModel = ArticulatedModel::create(experimentConfig.weapon.modelSpec, "viewModel");
+	}
 
 	const static Any bulletSpec = PARSE_ANY(ArticulatedModel::Specification{
 		filename = "ifs/d10.ifs";
@@ -901,8 +903,10 @@ void App::updateSession(String id) {
 	m_fireSound = Sound::create(System::findDataFile(sessConfig->weapon.fireSound));
 	m_explosionSound = Sound::create(System::findDataFile(sessConfig->explosionSound));
 
-	// Update weapon model
-	m_viewModel = ArticulatedModel::create(sessConfig->weapon.modelSpec, "viewModel");
+	// Update weapon model (if drawn)
+	if (sessConfig->weapon.renderModel) {
+		m_viewModel = ArticulatedModel::create(sessConfig->weapon.modelSpec, "viewModel");
+	}
 
 	// Create a series of colored materials to choose from for target health
 	for (int i = 0; i < m_MatTableSize; i++) {

@@ -478,16 +478,7 @@ public:
 	float fireSoundVol = 0.5f;											///< Volume for fire sound
 	bool renderModel = false;											///< Render a model for the weapon?
 	Vector3 muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
-	ArticulatedModel::Specification modelSpec = ArticulatedModel::Specification(		///< Basic model spec
-		PARSE_ANY(ArticulatedModel::Specification{
-			filename = "model/sniper/sniper.obj";
-			preprocess = {
-				transformGeometry(all(), Matrix4::yawDegrees(90));
-				transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
-			};
-			scale = 0.25;
-		};)
-	);
+	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
 	bool renderMuzzleFlash = false;										///< Render a muzzle flash when the weapon fires?
 	bool renderDecals = true;											///< Render decals when the shots miss?
 	bool renderBullets = false;											///< Render bullets leaving the weapon
@@ -498,7 +489,17 @@ public:
 	float damageRollOffDistance = 0;									///< Damage roll of w/ distance
 	//String reticleImage;												///< Reticle image to show for this weapon
 
-	WeaponConfig() {}
+	WeaponConfig() {
+	// Suggested any for "default" model, leaving this here for now... breaks debug config if uncommented
+			//PARSE_ANY(ArticulatedModel::Specification{
+			//	filename = "model/sniper/sniper.obj";
+			//	preprocess = {
+			//		transformGeometry(all(), Matrix4::yawDegrees(90));
+			//		transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
+			//	};
+			//	scale = 0.25;
+			//	};)
+	}
 
 	/** Load from Any */
 	WeaponConfig(const Any& any) {
@@ -518,7 +519,14 @@ public:
 			reader.getIfPresent("fireSound", fireSound);
 
 			reader.getIfPresent("renderModel", renderModel);
-			reader.getIfPresent("modelSpec", modelSpec);
+			if (renderModel) {
+				if(!reader.getIfPresent("modelSpec", modelSpec)){
+					throw "If \"renderModel\" is set to true within a weapon config then a \"modelSpec\" must be provided!";
+				}
+			}
+			else {
+				reader.getIfPresent("modelSpec", modelSpec);
+			}
 			reader.getIfPresent("muzzleOffset", muzzleOffset);
 			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
 			reader.getIfPresent("renderDecals", renderDecals);
