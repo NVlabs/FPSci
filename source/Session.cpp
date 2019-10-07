@@ -201,12 +201,12 @@ void Session::initTargetAnimation() {
 		// Make sure we reset the target color here (avoid color bugs)
 		m_app->spawnFlyingTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
-			m_config->dummyTargetSize,
-			m_config->dummyTargetColor,
+			m_config->refTargetSize,
+			m_config->refTargetColor,
 			{ 0.0f, 0.0f },
 			{ 1000.0f, 1000.f },
 			initialSpawnPos,
-			"dummy",
+			"reference",
 			0
 		);
 	}

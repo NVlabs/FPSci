@@ -399,8 +399,8 @@ void App::loadModels() {
 	for (TargetConfig target : experimentConfig.targets) {
 		toBuild.set(target.id, target.modelSpec);
 	}
-	// Append the basic model automatically (used for dummy targets for now)
-	toBuild.set("dummy", PARSE_ANY(ArticulatedModel::Specification{
+	// Append the basic model automatically (used for reference targets for now)
+	toBuild.set("reference", PARSE_ANY(ArticulatedModel::Specification{
 		filename = "model/target/target.obj";
 		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
 					allowVertexMerging = true;
@@ -726,7 +726,7 @@ void App::previewWaypoints(void) {
 	}
 	if (m_waypoints.size() > 1) {
 		// Create a new target and set its index
-		spawnDestTarget(Vector3::zero(), m_waypoints, 1.0, Color3::white(), "dummy", 0, 0, "preview");
+		spawnDestTarget(Vector3::zero(), m_waypoints, 1.0, Color3::white(), "reference", 0, 0, "preview");
 		m_previewIdx = targetArray.size() - 1;
 	}
 }
@@ -876,7 +876,7 @@ void App::updateSession(String id) {
 		sess = Session::create(this, sessConfig);									// Create the session
 	}
 	else {
-		sessConfig = SessionConfig::create();										// Create a dummy session
+		sessConfig = SessionConfig::create();										// Create an empty session
 		sess = Session::create(this);											
 	}
 	

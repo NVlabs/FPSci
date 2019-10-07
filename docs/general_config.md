@@ -202,18 +202,18 @@ Each question in the array is then asked of the user (via an independent time-se
 | Parameter Name        |Units                  | Description                                                                        |
 |-----------------------|-----------------------|------------------------------------------------------------------------------------|
 |`targetHealthColors`   |[`Color3`, `Color3`]   | The max/min health colors for the target as an array of [`max color`, `min color`], if you do not want the target to change color as its health drops, set these values both to the same color                                                  |
-|`dummyTargetColor`     |`Color3`               | The color of the "dummy" targets spawned between trials                            |
-|`dummyTargetSize`      |m                      | The size of the "dummy" targets spawned between trials                             |
+|`referenceTargetColor` |`Color3`               | The color of the "reference" targets spawned between trials                        |
+|`referenceTargetSize`  |m                      | The size of the "reference" targets spawned between trials                         |
 |`explosionSound`       |file                   | The sound to play when a target is destroyed                                       |
 |`explosionSoundVol`    |ratio                  | The volume of the explosion sound to play                                          |
 
 ```
-"targetHealthColors": [                     // Array of two colors to interpolate between for health
+"targetHealthColors": [                         // Array of two colors to interpolate between for target health
     Color3(0.0, 1.0, 0.0),
     Color3(1.0, 0.0, 0.0)
 ],
-"dummyTargetColor": Color3(1.0,1.0,1.0),    // Draw the dummy targets (return to "0" view direction)
-"dummyTargetSize": 0.01,                    // This is a scale factor for the model
+"referenceTargetColor": Color3(1.0,1.0,1.0),    // Reference target color (return to "0" view direction)
+"referenceTargetSize": 0.01,                    // This is a size in meters
 "explosionSound": "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav",
 "explosionSoundVol": 10.0f,
 

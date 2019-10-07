@@ -885,9 +885,9 @@ public:
 	float combatTextFade = 0.98f;								///< Fade rate for combat text (0 implies don't fade)	
 	float combatTextTimeout = 0.5f;								///< Time for combat text to disappear (in seconds)
 
-	// Dummy target
-	float dummyTargetSize = 0.01f;								///< Size of the dummy target
-	Color3 dummyTargetColor = Color3(1.0, 0.0, 0.0);			///< Default "dummy" target color
+	// Reference target
+	float refTargetSize = 0.01f;								///< Size of the reference target
+	Color3 refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
 
 	// Questions
 	Array<Question> questions;
@@ -970,8 +970,8 @@ public:
 			reader.getIfPresent("floatingCombatTextVelocity", combatTextVelocity);
 			reader.getIfPresent("floatingCombatTextFade", combatTextFade);
 			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
-			reader.getIfPresent("dummyTargetSize", dummyTargetSize);
-			reader.getIfPresent("dummyTargetColor", dummyTargetColor);
+			reader.getIfPresent("referenceTargetSize", refTargetSize);
+			reader.getIfPresent("referenceTargetColor", refTargetColor);
 			reader.getIfPresent("questions", questions);
 			break;
 		default:
@@ -1044,8 +1044,8 @@ public:
 		a["floatingCombatTextVelocity"] = combatTextVelocity;
 		a["floatingCombatTextFade"] = combatTextFade;
 		a["floatingCombatTextTimeout"] = combatTextTimeout;
-		a["dummyTargetSize"] = dummyTargetSize;
-		a["dummyTargetColor"] = dummyTargetColor;
+		a["referenceTargetSize"] = refTargetSize;
+		a["referenceTargetColor"] = refTargetColor;
 		return a;
 	}
 };
