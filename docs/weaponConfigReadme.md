@@ -10,6 +10,11 @@ The [`data-files/weapon` directory](../data-files/weapon) contains some default 
 "weapon" : #include("[weapon file name].Any");
 ```
 
+## Interaction with Experiment/Session Level Specification
+The "parameter inheritance" structure used for experiment/session level parameters does not carry into the weapon configuration. That is to say, weapon configurations must be _completely_ specified wherever they are provided. For this reason we suggest encapsulating weapons in their own `*.weapon.Any` files and including them using a `#include()` directive.
+
+As an example of this concept, you **cannot** (currently) specify a weapon at the experiment level, then change just one field within this weapon configuration on a per-session basis. Instead you need to _redefine_ this weapon for each session. Using `#include()` directives for weapons avoids this issue since the full weapon configuration is always specified.
+
 # Weapon Config Field Descriptions
 
 This file provides information about the weapon to be used in the experiment. Detailed field descriptions are provided below.
@@ -80,3 +85,5 @@ If you want to render a 3D model as the weapon from the FPS view you will need t
     }
 
 The `modelSpec` above provides a filename for a `.obj` file for the model, as well as several preprocess steps intended to orient, position, and scale the model correctly.
+
+If the `renderModel` flag within a weapon configuration is `true` a `modelSpec` must be provided in the configuration. If a `modelSpec` is not provided an exception will be thrown at runtime stating this.
