@@ -684,7 +684,7 @@ public:
 class TrialCount {
 public:
 	Array<String> ids;			///< Trial ID list
-	int count = 0;				///< Count of trials to be performed
+	int count = 1;				///< Count of trials to be performed
 	static int defaultCount;	///< Default count to use
 
 	TrialCount() {};
