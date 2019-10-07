@@ -30,7 +30,10 @@ If a scene name is specified at the experiment level it will be applied to all s
 ## Weapon Configuration
 * `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](../data-files/weapon/weaponConfigReadme.md))
 
+The `weapon` config should be thought of as an atomic type (just like an `int` or `float`). Even though it is a (more complex) data structure, it does not use the experiment-->session level inheritance appraoch offered elsewhere in the configuration format (i.e. any `weapon` specification should be complete). For this reason we recommend storing weapon configurations in independent `.weapon.Any` files and including them using the `.Any` `#include()` directive.
+
 ## Duration Settings
+The following settings allow the user to control various timings/durations around the per trial state machine.
 
 | Parameter Name     |Units| Description                                                        |
 |--------------------|-----|--------------------------------------------------------------------|
@@ -43,6 +46,7 @@ If a scene name is specified at the experiment level it will be applied to all s
 "readyDuration": 0.5,       // Time allocated for preparing for trial
 "taskDuration": 100000.0,   // Maximum duration allowed for completion of the task
 ```
+
 ## Rendering Settings
 | Parameter Name            |Units  | Description                                                        |
 |---------------------------|-------|--------------------------------------------------------------------|
