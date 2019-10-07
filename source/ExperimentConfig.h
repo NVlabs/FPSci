@@ -264,6 +264,9 @@ public:
 			if(!reader.getIfPresent("users", users)){
 				throw "The \"users\" array must be specified in the user configuration file!";
 			}
+			if (users.size() == 0) {
+				throw "At least 1 user must be specified in the \"users\" array within the user configuration file!";
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in UserTable.\n", settingsVersion);
@@ -356,7 +359,9 @@ public:
 			if(!reader.getIfPresent("id", id)){
 				throw "All user status fields must include the user ID!";
 			}
-			reader.getIfPresent("sessions", sessionOrder);
+			if (!reader.getIfPresent("sessions", sessionOrder)) {
+				throw format("Must provide \"sessions\" array for User ID:\"%s\" in user status!", id);
+			}
 			reader.getIfPresent("completedSessions", completedSessions);
 			break;
 		default:
@@ -391,7 +396,7 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			if(!reader.getIfPresent("users", userInfo)){
-				throw "The \"users\" array must be present in the user status file!";
+				throw "The \"users\" array must bree present in the user status file!";
 			}
 			break;
 		default:
