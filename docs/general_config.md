@@ -10,6 +10,15 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ```
 
 ## Scene Control
+The `sceneName` parameter allows the user to control the scene in which the application is run. If unspecified, the `sceneName` comes from:
+
+1. An inherited experiment-level `sceneName` parameter
+2. The last specified session-level `sceneName` parameter (in time)
+3. The `App::m_defaultScene` field within the source (currently set to `"FPSci Simple Hallway"` which is distributed with the repository)
+
+If a scene name is specified at the experiment level it will be applied to all scenes that do not have a `sceneName` specified. If you do not specify a `sceneName` in the experiment config, and do not specify `sceneName` for every session, then session ordering may have an impact on which scene pairs with which session.
+
+
 | Parameter Name     |Units| Description                                                            |
 |--------------------|-----|------------------------------------------------------------------------|
 |`sceneName`         |name |The `name` of the (virtual) scene (not necessarily the filename!)       |

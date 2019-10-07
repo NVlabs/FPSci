@@ -785,7 +785,7 @@ public:
 class FpsConfig : public ReferenceCountedObject {
 public:
 	int	settingsVersion = 1;						///< Settings version
-	String sceneName = "FPSci Simple Hallway";		///< Scene name
+	String sceneName = "";							///< Scene name
 
 	// Rendering parameters
 	float frameRate = 0.0f;							///< Target (goal) frame rate (in Hz)

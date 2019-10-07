@@ -741,7 +741,7 @@ void App::stopPreview(void) {
 void App::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
-	String filename = Scene::sceneNameToFilename(experimentConfig.sceneName);
+	String filename = Scene::sceneNameToFilename(sessConfig->sceneName);
 	scene()->toAny().save(filename);
 }
 
@@ -894,7 +894,14 @@ void App::updateSession(String id) {
 	m_combatFont = GFont::fromFile(System::findDataFile(sessConfig->combatTextFont));
 
 	// Load the experiment scene if we haven't already (target only)
-	if (sessConfig->sceneName != m_loadedScene) {
+	if (sessConfig->sceneName.empty()) {
+		if (m_loadedScene.empty()) {		// No scene specified
+			loadScene(m_defaultScene);		// Use this as the default
+			m_loadedScene = m_defaultScene;
+		}
+		// Otherwise just let the loaded scene persist
+	}
+	else if (sessConfig->sceneName != m_loadedScene) {
 		loadScene(sessConfig->sceneName);
 		m_loadedScene = sessConfig->sceneName;
 	}
