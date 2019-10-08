@@ -74,6 +74,7 @@ An example session configuration snippet is included below:
     * `elevationLocked` indicates whether or not the target is locked to its initial elevation
     * `eccH/V` are controls for min ([0])/max([1]) horizontal/vertical eccentricity for target initial position (in deg)
     * `motionChangePeriod` is a vector indicating the minimum ([0]) and maximum ([1]) motion change period allowed (in s)
+    * `upperHemisphereOnly` is a boolean-type scalar indicating whether target flies only on the upper hemisphere of player-centric sphere. Only applicable to `FlyingEntity` defined in the "player" space.
     * `jumpEnabled` determines whether the target can "jump" or not
     * `jumpPeriod` is a vector indicating the minimum ([0]) and maximum ([1]) period to wait between jumps (in seconds)
     * `jumpSpeed` is a vector indicating the minimum ([0]) and maximum([1]) angular speed with which to jump (in deg/s)
