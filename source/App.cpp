@@ -270,6 +270,7 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	const Color3& color,
 	const Vector2& speedRange,
 	const Vector2& motionChangePeriodRange,
+	bool upperHemisphereOnly,
 	Point3 orbitCenter,
 	String id,
 	int paramIdx,
@@ -286,6 +287,7 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 		CFrame(),
 		speedRange,
 		motionChangePeriodRange,
+		upperHemisphereOnly,
 		orbitCenter,
 		paramIdx,
 		respawns

@@ -184,6 +184,7 @@ void Session::initTargetAnimation() {
 					m_config->targetHealthColors[0],
 					{ target.val["minSpeed"], target.val["maxSpeed"] },
 					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
+					(bool)target.val["upperHemisphereOnly"],
 					initialSpawnPos,
 					String(target.str["id"]),
 					i,
@@ -205,6 +206,7 @@ void Session::initTargetAnimation() {
 			m_config->refTargetColor,
 			{ 0.0f, 0.0f },
 			{ 1000.0f, 1000.f },
+			false,
 			initialSpawnPos,
 			"reference",
 			0

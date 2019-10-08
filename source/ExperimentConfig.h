@@ -578,6 +578,7 @@ class TargetConfig {
 public:
 	String id;												///< Trial ID to indentify affiliated trial runs
 	bool elevLocked = false;								///< Elevation locking
+	bool upperHemisphereOnly = false;                       ///< Limit flying motion to upper hemisphere only
 	Array<float> distance = { 30.0f, 40.0f };				///< Distance to the target
 	Array<float> motionChangePeriod = { 1.0f, 1.0f };		///< Range of motion change period in seconds
 	Array<float> speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
@@ -622,6 +623,7 @@ public:
 				throw "An \"id\" field must be provided for every target config!";
 			}
 			reader.getIfPresent("elevationLocked", elevLocked);
+			reader.getIfPresent("upperHemisphereOnly", upperHemisphereOnly);
 			reader.getIfPresent("distance", distance);
 			reader.getIfPresent("motionChangePeriod", motionChangePeriod);
 			reader.getIfPresent("speed", speed);
@@ -662,7 +664,7 @@ public:
 			a["destinations"] = destinations;
 		}
 		else {
-			a["elevationLocked"] = elevLocked;
+			a["upperHemisphereOnly"] = upperHemisphereOnly;
 			a["distance"] = distance;
 			a["motionChangePeriod"] = motionChangePeriod;
 			a["visualSize"] = visualSize;
@@ -1197,6 +1199,7 @@ public:
 				p.add("maxVisualSize", target->visualSize[1]);
 				p.add("minMotionChangePeriod", target->motionChangePeriod[0]);
 				p.add("maxMotionChangePeriod", target->motionChangePeriod[1]);
+				p.add("upperHemisphereOnly", (float)target->upperHemisphereOnly);
 				p.add("minSpeed", target->speed[0]);
 				p.add("maxSpeed", target->speed[1]);
 				p.add("minDistance", target->distance[0]);
@@ -1270,8 +1273,8 @@ public:
 		// Iterate through trials and print them
 		for (int i = 0; i < targets.size(); i++) {
 			TargetConfig target = targets[i];
-			logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tElevation Locked = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n",
-				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.elevLocked ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1]);
+			logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tElevation Locked = %s\n\tUpper Hemisphere Only = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n",
+				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.elevLocked ? "True" : "False", target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1]);
 		}
 	}
 };

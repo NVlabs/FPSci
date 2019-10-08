@@ -148,6 +148,12 @@ protected:
         removed from the queue.*/
     Queue<Point3>                   m_destinationPoints;
 
+	/** Limits flying target entity motion for the upper hemisphere only.
+		OnSimulation will y-invert target position & destination points
+		whenever the target enters into the lower hemisphere.
+		*/
+	bool							m_upperHemisphereOnly;
+
 	AABox m_bounds = AABox();
 
 	FlyingEntity() {}
@@ -155,7 +161,7 @@ protected:
 
 	void init();
 
-	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter, int paramIdx, int respawns = 0, int scaleIdx=0);
+	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, int respawns = 0, int scaleIdx=0);
 
 public:
 
@@ -194,6 +200,7 @@ public:
 		const CFrame&					position,
 		const Vector2&				    speedRange,
 		const Vector2&					motionChangePeriodRange,
+		bool							upperHemisphereOnly,
 		Point3							orbitCenter,
 		int								paramIdx,
 		int								respawns=0);

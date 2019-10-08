@@ -305,6 +305,7 @@ public:
 		const Color3& color,
 		const Vector2& speedRange,
 		const Vector2& motionChangePeriodRange,
+		bool upperHemisphereOnly,
 		Point3 orbitCenter,
 		String modelName,
 		int paramIdx,

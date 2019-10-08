@@ -164,6 +164,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	const CFrame&                           position,
 	const Vector2&                          speedRange,
 	const Vector2&                          motionChangePeriodRange,
+	bool									upperHemisphereOnly,
 	Point3                                  orbitCenter,
 	int										paramIdx,
 	int										respawns) {
@@ -174,7 +175,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	// Initialize each base class, which parses its own fields
 	flyingEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
 	flyingEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, orbitCenter, paramIdx, respawns, scaleIdx);
+	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, upperHemisphereOnly, orbitCenter, paramIdx, respawns, scaleIdx);
 
 	return flyingEntity;
 }
@@ -190,9 +191,10 @@ void FlyingEntity::init() {
 }
 
 
-void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, Point3 orbitCenter, int paramIdx, int respawns, int scaleIdx) {
+void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, int respawns, int scaleIdx) {
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
+	m_upperHemisphereOnly = upperHemisphereOnly;
 	m_orbitCenter = orbitCenter;
 	m_paramIdx = paramIdx;
 	m_respawnCount = respawns;
@@ -282,6 +284,7 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		// Handle non-world space (player projection here)
 		while ((deltaTime > 0.000001f) && m_angularSpeedRange[0] > 0.0f) {
 			if (m_destinationPoints.empty()) {
+				// Add destimation points if no destination points.
 				float motionChangePeriod = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
 				float angularSpeed = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
 				float angularDistance = motionChangePeriod * angularSpeed;
@@ -344,6 +347,19 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 				const Vector3& V = (destinationVector - currentVector * projection).direction();
 
 				setFrame(m_orbitCenter + (cos(angleChange) * U + sin(angleChange) * V) * radius);
+			}
+
+			if (m_upperHemisphereOnly) {
+				// Target position must be always above the orbit horizon (plane defined by "y = m_orbitCenter.y")
+				// If target is below the orbit horizon, y-invert position & destination points w.r.t. the orbit horizon.
+				if (m_frame.translation.y < m_orbitCenter.y) {
+					m_frame.translation.y = m_orbitCenter.y + (m_orbitCenter.y - m_frame.translation.y);
+					for (int i = 0; i < m_destinationPoints.length(); ++i) { // iterate by the number of elements in m_destinationPoints.
+						Point3 t_dp = m_destinationPoints.popFront(); // pop first element.
+						t_dp.y = m_orbitCenter.y + (m_orbitCenter.y - t_dp.y);
+						m_destinationPoints.pushBack(t_dp); // push the newly processed destination points at the back.
+					}
+				}
 			}
 		}
 	}
