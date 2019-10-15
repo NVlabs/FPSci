@@ -15,8 +15,8 @@ trials = db.getTrials()
 # Analyze each trial in the results
 for trial in trials:
     # Get target trajectory and player actions from the db
-    trajectory = db.getTargetPositionsAzimElev(trial.id)
-    actions = db.getPlayerActions(trial.id)
+    trajectory = db.getTrialTargetPositionsAzimElev(trial)
+    actions = db.getTrialPlayerActions(trial)
 
     # Start by making a plot of the target trajectory
     tazims = []; televs = []
@@ -46,7 +46,7 @@ for trial in trials:
     plt.scatter(miss_azim, miss_elev, color='red', s=30, marker='x')
     plt.scatter(hit_azim, hit_elev, color='green', s=30, marker='o')
 
-    plt.title('Azimuth vs Elevation for Target Path and Player Action for Trial {0}'.format(trial.id))
+    plt.title('Azimuth vs Elevation for Target Path and Player Action for Trial {0} #{1}'.format(trial.id, trial.idx+1))
     plt.xlabel('Azimuth (°)')
     plt.xlim(mean_azim-AZIM_RANGE_DEG/2, mean_azim+AZIM_RANGE_DEG/2)
     plt.ylabel('Elevation (°)')
