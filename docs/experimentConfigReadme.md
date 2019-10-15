@@ -71,7 +71,6 @@ An example session configuration snippet is included below:
     * `visualSize` is a vector indicating the minimum ([0]) and maximum ([1]) visual size for the target (in deg)
     * `speed` is a vector indictating the minimum ([0]) and maximum ([1]) speeds in angular velocity (in deg/s)
     * `distance` is the distance to this target (in meters)
-    * `elevationLocked` indicates whether or not the target is locked to its initial elevation
     * `eccH/V` are controls for min ([0])/max([1]) horizontal/vertical eccentricity for target initial position (in deg)
     * `motionChangePeriod` is a vector indicating the minimum ([0]) and maximum ([1]) motion change period allowed (in s)
     * `upperHemisphereOnly` is a boolean-type scalar indicating whether target flies only on the upper hemisphere of player-centric sphere. Only applicable to `FlyingEntity` defined in the "player" space.
