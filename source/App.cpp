@@ -1505,10 +1505,17 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 
 	if (m_hitScan) {
 		const Ray& ray = activeCamera()->frame().lookRay();		// Use the camera lookray for hit detection
-			
+		Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
+		for (auto projectile : projectileArray) {
+			dontHit.append(projectile.entity);
+		}
+		for (auto target : targetArray) {
+			dontHit.append(target);
+		}
 		// Check for closest hit
 		float closest = finf();
 		int closestIndex = -1;
+		scene()->intersect(ray, closest, false, dontHit);
 		for (int t = 0; t < targetArray.size(); ++t) {
 			if (targetArray[t]->intersect(ray, closest)) {
 				closestIndex = t;
