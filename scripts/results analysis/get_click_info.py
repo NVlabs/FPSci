@@ -1,5 +1,5 @@
 import sys
-from abstractfps_importer.Importer import Importer
+from FPSci_.Importer import Importer
 
 if len(sys.argv) < 2: raise Exception("Provide input db as argument!")
 db = Importer(sys.argv[1])

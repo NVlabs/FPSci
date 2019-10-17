@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from abstractfps_importer.Importer import Importer
+from FPSci_Importer.Importer import Importer
 import sys
 import numpy as np
 
