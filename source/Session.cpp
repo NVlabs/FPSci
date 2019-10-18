@@ -333,7 +333,7 @@ void Session::updatePresentationState()
 		}
 	}
 	else if (currentState == PresentationState::scoreboard) {
-		if (stateElapsedTime > m_scoreboardDuration) {
+		//if (stateElapsedTime > m_scoreboardDuration) {
 			newState = PresentationState::complete;
 			m_app->openUserSettingsWindow();
 			if (m_hasSession) {
@@ -348,12 +348,12 @@ void Session::updatePresentationState()
 					moveOn = true;														// Check for session complete (signal start of next session)
 				}
 			}
-		}
-		else {
-			newState = PresentationState::complete;
-			m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
-			moveOn = false;
-		}
+		//}
+		//else {
+		//	newState = PresentationState::complete;
+		//	m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
+		//	moveOn = false;
+		//}
 	}
 
 	else {

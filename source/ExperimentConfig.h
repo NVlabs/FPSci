@@ -345,6 +345,7 @@ public:
 	String id = "anon";								///< User ID
 	Array<String> sessionOrder = {};				///< Array containing session ordering
 	Array<String> completedSessions = {};			///< Array containing all completed session ids for this user
+	static Array<String> defaultSessionOrder;		///< Default session order
 
 	UserSessionStatus() {}
 
@@ -359,7 +360,9 @@ public:
 			if(!reader.getIfPresent("id", id)){
 				throw "All user status fields must include the user ID!";
 			}
-			if (!reader.getIfPresent("sessions", sessionOrder)) {
+			sessionOrder = defaultSessionOrder;
+			// Check for empty session list here (no default) require a per user session order in this case
+			if (sessionOrder.size() == 0 && !reader.getIfPresent("sessions", sessionOrder)) {
 				throw format("Must provide \"sessions\" array for User ID:\"%s\" in user status!", id);
 			}
 			reader.getIfPresent("completedSessions", completedSessions);
@@ -383,6 +386,8 @@ public:
 /** Class for representing user status tables */
 class UserStatusTable {
 public:
+	bool sequence = false;								///< Flag for whether to sequence these experiments (allow duplicates)
+	Array<String> defaultSessionOrder = {};				///< Default session ordering (for all unspecified users)
 	Array<UserSessionStatus> userInfo = {};				///< Array of user status
 
 	UserStatusTable() {}
@@ -395,6 +400,9 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
+			reader.getIfPresent("sequence", sequence);
+			reader.getIfPresent("sessions", defaultSessionOrder);
+			UserSessionStatus::defaultSessionOrder = defaultSessionOrder;				// Set the default order here
 			if(!reader.getIfPresent("users", userInfo)){
 				throw "The \"users\" array must bree present in the user status file!";
 			}
@@ -409,6 +417,8 @@ public:
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
 		a["settingsVersion"] = 1;						// Create a version 1 file
+		a["sequence"] = sequence;
+		a["sessions"] = defaultSessionOrder;
 		a["users"] = userInfo;							// Include updated subject table
 		return a;
 	}
@@ -436,8 +446,21 @@ public:
 	String getNextSession(String userId) {
 		// Return the first valid session that has not been completed
 		shared_ptr<UserSessionStatus> status = getUserStatus(userId);
-		for (auto sess : status->sessionOrder) {
-			if (!status->completedSessions.contains(sess)) return sess;
+		// Handle sequence mode here (can be repeats)
+		if (sequence) {
+			int j = 0;
+			for (int i = 0; i < status->sessionOrder.size(); i++) {
+				if (status->completedSessions.size() <= i) {						// If there aren't enough entries in completed sessions to support this
+					return status->sessionOrder[i];
+				}
+				// In the future consider cases where completedSessions doesn't exactly match sessionOrder here... (fine for now?)
+			}
+		}
+		// Default mode here (no repeats)
+		else {
+			for (auto sess : status->sessionOrder) {
+				if (!status->completedSessions.contains(sess)) return sess;
+			}
 		}
 		// If all sessions are complete return empty string
 		return "";
