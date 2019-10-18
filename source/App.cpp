@@ -1532,13 +1532,12 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 			float damage;
 			if (destroyImmediately) damage = target->health();
 			else if (sessConfig->weapon.firePeriod == 0.0f && hitTarget) {		// Check if we are in "laser" mode hit the target last time
-				float dt = static_cast<float>(System::time() - lastTime);
+				float dt = max(previousSimTimeStep(),0.0f);
 				damage = sessConfig->weapon.damagePerSecond * dt;
 			}
 			else {																// If we're not in "laser" mode then damage/shot is just damage/second * second/shot
 				damage = sessConfig->weapon.damagePerSecond * sessConfig->weapon.firePeriod;
 			}
-			lastTime = System::time();
 			hitTarget = true;
 
 			// Check if we need to add combat text for this damage
