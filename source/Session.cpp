@@ -135,7 +135,7 @@ void Session::initTargetAnimation() {
 			float visualSize = G3D::Random().common().uniform(target.val["minVisualSize"], target.val["maxVisualSize"]);
 			bool isWorldSpace = target.str["destSpace"] == "world";
 
-			CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw- (initialHeadingRadians * 180 / pi()), rot_pitch, 0.0f);
+			CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw- (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
 
 			// Check for case w/ destination array
 			if (target.val["destCount"] > 0.0) {

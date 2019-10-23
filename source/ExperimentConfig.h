@@ -795,7 +795,7 @@ public:
 
 			// Get the question prompt
 			if(!reader.getIfPresent("prompt", prompt)){
-				throw "A \prompt\" field must be provided with every question!";
+				throw "A \"prompt\" field must be provided with every question!";
 			}
 			reader.getIfPresent("title", title);
 			break;

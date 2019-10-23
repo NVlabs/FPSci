@@ -72,7 +72,7 @@ public:
 		const String&					name,
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
-		float							scaleIdx,
+		int								scaleIdx,
 		const CFrame&					position,
 		int								paramIdx,
 		Point3							offset=Point3::zero(),

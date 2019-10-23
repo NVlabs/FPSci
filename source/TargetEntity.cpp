@@ -29,7 +29,7 @@ shared_ptr<TargetEntity> TargetEntity::create(
 	const String&					name,
 	Scene*							scene,
 	const shared_ptr<Model>&		model,
-	float							scale,
+	int								scaleIdx,
 	const CFrame&					position,
 	int								paramIdx,
 	Point3							offset,
@@ -38,7 +38,7 @@ shared_ptr<TargetEntity> TargetEntity::create(
 	const shared_ptr<TargetEntity>& target = createShared<TargetEntity>();
 	target->Entity::init(name, scene, CFrame(dests[0].position), shared_ptr<Entity::Track>(), true, true);
 	target->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	target->TargetEntity::init(dests, paramIdx, offset, respawns, scale);
+	target->TargetEntity::init(dests, paramIdx, offset, respawns, scaleIdx);
 	return target;
 }
 
