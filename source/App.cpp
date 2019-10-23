@@ -1321,178 +1321,58 @@ bool App::onEvent(const GEvent& event) {
 	return false;
 }
 
-
 void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 	GApp::onPostProcessHDR3DEffects(rd);
+}
 
-	rd->push2D(); {
-		const float scale = rd->viewport().width() / 1920.0f;
-		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+void App::drawHUD(RenderDevice *rd) {
+	// Draw the HUD elements
+	const Vector2 scale = Vector2(rd->viewport().width()/1920.0f, rd->viewport().height()/1080.0f);
 
-		// Reticle
-		Draw::rect2D(
-			(reticleTexture->rect2DBounds() * scale - reticleTexture->vector2Bounds() * scale / 2.0f) / 2.0f + rd->viewport().wh() / 2.0f,
-			rd, Color3::green(), reticleTexture);
+	// Draw the player health bar
+	if (sessConfig->showPlayerHealthBar) {
+		const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
+		const Point2 location = Point2(sessConfig->playerHealthBarPos.x, sessConfig->playerHealthBarPos.y + m_debugMenuHeight);
+		const Point2 size = sessConfig->playerHealthBarSize;
+		const Point2 border = sessConfig->playerHealthBarBorderSize;
+		const Color4 borderColor = sessConfig->playerHealthBarBorderColor;
+		const Color4 color = sessConfig->playerHealthBarColors[1] * (1.0f - health) + sessConfig->playerHealthBarColors[0] * health;
 
-		// Draw target health bars
-		if (sessConfig->showTargetHealthBars) {
-			for (auto const& target : targetArray) {
-				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
-					sessConfig->targetHealthBarSize,
-					sessConfig->targetHealthBarOffset,
-					sessConfig->targetHealthBarBorderSize,
-					sessConfig->targetHealthBarColors,
-					sessConfig->targetHealthBarBorderColor);
-			}
+		Draw::rect2D(Rect2D::xywh(location - border, size + border + border), rd, borderColor);
+		Draw::rect2D(Rect2D::xywh(location, size*Point2(health, 1.0f)), rd, color);
+	}
+	// Draw the ammo indicator
+	if (sessConfig->showAmmo) {
+		Point2 lowerRight = Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height()));
+		hudFont->draw2D(rd,
+			format("%d/%d", sess->remainingAmmo(), sessConfig->weapon.maxAmmo),
+			lowerRight - sessConfig->ammoPosition,
+			sessConfig->ammoSize,
+			sessConfig->ammoColor,
+			sessConfig->ammoOutlineColor,
+			GFont::XALIGN_RIGHT,
+			GFont::YALIGN_BOTTOM
+		);
+	}
+
+	if (sessConfig->showBanner && !emergencyTurbo) {
+		const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->bannerVertVisible*hudTexture->height() * scale.y + debugMenuHeight());
+		Draw::rect2D((hudTexture->rect2DBounds() * scale - hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), hudTexture);
+
+		// Create strings for time remaining, progress in sessions, and score
+		float remainingTime = sess->getRemainingTrialTime();
+		float printTime = remainingTime > 0 ? remainingTime : 0.0f;
+		String time_string = format("%0.2f", printTime);
+		float prog = sess->getProgress();
+		String prog_string = "";
+		if (!isnan(prog)) {
+			prog_string = format("%d", (int)(100.0f*sess->getProgress())) + "%";
 		}
+		String score_string = format("%d", (int)(10 * sess->getScore()));
 
-		// Draw the combat text
-		if (sessConfig->showCombatText) {
-			Array<int> toRemove;
-			for (int i = 0; i < m_combatTextList.size(); i++) {
-				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
-				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
-			}
-			// Remove the expired elements here
-			m_combatTextList.removeNulls();
-		}
-
-		// Paint both sides by the width of latency measuring box.
-		Point2 latencyRect = sessConfig->clickPhotonSize;
-		// weapon ready status
-		if (sessConfig->renderWeaponStatus) {
-			// Draw the "active" cooldown box
-			if (sessConfig->cooldownMode == "box") {
-				float boxLeft = (float)m_framebuffer->width() * 0.0f;
-				if (sessConfig->weaponStatusSide == "right") {
-					// swap side
-					boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
-				}
-				Draw::rect2D(
-					Rect2D::xywh(
-						boxLeft,
-						(float)m_framebuffer->height() * (float)(sess->weaponCooldownPercent()),
-						(float)m_framebuffer->width() * latencyRect.x,
-						(float)m_framebuffer->height() * (float)(1.0 - sess->weaponCooldownPercent())
-					), rd, Color3::white() * 0.8f
-				);
-			}
-			else if (sessConfig->cooldownMode == "ring") {
-				// Draw cooldown "ring" instead of box
-				const float iRad = sessConfig->cooldownInnerRadius;
-				const float oRad = iRad + sessConfig->cooldownThickness;
-				const int segments = sessConfig->cooldownSubdivisions;
-				int segsToLight = static_cast<int>((1 - sess->weaponCooldownPercent())*segments);
-				// Create the segments
-				for (int i = 0; i < segsToLight; i++) {
-					const float inc = static_cast<float>(2 * pi() / segments);
-					const float theta = -i * inc;
-					Vector2 center = Vector2(m_framebuffer->width() / 2.0f, m_framebuffer->height() / 2.0f);
-					Array<Vector2> verts = {
-						center + Vector2(oRad*sin(theta), -oRad * cos(theta)),
-						center + Vector2(oRad*sin(theta + inc), -oRad * cos(theta + inc)),
-						center + Vector2(iRad*sin(theta + inc), -iRad * cos(theta + inc)),
-						center + Vector2(iRad*sin(theta), -iRad * cos(theta))
-					};
-					Draw::poly2D(verts, rd, sessConfig->cooldownColor);
-				}
-			}
-		}
-
-		// Click to photon latency measuring corner box
-		if (sessConfig->renderClickPhoton) {
-			float boxLeft = 0.0f;
-			if (sessConfig->clickPhotonSide == "right") {
-				// swap side
-				boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
-			}
-			// Draw the "active" box
-			Color3 cornerColor = (m_buttonUp) ? sessConfig->clickPhotonColors[0] : sessConfig->clickPhotonColors[1];
-			Draw::rect2D(
-				Rect2D::xywh(
-					boxLeft,
-					(float)m_framebuffer->height() * (sessConfig->clickPhotonVertPos - latencyRect.y / 2),
-					(float)m_framebuffer->width() * latencyRect.x,
-					(float)m_framebuffer->height() * latencyRect.y
-				), rd, cornerColor
-			);
-		}
-
-		// Draw the HUD elements
-		if (sessConfig->showHUD) {
-			const float vscale = rd->viewport().height() / (1080.0f);
-
-			// Draw the player health bar
-			if (sessConfig->showPlayerHealthBar) {
-				const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
-				const Point2 location = Point2(sessConfig->playerHealthBarPos.x, sessConfig->playerHealthBarPos.y + m_debugMenuHeight * vscale);
-				const Point2 size = sessConfig->playerHealthBarSize;
-				const Point2 border = sessConfig->playerHealthBarBorderSize;
-				const Color4 borderColor = sessConfig->playerHealthBarBorderColor;
-				const Color4 color = sessConfig->playerHealthBarColors[1] * (1.0f - health) + sessConfig->playerHealthBarColors[0] * health;
-
-				Draw::rect2D(Rect2D::xywh(location - border, size + border + border), rd, borderColor);
-				Draw::rect2D(Rect2D::xywh(location, size*Point2(health, 1.0f)), rd, color);
-			}
-			// Draw the ammo indicator
-			if (sessConfig->showAmmo) {
-				Point2 lowerRight = Point2(static_cast<float>(m_framebuffer->width()), static_cast<float>(m_framebuffer->height()));
-				hudFont->draw2D(rd,
-					format("%d/%d", sess->remainingAmmo(), sessConfig->weapon.maxAmmo),
-					lowerRight - sessConfig->ammoPosition,
-					sessConfig->ammoSize,
-					sessConfig->ammoColor,
-					sessConfig->ammoOutlineColor,
-					GFont::XALIGN_RIGHT,
-					GFont::YALIGN_BOTTOM
-				);
-			}
-
-			if (sessConfig->showBanner && !emergencyTurbo) {
-				const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->bannerVertVisible*hudTexture->height() * vscale + debugMenuHeight() + 74.0f);
-				Draw::rect2D((hudTexture->rect2DBounds() * scale - hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), hudTexture);
-
-				// Create strings for time remaining, progress in sessions, and score
-				float remainingTime = sess->getRemainingTrialTime();
-				float printTime = remainingTime > 0 ? remainingTime : 0.0f;
-				String time_string = format("%0.2f", printTime);
-				float prog = sess->getProgress();
-				String prog_string = "";
-				if (!isnan(prog)) {
-					prog_string = format("%d", (int)(100.0f*sess->getProgress())) + "%";
-				}
-				String score_string = format("%d", (int)(10 * sess->getScore()));
-
-				hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale, scale * sessConfig->bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-				hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale * sessConfig->bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-				hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale * sessConfig->bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-			}
-		}
-
-		// Handle the feedback message
-		String message = sess->getFeedbackMessage();
-		if (!message.empty()) {
-			outputFont->draw2D(rd, message.c_str(),
-				(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-		}
-
-	} rd->pop2D();
-
-	if (sessConfig->shader != "") {
-		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
-		// latency queue copy
-			
-		// Copy the post-VFX HDR framebuffer
-		static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("temp distortion source", 256, 256, m_framebuffer->texture(0)->format()));
-		temp->resize(m_framebuffer->width(), m_framebuffer->height());
-		m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
-
-		rd->push2D(m_framebuffer); {
-			Args args;
-			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
-			args.setRect(rd->viewport());
-			LAUNCH_SHADER(sessConfig->shader, args);
-		} rd->pop2D();
+		hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale.x, scale.x * sessConfig->bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale.x * sessConfig->bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+		hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * sessConfig->bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 	}
 }
 
@@ -1832,14 +1712,7 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 }
 
 void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
- 
- //   // Faster than the full stats widget
-	//std::string expDebugStr = "%d fps ";
-	//expDebugStr += ex->getDebugStr(); // debugging message
- //   debugFont->draw2D(rd, format(expDebugStr.c_str(), iRound(renderDevice->stats().smoothFrameRate)), Point2(10,10), 12.0f, Color3::yellow());
-
     // Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
-
 	// Track the instantaneous frame duration (no smoothing) in a circular queue
 	if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
 		m_frameDurationQueue.dequeue();
@@ -1860,6 +1733,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 	rd->push2D(); {
 		const float scale = rd->viewport().width() / 1920.0f;
+		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 		// FPS display (faster than the full stats widget)
 		if (renderFPS) {
@@ -1885,7 +1759,127 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			outputFont->draw2D(rd, "Recording Position", Point2(window()->width()*0.9f, m_debugMenuHeight*scale), 20.0f, Color3::red());
 		}
 
+		// Reticle
+		Draw::rect2D(
+			(reticleTexture->rect2DBounds() * scale - reticleTexture->vector2Bounds() * scale / 2.0f) / 2.0f + rd->viewport().wh() / 2.0f,
+			rd, Color3::green(), reticleTexture);
+
+		// Draw target health bars
+		if (sessConfig->showTargetHealthBars) {
+			for (auto const& target : targetArray) {
+				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
+					sessConfig->targetHealthBarSize,
+					sessConfig->targetHealthBarOffset,
+					sessConfig->targetHealthBarBorderSize,
+					sessConfig->targetHealthBarColors,
+					sessConfig->targetHealthBarBorderColor);
+			}
+		}
+
+		// Draw the combat text
+		if (sessConfig->showCombatText) {
+			Array<int> toRemove;
+			for (int i = 0; i < m_combatTextList.size(); i++) {
+				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
+				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
+			}
+			// Remove the expired elements here
+			m_combatTextList.removeNulls();
+		}
+
+		// Paint both sides by the width of latency measuring box.
+		Point2 latencyRect = sessConfig->clickPhotonSize;
+		// weapon ready status
+		if (sessConfig->renderWeaponStatus) {
+			// Draw the "active" cooldown box
+			if (sessConfig->cooldownMode == "box") {
+				float boxLeft = (float)m_framebuffer->width() * 0.0f;
+				if (sessConfig->weaponStatusSide == "right") {
+					// swap side
+					boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
+				}
+				Draw::rect2D(
+					Rect2D::xywh(
+						boxLeft,
+						(float)m_framebuffer->height() * (float)(sess->weaponCooldownPercent()),
+						(float)m_framebuffer->width() * latencyRect.x,
+						(float)m_framebuffer->height() * (float)(1.0 - sess->weaponCooldownPercent())
+					), rd, Color3::white() * 0.8f
+				);
+			}
+			else if (sessConfig->cooldownMode == "ring") {
+				// Draw cooldown "ring" instead of box
+				const float iRad = sessConfig->cooldownInnerRadius;
+				const float oRad = iRad + sessConfig->cooldownThickness;
+				const int segments = sessConfig->cooldownSubdivisions;
+				int segsToLight = static_cast<int>((1 - sess->weaponCooldownPercent())*segments);
+				// Create the segments
+				for (int i = 0; i < segsToLight; i++) {
+					const float inc = static_cast<float>(2 * pi() / segments);
+					const float theta = -i * inc;
+					Vector2 center = Vector2(m_framebuffer->width() / 2.0f, m_framebuffer->height() / 2.0f);
+					Array<Vector2> verts = {
+						center + Vector2(oRad*sin(theta), -oRad * cos(theta)),
+						center + Vector2(oRad*sin(theta + inc), -oRad * cos(theta + inc)),
+						center + Vector2(iRad*sin(theta + inc), -iRad * cos(theta + inc)),
+						center + Vector2(iRad*sin(theta), -iRad * cos(theta))
+					};
+					Draw::poly2D(verts, rd, sessConfig->cooldownColor);
+				}
+			}
+		}
+
+		// Click to photon latency measuring corner box
+		if (sessConfig->renderClickPhoton) {
+			float boxLeft = 0.0f;
+			if (sessConfig->clickPhotonSide == "right") {
+				// swap side
+				boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
+			}
+			// Draw the "active" box
+			Color3 cornerColor = (m_buttonUp) ? sessConfig->clickPhotonColors[0] : sessConfig->clickPhotonColors[1];
+			Draw::rect2D(
+				Rect2D::xywh(
+					boxLeft,
+					(float)m_framebuffer->height() * (sessConfig->clickPhotonVertPos - latencyRect.y / 2),
+					(float)m_framebuffer->width() * latencyRect.x,
+					(float)m_framebuffer->height() * latencyRect.y
+				), rd, cornerColor
+			);
+		}
+
+		// Draw the HUD here
+		if (sessConfig->showHUD) {
+			drawHUD(rd);
+		}
+
+		// Handle the feedback message
+		String message = sess->getFeedbackMessage();
+		if (!message.empty()) {
+			outputFont->draw2D(rd, message.c_str(),
+				(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+		}
+
 	} rd->pop2D();
+
+	if (sessConfig->shader != "") {
+		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
+		// latency queue copy
+
+		// Think about whether or not this is the right place to run the shader...
+
+		// Copy the post-VFX HDR framebuffer
+		static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("temp distortion source", 256, 256, m_framebuffer->texture(0)->format()));
+		temp->resize(m_framebuffer->width(), m_framebuffer->height());
+		m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
+
+		rd->push2D(m_framebuffer); {
+			Args args;
+			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
+			args.setRect(rd->viewport());
+			LAUNCH_SHADER(sessConfig->shader, args);
+		} rd->pop2D();
+	}
 
 	// Might not need this on the reaction trial
 	// This is rendering the GUI. Can remove if desired.

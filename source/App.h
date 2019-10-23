@@ -199,6 +199,8 @@ protected:
 	void updateUser(void);
     void updateUserGUI();
 
+	void drawHUD(RenderDevice *rd);
+
 public:
 	/* Moving from proctected so that Experiment classes can use it. */
 	shared_ptr<GFont>               outputFont;						///< Font used for output
