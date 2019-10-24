@@ -1793,17 +1793,17 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 		if (sessConfig->renderWeaponStatus) {
 			// Draw the "active" cooldown box
 			if (sessConfig->cooldownMode == "box") {
-				float boxLeft = (float)m_framebuffer->width() * 0.0f;
+				float boxLeft = (float)rd->viewport().width() * 0.0f;
 				if (sessConfig->weaponStatusSide == "right") {
 					// swap side
-					boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
+					boxLeft = (float)rd->viewport().width() * (1.0f - latencyRect.x);
 				}
 				Draw::rect2D(
 					Rect2D::xywh(
 						boxLeft,
-						(float)m_framebuffer->height() * (float)(sess->weaponCooldownPercent()),
-						(float)m_framebuffer->width() * latencyRect.x,
-						(float)m_framebuffer->height() * (float)(1.0 - sess->weaponCooldownPercent())
+						(float)rd->viewport().height() * (float)(sess->weaponCooldownPercent()),
+						(float)rd->viewport().width() * latencyRect.x,
+						(float)rd->viewport().height() * (float)(1.0 - sess->weaponCooldownPercent())
 					), rd, Color3::white() * 0.8f
 				);
 			}
@@ -1817,7 +1817,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 				for (int i = 0; i < segsToLight; i++) {
 					const float inc = static_cast<float>(2 * pi() / segments);
 					const float theta = -i * inc;
-					Vector2 center = Vector2(m_framebuffer->width() / 2.0f, m_framebuffer->height() / 2.0f);
+					Vector2 center = Vector2(rd->viewport().width() / 2.0f, rd->viewport().height() / 2.0f);
 					Array<Vector2> verts = {
 						center + Vector2(oRad*sin(theta), -oRad * cos(theta)),
 						center + Vector2(oRad*sin(theta + inc), -oRad * cos(theta + inc)),
@@ -1834,16 +1834,16 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			float boxLeft = 0.0f;
 			if (sessConfig->clickPhotonSide == "right") {
 				// swap side
-				boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
+				boxLeft = (float)rd->viewport().width() * (1.0f - latencyRect.x);
 			}
 			// Draw the "active" box
 			Color3 cornerColor = (m_buttonUp) ? sessConfig->clickPhotonColors[0] : sessConfig->clickPhotonColors[1];
 			Draw::rect2D(
 				Rect2D::xywh(
 					boxLeft,
-					(float)m_framebuffer->height() * (sessConfig->clickPhotonVertPos - latencyRect.y / 2),
-					(float)m_framebuffer->width() * latencyRect.x,
-					(float)m_framebuffer->height() * latencyRect.y
+					(float)rd->viewport().height() * (sessConfig->clickPhotonVertPos - latencyRect.y / 2),
+					(float)rd->viewport().width() * latencyRect.x,
+					(float)rd->viewport().height() * latencyRect.y
 				), rd, cornerColor
 			);
 		}
@@ -1859,6 +1859,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			outputFont->draw2D(rd, message.c_str(),
 				(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
 		}
+
 
 	} rd->pop2D();
 
