@@ -52,3 +52,26 @@ A quick guide is provided below to this repository structure:
 * [`docs`](docs) contains documentation to aid experiment designers
 * [`scripts`](scripts) contains some useful scripts for developers including some basic data analysis
 * `results` is created when executing `FirstPersonScience` and holds the results `.db` files from each experiment
+
+## Source Organization
+The source files (located in the [`source`](source) directory) implement a fairly typical G3D application structure with additional classes/files for many peripheral features. We outline the purpose of each of these source files below.
+
+### Application Code
+All graphics and scene-related routines are in [`App.cpp`](source/App.cpp) and its [affiliated header file](source/App.h). The `App` class inherits `GApp` from G3D and thus controls all rendering. Unlike many other applications this `App` class overrides the `oneFrame()` method from within `GApp` to allow us to reorder the render loop to reduce latency.
+
+Several helper classes/files have been created to assist with application-level tasks. 
+
+* The `PhysicsScene` class/[file](source/PhysicsScene.cpp) is borrowed (w/ some modifications) from the G3D `simpleGame` example. This class extends the typical `Scene` by adding support for a tree based collision model, using a sphere as a proxy for the player.
+* `PlayerEntity` class/[file](source/PlayerEntity.cpp) is also borrowed from the G3D `simpleGame` example. The class provides a controllable player-entity (rather than no-clip camera) that works well with the `PhysicsScene`
+* `TargetEntity` class/[file](source/TargetEntity.cpp) is a custom class implementing different target types that inherit a common, generic `TargetEntity` (which in turn inherits G3D's `VisibleEntity`)
+* The `GuiElements` class/[file](source/GuiElements.cpp) contains some custom GUI menus designed to work specifically with this application
+* The [`Dialogs.h` file](source/Dialogs.h) contains some generic dialog box classes that are used for asking questions of the user following a session.
+* The [`PyLogger.h` file](source/PyLogger.h) encapsulates the calls used to launch the LDAT-R python logging tools from within the application when running FPSci with an LDAT-R device present.
+
+### Experiment/Session Code
+The majority of experiment/session level management occurs within [`Session.cpp`](source/Session.cpp) and it's [affiliated header file](source/Session.h). This includes configuring sessions, controlling the per-trial/session state, and logging results.
+
+Experiment/session-level helpers include:
+* [`Logger.cpp`](source/Logger.cpp) / [`Logger.h`](source/Logger.h) which manage logging for the session
+* [`ExperimentConfig.h`](source/ExperimentConfig.h) which contains the `.Any` serializable classes for all session/experiment control
+* [`Param.h`](source/Param.h) which is used as a sort of dynamically typed dictionary to help consolidate parameter passing
