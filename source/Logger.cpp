@@ -140,9 +140,9 @@ void Logger::recordFrameInfo(Array<Array<String>> info) {
 	insertRowsIntoDB(m_db, "Frame_Info", info);
 }
 
-void Logger::addTargets(Array<Array<Param>> targetParams) {
+void Logger::addTargets(Array<Array<ParameterTable>> targetParams) {
 	for (int i = 0; i < targetParams.size(); i++) {
-		for (Param tparam : targetParams[i]) {
+		for (ParameterTable tparam : targetParams[i]) {
 			const String type = (tparam.val["destCount"] > 0) ? "waypoint" : "parametrized";
 			Array<String> targetValues = {
 				String(std::to_string(i)),										// This is the trial ID

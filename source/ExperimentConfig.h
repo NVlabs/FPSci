@@ -1,15 +1,15 @@
 #pragma once
 
 #include <G3D/G3D.h>
-#include "Param.h"
+#include "ParameterTable.h"
 
 /** Configure how the application should start */
 class StartupConfig {
 public:
-    bool playMode = true;					///< Sets whether the experiment is run in full-screen "playMode" (true for real data)
-    String experimentConfigPath = "";		///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
-    String userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
-    bool audioEnable = true;                ///< Audio on/off
+    bool	playMode = true;					///< Sets whether the experiment is run in full-screen "playMode" (true for real data)
+    String	experimentConfigPath = "";			///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
+    String	userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
+    bool	audioEnable = true;					///< Audio on/off
 
     StartupConfig() {};
 
@@ -57,21 +57,21 @@ public:
 class SystemConfig {
 public:
 	// Output/runtime read parameters
-	String cpuName;			///< The vendor name of the CPU being used
-	int coreCount;			///< Core count for the CPU being used
-	String gpuName;			///< The vendor name of the GPU being used
-	long memCapacityMB;		///< The capacity of memory (RAM) in MB
-	String displayName;		///< The vendor name of the display (not currently working)
-	int displayXRes;		///< The horizontal size of the display in pixels
-	int displayYRes;		///< The vertical size of the display in pixels
-	int displayXSize;		///< The horizontal size of the display in mm
-	int displayYSize;		///< The vertical size of the display in mm
+	String	cpuName;			///< The vendor name of the CPU being used
+	int		coreCount;			///< Core count for the CPU being used
+	String	gpuName;			///< The vendor name of the GPU being used
+	long	memCapacityMB;		///< The capacity of memory (RAM) in MB
+	String	displayName;		///< The vendor name of the display (not currently working)
+	int		displayXRes;		///< The horizontal size of the display in pixels
+	int		displayYRes;		///< The vertical size of the display in pixels
+	int		displayXSize;		///< The horizontal size of the display in mm
+	int		displayYSize;		///< The vertical size of the display in mm
 
 	// Input parameters
-	bool hasLogger = false;			///< Indicates that a hardware logger is present in the system
-	String loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
-	bool hasSync = false;			///< Indicates that a hardware sync will occur via serial card DTR signal
-	String syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
+	bool	hasLogger = false;			///< Indicates that a hardware logger is present in the system
+	String	loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
+	bool	hasSync = false;			///< Indicates that a hardware sync will occur via serial card DTR signal
+	String	syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
 
 	SystemConfig() {};
 
@@ -210,10 +210,10 @@ public:
 /**Class for managing user configuration*/
 class UserConfig {
 public:
-    String id = "anon";						///< Subject ID (as recorded in output DB)
-    double mouseDPI = 800.0;				///< Mouse DPI setting
-    double cmp360 = 12.75;					///< Mouse sensitivity, reported as centimeters per 360�
-	int currentSession = 0;					///< Currently selected session
+    String	id = "anon";						///< Subject ID (as recorded in output DB)
+    double	mouseDPI = 800.0;					///< Mouse DPI setting
+    double	cmp360 = 12.75;						///< Mouse sensitivity, reported as centimeters per 360�
+	int		currentSession = 0;					///< Currently selected session
 
 	UserConfig() {};
 
@@ -247,8 +247,8 @@ public:
 /** Class for loading a user table and getting user info */
 class UserTable {
 public:
-	String currentUser = "None";			///< The currently active user
-	Array<UserConfig> users = {};			///< A list of valid users
+	String					currentUser = "None";			///< The currently active user
+	Array<UserConfig>		users = {};						///< A list of valid users
 
 	UserTable() {};
 
@@ -342,10 +342,10 @@ public:
 /** Class for handling user status */
 class UserSessionStatus {
 public:
-	String id = "anon";								///< User ID
-	Array<String> sessionOrder = {};				///< Array containing session ordering
-	Array<String> completedSessions = {};			///< Array containing all completed session ids for this user
-	static Array<String> defaultSessionOrder;		///< Default session order
+	String					id = "anon";					///< User ID
+	Array<String>			sessionOrder = {};				///< Array containing session ordering
+	Array<String>			completedSessions = {};			///< Array containing all completed session ids for this user
+	static Array<String>	defaultSessionOrder;			///< Default session order
 
 	UserSessionStatus() {}
 
@@ -497,25 +497,25 @@ public:
 /** Weapon configuration class */
 class WeaponConfig {
 public:
-	String id = "default";												///< Id by which to refer to this weapon
-	int maxAmmo = 10000;												///< Max ammo (clicks) allowed per trial (set large for laser mode)
-	float firePeriod = 0.5;												///< Minimum fire period (set to 0 for laser mode)
-	bool autoFire = false;												///< Fire repeatedly when mouse is held? (set true for laser mode)
-	float damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
-	String fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	///< Sound to play on fire
-	float fireSoundVol = 0.5f;											///< Volume for fire sound
-	bool renderModel = false;											///< Render a model for the weapon?
-	Vector3 muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
-	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
-	bool renderMuzzleFlash = false;										///< Render a muzzle flash when the weapon fires?
-	bool renderDecals = true;											///< Render decals when the shots miss?
-	bool renderBullets = false;											///< Render bullets leaving the weapon
-	float bulletSpeed = 1.0f;											///< Speed to draw at for rendered rounds (in m/s)
+	String	id = "default";												///< Id by which to refer to this weapon
+	int		maxAmmo = 10000;											///< Max ammo (clicks) allowed per trial (set large for laser mode)
+	float	firePeriod = 0.5;											///< Minimum fire period (set to 0 for laser mode)
+	bool	autoFire = false;											///< Fire repeatedly when mouse is held? (set true for laser mode)
+	float	damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
+	String	fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	///< Sound to play on fire
+	float	fireSoundVol = 0.5f;										///< Volume for fire sound
+	bool	renderModel = false;										///< Render a model for the weapon?
+	Vector3	muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
+	bool	renderMuzzleFlash = false;									///< Render a muzzle flash when the weapon fires?
+	bool	renderDecals = true;										///< Render decals when the shots miss?
+	bool	renderBullets = false;										///< Render bullets leaving the weapon
+	float	bulletSpeed = 1.0f;											///< Speed to draw at for rendered rounds (in m/s)
 	//String missDecal = "bullet-decal-256x256.png";					///< The decal to place where the shot misses
-	float fireSpread = 0;												///< The spread of the fire
-	float damageRollOffAim = 0;											///< Damage roll off w/ aim
-	float damageRollOffDistance = 0;									///< Damage roll of w/ distance
+	float	fireSpread = 0;												///< The spread of the fire
+	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
+	float	damageRollOffDistance = 0;									///< Damage roll of w/ distance
 	//String reticleImage;												///< Reticle image to show for this weapon
+	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
 
 	WeaponConfig() {
 	// Suggested any for "default" model, leaving this here for now... breaks debug config if uncommented
@@ -597,25 +597,25 @@ public:
 };
 
 /** Class for representing a given target configuration */
-class TargetConfig {
+class TargetConfig : public ReferenceCountedObject {
 public:
-	String id;												///< Trial ID to indentify affiliated trial runs
-	//bool elevLocked = false;								///< Elevation locking
-	bool upperHemisphereOnly = false;                       ///< Limit flying motion to upper hemisphere only
-	Array<float> distance = { 30.0f, 40.0f };				///< Distance to the target
-	Array<float> motionChangePeriod = { 1.0f, 1.0f };		///< Range of motion change period in seconds
-	Array<float> speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
-	Array<float> eccH = { 5.0f, 15.0f };					///< Range of initial horizontal eccentricity
-	Array<float> eccV = { 0.0f, 2.0f };						///< Range of initial vertical eccentricity
-	Array<float> visualSize = { 0.2f, 0.2f };				///< Visual size of the target (in degrees)
-	bool jumpEnabled = false;								///< Flag indicating whether the target jumps
-	Array<float> jumpPeriod = { 2.0f, 2.0f };				///< Range of time period between jumps in seconds
-	Array<float> jumpSpeed = { 2.0f, 5.5f };				///< Range of jump speeds in meters/s
-	Array<float> accelGravity = { 9.8f, 9.8f };				///< Range of acceleration due to gravity in meters/s^2
+	String			id;										///< Trial ID to indentify affiliated trial runs
+	//bool    		elevLocked = false;						///< Elevation locking
+	bool			upperHemisphereOnly = false;            ///< Limit flying motion to upper hemisphere only
+	Array<float>	distance = { 30.0f, 40.0f };			///< Distance to the target
+	Array<float>	motionChangePeriod = { 1.0f, 1.0f };	///< Range of motion change period in seconds
+	Array<float>	speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
+	Array<float>	eccH = { 5.0f, 15.0f };					///< Range of initial horizontal eccentricity
+	Array<float>	eccV = { 0.0f, 2.0f };					///< Range of initial vertical eccentricity
+	Array<float>	visualSize = { 0.2f, 0.2f };			///< Visual size of the target (in degrees)
+	bool			jumpEnabled = false;					///< Flag indicating whether the target jumps
+	Array<float>	jumpPeriod = { 2.0f, 2.0f };			///< Range of time period between jumps in seconds
+	Array<float>	jumpSpeed = { 2.0f, 5.5f };				///< Range of jump speeds in meters/s
+	Array<float>	accelGravity = { 9.8f, 9.8f };			///< Range of acceleration due to gravity in meters/s^2
 	Array<Destination> destinations;						///< Array of destinations to traverse
-	String destSpace = "world";								///< Space to use for destinations (implies offset) can be "world" or "player"
-	float respawnCount = 0.0f;								///< Number of times to respawn
-	AABox bbox = AABox();
+	String			destSpace = "world";					///< Space to use for destinations (implies offset) can be "world" or "player"
+	float			respawnCount = 0.0f;					///< Number of times to respawn
+	AABox			bbox;
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
@@ -708,9 +708,9 @@ public:
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */
 class TrialCount {
 public:
-	Array<String> ids;			///< Trial ID list
-	int count = 1;				///< Count of trials to be performed
-	static int defaultCount;	///< Default count to use
+	Array<String>	ids;			///< Trial ID list
+	int				count = 1;		///< Count of trials to be performed
+	static int		defaultCount;	///< Default count to use
 
 	TrialCount() {};
 
@@ -809,120 +809,120 @@ public:
 
 class FpsConfig : public ReferenceCountedObject {
 public:
-	int	settingsVersion = 1;						///< Settings version
-	String sceneName = "";							///< Scene name
+	int	            settingsVersion = 1;						///< Settings version
+	String          sceneName = "";							    ///< Scene name
 
 	// Rendering parameters
-	float frameRate = 0.0f;							///< Target (goal) frame rate (in Hz)
-	int frameDelay = 0;								///< Integer frame delay (in frames)
-	String shader = "";								///< Option for a custom shader name
+	float           frameRate = 0.0f;							///< Target (goal) frame rate (in Hz)
+	int             frameDelay = 0;								///< Integer frame delay (in frames)
+	String          shader = "";								///< Option for a custom shader name
 
 	// Timing parameters
-	float readyDuration = 0.5f;						///< Time in ready state in seconds
-	float taskDuration = 100000.0f;					///< Maximum time spent in any one task
-	float feedbackDuration = 1.0f;					///< Time in feedback state in seconds
+	float           readyDuration = 0.5f;						///< Time in ready state in seconds
+	float           taskDuration = 100000.0f;					///< Maximum time spent in any one task
+	float           feedbackDuration = 1.0f;					///< Time in feedback state in seconds
 
 	// Trial count
-	int defaultTrialCount = 5;						///< Default trial count
+	int             defaultTrialCount = 5;						///< Default trial count
 
 	// View parameters
-	float hFoV = 103.0f;							///< Field of view (horizontal) for the user
-	float moveRate = 0.0f;							///< Player move rate (defaults to no motion)
-	float playerHeight = 1.5f;						///< Height for the player view (in walk mode)
-	float crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
-	float jumpVelocity = 7.0f;						///< Jump velocity for the player
-	float jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
-	bool jumpTouch = true;							///< Require the player to be touch a surface to jump?
-	Vector3 playerGravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
+	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
+	float           moveRate = 0.0f;							///< Player move rate (defaults to no motion)
+	float           playerHeight = 1.5f;						///< Height for the player view (in walk mode)
+	float           crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
+	float           jumpVelocity = 7.0f;						///< Jump velocity for the player
+	float           jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
+	bool            jumpTouch = true;							///< Require the player to be touch a surface to jump?
+	Vector3         playerGravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
 
-	WeaponConfig weapon = WeaponConfig();			///< Weapon to be used
+	WeaponConfig    weapon;			                            ///< Weapon to be used
 
 	// HUD parameters
-	bool showHUD = false;							///< Master control for all HUD elements
-	bool showBanner = false;						///< Show the banner display
-	float bannerVertVisible = 0.41f;				///< Vertical banner visibility
-	float bannerLargeFontSize = 30.0f;				///< Banner percent complete font size
-	float bannerSmallFontSize = 14.0f;				///< Banner detail font size
-	String hudFont = "dominant.fnt";				///< Font to use for Heads Up Display
+	bool            showHUD = false;							            ///< Master control for all HUD elements
+	bool            showBanner = false;						                ///< Show the banner display
+	float           bannerVertVisible = 0.41f;				                ///< Vertical banner visibility
+	float           bannerLargeFontSize = 30.0f;				            ///< Banner percent complete font size
+	float           bannerSmallFontSize = 14.0f;				            ///< Banner detail font size
+	String          hudFont = "dominant.fnt";				                ///< Font to use for Heads Up Display
 
 	// Player health bar
-	bool showPlayerHealthBar = false;										///< Display a player health bar?
-	Point2 playerHealthBarSize = Point2(200.0f, 20.0f);						///< Player health bar size (in pixels)
-	Point2 playerHealthBarPos = Point2(10.0f, 10.0f);						///< Player health bar position (in pixels)
-	Point2 playerHealthBarBorderSize = Point2(2.0f, 2.0f);					///< Player health bar border size
-	Color4 playerHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Player health bar border color
-	Array<Color4> playerHealthBarColors = {									///< Player health bar start/end colors
+	bool            showPlayerHealthBar = false;							///< Display a player health bar?
+	Point2          playerHealthBarSize = Point2(200.0f, 20.0f);			///< Player health bar size (in pixels)
+	Point2          playerHealthBarPos = Point2(10.0f, 10.0f);				///< Player health bar position (in pixels)
+	Point2          playerHealthBarBorderSize = Point2(2.0f, 2.0f);			///< Player health bar border size
+	Color4          playerHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Player health bar border color
+	Array<Color4>   playerHealthBarColors = {								///< Player health bar start/end colors
 		Color4(0.0, 1.0, 0.0, 1.0),
 		Color4(1.0, 0.0, 0.0, 1.0)
 	};
 
 	// Click-to-photon
-	bool renderClickPhoton = false;                 ///< Render click to photon box
-	String clickPhotonSide = "right";               ///< "right" for right side, otherwise left
-	Point2 clickPhotonSize = Point2(0.05f, 0.035f);	///< Size of the click-to-photon area (ratio of screen space)
-	float clickPhotonVertPos = 0.5f;				///< Percentage of the screen down to locate the box
-	Array<Color3> clickPhotonColors = {				///< Colors to apply to click to photon box
+	bool            renderClickPhoton = false;                              ///< Render click to photon box
+	String          clickPhotonSide = "right";                              ///< "right" for right side, otherwise left
+	Point2          clickPhotonSize = Point2(0.05f, 0.035f);	            ///< Size of the click-to-photon area (ratio of screen space)
+	float           clickPhotonVertPos = 0.5f;				                ///< Percentage of the screen down to locate the box
+
+	Array<Color3>   clickPhotonColors = {				                        ///< Colors to apply to click to photon box
 		Color3::white() * 0.2f,
 		Color3::white() * 0.8f
 	};
 
 	// Weapon status
-	bool showAmmo = false;													///< Display remaining ammo
-	Point2 ammoPosition = Point2(10.0f, 10.0f);								///< Position of the ammo indicator text
-	float ammoSize = 24.0f;													///< Font size for ammo indicator text
-	Color4 ammoColor = Color4(1.0, 1.0, 1.0, 1.0);							///< Color for ammo indicator text
-	Color4 ammoOutlineColor = Color4(0.0, 0.0, 0.0, 1.0);					///< Outline color for ammo indicator text
-	bool renderWeaponStatus = true;											///< Display weapon cooldown
-	String cooldownMode = "ring";											///< Currently "ring" and "box" are supported
-	String weaponStatusSide = "left";										///< Only applied in "box" mode, can be "right" or "left"
-	float cooldownInnerRadius = 40.0f;										///< Inner radius for cooldown ring
-	float cooldownThickness = 10.0f;										///< Thickness of cooldown ring
-	int cooldownSubdivisions = 64;											///< Number of polygon divisions in the "ring"
-	Color4 cooldownColor = Color4(1.0f, 1.0f, 1.0f, 0.75f);					///< Cooldown ring color when active (transparent when inactive)
+	bool            showAmmo = false;											///< Display remaining ammo
+	Point2          ammoPosition = Point2(10.0f, 10.0f);						///< Position of the ammo indicator text
+	float           ammoSize = 24.0f;											///< Font size for ammo indicator text
+	Color4          ammoColor = Color4(1.0, 1.0, 1.0, 1.0);						///< Color for ammo indicator text
+	Color4          ammoOutlineColor = Color4(0.0, 0.0, 0.0, 1.0);				///< Outline color for ammo indicator text
+	bool            renderWeaponStatus = true;									///< Display weapon cooldown
+	String          cooldownMode = "ring";										///< Currently "ring" and "box" are supported
+	String          weaponStatusSide = "left";									///< Only applied in "box" mode, can be "right" or "left"
+	float           cooldownInnerRadius = 40.0f;								///< Inner radius for cooldown ring
+	float           cooldownThickness = 10.0f;									///< Thickness of cooldown ring
+	int             cooldownSubdivisions = 64;									///< Number of polygon divisions in the "ring"
+	Color4          cooldownColor = Color4(1.0f, 1.0f, 1.0f, 0.75f);			///< Cooldown ring color when active (transparent when inactive)
 
 	// Target health bars
-	Array<Color3> targetHealthColors = {									///< Target start/end color (based on target health)
+	Array<Color3>   targetHealthColors = {									    ///< Target start/end color (based on target health)
 		Color3(0.0, 1.0, 0.0),
 		Color3(1.0, 0.0, 0.0)
 	};
-	bool showTargetHealthBars = false;										///< Display a target health bar?
-	Point2 targetHealthBarSize = Point2(100.0f, 10.0f);						///< Health bar size (in pixels)
-	Point3 targetHealthBarOffset = Point3(0.0f, -50.0f, 0.0f);				///< Offset from target to health bar (in pixels)
-	Point2 targetHealthBarBorderSize = Point2(2.0f, 2.0f);					///< Thickness of the target health bar border
-	Color4 targetHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Health bar border color
-	Array<Color4> targetHealthBarColors = {									///< Target health bar start/end color
+	bool            showTargetHealthBars = false;								///< Display a target health bar?
+	Point2          targetHealthBarSize = Point2(100.0f, 10.0f);				///< Health bar size (in pixels)
+	Point3          targetHealthBarOffset = Point3(0.0f, -50.0f, 0.0f);			///< Offset from target to health bar (in pixels)
+	Point2          targetHealthBarBorderSize = Point2(2.0f, 2.0f);				///< Thickness of the target health bar border
+	Color4          targetHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);///< Health bar border color
+	Array<Color4>   targetHealthBarColors = {									///< Target health bar start/end color
 		Color4(0.0, 1.0, 0.0, 1.0),
 		Color4(1.0, 0.0, 0.0, 1.0)
 	};
 
 	// Sounds
-	String explosionSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
-	float explosionSoundVol = 10.0f;
+	String          explosionSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
+	float           explosionSoundVol = 10.0f;
 
 	// Floating combat text controls
-	bool showCombatText = false;								///< Display floating combat text?
-	String combatTextFont = "dominant.fnt";						///< Font to use for combat text
-	float combatTextSize = 16.0;								///< Font size for floating combat text
-	Color4 combatTextColor = Color4(1.0, 0.0, 0.0, 1.0);		///< The main color for floating combat text
-	Color4 combatTextOutline = Color4(0.0, 0.0, 0.0, 1.0);		///< Combat text outline color
-	Point3 combatTextOffset = Point3(0.0, -10.0, 0.0);			///< Initial offset for combat text
-	Point3 combatTextVelocity = Point3(0.0, -100.0, 0.0);		///< Move rate/vector for combat text
-	float combatTextFade = 0.98f;								///< Fade rate for combat text (0 implies don't fade)	
-	float combatTextTimeout = 0.5f;								///< Time for combat text to disappear (in seconds)
+	bool            showCombatText = false;								///< Display floating combat text?
+	String          combatTextFont = "dominant.fnt";					///< Font to use for combat text
+	float           combatTextSize = 16.0;								///< Font size for floating combat text
+	Color4          combatTextColor = Color4(1.0, 0.0, 0.0, 1.0);		///< The main color for floating combat text
+	Color4          combatTextOutline = Color4(0.0, 0.0, 0.0, 1.0);		///< Combat text outline color
+	Point3          combatTextOffset = Point3(0.0, -10.0, 0.0);			///< Initial offset for combat text
+	Point3          combatTextVelocity = Point3(0.0, -100.0, 0.0);		///< Move rate/vector for combat text
+	float           combatTextFade = 0.98f;								///< Fade rate for combat text (0 implies don't fade)	
+	float           combatTextTimeout = 0.5f;							///< Time for combat text to disappear (in seconds)
 
-	// Reference target
-	float refTargetSize = 0.01f;								///< Size of the reference target
-	Color3 refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
+	// Reference/dummy target
+	float           refTargetSize = 0.01f;								///< Size of the reference target
+	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
 
-	// Questions
-	Array<Question> questions;
+	Array<Question> questionArray;
 
 	// Constructors
 	FpsConfig(const Any& any) {
 		load(any);
 	}
 
-	FpsConfig(const Any& any, FpsConfig defaultConfig) {
+	FpsConfig(const Any& any, const FpsConfig& defaultConfig) {
 		*this = defaultConfig;
 		load(any);
 	}
@@ -997,7 +997,7 @@ public:
 			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
 			reader.getIfPresent("referenceTargetSize", refTargetSize);
 			reader.getIfPresent("referenceTargetColor", refTargetColor);
-			reader.getIfPresent("questions", questions);
+			reader.getIfPresent("questions", questionArray);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in FpsConfig.\n", settingsVersion);
@@ -1078,12 +1078,12 @@ public:
 /** Configuration for a session worth of trials */
 class SessionConfig : public FpsConfig {
 public:
-	String id;									///< Session ID
-	String  sessDescription = "Session";		///< String indicating whether session is training or real
-	Array<TrialCount> trials;					///< Array of trials (and their counts) to be performed
-	static FpsConfig defaultConfig;
+	String				id;								///< Session ID
+	String				description = "Session";		///< String indicating whether session is training or real
+	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
+	static FpsConfig	defaultConfig;
 
-	SessionConfig() : FpsConfig(defaultConfig) {};
+	SessionConfig() : FpsConfig(defaultConfig) {}
 
 	static shared_ptr<SessionConfig> create() {
 		return createShared<SessionConfig>();
@@ -1097,7 +1097,7 @@ public:
 		case 1:
 			// Unique session info
 			reader.getIfPresent("id", id);
-			reader.getIfPresent("description", sessDescription);
+			reader.getIfPresent("description", description);
 			if (!reader.getIfPresent("trials", trials)){
 				throw format("A \"trials\" array must be specified with each session! See session: \"%s\"", id);
 			}
@@ -1110,10 +1110,11 @@ public:
 
 	Any toAny(const bool forceAll = true) const {
 		// Get the base any config
-		Any a = ((FpsConfig*)this)->toAny();
+		Any a = FpsConfig::toAny();
+
 		// Update w/ the session-specific fields
 		a["id"] = id;
-		a["description"] = sessDescription;
+		a["description"] = description;
 		a["trials"] = trials;
 		return a;
 	}
@@ -1121,7 +1122,7 @@ public:
 	/** Get the total number of trials in this session */
 	int getTotalTrials(void) {
 		int count = 0;
-		for (TrialCount tc : trials) {
+		for (const TrialCount& tc : trials) {
 			count += tc.count;
 		}
 		return count;
@@ -1131,7 +1132,7 @@ public:
 /** Experiment configuration */
 class ExperimentConfig : public FpsConfig {
 public:
-	String expDescription = "Experiment";				///< Experiment description
+	String description = "Experiment";					///< Experiment description
 	Array<SessionConfig> sessions;						///< Array of sessions
 	Array<TargetConfig> targets;						///< Array of trial configs   
 
@@ -1143,7 +1144,7 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			// Experiment-specific info
-			reader.getIfPresent("description", expDescription);
+			reader.getIfPresent("description", description);
 			if(!reader.getIfPresent("targets", targets)){												// Get the targets (required)
 
 				throw "At least one target must be specified for the experiment!";
@@ -1160,58 +1161,57 @@ public:
 	}
 
 	/** Get an array of session IDs */
-	Array<String> getSessIds() {
-		Array<String> ids;
-		for (auto sess : sessions) {
-			ids.append(sess.id);
-		}
-		return ids;
+	void getSessionIds(Array<String>& ids) const {
+        ids.fastClear();
+		for (const SessionConfig& session : sessions) { ids.append(session.id); }
 	}
 
 	/** Get a session config based on its ID */
-	shared_ptr<SessionConfig> getSessionConfigById(String id) {
-		for (int i = 0; i < sessions.size(); i++) {
-			if (!sessions[i].id.compare(id)) return std::make_shared<SessionConfig>(sessions[i]);
+	shared_ptr<SessionConfig> getSessionConfigById(const String& id) const {
+		for (const SessionConfig& session : sessions) {
+			if (! session.id.compare(id)) {
+                return SessionConfig::createShared<SessionConfig>(session);
+            }
 		}
 		return nullptr;
 	}
 
 	/** Get the index of a session in the session array (by ID) */
-	int getSessionIndex(String id) {
-		for (int i = 0; i < sessions.size(); i++) {
-			auto aa = sessions[i];
-			if (!sessions[i].id.compare(id)) return i;
+	int getSessionIndex(const String& id) const {
+        debugAssert(sessions.size() >= 0 && sessions.size() < 100000);
+        for (int i = 0; i < sessions.size(); ++i) {
+			if (! sessions[i].id.compare(id)) {
+                return i;
+            }
 		}
-        // wasn't found, probably will segfault
         return -1;
 	}
 	
-	// Get a pointer to a target config by ID
-	shared_ptr<TargetConfig> getTargetConfigById(String id) {
-		for (int i = 0; i < targets.size(); i++) {
-			if (!targets[i].id.compare(id)) {
-				return std::make_shared<TargetConfig>(targets[i]);
+	/** Get a pointer to a target config by ID */
+	shared_ptr<TargetConfig> getTargetConfigById(const String& id) const {
+        for (const TargetConfig& target : targets) { 
+			if (! target.id.compare(id)) {
+				return TargetConfig::createShared<TargetConfig>(target);
 			}
 		}
 		return nullptr;
 	}
 
 	/** Get experiment conditions for a given session (by ID) */
-	Array<Array<Param>> getExpConditions(String id) {
-		int idx = getSessionIndex(id);
-		return getExpConditions(idx);
+	Array<Array<ParameterTable>> getExpConditions(const String& id) const {
+		return getExpConditions(getSessionIndex(id));
 	}
 
 	/** This is a kludge to quickly create param-based experiment conditions w/ appropriate parameters */
-	Array<Array<Param>> getExpConditions(int sessionIndex) {
-		Array<Array<Param>> sessParams;
+	Array<Array<ParameterTable>> getExpConditions(int sessionIndex) const {
+		Array<Array<ParameterTable>> sessParams;
 		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
 			// Append each trial worth of targets
-			Array<Param> targets;
+			Array<ParameterTable> targets;
 			for (String id : sessions[sessionIndex].trials[j].ids) {
 				// Append training target
-				Param p;
-				shared_ptr<TargetConfig> target = getTargetConfigById(id);
+				ParameterTable p;
+				const shared_ptr<TargetConfig>& target = getTargetConfigById(id);
 				p.add("minEccH", target->eccH[0]);
 				p.add("minEccV", target->eccV[0]);
 				p.add("maxEccH", target->eccH[1]);
@@ -1246,8 +1246,7 @@ public:
 				p.add("model", modelName.c_str());
 				if (target->jumpEnabled) {
 					p.add("jumpEnabled", "true");
-				}
-				else {
+				} else {
 					p.add("jumpEnabled", "false");
 				}
 				targets.append(p);
@@ -1259,9 +1258,10 @@ public:
 
 	Any toAny(const bool forceAll = true) const {
 		// Get the base any config
-		Any a = ((FpsConfig*)this)->toAny();
+		Any a = FpsConfig::toAny();
+
 		// Write the experiment configuration-specific 
-		a["description"] = expDescription;
+		a["description"] = description;
 		a["targets"] = targets;
 		a["sessions"] = sessions;
 		return a;
@@ -1269,8 +1269,9 @@ public:
 
 	/** Get the experiment config from file */
 	static ExperimentConfig load(String filename) {
-		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, build a default
-			ExperimentConfig ex = ExperimentConfig();
+        // if file not found, build a default
+        if (!FileSystem::exists(System::findDataFile(filename, false))) {
+            ExperimentConfig ex = ExperimentConfig();
 			ex.toAny().save("experimentconfig.Any");
 			SessionConfig::defaultConfig = (FpsConfig)ex;
 			return ex;
@@ -1281,7 +1282,7 @@ public:
 	/** Print the experiment config to the log */
 	void printToLog() {
 		logPrintf("-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-			expDescription, sceneName, feedbackDuration, readyDuration, taskDuration, weapon.maxAmmo);
+			description, sceneName, feedbackDuration, readyDuration, taskDuration, weapon.maxAmmo);
 		// Iterate through sessions and print them
 		for (int i = 0; i < sessions.size(); i++) {
 			SessionConfig sess = sessions[i];

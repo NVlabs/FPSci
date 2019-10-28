@@ -28,7 +28,7 @@
 #include "Session.h"
 #include "App.h"
 
-void Session::addTrial(Array<Param> params) {
+void Session::addTrial(Array<ParameterTable> params) {
 	m_remaining.append(params[0].val["trialCount"]);
 	m_trialParams.append(params);
 }
@@ -44,17 +44,17 @@ void Session::nextCondition() {
 	m_currTrialIdx = unrunTrialIdxs[rand() % unrunTrialIdxs.size()];
 }
 
-bool Session::isComplete() {
+bool Session::isComplete() const{
 	bool allTrialsComplete = true;
 	for (int remaining : m_remaining) {
-		allTrialsComplete &= (remaining == 0);
+		allTrialsComplete = allTrialsComplete && (remaining == 0);
 	}
 	return allTrialsComplete;
 }
 
-bool Session::setupTrialParams(Array<Array<Param>> params)
+bool Session::setupTrialParams(const Array<Array<ParameterTable>> params)
 {
-	for (Array<Param> targets : params) {
+	for (Array<ParameterTable> targets : params) {
 		for (int i = 0; i < targets.size(); i++) {										// Add the session to each target
 			std::string sess = targets[i].str["sessionID"];
 			targets[i].add("name", format("%s_%d_%s_%d", sess, (int)targets[i].val["trial_idx"], targets[i].str["id"], i).c_str());
@@ -82,7 +82,7 @@ void Session::onInit(String filename, String userName, String description) {
 	// Check for valid session
 	if (m_hasSession) {
 		// Iterate over the sessions here and add a config for each
-		Array<Array<Param>> params = m_app->experimentConfig.getExpConditions(m_config->id);
+		Array<Array<ParameterTable>> params = m_app->experimentConfig.getExpConditions(m_config->id);
 		setupTrialParams(params);
 	}
 	else {	// Invalid session, move to displaying message
@@ -90,20 +90,11 @@ void Session::onInit(String filename, String userName, String description) {
 	}
 }
 
-float Session::randSign() {
-	if (Random::common().uniform() > 0.5) {
-		return 1;
-	}
-	else {
-		return -1;
-	}
-}
-
-void Session::randomizePosition(shared_ptr<TargetEntity> target) {
+void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
 	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation;
 
-	Param tParam = m_trialParams[m_currTrialIdx][target->paramIdx()];
-	bool isWorldSpace = tParam.str["destSpace"] == "world";
+	ParameterTable tParam = m_trialParams[m_currTrialIdx][target->paramIdx()];
+	const bool isWorldSpace = tParam.str["destSpace"] == "world";
 	Point3 loc;
 
 	if (isWorldSpace) {
@@ -111,9 +102,9 @@ void Session::randomizePosition(shared_ptr<TargetEntity> target) {
 		target->resetMotionParams();					// Reset the target motion behavior
 	}
 	else {
-		float rot_pitch = randSign() * Random::common().uniform(tParam.val["minEccV"], tParam.val["maxEccV"]);
-		float rot_yaw = randSign() * Random::common().uniform(tParam.val["minEccH"], tParam.val["maxEccH"]);
-		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw, rot_pitch, 0.0f);
+		const float rot_pitch = randSign() * Random::common().uniform(tParam.val["minEccV"], tParam.val["maxEccV"]);
+		const float rot_yaw = randSign() * Random::common().uniform(tParam.val["minEccH"], tParam.val["maxEccH"]);
+		const CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw, rot_pitch, 0.0f);
 		loc = f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 	}
 	target->setFrame(loc);
@@ -129,7 +120,7 @@ void Session::initTargetAnimation() {
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (presentationState == PresentationState::task) {
 		for (int i = 0; i < m_trialParams[m_currTrialIdx].size(); i++) {
-			Param target = m_trialParams[m_currTrialIdx][i];
+			ParameterTable target = m_trialParams[m_currTrialIdx][i];
 			float rot_pitch = randSign() * Random::common().uniform(target.val["minEccV"], target.val["maxEccV"]);
 			float rot_yaw = randSign() * Random::common().uniform(target.val["minEccH"], target.val["maxEccH"]);
 			float visualSize = G3D::Random().common().uniform(target.val["minVisualSize"], target.val["maxVisualSize"]);
@@ -224,13 +215,13 @@ void Session::processResponse()
 	m_taskExecutionTime = m_timer.getTime();
 	// Get total target count here
 	int totalTargets = 0;
-	for (Param t : m_trialParams[m_currTrialIdx]) {
-		if (t.val["respawns"] == -1) {
+	for (ParameterTable table : m_trialParams[m_currTrialIdx]) {
+		if (table.val["respawns"] == -1) {
 			totalTargets = MAXINT;		// Ininite spawn case
 			break;
 		}
 		else {
-			totalTargets += (int)t.val["respawns"];
+			totalTargets += (int)table.val["respawns"];
 		}
 	}		
 	m_response = totalTargets - m_destroyedTargets; // Number of targets remaining
@@ -243,12 +234,12 @@ void Session::processResponse()
 	// Check for whether all targets have been destroyed
 	if (m_response == 0) {
 		m_totalRemainingTime += (double(m_config->taskDuration) - m_taskExecutionTime);
-		if (m_config->sessDescription == "training") {
+		if (m_config->description == "training") {
 			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
 		}
 	}
 	else {
-		if (m_config->sessDescription == "training") {
+		if (m_config->description == "training") {
 			m_feedbackMessage = "Failure!";
 		}
 	}
@@ -294,23 +285,23 @@ void Session::updatePresentationState()
 		if ((stateElapsedTime > m_config->feedbackDuration) && (remainingTargets <= 0))
 		{
 			if (isComplete()) {
-				if (m_config->questions.size() > 0 && m_currQuestionIdx < m_config->questions.size()) {			// Pop up question dialog(s) here if we need to
+				if (m_config->questionArray.size() > 0 && m_currQuestionIdx < m_config->questionArray.size()) {			// Pop up question dialog(s) here if we need to
 
 					if (m_currQuestionIdx == -1){
 						m_currQuestionIdx = 0;
-						m_app->presentQuestion(m_config->questions[m_currQuestionIdx]);
+						m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
 					}
 					else if (!m_app->dialog->visible()) {														// Check for whether dialog is closed (otherwise we are waiting for input)
 						if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
-							m_config->questions[m_currQuestionIdx].result = m_app->dialog->result;				// Store response w/ quesiton
-							m_logger->addQuestion(m_config->questions[m_currQuestionIdx], m_config->id);		// Log the question and its answer
+							m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;				// Store response w/ quesiton
+							m_logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);		// Log the question and its answer
 							m_currQuestionIdx++;																// Present the next question (if there is one)
-							if (m_currQuestionIdx < m_config->questions.size()) {								// Double check we have a next question before launching the next question
-								m_app->presentQuestion(m_config->questions[m_currQuestionIdx]);
+							if (m_currQuestionIdx < m_config->questionArray.size()) {								// Double check we have a next question before launching the next question
+								m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
 							}
 						}
 						else {
-							m_app->presentQuestion(m_config->questions[m_currQuestionIdx]);						// Relaunch the same dialog (this wasn't completed)
+							m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);						// Relaunch the same dialog (this wasn't completed)
 						}	
 					}	
 				}
@@ -395,7 +386,7 @@ void Session::recordTrialResponse()
 	Array<String> trialValues = {
 		String(std::to_string(m_currTrialIdx)),
 		"'" + sess + "'",
-		"'" + m_config->sessDescription + "'",
+		"'" + m_config->description + "'",
 		"'" + m_taskStartTime + "'",
 		"'" + m_taskEndTime + "'",
 		String(std::to_string(m_taskExecutionTime)),
@@ -471,7 +462,7 @@ void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 	m_frameInfo.push_back(frameValues);
 }
 
-bool Session::responseReady() {
+bool Session::canFire() {
 	if (isNull(m_config)) return true;
 	double timeNow = System::time();
 	if ((timeNow - m_lastFireAt) > (m_config->weapon.firePeriod)) {
@@ -483,13 +474,13 @@ bool Session::responseReady() {
 	}
 }
 
-double Session::weaponCooldownPercent() {
+double Session::weaponCooldownPercent() const {
 	if (isNull(m_config)) return 1.0;
 	if (m_config->weapon.firePeriod == 0.0f) return 1.0;
 	return min((System::time() - m_lastFireAt) / m_config->weapon.firePeriod, 1.0);
 }
 
-int Session::remainingAmmo() {
+int Session::remainingAmmo() const {
 	if (isNull(m_config)) return 100;
 	return m_config->weapon.maxAmmo - m_clickCount;
 }

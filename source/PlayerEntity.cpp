@@ -66,14 +66,6 @@ void PlayerEntity::setCrouched(bool crouched) {
 	m_crouched = crouched;
 }
 
-bool PlayerEntity::crouched(void) {
-	return m_crouched;
-}
-
-bool PlayerEntity::inContact(void) {
-	return m_inContact;
-}
-
 float PlayerEntity::heightOffset(float height) {
 	return height - m_collisionProxySphere.radius;
 }
@@ -92,10 +84,6 @@ bool PlayerEntity::doDamage(float damage) {
 	return m_health <= 0;
 }
 
-float PlayerEntity::health() {
-	return m_health;
-}
-
 Any PlayerEntity::toAny(const bool forceAll) const {
     Any a = VisibleEntity::toAny(forceAll);
     a.setName("PlayerEntity");
@@ -106,6 +94,36 @@ Any PlayerEntity::toAny(const bool forceAll) const {
     
 void PlayerEntity::onPose(Array<shared_ptr<Surface> >& surfaceArray) {
     VisibleEntity::onPose(surfaceArray);
+}
+
+void PlayerEntity::updateFromInput(UserInput* ui) {
+
+	const float walkSpeed = moveRate * units::meters() / units::seconds();
+	static const Vector3 jumpVelocity(0, jumpVelocity * units::meters() / units::seconds(), 0);
+
+	// Get walking speed here (and normalize if necessary)
+	Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
+	if (linear.magnitude() > 0) {
+		linear = linear.direction() * walkSpeed;
+	}
+	// Add jump here (if needed)
+	RealTime timeSinceLastJump = System::time() - m_lastJumpTime;
+	if (ui->keyPressed(GKey::SPACE) && timeSinceLastJump > jumpInterval) {
+		// Allow jumping if jumpTouch = False or if jumpTouch = True and the player is in contact w/ the map
+		if (!jumpTouch || m_inContact) {
+			linear += jumpVelocity;
+			m_lastJumpTime = System::time();
+		}
+	}
+
+	// Get the mouse rotation here
+	Vector2 mouseRotate = ui->mouseDXY() * (float)mouseSensitivity / 2000.0f;
+	float yaw = mouseRotate.x;
+	float pitch = mouseRotate.y;
+
+	// Set the player translation/view velocities
+	setDesiredOSVelocity(linear);
+	setDesiredAngularVelocity(yaw, pitch);
 }
 
 /** Maximum coordinate values for the player ship */
@@ -123,6 +141,18 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
         m_frame.rotation     = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians);
         m_headTilt = clamp(m_headTilt - m_desiredPitchVelocity, -80 * units::degrees(), 80 * units::degrees());
     }
+
+	// Check for "off map" condition and reset position here...
+	CFrame c = frame();
+	if (c.translation.y < m_respawnHeight) {
+		c.translation = m_respawnPosition;
+		setFrame(c);
+	}
+	float currentHeight = m_crouched ? crouchHeight : height;
+	currentHeight = heightOffset(currentHeight);
+	c.translation += Vector3(0, currentHeight, 0);		// Set the player to the right height
+	c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), headTilt());
+	setFrame(c);
 }
 
 
@@ -209,14 +239,14 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
 	// Apply the velocity using a terminal velocity of about 5.4s of acceleration (human is ~53m/s w/ 9.8m/s^2)
 	if (m_desiredOSVelocity.y > 0) {
 		// Jump occurring, need to track this
-		m_jumpVelocity = m_desiredOSVelocity.y;
+		m_lastJumpVelocity = m_desiredOSVelocity.y;
 	}
 	// Already in a jump, apply gravity and enforce terminal velocity
-	m_jumpVelocity += ((PhysicsScene*)m_scene)->gravity().y*deltaTime;
-	if (abs(m_jumpVelocity) > 0) {
+	m_lastJumpVelocity += ((PhysicsScene*)m_scene)->gravity().y*deltaTime;
+	if (abs(m_lastJumpVelocity) > 0) {
 		// Enforce terminal velocity here
-		m_jumpVelocity = m_jumpVelocity / abs(m_jumpVelocity) * min(abs(m_jumpVelocity), abs(5.4f*((PhysicsScene*)m_scene)->gravity().y));
-		velocity.y = m_jumpVelocity;
+		m_lastJumpVelocity = m_lastJumpVelocity / abs(m_lastJumpVelocity) * min(abs(m_lastJumpVelocity), abs(5.4f*((PhysicsScene*)m_scene)->gravity().y));
+		velocity.y = m_lastJumpVelocity;
 	}
 	
     Array<Tri> triArray;

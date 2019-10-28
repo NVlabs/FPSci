@@ -483,9 +483,6 @@ void JumpingEntity::init(
 Any JumpingEntity::toAny(const bool forceAll) const {
 	Any a = VisibleEntity::toAny(forceAll);
 	a.setName("JumpingEntity");
-
-	// a["velocity"] = m_velocity;
-
 	return a;
 }
 

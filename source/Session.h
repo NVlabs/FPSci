@@ -28,7 +28,7 @@
 #pragma once
 
 #include <G3D/G3D.h>
-#include "Param.h"
+#include "ParameterTable.h"
 #include "ExperimentConfig.h"
 #include "sqlHelpers.h"
 #include "Logger.h"
@@ -53,9 +53,9 @@ public:
 
 class Session : public ReferenceCountedObject {
 protected:
-	App* m_app;											///< Pointer to the app
-	shared_ptr<SessionConfig> m_config = nullptr;		///< The session this experiment will run
-	shared_ptr<Logger> m_logger = nullptr;				///< Output results logger
+	App* m_app = nullptr;								///< Pointer to the app
+	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
+	shared_ptr<Logger> m_logger;						///< Output results logger
 
 	// Experiment management					
 	int m_response;										///< 0 indicates failure (didn't hit the target), 1 indicates sucess (hit the target)
@@ -67,15 +67,15 @@ protected:
 	int m_currTrialIdx;									///< Current trial
 	int m_currQuestionIdx = -1;							///< Current question index
 	Array<int> m_remaining;								///< Completed flags
-	Array<Array<Param>> m_trialParams;					///< Trial (target) parameters
+	Array<Array<ParameterTable>> m_trialParams;			///< Trial (target) parameters
 
 	// Time-based parameters
-	double m_taskExecutionTime;							///< Task completion time for the most recent trial
+	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial
 	String m_taskStartTime;								///< Recorded task start timestamp							
 	String m_taskEndTime;								///< Recorded task end timestamp
-	double m_totalRemainingTime = 0;					///< Time remaining in the trial
-	double m_scoreboardDuration = 10.0;					///< Show the score for at least this amount of seconds.
-	double m_lastFireAt = 0.f;							///< Time of the last shot
+	RealTime m_totalRemainingTime = 0;					///< Time remaining in the trial
+	RealTime m_scoreboardDuration = 10.0;				///< Show the score for at least this amount of seconds.
+	RealTime m_lastFireAt = 0.f;						///< Time of the last shot
 	Timer m_timer;										///< Timer used for timing tasks	
 	// Could move timer above to stopwatch in future
 	//Stopwatch stopwatch;			
@@ -113,19 +113,24 @@ public:
 		return createShared<Session>(app, config);
 	}
 
-	void randomizePosition(shared_ptr<TargetEntity> target);
-	/** creates a new target with randomized motion path and gives it to the app */
+	void randomizePosition(const shared_ptr<TargetEntity>& target) const;
 	void initTargetAnimation();
-	/** gets the current weapon cooldown as a ratio **/
-	double weaponCooldownPercent();
-	int remainingAmmo();
+	double weaponCooldownPercent() const;
+	int remainingAmmo() const;
 
-	void addTrial(Array<Param> params);
-	bool isComplete();
+	void addTrial(Array<ParameterTable> params);
+	bool isComplete() const;
 	void nextCondition();
 
-	/** randomly returns either +1 or -1 **/
-	float randSign();
+	/** randomly returns either +1 or -1 **/	
+	static float randSign() {
+		if (Random::common().uniform() > 0.5) {
+			return 1;
+		} else {
+			return -1;
+		}
+	}
+	
 	void updatePresentationState();
 	void onInit(String filename, String userName, String description);
 	void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
@@ -146,8 +151,12 @@ public:
 	/** queues action with given name to insert into database when trial completes
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */
 	void accumulatePlayerAction(String action, String target="");
-	bool responseReady();
-	bool setupTrialParams(Array<Array<Param>> params);
+	bool canFire();
+
+	using TargetParameters = Array<ParameterTable>;
+	using SessionParameters = Array<TargetParameters>;
+	bool setupTrialParams(SessionParameters params);
+	
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState presentationState;			///< Current presentation state
 

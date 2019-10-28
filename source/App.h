@@ -117,8 +117,6 @@ protected:
 	shared_ptr<VisibleEntity>		m_explosion;						///< Model for target destroyed decal
 	RealTime						m_explosionEndTime;					///< Time for end of explosion
 		
-	shared_ptr<PhysicsScene>		m_scene;							///< Pointer to the physics scene
-
 	const int m_MatTableSize = 10;										///< Set this to set # of color "levels"
 	Array<shared_ptr<UniversalMaterial>>	m_materials;				///< This stores the color materials
 
@@ -127,21 +125,18 @@ protected:
 	GuiLabel*						m_mouseDPILabel;					///< Label for mouse DPI field
 	GuiLabel*						m_cm360Label;						///< Label for cm/360 field
 
-	Array<Destination> m_waypoints;			///< Store way points for path creation here
-	Array<DebugID> m_waypointIDs;			///< Storage for IDs for point spheres
-	Array<DebugID> m_arrowIDs;				///< Storage for IDs for connecting arrows	
-	shared_ptr<WaypointDisplay> m_waypointWindow;
-	shared_ptr<PlayerControls> m_playerWindow;
-	shared_ptr<RenderControls> m_renderWindow;
-	DebugID m_highlighted;					///< ID for the waypoint window highlighter
+	Array<Destination>				m_waypoints;						///< Store way points for path creation here
+	Array<DebugID>					m_waypointIDs;						///< Storage for IDs for point spheres
+	Array<DebugID>					m_arrowIDs;							///< Storage for IDs for connecting arrows	
+	shared_ptr<WaypointDisplay>		m_waypointControls;
+	shared_ptr<PlayerControls>		m_playerControls;
+	shared_ptr<RenderControls>		m_renderControls;
+	DebugID							m_highlighted;						///< ID for the waypoint window highlighter
 		
-	RealTime m_recordStart = nan();			///< Start time for recording
-	int m_previewIdx = -1;					///< Index of the preview target in the targetArray
-	float m_lastRecordTime = 0.0;			///< Time storage for recording
+	RealTime						m_recordStart = nan();				///< Start time for recording
+	int								m_previewIdx = -1;					///< Index of the preview target in the targetArray
+	float							m_lastRecordTime = 0.0;				///< Time storage for recording
 	
-	float m_resetHeight;					///< Height at which to reset player location (fell through floor)
-	Point3 m_spawnPosition;					///< Position for player spawn
-
 	// Internal controls for waypoint visualization
 	const Color4 m_waypointColor = Color4(0.0f, 1.0f, 0.0f, 0.7f);	///< Color for waypoint visualization
 	const Color4 m_highlightColor = Color4(1.0f, 1.0f, 0.0f, 1.0f);	///< Highlight color
@@ -343,6 +338,7 @@ public:
 	void markSessComplete(String id);
 	void updateSessionPress(void);
 	void updateSession(String id);
+	void updateParameters(int frameDelay, float frameRate);
 	void presentQuestion(Question question);
 
 	String getDropDownUserId(void);

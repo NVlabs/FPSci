@@ -1,7 +1,7 @@
 #pragma once
 #include <G3D/G3D.h>
 #include <ctime>
-#include "Param.h"
+#include "ParameterTable.h"
 #include "ExperimentConfig.h"
 #include "sqlHelpers.h"
 
@@ -31,7 +31,7 @@ public:
 	static String genFileTimestamp();
 
 	/** Add conditions to an experiment */
-	void addTargets(Array<Array<Param>> targetParams);
+	void addTargets(Array<Array<ParameterTable>> targetParams);
 
 	/** Create a results file */
 	void createResultsFile(String filename, String subjectID, String description="None");

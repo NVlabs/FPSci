@@ -50,8 +50,7 @@ void App::onInit() {
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
 
 	// Setup the scene
-	m_scene = PhysicsScene::create(m_ambientOcclusion);
-	setScene(m_scene);
+	setScene(PhysicsScene::create(m_ambientOcclusion));
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
@@ -483,19 +482,19 @@ void App::makeGUI() {
 
 	// Setup the waypoint config/display
 	WaypointDisplayConfig config = WaypointDisplayConfig();
-	m_waypointWindow = WaypointDisplay::create(this, theme, config, (shared_ptr<Array<Destination>>)&m_waypoints);
-	m_waypointWindow->setVisible(false);
-	this->addWidget(m_waypointWindow);
+	m_waypointControls = WaypointDisplay::create(this, theme, config, (shared_ptr<Array<Destination>>)&m_waypoints);
+	m_waypointControls->setVisible(false);
+	this->addWidget(m_waypointControls);
 
 	// Setup the player control
-	m_playerWindow = PlayerControls::create((FpsConfig)experimentConfig, std::bind(&App::exportScene, this), theme);
-	m_playerWindow->setVisible(false);
-	this->addWidget(m_playerWindow);
+	m_playerControls = PlayerControls::create((FpsConfig)experimentConfig, std::bind(&App::exportScene, this), theme);
+	m_playerControls->setVisible(false);
+	this->addWidget(m_playerControls);
 
 	// Setup the render control
-	m_renderWindow = RenderControls::create((FpsConfig)experimentConfig, renderFPS, emergencyTurbo, reticleIndex, numReticles, sceneBrightness, theme);
-	m_renderWindow->setVisible(false);
-	this->addWidget(m_renderWindow);
+	m_renderControls = RenderControls::create((FpsConfig)experimentConfig, renderFPS, emergencyTurbo, reticleIndex, numReticles, sceneBrightness, theme);
+	m_renderControls->setVisible(false);
+	this->addWidget(m_renderControls);
 
 	// Open sub-window panes here...
 	debugPane->beginRow(); {
@@ -567,7 +566,7 @@ void App::dropWaypoint(Destination dest, Point3 offset) {
 bool App::updateWaypoint(Destination dest, int idx) {
 	// Check for valid indexing
 	if (idx < 0) {
-		idx = m_waypointWindow->getSelected();	// Use the selected item if no index is passed in
+		idx = m_waypointControls->getSelected();	// Use the selected item if no index is passed in
 	}
 	else if (idx > m_waypoints.lastIndex()) 
 		return false;							// If the index is too high don't update
@@ -631,7 +630,7 @@ bool App::updateWaypoint(Destination dest, int idx) {
 
 void App::removeHighlighted(void) {
 	// Remove the selected waypoint
-	removeWaypoint(m_waypointWindow->getSelected());
+	removeWaypoint(m_waypointControls->getSelected());
 }
 
 bool App::removeWaypoint(int idx) {
@@ -664,7 +663,7 @@ bool App::removeWaypoint(int idx) {
 		m_waypoints.fastRemove(idx);
 
 		// Get rid of the debug highlight and clear selection
-		m_waypointWindow->setSelected(-1);
+		m_waypointControls->setSelected(-1);
 		removeDebugShape(m_highlighted);
 		return true;
 	}
@@ -690,7 +689,7 @@ void App::clearWaypoints(void) {
 	m_arrowIDs.clear();
 	// Clear the highlighted shape
 	removeDebugShape(m_highlighted);
-	m_waypointWindow->setSelected(-1);
+	m_waypointControls->setSelected(-1);
 }
 
 void App::exportWaypoints(void) {
@@ -750,15 +749,15 @@ void App::exportScene() {
 }
 
 void App::showWaypointManager() {
-	m_waypointWindow->setVisible(true);
+	m_waypointControls->setVisible(true);
 }
 
 void App::showPlayerControls() {
-	m_playerWindow->setVisible(true);
+	m_playerControls->setVisible(true);
 }
 
 void App::showRenderControls() {
-	m_renderWindow->setVisible(true);
+	m_renderControls->setVisible(true);
 }
 
 void App::userSaveButtonPress(void) {
@@ -801,7 +800,7 @@ Array<String> App::updateSessionDropDown(void) {
 		logPrintf("User %s not found. Creating a new user w/ default session ordering.\n", userId);
 		UserSessionStatus newStatus = UserSessionStatus();
 		newStatus.id = userId;
-		newStatus.sessionOrder = experimentConfig.getSessIds();
+		experimentConfig.getSessionIds(newStatus.sessionOrder);
 		userStatusTable.userInfo.append(newStatus);
 		userStatus = userStatusTable.getUserStatus(userId);
 		userStatusTable.toAny().save("userstatus.Any");
@@ -871,9 +870,23 @@ void App::updateSessionPress(void) {
 	updateSession(getDropDownSessId());
 }
 
+void App::updateParameters(int frameDelay, float frameRate) {
+	// Apply frame lag
+	displayLagFrames = frameDelay;
+	// Set a maximum *finite* frame rate
+	float dt = 0;
+	if (frameRate > 0) dt = 1.0f / frameRate;
+	else dt = 1.0f / float(window()->settings().refreshRate);
+	setFrameDuration(dt, GApp::REAL_TIME);
+	m_renderControls->frameRate = frameRate;
+}
+
+
 void App::updateSession(String id) {
 	// Check for a valid ID (non-emtpy and 
-	if (!id.empty() && experimentConfig.getSessIds().contains(id)) {
+	Array<String> ids;
+	experimentConfig.getSessionIds(ids);
+	if (!id.empty() && ids.contains(id)) {
 		sessConfig = experimentConfig.getSessionConfigById(id);						// Get the new session config
 		logPrintf("User selected session: %s. Updating now...\n", id);				// Print message to log
 		m_sessDropDown->setSelectedValue(id);										// Update session drop-down selection
@@ -883,15 +896,9 @@ void App::updateSession(String id) {
 		sessConfig = SessionConfig::create();										// Create an empty session
 		sess = Session::create(this);											
 	}
-	
-	// Apply frame lag
-	displayLagFrames = sessConfig->frameDelay;
 
-	// Set a maximum *finite* frame rate
-	float dt = 0;
-	if (sessConfig->frameRate > 0) dt = 1.0f / sessConfig->frameRate;
-	else dt = 1.0f / float(window()->settings().refreshRate);
-	setFrameDuration(dt, GApp::REAL_TIME);
+	// Update the frame rate/delay
+	updateParameters(sessConfig->frameDelay, sessConfig->frameRate);
 
 	// Load (session dependent) fonts
 	hudFont = GFont::fromFile(System::findDataFile(sessConfig->hudFont));
@@ -931,7 +938,18 @@ void App::updateSession(String id) {
 	}
 
 	// Player parameters
-	sess->initialHeadingRadians = scene()->typedEntity<PlayerEntity>("player")->heading();
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+	sess->initialHeadingRadians = player->heading();
+	// Copied from old FPM code
+	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
+	mouseSens *= 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
+	player->mouseSensitivity = mouseSens;
+	player->moveRate = sessConfig->moveRate;
+	player->jumpVelocity = sessConfig->jumpVelocity;
+	player->jumpInterval = sessConfig->jumpInterval;
+	player->jumpTouch = sessConfig->jumpTouch;
+	player->height = sessConfig->playerHeight;
+	player->crouchHeight = sessConfig->crouchHeight;
 	updateMoveRate(sessConfig->moveRate);
 
 	// Make sure all targets are cleared
@@ -953,7 +971,7 @@ void App::updateSession(String id) {
 	}
 
 	// Initialize the experiment (this creates the results file)
-	sess->onInit(logName+".db", userTable.currentUser, experimentConfig.expDescription + "/" + sessConfig->sessDescription);
+	sess->onInit(logName+".db", userTable.currentUser, experimentConfig.description + "/" + sessConfig->description);
 	// Don't create a results file for a user w/ no sessions left
 	if (m_sessDropDown->numElements() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
@@ -979,24 +997,28 @@ void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 		FoV = sessConfig->hFoV;
 	}
 	// Set the active camera to the player
-	setActiveCamera(m_scene->typedEntity<Camera>("camera"));
+	setActiveCamera(scene()->typedEntity<Camera>("camera"));
     // make sure the scene has a "player" entity
-    if (isNull(m_scene->typedEntity<PlayerEntity>("player"))) {
-        shared_ptr<Entity> newPlayer = PlayerEntity::create("player", &(*scene()), CFrame::fromXYZYPRDegrees(0.0f, 0.0f, 0.0f), nullptr);
-        m_scene->insert(newPlayer);
+    if (isNull(scene()->typedEntity<PlayerEntity>("player"))) {
+        shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
+        scene()->insert(newPlayer);
     }
-	// For now make the player invisible (prevent issues w/ seeing model from inside)
-	m_scene->typedEntity<PlayerEntity>("player")->setVisible(false);
-	m_scene->setGravity(grav);
-	// Capture these variables here
-	m_resetHeight = m_scene->resetHeight();
-	if (isnan(m_resetHeight)) {
-		m_resetHeight = -1e6;
+
+	// Get the reset height
+	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
+	pscene->setGravity(grav);
+	float resetHeight = pscene->resetHeight();
+	if (isnan(resetHeight)) {
+		resetHeight = -1e6;
 	}
-	m_spawnPosition = activeCamera()->frame().translation;
+
+	// For now make the player invisible (prevent issues w/ seeing model from inside)
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+	player->setVisible(false);
+	player->setRespawnHeight(resetHeight);
+	player->setRespawnPosition(activeCamera()->frame().translation);
 	activeCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
 }
-
 
 void App::onAI() {
 	GApp::onAI();
@@ -1103,47 +1125,45 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 
 	// Move the player
-	const shared_ptr<PlayerEntity>& p = m_scene->typedEntity<PlayerEntity>("player");
-	if (notNull(p)) {
-		CFrame c = p->frame();
-		// Check for "off map" condition and reset position here...
-		if (c.translation.y < m_resetHeight) {
-			c.translation = m_spawnPosition;
-			p->setFrame(c);
-		}
-		float height = p->crouched() ? sessConfig->crouchHeight : sessConfig->playerHeight;
-		height = p->heightOffset(height);
-		c.translation += Vector3(0, height, 0);		// Set the player to the right height
-		c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), p->headTilt());
-		activeCamera()->setFrame(c);
-	}
+	//const shared_ptr<PlayerEntity>& p = m_scene->typedEntity<PlayerEntity>("player");
+	//if (notNull(p)) {
+	//	CFrame c = p->frame();
+	//	// Check for "off map" condition and reset position here...
+	//	if (c.translation.y < m_resetHeight) {
+	//		c.translation = m_spawnPosition;
+	//		p->setFrame(c);
+	//	}
+	//	float height = p->crouched() ? sessConfig->crouchHeight : sessConfig->playerHeight;
+	//	height = p->heightOffset(height);
+	//	c.translation += Vector3(0, height, 0);		// Set the player to the right height
+	//	c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), p->headTilt());
+	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
+	activeCamera()->setFrame(p->frame());
 
 	// Handle developer mode features here
 	if (!startupConfig.playMode) {
 		// Copy over dynamic elements
-		sessConfig->playerHeight = m_playerWindow->playerHeight;
-		sessConfig->crouchHeight = m_playerWindow->crouchHeight;
-		sessConfig->moveRate = m_playerWindow->moveRate;
+		// TODO:Consider moving to App owning GuiPane, and no need for all this copy-over...
+		shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+		player->height = m_playerControls->playerHeight;
+		player->crouchHeight = m_playerControls->crouchHeight;
+		player->moveRate = m_playerControls->moveRate;
 
-		sessConfig->showHUD = m_renderWindow->showHud;
-		sessConfig->weapon.renderModel = m_renderWindow->showWeapon;
-		sessConfig->weapon.renderBullets = m_renderWindow->showBullets;
+		sessConfig->showHUD = m_renderControls->showHud;
+		sessConfig->weapon.renderModel = m_renderControls->showWeapon;
+		sessConfig->weapon.renderBullets = m_renderControls->showBullets;
 		
-		renderFPS = m_renderWindow->showFps;
-		emergencyTurbo = m_renderWindow->turboMode;
+		renderFPS = m_renderControls->showFps;
+		emergencyTurbo = m_renderControls->turboMode;
 
-		sessConfig->frameRate = m_renderWindow->frameRate;
-		float dt = 0;
-		if (sessConfig->frameRate > 0) dt = 1.0f / sessConfig->frameRate;
-		else dt = 1.0f / float(window()->settings().refreshRate);
-		setFrameDuration(dt, GApp::REAL_TIME);
-		displayLagFrames = m_renderWindow->frameDelay;
+		sessConfig->frameRate = m_renderControls->frameRate;
+		updateParameters(m_renderControls->frameDelay, m_renderControls->frameRate);
 
-		reticleIndex = m_renderWindow->reticleIdx;
-		sceneBrightness = m_renderWindow->brightness;
+		reticleIndex = m_renderControls->reticleIdx;
+		sceneBrightness = m_renderControls->brightness;
 
 		// Handle highlighting for selected target
-		int selIdx = m_waypointWindow->getSelected();
+		int selIdx = m_waypointControls->getSelected();
 		if (selIdx >= 0) {
 			// Handle position update
 			Destination dest = m_waypoints[selIdx];
@@ -1183,12 +1203,12 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		}
 		else {
 			m_recordStart = nan();
-			m_lastRecordTime = 0.0;
+			m_lastRecordTime = 0.0f;
 		}
 
 		// Example GUI dynamic layout code.  Resize the debugWindow to fill
 		// the screen horizontally.
-		debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+		debugWindow->setRect(Rect2D::xywh(0.0f, 0.0f, (float)window()->width(), debugWindow->rect().height()));
 	}
 	   
 	// Check for completed session
@@ -1203,7 +1223,7 @@ bool App::onEvent(const GEvent& event) {
 	if (!startupConfig.playMode) {
 		if (event.type == GEventType::KEY_DOWN) {
 			bool foundKey = true;
-			int selIdx = m_waypointWindow->getSelected();
+			int selIdx = m_waypointControls->getSelected();
 			switch (event.key.keysym.sym) {
 			// Handle "hot keys" here
 			case 'q':							// Use 'q' to drop a waypoint
@@ -1215,19 +1235,19 @@ bool App::onEvent(const GEvent& event) {
 
 			// Handle shortcuts for opening sub-menus here
 			case '1':							// Use '1' to toggle the rendering controls
-				m_renderWindow->setVisible(!m_renderWindow->visible());
+				m_renderControls->setVisible(!m_renderControls->visible());
 				break;
 			case '2':							// Use '2' to toggle the player controls
-				m_playerWindow->setVisible(!m_playerWindow->visible());
+				m_playerControls->setVisible(!m_playerControls->visible());
 				break;
 			case '3':							// Use '3' to toggle the waypoint manager
-				m_waypointWindow->setVisible(!m_waypointWindow->visible());
+				m_waypointControls->setVisible(!m_waypointControls->visible());
 				break;
 			case GKey::PAGEUP:
-				m_waypointMoveMask += Vector3(0, 1, 0);
+				m_waypointMoveMask += Vector3(0.0f, 1.0f, 0.0f);
 				break;
 			case GKey::PAGEDOWN:
-				m_waypointMoveMask += Vector3(0, -1, 0);
+				m_waypointMoveMask += Vector3(0.0f, -1, 0);
 				break;
 			case GKey::HOME:
 				m_waypointMoveMask += Vector3(0, 0, 1);
@@ -1307,12 +1327,12 @@ bool App::onEvent(const GEvent& event) {
 			return true;
 		}
 		else if (event.key.keysym.sym == GKey::LCTRL) {
-			m_scene->typedEntity<PlayerEntity>("player")->setCrouched(true);
+			scene()->typedEntity<PlayerEntity>("player")->setCrouched(true);
 			return true;
 		}
 	}
 	else if ((event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey::LCTRL)) {
-		m_scene->typedEntity<PlayerEntity>("player")->setCrouched(false);
+		scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
 		return true;
 	}
 
@@ -1331,7 +1351,7 @@ void App::drawHUD(RenderDevice *rd) {
 
 	// Draw the player health bar
 	if (sessConfig->showPlayerHealthBar) {
-		const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
+		const float health = scene()->typedEntity<PlayerEntity>("player")->health();
 		const Point2 location = Point2(sessConfig->playerHealthBarPos.x, sessConfig->playerHealthBarPos.y + m_debugMenuHeight);
 		const Point2 size = sessConfig->playerHealthBarSize;
 		const Point2 border = sessConfig->playerHealthBarBorderSize;
@@ -1562,39 +1582,9 @@ void App::onUserInput(UserInput* ui) {
 	GApp::onUserInput(ui);
 	(void)ui;
 
-	const shared_ptr<PlayerEntity>& player = m_scene->typedEntity<PlayerEntity>("player");
-	if (!m_userSettingsMode) {
-		if (notNull(player)) {
-			// Copied from old FPM code
-			double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
-			mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
-			const float walkSpeed = sessConfig->moveRate * units::meters() / units::seconds();
-			static const Vector3 jumpVelocity(0, sessConfig->jumpVelocity * units::meters() / units::seconds(), 0);
-
-			// Get walking speed here (and normalize if necessary)
-			Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
-			if (linear.magnitude() > 0) {
-				linear = linear.direction() * walkSpeed;
-			}
-			// Add jump here (if needed)
-			RealTime timeSinceLastJump = System::time() - m_lastJumpTime;
-			if (ui->keyPressed(GKey::SPACE) && timeSinceLastJump > sessConfig->jumpInterval) {
-				// Allow jumping if jumpTouch = False or if jumpTouch = True and the player is in contact w/ the map
-				if (!sessConfig->jumpTouch || player->inContact()) {
-					linear += jumpVelocity;
-					m_lastJumpTime = System::time();
-				}
-			}
-
-			// Get the mouse rotation here
-			Vector2 mouseRotate = ui->mouseDXY() * (float)mouseSensitivity / 2000.0f;
-			float yaw = mouseRotate.x;
-			float pitch = mouseRotate.y;
-
-			// Set the player translation/view velocities
-			player->setDesiredOSVelocity(linear);
-			player->setDesiredAngularVelocity(yaw, pitch);
-		}
+	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
+	if (!m_userSettingsMode && notNull(player)) {
+			player->updateFromInput(ui);
 	}
 	else {	// Zero the player velocity and rotation when in the setting menu
 		player->setDesiredOSVelocity(Vector3::zero());
@@ -1615,7 +1605,8 @@ void App::onUserInput(UserInput* ui) {
 		if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
 			// check for hit, add graphics, update target state
 			if ((sess->presentationState == PresentationState::task) && !m_userSettingsMode) {
-				if (sess->responseReady()) {
+				if (sess->canFire()) {
+
 					fired = true;
 					sess->countClick();						        // Count clicks
 					shared_ptr<TargetEntity> t = fire();			// Fire the weapon
@@ -1663,7 +1654,7 @@ void App::onUserInput(UserInput* ui) {
 				}
 			}
 			if (closestIdx != -1) {							// We are "hitting" this item
-				m_waypointWindow->setSelected(closestIdx);
+				m_waypointControls->setSelected(closestIdx);
 			}
 		}
 
@@ -1698,7 +1689,7 @@ void App::destroyTarget(int index) {
 void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {
 	GApp::onPose(surface, surface2D);
 
-	m_scene->poseExceptExcluded(surface, "player");
+	typedScene<PhysicsScene>()->poseExceptExcluded(surface, "player");
 
 	if (sessConfig->weapon.renderModel) {
 		const float yScale = -0.12f;
