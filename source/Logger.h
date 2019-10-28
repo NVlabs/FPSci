@@ -5,6 +5,9 @@
 #include "ExperimentConfig.h"
 #include "sqlHelpers.h"
 
+using Rows = Array<String>;
+using Columns = Array<Array<String>>;
+
 /** Simple class to log data from trials */
 class Logger : public ReferenceCountedObject {
 protected:
@@ -19,7 +22,7 @@ public:
 	}
 
 	/** Record a response for a trial */
-	void recordTrialResponse(Array<String> values);
+	void recordTrialResponse(Rows values);
 
 	/** Close the results file */
 	void closeResultsFile(void);
@@ -31,19 +34,19 @@ public:
 	static String genFileTimestamp();
 
 	/** Add conditions to an experiment */
-	void addTargets(Array<Array<ParameterTable>> targetParams);
+	void addTargets(SessionParameters targetParams);
 
 	/** Create a results file */
 	void createResultsFile(String filename, String subjectID, String description="None");
 
 	/** Record an array of target locations */
-	void recordTargetTrajectory(Array<Array<String>> trajectory);
+	void recordTargetTrajectory(Array<Rows> trajectory);
 
 	/** Record an array of player actions */
-	void recordPlayerActions(Array<Array<String>> actions);
+	void recordPlayerActions(Array<Rows> actions);
 
 	/** Record an array of frame timing info */
-	void recordFrameInfo(Array<Array<String>> info);
+	void recordFrameInfo(Array<Rows> info);
 		
 	/** Record a question and its response */
 	void addQuestion(Question question, String session);

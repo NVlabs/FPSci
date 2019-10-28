@@ -52,9 +52,9 @@ bool Session::isComplete() const{
 	return allTrialsComplete;
 }
 
-bool Session::setupTrialParams(const Array<Array<ParameterTable>> params)
+bool Session::setupTrialParams(const SessionParameters params)
 {
-	for (Array<ParameterTable> targets : params) {
+	for (TargetParameters targets : params) {
 		for (int i = 0; i < targets.size(); i++) {										// Add the session to each target
 			std::string sess = targets[i].str["sessionID"];
 			targets[i].add("name", format("%s_%d_%s_%d", sess, (int)targets[i].val["trial_idx"], targets[i].str["id"], i).c_str());
@@ -82,7 +82,7 @@ void Session::onInit(String filename, String userName, String description) {
 	// Check for valid session
 	if (m_hasSession) {
 		// Iterate over the sessions here and add a config for each
-		Array<Array<ParameterTable>> params = m_app->experimentConfig.getExpConditions(m_config->id);
+		SessionParameters params = m_app->experimentConfig.getExpConditions(m_config->id);
 		setupTrialParams(params);
 	}
 	else {	// Invalid session, move to displaying message

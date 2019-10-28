@@ -3,6 +3,9 @@
 #include <G3D/G3D.h>
 #include "ParameterTable.h"
 
+using TargetParameters = Array<ParameterTable>;		///< Define target parameters as array of parameter tables (one per target)
+using SessionParameters = Array<TargetParameters>;	///< Define session parameters as array of target parameters (one per session)
+
 /** Configure how the application should start */
 class StartupConfig {
 public:
@@ -1190,7 +1193,7 @@ public:
 	/** Get a pointer to a target config by ID */
 	shared_ptr<TargetConfig> getTargetConfigById(const String& id) const {
         for (const TargetConfig& target : targets) { 
-			if (! target.id.compare(id)) {
+			if (!target.id.compare(id)) {
 				return TargetConfig::createShared<TargetConfig>(target);
 			}
 		}
@@ -1198,16 +1201,16 @@ public:
 	}
 
 	/** Get experiment conditions for a given session (by ID) */
-	Array<Array<ParameterTable>> getExpConditions(const String& id) const {
+	SessionParameters getExpConditions(const String& id) const {
 		return getExpConditions(getSessionIndex(id));
 	}
 
 	/** This is a kludge to quickly create param-based experiment conditions w/ appropriate parameters */
-	Array<Array<ParameterTable>> getExpConditions(int sessionIndex) const {
-		Array<Array<ParameterTable>> sessParams;
+	SessionParameters getExpConditions(int sessionIndex) const {
+		SessionParameters sessParams;
 		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
 			// Append each trial worth of targets
-			Array<ParameterTable> targets;
+			TargetParameters targets;
 			for (String id : sessions[sessionIndex].trials[j].ids) {
 				// Append training target
 				ParameterTable p;

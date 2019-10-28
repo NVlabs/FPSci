@@ -1125,18 +1125,6 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 
 	// Move the player
-	//const shared_ptr<PlayerEntity>& p = m_scene->typedEntity<PlayerEntity>("player");
-	//if (notNull(p)) {
-	//	CFrame c = p->frame();
-	//	// Check for "off map" condition and reset position here...
-	//	if (c.translation.y < m_resetHeight) {
-	//		c.translation = m_spawnPosition;
-	//		p->setFrame(c);
-	//	}
-	//	float height = p->crouched() ? sessConfig->crouchHeight : sessConfig->playerHeight;
-	//	height = p->heightOffset(height);
-	//	c.translation += Vector3(0, height, 0);		// Set the player to the right height
-	//	c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), p->headTilt());
 	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
 	activeCamera()->setFrame(p->frame());
 

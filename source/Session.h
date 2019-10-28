@@ -37,6 +37,9 @@
 
 class App;
 
+using TargetParameters = Array<ParameterTable>;		///< Define target parameters as array of parameter tables (one per target)
+using SessionParameters = Array<TargetParameters>;	///< Define session parameters as array of target parameters (one per session)
+
 // Simple timer for measuring time offsets
 class Timer
 {
@@ -67,7 +70,7 @@ protected:
 	int m_currTrialIdx;									///< Current trial
 	int m_currQuestionIdx = -1;							///< Current question index
 	Array<int> m_remaining;								///< Completed flags
-	Array<Array<ParameterTable>> m_trialParams;			///< Trial (target) parameters
+	SessionParameters m_trialParams;					///< Trial (target) parameters
 
 	// Time-based parameters
 	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial
@@ -84,9 +87,9 @@ protected:
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	
 	// Reported data storage
-	Array<Array<String>> m_playerActions;				///< Storage for player action (hit, miss, aim)
-	Array<Array<String>> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
-	Array<Array<String>> m_frameInfo;					///< Storage for frame info (sdt, idt, rdt)
+	Array<Rows> m_playerActions;				///< Storage for player action (hit, miss, aim)
+	Array<Rows> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
+	Array<Rows> m_frameInfo;						///< Storage for frame info (sdt, idt, rdt)
 
 	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app) {
 		m_config = config;
@@ -153,9 +156,7 @@ public:
 	void accumulatePlayerAction(String action, String target="");
 	bool canFire();
 
-	using TargetParameters = Array<ParameterTable>;
-	using SessionParameters = Array<TargetParameters>;
-	bool setupTrialParams(SessionParameters params);
+	bool setupTrialParams(const SessionParameters params);
 	
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState presentationState;			///< Current presentation state

@@ -39,7 +39,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	// create tables inside the db file.
 	// 1. Experiment description (time and subject ID)
 	// create sqlite table
-	Array<Array<String>> expColumns = {
+	Columns expColumns = {
 		// format: column name, data type, sqlite modifier(s)
 			{ "time", "text", "NOT NULL" },
 			{ "subjectID", "text", "NOT NULL" },
@@ -48,7 +48,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Experiments", expColumns); // no need of Primary Key for this table.
 
 	// populate table
-	Array<String> expValues = {
+	Rows expValues = {
 		"'" + timeStr + "'",
 		"'" + subjectID + "'",
 		"'" + description + "'"
@@ -57,7 +57,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 
 	// 2. Targets
 	// create sqlite table
-	Array<Array<String>> targetColumns = {
+	Columns targetColumns = {
 			{ "trial_id", "integer"}, // Trial ID refers to the trial which this target is affiliated with
 			{ "target_id", "text" },
 			{ "type", "text"},
@@ -77,7 +77,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Targets", targetColumns); // Primary Key needed for this table.
 
 	// 3. Trials, only need to create the table.
-	Array<Array<String>> trialColumns = {
+	Columns trialColumns = {
 			{ "trial_id", "integer" },
 			{ "session_id", "text" },
 			{ "session_mode", "text" },
@@ -89,7 +89,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Trials", trialColumns);
 
 	// 4. Target_Trajectory, only need to create the table.
-	Array<Array<String>> targetTrajectoryColumns = {
+	Columns targetTrajectoryColumns = {
 			{ "time", "text" },
 			{ "target_id", "text"},
 			{ "position_x", "real" },
@@ -99,7 +99,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Target_Trajectory", targetTrajectoryColumns);
 
 	// 5. Player_Action, only need to create the table.
-	Array<Array<String>> viewTrajectoryColumns = {
+	Columns viewTrajectoryColumns = {
 			{ "time", "text" },
 			{ "position_az", "real" },
 			{ "position_el", "real" },
@@ -112,7 +112,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
 
 	// 6. Frame_Info, create the table
-	Array<Array<String>> frameInfoColumns = {
+	Columns frameInfoColumns = {
 			{"time", "text"},
 			{"idt", "real"},
 			{"sdt", "real"},
@@ -120,7 +120,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Frame_Info", frameInfoColumns);
 
 	// 7. Question responses
-	Array<Array<String>> questionColumns = {
+	Columns questionColumns = {
 		{"Session", "text"},
 		{"Question", "text"},
 		{"Response", "text"}
@@ -128,23 +128,23 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Questions", questionColumns);
 }
 
-void Logger::recordTargetTrajectory(Array<Array<String>> trajectory) {
+void Logger::recordTargetTrajectory(Array<Rows> trajectory) {
 	insertRowsIntoDB(m_db, "Target_Trajectory", trajectory);
 }
 
-void Logger::recordPlayerActions(Array<Array<String>> actions) {
+void Logger::recordPlayerActions(Array<Rows> actions) {
 	insertRowsIntoDB(m_db, "Player_Action", actions);
 }
 
-void Logger::recordFrameInfo(Array<Array<String>> info) {
+void Logger::recordFrameInfo(Array<Rows> info) {
 	insertRowsIntoDB(m_db, "Frame_Info", info);
 }
 
-void Logger::addTargets(Array<Array<ParameterTable>> targetParams) {
+void Logger::addTargets(SessionParameters targetParams) {
 	for (int i = 0; i < targetParams.size(); i++) {
 		for (ParameterTable tparam : targetParams[i]) {
 			const String type = (tparam.val["destCount"] > 0) ? "waypoint" : "parametrized";
-			Array<String> targetValues = {
+			Rows targetValues = {
 				String(std::to_string(i)),										// This is the trial ID
 				"'" + String(tparam.str["name"]) +"'",							// This is the target name
 				"'" + type + "'",
@@ -166,12 +166,12 @@ void Logger::addTargets(Array<Array<ParameterTable>> targetParams) {
 	}
 }
 
-void Logger::recordTrialResponse(Array<String> values) {
+void Logger::recordTrialResponse(Rows values) {
 	insertRowIntoDB(m_db, "Trials", values);
 }
 
 void Logger::addQuestion(Question q, String session) {
-	Array<String> rowContents = {
+	Rows rowContents = {
 		"'" + session + "'",
 		"'" + q.prompt + "'",
 		"'" + q.result + "'"
