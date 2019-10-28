@@ -51,10 +51,10 @@
     <ClInclude Include="source\Session.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\Param.h">
+    <ClInclude Include="source\Dialogs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\Dialogs.h">
+    <ClInclude Include="source\ParameterTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

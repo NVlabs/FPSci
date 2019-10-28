@@ -35,7 +35,7 @@
 #include "TargetEntity.h"
 
 /** Struct for condition parameter or experiment description */
-struct Param
+struct ParameterTable
 {
 	std::map<std::string, float> val;
 	std::map<std::string, std::string> str;
@@ -57,7 +57,7 @@ struct Param
 		destinations = dests;
 	}
 
-	Param() {
+	ParameterTable() {
 		val = std::map<std::string, float>();
 		str = std::map<std::string, std::string>();
 		val_vec = std::map<std::string, std::vector<float>>();
