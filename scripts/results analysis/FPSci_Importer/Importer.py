@@ -40,6 +40,12 @@ class QuestionResponse:
         self.question = question
         self.response = response
 
+class FrameInfo:
+    def __init__(self, time, sdt, idt):
+        self.time = time
+        self.sdt = float(sdt)
+        self.idt = float(idt)
+
 class Event:
     def __init__(self, time, eventType):
         self.time = time
@@ -203,9 +209,22 @@ class Importer:
         for row in rows: targets.append(self.getRowTarget(row))
 
     def getQuestionResponses(self, sessId = None):
+        """"Get the questions and responses as a list"""
         query = 'SELECT * from Questions '
         if sessId is not None: query += 'WHERE Session = \'{0}\''
         rows = self.queryDb(query)
         questions = []
         for row in rows: questions.append(QuestionResponse(row[0], row[1], row[2]))
         return questions
+
+    def getFrameInfo(self):
+        """Get the frame info table as a list"""
+        frames = []
+        for row in self.getTableRows('Frame_Info'):
+            frames.append(FrameInfo(row[0], row[2], row[1]))
+        return frames
+
+    def parseTime(self, timeStr):
+        return datetime.strptime(timeStr, IN_LOG_TIME_FORMAT)
+        
+
