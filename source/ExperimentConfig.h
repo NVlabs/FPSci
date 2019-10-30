@@ -618,7 +618,8 @@ public:
 	Array<Destination> destinations;						///< Array of destinations to traverse
 	String			destSpace = "world";					///< Space to use for destinations (implies offset) can be "world" or "player"
 	float			respawnCount = 0.0f;					///< Number of times to respawn
-	AABox			bbox;
+	AABox			bbox;									///< Bounding box
+	Array<bool>		axisLock = { false };					///< Array of axis lock values
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
@@ -672,6 +673,17 @@ public:
 			else {
 				reader.getIfPresent("bounds", bbox);
 			}
+			if (reader.getIfPresent("axisLocked", axisLock)) {
+				if (axisLock.size() < 3) {
+					throw format("Must provide 3 fields (X,Y,Z) for axis lock! Only %d provided! See target: \"%s\"", axisLock.size(), id);
+				}
+				else if (axisLock.size() > 3) {
+					logPrintf("Provided axis lock for target \"%s\" has >3 fields, using the first 3...", id);
+				}
+				if (axisLock[0] && axisLock[1] && axisLock[2] && speed[0] != 0.0f && speed[1] != 0.0f) {
+					throw format("Target \"%s\" locks all axes but has non-zero speed!", id);
+				}
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
@@ -699,6 +711,7 @@ public:
 			a["jumpEnabled"] = jumpEnabled;
 			a["jumpPeriod"] = jumpPeriod;
 			a["accelGravity"] = accelGravity;
+			a["axisLocked"] = axisLock;
 		}
 		return a;
 	};
@@ -1243,8 +1256,10 @@ public:
 				p.add("destCount", (float)target->destinations.size());
 				p.add("destSpace", target->destSpace.c_str());
 				p.add("respawns", (float)target->respawnCount);
-				p.destinations = target->destinations;
-				p.bounds = target->bbox;
+				p.add(target->axisLock);
+				p.add(target->destinations);
+				p.add(target->bbox);
+
 				String modelName = target->modelSpec["filename"];
 				p.add("model", modelName.c_str());
 				if (target->jumpEnabled) {
@@ -1300,8 +1315,9 @@ public:
 		// Iterate through trials and print them
 		for (int i = 0; i < targets.size(); i++) {
 			TargetConfig target = targets[i];
-			logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tUpper Hemisphere Only = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n",
-				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1]);
+			logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tUpper Hemisphere Only = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n\tAxis Lock = [%s, %s, %s]\n",
+				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1],
+				target.axisLock[0]?"true":"false", target.axisLock[1] ? "true" : "false", target.axisLock[2] ? "true" : "false");
 		}
 	}
 };

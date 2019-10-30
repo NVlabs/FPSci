@@ -306,6 +306,7 @@ public:
 		Point3 orbitCenter,
 		String modelName,
 		int paramIdx,
+		bool axisLock[3],
 		int respawns = 0,
 		String name = ""
 	);
@@ -325,6 +326,7 @@ public:
 		float targetDistance,
 		String modelName,
 		int paramIdx,
+		bool axisLock[3],
 		int respawns = 0,
 		String name = ""
 	);

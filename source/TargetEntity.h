@@ -133,35 +133,29 @@ public:
 
 class FlyingEntity : public TargetEntity {
 protected:
-	/** Angular speed in degress/sec */
-	float                           m_speed = 0.0f;
-    /** World space point at center of orbit */
-	Point3                          m_orbitCenter;
-
-	/** Angular Speed Range (deg/s) x=min y=max */
-	Vector2                         m_angularSpeedRange = Vector2{ 0.0f, 4.0f };
-    /** Motion Change period x=min y=max */
-    Vector2                         m_motionChangePeriodRange = Vector2{ 10000.0f, 10000.0f };
-
+	float			m_speed = 0.0f;									///< Speed of the target (deg/s or m/s depending on space)
+	Point3			m_orbitCenter;									///< World space point at center of orbit
+	Vector2			m_angularSpeedRange = Vector2{ 0.0f, 4.0f };	///< Angular Speed Range(deg / s) x = min y = max
+    Vector2			m_motionChangePeriodRange = Vector2{ 10000.0f, 10000.0f };	  ///< Motion Change period in seconds (x=min y=max)
     /** The target will move through these points along arcs around
         m_orbitCenter at m_speed. As each point is hit, it is
         removed from the queue.*/
-    Queue<Point3>                   m_destinationPoints;
+    Queue<Point3>	m_destinationPoints;
 
 	/** Limits flying target entity motion for the upper hemisphere only.
 		OnSimulation will y-invert target position & destination points
 		whenever the target enters into the lower hemisphere.
 		*/
-	bool							m_upperHemisphereOnly;
-
-	AABox m_bounds = AABox();
+	bool			m_upperHemisphereOnly;
+	AABox			m_bounds = AABox();							///< Bounds (for world space motion)
+	bool			m_axisLocks[3] = { false };					///< Axis locks (for world space motion)
 
 	FlyingEntity() {}
     void init(AnyTableReader& propertyTable);
 
 	void init();
 
-	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, int respawns = 0, int scaleIdx=0);
+	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, bool axisLock[3], int respawns = 0, int scaleIdx=0);
 
 public:
 
@@ -203,6 +197,7 @@ public:
 		bool							upperHemisphereOnly,
 		Point3							orbitCenter,
 		int								paramIdx,
+		bool							axisLock[3],
 		int								respawns=0);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
@@ -223,48 +218,40 @@ protected:
 	// 3. If deviated from spherical surface (can be true in jumping cases), project toward orbit center to snap on the spherical surface.
 
 	/** Motion kinematic parameters, x is spherical (horizontal) component and y is vertical (jump) component. */
-	Point2                          m_speed;
+	Point2			m_speed;
 
 	/** Position is calculated as sphieral motion + jump.
 	Animation is done by projecting it toward the spherical surface. */
-	Point3                          m_simulatedPos;
+	Point3          m_simulatedPos;
 
 	/** Parameters reset every time motion change or jump happens */
-	float                           m_planarSpeedGoal; // the speed value m_speed tries to approach.
-	Point2                          m_acc;
-	float							m_jumpSpeed;
+	float           m_planarSpeedGoal;			///< the speed value m_speed tries to approach.
+	Point2          m_acc;						///< Acceleration storage
+	float			m_jumpSpeed;				///< Jump speed storage
 
-	/** World space point at center of orbit */
-	Point3                          m_orbitCenter;
-	float                           m_orbitRadius;
+	Point3          m_orbitCenter;				///< World-space center of orbit (player space)
+	float           m_orbitRadius;				///< Radius of orbit path (player space)
+	
+	float           m_motionChangeTimer;		///< Time remaining to motion change (in seconds)
+	float			m_jumpTimer;				///< Time remaining in jump (in seconds)
+	
+	bool			m_inJump;					///< In a jump currently?
+	SimTime			m_jumpTime;					///< Time at which a jump started
+	float           m_standingHeight;			///< Default or "pre-jump" height
+	Vector2			m_angularSpeedRange;		///< Angular Speed Range in deg/s (x=min y=max)
+	Vector2         m_motionChangePeriodRange;	///< Motion Change period in seconds (x=min y=max)
+    Vector2			m_jumpPeriodRange;			///< Jump period in seconds (x=min y=max)
+    Vector2         m_jumpSpeedRange;			///< Jump initial speed in m/s (x=min y=max)
+    Vector2			m_gravityRange;				///< Gravitational Acceleration in m/s^2 (x=min y=max)
 
-	/** variables for motion changes */
-	float                           m_motionChangeTimer;
-	float                           m_jumpTimer;
+	Vector2         m_distanceRange;
+	float           m_planarAcc = 0.3f;
+	bool            m_isFirstFrame = true;		///< Initializer flag
+	SimTime			m_nextJumpTime = 0;			///< Next time at which to jump
+	
+	AABox			m_bounds = AABox();
+	bool			m_axisLocks[3] = { false };	///< Axis locks (for world space motion)
 
-	/** jump state */
-	bool                            m_inJump;
-	SimTime							m_jumpTime;
-	float                           m_standingHeight;
-
-	/** Angular Speed Range (deg/s) x=min y=max */
-	Vector2                         m_angularSpeedRange;
-	/** Motion Change period x=min y=max */
-	Vector2                         m_motionChangePeriodRange;
-	/** Jump period x=min y=max */
-    Vector2                         m_jumpPeriodRange;
-	/** Jump initial speed (m/s) x=min y=max */
-    Vector2                         m_jumpSpeedRange;
-	/** Gravitational Acceleration (m/s^2) x=min y=max */
-    Vector2                         m_gravityRange;
-	/** Distance range */
-	Vector2                         m_distanceRange;
-	float                           m_planarAcc = 0.3f;
-
-	/** check first frame */
-	bool                            m_isFirstFrame = true;
-	SimTime							m_nextJumpTime = 0;
-	AABox m_bounds = AABox();
 
 	JumpingEntity() {}
 
@@ -282,6 +269,7 @@ protected:
 		Point3 orbitCenter,
 		float orbitRadius,
 		int paramIdx,
+		bool axisLock[3],
 		int respawns = 0,
 		int scaleIdx=0
 	);
@@ -319,6 +307,7 @@ public:
 		Point3							orbitCenter,
 		float							orbitRadius,
 		int								paramIdx,
+		bool							axisLock[3],
 		int								respawns=0);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should

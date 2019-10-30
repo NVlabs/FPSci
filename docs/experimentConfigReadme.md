@@ -84,6 +84,7 @@ An example session configuration snippet is included below:
       * `xyz` the position for this point in the path
     * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
     * `bounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
+    * `axisLocked` is a boolean array specifying which (if any) axes of motion are "locked" (i.e. disallowed) for this target's motion in [X,Y,Z] order. This only applies for world-space, parametric targets.
 
 #### Target Configuration Example
 An example target configuration snippet is provided below:
@@ -106,6 +107,7 @@ targets = [
                 Point3(-8.5, 0.5, -11.5),   // It is important these are specified in "increasing order"
                 Point3(-6.5, 1.5, -7.5)     // All x,y,z coordinates must be greater than those above
         },
+        "axisLocked": [true, false, false],
         "visualSize" : [0.3, 1.0],          // Visual size between 0.3-1m
         "respawnCount" : -1,                // Respawn forever
     },

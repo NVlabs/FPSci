@@ -159,6 +159,7 @@ void Session::initTargetAnimation() {
 					m_targetDistance,
 					String(target.str["id"]),
 					i,
+					target.axisLock,
 					(int) target.val["respawns"],
 					String(target.str["name"])
 				);
@@ -179,6 +180,7 @@ void Session::initTargetAnimation() {
 					initialSpawnPos,
 					String(target.str["id"]),
 					i,
+					target.axisLock,
 					(int)target.val["respawns"],
 					String(target.str["name"])
 				);
@@ -190,6 +192,7 @@ void Session::initTargetAnimation() {
 		}
 	}
 	else {
+		bool locks[3] = { true };
 		// Make sure we reset the target color here (avoid color bugs)
 		m_app->spawnFlyingTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
@@ -200,7 +203,8 @@ void Session::initTargetAnimation() {
 			false,
 			initialSpawnPos,
 			"reference",
-			0
+			0,
+			locks
 		);
 	}
 

@@ -167,6 +167,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	bool									upperHemisphereOnly,
 	Point3                                  orbitCenter,
 	int										paramIdx,
+	bool									axisLock[3],
 	int										respawns) {
 
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
@@ -175,7 +176,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	// Initialize each base class, which parses its own fields
 	flyingEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
 	flyingEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, upperHemisphereOnly, orbitCenter, paramIdx, respawns, scaleIdx);
+	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, upperHemisphereOnly, orbitCenter, paramIdx, axisLock, respawns, scaleIdx);
 
 	return flyingEntity;
 }
@@ -191,7 +192,7 @@ void FlyingEntity::init() {
 }
 
 
-void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, int respawns, int scaleIdx) {
+void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, bool axisLock[3], int respawns, int scaleIdx) {
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
 	m_upperHemisphereOnly = upperHemisphereOnly;
@@ -199,6 +200,9 @@ void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRan
 	m_paramIdx = paramIdx;
 	m_respawnCount = respawns;
 	m_scaleIdx = scaleIdx;
+	for (int i = 0; i < 3; i++) {
+		m_axisLocks[i] = axisLock[i];
+	}
 }
 
 void FlyingEntity::setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter) {
@@ -251,7 +255,20 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			m_nextChangeTime = absoluteTime + motionChangeTime;
 			// Velocity to use for this next interval
 			float vel = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
-			m_velocity = vel * (m_bounds.randomInteriorPoint()- m_frame.translation).direction();
+			Point3 destination = m_bounds.randomInteriorPoint();
+			if (m_axisLocks[0]) {
+				destination.x = pos.x;
+			}
+			if (m_axisLocks[1]) {
+				destination.y = pos.y;
+			}
+			if (m_axisLocks[2]) {
+				destination.z = pos.z;
+			}
+			if (m_axisLocks[0] && m_axisLocks[1] && m_axisLocks[2] && vel > 0) {
+				throw "Cannot lock all axes for non-static target!";
+			}
+			m_velocity = vel * (destination - m_frame.translation).direction();
 		
 		}
 		// Check for whether the target has "left" the bounds, if so "reflect" it about the wall
@@ -407,6 +424,7 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 	Point3                                  orbitCenter,
 	float                                   orbitRadius,
 	int										paramIdx,
+	bool									axisLock[3],
 	int										respawns) {
 
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
@@ -425,6 +443,7 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 		orbitCenter,
 		orbitRadius,
 		paramIdx,
+		axisLock,
 		respawns,
 		scaleIdx);
 
@@ -451,6 +470,7 @@ void JumpingEntity::init(
 	Point3 orbitCenter,
 	float orbitRadius,
 	int paramIdx,
+	bool axisLock[3],
 	int respawns,
 	int scaleIdx)
 {
@@ -464,6 +484,9 @@ void JumpingEntity::init(
 	m_respawnCount = respawns;
 	m_paramIdx = paramIdx;
 	m_scaleIdx = scaleIdx;
+	for (int i = 0; i < 3; i++) {
+		m_axisLocks[i] = axisLock[i];
+	}
 
 	m_orbitRadius = orbitRadius;
 	float angularSpeed = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
@@ -513,7 +536,20 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			m_nextChangeTime = absoluteTime + motionChangeTime;
 			// Velocity to use for this next interval
 			float vel = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
-			m_velocity = vel * (m_bounds.randomInteriorPoint() - m_frame.translation).direction();
+			Point3 destination = m_bounds.randomInteriorPoint();
+			if (m_axisLocks[0]) {
+				destination.x = frame().translation.x;
+			}
+			if (m_axisLocks[1]) {
+				destination.y = frame().translation.y;
+			}
+			if (m_axisLocks[2]) {
+				destination.z = frame().translation.z;
+			}
+			if (m_axisLocks[0] && m_axisLocks[1] && m_axisLocks[2] && vel > 0) {
+				throw "Cannot lock all axes for non-static target!";
+			}
+			m_velocity = vel * (destination - m_frame.translation).direction();
 		}
 		// Check for time for jump
 		if (absoluteTime > m_nextJumpTime && !m_inJump) {

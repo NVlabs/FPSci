@@ -42,6 +42,7 @@ struct ParameterTable
 	std::map<std::string, std::vector<float>> val_vec;
 	Array<Destination> destinations;
 	AABox bounds;
+	bool axisLock[3];
 
 	void add(std::string s, float f) {
 		val.insert(std::pair<std::string, float>(s, f));
@@ -55,6 +56,16 @@ struct ParameterTable
 
 	void add(Array<Destination> dests) {
 		destinations = dests;
+	}
+
+	void add(AABox box) {
+		bounds = box;
+	}
+
+	void add(Array<bool> aLock) {
+		for (int i = 0; i < 3; i++) {
+			axisLock[i] = aLock[i];
+		}
 	}
 
 	ParameterTable() {

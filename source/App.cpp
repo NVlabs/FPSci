@@ -275,6 +275,7 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	Point3 orbitCenter,
 	String id,
 	int paramIdx,
+	bool axisLock[3],
 	int respawns,
 	String name)
 {
@@ -291,6 +292,7 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 		upperHemisphereOnly,
 		orbitCenter,
 		paramIdx,
+		axisLock,
 		respawns
 	);
 
@@ -325,6 +327,7 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	float targetDistance,
 	String id,
 	int paramIdx,
+	bool axisLock[3],
 	int respawns,
 	String name)
 {
@@ -345,6 +348,7 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 		orbitCenter,
 		targetDistance,
 		paramIdx,
+		axisLock,
 		respawns
 	);
 
@@ -943,7 +947,7 @@ void App::updateSession(String id) {
 	// Copied from old FPM code
 	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
 	mouseSens *= 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
-	player->mouseSensitivity = mouseSens;
+	player->mouseSensitivity = (float)mouseSens;
 	player->moveRate = sessConfig->moveRate;
 	player->jumpVelocity = sessConfig->jumpVelocity;
 	player->jumpInterval = sessConfig->jumpInterval;
