@@ -99,7 +99,6 @@ void PlayerEntity::onPose(Array<shared_ptr<Surface> >& surfaceArray) {
 void PlayerEntity::updateFromInput(UserInput* ui) {
 
 	const float walkSpeed = moveRate * units::meters() / units::seconds();
-	static const Vector3 jumpVelocity(0, jumpVelocity * units::meters() / units::seconds(), 0);
 
 	// Get walking speed here (and normalize if necessary)
 	Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
@@ -111,6 +110,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	if (ui->keyPressed(GKey::SPACE) && timeSinceLastJump > jumpInterval) {
 		// Allow jumping if jumpTouch = False or if jumpTouch = True and the player is in contact w/ the map
 		if (!jumpTouch || m_inContact) {
+			static const Vector3 jumpVelocity(0, jumpVelocity * units::meters() / units::seconds(), 0);
 			linear += jumpVelocity;
 			m_lastJumpTime = System::time();
 		}
@@ -233,20 +233,28 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
 	// Only allow y-axis gravity for now
     alwaysAssertM(((PhysicsScene*)m_scene)->gravity().x == 0.0f && ((PhysicsScene*)m_scene)->gravity().z == 0.0f, 
                             "We assume gravity points along the y axis to simplify implementation");
-    
+	float ygrav = ((PhysicsScene*)m_scene)->gravity().y;
 	Vector3 velocity = frame().vectorToWorldSpace(m_desiredOSVelocity);
 
 	// Apply the velocity using a terminal velocity of about 5.4s of acceleration (human is ~53m/s w/ 9.8m/s^2)
 	if (m_desiredOSVelocity.y > 0) {
+		m_inAir = true;
 		// Jump occurring, need to track this
 		m_lastJumpVelocity = m_desiredOSVelocity.y;
 	}
-	// Already in a jump, apply gravity and enforce terminal velocity
-	m_lastJumpVelocity += ((PhysicsScene*)m_scene)->gravity().y*deltaTime;
-	if (abs(m_lastJumpVelocity) > 0) {
-		// Enforce terminal velocity here
-		m_lastJumpVelocity = m_lastJumpVelocity / abs(m_lastJumpVelocity) * min(abs(m_lastJumpVelocity), abs(5.4f*((PhysicsScene*)m_scene)->gravity().y));
-		velocity.y = m_lastJumpVelocity;
+	else if (m_inAir) {
+		// Already in a jump, apply gravity and enforce terminal velocity
+		m_lastJumpVelocity += ((PhysicsScene*)m_scene)->gravity().y*deltaTime;
+		if (abs(m_lastJumpVelocity) > 0) {
+			// Enforce terminal velocity here
+			m_lastJumpVelocity = m_lastJumpVelocity / abs(m_lastJumpVelocity) * min(abs(m_lastJumpVelocity), abs(5.4f*ygrav));
+			velocity.y = m_lastJumpVelocity;
+		}
+	}
+	else {
+		// Walking on the ground, just set a small negative veloicity to keep us in contact (this is a hack)
+		m_lastJumpVelocity = 0.0f;
+		velocity.y = -epsilon;
 	}
 	
     Array<Tri> triArray;
@@ -286,8 +294,9 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
 
         // Early out of loop when debugging
         //if (! runSimulation) { return; }
-        
+		m_inAir = !collision;
         if (collision) {
+			m_inAir = collisionNormal.y < 0.99;
 #           ifdef TRACE_COLLISIONS
                 debugPrintf("  Collision C=%s, n=%s; position after=%s)\n", 
                             collisionPoint.toString().c_str(),
@@ -302,7 +311,6 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
                 // towards the triangle.
                loc = collisionPoint + collisionNormal * (m_collisionProxySphere.radius + epsilon * 2.0f);
 			   setFrame(loc);
-
                 
 #               ifdef TRACE_COLLISIONS
                     debugPrintf("  Interpenetration detected.  Position after = %s\n",

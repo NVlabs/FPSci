@@ -22,6 +22,7 @@ protected:
 	RealTime		m_lastJumpTime;
 
 	bool			m_crouched = false;					///< Is the player crouched?
+	bool			m_inAir = true;						///< Is the player in the air (i.e. not in collision w/ a ground plane)?
 	float			m_lastJumpVelocity;
 	float			m_health = 1.0f;					///< Player health storage
 
