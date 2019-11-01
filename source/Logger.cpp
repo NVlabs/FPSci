@@ -1,12 +1,19 @@
 #include "Logger.h"
+//#include <chrono>
 
 // TODO: Replace with the G3D timestamp uses.
 // utility function for generating a unique timestamp.
 String Logger::genUniqueTimestamp() {
-	_SYSTEMTIME t;
-	GetLocalTime(&t);
+	FILETIME ft;
+	GetSystemTimePreciseAsFileTime(&ft);
+	unsigned long long usecsinceepoch = (static_cast<unsigned long long>(ft.dwHighDateTime) << 32 | ft.dwLowDateTime)/10;		// Get time since epoch in usec
+	int usec = usecsinceepoch % 1000000;
+
+	SYSTEMTIME datetime;
+	FileTimeToSystemTime(&ft, &datetime);
+		
 	char tmCharArray[30] = { 0 };
-	sprintf(tmCharArray, "%04d-%02d-%02d %02d:%02d:%02d.%06d", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond, t.wMilliseconds*1000);
+	sprintf(tmCharArray, "%04d-%02d-%02d %02d:%02d:%02d.%06d", datetime.wYear, datetime.wMonth, datetime.wDay, datetime.wHour, datetime.wMinute, datetime.wSecond, usec);
 	std::string timeStr(tmCharArray);
 	return String(timeStr);
 }
