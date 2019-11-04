@@ -135,7 +135,7 @@ void Session::initTargetAnimation() {
 					offset,
 					target.destinations,
 					visualSize,
-					m_config->targetHealthColors[0],
+					m_config->targetView.healthColors[0],
 					String(target.str["id"]),
 					i,
 					(int)target.val["respawns"],
@@ -148,7 +148,7 @@ void Session::initTargetAnimation() {
 				shared_ptr<JumpingEntity> t = m_app->spawnJumpingTarget(
 					offset,
 					visualSize,
-					m_config->targetHealthColors[0],
+					m_config->targetView.healthColors[0],
 					{ target.val["minSpeed"], target.val["maxSpeed"] },
 					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
 					{ target.val["minJumpPeriod"], target.val["maxJumpPeriod"] },
@@ -173,7 +173,7 @@ void Session::initTargetAnimation() {
 				shared_ptr<FlyingEntity> t = m_app->spawnFlyingTarget(
 					offset,
 					visualSize,
-					m_config->targetHealthColors[0],
+					m_config->targetView.healthColors[0],
 					{ target.val["minSpeed"], target.val["maxSpeed"] },
 					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
 					(bool)target.val["upperHemisphereOnly"],
@@ -196,8 +196,8 @@ void Session::initTargetAnimation() {
 		// Make sure we reset the target color here (avoid color bugs)
 		m_app->spawnFlyingTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
-			m_config->refTargetSize,
-			m_config->refTargetColor,
+			m_config->targetView.refTargetSize,
+			m_config->targetView.refTargetColor,
 			{ 0.0f, 0.0f },
 			{ 1000.0f, 1000.f },
 			false,
@@ -237,7 +237,7 @@ void Session::processResponse()
 
 	// Check for whether all targets have been destroyed
 	if (m_response == 0) {
-		m_totalRemainingTime += (double(m_config->taskDuration) - m_taskExecutionTime);
+		m_totalRemainingTime += (double(m_config->timing.taskDuration) - m_taskExecutionTime);
 		if (m_config->description == "training") {
 			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
 		}
@@ -269,14 +269,14 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::ready)
 	{
-		if (stateElapsedTime > m_config->readyDuration)
+		if (stateElapsedTime > m_config->timing.readyDuration)
 		{
 			newState = PresentationState::task;
 		}
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_config->taskDuration) || (remainingTargets <= 0) || (m_clickCount == m_config->weapon.maxAmmo))
+		if ((stateElapsedTime > m_config->timing.taskDuration) || (remainingTargets <= 0) || (m_clickCount == m_config->weapon.maxAmmo))
 		{
 			m_taskEndTime = Logger::genUniqueTimestamp();
 			processResponse();
@@ -286,7 +286,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::feedback)
 	{
-		if ((stateElapsedTime > m_config->feedbackDuration) && (remainingTargets <= 0))
+		if ((stateElapsedTime > m_config->timing.feedbackDuration) && (remainingTargets <= 0))
 		{
 			if (isComplete()) {
 				if (m_config->questionArray.size() > 0 && m_currQuestionIdx < m_config->questionArray.size()) {			// Pop up question dialog(s) here if we need to
@@ -492,7 +492,7 @@ int Session::remainingAmmo() const {
 
 float Session::getRemainingTrialTime() {
 	if (isNull(m_config)) return 10.0;
-	return m_config->taskDuration - m_timer.getTime();
+	return m_config->timing.taskDuration - m_timer.getTime();
 }
 
 float Session::getProgress() {

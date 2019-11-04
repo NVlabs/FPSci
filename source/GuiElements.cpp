@@ -151,9 +151,9 @@ PlayerControls::PlayerControls(FpsConfig config, std::function<void()> exportCal
 	GuiPane* pane = GuiWindow::pane();
 
 	// Get default values...
-	playerHeight = config.playerHeight;
-	crouchHeight = config.crouchHeight;
-	moveRate = config.moveRate;
+	playerHeight = config.player.height;
+	crouchHeight = config.player.crouchHeight;
+	moveRate = config.player.moveRate;
 
 	pane->beginRow(); {
 		auto  c = pane->addNumberBox("Player Height", &playerHeight, "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f);
@@ -191,11 +191,11 @@ RenderControls::RenderControls(FpsConfig config, bool drawFps, bool turbo, int r
 
 	showBullets = config.weapon.renderBullets;
 	showWeapon = config.weapon.renderModel;
-	showHud = config.showHUD;
+	showHud = config.hud.enable;
 	showFps = drawFps;
 	turboMode = turbo;
-	frameRate = config.frameRate;
-	frameDelay = config.frameDelay;
+	frameRate = config.render.frameRate;
+	frameDelay = config.render.frameDelay;
 	reticleIdx = reticleIndex;
 	brightness = b;
 
