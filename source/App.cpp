@@ -1609,27 +1609,27 @@ void App::onUserInput(UserInput* ui) {
 					if (notNull(t)) {								// Check if we hit anything
                         if (t->health() <= 0) {
                             // Target eliminated, must be 'destroy'.
-                            sess->accumulatePlayerAction("destroy", t->name());	
+                            sess->accumulatePlayerAction(PlayerActionType::Destroy, t->name());	
                         }
                         else {
                             // Target 'hit', but still alive.
-                            sess->accumulatePlayerAction("hit", t->name());
+                            sess->accumulatePlayerAction(PlayerActionType::Hit, t->name());
                         }
 					}
                     else {
                         // Target still present, must be 'miss'.
-                        sess->accumulatePlayerAction("miss");
+                        sess->accumulatePlayerAction(PlayerActionType::Miss);
                     }
 				}
 				// Avoid accumulating invalid clicks during holds...
                 else {
                     // Invalid click since the trial isn't ready for response
-                    sess->accumulatePlayerAction("invalid");
+                    sess->accumulatePlayerAction(PlayerActionType::Invalid);
                 }
 			}
 		}
 		else {
-			sess->accumulatePlayerAction("non-task"); // not happening in task state.
+			sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
 		}
 
 		// Check for developer mode editing here

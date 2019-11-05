@@ -414,21 +414,76 @@ void Session::recordTrialResponse()
 
 	// Target_Trajectory table. Write down the recorded target trajectories.
 	if (m_config->logger.logTargetTrajectories) {
-		m_logger->recordTargetTrajectory(m_targetTrajectory);
+		m_logger->recordTargetTrajectory(getTrajectoryForDb());
 		m_targetTrajectory.clear();
 	}
 
 	// Player_Action table. Write down the recorded player actions.
 	if (m_config->logger.logPlayerActions) {
-		m_logger->recordPlayerActions(m_playerActions);
+		m_logger->recordPlayerActions(getPlayerActionsForDb());
 		m_playerActions.clear();
 	}
 
 	// Frame_Info table. Write down all frame info.
 	if (m_config->logger.logFrameInfo) {
-		m_logger->recordFrameInfo(m_frameInfo);
+		m_logger->recordFrameInfo(getFrameInfoForDb());
 		m_frameInfo.clear();
 	}
+}
+
+Array<RowEntry> Session::getTrajectoryForDb() {
+	Array<RowEntry> rows;
+	for (TargetLocation loc : m_targetTrajectory) {
+		Array<String> targetTrajectoryValues = {
+			"'" + Logger::formatFileTime(loc.time) + "'",
+			"'" + loc.name + "'",
+			String(std::to_string(loc.position.x)),
+			String(std::to_string(loc.position.y)),
+			String(std::to_string(loc.position.z)),
+		};
+		rows.append(targetTrajectoryValues);
+	}
+	return rows;
+}
+
+Array<RowEntry> Session::getPlayerActionsForDb() {
+	Array<RowEntry> rows;
+	for (PlayerAction action : m_playerActions) {
+		String actionStr = "";
+		switch (action.action) {
+			case Invalid: actionStr = "invalid"; break;
+			case Nontask: actionStr = "non-task"; break;
+			case Aim: actionStr = "aim"; break;
+			case Miss: actionStr = "miss"; break;
+			case Hit: actionStr = "hit"; break;
+			case Destroy: actionStr = "destroy"; break;
+		}
+		Array<String> playerActionValues = {
+		"'" + Logger::formatFileTime(action.time) + "'",
+		String(std::to_string(action.viewDirection.x)),
+		String(std::to_string(action.viewDirection.y)),
+		String(std::to_string(action.position.x)),
+		String(std::to_string(action.position.y)),
+		String(std::to_string(action.position.z)),
+		"'" + actionStr + "'",
+		"'" + action.targetName + "'",
+		};
+		rows.append(playerActionValues);
+	}
+	return rows;
+}
+
+Array<RowEntry> Session::getFrameInfoForDb() {
+	Array<RowEntry> rows;
+	for (FrameInfo info : m_frameInfo) {
+		Array<String> frameValues = {
+			"'" + Logger::formatFileTime(info.time) + "'",
+			//String(std::to_string(info.idt)),
+			String(std::to_string(info.sdt))
+		};
+		rows.append(frameValues);
+	}
+	return rows;
 }
 
 void Session::accumulateTrajectories()
@@ -440,56 +495,35 @@ void Session::accumulateTrajectories()
 			Point3 targetAbsolutePosition = target->frame().translation;
 			Point3 initialSpawnPos = m_app->activeCamera()->frame().translation;
 			Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
-
+					   
 			//// below for 2D direction calculation (azimuth and elevation)
 			//Point3 t = targetPosition.direction();
 			//float az = atan2(-t.z, -t.x) * 180 / pif();
 			//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
-
-			Array<String> targetTrajectoryValues = {
-				"'" + Logger::genUniqueTimestamp() + "'",
-				"'" + target->name() + "'",
-				String(std::to_string(targetPosition.x)),
-				String(std::to_string(targetPosition.y)),
-				String(std::to_string(targetPosition.z)),
-			};
-			m_targetTrajectory.push_back(targetTrajectoryValues);
+			TargetLocation location = TargetLocation(Logger::getFileTime(), target->name(), targetPosition);
+			m_targetTrajectory.push_back(location);
 		}
 	}
 	// recording view direction trajectories
-	accumulatePlayerAction("aim");
+	accumulatePlayerAction(PlayerActionType::Aim);
 }
 
-void Session::accumulatePlayerAction(String action, String targetName)
+void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 {
 	if (m_config->logger.logPlayerActions) {
 		BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 		// recording target trajectories
 		Point2 dir = m_app->getViewDirection();
 		Point3 loc = m_app->getPlayerLocation();
-		Array<String> playerActionValues = {
-			"'" + Logger::genUniqueTimestamp() + "'",
-			String(std::to_string(dir.x)),
-			String(std::to_string(dir.y)),
-			String(std::to_string(loc.x)),
-			String(std::to_string(loc.y)),
-			String(std::to_string(loc.z)),
-			"'" + action + "'",
-			"'" + targetName + "'",
-		};
-		m_playerActions.push_back(playerActionValues);
+		PlayerAction pa = PlayerAction(Logger::getFileTime(), dir, loc, action, targetName);
+		m_playerActions.push_back(pa);
 		END_PROFILER_EVENT();
 	}
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 	if (m_config->logger.logFrameInfo) {
-		Array<String> frameValues = {
-			"'" + Logger::genUniqueTimestamp() + "'",
-			String(std::to_string(idt)),
-			String(std::to_string(sdt))
-		};
-		m_frameInfo.push_back(frameValues);
+		m_frameInfo.push_back(FrameInfo(Logger::getFileTime(), sdt));
 	}
 }
 

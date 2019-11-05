@@ -4,19 +4,28 @@
 // TODO: Replace with the G3D timestamp uses.
 // utility function for generating a unique timestamp.
 String Logger::genUniqueTimestamp() {
+	return formatFileTime(getFileTime());
+}
+
+FILETIME Logger::getFileTime() {
 	FILETIME ft;
 	GetSystemTimePreciseAsFileTime(&ft);
-	unsigned long long usecsinceepoch = (static_cast<unsigned long long>(ft.dwHighDateTime) << 32 | ft.dwLowDateTime)/10;		// Get time since epoch in usec
-	int usec = usecsinceepoch % 1000000;
+	return ft;
+}
+
+String Logger::formatFileTime(FILETIME ft) {
+	unsigned long long usecsinceepoch = (static_cast<unsigned long long>(ft.dwHighDateTime) << 32 | ft.dwLowDateTime) / 10;		// Get time since epoch in usec
+	unsigned long long usec = usecsinceepoch % 1000000;
 
 	SYSTEMTIME datetime;
 	FileTimeToSystemTime(&ft, &datetime);
-		
+
 	char tmCharArray[30] = { 0 };
 	sprintf(tmCharArray, "%04d-%02d-%02d %02d:%02d:%02d.%06d", datetime.wYear, datetime.wMonth, datetime.wDay, datetime.wHour, datetime.wMinute, datetime.wSecond, usec);
 	std::string timeStr(tmCharArray);
 	return String(timeStr);
 }
+
 
 String Logger::genFileTimestamp() {
 	_SYSTEMTIME t;
@@ -55,7 +64,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Experiments", expColumns); // no need of Primary Key for this table.
 
 	// populate table
-	Rows expValues = {
+	RowEntry expValues = {
 		"'" + timeStr + "'",
 		"'" + subjectID + "'",
 		"'" + description + "'"
@@ -121,7 +130,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	// 6. Frame_Info, create the table
 	Columns frameInfoColumns = {
 			{"time", "text"},
-			{"idt", "real"},
+			//{"idt", "real"},
 			{"sdt", "real"},
 	};
 	createTableInDB(m_db, "Frame_Info", frameInfoColumns);
@@ -135,15 +144,15 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Questions", questionColumns);
 }
 
-void Logger::recordTargetTrajectory(Array<Rows> trajectory) {
+void Logger::recordTargetTrajectory(Array<RowEntry> trajectory) {
 	insertRowsIntoDB(m_db, "Target_Trajectory", trajectory);
 }
 
-void Logger::recordPlayerActions(Array<Rows> actions) {
+void Logger::recordPlayerActions(Array<RowEntry> actions) {
 	insertRowsIntoDB(m_db, "Player_Action", actions);
 }
 
-void Logger::recordFrameInfo(Array<Rows> info) {
+void Logger::recordFrameInfo(Array<RowEntry> info) {
 	insertRowsIntoDB(m_db, "Frame_Info", info);
 }
 
@@ -151,7 +160,7 @@ void Logger::addTargets(SessionParameters targetParams) {
 	for (int i = 0; i < targetParams.size(); i++) {
 		for (ParameterTable tparam : targetParams[i]) {
 			const String type = (tparam.val["destCount"] > 0) ? "waypoint" : "parametrized";
-			Rows targetValues = {
+			RowEntry targetValues = {
 				String(std::to_string(i)),										// This is the trial ID
 				"'" + String(tparam.str["name"]) +"'",							// This is the target name
 				"'" + type + "'",
@@ -173,12 +182,12 @@ void Logger::addTargets(SessionParameters targetParams) {
 	}
 }
 
-void Logger::recordTrialResponse(Rows values) {
+void Logger::recordTrialResponse(RowEntry values) {
 	insertRowIntoDB(m_db, "Trials", values);
 }
 
 void Logger::addQuestion(Question q, String session) {
-	Rows rowContents = {
+	RowEntry rowContents = {
 		"'" + session + "'",
 		"'" + q.prompt + "'",
 		"'" + q.result + "'"

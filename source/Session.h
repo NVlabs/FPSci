@@ -54,6 +54,61 @@ public:
 	};
 };
 
+struct FrameInfo{
+	FILETIME time;
+	//float idt = 0.0f;
+	float sdt = 0.0f;
+
+	FrameInfo() {};
+
+	FrameInfo(FILETIME t, float simDeltaTime) {
+		time = t;
+		sdt = simDeltaTime;
+	}
+};
+
+struct TargetLocation {
+	FILETIME time;
+	String name = "";
+	Point3 position = Point3::zero();
+
+	TargetLocation() {};
+
+	TargetLocation(FILETIME t, String targetName, Point3 targetPosition) {
+		time = t;
+		name = targetName;
+		position = targetPosition;
+	}
+};
+
+enum PlayerActionType{
+	None,
+	Aim,
+	Invalid,
+	Nontask,
+	Miss,
+	Hit,
+	Destroy
+};
+
+struct PlayerAction {
+	FILETIME			time;
+	Point2				viewDirection = Point2::zero();
+	Point3				position = Point3::zero();
+	PlayerActionType	action = PlayerActionType::None;
+	String				targetName = "";
+
+	PlayerAction() {};
+
+	PlayerAction(FILETIME t, Point2 playerViewDirection, Point3 playerPosition, PlayerActionType playerAction, String name) {
+		time = t;
+		viewDirection = playerViewDirection;
+		position = playerPosition;
+		action = playerAction;
+		targetName = name;
+	}
+};
+
 class Session : public ReferenceCountedObject {
 protected:
 	App* m_app = nullptr;								///< Pointer to the app
@@ -87,9 +142,13 @@ protected:
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	
 	// Reported data storage
-	Array<Rows> m_playerActions;				///< Storage for player action (hit, miss, aim)
-	Array<Rows> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
-	Array<Rows> m_frameInfo;						///< Storage for frame info (sdt, idt, rdt)
+	Array<PlayerAction> m_playerActions;				///< Storage for player action (hit, miss, aim)
+	Array<TargetLocation> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
+	Array<FrameInfo> m_frameInfo;						///< Storage for frame info (sdt, idt, rdt)
+
+	Array<RowEntry> getTrajectoryForDb();
+	Array<RowEntry> getPlayerActionsForDb();
+	Array<RowEntry> getFrameInfoForDb();
 
 	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app) {
 		m_config = config;
@@ -153,7 +212,7 @@ public:
 
 	/** queues action with given name to insert into database when trial completes
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */
-	void accumulatePlayerAction(String action, String target="");
+	void accumulatePlayerAction(PlayerActionType action, String target="");
 	bool canFire();
 
 	bool setupTrialParams(const SessionParameters params);
