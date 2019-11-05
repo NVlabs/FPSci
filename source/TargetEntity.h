@@ -49,16 +49,17 @@ public:
 
 class TargetEntity : public VisibleEntity {
 protected:
-	float m_health			= 1.0f;				///< Target health
-	Color3 m_color			= Color3::red();	///< Default color
-	Array<Destination> m_destinations;			///< Array of destinations to visit
-	int destinationIdx		= 0;				///< Current index into the destination array
-	Point3 m_offset;							///< Offset for initial spawn
-	SimTime m_spawnTime		= 0;				///< Time initiatlly spawned
-	int m_respawnCount		= 0;				///< Number of times to respawn
-	int m_paramIdx			= -1;				///< Parameter index of this item
-	bool m_worldSpace		= false;			///< World space coordiantes?
-	int m_scaleIdx = 0;
+	float	m_health			= 1.0f;				///< Target health
+	Color3	m_color				= Color3::red();	///< Default color
+	int		destinationIdx		= 0;				///< Current index into the destination array
+	SimTime m_spawnTime			= 0;				///< Time initiatlly spawned
+	int		m_respawnCount		= 0;				///< Number of times to respawn
+	int		m_paramIdx			= -1;				///< Parameter index of this item
+	bool	m_worldSpace		= false;			///< World space coordiantes?
+	int		m_scaleIdx			= 0;				///< Index for scaled model
+	bool	m_isLogged			= true;				///< Control flag for logging
+	Point3	m_offset;								///< Offset for initial spawn
+	Array<Destination> m_destinations;				///< Array of destinations to visit
 
 	// Only used for flying/jumping entities
 	SimTime m_nextChangeTime = 0;
@@ -76,14 +77,16 @@ public:
 		const CFrame&					position,
 		int								paramIdx,
 		Point3							offset=Point3::zero(),
-		int								respawns=0);
+		int								respawns=0,
+		bool							isLogged=true);
 
-	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount=0, int scaleIdx=0) {
+	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount=0, int scaleIdx=0, bool isLogged=true) {
 		setDestinations(dests);
 		m_offset = staticOffset;
 		m_respawnCount = respawnCount;
 		m_paramIdx = paramIdx;
 		m_scaleIdx = scaleIdx;
+		m_isLogged = isLogged;
 		destinationIdx = 0;
 	}
 
@@ -115,6 +118,10 @@ public:
 
 	int scaleIndex() {
 		return m_scaleIdx;
+	}
+
+	bool isLogged() {
+		return m_isLogged;
 	}
 
 	/** Getter for health */
@@ -155,7 +162,7 @@ protected:
 
 	void init();
 
-	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, bool axisLock[3], int respawns = 0, int scaleIdx=0);
+	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, bool axisLock[3], int respawns = 0, int scaleIdx=0, bool isLogged=true);
 
 public:
 
@@ -198,7 +205,8 @@ public:
 		Point3							orbitCenter,
 		int								paramIdx,
 		bool							axisLock[3],
-		int								respawns=0);
+		int								respawns=0,
+		bool							isLogged=true);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
         modify at least the name of the Table returned by the base class, which will be "Entity"
@@ -271,7 +279,8 @@ protected:
 		int paramIdx,
 		bool axisLock[3],
 		int respawns = 0,
-		int scaleIdx=0
+		int scaleIdx=0,
+		bool isLogged=true
 	);
 
 public:
@@ -308,7 +317,8 @@ public:
 		float							orbitRadius,
 		int								paramIdx,
 		bool							axisLock[3],
-		int								respawns=0);
+		int								respawns=0,
+		bool							isLogged=true);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
 		modify at least the name of the Table returned by the base class, which will be "Entity"

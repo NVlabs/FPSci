@@ -287,7 +287,7 @@ public:
     @param scale size of target TODO: is this radius or diameter in meters?*/
     void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
 
-	shared_ptr<TargetEntity> spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color, String id, int paramIdx, int respawns = 0, String name="");
+	shared_ptr<TargetEntity> spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color, String id, int paramIdx, int respawns = 0, String name="", bool isLogged=true);
 
 	/** Creates a random target in front of the player */
 	void spawnRandomTarget();
@@ -308,7 +308,8 @@ public:
 		int paramIdx,
 		bool axisLock[3],
 		int respawns = 0,
-		String name = ""
+		String name = "",
+		bool isLogged=true
 	);
 
 	/** Creates a jumping target */
@@ -328,7 +329,8 @@ public:
 		int paramIdx,
 		bool axisLock[3],
 		int respawns = 0,
-		String name = ""
+		String name = "",
+		bool isLogged=true
 	);
 
 

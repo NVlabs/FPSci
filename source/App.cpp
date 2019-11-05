@@ -238,11 +238,11 @@ shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, b
 }
 
 shared_ptr<TargetEntity> App::spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color,
-	 String id, int paramIdx, int respawns, String name) {	
+	 String id, int paramIdx, int respawns, String name, bool isLogged) {	
 	// Create the target
 	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], scaleIndex, CFrame(), paramIdx, position, respawns);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], scaleIndex, CFrame(), paramIdx, position, respawns, isLogged);
 
 	// Setup the texture
 	UniversalMaterial::Specification materialSpecification;
@@ -277,7 +277,8 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	int paramIdx,
 	bool axisLock[3],
 	int respawns,
-	String name)
+	String name,
+	bool isLogged)
 {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
 	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
@@ -293,7 +294,8 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 		orbitCenter,
 		paramIdx,
 		axisLock,
-		respawns
+		respawns,
+		isLogged
 	);
 
 	UniversalMaterial::Specification materialSpecification;
@@ -329,7 +331,8 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	int paramIdx,
 	bool axisLock[3],
 	int respawns,
-	String name)
+	String name,
+	bool isLogged)
 {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
 	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
@@ -349,7 +352,8 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 		targetDistance,
 		paramIdx,
 		axisLock,
-		respawns
+		respawns,
+		isLogged
 	);
 
 	UniversalMaterial::Specification materialSpecification;
@@ -898,7 +902,7 @@ void App::updateSession(String id) {
 	}
 	else {
 		sessConfig = SessionConfig::create();										// Create an empty session
-		sess = Session::create(this);											
+		sess = Session::create(this, sessConfig);											
 	}
 
 	// Update the frame rate/delay

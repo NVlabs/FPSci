@@ -63,7 +63,9 @@ bool Session::setupTrialParams(const SessionParameters params)
 	}
 
 	// Update the logger w/ these conditions (IS THIS THE RIGHT PLACE TO DO THIS???)
-	m_logger->addTargets(m_trialParams);
+	if (m_config->logger.enable) {
+		m_logger->addTargets(m_trialParams);
+	}
 
 	// Select the first condition
 	nextCondition();
@@ -75,9 +77,11 @@ void Session::onInit(String filename, String userName, String description) {
 	presentationState = PresentationState::initial;
 	m_feedbackMessage = "Click to spawn a target, then use shift on red target to begin.";
 
-	// Setup the logger and create results file
-	m_logger = Logger::create();
-	m_logger->createResultsFile(filename, userName, description);
+	if (m_config->logger.enable) {
+		// Setup the logger and create results file
+		m_logger = Logger::create();
+		m_logger->createResultsFile(filename, userName, description);
+	}
 
 	// Check for valid session
 	if (m_hasSession) {
@@ -139,7 +143,8 @@ void Session::initTargetAnimation() {
 					String(target.str["id"]),
 					i,
 					(int)target.val["respawns"],
-					String(target.str["name"])
+					String(target.str["name"]),
+					target.bools["logTargetTrajectory"]
 				);
 			}
 			// Otherwise check if this is a jumping target
@@ -161,7 +166,8 @@ void Session::initTargetAnimation() {
 					i,
 					target.axisLock,
 					(int) target.val["respawns"],
-					String(target.str["name"])
+					String(target.str["name"]),
+					target.bools["logTargetTrajectory"]
 				);
 				t->setWorldSpace(isWorldSpace);
 				if (isWorldSpace) {
@@ -176,13 +182,14 @@ void Session::initTargetAnimation() {
 					m_config->targetView.healthColors[0],
 					{ target.val["minSpeed"], target.val["maxSpeed"] },
 					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
-					(bool)target.val["upperHemisphereOnly"],
+					target.bools["upperHemisphereOnly"],
 					initialSpawnPos,
 					String(target.str["id"]),
 					i,
 					target.axisLock,
 					(int)target.val["respawns"],
-					String(target.str["name"])
+					String(target.str["name"]),
+					target.bools["logTargetTrajectory"]
 				);
 				t->setWorldSpace(isWorldSpace);
 				if (isWorldSpace) {
@@ -297,20 +304,24 @@ void Session::updatePresentationState()
 					}
 					else if (!m_app->dialog->visible()) {														// Check for whether dialog is closed (otherwise we are waiting for input)
 						if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
-							m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;				// Store response w/ quesiton
-							m_logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);		// Log the question and its answer
+							m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
+							if (m_config->logger.enable) {
+								m_logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
+							}
 							m_currQuestionIdx++;																// Present the next question (if there is one)
-							if (m_currQuestionIdx < m_config->questionArray.size()) {								// Double check we have a next question before launching the next question
+							if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
 								m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
 							}
 						}
 						else {
-							m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);						// Relaunch the same dialog (this wasn't completed)
+							m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);					// Relaunch the same dialog (this wasn't completed)
 						}	
 					}	
 				}
 				else {
-					m_logger->closeResultsFile();																// Close the current results file
+					if (m_config->logger.enable) {
+						m_logger->closeResultsFile();															// Close the current results file (if open)
+					}
 					m_app->markSessComplete(String(m_trialParams[m_currTrialIdx][0].str["sessionID"]));			// Add this session to user's completed sessions
 					m_app->updateSessionDropDown();
 
@@ -384,54 +395,66 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 
 void Session::recordTrialResponse()
 {
-	String sess = String(m_trialParams[m_currTrialIdx][0].str["sessionID"]);
+	if (!m_config->logger.enable) return;		// Skip this if the logger is disabled
+	if (m_config->logger.logTrialResponse) {
+		String sess = String(m_trialParams[m_currTrialIdx][0].str["sessionID"]);
 
-	// Trials table. Record trial start time, end time, and task completion time.
-	Array<String> trialValues = {
-		String(std::to_string(m_currTrialIdx)),
-		"'" + sess + "'",
-		"'" + m_config->description + "'",
-		"'" + m_taskStartTime + "'",
-		"'" + m_taskEndTime + "'",
-		String(std::to_string(m_taskExecutionTime)),
-		String(std::to_string(m_response))
-	};
-	m_logger->recordTrialResponse(trialValues);
+		// Trials table. Record trial start time, end time, and task completion time.
+		Array<String> trialValues = {
+			String(std::to_string(m_currTrialIdx)),
+			"'" + sess + "'",
+			"'" + m_config->description + "'",
+			"'" + m_taskStartTime + "'",
+			"'" + m_taskEndTime + "'",
+			String(std::to_string(m_taskExecutionTime)),
+			String(std::to_string(m_response))
+		};
+		m_logger->recordTrialResponse(trialValues);
+	}
 
 	// Target_Trajectory table. Write down the recorded target trajectories.
-	m_logger->recordTargetTrajectory(m_targetTrajectory);
-	m_targetTrajectory.clear();
+	if (m_config->logger.logTargetTrajectories) {
+		m_logger->recordTargetTrajectory(m_targetTrajectory);
+		m_targetTrajectory.clear();
+	}
 
 	// Player_Action table. Write down the recorded player actions.
-	m_logger->recordPlayerActions(m_playerActions);
-	m_playerActions.clear();
+	if (m_config->logger.logPlayerActions) {
+		m_logger->recordPlayerActions(m_playerActions);
+		m_playerActions.clear();
+	}
 
 	// Frame_Info table. Write down all frame info.
-	m_logger->recordFrameInfo(m_frameInfo);
-	m_frameInfo.clear();
+	if (m_config->logger.logFrameInfo) {
+		m_logger->recordFrameInfo(m_frameInfo);
+		m_frameInfo.clear();
+	}
 }
 
 void Session::accumulateTrajectories()
 {
-	for (shared_ptr<TargetEntity> target : m_app->targetArray) {
-		// recording target trajectories
-		Point3 targetAbsolutePosition = target->frame().translation;
-		Point3 initialSpawnPos = m_app->activeCamera()->frame().translation;
-		Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
+	if (m_config->logger.logTargetTrajectories) {
+		for (shared_ptr<TargetEntity> target : m_app->targetArray) {
+			if (!target->isLogged()) continue;
+			// recording target trajectories
+			Point3 targetAbsolutePosition = target->frame().translation;
+			Point3 initialSpawnPos = m_app->activeCamera()->frame().translation;
+			Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
 
-		//// below for 2D direction calculation (azimuth and elevation)
-		//Point3 t = targetPosition.direction();
-		//float az = atan2(-t.z, -t.x) * 180 / pif();
-		//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
+			//// below for 2D direction calculation (azimuth and elevation)
+			//Point3 t = targetPosition.direction();
+			//float az = atan2(-t.z, -t.x) * 180 / pif();
+			//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
 
-		Array<String> targetTrajectoryValues = {
-			"'" + Logger::genUniqueTimestamp() + "'",
-			"'" + target->name() + "'",
-			String(std::to_string(targetPosition.x)),
-			String(std::to_string(targetPosition.y)),
-			String(std::to_string(targetPosition.z)),
-		};
-		m_targetTrajectory.push_back(targetTrajectoryValues);
+			Array<String> targetTrajectoryValues = {
+				"'" + Logger::genUniqueTimestamp() + "'",
+				"'" + target->name() + "'",
+				String(std::to_string(targetPosition.x)),
+				String(std::to_string(targetPosition.y)),
+				String(std::to_string(targetPosition.z)),
+			};
+			m_targetTrajectory.push_back(targetTrajectoryValues);
+		}
 	}
 	// recording view direction trajectories
 	accumulatePlayerAction("aim");
@@ -439,31 +462,35 @@ void Session::accumulateTrajectories()
 
 void Session::accumulatePlayerAction(String action, String targetName)
 {
-	BEGIN_PROFILER_EVENT("accumulatePlayerAction");
-	// recording target trajectories
-	Point2 dir = m_app->getViewDirection();
-	Point3 loc = m_app->getPlayerLocation();
-	Array<String> playerActionValues = {
-		"'" + Logger::genUniqueTimestamp() + "'",
-		String(std::to_string(dir.x)),
-		String(std::to_string(dir.y)),
-		String(std::to_string(loc.x)),
-		String(std::to_string(loc.y)),
-		String(std::to_string(loc.z)),
-		"'" + action + "'",
-		"'" + targetName + "'",
-	};
-	m_playerActions.push_back(playerActionValues);
-	END_PROFILER_EVENT();
+	if (m_config->logger.logPlayerActions) {
+		BEGIN_PROFILER_EVENT("accumulatePlayerAction");
+		// recording target trajectories
+		Point2 dir = m_app->getViewDirection();
+		Point3 loc = m_app->getPlayerLocation();
+		Array<String> playerActionValues = {
+			"'" + Logger::genUniqueTimestamp() + "'",
+			String(std::to_string(dir.x)),
+			String(std::to_string(dir.y)),
+			String(std::to_string(loc.x)),
+			String(std::to_string(loc.y)),
+			String(std::to_string(loc.z)),
+			"'" + action + "'",
+			"'" + targetName + "'",
+		};
+		m_playerActions.push_back(playerActionValues);
+		END_PROFILER_EVENT();
+	}
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
-	Array<String> frameValues = {
-		"'" + Logger::genUniqueTimestamp() + "'",
-		String(std::to_string(idt)),
-		String(std::to_string(sdt))
-	};
-	m_frameInfo.push_back(frameValues);
+	if (m_config->logger.logFrameInfo) {
+		Array<String> frameValues = {
+			"'" + Logger::genUniqueTimestamp() + "'",
+			String(std::to_string(idt)),
+			String(std::to_string(sdt))
+		};
+		m_frameInfo.push_back(frameValues);
+	}
 }
 
 bool Session::canFire() {

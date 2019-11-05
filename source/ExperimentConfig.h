@@ -605,6 +605,7 @@ public:
 	String			id;										///< Trial ID to indentify affiliated trial runs
 	//bool    		elevLocked = false;						///< Elevation locking
 	bool			upperHemisphereOnly = false;            ///< Limit flying motion to upper hemisphere only
+	bool			logTargetTrajectory = true;				///< Log this target's trajectory
 	Array<float>	distance = { 30.0f, 40.0f };			///< Distance to the target
 	Array<float>	motionChangePeriod = { 1.0f, 1.0f };	///< Range of motion change period in seconds
 	Array<float>	speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
@@ -651,6 +652,7 @@ public:
 			}
 			//reader.getIfPresent("elevationLocked", elevLocked);
 			reader.getIfPresent("upperHemisphereOnly", upperHemisphereOnly);
+			reader.getIfPresent("logTargetTrajectory", logTargetTrajectory);
 			reader.getIfPresent("distance", distance);
 			reader.getIfPresent("motionChangePeriod", motionChangePeriod);
 			reader.getIfPresent("speed", speed);
@@ -697,6 +699,7 @@ public:
 		a["respawnCount"] = respawnCount;
 		a["visualSize"] = visualSize;
 		a["modelSpec"] = modelSpec;
+		a["logTargetTrajectory"] = logTargetTrajectory;
 		if (destinations.size() > 0) {
 			a["destSpace"] = destSpace;
 			a["destinations"] = destinations;
@@ -1167,6 +1170,40 @@ public:
 	}
 };
 
+class LoggerConfig {
+public:
+	// Enable flags for log
+	bool enable					= true;		///< High-level logging enable flag (if false no output is created)							
+	bool logTargetTrajectories	= true;		///< Log target trajectories in table?
+	bool logFrameInfo			= true;		///< Log frame info in table?
+	bool logPlayerActions		= true;		///< Log player actions in table?
+	bool logTrialResponse		= true;		///< Log trial response in table?
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("logEnable", enable);
+			reader.getIfPresent("logTargetTrajectories", logTargetTrajectories);
+			reader.getIfPresent("logFrameInfo", logFrameInfo);
+			reader.getIfPresent("logPlayerActions", logPlayerActions);
+			reader.getIfPresent("logTrialResponse", logTrialResponse);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a) const {
+		a["logEnable"] = enable;
+		a["logTargetTrajectories"] = logTargetTrajectories;
+		a["logFrameInfo"] = logFrameInfo;
+		a["logPlayerActions"] = logPlayerActions;
+		a["logTrialResponse"] = logTrialResponse;
+		return a;
+	}
+};
+
 class FpsConfig : public ReferenceCountedObject {
 public:
 	int	            settingsVersion = 1;						///< Settings version
@@ -1180,6 +1217,7 @@ public:
 	TimingConfig		timing;									///< Timing related config parameters
 	TargetViewConfig	targetView;								///< Target drawing config parameters
 	ClickToPhotonConfig clickToPhoton;							///< Click to photon config parameters
+	LoggerConfig		logger;									///< Logging configuration
 	WeaponConfig		weapon;			                        ///< Weapon to be used
 	Array<Question> questionArray;								///< Array of questions for this experiment/trial
 
@@ -1205,6 +1243,7 @@ public:
 		clickToPhoton.load(reader, settingsVersion);
 		audio.load(reader, settingsVersion);
 		timing.load(reader, settingsVersion);
+		logger.load(reader, settingsVersion);
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("sceneName", sceneName);
@@ -1228,6 +1267,7 @@ public:
 		a = clickToPhoton.addToAny(a);
 		a = audio.addToAny(a);
 		a = timing.addToAny(a);
+		a = logger.addToAny(a);
 		a["weapon"] =  weapon;
 		return a;
 	}
@@ -1342,7 +1382,7 @@ public:
                 return i;
             }
 		}
-        return -1;
+		throw format("Could not find session:\"%s\"", id);
 	}
 	
 	/** Get a pointer to a target config by ID */
@@ -1380,7 +1420,8 @@ public:
 				p.add("maxVisualSize", target->visualSize[1]);
 				p.add("minMotionChangePeriod", target->motionChangePeriod[0]);
 				p.add("maxMotionChangePeriod", target->motionChangePeriod[1]);
-				p.add("upperHemisphereOnly", (float)target->upperHemisphereOnly);
+				p.addBool("upperHemisphereOnly", target->upperHemisphereOnly);
+				p.addBool("logTargetTrajectory", target->logTargetTrajectory);
 				p.add("minSpeed", target->speed[0]);
 				p.add("maxSpeed", target->speed[1]);
 				p.add("minDistance", target->distance[0]);

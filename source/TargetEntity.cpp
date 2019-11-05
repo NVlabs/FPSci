@@ -33,12 +33,13 @@ shared_ptr<TargetEntity> TargetEntity::create(
 	const CFrame&					position,
 	int								paramIdx,
 	Point3							offset,
-	int								respawns)
+	int								respawns,
+	bool							isLogged)
 {
 	const shared_ptr<TargetEntity>& target = createShared<TargetEntity>();
 	target->Entity::init(name, scene, CFrame(dests[0].position), shared_ptr<Entity::Track>(), true, true);
 	target->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	target->TargetEntity::init(dests, paramIdx, offset, respawns, scaleIdx);
+	target->TargetEntity::init(dests, paramIdx, offset, respawns, scaleIdx, isLogged);
 	return target;
 }
 
@@ -168,7 +169,8 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	Point3                                  orbitCenter,
 	int										paramIdx,
 	bool									axisLock[3],
-	int										respawns) {
+	int										respawns,
+	bool									isLogged) {
 
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
 	const shared_ptr<FlyingEntity>& flyingEntity = createShared<FlyingEntity>();
@@ -176,8 +178,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	// Initialize each base class, which parses its own fields
 	flyingEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
 	flyingEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, upperHemisphereOnly, orbitCenter, paramIdx, axisLock, respawns, scaleIdx);
-
+	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, upperHemisphereOnly, orbitCenter, paramIdx, axisLock, respawns, scaleIdx, isLogged);
 	return flyingEntity;
 }
 
@@ -192,7 +193,7 @@ void FlyingEntity::init() {
 }
 
 
-void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, bool axisLock[3], int respawns, int scaleIdx) {
+void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, bool axisLock[3], int respawns, int scaleIdx, bool isLogged) {
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
 	m_upperHemisphereOnly = upperHemisphereOnly;
@@ -200,6 +201,7 @@ void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRan
 	m_paramIdx = paramIdx;
 	m_respawnCount = respawns;
 	m_scaleIdx = scaleIdx;
+	m_isLogged = isLogged;
 	for (int i = 0; i < 3; i++) {
 		m_axisLocks[i] = axisLock[i];
 	}
@@ -425,7 +427,8 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 	float                                   orbitRadius,
 	int										paramIdx,
 	bool									axisLock[3],
-	int										respawns) {
+	int										respawns, 
+	bool									isLogged) {
 
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
 	const shared_ptr<JumpingEntity>& jumpingEntity = createShared<JumpingEntity>();
@@ -445,7 +448,8 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 		paramIdx,
 		axisLock,
 		respawns,
-		scaleIdx);
+		scaleIdx,
+		isLogged);
 
 	return jumpingEntity;
 }
@@ -472,7 +476,8 @@ void JumpingEntity::init(
 	int paramIdx,
 	bool axisLock[3],
 	int respawns,
-	int scaleIdx)
+	int scaleIdx,
+	bool isLogged)
 {
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
@@ -484,6 +489,7 @@ void JumpingEntity::init(
 	m_respawnCount = respawns;
 	m_paramIdx = paramIdx;
 	m_scaleIdx = scaleIdx;
+	m_isLogged = isLogged;
 	for (int i = 0; i < 3; i++) {
 		m_axisLocks[i] = axisLock[i];
 	}

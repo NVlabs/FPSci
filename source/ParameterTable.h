@@ -40,6 +40,7 @@ struct ParameterTable
 	std::map<std::string, float> val;
 	std::map<std::string, std::string> str;
 	std::map<std::string, std::vector<float>> val_vec;
+	std::map<std::string, bool> bools;
 	Array<Destination> destinations;
 	AABox bounds;
 	bool axisLock[3];
@@ -52,6 +53,9 @@ struct ParameterTable
 	}
 	void add(std::string str_key, std::string str_val) {
 		str.insert(std::pair<std::string, std::string>(str_key, str_val));
+	}
+	void addBool(std::string str_key, bool b) {
+		bools.insert(std::pair<std::string, bool>(str_key, b));
 	}
 
 	void add(Array<Destination> dests) {
