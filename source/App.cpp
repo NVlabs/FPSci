@@ -1799,7 +1799,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 				const float iRad = sessConfig->hud.cooldownInnerRadius;
 				const float oRad = iRad + sessConfig->hud.cooldownThickness;
 				const int segments = sessConfig->hud.cooldownSubdivisions;
-				int segsToLight = static_cast<int>((1 - sess->weaponCooldownPercent())*segments);
+				int segsToLight = static_cast<int>(ceilf((1 - sess->weaponCooldownPercent())*segments));
 				// Create the segments
 				for (int i = 0; i < segsToLight; i++) {
 					const float inc = static_cast<float>(2 * pi() / segments);
