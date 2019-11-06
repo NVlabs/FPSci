@@ -234,3 +234,37 @@ shared_ptr<RenderControls> RenderControls::create(FpsConfig config, bool drawFps
 	const shared_ptr<GuiTheme>& theme, float width, float height) {
 	return createShared<RenderControls>(config, drawFps, turbo, reticleIdx, numReticles, brightness, theme, width, height);
 }
+
+WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width, float height) : 
+	GuiWindow("Weapon Controls", theme, Rect2D::xywh(5, 5, width, height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
+{
+	// Create the GUI pane
+	GuiPane* pane = GuiWindow::pane();
+
+	pane->beginRow(); {
+		pane->addNumberBox("Max Ammo", &(config.maxAmmo), "", GuiTheme::NO_SLIDER, 0, 100000, 1);
+		pane->addNumberBox("Fire Period", &(config.firePeriod), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 10.0f, 0.1f);
+		pane->addCheckBox("Autofire", &(config.autoFire));
+	} pane->endRow();
+	pane->beginRow(); {
+		auto n = pane->addNumberBox("Damage", &(config.damagePerSecond), "health/s", GuiTheme::LINEAR_SLIDER, 0.0f, 100.0f, 0.1f);
+		n->setWidth(300.0f);
+		n->setUnitsSize(50.0f);
+	} pane->endRow();
+	pane->beginRow(); {
+		auto c = pane->addLabel("Muzzle offset");
+		c->setWidth(100.0f);
+		auto n = pane->addNumberBox("X", &(config.muzzleOffset.x), "m", GuiTheme::LINEAR_SLIDER, -1.0f, 1.0f, 0.01f);
+		n->setCaptionWidth(10.0f);
+		n->setWidth(150.0f);
+		n = pane->addNumberBox("Y", &(config.muzzleOffset.y), "m", GuiTheme::LINEAR_SLIDER, -1.0f, 1.0f, 0.01f);
+		n->setCaptionWidth(10.0f);
+		n->setWidth(150.0f);
+		n = pane->addNumberBox("Z", &(config.muzzleOffset.z), "m", GuiTheme::LINEAR_SLIDER, -1.0f, 1.0f, 0.01f);
+		n->setCaptionWidth(10.0f);
+		n->setWidth(150.0f);
+	} pane->endRow();
+	pane->beginRow(); {
+		pane->addCheckBox("Muzzle flash", &(config.renderMuzzleFlash));
+	} pane->endRow();
+}

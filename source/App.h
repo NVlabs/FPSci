@@ -131,6 +131,7 @@ protected:
 	shared_ptr<WaypointDisplay>		m_waypointControls;
 	shared_ptr<PlayerControls>		m_playerControls;
 	shared_ptr<RenderControls>		m_renderControls;
+	shared_ptr<WeaponControls>		m_weaponControls;
 	DebugID							m_highlighted;						///< ID for the waypoint window highlighter
 		
 	RealTime						m_recordStart = nan();				///< Start time for recording
@@ -267,6 +268,8 @@ public:
 	void showPlayerControls();
 	/** Show the render controls */
 	void showRenderControls();
+	/** Show the weapon controls */
+	void showWeaponControls();
 	/** Save scene w/ updated player position */
 	void exportScene();
 

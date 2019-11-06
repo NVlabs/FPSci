@@ -99,3 +99,12 @@ public:
 	static shared_ptr<RenderControls> create(FpsConfig config, bool drawFps, bool turbo, int reticleIdx, int numReticles, float brightness,
 		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
 };
+
+class WeaponControls : public GuiWindow {
+protected:
+	WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
+public:
+	static shared_ptr<WeaponControls> create(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f) {
+		return createShared<WeaponControls>(config, theme, width, height);
+	}
+};

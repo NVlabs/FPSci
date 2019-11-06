@@ -504,11 +504,16 @@ void App::makeGUI() {
 	m_renderControls->setVisible(false);
 	this->addWidget(m_renderControls);
 
+	m_weaponControls = WeaponControls::create(sessConfig->weapon, theme);
+	m_weaponControls->setVisible(false);
+	this->addWidget(m_weaponControls);
+
 	// Open sub-window panes here...
 	debugPane->beginRow(); {
 		debugPane->addButton("Render Controls [1]", this, &App::showRenderControls);
 		debugPane->addButton("Player Controls [2]", this, &App::showPlayerControls);
 		debugPane->addButton("Waypoint Manager [3]", this, &App::showWaypointManager);
+		debugPane->addButton("Weapon Controls [4]", this, &App::showWeaponControls);
 	}debugPane->endRow();
 
     // set up user settings window
@@ -768,6 +773,10 @@ void App::showRenderControls() {
 	m_renderControls->setVisible(true);
 }
 
+void App::showWeaponControls() {
+	m_weaponControls->setVisible(true);
+}
+
 void App::userSaveButtonPress(void) {
 	// Save the any file
 	Any a = Any(userTable);
@@ -904,6 +913,11 @@ void App::updateSession(String id) {
 		sessConfig = SessionConfig::create();										// Create an empty session
 		sess = Session::create(this, sessConfig);											
 	}
+
+	// Update the weapon controls
+	m_weaponControls = WeaponControls::create(sessConfig->weapon, theme);
+	m_weaponControls->setVisible(false);
+	this->addWidget(m_weaponControls);
 
 	// Update the frame rate/delay
 	updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
@@ -1238,6 +1252,9 @@ bool App::onEvent(const GEvent& event) {
 				break;
 			case '3':							// Use '3' to toggle the waypoint manager
 				m_waypointControls->setVisible(!m_waypointControls->visible());
+				break;
+			case '4':
+				m_weaponControls->setVisible(!m_weaponControls->visible());
 				break;
 			case GKey::PAGEUP:
 				m_waypointMoveMask += Vector3(0.0f, 1.0f, 0.0f);
