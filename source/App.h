@@ -234,6 +234,7 @@ public:
 
 	bool renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
 	int  displayLagFrames = 0;			///< Count of frames of latency to add
+	float lastSetFrameRate = 0.0f;		///< Last set frame rate
 	const int numReticles = 55;			///< Total count of reticles available to choose from
 	int  reticleIndex = numReticles;	///< Start by selecting the last reticle
 	float sceneBrightness = 1.0f;		///< Scene brightness scale factor

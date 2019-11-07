@@ -240,4 +240,7 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 	pane->beginRow(); {
 		pane->addCheckBox("Muzzle flash", &(config.renderMuzzleFlash));
 	} pane->endRow();
+
+	pack();
+	moveTo(Vector2(0, 610));
 }

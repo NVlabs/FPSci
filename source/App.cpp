@@ -518,8 +518,8 @@ void App::makeGUI() {
 	debugPane->beginRow(); {
 		debugPane->addButton("Render Controls [1]", this, &App::showRenderControls);
 		debugPane->addButton("Player Controls [2]", this, &App::showPlayerControls);
-		debugPane->addButton("Waypoint Manager [3]", this, &App::showWaypointManager);
-		debugPane->addButton("Weapon Controls [4]", this, &App::showWeaponControls);
+		debugPane->addButton("Weapon Controls [3]", this, &App::showWeaponControls);
+		debugPane->addButton("Waypoint Manager [4]", this, &App::showWaypointManager);
 	}debugPane->endRow();
 
     // set up user settings window
@@ -896,13 +896,13 @@ void App::updateSessionPress(void) {
 void App::updateParameters(int frameDelay, float frameRate) {
 	// Apply frame lag
 	displayLagFrames = frameDelay;
+	lastSetFrameRate = frameRate;
 	// Set a maximum *finite* frame rate
 	float dt = 0;
 	if (frameRate > 0) dt = 1.0f / frameRate;
 	else dt = 1.0f / float(window()->settings().refreshRate);
 	setFrameDuration(dt, GApp::REAL_TIME);
 }
-
 
 void App::updateSession(String id) {
 	// Check for a valid ID (non-emtpy and 
@@ -1162,6 +1162,11 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		player->crouchHeight = sessConfig->player.crouchHeight;
 		player->moveRate = sessConfig->player.moveRate;
 
+		// Handle frame rate/delay updates here
+		if (sessConfig->render.frameRate != lastSetFrameRate || displayLagFrames != sessConfig->render.frameDelay) {
+			updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
+		}
+
 		// Handle highlighting for selected target
 		int selIdx = m_waypointControls->getSelected();
 		if (selIdx >= 0) {
@@ -1240,11 +1245,11 @@ bool App::onEvent(const GEvent& event) {
 			case '2':							// Use '2' to toggle the player controls
 				m_playerControls->setVisible(!m_playerControls->visible());
 				break;
-			case '3':							// Use '3' to toggle the waypoint manager
-				m_waypointControls->setVisible(!m_waypointControls->visible());
-				break;
-			case '4':
+			case '3':							// Use '3' to toggle the weapon controls
 				m_weaponControls->setVisible(!m_weaponControls->visible());
+				break;
+			case '4':							// Use '4' to toggle the waypoint controls
+				m_waypointControls->setVisible(!m_waypointControls->visible());
 				break;
 			case GKey::PAGEUP:
 				m_waypointMoveMask += Vector3(0.0f, 1.0f, 0.0f);
