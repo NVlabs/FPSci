@@ -30,7 +30,6 @@
 #include <G3D/G3D.h>
 #include "ParameterTable.h"
 #include "ExperimentConfig.h"
-#include "sqlHelpers.h"
 #include "Logger.h"
 #include "Dialogs.h"
 #include <ctime>
@@ -54,7 +53,7 @@ public:
 	};
 };
 
-struct FrameInfo{
+ struct FrameInfo {
 	FILETIME time;
 	//float idt = 0.0f;
 	float sdt = 0.0f;
@@ -146,10 +145,6 @@ protected:
 	Array<TargetLocation> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
 	Array<FrameInfo> m_frameInfo;						///< Storage for frame info (sdt, idt, rdt)
 
-	Array<RowEntry> getTrajectoryForDb();
-	Array<RowEntry> getPlayerActionsForDb();
-	Array<RowEntry> getFrameInfoForDb();
-
 	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app) {
 		m_config = config;
 		m_hasSession = notNull(m_config);
@@ -177,7 +172,7 @@ public:
 
 	void randomizePosition(const shared_ptr<TargetEntity>& target) const;
 	void initTargetAnimation();
-	double weaponCooldownPercent() const;
+	float weaponCooldownPercent() const;
 	int remainingAmmo() const;
 
 	void addTrial(Array<ParameterTable> params);

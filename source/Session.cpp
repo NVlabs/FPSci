@@ -414,76 +414,21 @@ void Session::recordTrialResponse()
 
 	// Target_Trajectory table. Write down the recorded target trajectories.
 	if (m_config->logger.logTargetTrajectories) {
-		m_logger->recordTargetTrajectory(getTrajectoryForDb());
+		m_logger->recordTargetTrajectory(m_targetTrajectory);
 		m_targetTrajectory.clear();
 	}
 
 	// Player_Action table. Write down the recorded player actions.
 	if (m_config->logger.logPlayerActions) {
-		m_logger->recordPlayerActions(getPlayerActionsForDb());
+		m_logger->recordPlayerActions(m_playerActions);
 		m_playerActions.clear();
 	}
 
 	// Frame_Info table. Write down all frame info.
 	if (m_config->logger.logFrameInfo) {
-		m_logger->recordFrameInfo(getFrameInfoForDb());
+		m_logger->recordFrameInfo(m_frameInfo);
 		m_frameInfo.clear();
 	}
-}
-
-Array<RowEntry> Session::getTrajectoryForDb() {
-	Array<RowEntry> rows;
-	for (TargetLocation loc : m_targetTrajectory) {
-		Array<String> targetTrajectoryValues = {
-			"'" + Logger::formatFileTime(loc.time) + "'",
-			"'" + loc.name + "'",
-			String(std::to_string(loc.position.x)),
-			String(std::to_string(loc.position.y)),
-			String(std::to_string(loc.position.z)),
-		};
-		rows.append(targetTrajectoryValues);
-	}
-	return rows;
-}
-
-Array<RowEntry> Session::getPlayerActionsForDb() {
-	Array<RowEntry> rows;
-	for (PlayerAction action : m_playerActions) {
-		String actionStr = "";
-		switch (action.action) {
-			case Invalid: actionStr = "invalid"; break;
-			case Nontask: actionStr = "non-task"; break;
-			case Aim: actionStr = "aim"; break;
-			case Miss: actionStr = "miss"; break;
-			case Hit: actionStr = "hit"; break;
-			case Destroy: actionStr = "destroy"; break;
-		}
-		Array<String> playerActionValues = {
-		"'" + Logger::formatFileTime(action.time) + "'",
-		String(std::to_string(action.viewDirection.x)),
-		String(std::to_string(action.viewDirection.y)),
-		String(std::to_string(action.position.x)),
-		String(std::to_string(action.position.y)),
-		String(std::to_string(action.position.z)),
-		"'" + actionStr + "'",
-		"'" + action.targetName + "'",
-		};
-		rows.append(playerActionValues);
-	}
-	return rows;
-}
-
-Array<RowEntry> Session::getFrameInfoForDb() {
-	Array<RowEntry> rows;
-	for (FrameInfo info : m_frameInfo) {
-		Array<String> frameValues = {
-			"'" + Logger::formatFileTime(info.time) + "'",
-			//String(std::to_string(info.idt)),
-			String(std::to_string(info.sdt))
-		};
-		rows.append(frameValues);
-	}
-	return rows;
 }
 
 void Session::accumulateTrajectories()
@@ -539,7 +484,7 @@ bool Session::canFire() {
 	}
 }
 
-double Session::weaponCooldownPercent() const {
+float Session::weaponCooldownPercent() const {
 	if (isNull(m_config)) return 1.0;
 	if (m_config->weapon.firePeriod == 0.0f) return 1.0;
 	return min((System::time() - m_lastFireAt) / m_config->weapon.firePeriod, 1.0);

@@ -1,5 +1,5 @@
 #include "Logger.h"
-//#include <chrono>
+#include "Session.h"
 
 // TODO: Replace with the G3D timestamp uses.
 // utility function for generating a unique timestamp.
@@ -144,16 +144,59 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Questions", questionColumns);
 }
 
-void Logger::recordTargetTrajectory(Array<RowEntry> trajectory) {
-	insertRowsIntoDB(m_db, "Target_Trajectory", trajectory);
+void Logger::recordTargetTrajectory(Array<TargetLocation> trajectory) {
+	Array<RowEntry> rows;
+	for (TargetLocation loc : trajectory) {
+		Array<String> targetTrajectoryValues = {
+			"'" + Logger::formatFileTime(loc.time) + "'",
+			"'" + loc.name + "'",
+			String(std::to_string(loc.position.x)),
+			String(std::to_string(loc.position.y)),
+			String(std::to_string(loc.position.z)),
+		};
+		rows.append(targetTrajectoryValues);
+	}
+	insertRowsIntoDB(m_db, "Target_Trajectory", rows);
 }
 
-void Logger::recordPlayerActions(Array<RowEntry> actions) {
-	insertRowsIntoDB(m_db, "Player_Action", actions);
+void Logger::recordPlayerActions(Array<PlayerAction> actions) {
+	Array<RowEntry> rows;
+	for (PlayerAction action : actions) {
+		String actionStr = "";
+		switch (action.action) {
+		case Invalid: actionStr = "invalid"; break;
+		case Nontask: actionStr = "non-task"; break;
+		case Aim: actionStr = "aim"; break;
+		case Miss: actionStr = "miss"; break;
+		case Hit: actionStr = "hit"; break;
+		case Destroy: actionStr = "destroy"; break;
+		}
+		Array<String> playerActionValues = {
+		"'" + Logger::formatFileTime(action.time) + "'",
+		String(std::to_string(action.viewDirection.x)),
+		String(std::to_string(action.viewDirection.y)),
+		String(std::to_string(action.position.x)),
+		String(std::to_string(action.position.y)),
+		String(std::to_string(action.position.z)),
+		"'" + actionStr + "'",
+		"'" + action.targetName + "'",
+		};
+		rows.append(playerActionValues);
+	}
+	insertRowsIntoDB(m_db, "Player_Action", rows);
 }
 
-void Logger::recordFrameInfo(Array<RowEntry> info) {
-	insertRowsIntoDB(m_db, "Frame_Info", info);
+void Logger::recordFrameInfo(Array<FrameInfo> frameInfo) {
+	Array<RowEntry> rows;
+	for (FrameInfo info : frameInfo) {
+		Array<String> frameValues = {
+			"'" + Logger::formatFileTime(info.time) + "'",
+			//String(std::to_string(info.idt)),
+			String(std::to_string(info.sdt))
+		};
+		rows.append(frameValues);
+	}
+	insertRowsIntoDB(m_db, "Frame_Info", rows);
 }
 
 void Logger::addTargets(SessionParameters targetParams) {
