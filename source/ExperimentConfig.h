@@ -620,7 +620,7 @@ public:
 	String			destSpace = "world";					///< Space to use for destinations (implies offset) can be "world" or "player"
 	float			respawnCount = 0.0f;					///< Number of times to respawn
 	AABox			bbox;									///< Bounding box
-	Array<bool>		axisLock = { false };					///< Array of axis lock values
+	Array<bool>		axisLock = { false, false, false };					///< Array of axis lock values
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
