@@ -188,11 +188,11 @@ RenderControls::RenderControls(SessionConfig& config, bool& drawFps, bool& turbo
 		pane->addCheckBox("Turbo mode", &turbo);
 	}pane->endRow();
 	pane->beginRow(); {
-		auto c = pane->addNumberBox("Framerate", &(config->render.frameRate));
+		auto c = pane->addNumberBox("Framerate", &(config.render.frameRate));
 		c->setWidth(width*0.95f);
 	} pane->endRow();
 	pane->beginRow(); {
-		auto c = pane->addNumberBox("Display Lag", &(config->render.frameDelay), "f", GuiTheme::LINEAR_SLIDER, 0, 60);
+		auto c = pane->addNumberBox("Display Lag", &(config.render.frameDelay), "f", GuiTheme::LINEAR_SLIDER, 0, 60);
 		c->setWidth(width*0.95f);
 	}pane->endRow();
 	pane->beginRow(); {

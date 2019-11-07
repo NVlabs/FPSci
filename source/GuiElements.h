@@ -77,7 +77,6 @@ protected:
 		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
 
 public:
-	GuiControl::Callback exportScene;
 	static shared_ptr<PlayerControls> create(SessionConfig& config, std::function<void()> exportCallback,
 		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f) {
 		return createShared<PlayerControls>(config, exportCallback, theme, width, height);
