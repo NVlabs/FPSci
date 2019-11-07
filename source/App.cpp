@@ -1161,6 +1161,9 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		player->height = sessConfig->player.height;
 		player->crouchHeight = sessConfig->player.crouchHeight;
 		player->moveRate = sessConfig->player.moveRate;
+		player->jumpVelocity = sessConfig->player.jumpVelocity;
+		player->jumpInterval = sessConfig->player.jumpInterval;
+		player->jumpTouch = sessConfig->player.jumpTouch;
 
 		// Handle frame rate/delay updates here
 		if (sessConfig->render.frameRate != lastSetFrameRate || displayLagFrames != sessConfig->render.frameDelay) {
