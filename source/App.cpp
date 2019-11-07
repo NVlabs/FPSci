@@ -374,7 +374,8 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 }
 
 void App::loadModels() {
-	if (experimentConfig.weapon.renderModel) {
+	if (experimentConfig.weapon.renderModel || startupConfig.playMode == false) {
+		// Load the model if we (might) need it
 		m_viewModel = ArticulatedModel::create(experimentConfig.weapon.modelSpec, "viewModel");
 	}
 
@@ -479,6 +480,28 @@ void App::loadModels() {
 	}
 }
 
+void App::updateControls() {
+	// Setup the waypoint config/display
+	WaypointDisplayConfig config = WaypointDisplayConfig();
+	m_waypointControls = WaypointDisplay::create(this, theme, config, (shared_ptr<Array<Destination>>)&m_waypoints);
+	m_waypointControls->setVisible(false);
+	this->addWidget(m_waypointControls);
+
+	// Setup the player control
+	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&App::exportScene, this), theme);
+	m_playerControls->setVisible(false);
+	this->addWidget(m_playerControls);
+
+	// Setup the render control
+	m_renderControls = RenderControls::create(*sessConfig, renderFPS, emergencyTurbo, reticleIndex, numReticles, sceneBrightness, theme);
+	m_renderControls->setVisible(false);
+	this->addWidget(m_renderControls);
+
+	m_weaponControls = WeaponControls::create(sessConfig->weapon, theme);
+	m_weaponControls->setVisible(false);
+	this->addWidget(m_weaponControls);
+}
+
 void App::makeGUI() {
 	debugWindow->setVisible(!startupConfig.playMode);
 	developerWindow->setVisible(!startupConfig.playMode);
@@ -488,25 +511,8 @@ void App::makeGUI() {
 
 	theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
 
-	// Setup the waypoint config/display
-	WaypointDisplayConfig config = WaypointDisplayConfig();
-	m_waypointControls = WaypointDisplay::create(this, theme, config, (shared_ptr<Array<Destination>>)&m_waypoints);
-	m_waypointControls->setVisible(false);
-	this->addWidget(m_waypointControls);
-
-	// Setup the player control
-	m_playerControls = PlayerControls::create((FpsConfig)experimentConfig, std::bind(&App::exportScene, this), theme);
-	m_playerControls->setVisible(false);
-	this->addWidget(m_playerControls);
-
-	// Setup the render control
-	m_renderControls = RenderControls::create((FpsConfig)experimentConfig, renderFPS, emergencyTurbo, reticleIndex, numReticles, sceneBrightness, theme);
-	m_renderControls->setVisible(false);
-	this->addWidget(m_renderControls);
-
-	m_weaponControls = WeaponControls::create(sessConfig->weapon, theme);
-	m_weaponControls->setVisible(false);
-	this->addWidget(m_weaponControls);
+	// Add the control panes here
+	updateControls();
 
 	// Open sub-window panes here...
 	debugPane->beginRow(); {
@@ -895,7 +901,6 @@ void App::updateParameters(int frameDelay, float frameRate) {
 	if (frameRate > 0) dt = 1.0f / frameRate;
 	else dt = 1.0f / float(window()->settings().refreshRate);
 	setFrameDuration(dt, GApp::REAL_TIME);
-	m_renderControls->frameRate = frameRate;
 }
 
 
@@ -914,10 +919,8 @@ void App::updateSession(String id) {
 		sess = Session::create(this, sessConfig);											
 	}
 
-	// Update the weapon controls
-	m_weaponControls = WeaponControls::create(sessConfig->weapon, theme);
-	m_weaponControls->setVisible(false);
-	this->addWidget(m_weaponControls);
+	// Update the controls for this session
+	updateControls();
 
 	// Update the frame rate/delay
 	updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
@@ -1155,22 +1158,9 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		// Copy over dynamic elements
 		// TODO:Consider moving to App owning GuiPane, and no need for all this copy-over...
 		shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-		player->height = m_playerControls->playerHeight;
-		player->crouchHeight = m_playerControls->crouchHeight;
-		player->moveRate = m_playerControls->moveRate;
-
-		sessConfig->hud.enable = m_renderControls->showHud;
-		sessConfig->weapon.renderModel = m_renderControls->showWeapon;
-		sessConfig->weapon.renderBullets = m_renderControls->showBullets;
-		
-		renderFPS = m_renderControls->showFps;
-		emergencyTurbo = m_renderControls->turboMode;
-
-		sessConfig->render.frameRate = m_renderControls->frameRate;
-		updateParameters(m_renderControls->frameDelay, m_renderControls->frameRate);
-
-		reticleIndex = m_renderControls->reticleIdx;
-		sceneBrightness = m_renderControls->brightness;
+		player->height = sessConfig->player.height;
+		player->crouchHeight = sessConfig->player.crouchHeight;
+		player->moveRate = sessConfig->player.moveRate;
 
 		// Handle highlighting for selected target
 		int selIdx = m_waypointControls->getSelected();

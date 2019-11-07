@@ -190,6 +190,7 @@ protected:
 
 	/** Called from onInit */
 	void makeGUI();
+	void updateControls();
 	void loadModels();
 	void destroyTarget(int index);
 	void updateUser(void);

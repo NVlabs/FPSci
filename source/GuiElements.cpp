@@ -130,10 +130,6 @@ WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, Wa
 	moveTo(Vector2(app->window()->width() - rect().width() - 10, 50));
 }
 
-shared_ptr<WaypointDisplay> WaypointDisplay::create(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) {
-	return createShared<WaypointDisplay>(app, theme, config, waypoints);
-}
-
 void WaypointDisplay::setManager(WidgetManager *manager) {
 	GuiWindow::setManager(manager);
 	if (manager) {
@@ -143,30 +139,25 @@ void WaypointDisplay::setManager(WidgetManager *manager) {
 	}
 }
 
-PlayerControls::PlayerControls(FpsConfig config, std::function<void()> exportCallback,
+PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> exportCallback,
 	const shared_ptr<GuiTheme>& theme, float width, float height) :
 	GuiWindow("Player Controls", theme, Rect2D::xywh(5, 5, width, height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
 {
 	// Create the GUI pane
 	GuiPane* pane = GuiWindow::pane();
 
-	// Get default values...
-	playerHeight = config.player.height;
-	crouchHeight = config.player.crouchHeight;
-	moveRate = config.player.moveRate;
-
 	pane->beginRow(); {
-		auto  c = pane->addNumberBox("Player Height", &playerHeight, "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f);
+		auto  c = pane->addNumberBox("Player Height", &(config.player.height), "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f);
 		c->setCaptionWidth(width / 2);
 		c->setWidth(width*0.95f);
 	} pane->endRow();
 	pane->beginRow(); {
-		auto c = pane->addNumberBox("Player Crouch Height", &crouchHeight, "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f);
+		auto c = pane->addNumberBox("Player Crouch Height", &(config.player.crouchHeight), "m", GuiTheme::LINEAR_SLIDER, 0.2f, 3.0f);
 		c->setCaptionWidth(width / 2);
 		c->setWidth(width*0.95f);
 	} pane->endRow();
 	pane->beginRow(); {
-		auto c = pane->addNumberBox("Move Rate", &moveRate, "m/s", GuiTheme::LINEAR_SLIDER, 0.0f, 30.0f);
+		auto c = pane->addNumberBox("Move Rate", &(config.player.moveRate), "m/s", GuiTheme::LINEAR_SLIDER, 0.0f, 30.0f);
 		c->setCaptionWidth(width / 2);
 		c->setWidth(width*0.95f);
 	}pane->endRow();
@@ -178,47 +169,34 @@ PlayerControls::PlayerControls(FpsConfig config, std::function<void()> exportCal
 	moveTo(Vector2(0, 480));
 }
 
-shared_ptr<PlayerControls> PlayerControls::create(FpsConfig config, std::function<void()> exportCallback, const shared_ptr<GuiTheme>& theme, float width, float height) {
-	return createShared<PlayerControls>(config, exportCallback, theme, width, height);
-}
-
-RenderControls::RenderControls(FpsConfig config, bool drawFps, bool turbo, int reticleIndex, int numReticles, float b,
+RenderControls::RenderControls(SessionConfig& config, bool& drawFps, bool& turbo, int& reticleIndex, const int numReticles, float& brightness,
 	const shared_ptr<GuiTheme>& theme, float width, float height) :
 	GuiWindow("Render Controls", theme, Rect2D::xywh(5,5,width,height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
 {
 	// Create the GUI pane
 	GuiPane* pane = GuiWindow::pane();
 
-	showBullets = config.weapon.renderBullets;
-	showWeapon = config.weapon.renderModel;
-	showHud = config.hud.enable;
-	showFps = drawFps;
-	turboMode = turbo;
-	frameRate = config.render.frameRate;
-	frameDelay = config.render.frameDelay;
-	reticleIdx = reticleIndex;
-	brightness = b;
-
 	pane->beginRow(); {
-		pane->addCheckBox("Show Bullets", &showBullets);
-		pane->addCheckBox("Show Weapon", &showWeapon);
-		pane->addCheckBox("Show HUD", &showHud);
+		pane->addCheckBox("Show Bullets", &(config.weapon.renderBullets));
+		auto cb = pane->addCheckBox("Show Weapon", &(config.weapon.renderModel));
+		cb->setEnabled(!config.weapon.modelSpec.filename.empty());
+		pane->addCheckBox("Show HUD", &(config.hud.enable));
 
 	} pane->endRow();
 	pane->beginRow(); {
-		pane->addCheckBox("Show FPS", &showFps);
-		pane->addCheckBox("Turbo mode", &turboMode);
+		pane->addCheckBox("Show FPS", &drawFps);
+		pane->addCheckBox("Turbo mode", &turbo);
 	}pane->endRow();
 	pane->beginRow(); {
-		auto c = pane->addNumberBox("Framerate", &frameRate);//Pointer<float>(
+		auto c = pane->addNumberBox("Framerate", &(config->render.frameRate));
 		c->setWidth(width*0.95f);
 	} pane->endRow();
 	pane->beginRow(); {
-		auto c = pane->addNumberBox("Display Lag", &frameDelay, "f", GuiTheme::LINEAR_SLIDER, 0, 60);
+		auto c = pane->addNumberBox("Display Lag", &(config->render.frameDelay), "f", GuiTheme::LINEAR_SLIDER, 0, 60);
 		c->setWidth(width*0.95f);
 	}pane->endRow();
 	pane->beginRow(); {
-		auto c = pane->addNumberBox("Reticle", &reticleIdx, "", GuiTheme::LINEAR_SLIDER, 0, numReticles, 1);
+		auto c = pane->addNumberBox("Reticle", &reticleIndex, "", GuiTheme::LINEAR_SLIDER, 0, numReticles, 1);
 		c->setWidth(width*0.95f);
 	}
 	pane->beginRow();{
@@ -228,11 +206,6 @@ RenderControls::RenderControls(FpsConfig config, bool drawFps, bool turbo, int r
 
 	pack();
 	moveTo(Vector2(0, 300));
-}
-
-shared_ptr<RenderControls> RenderControls::create(FpsConfig config, bool drawFps, bool turbo, int reticleIdx, int numReticles, float brightness, 
-	const shared_ptr<GuiTheme>& theme, float width, float height) {
-	return createShared<RenderControls>(config, drawFps, turbo, reticleIdx, numReticles, brightness, theme, width, height);
 }
 
 WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width, float height) : 
