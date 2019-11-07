@@ -163,17 +163,17 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 	pane->beginRow(); {
 		auto c = pane->addNumberBox("Jump Velocity", &(config.player.jumpVelocity), "m/s", GuiTheme::LINEAR_SLIDER, 0.0f, 50.0f, 0.1f);
 		c->setCaptionWidth(width / 2);
-		c->setWidth(width*0.95);
+		c->setWidth(width*0.95f);
 	} pane->endRow();
 	pane->beginRow(); {
 		auto c = pane->addNumberBox("Jump Interval", &(config.player.jumpInterval), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 10.0f, 0.1f);
 		c->setCaptionWidth(width / 2);
-		c->setWidth(width*0.95);
+		c->setWidth(width*0.95f);
 	} pane->endRow();
 	pane->beginRow(); {
 		auto c = pane->addCheckBox("Jump Requires Contact?", &(config.player.jumpTouch));
 		c->setCaptionWidth(width / 2);
-		c->setWidth(width*0.95);
+		c->setWidth(width*0.95f);
 	} pane->endRow();
 	pane->beginRow(); {
 		pane->addButton("Set Start Position", exportCallback);
