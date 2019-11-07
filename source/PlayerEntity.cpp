@@ -128,31 +128,32 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 
 /** Maximum coordinate values for the player ship */
 void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
-    // Do not call Entity::onSimulation; that will override with spline animation
+	// Do not call Entity::onSimulation; that will override with spline animation
     if (! isNaN(deltaTime) && (deltaTime > 0)) {
         m_previousFrame = m_frame;
     }
     simulatePose(absoluteTime, deltaTime);
 
-    if (! isNaN(deltaTime)) {
-        m_inContact = slideMove(deltaTime);
+	if (!isNaN(deltaTime)) {
+		m_inContact = slideMove(deltaTime);
 		m_headingRadians += m_desiredYawVelocity;	// *(float)deltaTime;		// Don't scale by time here
 		m_headingRadians = mod1(m_headingRadians / (2 * pif())) * 2 * pif();
-        m_frame.rotation     = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians);
-        m_headTilt = clamp(m_headTilt - m_desiredPitchVelocity, -80 * units::degrees(), 80 * units::degrees());
-    }
+		m_frame.rotation = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians);
+		m_headTilt = clamp(m_headTilt - m_desiredPitchVelocity, -80 * units::degrees(), 80 * units::degrees());
 
-	// Check for "off map" condition and reset position here...
-	CFrame c = frame();
-	if (c.translation.y < m_respawnHeight) {
-		c.translation = m_respawnPosition;
+		// Handle crouching here...
+		CFrame c = frame();
+		float offset = heightOffset(m_crouched ? crouchHeight : height);		// Get height accoutning for contact proxy
+		c.translation += Vector3(0, offset, 0);									// Set the player to the right height
+		c.rotation *= Matrix3::fromAxisAngle(Vector3::unitX(), headTilt());		// Set the rotation
 		setFrame(c);
+
+		// Check for "off map" condition and reset position here...
+		if (c.translation.y < m_respawnHeight) {
+			c.translation = m_respawnPosition;
+			setFrame(c);
+		}
 	}
-	float currentHeight = m_crouched ? crouchHeight : height;
-	currentHeight = heightOffset(currentHeight);
-	c.translation += Vector3(0, currentHeight, 0);		// Set the player to the right height
-	c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), headTilt());
-	setFrame(c);
 }
 
 
