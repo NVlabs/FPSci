@@ -1151,7 +1151,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// Move the player
 	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
-	activeCamera()->setFrame(p->frame());
+	activeCamera()->setFrame(p->getCameraFrame());
 
 	// Handle developer mode features here
 	if (!startupConfig.playMode) {
@@ -1186,24 +1186,24 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			if (isnan(m_recordStart)) {
 				m_recordStart = now;
 				clearWaypoints();		// Just clear the waypoints for now
-				dropWaypoint(Destination(p->frame().translation, 0.0f));
+				dropWaypoint(Destination(p->getCameraFrame().translation, 0.0f));
 			}
 			else {
 				SimTime t = static_cast<SimTime>(now - m_recordStart);
-				float distance = (m_waypoints.last().position - p->frame().translation).magnitude();
+				float distance = (m_waypoints.last().position - p->getCameraFrame().translation).magnitude();
 				switch (recordMode) {
 				case 0: // This is fixed distance mode, check if we've moved "far enough" to drop a new waypoint
 					if (distance > recordInterval) {
 						// Use the m_waypointDelay to meter out time when in constant distance mode
 						t = m_waypoints.size() * waypointDelay;
-						dropWaypoint(Destination(p->frame().translation, t));
+						dropWaypoint(Destination(p->getCameraFrame().translation, t));
 					}
 					break;
 				case 1: // This is fixed time mode, check if we are beyond the sampling interval and need a new waypoint
 					if ((t - m_lastRecordTime) > recordInterval) {
 						m_lastRecordTime = t;
 						// Apply the recording time-scaling here (after checking for record interval)
-						dropWaypoint(Destination(p->frame().translation, t / recordTimeScaling));
+						dropWaypoint(Destination(p->getCameraFrame().translation, t / recordTimeScaling));
 					}
 					break;
 				}

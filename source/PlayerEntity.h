@@ -81,19 +81,24 @@ public:
      collisions.  Called from onSimulation(). */
     bool slideMove(SimTime deltaTime);
 
+	float heightOffset(float height) const;
 
     /** In world space */
     Sphere collisionProxy() const {
         return Sphere(m_frame.pointToWorldSpace(m_collisionProxySphere.center), m_collisionProxySphere.radius);
     }
 
+	const CFrame& getCameraFrame() const {
+		CFrame f = frame();
+		f.translation += Point3(0.0f, heightOffset(m_crouched ? crouchHeight : height), 0.0f);
+		return f;
+	}
+
     /** In radians... not used for rendering, use for first-person cameras */
     float headTilt() const {
         return m_headTilt;
     }
-
-	float heightOffset(float height);
-
+	   
 	void setCrouched(bool crouched);
 
 	void setRespawnPosition(Point3 pos) {

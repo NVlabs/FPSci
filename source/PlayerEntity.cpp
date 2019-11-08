@@ -66,7 +66,7 @@ void PlayerEntity::setCrouched(bool crouched) {
 	m_crouched = crouched;
 }
 
-float PlayerEntity::heightOffset(float height) {
+float PlayerEntity::heightOffset(float height) const {
 	return height - m_collisionProxySphere.radius;
 }
 
@@ -140,22 +140,14 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		m_headingRadians = mod1(m_headingRadians / (2 * pif())) * 2 * pif();
 		m_frame.rotation = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians);
 		m_headTilt = clamp(m_headTilt - m_desiredPitchVelocity, -80 * units::degrees(), 80 * units::degrees());
-
-		// Handle crouching here...
-		CFrame c = frame();
-		float offset = heightOffset(m_crouched ? crouchHeight : height);		// Get height accoutning for contact proxy
-		c.translation += Vector3(0, offset, 0);									// Set the player to the right height
-		c.rotation *= Matrix3::fromAxisAngle(Vector3::unitX(), headTilt());		// Set the rotation
-		setFrame(c);
+		m_frame.rotation *= Matrix3::fromAxisAngle(Vector3::unitX(), m_headTilt);		// Set the rotation
 
 		// Check for "off map" condition and reset position here...
-		if (c.translation.y < m_respawnHeight) {
-			c.translation = m_respawnPosition;
-			setFrame(c);
+		if (m_frame.translation.y < m_respawnHeight) {
+			m_frame.translation = m_respawnPosition;
 		}
 	}
 }
-
 
 void PlayerEntity::getConservativeCollisionTris(Array<Tri>& triArray, const Vector3& velocity, float deltaTime) const {
     Sphere nearby = collisionProxy();
@@ -226,7 +218,6 @@ bool PlayerEntity::findFirstCollision
 	return collision;
 }
 
-
 bool PlayerEntity::slideMove(SimTime deltaTime) { 
     static const float epsilon = 0.0001f;
 	Point3 loc;
@@ -245,10 +236,10 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
 	}
 	else if (m_inAir) {
 		// Already in a jump, apply gravity and enforce terminal velocity
-		m_lastJumpVelocity += ((PhysicsScene*)m_scene)->gravity().y*deltaTime;
+		m_lastJumpVelocity += ygrav * deltaTime;
 		if (abs(m_lastJumpVelocity) > 0) {
 			// Enforce terminal velocity here
-			m_lastJumpVelocity = m_lastJumpVelocity / abs(m_lastJumpVelocity) * min(abs(m_lastJumpVelocity), abs(5.4f*ygrav));
+			m_lastJumpVelocity = m_lastJumpVelocity / abs(m_lastJumpVelocity) * min(abs(m_lastJumpVelocity), abs(5.4f * ygrav));
 			velocity.y = m_lastJumpVelocity;
 		}
 	}
@@ -275,7 +266,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
         debugPrintf("Initial velocity = %s; position = %s\n", velocity.toString().c_str(),  m_frame.translation.toString().c_str());
 #   endif
     int iterations = 0;
-	bool collided = false;
+	bool collided = m_inContact;
     while ((deltaTime > epsilon) && (velocity.length() > epsilon)) {
         float stepTime = float(deltaTime);
         Vector3 collisionNormal;
