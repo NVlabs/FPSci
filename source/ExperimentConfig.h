@@ -221,7 +221,7 @@ public:
 	Array<float>	reticleScale		= { 1.0f, 1.0f };				///< Scale for the user's reticle
 	Array<Color4>	reticleColor		= {Color4(1.0, 0.0, 0.0, 1.0),	///< Color for the user's reticle
 										Color4(1.0, 0.0, 0.0, 1.0)};	
-	float			reticleShrinkTimeS	= 0.3;							///< Time for reticle to contract after expand on shot (in seconds)
+	float			reticleShrinkTimeS	= 0.3f;							///< Time for reticle to contract after expand on shot (in seconds)
 
 	UserConfig() {};
 
