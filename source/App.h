@@ -236,7 +236,6 @@ public:
 	int  displayLagFrames = 0;			///< Count of frames of latency to add
 	float lastSetFrameRate = 0.0f;		///< Last set frame rate
 	const int numReticles = 55;			///< Total count of reticles available to choose from
-	int  reticleIndex = numReticles;	///< Start by selecting the last reticle
 	float sceneBrightness = 1.0f;		///< Scene brightness scale factor
 
 	/** Call to change the reticle. */
@@ -277,11 +276,6 @@ public:
 
 	float debugMenuHeight() {
 		return m_debugMenuHeight;
-	}
-
-	/** Increment the current reticle index */
-	void nextReticle() {
-		setReticle((reticleIndex + 1) % (numReticles+1));
 	}
 
     /** Creates a random target with motion based on parameters 
@@ -397,7 +391,6 @@ public:
 		Vector2 screenSize = resolution * pixelSize;
 	} m_screenSetting;
 
-	//Color3                          m_reticleColor;
 	bool							m_buttonUp = true;
 };
 

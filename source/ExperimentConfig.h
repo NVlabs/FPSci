@@ -213,10 +213,15 @@ public:
 /**Class for managing user configuration*/
 class UserConfig {
 public:
-    String	id = "anon";						///< Subject ID (as recorded in output DB)
-    double	mouseDPI = 800.0;					///< Mouse DPI setting
-    double	cmp360 = 12.75;						///< Mouse sensitivity, reported as centimeters per 360�
-	int		currentSession = 0;					///< Currently selected session
+    String			id					= "anon";						///< Subject ID (as recorded in output DB)
+    double			mouseDPI			= 800.0;						///< Mouse DPI setting
+    double			cmp360				= 12.75;						///< Mouse sensitivity, reported as centimeters per 360�
+	int				currentSession		= 0;							///< Currently selected session
+	int				reticleIndex		= -1;							///< Reticle to show for this user
+	Array<float>	reticleScale		= { 1.0f, 1.0f };				///< Scale for the user's reticle
+	Array<Color4>	reticleColor		= {Color4(1.0, 0.0, 0.0, 1.0),	///< Color for the user's reticle
+										Color4(1.0, 0.0, 0.0, 1.0)};	
+	float			reticleShrinkTimeS	= 0.3;							///< Time for reticle to contract after expand on shot (in seconds)
 
 	UserConfig() {};
 
@@ -230,6 +235,10 @@ public:
             reader.getIfPresent("id", id);
             reader.getIfPresent("mouseDPI", mouseDPI);
             reader.getIfPresent("cmp360", cmp360);
+			reader.getIfPresent("reticleIndex", reticleIndex);
+			reader.getIfPresent("reticleScale", reticleScale);
+			reader.getIfPresent("reticleColor", reticleColor);
+			reader.getIfPresent("reticleShrinkTime", reticleShrinkTimeS);
 			break;
         default:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);

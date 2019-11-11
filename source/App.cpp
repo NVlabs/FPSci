@@ -65,7 +65,7 @@ void App::onInit() {
 
 	// Load models and set the reticle
 	loadModels();
-	setReticle(reticleIndex);
+	setReticle(userTable.getCurrentUser()->reticleIndex);
 
 	updateMouseSensitivity();			// Update (apply) mouse sensitivity
 	updateMoveRate(experimentConfig.player.moveRate);
@@ -493,7 +493,7 @@ void App::updateControls() {
 	this->addWidget(m_playerControls);
 
 	// Setup the render control
-	m_renderControls = RenderControls::create(*sessConfig, renderFPS, emergencyTurbo, reticleIndex, numReticles, sceneBrightness, theme);
+	m_renderControls = RenderControls::create(*sessConfig, *(userTable.getCurrentUser()), renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme);
 	m_renderControls->setVisible(false);
 	this->addWidget(m_renderControls);
 
@@ -1679,9 +1679,9 @@ void App::onUserInput(UserInput* ui) {
 		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
 	}	
 
-	if (m_lastReticleLoaded != reticleIndex) {
+	if (m_lastReticleLoaded != userTable.getCurrentUser()->reticleIndex) {
 		// Slider was used to change the reticle
-		setReticle(reticleIndex);
+		setReticle(userTable.getCurrentUser()->reticleIndex);
 	}
 
 	activeCamera()->filmSettings().setSensitivity(sceneBrightness);
@@ -1762,9 +1762,11 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 		}
 
 		// Reticle
-		Draw::rect2D(
-			(reticleTexture->rect2DBounds() * scale - reticleTexture->vector2Bounds() * scale / 2.0f) / 2.0f + rd->viewport().wh() / 2.0f,
-			rd, Color3::green(), reticleTexture);
+		UserConfig* user = userTable.getCurrentUser();
+		float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleShrinkTimeS), 1.0f), 0.0f);
+		float rScale = tscale*user->reticleScale[0]+(1.0f-tscale)*user->reticleScale[1];
+		Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
+		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds()/ 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
 
 		// Draw target health bars
 		if (sessConfig->targetView.showHealthBars) {
@@ -1890,15 +1892,17 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 }
 
 /** Set the currently reticle by index */
-void App::setReticle(int r) {
-	m_lastReticleLoaded = reticleIndex = clamp(0, r, numReticles);
+void App::setReticle(const int r) {
+	int idx = clamp(0, r, numReticles);
+	if(idx == m_lastReticleLoaded) return;	// Nothing to do here, setting current reticle
 	if (r < numReticles) {
-		reticleTexture = Texture::fromFile(System::findDataFile(format("gui/reticle/reticle-%03d.png", reticleIndex)));
+		reticleTexture = Texture::fromFile(System::findDataFile(format("gui/reticle/reticle-%03d.png", idx)));
 	}
 	else {
 		// This special case is added to allow a custom reticle not in the gui/reticle/reticle-[x].png format
 		reticleTexture = Texture::fromFile(System::findDataFile("gui/reticle.png"));
 	}
+	m_lastReticleLoaded = idx;
 }
 
 void App::onCleanup() {

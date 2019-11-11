@@ -85,12 +85,12 @@ public:
 
 class RenderControls : public GuiWindow {
 protected:
-	RenderControls(SessionConfig& config, bool& drawFps, bool& turbo, int& reticleIdx, const int numReticles, float& brightness,
+	RenderControls(SessionConfig& config, UserConfig& user, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, float width=400.0f, float height=10.0f);
 public:
-	static shared_ptr<RenderControls> create(SessionConfig& config, bool& drawFps, bool& turbo, int& reticleIdx, const int numReticles, float& brightness,
+	static shared_ptr<RenderControls> create(SessionConfig& config, UserConfig &user, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f) {
-		return createShared<RenderControls>(config, drawFps, turbo, reticleIdx, numReticles, brightness, theme, width, height);
+		return createShared<RenderControls>(config, user, drawFps, turbo, numReticles, brightness, theme, width, height);
 	}
 };
 

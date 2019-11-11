@@ -173,6 +173,9 @@ public:
 	void randomizePosition(const shared_ptr<TargetEntity>& target) const;
 	void initTargetAnimation();
 	float weaponCooldownPercent() const;
+	RealTime lastFireTime() const {
+		return m_lastFireAt;
+	}
 	int remainingAmmo() const;
 
 	void addTrial(Array<ParameterTable> params);
@@ -211,7 +214,7 @@ public:
 	bool canFire();
 
 	bool setupTrialParams(const SessionParameters params);
-	
+
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState presentationState;			///< Current presentation state
 
