@@ -54,9 +54,6 @@
     <ClInclude Include="source\Dialogs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\ParameterTable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp">
