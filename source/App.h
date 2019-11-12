@@ -10,14 +10,13 @@
  */
 #pragma once
 #include <G3D/G3D.h>
-#include "TargetEntity.h"
 #include "ExperimentConfig.h"
-#include "Session.h"
-#include "Logger.h"
-#include "PhysicsScene.h"
-#include <chrono>
+#include "TargetEntity.h"
 #include "GuiElements.h"
 #include "PyLogger.h"
+
+class Session;
+class G3Dialog;
 
 // An enum that tracks presentation state within a trial. Duration defined in session.h
 // ready: ready scene that happens before beginning of a task.
@@ -305,7 +304,7 @@ public:
 		Point3 orbitCenter,
 		String modelName,
 		int paramIdx,
-		bool axisLock[3],
+		Array<bool> axisLock,
 		int respawns = 0,
 		String name = "",
 		bool isLogged=true
@@ -326,7 +325,7 @@ public:
 		float targetDistance,
 		String modelName,
 		int paramIdx,
-		bool axisLock[3],
+		Array<bool> axisLock,
 		int respawns = 0,
 		String name = "",
 		bool isLogged=true

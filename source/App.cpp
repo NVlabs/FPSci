@@ -1,7 +1,11 @@
 /** \file App.cpp */
 #include "App.h"
-#include "TargetEntity.h"
+#include "Dialogs.h"
 #include "PlayerEntity.h"
+#include "Logger.h"
+#include "Session.h"
+#include "PhysicsScene.h"
+#include <chrono>
 
 // Scale and offset for target
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
@@ -275,7 +279,7 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	Point3 orbitCenter,
 	String id,
 	int paramIdx,
-	bool axisLock[3],
+	Array<bool> axisLock,
 	int respawns,
 	String name,
 	bool isLogged)
@@ -329,7 +333,7 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	float targetDistance,
 	String id,
 	int paramIdx,
-	bool axisLock[3],
+	Array<bool> axisLock,
 	int respawns,
 	String name,
 	bool isLogged)
