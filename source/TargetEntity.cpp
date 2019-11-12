@@ -168,7 +168,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	bool									upperHemisphereOnly,
 	Point3                                  orbitCenter,
 	int										paramIdx,
-	bool									axisLock[3],
+	Array<bool>								axisLock,
 	int										respawns,
 	bool									isLogged) {
 
@@ -193,7 +193,7 @@ void FlyingEntity::init() {
 }
 
 
-void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, bool axisLock[3], int respawns, int scaleIdx, bool isLogged) {
+void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, Array<bool> axisLock, int respawns, int scaleIdx, bool isLogged) {
 	m_angularSpeedRange = angularSpeedRange;
 	m_motionChangePeriodRange = motionChangePeriodRange;
 	m_upperHemisphereOnly = upperHemisphereOnly;
@@ -202,6 +202,7 @@ void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRan
 	m_respawnCount = respawns;
 	m_scaleIdx = scaleIdx;
 	m_isLogged = isLogged;
+	alwaysAssertM(axisLock.size() == 3, "Axis lock must have size 3!")
 	for (int i = 0; i < 3; i++) {
 		m_axisLocks[i] = axisLock[i];
 	}
@@ -426,7 +427,7 @@ shared_ptr<JumpingEntity> JumpingEntity::create
 	Point3                                  orbitCenter,
 	float                                   orbitRadius,
 	int										paramIdx,
-	bool									axisLock[3],
+	Array<bool>								axisLock,
 	int										respawns, 
 	bool									isLogged) {
 
@@ -474,7 +475,7 @@ void JumpingEntity::init(
 	Point3 orbitCenter,
 	float orbitRadius,
 	int paramIdx,
-	bool axisLock[3],
+	Array<bool> axisLock,
 	int respawns,
 	int scaleIdx,
 	bool isLogged)
@@ -490,10 +491,10 @@ void JumpingEntity::init(
 	m_paramIdx = paramIdx;
 	m_scaleIdx = scaleIdx;
 	m_isLogged = isLogged;
+	alwaysAssertM(axisLock.size() == 3, "Axis lock must have size 3!")
 	for (int i = 0; i < 3; i++) {
 		m_axisLocks[i] = axisLock[i];
 	}
-
 	m_orbitRadius = orbitRadius;
 	float angularSpeed = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
 	m_planarSpeedGoal = m_orbitRadius * (angularSpeed * pif() / 180.0f);

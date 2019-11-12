@@ -162,7 +162,7 @@ protected:
 
 	void init();
 
-	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, bool axisLock[3], int respawns = 0, int scaleIdx=0, bool isLogged=true);
+	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, Array<bool> axisLock, int respawns = 0, int scaleIdx=0, bool isLogged=true);
 
 public:
 
@@ -204,7 +204,7 @@ public:
 		bool							upperHemisphereOnly,
 		Point3							orbitCenter,
 		int								paramIdx,
-		bool							axisLock[3],
+		Array<bool>						axisLock,
 		int								respawns=0,
 		bool							isLogged=true);
 
@@ -277,7 +277,7 @@ protected:
 		Point3 orbitCenter,
 		float orbitRadius,
 		int paramIdx,
-		bool axisLock[3],
+		Array<bool> axisLock,
 		int respawns = 0,
 		int scaleIdx=0,
 		bool isLogged=true
@@ -316,7 +316,7 @@ public:
 		Point3							orbitCenter,
 		float							orbitRadius,
 		int								paramIdx,
-		bool							axisLock[3],
+		Array<bool>						axisLock,
 		int								respawns=0,
 		bool							isLogged=true);
 
