@@ -202,7 +202,7 @@ void FlyingEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRan
 	m_respawnCount = respawns;
 	m_scaleIdx = scaleIdx;
 	m_isLogged = isLogged;
-	alwaysAssertM(axisLock.size() == 3, "Axis lock must have size 3!")
+	alwaysAssertM(axisLock.size() == 3, "Axis lock must have size 3!");
 	for (int i = 0; i < 3; i++) {
 		m_axisLocks[i] = axisLock[i];
 	}
@@ -491,7 +491,7 @@ void JumpingEntity::init(
 	m_paramIdx = paramIdx;
 	m_scaleIdx = scaleIdx;
 	m_isLogged = isLogged;
-	alwaysAssertM(axisLock.size() == 3, "Axis lock must have size 3!")
+	alwaysAssertM(axisLock.size() == 3, "Axis lock must have size 3!");
 	for (int i = 0; i < 3; i++) {
 		m_axisLocks[i] = axisLock[i];
 	}
