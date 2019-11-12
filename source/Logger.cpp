@@ -15,7 +15,7 @@ FILETIME Logger::getFileTime() {
 
 String Logger::formatFileTime(FILETIME ft) {
 	unsigned long long usecsinceepoch = (static_cast<unsigned long long>(ft.dwHighDateTime) << 32 | ft.dwLowDateTime) / 10;		// Get time since epoch in usec
-	unsigned long long usec = usecsinceepoch % 1000000;
+	int usec = usecsinceepoch % 1000000;
 
 	SYSTEMTIME datetime;
 	FileTimeToSystemTime(&ft, &datetime);

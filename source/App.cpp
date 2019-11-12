@@ -1751,7 +1751,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			}
 
 			msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
-			outputFont->draw2D(rd, msg, Point2(rd->viewport().width()*0.75, rd->viewport().height()*0.05).floor(), floor(20.0f*scale), Color3::yellow());
+			outputFont->draw2D(rd, msg, Point2(rd->viewport().width()*0.75f, rd->viewport().height()*0.05f).floor(), floor(20.0f*scale), Color3::yellow());
 		}
 
 		// Handle recording indicator

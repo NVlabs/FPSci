@@ -29,7 +29,7 @@
 #include "App.h"
 
 void Session::addTrial(Array<ParameterTable> params) {
-	m_remaining.append(params[0].val["trialCount"]);
+	m_remaining.append((int)(params[0].val["trialCount"]));
 	m_trialParams.append(params);
 }
 
@@ -487,7 +487,7 @@ bool Session::canFire() {
 float Session::weaponCooldownPercent() const {
 	if (isNull(m_config)) return 1.0;
 	if (m_config->weapon.firePeriod == 0.0f) return 1.0;
-	return min((System::time() - m_lastFireAt) / m_config->weapon.firePeriod, 1.0);
+	return min((float)(System::time() - m_lastFireAt) / m_config->weapon.firePeriod, 1.0f);
 }
 
 int Session::remainingAmmo() const {
