@@ -138,9 +138,8 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		m_inContact = slideMove(deltaTime);
 		m_headingRadians += m_desiredYawVelocity;	// *(float)deltaTime;		// Don't scale by time here
 		m_headingRadians = mod1(m_headingRadians / (2 * pif())) * 2 * pif();
-		m_frame.rotation = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians);
 		m_headTilt = clamp(m_headTilt - m_desiredPitchVelocity, -80 * units::degrees(), 80 * units::degrees());
-		m_frame.rotation *= Matrix3::fromAxisAngle(Vector3::unitX(), m_headTilt);		// Set the rotation
+		m_frame.rotation = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians) * Matrix3::fromAxisAngle(Vector3::unitX(), m_headTilt);
 
 		// Check for "off map" condition and reset position here...
 		if (m_frame.translation.y < m_respawnHeight) {

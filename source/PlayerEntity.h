@@ -88,7 +88,7 @@ public:
         return Sphere(m_frame.pointToWorldSpace(m_collisionProxySphere.center), m_collisionProxySphere.radius);
     }
 
-	const CFrame& getCameraFrame() const {
+	const CFrame getCameraFrame() const {
 		CFrame f = frame();
 		f.translation += Point3(0.0f, heightOffset(m_crouched ? crouchHeight : height), 0.0f);
 		return f;
