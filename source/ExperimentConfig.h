@@ -1,10 +1,7 @@
 #pragma once
 
 #include <G3D/G3D.h>
-#include "ParameterTable.h"
-
-using TargetParameters = Array<ParameterTable>;		///< Define target parameters as array of parameter tables (one per target)
-using SessionParameters = Array<TargetParameters>;	///< Define session parameters as array of target parameters (one per session)
+#include "TargetEntity.h"
 
 /** Configure how the application should start */
 class StartupConfig {
@@ -620,14 +617,14 @@ public:
 	Array<float>	speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
 	Array<float>	eccH = { 5.0f, 15.0f };					///< Range of initial horizontal eccentricity
 	Array<float>	eccV = { 0.0f, 2.0f };					///< Range of initial vertical eccentricity
-	Array<float>	visualSize = { 0.2f, 0.2f };			///< Visual size of the target (in degrees)
+	Array<float>	size = { 0.2f, 0.2f };			///< Visual size of the target (in degrees)
 	bool			jumpEnabled = false;					///< Flag indicating whether the target jumps
 	Array<float>	jumpPeriod = { 2.0f, 2.0f };			///< Range of time period between jumps in seconds
 	Array<float>	jumpSpeed = { 2.0f, 5.5f };				///< Range of jump speeds in meters/s
 	Array<float>	accelGravity = { 9.8f, 9.8f };			///< Range of acceleration due to gravity in meters/s^2
 	Array<Destination> destinations;						///< Array of destinations to traverse
 	String			destSpace = "world";					///< Space to use for destinations (implies offset) can be "world" or "player"
-	float			respawnCount = 0.0f;					///< Number of times to respawn
+	int				respawnCount = 0;						///< Number of times to respawn
 	AABox			bbox;									///< Bounding box
 	Array<bool>		axisLock = { false, false, false };					///< Array of axis lock values
 
@@ -665,7 +662,7 @@ public:
 			reader.getIfPresent("distance", distance);
 			reader.getIfPresent("motionChangePeriod", motionChangePeriod);
 			reader.getIfPresent("speed", speed);
-			reader.getIfPresent("visualSize", visualSize);
+			reader.getIfPresent("visualSize", size);
 			reader.getIfPresent("eccH", eccH);
 			reader.getIfPresent("eccV", eccV);
 			reader.getIfPresent("jumpEnabled", jumpEnabled);
@@ -706,7 +703,7 @@ public:
 		Any a(Any::TABLE);
 		a["id"] = id;
 		a["respawnCount"] = respawnCount;
-		a["visualSize"] = visualSize;
+		a["visualSize"] = size;
 		a["modelSpec"] = modelSpec;
 		a["logTargetTrajectory"] = logTargetTrajectory;
 		if (destinations.size() > 0) {
@@ -717,7 +714,7 @@ public:
 			a["upperHemisphereOnly"] = upperHemisphereOnly;
 			a["distance"] = distance;
 			a["motionChangePeriod"] = motionChangePeriod;
-			a["visualSize"] = visualSize;
+			a["visualSize"] = size;
 			a["eccH"] = eccH;
 			a["eccV"] = eccV;
 			a["jumpEnabled"] = jumpEnabled;
@@ -1404,66 +1401,22 @@ public:
 		return nullptr;
 	}
 
-	/** Get experiment conditions for a given session (by ID) */
-	SessionParameters getExpConditions(const String& id) const {
-		return getExpConditions(getSessionIndex(id));
+	Array<Array<shared_ptr<TargetConfig>>> getTargetsForSession(const String& id) const {
+		return getTargetsForSession(getSessionIndex(id));
 	}
 
-	/** This is a kludge to quickly create param-based experiment conditions w/ appropriate parameters */
-	SessionParameters getExpConditions(int sessionIndex) const {
-		SessionParameters sessParams;
-		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
-			// Append each trial worth of targets
-			TargetParameters targets;
-			for (String id : sessions[sessionIndex].trials[j].ids) {
-				// Append training target
-				ParameterTable p;
-				const shared_ptr<TargetConfig>& target = getTargetConfigById(id);
-				p.add("minEccH", target->eccH[0]);
-				p.add("minEccV", target->eccV[0]);
-				p.add("maxEccH", target->eccH[1]);
-				p.add("maxEccV", target->eccV[1]);
-				p.add("targetFrameRate", sessions[sessionIndex].render.frameRate);
-				p.add("targetFrameLag", (float)sessions[sessionIndex].render.frameDelay);
-				p.add("minVisualSize", target->visualSize[0]);
-				p.add("maxVisualSize", target->visualSize[1]);
-				p.add("minMotionChangePeriod", target->motionChangePeriod[0]);
-				p.add("maxMotionChangePeriod", target->motionChangePeriod[1]);
-				p.addBool("upperHemisphereOnly", target->upperHemisphereOnly);
-				p.addBool("logTargetTrajectory", target->logTargetTrajectory);
-				p.add("minSpeed", target->speed[0]);
-				p.add("maxSpeed", target->speed[1]);
-				p.add("minDistance", target->distance[0]);
-				p.add("maxDistance", target->distance[1]);
-				p.add("minJumpPeriod", target->jumpPeriod[0]);
-				p.add("maxJumpPeriod", target->jumpPeriod[1]);
-				p.add("minJumpSpeed", target->jumpSpeed[0]);
-				p.add("maxJumpSpeed", target->jumpSpeed[1]);
-				p.add("minGravity", target->accelGravity[0]);
-				p.add("maxGravity", target->accelGravity[1]);
-				p.add("trial_idx", (float)j);
-				p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
-				p.add("id", id.c_str());
-				p.add("sessionID", sessions[sessionIndex].id.c_str());
-				p.add("destCount", (float)target->destinations.size());
-				p.add("destSpace", target->destSpace.c_str());
-				p.add("respawns", (float)target->respawnCount);
-				p.add(target->axisLock);
-				p.add(target->destinations);
-				p.add(target->bbox);
-
-				String modelName = target->modelSpec["filename"];
-				p.add("model", modelName.c_str());
-				if (target->jumpEnabled) {
-					p.add("jumpEnabled", "true");
-				} else {
-					p.add("jumpEnabled", "false");
-				}
-				targets.append(p);
+	Array<Array<shared_ptr<TargetConfig>>> getTargetsForSession(int sessionIndex) const {
+		Array<Array<shared_ptr<TargetConfig>>> trials;
+		// Iterate through the trials
+		for (int i = 0; i < sessions[sessionIndex].trials.size(); i++) {
+			Array<shared_ptr<TargetConfig>> targets;
+			for (String id : sessions[sessionIndex].trials[i].ids) {
+				const shared_ptr<TargetConfig> t = getTargetConfigById(id);
+				targets.append(t);
 			}
-			sessParams.append(targets);
+			trials.append(targets);
 		}
-		return sessParams;
+		return trials;
 	}
 
 	Any toAny(const bool forceAll = true) const {
@@ -1508,7 +1461,7 @@ public:
 		for (int i = 0; i < targets.size(); i++) {
 			TargetConfig target = targets[i];
 			logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tUpper Hemisphere Only = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n\tAxis Lock = [%s, %s, %s]\n",
-				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1],
+				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.size[0], target.size[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1],
 				target.axisLock[0]?"true":"false", target.axisLock[1] ? "true" : "false", target.axisLock[2] ? "true" : "false");
 		}
 	}

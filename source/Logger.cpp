@@ -74,11 +74,12 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	// 2. Targets
 	// create sqlite table
 	Columns targetColumns = {
-			{ "trial_id", "integer"}, // Trial ID refers to the trial which this target is affiliated with
-			{ "target_id", "text" },
+			{ "name", "text"},
+			{ "id", "text" },
 			{ "type", "text"},
-			{ "refresh_rate", "real" },
-			{ "added_frame_lag", "real" },
+			{ "destSpace", "text"},
+			{ "min_size", "real"},
+			{ "max_size", "real"},
 			{ "min_ecc_h", "real" },
 			{ "min_ecc_V", "real" },
 			{ "max_ecc_h", "real" },
@@ -88,7 +89,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 			{ "min_motion_change_period", "real" },
 			{ "max_motion_change_period", "real" },
 			{ "jump_enabled", "text" },
-			{ "model", "text" }
+			{ "model_file", "text" }
 	};
 	createTableInDB(m_db, "Targets", targetColumns); // Primary Key needed for this table.
 
@@ -199,30 +200,29 @@ void Logger::recordFrameInfo(Array<FrameInfo> frameInfo) {
 	insertRowsIntoDB(m_db, "Frame_Info", rows);
 }
 
-void Logger::addTargets(SessionParameters targetParams) {
-	for (int i = 0; i < targetParams.size(); i++) {
-		for (ParameterTable tparam : targetParams[i]) {
-			const String type = (tparam.val["destCount"] > 0) ? "waypoint" : "parametrized";
-			RowEntry targetValues = {
-				String(std::to_string(i)),										// This is the trial ID
-				"'" + String(tparam.str["name"]) +"'",							// This is the target name
-				"'" + type + "'",
-				String(std::to_string(tparam.val["targetFrameRate"])),			
-				String(std::to_string(tparam.val["targetFrameLag"])),
-				String(std::to_string(tparam.val["minEccH"])),
-				String(std::to_string(tparam.val["minEccV"])),
-				String(std::to_string(tparam.val["maxEccH"])),
-				String(std::to_string(tparam.val["maxEccV"])),
-				String(std::to_string(tparam.val["minSpeed"])),
-				String(std::to_string(tparam.val["maxSpeed"])),
-				String(std::to_string(tparam.val["minMotionChangePeriod"])),
-				String(std::to_string(tparam.val["maxMotionChangePeriod"])),
-				"'" + String(tparam.str["jumpEnabled"]) + "'",
-				"'" + String(tparam.str["model"] + "'")
-			};
-			insertRowIntoDB(m_db, "Targets", targetValues);
-		}
-	}
+void Logger::addTarget(String name, shared_ptr<TargetConfig> config) {
+	const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
+	const String jumpEnabled = config->jumpEnabled ? "True" : "False";
+	const String modelName = config->modelSpec["filename"];
+	const RowEntry targetValues = {
+		"'" + name + "'",
+		"'" + config->id + "'",
+		"'" + type + "'",
+		"'" + config->destSpace + "'",
+		String(std::to_string(config->size[0])),
+		String(std::to_string(config->size[1])),
+		String(std::to_string(config->eccH[0])),
+		String(std::to_string(config->eccH[1])),
+		String(std::to_string(config->eccV[0])),
+		String(std::to_string(config->eccV[1])),
+		String(std::to_string(config->speed[0])),
+		String(std::to_string(config->speed[1])),
+		String(std::to_string(config->motionChangePeriod[0])),
+		String(std::to_string(config->motionChangePeriod[1])),
+		"'" + jumpEnabled + "'",
+		"'" + modelName + "'"
+	};
+	insertRowIntoDB(m_db, "Targets", targetValues);
 }
 
 void Logger::recordTrialResponse(RowEntry values) {

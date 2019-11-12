@@ -38,8 +38,8 @@ public:
 	/** Genearte a timestamp for filenames */
 	static String genFileTimestamp();
 
-	/** Add conditions to an experiment */
-	void addTargets(SessionParameters targetParams);
+	/** Add a target to an experiment */
+	void addTarget(String name, shared_ptr<TargetConfig> targetConfig);
 
 	/** Create a results file */
 	void createResultsFile(String filename, String subjectID, String description="None");

@@ -27,11 +27,9 @@
 ***************************************************************************/
 #include "Session.h"
 #include "App.h"
-
-void Session::addTrial(Array<ParameterTable> params) {
-	m_remaining.append((int)(params[0].val["trialCount"]));
-	m_trialParams.append(params);
-}
+#include "Logger.h"
+#include "TargetEntity.h"
+#include "Dialogs.h"
 
 void Session::nextCondition() {
 	Array<int> unrunTrialIdxs;
@@ -52,22 +50,18 @@ bool Session::isComplete() const{
 	return allTrialsComplete;
 }
 
-bool Session::setupTrialParams(const SessionParameters params)
-{
-	for (TargetParameters targets : params) {
-		for (int i = 0; i < targets.size(); i++) {										// Add the session to each target
-			std::string sess = targets[i].str["sessionID"];
-			targets[i].add("name", format("%s_%d_%s_%d", sess, (int)targets[i].val["trial_idx"], targets[i].str["id"], i).c_str());
+bool Session::setupTrialParams(Array<Array<shared_ptr<TargetConfig>>> trials) {
+	for (int i = 0; i < trials.size(); i++) {
+		Array<shared_ptr<TargetConfig>> targets = trials[i];
+		for (int j = 0; j < targets.size(); j++) {
+			const String name = format("%s_%d_%s_%d", m_config->id, i, targets[j]->id, j);
+			if (m_config->logger.enable) {
+				m_logger->addTarget(name, targets[j]);
+			}			
 		}
-		addTrial(targets);
+		m_remaining.append(m_config->trials[i].count);
+		m_targetConfigs.append(targets);
 	}
-
-	// Update the logger w/ these conditions (IS THIS THE RIGHT PLACE TO DO THIS???)
-	if (m_config->logger.enable) {
-		m_logger->addTargets(m_trialParams);
-	}
-
-	// Select the first condition
 	nextCondition();
 	return true;
 }
@@ -86,8 +80,8 @@ void Session::onInit(String filename, String userName, String description) {
 	// Check for valid session
 	if (m_hasSession) {
 		// Iterate over the sessions here and add a config for each
-		SessionParameters params = m_app->experimentConfig.getExpConditions(m_config->id);
-		setupTrialParams(params);
+		Array<Array<shared_ptr<TargetConfig>>> trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
+		setupTrialParams(trials);
 	}
 	else {	// Invalid session, move to displaying message
 		presentationState = PresentationState::scoreboard;
@@ -96,18 +90,17 @@ void Session::onInit(String filename, String userName, String description) {
 
 void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
 	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation;
-
-	ParameterTable tParam = m_trialParams[m_currTrialIdx][target->paramIdx()];
-	const bool isWorldSpace = tParam.str["destSpace"] == "world";
+	shared_ptr<TargetConfig> config = m_targetConfigs[m_currTrialIdx][target->paramIdx()];
+	const bool isWorldSpace = config->destSpace == "world";
 	Point3 loc;
 
 	if (isWorldSpace) {
-		loc = tParam.bounds.randomInteriorPoint();		// Set a random position in the bounds
+		loc = config->bbox.randomInteriorPoint();		// Set a random position in the bounds
 		target->resetMotionParams();					// Reset the target motion behavior
 	}
 	else {
-		const float rot_pitch = randSign() * Random::common().uniform(tParam.val["minEccV"], tParam.val["maxEccV"]);
-		const float rot_yaw = randSign() * Random::common().uniform(tParam.val["minEccH"], tParam.val["maxEccH"]);
+		const float rot_pitch = randSign() * Random::common().uniform(config->eccV[0], config->eccV[1]);
+		const float rot_yaw = randSign() * Random::common().uniform(config->eccH[0], config->eccH[1]);
 		const CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw, rot_pitch, 0.0f);
 		loc = f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 	}
@@ -123,83 +116,85 @@ void Session::initTargetAnimation() {
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (presentationState == PresentationState::task) {
-		for (int i = 0; i < m_trialParams[m_currTrialIdx].size(); i++) {
-			ParameterTable target = m_trialParams[m_currTrialIdx][i];
-			float rot_pitch = randSign() * Random::common().uniform(target.val["minEccV"], target.val["maxEccV"]);
-			float rot_yaw = randSign() * Random::common().uniform(target.val["minEccH"], target.val["maxEccH"]);
-			float visualSize = G3D::Random().common().uniform(target.val["minVisualSize"], target.val["maxVisualSize"]);
-			bool isWorldSpace = target.str["destSpace"] == "world";
+		// Iterate through the targets
+		for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
+			const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, m_targetConfigs[m_currTrialIdx][i]->id, i);
+			shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
+			float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
+			float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
+			float visualSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
+			bool isWorldSpace = target->destSpace == "world";
 
 			CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw- (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
 
 			// Check for case w/ destination array
-			if (target.val["destCount"] > 0.0) {
+			if (target->destinations.size() > 0) {
 				Point3 offset =isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 				m_app->spawnDestTarget(
 					offset,
-					target.destinations,
+					target->destinations,
 					visualSize,
 					m_config->targetView.healthColors[0],
-					String(target.str["id"]),
+					target->id,
 					i,
-					(int)target.val["respawns"],
-					String(target.str["name"]),
-					target.bools["logTargetTrajectory"]
+					target->respawnCount,
+					name,
+					target->logTargetTrajectory
 				);
 			}
 			// Otherwise check if this is a jumping target
-			else if (String(target.str["jumpEnabled"].c_str()) == "true") {
-				Point3 offset = isWorldSpace ? target.bounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			else if (target->jumpEnabled) {
+				Point3 offset = isWorldSpace ? target->bbox.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 				shared_ptr<JumpingEntity> t = m_app->spawnJumpingTarget(
 					offset,
 					visualSize,
 					m_config->targetView.healthColors[0],
-					{ target.val["minSpeed"], target.val["maxSpeed"] },
-					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
-					{ target.val["minJumpPeriod"], target.val["maxJumpPeriod"] },
-					{ target.val["minDistance"], target.val["maxDistance"] },
-					{ target.val["minJumpSpeed"], target.val["maxJumpSpeed"] },
-					{ target.val["minGravity"], target.val["maxGravity"] },
+					{ target->speed[0], target->speed[1] },
+					{ target->motionChangePeriod[0], target->motionChangePeriod[1] },
+					{ target->jumpPeriod[0], target->jumpPeriod[1] },
+					{ target->distance[0], target->distance[1] },
+					{ target->jumpSpeed[0], target->jumpSpeed[1] },
+					{ target->accelGravity[0], target->accelGravity[1] },
 					initialSpawnPos,
 					m_targetDistance,
-					String(target.str["id"]),
+					target->id,
 					i,
-					target.axisLock,
-					(int) target.val["respawns"],
-					String(target.str["name"]),
-					target.bools["logTargetTrajectory"]
+					target->axisLock,
+					target->respawnCount,
+					name,
+					target->logTargetTrajectory
 				);
 				t->setWorldSpace(isWorldSpace);
 				if (isWorldSpace) {
-					t->setBounds(target.bounds);
+					t->setBounds(target->bbox);
 				}
 			}
 			else {
-				Point3 offset = isWorldSpace ? target.bounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+				Point3 offset = isWorldSpace ? target->bbox.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 				shared_ptr<FlyingEntity> t = m_app->spawnFlyingTarget(
 					offset,
 					visualSize,
 					m_config->targetView.healthColors[0],
-					{ target.val["minSpeed"], target.val["maxSpeed"] },
-					{ target.val["minMotionChangePeriod"], target.val["maxMotionChangePeriod"] },
-					target.bools["upperHemisphereOnly"],
+					{ target->speed[0], target->speed[1] },
+					{ target->motionChangePeriod[0], target->motionChangePeriod[1] },
+					target->upperHemisphereOnly,
 					initialSpawnPos,
-					String(target.str["id"]),
+					target->id,
 					i,
-					target.axisLock,
-					(int)target.val["respawns"],
-					String(target.str["name"]),
-					target.bools["logTargetTrajectory"]
+					target->axisLock,
+					target->respawnCount,
+					name,
+					target->logTargetTrajectory
 				);
 				t->setWorldSpace(isWorldSpace);
 				if (isWorldSpace) {
-					t->setBounds(target.bounds);
+					t->setBounds(target->bbox);
 				}
 			}
 		}
 	}
 	else {
-		bool locks[3] = { true };
+		Array<bool> locks = { true, true, true };
 		// Make sure we reset the target color here (avoid color bugs)
 		m_app->spawnFlyingTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
@@ -226,21 +221,19 @@ void Session::processResponse()
 	m_taskExecutionTime = m_timer.getTime();
 	// Get total target count here
 	int totalTargets = 0;
-	for (ParameterTable table : m_trialParams[m_currTrialIdx]) {
-		if (table.val["respawns"] == -1) {
+	for (shared_ptr<TargetConfig> target : m_targetConfigs[m_currTrialIdx]) {
+		if (target->respawnCount == -1) {
 			totalTargets = MAXINT;		// Ininite spawn case
 			break;
 		}
 		else {
-			totalTargets += (int)table.val["respawns"];
+			totalTargets += target->respawnCount;
 		}
 	}		
 	m_response = totalTargets - m_destroyedTargets; // Number of targets remaining
 	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
 	
 	m_remaining[m_currTrialIdx] -= 1;
-
-	String sess = String(m_trialParams[m_currTrialIdx][0].str["sessionID"]);
 
 	// Check for whether all targets have been destroyed
 	if (m_response == 0) {
@@ -322,7 +315,7 @@ void Session::updatePresentationState()
 					if (m_config->logger.enable) {
 						m_logger->closeResultsFile();															// Close the current results file (if open)
 					}
-					m_app->markSessComplete(String(m_trialParams[m_currTrialIdx][0].str["sessionID"]));			// Add this session to user's completed sessions
+					m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
 					m_app->updateSessionDropDown();
 
 					int score = int(m_totalRemainingTime);
@@ -397,12 +390,10 @@ void Session::recordTrialResponse()
 {
 	if (!m_config->logger.enable) return;		// Skip this if the logger is disabled
 	if (m_config->logger.logTrialResponse) {
-		String sess = String(m_trialParams[m_currTrialIdx][0].str["sessionID"]);
-
 		// Trials table. Record trial start time, end time, and task completion time.
 		Array<String> trialValues = {
 			String(std::to_string(m_currTrialIdx)),
-			"'" + sess + "'",
+			"'" + m_config->id + "'",
 			"'" + m_config->description + "'",
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",

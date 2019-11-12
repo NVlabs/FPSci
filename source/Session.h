@@ -28,16 +28,12 @@
 #pragma once
 
 #include <G3D/G3D.h>
-#include "ParameterTable.h"
 #include "ExperimentConfig.h"
-#include "Logger.h"
-#include "Dialogs.h"
 #include <ctime>
 
 class App;
-
-using TargetParameters = Array<ParameterTable>;		///< Define target parameters as array of parameter tables (one per target)
-using SessionParameters = Array<TargetParameters>;	///< Define session parameters as array of target parameters (one per session)
+class TargetEntity;
+class Logger;
 
 // Simple timer for measuring time offsets
 class Timer
@@ -124,7 +120,7 @@ protected:
 	int m_currTrialIdx;									///< Current trial
 	int m_currQuestionIdx = -1;							///< Current question index
 	Array<int> m_remaining;								///< Completed flags
-	SessionParameters m_trialParams;					///< Trial (target) parameters
+	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;			///< Target configurations by trial
 
 	// Time-based parameters
 	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial
@@ -178,7 +174,6 @@ public:
 	}
 	int remainingAmmo() const;
 
-	void addTrial(Array<ParameterTable> params);
 	bool isComplete() const;
 	void nextCondition();
 
@@ -213,7 +208,7 @@ public:
 	void accumulatePlayerAction(PlayerActionType action, String target="");
 	bool canFire();
 
-	bool setupTrialParams(const SessionParameters params);
+	bool setupTrialParams(Array<Array<shared_ptr<TargetConfig>>> trials);
 
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState presentationState;			///< Current presentation state
