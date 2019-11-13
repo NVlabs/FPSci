@@ -339,7 +339,7 @@ public:
 	String getDropDownSessId(void);
 	void markSessComplete(String id);
 	void updateSessionPress(void);
-	void updateSession(String id);
+	void updateSession(const String& id);
 	void updateParameters(int frameDelay, float frameRate);
 	void presentQuestion(Question question);
 

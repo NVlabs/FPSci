@@ -908,7 +908,7 @@ void App::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, GApp::REAL_TIME);
 }
 
-void App::updateSession(String id) {
+void App::updateSession(const String& id) {
 	// Check for a valid ID (non-emtpy and 
 	Array<String> ids;
 	experimentConfig.getSessionIds(ids);
