@@ -111,7 +111,7 @@ protected:
 	shared_ptr<Logger> m_logger;						///< Output results logger
 
 	// Experiment management					
-	int m_response;										///< 0 indicates failure (didn't hit the target), 1 indicates sucess (hit the target)
+	int m_remainingTargets;								///< Number of remaining targets (calculated at the end of the session)
 	int m_destroyedTargets = 0;							///< Number of destroyed target
 	int m_clickCount = 0;								///< Count of total clicks in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
@@ -119,7 +119,7 @@ protected:
 
 	int m_currTrialIdx;									///< Current trial
 	int m_currQuestionIdx = -1;							///< Current question index
-	Array<int> m_remaining;								///< Completed flags
+	Array<int> m_remainingTrials;								///< Completed flags
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;			///< Target configurations by trial
 
 	// Time-based parameters
@@ -190,7 +190,7 @@ public:
 	void onInit(String filename, String userName, String description);
 	void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
 	void processResponse();
-	void recordTrialResponse();
+	void recordTrialResponse(int remainingTargets, int totalTargets);
 	void accumulateTrajectories();
 	void accumulateFrameInfo(RealTime rdt, float sdt, float idt);
 

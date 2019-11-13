@@ -33,8 +33,8 @@
 
 void Session::nextCondition() {
 	Array<int> unrunTrialIdxs;
-	for (int i = 0; i < m_remaining.size(); i++) {
-		if (m_remaining[i] > 0) {
+	for (int i = 0; i < m_remainingTrials.size(); i++) {
+		if (m_remainingTrials[i] > 0) {
 			unrunTrialIdxs.append(i);
 		}
 	}
@@ -44,7 +44,7 @@ void Session::nextCondition() {
 
 bool Session::isComplete() const{
 	bool allTrialsComplete = true;
-	for (int remaining : m_remaining) {
+	for (int remaining : m_remainingTrials) {
 		allTrialsComplete = allTrialsComplete && (remaining == 0);
 	}
 	return allTrialsComplete;
@@ -59,7 +59,7 @@ bool Session::setupTrialParams(Array<Array<shared_ptr<TargetConfig>>> trials) {
 				m_logger->addTarget(name, targets[j]);
 			}			
 		}
-		m_remaining.append(m_config->trials[i].count);
+		m_remainingTrials.append(m_config->trials[i].count);
 		m_targetConfigs.append(targets);
 	}
 	nextCondition();
@@ -230,13 +230,13 @@ void Session::processResponse()
 			totalTargets += target->respawnCount;
 		}
 	}		
-	m_response = totalTargets - m_destroyedTargets; // Number of targets remaining
-	recordTrialResponse(); // NOTE: we need record response first before processing it with PsychHelper.
+	m_remainingTargets = totalTargets - m_destroyedTargets; // Number of targets remaining
+	recordTrialResponse(m_remainingTargets, totalTargets); // NOTE: we need record response first before processing it with PsychHelper.
 	
-	m_remaining[m_currTrialIdx] -= 1;
+	m_remainingTrials[m_currTrialIdx] -= 1;
 
 	// Check for whether all targets have been destroyed
-	if (m_response == 0) {
+	if (m_remainingTargets == 0) {
 		m_totalRemainingTime += (double(m_config->timing.taskDuration) - m_taskExecutionTime);
 		if (m_config->description == "training") {
 			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
@@ -386,7 +386,7 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	}
 }
 
-void Session::recordTrialResponse()
+void Session::recordTrialResponse(int remainingTargets, int totalTargets)
 {
 	if (!m_config->logger.enable) return;		// Skip this if the logger is disabled
 	if (m_config->logger.logTrialResponse) {
@@ -398,7 +398,8 @@ void Session::recordTrialResponse()
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
 			String(std::to_string(m_taskExecutionTime)),
-			String(std::to_string(m_response))
+			String(std::to_string(remainingTargets)),
+			String(std::to_string(totalTargets))
 		};
 		m_logger->recordTrialResponse(trialValues);
 	}
@@ -495,7 +496,7 @@ float Session::getRemainingTrialTime() {
 float Session::getProgress() {
 	if (notNull(m_config)) {
 		int completed = 0;
-		for (bool c : m_remaining) {
+		for (bool c : m_remainingTrials) {
 			if (c) completed++;
 		}
 		return completed / (float)m_config->getTotalTrials();
