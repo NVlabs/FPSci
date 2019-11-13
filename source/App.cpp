@@ -1331,8 +1331,8 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 		// Reticle
 		Draw::rect2D(
-			(reticleTexture->rect2DBounds() * scale - reticleTexture->vector2Bounds() * scale / 2.0f) / 2.0f + rd->viewport().wh() / 2.0f,
-			rd, Color3::green(), reticleTexture);
+			(reticleTexture->rect2DBounds() * scale - reticleTexture->vector2Bounds() * scale / 2.0f) / 1.5f + rd->viewport().wh() / 2.0f,
+			rd, Color3::red(), reticleTexture);
 
 		// Draw target health bars
 		if (sessConfig->showTargetHealthBars) {
@@ -1792,7 +1792,7 @@ void App::onUserInput(UserInput* ui) {
 	}
 	
 	// Handle spacebar during feedback
-    GKey initShootKey = GKey::LSHIFT;
+    GKey initShootKey = GKey::RSHIFT;
 	if (ui->keyPressed(initShootKey) && (sess->presentationState == PresentationState::feedback)) {
 		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
 	}	
