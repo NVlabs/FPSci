@@ -49,16 +49,17 @@ public:
 
 class TargetEntity : public VisibleEntity {
 protected:
-	float m_health			= 1.0f;				///< Target health
-	Color3 m_color			= Color3::red();	///< Default color
-	Array<Destination> m_destinations;			///< Array of destinations to visit
-	int destinationIdx		= 0;				///< Current index into the destination array
-	Point3 m_offset;							///< Offset for initial spawn
-	SimTime m_spawnTime		= 0;				///< Time initiatlly spawned
-	int m_respawnCount		= 0;				///< Number of times to respawn
-	int m_paramIdx			= -1;				///< Parameter index of this item
-	bool m_worldSpace		= false;			///< World space coordiantes?
-	int m_scaleIdx = 0;
+	float	m_health			= 1.0f;				///< Target health
+	Color3	m_color				= Color3::red();	///< Default color
+	int		destinationIdx		= 0;				///< Current index into the destination array
+	SimTime m_spawnTime			= 0;				///< Time initiatlly spawned
+	int		m_respawnCount		= 0;				///< Number of times to respawn
+	int		m_paramIdx			= -1;				///< Parameter index of this item
+	bool	m_worldSpace		= false;			///< World space coordiantes?
+	int		m_scaleIdx			= 0;				///< Index for scaled model
+	bool	m_isLogged			= true;				///< Control flag for logging
+	Point3	m_offset;								///< Offset for initial spawn
+	Array<Destination> m_destinations;				///< Array of destinations to visit
 
 	// Only used for flying/jumping entities
 	SimTime m_nextChangeTime = 0;
@@ -72,18 +73,20 @@ public:
 		const String&					name,
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
-		float							scaleIdx,
+		int								scaleIdx,
 		const CFrame&					position,
 		int								paramIdx,
 		Point3							offset=Point3::zero(),
-		int								respawns=0);
+		int								respawns=0,
+		bool							isLogged=true);
 
-	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount=0, int scaleIdx=0) {
+	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount=0, int scaleIdx=0, bool isLogged=true) {
 		setDestinations(dests);
 		m_offset = staticOffset;
 		m_respawnCount = respawnCount;
 		m_paramIdx = paramIdx;
 		m_scaleIdx = scaleIdx;
+		m_isLogged = isLogged;
 		destinationIdx = 0;
 	}
 
@@ -117,6 +120,10 @@ public:
 		return m_scaleIdx;
 	}
 
+	bool isLogged() {
+		return m_isLogged;
+	}
+
 	/** Getter for health */
 	float health() { return m_health; }
 	/**Get the total time for a path*/
@@ -133,35 +140,29 @@ public:
 
 class FlyingEntity : public TargetEntity {
 protected:
-	/** Angular speed in degress/sec */
-	float                           m_speed = 0.0f;
-    /** World space point at center of orbit */
-	Point3                          m_orbitCenter;
-
-	/** Angular Speed Range (deg/s) x=min y=max */
-	Vector2                         m_angularSpeedRange = Vector2{ 0.0f, 4.0f };
-    /** Motion Change period x=min y=max */
-    Vector2                         m_motionChangePeriodRange = Vector2{ 10000.0f, 10000.0f };
-
+	float			m_speed = 0.0f;									///< Speed of the target (deg/s or m/s depending on space)
+	Point3			m_orbitCenter;									///< World space point at center of orbit
+	Vector2			m_angularSpeedRange = Vector2{ 0.0f, 4.0f };	///< Angular Speed Range(deg / s) x = min y = max
+    Vector2			m_motionChangePeriodRange = Vector2{ 10000.0f, 10000.0f };	  ///< Motion Change period in seconds (x=min y=max)
     /** The target will move through these points along arcs around
         m_orbitCenter at m_speed. As each point is hit, it is
         removed from the queue.*/
-    Queue<Point3>                   m_destinationPoints;
+    Queue<Point3>	m_destinationPoints;
 
 	/** Limits flying target entity motion for the upper hemisphere only.
 		OnSimulation will y-invert target position & destination points
 		whenever the target enters into the lower hemisphere.
 		*/
-	bool							m_upperHemisphereOnly;
-
-	AABox m_bounds = AABox();
+	bool			m_upperHemisphereOnly;
+	AABox			m_bounds = AABox();							///< Bounds (for world space motion)
+	bool			m_axisLocks[3] = { false };					///< Axis locks (for world space motion)
 
 	FlyingEntity() {}
     void init(AnyTableReader& propertyTable);
 
 	void init();
 
-	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, int respawns = 0, int scaleIdx=0);
+	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, Array<bool> axisLock, int respawns = 0, int scaleIdx=0, bool isLogged=true);
 
 public:
 
@@ -203,7 +204,9 @@ public:
 		bool							upperHemisphereOnly,
 		Point3							orbitCenter,
 		int								paramIdx,
-		int								respawns=0);
+		Array<bool>						axisLock,
+		int								respawns=0,
+		bool							isLogged=true);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
         modify at least the name of the Table returned by the base class, which will be "Entity"
@@ -223,48 +226,40 @@ protected:
 	// 3. If deviated from spherical surface (can be true in jumping cases), project toward orbit center to snap on the spherical surface.
 
 	/** Motion kinematic parameters, x is spherical (horizontal) component and y is vertical (jump) component. */
-	Point2                          m_speed;
+	Point2			m_speed;
 
 	/** Position is calculated as sphieral motion + jump.
 	Animation is done by projecting it toward the spherical surface. */
-	Point3                          m_simulatedPos;
+	Point3          m_simulatedPos;
 
 	/** Parameters reset every time motion change or jump happens */
-	float                           m_planarSpeedGoal; // the speed value m_speed tries to approach.
-	Point2                          m_acc;
-	float							m_jumpSpeed;
+	float           m_planarSpeedGoal;			///< the speed value m_speed tries to approach.
+	Point2          m_acc;						///< Acceleration storage
+	float			m_jumpSpeed;				///< Jump speed storage
 
-	/** World space point at center of orbit */
-	Point3                          m_orbitCenter;
-	float                           m_orbitRadius;
+	Point3          m_orbitCenter;				///< World-space center of orbit (player space)
+	float           m_orbitRadius;				///< Radius of orbit path (player space)
+	
+	float           m_motionChangeTimer;		///< Time remaining to motion change (in seconds)
+	float			m_jumpTimer;				///< Time remaining in jump (in seconds)
+	
+	bool			m_inJump;					///< In a jump currently?
+	SimTime			m_jumpTime;					///< Time at which a jump started
+	float           m_standingHeight;			///< Default or "pre-jump" height
+	Vector2			m_angularSpeedRange;		///< Angular Speed Range in deg/s (x=min y=max)
+	Vector2         m_motionChangePeriodRange;	///< Motion Change period in seconds (x=min y=max)
+    Vector2			m_jumpPeriodRange;			///< Jump period in seconds (x=min y=max)
+    Vector2         m_jumpSpeedRange;			///< Jump initial speed in m/s (x=min y=max)
+    Vector2			m_gravityRange;				///< Gravitational Acceleration in m/s^2 (x=min y=max)
 
-	/** variables for motion changes */
-	float                           m_motionChangeTimer;
-	float                           m_jumpTimer;
+	Vector2         m_distanceRange;
+	float           m_planarAcc = 0.3f;
+	bool            m_isFirstFrame = true;		///< Initializer flag
+	SimTime			m_nextJumpTime = 0;			///< Next time at which to jump
+	
+	AABox			m_bounds = AABox();
+	bool			m_axisLocks[3] = { false };	///< Axis locks (for world space motion)
 
-	/** jump state */
-	bool                            m_inJump;
-	SimTime							m_jumpTime;
-	float                           m_standingHeight;
-
-	/** Angular Speed Range (deg/s) x=min y=max */
-	Vector2                         m_angularSpeedRange;
-	/** Motion Change period x=min y=max */
-	Vector2                         m_motionChangePeriodRange;
-	/** Jump period x=min y=max */
-    Vector2                         m_jumpPeriodRange;
-	/** Jump initial speed (m/s) x=min y=max */
-    Vector2                         m_jumpSpeedRange;
-	/** Gravitational Acceleration (m/s^2) x=min y=max */
-    Vector2                         m_gravityRange;
-	/** Distance range */
-	Vector2                         m_distanceRange;
-	float                           m_planarAcc = 0.3f;
-
-	/** check first frame */
-	bool                            m_isFirstFrame = true;
-	SimTime							m_nextJumpTime = 0;
-	AABox m_bounds = AABox();
 
 	JumpingEntity() {}
 
@@ -282,8 +277,10 @@ protected:
 		Point3 orbitCenter,
 		float orbitRadius,
 		int paramIdx,
+		Array<bool> axisLock,
 		int respawns = 0,
-		int scaleIdx=0
+		int scaleIdx=0,
+		bool isLogged=true
 	);
 
 public:
@@ -319,7 +316,9 @@ public:
 		Point3							orbitCenter,
 		float							orbitRadius,
 		int								paramIdx,
-		int								respawns=0);
+		Array<bool>						axisLock,
+		int								respawns=0,
+		bool							isLogged=true);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
 		modify at least the name of the Table returned by the base class, which will be "Entity"

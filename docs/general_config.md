@@ -83,6 +83,25 @@ The following settings allow the user to control various timings/durations aroun
 "playerGravity": Vector3(0.0, -5.0, 0.0),   // Player gravity
 ```
 
+## Logging Controls
+As part of the general configuration parameters several controls over reporting of data via the output SQL database are provided. These flags and their functions are described below.
+
+| Parameter Name        | Units | Description                                                                      |
+|-----------------------|-------|----------------------------------------------------------------------------------|
+|`logEnable`            |bool   | Enables the logger and creation of an output database                            |
+|`logTargetTrajectories`|bool   | Whether or not to log target position to the `Target_Trajectory` table           |
+|`logFrameInfo`         |bool   | Whether or not to log frame info into the `Frame_Info` table                     |
+|`logPlayerActions`     |bool   | Whether or not to log player actions into the `Player_Action` table              |
+|`logTrialResponse`     |bool   | Whether or not to log trial responses into the `Trials` table                    |
+
+```
+"logEnable" : true,
+"logTargetTrajectories": true,
+"logFrameInfo": true,
+"logPlayerActions": true,
+"logTrialResponse": true,
+```
+
 ## Feedback Questions
 In addition to supporting in-app performance-based reporting the application also includes `.Any` configurable prompts that can be configured from the experiment or session level. Currently `MultipleChoice` and (text) `Entry` questions are supported, though more support could be added for other question types.
 

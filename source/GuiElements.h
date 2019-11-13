@@ -65,37 +65,40 @@ public:
 	}
 
 	virtual void setManager(WidgetManager* manager);
-	static shared_ptr<WaypointDisplay> create(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints);
+	static shared_ptr<WaypointDisplay> create(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) {
+		return createShared<WaypointDisplay>(app, theme, config, waypoints);
+
+	}
 };
 
 class PlayerControls : public GuiWindow {
 protected:
-	PlayerControls(FpsConfig config, std::function<void()> exportCallback,
+	PlayerControls(SessionConfig& config, std::function<void()> exportCallback,
 		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
 
 public:
-	float playerHeight;
-	float crouchHeight;
-	float moveRate;
-	GuiControl::Callback exportScene;
-	static shared_ptr<PlayerControls> create(FpsConfig config, std::function<void()> exportCallback,
-		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
+	static shared_ptr<PlayerControls> create(SessionConfig& config, std::function<void()> exportCallback,
+		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f) {
+		return createShared<PlayerControls>(config, exportCallback, theme, width, height);
+	}
 };
 
 class RenderControls : public GuiWindow {
 protected:
-	RenderControls(FpsConfig config, bool drawFps, bool turbo, int reticleIdx, int numReticles, float brightness,
+	RenderControls(SessionConfig& config, UserConfig& user, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, float width=400.0f, float height=10.0f);
 public:
-	bool showBullets;
-	bool showWeapon;
-	bool showHud;
-	bool showFps;
-	bool turboMode;
-	float frameRate;
-	int frameDelay;
-	int reticleIdx;
-	float brightness;
-	static shared_ptr<RenderControls> create(FpsConfig config, bool drawFps, bool turbo, int reticleIdx, int numReticles, float brightness,
-		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
+	static shared_ptr<RenderControls> create(SessionConfig& config, UserConfig &user, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
+		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f) {
+		return createShared<RenderControls>(config, user, drawFps, turbo, numReticles, brightness, theme, width, height);
+	}
+};
+
+class WeaponControls : public GuiWindow {
+protected:
+	WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
+public:
+	static shared_ptr<WeaponControls> create(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f) {
+		return createShared<WeaponControls>(config, theme, width, height);
+	}
 };

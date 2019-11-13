@@ -73,7 +73,8 @@ An example session configuration snippet is included below:
     * `distance` is the distance to this target (in meters)
     * `eccH/V` are controls for min ([0])/max([1]) horizontal/vertical eccentricity for target initial position (in deg)
     * `motionChangePeriod` is a vector indicating the minimum ([0]) and maximum ([1]) motion change period allowed (in s)
-    * `upperHemisphereOnly` is a boolean-type scalar indicating whether target flies only on the upper hemisphere of player-centric sphere. Only applicable to `FlyingEntity` defined in the "player" space.
+    * `upperHemisphereOnly` is a boolean flag indicating whether target flies only on the upper hemisphere of player-centric sphere. Only applicable to `FlyingEntity` defined in the "player" space.
+    * `logTargetTrajectory` is a boolean flag indicating whether or not this (individual) target's position should be logged for trials it is displayed for
     * `jumpEnabled` determines whether the target can "jump" or not
     * `jumpPeriod` is a vector indicating the minimum ([0]) and maximum ([1]) period to wait between jumps (in seconds)
     * `jumpSpeed` is a vector indicating the minimum ([0]) and maximum([1]) angular speed with which to jump (in deg/s)
@@ -84,6 +85,7 @@ An example session configuration snippet is included below:
       * `xyz` the position for this point in the path
     * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
     * `bounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
+    * `axisLocked` is a boolean array specifying which (if any) axes of motion are "locked" (i.e. disallowed) for this target's motion in [X,Y,Z] order. This only applies for world-space, parametric targets.
 
 #### Target Configuration Example
 An example target configuration snippet is provided below:
@@ -106,6 +108,7 @@ targets = [
                 Point3(-8.5, 0.5, -11.5),   // It is important these are specified in "increasing order"
                 Point3(-6.5, 1.5, -7.5)     // All x,y,z coordinates must be greater than those above
         },
+        "axisLocked": [true, false, false],
         "visualSize" : [0.3, 1.0],          // Visual size between 0.3-1m
         "respawnCount" : -1,                // Respawn forever
     },

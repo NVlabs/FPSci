@@ -1,7 +1,11 @@
 /** \file App.cpp */
 #include "App.h"
-#include "TargetEntity.h"
+#include "Dialogs.h"
 #include "PlayerEntity.h"
+#include "Logger.h"
+#include "Session.h"
+#include "PhysicsScene.h"
+#include <chrono>
 
 // Scale and offset for target
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
@@ -50,8 +54,7 @@ void App::onInit() {
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
 
 	// Setup the scene
-	m_scene = PhysicsScene::create(m_ambientOcclusion);
-	setScene(m_scene);
+	setScene(PhysicsScene::create(m_ambientOcclusion));
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
@@ -66,10 +69,10 @@ void App::onInit() {
 
 	// Load models and set the reticle
 	loadModels();
-	setReticle(reticleIndex);
+	setReticle(userTable.getCurrentUser()->reticleIndex);
 
 	updateMouseSensitivity();			// Update (apply) mouse sensitivity
-	updateMoveRate(experimentConfig.moveRate);
+	updateMoveRate(experimentConfig.player.moveRate);
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
 	updateSessionPress();				// Update session to create results file/start collection
 }
@@ -239,11 +242,11 @@ shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, b
 }
 
 shared_ptr<TargetEntity> App::spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color,
-	 String id, int paramIdx, int respawns, String name) {	
+	 String id, int paramIdx, int respawns, String name, bool isLogged) {	
 	// Create the target
 	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], scaleIndex, CFrame(), paramIdx, position, respawns);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], scaleIndex, CFrame(), paramIdx, position, respawns, isLogged);
 
 	// Setup the texture
 	UniversalMaterial::Specification materialSpecification;
@@ -276,8 +279,10 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	Point3 orbitCenter,
 	String id,
 	int paramIdx,
+	Array<bool> axisLock,
 	int respawns,
-	String name)
+	String name,
+	bool isLogged)
 {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
 	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
@@ -292,7 +297,9 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 		upperHemisphereOnly,
 		orbitCenter,
 		paramIdx,
-		respawns
+		axisLock,
+		respawns,
+		isLogged
 	);
 
 	UniversalMaterial::Specification materialSpecification;
@@ -326,8 +333,10 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	float targetDistance,
 	String id,
 	int paramIdx,
+	Array<bool> axisLock,
 	int respawns,
-	String name)
+	String name,
+	bool isLogged)
 {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
 	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
@@ -346,7 +355,9 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 		orbitCenter,
 		targetDistance,
 		paramIdx,
-		respawns
+		axisLock,
+		respawns,
+		isLogged
 	);
 
 	UniversalMaterial::Specification materialSpecification;
@@ -367,7 +378,8 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 }
 
 void App::loadModels() {
-	if (experimentConfig.weapon.renderModel) {
+	if (experimentConfig.weapon.renderModel || startupConfig.playMode == false) {
+		// Load the model if we (might) need it
 		m_viewModel = ArticulatedModel::create(experimentConfig.weapon.modelSpec, "viewModel");
 	}
 
@@ -463,13 +475,35 @@ void App::loadModels() {
 	// Create a series of colored materials to choose from for target health
 	for (int i = 0; i < m_MatTableSize; i++) {
 		float complete = (float)i / m_MatTableSize;
-		Color3 color = experimentConfig.targetHealthColors[0] * complete + experimentConfig.targetHealthColors[1] * (1.0f - complete);
+		Color3 color = experimentConfig.targetView.healthColors[0] * complete + experimentConfig.targetView.healthColors[1] * (1.0f - complete);
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
 		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
 		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
 		m_materials.append(UniversalMaterial::create(materialSpecification));
 	}
+}
+
+void App::updateControls() {
+	// Setup the waypoint config/display
+	WaypointDisplayConfig config = WaypointDisplayConfig();
+	m_waypointControls = WaypointDisplay::create(this, theme, config, (shared_ptr<Array<Destination>>)&m_waypoints);
+	m_waypointControls->setVisible(false);
+	this->addWidget(m_waypointControls);
+
+	// Setup the player control
+	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&App::exportScene, this), theme);
+	m_playerControls->setVisible(false);
+	this->addWidget(m_playerControls);
+
+	// Setup the render control
+	m_renderControls = RenderControls::create(*sessConfig, *(userTable.getCurrentUser()), renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme);
+	m_renderControls->setVisible(false);
+	this->addWidget(m_renderControls);
+
+	m_weaponControls = WeaponControls::create(sessConfig->weapon, theme);
+	m_weaponControls->setVisible(false);
+	this->addWidget(m_weaponControls);
 }
 
 void App::makeGUI() {
@@ -481,27 +515,15 @@ void App::makeGUI() {
 
 	theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
 
-	// Setup the waypoint config/display
-	WaypointDisplayConfig config = WaypointDisplayConfig();
-	m_waypointWindow = WaypointDisplay::create(this, theme, config, (shared_ptr<Array<Destination>>)&m_waypoints);
-	m_waypointWindow->setVisible(false);
-	this->addWidget(m_waypointWindow);
-
-	// Setup the player control
-	m_playerWindow = PlayerControls::create((FpsConfig)experimentConfig, std::bind(&App::exportScene, this), theme);
-	m_playerWindow->setVisible(false);
-	this->addWidget(m_playerWindow);
-
-	// Setup the render control
-	m_renderWindow = RenderControls::create((FpsConfig)experimentConfig, renderFPS, emergencyTurbo, reticleIndex, numReticles, sceneBrightness, theme);
-	m_renderWindow->setVisible(false);
-	this->addWidget(m_renderWindow);
+	// Add the control panes here
+	updateControls();
 
 	// Open sub-window panes here...
 	debugPane->beginRow(); {
 		debugPane->addButton("Render Controls [1]", this, &App::showRenderControls);
 		debugPane->addButton("Player Controls [2]", this, &App::showPlayerControls);
-		debugPane->addButton("Waypoint Manager [3]", this, &App::showWaypointManager);
+		debugPane->addButton("Weapon Controls [3]", this, &App::showWeaponControls);
+		debugPane->addButton("Waypoint Manager [4]", this, &App::showWaypointManager);
 	}debugPane->endRow();
 
     // set up user settings window
@@ -567,7 +589,7 @@ void App::dropWaypoint(Destination dest, Point3 offset) {
 bool App::updateWaypoint(Destination dest, int idx) {
 	// Check for valid indexing
 	if (idx < 0) {
-		idx = m_waypointWindow->getSelected();	// Use the selected item if no index is passed in
+		idx = m_waypointControls->getSelected();	// Use the selected item if no index is passed in
 	}
 	else if (idx > m_waypoints.lastIndex()) 
 		return false;							// If the index is too high don't update
@@ -631,7 +653,7 @@ bool App::updateWaypoint(Destination dest, int idx) {
 
 void App::removeHighlighted(void) {
 	// Remove the selected waypoint
-	removeWaypoint(m_waypointWindow->getSelected());
+	removeWaypoint(m_waypointControls->getSelected());
 }
 
 bool App::removeWaypoint(int idx) {
@@ -664,7 +686,7 @@ bool App::removeWaypoint(int idx) {
 		m_waypoints.fastRemove(idx);
 
 		// Get rid of the debug highlight and clear selection
-		m_waypointWindow->setSelected(-1);
+		m_waypointControls->setSelected(-1);
 		removeDebugShape(m_highlighted);
 		return true;
 	}
@@ -690,7 +712,7 @@ void App::clearWaypoints(void) {
 	m_arrowIDs.clear();
 	// Clear the highlighted shape
 	removeDebugShape(m_highlighted);
-	m_waypointWindow->setSelected(-1);
+	m_waypointControls->setSelected(-1);
 }
 
 void App::exportWaypoints(void) {
@@ -750,15 +772,19 @@ void App::exportScene() {
 }
 
 void App::showWaypointManager() {
-	m_waypointWindow->setVisible(true);
+	m_waypointControls->setVisible(true);
 }
 
 void App::showPlayerControls() {
-	m_playerWindow->setVisible(true);
+	m_playerControls->setVisible(true);
 }
 
 void App::showRenderControls() {
-	m_renderWindow->setVisible(true);
+	m_renderControls->setVisible(true);
+}
+
+void App::showWeaponControls() {
+	m_weaponControls->setVisible(true);
 }
 
 void App::userSaveButtonPress(void) {
@@ -801,7 +827,7 @@ Array<String> App::updateSessionDropDown(void) {
 		logPrintf("User %s not found. Creating a new user w/ default session ordering.\n", userId);
 		UserSessionStatus newStatus = UserSessionStatus();
 		newStatus.id = userId;
-		newStatus.sessionOrder = experimentConfig.getSessIds();
+		experimentConfig.getSessionIds(newStatus.sessionOrder);
 		userStatusTable.userInfo.append(newStatus);
 		userStatus = userStatusTable.getUserStatus(userId);
 		userStatusTable.toAny().save("userstatus.Any");
@@ -871,9 +897,22 @@ void App::updateSessionPress(void) {
 	updateSession(getDropDownSessId());
 }
 
-void App::updateSession(String id) {
+void App::updateParameters(int frameDelay, float frameRate) {
+	// Apply frame lag
+	displayLagFrames = frameDelay;
+	lastSetFrameRate = frameRate;
+	// Set a maximum *finite* frame rate
+	float dt = 0;
+	if (frameRate > 0) dt = 1.0f / frameRate;
+	else dt = 1.0f / float(window()->settings().refreshRate);
+	setFrameDuration(dt, GApp::REAL_TIME);
+}
+
+void App::updateSession(const String& id) {
 	// Check for a valid ID (non-emtpy and 
-	if (!id.empty() && experimentConfig.getSessIds().contains(id)) {
+	Array<String> ids;
+	experimentConfig.getSessionIds(ids);
+	if (!id.empty() && ids.contains(id)) {
 		sessConfig = experimentConfig.getSessionConfigById(id);						// Get the new session config
 		logPrintf("User selected session: %s. Updating now...\n", id);				// Print message to log
 		m_sessDropDown->setSelectedValue(id);										// Update session drop-down selection
@@ -881,21 +920,18 @@ void App::updateSession(String id) {
 	}
 	else {
 		sessConfig = SessionConfig::create();										// Create an empty session
-		sess = Session::create(this);											
+		sess = Session::create(this, sessConfig);											
 	}
-	
-	// Apply frame lag
-	displayLagFrames = sessConfig->frameDelay;
 
-	// Set a maximum *finite* frame rate
-	float dt = 0;
-	if (sessConfig->frameRate > 0) dt = 1.0f / sessConfig->frameRate;
-	else dt = 1.0f / float(window()->settings().refreshRate);
-	setFrameDuration(dt, GApp::REAL_TIME);
+	// Update the controls for this session
+	updateControls();
+
+	// Update the frame rate/delay
+	updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
 
 	// Load (session dependent) fonts
-	hudFont = GFont::fromFile(System::findDataFile(sessConfig->hudFont));
-	m_combatFont = GFont::fromFile(System::findDataFile(sessConfig->combatTextFont));
+	hudFont = GFont::fromFile(System::findDataFile(sessConfig->hud.hudFont));
+	m_combatFont = GFont::fromFile(System::findDataFile(sessConfig->targetView.combatTextFont));
 
 	// Load the experiment scene if we haven't already (target only)
 	if (sessConfig->sceneName.empty()) {
@@ -912,7 +948,7 @@ void App::updateSession(String id) {
 
 	// Check for play mode specific parameters
 	m_fireSound = Sound::create(System::findDataFile(sessConfig->weapon.fireSound));
-	m_explosionSound = Sound::create(System::findDataFile(sessConfig->explosionSound));
+	m_explosionSound = Sound::create(System::findDataFile(sessConfig->audio.explosionSound));
 
 	// Update weapon model (if drawn)
 	if (sessConfig->weapon.renderModel) {
@@ -922,7 +958,7 @@ void App::updateSession(String id) {
 	// Create a series of colored materials to choose from for target health
 	for (int i = 0; i < m_MatTableSize; i++) {
 		float complete = (float)i / m_MatTableSize;
-		Color3 color = sessConfig->targetHealthColors[0] * complete + sessConfig->targetHealthColors[1] * (1.0f - complete);
+		Color3 color = sessConfig->targetView.healthColors[0] * complete + sessConfig->targetView.healthColors[1] * (1.0f - complete);
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
 		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
@@ -931,8 +967,19 @@ void App::updateSession(String id) {
 	}
 
 	// Player parameters
-	sess->initialHeadingRadians = scene()->typedEntity<PlayerEntity>("player")->heading();
-	updateMoveRate(sessConfig->moveRate);
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+	sess->initialHeadingRadians = player->heading();
+	// Copied from old FPM code
+	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
+	mouseSens *= 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
+	player->mouseSensitivity = (float)mouseSens;
+	player->moveRate = sessConfig->player.moveRate;
+	player->jumpVelocity = sessConfig->player.jumpVelocity;
+	player->jumpInterval = sessConfig->player.jumpInterval;
+	player->jumpTouch = sessConfig->player.jumpTouch;
+	player->height = sessConfig->player.height;
+	player->crouchHeight = sessConfig->player.crouchHeight;
+	updateMoveRate(sessConfig->player.moveRate);
 
 	// Make sure all targets are cleared
 	clearTargets();
@@ -953,7 +1000,7 @@ void App::updateSession(String id) {
 	}
 
 	// Initialize the experiment (this creates the results file)
-	sess->onInit(logName+".db", userTable.currentUser, experimentConfig.expDescription + "/" + sessConfig->sessDescription);
+	sess->onInit(logName+".db", userTable.currentUser, experimentConfig.description + "/" + sessConfig->description);
 	// Don't create a results file for a user w/ no sessions left
 	if (m_sessDropDown->numElements() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
@@ -972,31 +1019,35 @@ void App::quitRequest() {
 
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	// Pick between experiment and session settings
-	Vector3 grav = experimentConfig.playerGravity;
-	float FoV = experimentConfig.hFoV;
+	Vector3 grav = experimentConfig.player.playerGravity;
+	float FoV = experimentConfig.render.hFoV;
 	if (sessConfig != nullptr) {
-		grav = sessConfig->playerGravity;
-		FoV = sessConfig->hFoV;
+		grav = sessConfig->player.playerGravity;
+		FoV = sessConfig->render.hFoV;
 	}
 	// Set the active camera to the player
-	setActiveCamera(m_scene->typedEntity<Camera>("camera"));
+	setActiveCamera(scene()->typedEntity<Camera>("camera"));
     // make sure the scene has a "player" entity
-    if (isNull(m_scene->typedEntity<PlayerEntity>("player"))) {
-        shared_ptr<Entity> newPlayer = PlayerEntity::create("player", &(*scene()), CFrame::fromXYZYPRDegrees(0.0f, 0.0f, 0.0f), nullptr);
-        m_scene->insert(newPlayer);
+    if (isNull(scene()->typedEntity<PlayerEntity>("player"))) {
+        shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
+        scene()->insert(newPlayer);
     }
-	// For now make the player invisible (prevent issues w/ seeing model from inside)
-	m_scene->typedEntity<PlayerEntity>("player")->setVisible(false);
-	m_scene->setGravity(grav);
-	// Capture these variables here
-	m_resetHeight = m_scene->resetHeight();
-	if (isnan(m_resetHeight)) {
-		m_resetHeight = -1e6;
+
+	// Get the reset height
+	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
+	pscene->setGravity(grav);
+	float resetHeight = pscene->resetHeight();
+	if (isnan(resetHeight)) {
+		resetHeight = -1e6;
 	}
-	m_spawnPosition = activeCamera()->frame().translation;
+
+	// For now make the player invisible (prevent issues w/ seeing model from inside)
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+	player->setVisible(false);
+	player->setRespawnHeight(resetHeight);
+	player->setRespawnPosition(activeCamera()->frame().translation);
 	activeCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
 }
-
 
 void App::onAI() {
 	GApp::onAI();
@@ -1103,47 +1154,28 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 
 	// Move the player
-	const shared_ptr<PlayerEntity>& p = m_scene->typedEntity<PlayerEntity>("player");
-	if (notNull(p)) {
-		CFrame c = p->frame();
-		// Check for "off map" condition and reset position here...
-		if (c.translation.y < m_resetHeight) {
-			c.translation = m_spawnPosition;
-			p->setFrame(c);
-		}
-		float height = p->crouched() ? sessConfig->crouchHeight : sessConfig->playerHeight;
-		height = p->heightOffset(height);
-		c.translation += Vector3(0, height, 0);		// Set the player to the right height
-		c.rotation = c.rotation * Matrix3::fromAxisAngle(Vector3::unitX(), p->headTilt());
-		activeCamera()->setFrame(c);
-	}
+	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
+	activeCamera()->setFrame(p->getCameraFrame());
 
 	// Handle developer mode features here
 	if (!startupConfig.playMode) {
 		// Copy over dynamic elements
-		sessConfig->playerHeight = m_playerWindow->playerHeight;
-		sessConfig->crouchHeight = m_playerWindow->crouchHeight;
-		sessConfig->moveRate = m_playerWindow->moveRate;
+		// TODO:Consider moving to App owning GuiPane, and no need for all this copy-over...
+		shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+		player->height = sessConfig->player.height;
+		player->crouchHeight = sessConfig->player.crouchHeight;
+		player->moveRate = sessConfig->player.moveRate;
+		player->jumpVelocity = sessConfig->player.jumpVelocity;
+		player->jumpInterval = sessConfig->player.jumpInterval;
+		player->jumpTouch = sessConfig->player.jumpTouch;
 
-		sessConfig->showHUD = m_renderWindow->showHud;
-		sessConfig->weapon.renderModel = m_renderWindow->showWeapon;
-		sessConfig->weapon.renderBullets = m_renderWindow->showBullets;
-		
-		renderFPS = m_renderWindow->showFps;
-		emergencyTurbo = m_renderWindow->turboMode;
-
-		sessConfig->frameRate = m_renderWindow->frameRate;
-		float dt = 0;
-		if (sessConfig->frameRate > 0) dt = 1.0f / sessConfig->frameRate;
-		else dt = 1.0f / float(window()->settings().refreshRate);
-		setFrameDuration(dt, GApp::REAL_TIME);
-		displayLagFrames = m_renderWindow->frameDelay;
-
-		reticleIndex = m_renderWindow->reticleIdx;
-		sceneBrightness = m_renderWindow->brightness;
+		// Handle frame rate/delay updates here
+		if (sessConfig->render.frameRate != lastSetFrameRate || displayLagFrames != sessConfig->render.frameDelay) {
+			updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
+		}
 
 		// Handle highlighting for selected target
-		int selIdx = m_waypointWindow->getSelected();
+		int selIdx = m_waypointControls->getSelected();
 		if (selIdx >= 0) {
 			// Handle position update
 			Destination dest = m_waypoints[selIdx];
@@ -1158,24 +1190,24 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			if (isnan(m_recordStart)) {
 				m_recordStart = now;
 				clearWaypoints();		// Just clear the waypoints for now
-				dropWaypoint(Destination(p->frame().translation, 0.0f));
+				dropWaypoint(Destination(p->getCameraFrame().translation, 0.0f));
 			}
 			else {
 				SimTime t = static_cast<SimTime>(now - m_recordStart);
-				float distance = (m_waypoints.last().position - p->frame().translation).magnitude();
+				float distance = (m_waypoints.last().position - p->getCameraFrame().translation).magnitude();
 				switch (recordMode) {
 				case 0: // This is fixed distance mode, check if we've moved "far enough" to drop a new waypoint
 					if (distance > recordInterval) {
 						// Use the m_waypointDelay to meter out time when in constant distance mode
 						t = m_waypoints.size() * waypointDelay;
-						dropWaypoint(Destination(p->frame().translation, t));
+						dropWaypoint(Destination(p->getCameraFrame().translation, t));
 					}
 					break;
 				case 1: // This is fixed time mode, check if we are beyond the sampling interval and need a new waypoint
 					if ((t - m_lastRecordTime) > recordInterval) {
 						m_lastRecordTime = t;
 						// Apply the recording time-scaling here (after checking for record interval)
-						dropWaypoint(Destination(p->frame().translation, t / recordTimeScaling));
+						dropWaypoint(Destination(p->getCameraFrame().translation, t / recordTimeScaling));
 					}
 					break;
 				}
@@ -1183,12 +1215,12 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		}
 		else {
 			m_recordStart = nan();
-			m_lastRecordTime = 0.0;
+			m_lastRecordTime = 0.0f;
 		}
 
 		// Example GUI dynamic layout code.  Resize the debugWindow to fill
 		// the screen horizontally.
-		debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+		debugWindow->setRect(Rect2D::xywh(0.0f, 0.0f, (float)window()->width(), debugWindow->rect().height()));
 	}
 	   
 	// Check for completed session
@@ -1203,7 +1235,7 @@ bool App::onEvent(const GEvent& event) {
 	if (!startupConfig.playMode) {
 		if (event.type == GEventType::KEY_DOWN) {
 			bool foundKey = true;
-			int selIdx = m_waypointWindow->getSelected();
+			int selIdx = m_waypointControls->getSelected();
 			switch (event.key.keysym.sym) {
 			// Handle "hot keys" here
 			case 'q':							// Use 'q' to drop a waypoint
@@ -1215,19 +1247,22 @@ bool App::onEvent(const GEvent& event) {
 
 			// Handle shortcuts for opening sub-menus here
 			case '1':							// Use '1' to toggle the rendering controls
-				m_renderWindow->setVisible(!m_renderWindow->visible());
+				m_renderControls->setVisible(!m_renderControls->visible());
 				break;
 			case '2':							// Use '2' to toggle the player controls
-				m_playerWindow->setVisible(!m_playerWindow->visible());
+				m_playerControls->setVisible(!m_playerControls->visible());
 				break;
-			case '3':							// Use '3' to toggle the waypoint manager
-				m_waypointWindow->setVisible(!m_waypointWindow->visible());
+			case '3':							// Use '3' to toggle the weapon controls
+				m_weaponControls->setVisible(!m_weaponControls->visible());
+				break;
+			case '4':							// Use '4' to toggle the waypoint controls
+				m_waypointControls->setVisible(!m_waypointControls->visible());
 				break;
 			case GKey::PAGEUP:
-				m_waypointMoveMask += Vector3(0, 1, 0);
+				m_waypointMoveMask += Vector3(0.0f, 1.0f, 0.0f);
 				break;
 			case GKey::PAGEDOWN:
-				m_waypointMoveMask += Vector3(0, -1, 0);
+				m_waypointMoveMask += Vector3(0.0f, -1, 0);
 				break;
 			case GKey::HOME:
 				m_waypointMoveMask += Vector3(0, 0, 1);
@@ -1307,12 +1342,12 @@ bool App::onEvent(const GEvent& event) {
 			return true;
 		}
 		else if (event.key.keysym.sym == GKey::LCTRL) {
-			m_scene->typedEntity<PlayerEntity>("player")->setCrouched(true);
+			scene()->typedEntity<PlayerEntity>("player")->setCrouched(true);
 			return true;
 		}
 	}
 	else if ((event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey::LCTRL)) {
-		m_scene->typedEntity<PlayerEntity>("player")->setCrouched(false);
+		scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
 		return true;
 	}
 
@@ -1321,178 +1356,58 @@ bool App::onEvent(const GEvent& event) {
 	return false;
 }
 
-
 void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 	GApp::onPostProcessHDR3DEffects(rd);
+}
 
-	rd->push2D(); {
-		const float scale = rd->viewport().width() / 1920.0f;
-		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+void App::drawHUD(RenderDevice *rd) {
+	// Draw the HUD elements
+	const Vector2 scale = Vector2(rd->viewport().width()/1920.0f, rd->viewport().height()/1080.0f);
 
-		// Reticle
-		Draw::rect2D(
-			(reticleTexture->rect2DBounds() * scale - reticleTexture->vector2Bounds() * scale / 2.0f) / 1.5f + rd->viewport().wh() / 2.0f,
-			rd, Color3::red(), reticleTexture);
+	// Draw the player health bar
+	if (sessConfig->hud.showPlayerHealthBar) {
+		const float health = scene()->typedEntity<PlayerEntity>("player")->health();
+		const Point2 location = Point2(sessConfig->hud.playerHealthBarPos.x, sessConfig->hud.playerHealthBarPos.y + m_debugMenuHeight);
+		const Point2 size = sessConfig->hud.playerHealthBarSize;
+		const Point2 border = sessConfig->hud.playerHealthBarBorderSize;
+		const Color4 borderColor = sessConfig->hud.playerHealthBarBorderColor;
+		const Color4 color = sessConfig->hud.playerHealthBarColors[1] * (1.0f - health) + sessConfig->hud.playerHealthBarColors[0] * health;
 
-		// Draw target health bars
-		if (sessConfig->showTargetHealthBars) {
-			for (auto const& target : targetArray) {
-				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
-					sessConfig->targetHealthBarSize,
-					sessConfig->targetHealthBarOffset,
-					sessConfig->targetHealthBarBorderSize,
-					sessConfig->targetHealthBarColors,
-					sessConfig->targetHealthBarBorderColor);
-			}
+		Draw::rect2D(Rect2D::xywh(location - border, size + border + border), rd, borderColor);
+		Draw::rect2D(Rect2D::xywh(location, size*Point2(health, 1.0f)), rd, color);
+	}
+	// Draw the ammo indicator
+	if (sessConfig->hud.showAmmo) {
+		Point2 lowerRight = Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height()));
+		hudFont->draw2D(rd,
+			format("%d/%d", sess->remainingAmmo(), sessConfig->weapon.maxAmmo),
+			lowerRight - sessConfig->hud.ammoPosition,
+			sessConfig->hud.ammoSize,
+			sessConfig->hud.ammoColor,
+			sessConfig->hud.ammoOutlineColor,
+			GFont::XALIGN_RIGHT,
+			GFont::YALIGN_BOTTOM
+		);
+	}
+
+	if (sessConfig->hud.showBanner && !emergencyTurbo) {
+		const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->hud.bannerVertVisible*hudTexture->height() * scale.y + debugMenuHeight());
+		Draw::rect2D((hudTexture->rect2DBounds() * scale - hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), hudTexture);
+
+		// Create strings for time remaining, progress in sessions, and score
+		float remainingTime = sess->getRemainingTrialTime();
+		float printTime = remainingTime > 0 ? remainingTime : 0.0f;
+		String time_string = format("%0.2f", printTime);
+		float prog = sess->getProgress();
+		String prog_string = "";
+		if (!isnan(prog)) {
+			prog_string = format("%d", (int)(100.0f*sess->getProgress())) + "%";
 		}
+		String score_string = format("%d", (int)(10 * sess->getScore()));
 
-		// Draw the combat text
-		if (sessConfig->showCombatText) {
-			Array<int> toRemove;
-			for (int i = 0; i < m_combatTextList.size(); i++) {
-				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
-				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
-			}
-			// Remove the expired elements here
-			m_combatTextList.removeNulls();
-		}
-
-		// Paint both sides by the width of latency measuring box.
-		Point2 latencyRect = sessConfig->clickPhotonSize;
-		// weapon ready status
-		if (sessConfig->renderWeaponStatus) {
-			// Draw the "active" cooldown box
-			if (sessConfig->cooldownMode == "box") {
-				float boxLeft = (float)m_framebuffer->width() * 0.0f;
-				if (sessConfig->weaponStatusSide == "right") {
-					// swap side
-					boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
-				}
-				Draw::rect2D(
-					Rect2D::xywh(
-						boxLeft,
-						(float)m_framebuffer->height() * (float)(sess->weaponCooldownPercent()),
-						(float)m_framebuffer->width() * latencyRect.x,
-						(float)m_framebuffer->height() * (float)(1.0 - sess->weaponCooldownPercent())
-					), rd, Color3::white() * 0.8f
-				);
-			}
-			else if (sessConfig->cooldownMode == "ring") {
-				// Draw cooldown "ring" instead of box
-				const float iRad = sessConfig->cooldownInnerRadius;
-				const float oRad = iRad + sessConfig->cooldownThickness;
-				const int segments = sessConfig->cooldownSubdivisions;
-				int segsToLight = static_cast<int>((1 - sess->weaponCooldownPercent())*segments);
-				// Create the segments
-				for (int i = 0; i < segsToLight; i++) {
-					const float inc = static_cast<float>(2 * pi() / segments);
-					const float theta = -i * inc;
-					Vector2 center = Vector2(m_framebuffer->width() / 2.0f, m_framebuffer->height() / 2.0f);
-					Array<Vector2> verts = {
-						center + Vector2(oRad*sin(theta), -oRad * cos(theta)),
-						center + Vector2(oRad*sin(theta + inc), -oRad * cos(theta + inc)),
-						center + Vector2(iRad*sin(theta + inc), -iRad * cos(theta + inc)),
-						center + Vector2(iRad*sin(theta), -iRad * cos(theta))
-					};
-					Draw::poly2D(verts, rd, sessConfig->cooldownColor);
-				}
-			}
-		}
-
-		// Click to photon latency measuring corner box
-		if (sessConfig->renderClickPhoton) {
-			float boxLeft = 0.0f;
-			if (sessConfig->clickPhotonSide == "right") {
-				// swap side
-				boxLeft = (float)m_framebuffer->width() * (1.0f - latencyRect.x);
-			}
-			// Draw the "active" box
-			Color3 cornerColor = (m_buttonUp) ? sessConfig->clickPhotonColors[0] : sessConfig->clickPhotonColors[1];
-			Draw::rect2D(
-				Rect2D::xywh(
-					boxLeft,
-					(float)m_framebuffer->height() * (sessConfig->clickPhotonVertPos - latencyRect.y / 2),
-					(float)m_framebuffer->width() * latencyRect.x,
-					(float)m_framebuffer->height() * latencyRect.y
-				), rd, cornerColor
-			);
-		}
-
-		// Draw the HUD elements
-		if (sessConfig->showHUD) {
-			const float vscale = rd->viewport().height() / (1080.0f);
-
-			// Draw the player health bar
-			if (sessConfig->showPlayerHealthBar) {
-				const float health = m_scene->typedEntity<PlayerEntity>("player")->health();
-				const Point2 location = Point2(sessConfig->playerHealthBarPos.x, sessConfig->playerHealthBarPos.y + m_debugMenuHeight * vscale);
-				const Point2 size = sessConfig->playerHealthBarSize;
-				const Point2 border = sessConfig->playerHealthBarBorderSize;
-				const Color4 borderColor = sessConfig->playerHealthBarBorderColor;
-				const Color4 color = sessConfig->playerHealthBarColors[1] * (1.0f - health) + sessConfig->playerHealthBarColors[0] * health;
-
-				Draw::rect2D(Rect2D::xywh(location - border, size + border + border), rd, borderColor);
-				Draw::rect2D(Rect2D::xywh(location, size*Point2(health, 1.0f)), rd, color);
-			}
-			// Draw the ammo indicator
-			if (sessConfig->showAmmo) {
-				Point2 lowerRight = Point2(static_cast<float>(m_framebuffer->width()), static_cast<float>(m_framebuffer->height()));
-				hudFont->draw2D(rd,
-					format("%d/%d", sess->remainingAmmo(), sessConfig->weapon.maxAmmo),
-					lowerRight - sessConfig->ammoPosition,
-					sessConfig->ammoSize,
-					sessConfig->ammoColor,
-					sessConfig->ammoOutlineColor,
-					GFont::XALIGN_RIGHT,
-					GFont::YALIGN_BOTTOM
-				);
-			}
-
-			if (sessConfig->showBanner && !emergencyTurbo) {
-				const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->bannerVertVisible*hudTexture->height() * vscale + debugMenuHeight() + 74.0f);
-				Draw::rect2D((hudTexture->rect2DBounds() * scale - hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), hudTexture);
-
-				// Create strings for time remaining, progress in sessions, and score
-				float remainingTime = sess->getRemainingTrialTime();
-				float printTime = remainingTime > 0 ? remainingTime : 0.0f;
-				String time_string = format("%0.2f", printTime);
-				float prog = sess->getProgress();
-				String prog_string = "";
-				if (!isnan(prog)) {
-					prog_string = format("%d", (int)(100.0f*sess->getProgress())) + "%";
-				}
-				String score_string = format("%d", (int)(10 * sess->getScore()));
-
-				hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale, scale * sessConfig->bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-				hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale * sessConfig->bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-				hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale * sessConfig->bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-			}
-		}
-
-		// Handle the feedback message
-		String message = sess->getFeedbackMessage();
-		if (!message.empty()) {
-			outputFont->draw2D(rd, message.c_str(),
-				(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-		}
-
-	} rd->pop2D();
-
-	if (sessConfig->shader != "") {
-		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
-		// latency queue copy
-			
-		// Copy the post-VFX HDR framebuffer
-		static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("temp distortion source", 256, 256, m_framebuffer->texture(0)->format()));
-		temp->resize(m_framebuffer->width(), m_framebuffer->height());
-		m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
-
-		rd->push2D(m_framebuffer); {
-			Args args;
-			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
-			args.setRect(rd->viewport());
-			LAUNCH_SHADER(sessConfig->shader, args);
-		} rd->pop2D();
+		hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale.x, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale.x * sessConfig->hud.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+		hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 	}
 }
 
@@ -1541,17 +1456,17 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 			hitTarget = true;
 
 			// Check if we need to add combat text for this damage
-			if (sessConfig->showCombatText) {
+			if (sessConfig->targetView.showCombatText) {
 				m_combatTextList.append(FloatingCombatText::create(
 					format("%2.0f", 100*damage),
 					m_combatFont,
-					sessConfig->combatTextSize,
-					sessConfig->combatTextColor,
-					sessConfig->combatTextOutline,
-					sessConfig->combatTextOffset,
-					sessConfig->combatTextVelocity,
-					sessConfig->combatTextFade,
-					sessConfig->combatTextTimeout));
+					sessConfig->targetView.combatTextSize,
+					sessConfig->targetView.combatTextColor,
+					sessConfig->targetView.combatTextOutline,
+					sessConfig->targetView.combatTextOffset,
+					sessConfig->targetView.combatTextVelocity,
+					sessConfig->targetView.combatTextFade,
+					sessConfig->targetView.combatTextTimeout));
 				m_combatTextList.last()->setFrame(target->frame());
 			}
 
@@ -1622,7 +1537,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 
     // play sounds
     if (destroyedTarget) {
-		m_explosionSound->play(sessConfig->explosionSoundVol);
+		m_explosionSound->play(sessConfig->audio.explosionSoundVol);
 		//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
 	}
 	else if(sessConfig->weapon.firePeriod > 0.0f || !sessConfig->weapon.autoFire) {
@@ -1682,39 +1597,9 @@ void App::onUserInput(UserInput* ui) {
 	GApp::onUserInput(ui);
 	(void)ui;
 
-	const shared_ptr<PlayerEntity>& player = m_scene->typedEntity<PlayerEntity>("player");
-	if (!m_userSettingsMode) {
-		if (notNull(player)) {
-			// Copied from old FPM code
-			double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
-			mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
-			const float walkSpeed = sessConfig->moveRate * units::meters() / units::seconds();
-			static const Vector3 jumpVelocity(0, sessConfig->jumpVelocity * units::meters() / units::seconds(), 0);
-
-			// Get walking speed here (and normalize if necessary)
-			Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
-			if (linear.magnitude() > 0) {
-				linear = linear.direction() * walkSpeed;
-			}
-			// Add jump here (if needed)
-			RealTime timeSinceLastJump = System::time() - m_lastJumpTime;
-			if (ui->keyPressed(GKey::SPACE) && timeSinceLastJump > sessConfig->jumpInterval) {
-				// Allow jumping if jumpTouch = False or if jumpTouch = True and the player is in contact w/ the map
-				if (!sessConfig->jumpTouch || player->inContact()) {
-					linear += jumpVelocity;
-					m_lastJumpTime = System::time();
-				}
-			}
-
-			// Get the mouse rotation here
-			Vector2 mouseRotate = ui->mouseDXY() * (float)mouseSensitivity / 2000.0f;
-			float yaw = mouseRotate.x;
-			float pitch = mouseRotate.y;
-
-			// Set the player translation/view velocities
-			player->setDesiredOSVelocity(linear);
-			player->setDesiredAngularVelocity(yaw, pitch);
-		}
+	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
+	if (!m_userSettingsMode && notNull(player)) {
+			player->updateFromInput(ui);
 	}
 	else {	// Zero the player velocity and rotation when in the setting menu
 		player->setDesiredOSVelocity(Vector3::zero());
@@ -1735,34 +1620,35 @@ void App::onUserInput(UserInput* ui) {
 		if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
 			// check for hit, add graphics, update target state
 			if ((sess->presentationState == PresentationState::task) && !m_userSettingsMode) {
-				if (sess->responseReady()) {
+				if (sess->canFire()) {
+
 					fired = true;
 					sess->countClick();						        // Count clicks
 					shared_ptr<TargetEntity> t = fire();			// Fire the weapon
 					if (notNull(t)) {								// Check if we hit anything
                         if (t->health() <= 0) {
                             // Target eliminated, must be 'destroy'.
-                            sess->accumulatePlayerAction("destroy", t->name());	
+                            sess->accumulatePlayerAction(PlayerActionType::Destroy, t->name());	
                         }
                         else {
                             // Target 'hit', but still alive.
-                            sess->accumulatePlayerAction("hit", t->name());
+                            sess->accumulatePlayerAction(PlayerActionType::Hit, t->name());
                         }
 					}
                     else {
                         // Target still present, must be 'miss'.
-                        sess->accumulatePlayerAction("miss");
+                        sess->accumulatePlayerAction(PlayerActionType::Miss);
                     }
 				}
 				// Avoid accumulating invalid clicks during holds...
                 else {
                     // Invalid click since the trial isn't ready for response
-                    sess->accumulatePlayerAction("invalid");
+                    sess->accumulatePlayerAction(PlayerActionType::Invalid);
                 }
 			}
 		}
 		else {
-			sess->accumulatePlayerAction("non-task"); // not happening in task state.
+			sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
 		}
 
 		// Check for developer mode editing here
@@ -1783,7 +1669,7 @@ void App::onUserInput(UserInput* ui) {
 				}
 			}
 			if (closestIdx != -1) {							// We are "hitting" this item
-				m_waypointWindow->setSelected(closestIdx);
+				m_waypointControls->setSelected(closestIdx);
 			}
 		}
 
@@ -1797,9 +1683,9 @@ void App::onUserInput(UserInput* ui) {
 		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
 	}	
 
-	if (m_lastReticleLoaded != reticleIndex) {
+	if (m_lastReticleLoaded != userTable.getCurrentUser()->reticleIndex) {
 		// Slider was used to change the reticle
-		setReticle(reticleIndex);
+		setReticle(userTable.getCurrentUser()->reticleIndex);
 	}
 
 	activeCamera()->filmSettings().setSensitivity(sceneBrightness);
@@ -1818,7 +1704,7 @@ void App::destroyTarget(int index) {
 void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {
 	GApp::onPose(surface, surface2D);
 
-	m_scene->poseExceptExcluded(surface, "player");
+	typedScene<PhysicsScene>()->poseExceptExcluded(surface, "player");
 
 	if (sessConfig->weapon.renderModel) {
 		const float yScale = -0.12f;
@@ -1832,14 +1718,7 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 }
 
 void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
- 
- //   // Faster than the full stats widget
-	//std::string expDebugStr = "%d fps ";
-	//expDebugStr += ex->getDebugStr(); // debugging message
- //   debugFont->draw2D(rd, format(expDebugStr.c_str(), iRound(renderDevice->stats().smoothFrameRate)), Point2(10,10), 12.0f, Color3::yellow());
-
     // Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
-
 	// Track the instantaneous frame duration (no smoothing) in a circular queue
 	if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
 		m_frameDurationQueue.dequeue();
@@ -1860,6 +1739,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 	rd->push2D(); {
 		const float scale = rd->viewport().width() / 1920.0f;
+		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 		// FPS display (faster than the full stats widget)
 		if (renderFPS) {
@@ -1875,8 +1755,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			}
 
 			msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
-
-			outputFont->draw2D(rd, msg, (Point2(30, 28) * scale).floor(), floor(20.0f * scale), Color3::yellow());
+			outputFont->draw2D(rd, msg, Point2(rd->viewport().width()*0.75f, rd->viewport().height()*0.05f).floor(), floor(20.0f*scale), Color3::yellow());
 		}
 
 		// Handle recording indicator
@@ -1885,7 +1764,130 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			outputFont->draw2D(rd, "Recording Position", Point2(window()->width()*0.9f, m_debugMenuHeight*scale), 20.0f, Color3::red());
 		}
 
+		// Reticle
+		UserConfig* user = userTable.getCurrentUser();
+		float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleShrinkTimeS), 1.0f), 0.0f);
+		float rScale = tscale*user->reticleScale[0]+(1.0f-tscale)*user->reticleScale[1];
+		Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
+		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds()/ 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
+
+		// Draw target health bars
+		if (sessConfig->targetView.showHealthBars) {
+			for (auto const& target : targetArray) {
+				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
+					sessConfig->targetView.healthBarSize,
+					sessConfig->targetView.healthBarOffset,
+					sessConfig->targetView.healthBarBorderSize,
+					sessConfig->targetView.healthBarColors,
+					sessConfig->targetView.healthBarBorderColor);
+			}
+		}
+
+		// Draw the combat text
+		if (sessConfig->targetView.showCombatText) {
+			Array<int> toRemove;
+			for (int i = 0; i < m_combatTextList.size(); i++) {
+				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
+				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
+			}
+			// Remove the expired elements here
+			m_combatTextList.removeNulls();
+		}
+
+		// Paint both sides by the width of latency measuring box.
+		Point2 latencyRect = sessConfig->clickToPhoton.size;
+		// weapon ready status
+		if (sessConfig->hud.renderWeaponStatus) {
+			// Draw the "active" cooldown box
+			if (sessConfig->hud.cooldownMode == "box") {
+				float boxLeft = (float)rd->viewport().width() * 0.0f;
+				if (sessConfig->hud.weaponStatusSide == "right") {
+					// swap side
+					boxLeft = (float)rd->viewport().width() * (1.0f - latencyRect.x);
+				}
+				Draw::rect2D(
+					Rect2D::xywh(
+						boxLeft,
+						(float)rd->viewport().height() * (float)(sess->weaponCooldownPercent()),
+						(float)rd->viewport().width() * latencyRect.x,
+						(float)rd->viewport().height() * (float)(1.0 - sess->weaponCooldownPercent())
+					), rd, Color3::white() * 0.8f
+				);
+			}
+			else if (sessConfig->hud.cooldownMode == "ring") {
+				// Draw cooldown "ring" instead of box
+				const float iRad = sessConfig->hud.cooldownInnerRadius;
+				const float oRad = iRad + sessConfig->hud.cooldownThickness;
+				const int segments = sessConfig->hud.cooldownSubdivisions;
+				int segsToLight = static_cast<int>(ceilf((1 - sess->weaponCooldownPercent())*segments));
+				// Create the segments
+				for (int i = 0; i < segsToLight; i++) {
+					const float inc = static_cast<float>(2 * pi() / segments);
+					const float theta = -i * inc;
+					Vector2 center = Vector2(rd->viewport().width() / 2.0f, rd->viewport().height() / 2.0f);
+					Array<Vector2> verts = {
+						center + Vector2(oRad*sin(theta), -oRad * cos(theta)),
+						center + Vector2(oRad*sin(theta + inc), -oRad * cos(theta + inc)),
+						center + Vector2(iRad*sin(theta + inc), -iRad * cos(theta + inc)),
+						center + Vector2(iRad*sin(theta), -iRad * cos(theta))
+					};
+					Draw::poly2D(verts, rd, sessConfig->hud.cooldownColor);
+				}
+			}
+		}
+
+		// Click to photon latency measuring corner box
+		if (sessConfig->clickToPhoton.enabled) {
+			float boxLeft = 0.0f;
+			if (sessConfig->clickToPhoton.side == "right") {
+				// swap side
+				boxLeft = (float)rd->viewport().width() * (1.0f - latencyRect.x);
+			}
+			// Draw the "active" box
+			Color3 cornerColor = (m_buttonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+			Draw::rect2D(
+				Rect2D::xywh(
+					boxLeft,
+					(float)rd->viewport().height() * (sessConfig->clickToPhoton.vertPos - latencyRect.y / 2),
+					(float)rd->viewport().width() * latencyRect.x,
+					(float)rd->viewport().height() * latencyRect.y
+				), rd, cornerColor
+			);
+		}
+
+		// Draw the HUD here
+		if (sessConfig->hud.enable) {
+			drawHUD(rd);
+		}
+
+		// Handle the feedback message
+		String message = sess->getFeedbackMessage();
+		if (!message.empty()) {
+			outputFont->draw2D(rd, message.c_str(),
+				(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+		}
+
+
 	} rd->pop2D();
+
+	if (sessConfig->render.shader != "") {
+		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
+		// latency queue copy
+
+		// Think about whether or not this is the right place to run the shader...
+
+		// Copy the post-VFX HDR framebuffer
+		static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("temp distortion source", 256, 256, m_framebuffer->texture(0)->format()));
+		temp->resize(m_framebuffer->width(), m_framebuffer->height());
+		m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
+
+		rd->push2D(m_framebuffer); {
+			Args args;
+			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
+			args.setRect(rd->viewport());
+			LAUNCH_SHADER(sessConfig->render.shader, args);
+		} rd->pop2D();
+	}
 
 	// Might not need this on the reaction trial
 	// This is rendering the GUI. Can remove if desired.
@@ -1893,15 +1895,17 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 }
 
 /** Set the currently reticle by index */
-void App::setReticle(int r) {
-	m_lastReticleLoaded = reticleIndex = clamp(0, r, numReticles);
+void App::setReticle(const int r) {
+	int idx = clamp(0, r, numReticles);
+	if(idx == m_lastReticleLoaded) return;	// Nothing to do here, setting current reticle
 	if (r < numReticles) {
-		reticleTexture = Texture::fromFile(System::findDataFile(format("gui/reticle/reticle-%03d.png", reticleIndex)));
+		reticleTexture = Texture::fromFile(System::findDataFile(format("gui/reticle/reticle-%03d.png", idx)));
 	}
 	else {
 		// This special case is added to allow a custom reticle not in the gui/reticle/reticle-[x].png format
 		reticleTexture = Texture::fromFile(System::findDataFile("gui/reticle.png"));
 	}
+	m_lastReticleLoaded = idx;
 }
 
 void App::onCleanup() {

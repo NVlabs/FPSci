@@ -1,15 +1,15 @@
 #pragma once
 
 #include <G3D/G3D.h>
-#include "Param.h"
+#include "TargetEntity.h"
 
 /** Configure how the application should start */
 class StartupConfig {
 public:
-    bool playMode = true;					///< Sets whether the experiment is run in full-screen "playMode" (true for real data)
-    String experimentConfigPath = "";		///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
-    String userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
-    bool audioEnable = true;                ///< Audio on/off
+    bool	playMode = true;					///< Sets whether the experiment is run in full-screen "playMode" (true for real data)
+    String	experimentConfigPath = "";			///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
+    String	userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
+    bool	audioEnable = true;					///< Audio on/off
 
     StartupConfig() {};
 
@@ -57,21 +57,21 @@ public:
 class SystemConfig {
 public:
 	// Output/runtime read parameters
-	String cpuName;			///< The vendor name of the CPU being used
-	int coreCount;			///< Core count for the CPU being used
-	String gpuName;			///< The vendor name of the GPU being used
-	long memCapacityMB;		///< The capacity of memory (RAM) in MB
-	String displayName;		///< The vendor name of the display (not currently working)
-	int displayXRes;		///< The horizontal size of the display in pixels
-	int displayYRes;		///< The vertical size of the display in pixels
-	int displayXSize;		///< The horizontal size of the display in mm
-	int displayYSize;		///< The vertical size of the display in mm
+	String	cpuName;			///< The vendor name of the CPU being used
+	int		coreCount;			///< Core count for the CPU being used
+	String	gpuName;			///< The vendor name of the GPU being used
+	long	memCapacityMB;		///< The capacity of memory (RAM) in MB
+	String	displayName;		///< The vendor name of the display (not currently working)
+	int		displayXRes;		///< The horizontal size of the display in pixels
+	int		displayYRes;		///< The vertical size of the display in pixels
+	int		displayXSize;		///< The horizontal size of the display in mm
+	int		displayYSize;		///< The vertical size of the display in mm
 
 	// Input parameters
-	bool hasLogger = false;			///< Indicates that a hardware logger is present in the system
-	String loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
-	bool hasSync = false;			///< Indicates that a hardware sync will occur via serial card DTR signal
-	String syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
+	bool	hasLogger = false;			///< Indicates that a hardware logger is present in the system
+	String	loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
+	bool	hasSync = false;			///< Indicates that a hardware sync will occur via serial card DTR signal
+	String	syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
 
 	SystemConfig() {};
 
@@ -210,10 +210,15 @@ public:
 /**Class for managing user configuration*/
 class UserConfig {
 public:
-    String id = "anon";						///< Subject ID (as recorded in output DB)
-    double mouseDPI = 800.0;				///< Mouse DPI setting
-    double cmp360 = 12.75;					///< Mouse sensitivity, reported as centimeters per 360�
-	int currentSession = 0;					///< Currently selected session
+    String			id					= "anon";						///< Subject ID (as recorded in output DB)
+    double			mouseDPI			= 800.0;						///< Mouse DPI setting
+    double			cmp360				= 12.75;						///< Mouse sensitivity, reported as centimeters per 360�
+	int				currentSession		= 0;							///< Currently selected session
+	int				reticleIndex		= -1;							///< Reticle to show for this user
+	Array<float>	reticleScale		= { 1.0f, 1.0f };				///< Scale for the user's reticle
+	Array<Color4>	reticleColor		= {Color4(1.0, 0.0, 0.0, 1.0),	///< Color for the user's reticle
+										Color4(1.0, 0.0, 0.0, 1.0)};	
+	float			reticleShrinkTimeS	= 0.3f;							///< Time for reticle to contract after expand on shot (in seconds)
 
 	UserConfig() {};
 
@@ -227,6 +232,10 @@ public:
             reader.getIfPresent("id", id);
             reader.getIfPresent("mouseDPI", mouseDPI);
             reader.getIfPresent("cmp360", cmp360);
+			reader.getIfPresent("reticleIndex", reticleIndex);
+			reader.getIfPresent("reticleScale", reticleScale);
+			reader.getIfPresent("reticleColor", reticleColor);
+			reader.getIfPresent("reticleShrinkTime", reticleShrinkTimeS);
 			break;
         default:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
@@ -247,8 +256,8 @@ public:
 /** Class for loading a user table and getting user info */
 class UserTable {
 public:
-	String currentUser = "None";			///< The currently active user
-	Array<UserConfig> users = {};			///< A list of valid users
+	String					currentUser = "None";			///< The currently active user
+	Array<UserConfig>		users = {};						///< A list of valid users
 
 	UserTable() {};
 
@@ -342,10 +351,10 @@ public:
 /** Class for handling user status */
 class UserSessionStatus {
 public:
-	String id = "anon";								///< User ID
-	Array<String> sessionOrder = {};				///< Array containing session ordering
-	Array<String> completedSessions = {};			///< Array containing all completed session ids for this user
-	static Array<String> defaultSessionOrder;		///< Default session order
+	String					id = "anon";					///< User ID
+	Array<String>			sessionOrder = {};				///< Array containing session ordering
+	Array<String>			completedSessions = {};			///< Array containing all completed session ids for this user
+	static Array<String>	defaultSessionOrder;			///< Default session order
 
 	UserSessionStatus() {}
 
@@ -497,25 +506,25 @@ public:
 /** Weapon configuration class */
 class WeaponConfig {
 public:
-	String id = "default";												///< Id by which to refer to this weapon
-	int maxAmmo = 10000;												///< Max ammo (clicks) allowed per trial (set large for laser mode)
-	float firePeriod = 0.5;												///< Minimum fire period (set to 0 for laser mode)
-	bool autoFire = false;												///< Fire repeatedly when mouse is held? (set true for laser mode)
-	float damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
-	String fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	///< Sound to play on fire
-	float fireSoundVol = 0.5f;											///< Volume for fire sound
-	bool renderModel = false;											///< Render a model for the weapon?
-	Vector3 muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
-	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
-	bool renderMuzzleFlash = false;										///< Render a muzzle flash when the weapon fires?
-	bool renderDecals = true;											///< Render decals when the shots miss?
-	bool renderBullets = false;											///< Render bullets leaving the weapon
-	float bulletSpeed = 1.0f;											///< Speed to draw at for rendered rounds (in m/s)
+	String	id = "default";												///< Id by which to refer to this weapon
+	int		maxAmmo = 10000;											///< Max ammo (clicks) allowed per trial (set large for laser mode)
+	float	firePeriod = 0.5;											///< Minimum fire period (set to 0 for laser mode)
+	bool	autoFire = false;											///< Fire repeatedly when mouse is held? (set true for laser mode)
+	float	damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
+	String	fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	///< Sound to play on fire
+	float	fireSoundVol = 0.5f;										///< Volume for fire sound
+	bool	renderModel = false;										///< Render a model for the weapon?
+	Vector3	muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
+	bool	renderMuzzleFlash = false;									///< Render a muzzle flash when the weapon fires?
+	bool	renderDecals = true;										///< Render decals when the shots miss?
+	bool	renderBullets = false;										///< Render bullets leaving the weapon
+	float	bulletSpeed = 1.0f;											///< Speed to draw at for rendered rounds (in m/s)
 	//String missDecal = "bullet-decal-256x256.png";					///< The decal to place where the shot misses
-	float fireSpread = 0;												///< The spread of the fire
-	float damageRollOffAim = 0;											///< Damage roll off w/ aim
-	float damageRollOffDistance = 0;									///< Damage roll of w/ distance
+	float	fireSpread = 0;												///< The spread of the fire
+	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
+	float	damageRollOffDistance = 0;									///< Damage roll of w/ distance
 	//String reticleImage;												///< Reticle image to show for this weapon
+	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
 
 	WeaponConfig() {
 	// Suggested any for "default" model, leaving this here for now... breaks debug config if uncommented
@@ -597,25 +606,27 @@ public:
 };
 
 /** Class for representing a given target configuration */
-class TargetConfig {
+class TargetConfig : public ReferenceCountedObject {
 public:
-	String id;												///< Trial ID to indentify affiliated trial runs
-	//bool elevLocked = false;								///< Elevation locking
-	bool upperHemisphereOnly = false;                       ///< Limit flying motion to upper hemisphere only
-	Array<float> distance = { 30.0f, 40.0f };				///< Distance to the target
-	Array<float> motionChangePeriod = { 1.0f, 1.0f };		///< Range of motion change period in seconds
-	Array<float> speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
-	Array<float> eccH = { 5.0f, 15.0f };					///< Range of initial horizontal eccentricity
-	Array<float> eccV = { 0.0f, 2.0f };						///< Range of initial vertical eccentricity
-	Array<float> visualSize = { 0.2f, 0.2f };				///< Visual size of the target (in degrees)
-	bool jumpEnabled = false;								///< Flag indicating whether the target jumps
-	Array<float> jumpPeriod = { 2.0f, 2.0f };				///< Range of time period between jumps in seconds
-	Array<float> jumpSpeed = { 2.0f, 5.5f };				///< Range of jump speeds in meters/s
-	Array<float> accelGravity = { 9.8f, 9.8f };				///< Range of acceleration due to gravity in meters/s^2
+	String			id;										///< Trial ID to indentify affiliated trial runs
+	//bool    		elevLocked = false;						///< Elevation locking
+	bool			upperHemisphereOnly = false;            ///< Limit flying motion to upper hemisphere only
+	bool			logTargetTrajectory = true;				///< Log this target's trajectory
+	Array<float>	distance = { 30.0f, 40.0f };			///< Distance to the target
+	Array<float>	motionChangePeriod = { 1.0f, 1.0f };	///< Range of motion change period in seconds
+	Array<float>	speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
+	Array<float>	eccH = { 5.0f, 15.0f };					///< Range of initial horizontal eccentricity
+	Array<float>	eccV = { 0.0f, 2.0f };					///< Range of initial vertical eccentricity
+	Array<float>	size = { 0.2f, 0.2f };			///< Visual size of the target (in degrees)
+	bool			jumpEnabled = false;					///< Flag indicating whether the target jumps
+	Array<float>	jumpPeriod = { 2.0f, 2.0f };			///< Range of time period between jumps in seconds
+	Array<float>	jumpSpeed = { 2.0f, 5.5f };				///< Range of jump speeds in meters/s
+	Array<float>	accelGravity = { 9.8f, 9.8f };			///< Range of acceleration due to gravity in meters/s^2
 	Array<Destination> destinations;						///< Array of destinations to traverse
-	String destSpace = "world";								///< Space to use for destinations (implies offset) can be "world" or "player"
-	float respawnCount = 0.0f;								///< Number of times to respawn
-	AABox bbox = AABox();
+	String			destSpace = "world";					///< Space to use for destinations (implies offset) can be "world" or "player"
+	int				respawnCount = 0;						///< Number of times to respawn
+	AABox			bbox;									///< Bounding box
+	Array<bool>		axisLock = { false, false, false };					///< Array of axis lock values
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
@@ -647,10 +658,11 @@ public:
 			}
 			//reader.getIfPresent("elevationLocked", elevLocked);
 			reader.getIfPresent("upperHemisphereOnly", upperHemisphereOnly);
+			reader.getIfPresent("logTargetTrajectory", logTargetTrajectory);
 			reader.getIfPresent("distance", distance);
 			reader.getIfPresent("motionChangePeriod", motionChangePeriod);
 			reader.getIfPresent("speed", speed);
-			reader.getIfPresent("visualSize", visualSize);
+			reader.getIfPresent("visualSize", size);
 			reader.getIfPresent("eccH", eccH);
 			reader.getIfPresent("eccV", eccV);
 			reader.getIfPresent("jumpEnabled", jumpEnabled);
@@ -669,6 +681,17 @@ public:
 			else {
 				reader.getIfPresent("bounds", bbox);
 			}
+			if (reader.getIfPresent("axisLocked", axisLock)) {
+				if (axisLock.size() < 3) {
+					throw format("Must provide 3 fields (X,Y,Z) for axis lock! Only %d provided! See target: \"%s\"", axisLock.size(), id);
+				}
+				else if (axisLock.size() > 3) {
+					logPrintf("Provided axis lock for target \"%s\" has >3 fields, using the first 3...", id);
+				}
+				if (axisLock[0] && axisLock[1] && axisLock[2] && speed[0] != 0.0f && speed[1] != 0.0f) {
+					throw format("Target \"%s\" locks all axes but has non-zero speed!", id);
+				}
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
@@ -680,8 +703,9 @@ public:
 		Any a(Any::TABLE);
 		a["id"] = id;
 		a["respawnCount"] = respawnCount;
-		a["visualSize"] = visualSize;
+		a["visualSize"] = size;
 		a["modelSpec"] = modelSpec;
+		a["logTargetTrajectory"] = logTargetTrajectory;
 		if (destinations.size() > 0) {
 			a["destSpace"] = destSpace;
 			a["destinations"] = destinations;
@@ -690,12 +714,13 @@ public:
 			a["upperHemisphereOnly"] = upperHemisphereOnly;
 			a["distance"] = distance;
 			a["motionChangePeriod"] = motionChangePeriod;
-			a["visualSize"] = visualSize;
+			a["visualSize"] = size;
 			a["eccH"] = eccH;
 			a["eccV"] = eccV;
 			a["jumpEnabled"] = jumpEnabled;
 			a["jumpPeriod"] = jumpPeriod;
 			a["accelGravity"] = accelGravity;
+			a["axisLocked"] = axisLock;
 		}
 		return a;
 	};
@@ -708,9 +733,9 @@ public:
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */
 class TrialCount {
 public:
-	Array<String> ids;			///< Trial ID list
-	int count = 1;				///< Count of trials to be performed
-	static int defaultCount;	///< Default count to use
+	Array<String>	ids;			///< Trial ID list
+	int				count = 1;		///< Count of trials to be performed
+	static int		defaultCount;	///< Default count to use
 
 	TrialCount() {};
 
@@ -795,7 +820,7 @@ public:
 
 			// Get the question prompt
 			if(!reader.getIfPresent("prompt", prompt)){
-				throw "A \prompt\" field must be provided with every question!";
+				throw "A \"prompt\" field must be provided with every question!";
 			}
 			reader.getIfPresent("title", title);
 			break;
@@ -807,156 +832,118 @@ public:
 
 };
 
-class FpsConfig : public ReferenceCountedObject {
+class RenderConfig {
 public:
-	int	settingsVersion = 1;						///< Settings version
-	String sceneName = "";							///< Scene name
-
 	// Rendering parameters
-	float frameRate = 0.0f;							///< Target (goal) frame rate (in Hz)
-	int frameDelay = 0;								///< Integer frame delay (in frames)
-	String shader = "";								///< Option for a custom shader name
+	float           frameRate = 0.0f;							///< Target (goal) frame rate (in Hz)
+	int             frameDelay = 0;								///< Integer frame delay (in frames)
+	String          shader = "";								///< Option for a custom shader name
+	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
 
-	// Timing parameters
-	float readyDuration = 0.5f;						///< Time in ready state in seconds
-	float taskDuration = 100000.0f;					///< Maximum time spent in any one task
-	float feedbackDuration = 1.0f;					///< Time in feedback state in seconds
-
-	// Trial count
-	int defaultTrialCount = 5;						///< Default trial count
-
-	// View parameters
-	float hFoV = 103.0f;							///< Field of view (horizontal) for the user
-	float moveRate = 0.0f;							///< Player move rate (defaults to no motion)
-	float playerHeight = 1.5f;						///< Height for the player view (in walk mode)
-	float crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
-	float jumpVelocity = 7.0f;						///< Jump velocity for the player
-	float jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
-	bool jumpTouch = true;							///< Require the player to be touch a surface to jump?
-	Vector3 playerGravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
-
-	WeaponConfig weapon = WeaponConfig();			///< Weapon to be used
-
-	// HUD parameters
-	bool showHUD = false;							///< Master control for all HUD elements
-	bool showBanner = false;						///< Show the banner display
-	float bannerVertVisible = 0.41f;				///< Vertical banner visibility
-	float bannerLargeFontSize = 30.0f;				///< Banner percent complete font size
-	float bannerSmallFontSize = 14.0f;				///< Banner detail font size
-	String hudFont = "dominant.fnt";				///< Font to use for Heads Up Display
-
-	// Player health bar
-	bool showPlayerHealthBar = false;										///< Display a player health bar?
-	Point2 playerHealthBarSize = Point2(200.0f, 20.0f);						///< Player health bar size (in pixels)
-	Point2 playerHealthBarPos = Point2(74.0f, 74.0f);						///< Player health bar position (in pixels)
-	Point2 playerHealthBarBorderSize = Point2(2.0f, 2.0f);					///< Player health bar border size
-	Color4 playerHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Player health bar border color
-	Array<Color4> playerHealthBarColors = {									///< Player health bar start/end colors
-		Color4(0.0, 1.0, 0.0, 1.0),
-		Color4(1.0, 0.0, 0.0, 1.0)
-	};
-
-	// Click-to-photon
-	bool renderClickPhoton = false;                 ///< Render click to photon box
-	String clickPhotonSide = "right";               ///< "right" for right side, otherwise left
-	Point2 clickPhotonSize = Point2(0.05f, 0.035f);	///< Size of the click-to-photon area (ratio of screen space)
-	float clickPhotonVertPos = 0.5f;				///< Percentage of the screen down to locate the box
-	Array<Color3> clickPhotonColors = {				///< Colors to apply to click to photon box
-		Color3::white() * 0.2f,
-		Color3::white() * 0.8f
-	};
-
-	// Weapon status
-	bool showAmmo = false;													///< Display remaining ammo
-	Point2 ammoPosition = Point2(64.0f, 64.0f);								///< Position of the ammo indicator text
-	float ammoSize = 24.0f;													///< Font size for ammo indicator text
-	Color4 ammoColor = Color4(1.0, 1.0, 1.0, 1.0);							///< Color for ammo indicator text
-	Color4 ammoOutlineColor = Color4(0.0, 0.0, 0.0, 1.0);					///< Outline color for ammo indicator text
-	bool renderWeaponStatus = true;											///< Display weapon cooldown
-	String cooldownMode = "ring";											///< Currently "ring" and "box" are supported
-	String weaponStatusSide = "left";										///< Only applied in "box" mode, can be "right" or "left"
-	float cooldownInnerRadius = 40.0f;										///< Inner radius for cooldown ring
-	float cooldownThickness = 10.0f;										///< Thickness of cooldown ring
-	int cooldownSubdivisions = 64;											///< Number of polygon divisions in the "ring"
-	Color4 cooldownColor = Color4(1.0f, 1.0f, 1.0f, 0.75f);					///< Cooldown ring color when active (transparent when inactive)
-
-	// Target health bars
-	Array<Color3> targetHealthColors = {									///< Target start/end color (based on target health)
-		Color3(0.0, 1.0, 0.0),
-		Color3(1.0, 0.0, 0.0)
-	};
-	bool showTargetHealthBars = false;										///< Display a target health bar?
-	Point2 targetHealthBarSize = Point2(100.0f, 10.0f);						///< Health bar size (in pixels)
-	Point3 targetHealthBarOffset = Point3(0.0f, -50.0f, 0.0f);				///< Offset from target to health bar (in pixels)
-	Point2 targetHealthBarBorderSize = Point2(2.0f, 2.0f);					///< Thickness of the target health bar border
-	Color4 targetHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Health bar border color
-	Array<Color4> targetHealthBarColors = {									///< Target health bar start/end color
-		Color4(0.0, 1.0, 0.0, 1.0),
-		Color4(1.0, 0.0, 0.0, 1.0)
-	};
-
-	// Sounds
-	String explosionSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
-	float explosionSoundVol = 10.0f;
-
-	// Floating combat text controls
-	bool showCombatText = false;								///< Display floating combat text?
-	String combatTextFont = "dominant.fnt";						///< Font to use for combat text
-	float combatTextSize = 16.0;								///< Font size for floating combat text
-	Color4 combatTextColor = Color4(1.0, 0.0, 0.0, 1.0);		///< The main color for floating combat text
-	Color4 combatTextOutline = Color4(0.0, 0.0, 0.0, 1.0);		///< Combat text outline color
-	Point3 combatTextOffset = Point3(0.0, -10.0, 0.0);			///< Initial offset for combat text
-	Point3 combatTextVelocity = Point3(0.0, -100.0, 0.0);		///< Move rate/vector for combat text
-	float combatTextFade = 0.98f;								///< Fade rate for combat text (0 implies don't fade)	
-	float combatTextTimeout = 0.5f;								///< Time for combat text to disappear (in seconds)
-
-	// Reference target
-	float refTargetSize = 0.01f;								///< Size of the reference target
-	Color3 refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
-
-	// Questions
-	Array<Question> questions;
-
-	// Constructors
-	FpsConfig(const Any& any) {
-		load(any);
-	}
-
-	FpsConfig(const Any& any, FpsConfig defaultConfig) {
-		*this = defaultConfig;
-		load(any);
-	}
-
-	FpsConfig() {}
-
-	void load(const Any& any) {
-		AnyTableReader reader(any);
-		reader.getIfPresent("settingsVersion", settingsVersion);
+	void load(AnyTableReader reader, int settingsVersion=1) {
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("sceneName", sceneName);
 			reader.getIfPresent("frameRate", frameRate);
 			reader.getIfPresent("frameDelay", frameDelay);
-			reader.getIfPresent("feedbackDuration", feedbackDuration);
-			reader.getIfPresent("readyDuration", readyDuration);
-			reader.getIfPresent("taskDuration", taskDuration);
-			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
+			reader.getIfPresent("shader", shader);
 			reader.getIfPresent("horizontalFieldOfView", hFoV);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a) const {
+		a["frameRate"] = frameRate;
+		a["frameDelay"] = frameDelay;
+		a["horizontalFieldOfView"] = hFoV;
+		a["shader"] = shader;
+		return a;
+	}
+
+};
+
+class PlayerConfig {
+public:
+	// View parameters
+	float           moveRate = 0.0f;							///< Player move rate (defaults to no motion)
+	float           height = 1.5f;						///< Height for the player view (in walk mode)
+	float           crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
+	float           jumpVelocity = 7.0f;						///< Jump velocity for the player
+	float           jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
+	bool            jumpTouch = true;							///< Require the player to be touch a surface to jump?
+	Vector3         playerGravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
 			reader.getIfPresent("moveRate", moveRate);
-			reader.getIfPresent("playerHeight", playerHeight);
+			reader.getIfPresent("playerHeight", height);
 			reader.getIfPresent("crouchHeight", crouchHeight);
 			reader.getIfPresent("jumpVelocity", jumpVelocity);
 			reader.getIfPresent("jumpInterval", jumpInterval);
 			reader.getIfPresent("jumpTouch", jumpTouch);
 			reader.getIfPresent("playerGravity", playerGravity);
-			reader.getIfPresent("weapon", weapon);
-			reader.getIfPresent("renderClickPhoton", renderClickPhoton);
-			reader.getIfPresent("clickPhotonSide", clickPhotonSide);
-			reader.getIfPresent("clickPhotonSize", clickPhotonSize);
-			reader.getIfPresent("clickPhotonVertPos", clickPhotonVertPos);
-			reader.getIfPresent("clickPhotonColors", clickPhotonColors);
-			reader.getIfPresent("shader", shader);
-			reader.getIfPresent("showHUD", showHUD);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a) const {
+		a["moveRate"] = moveRate;
+		a["playerHeight"] = height;
+		a["crouchHeight"] = crouchHeight;
+		a["jumpVelocity"] = jumpVelocity;
+		a["jumpInterval"] = jumpInterval;
+		a["jumpTouch"] = jumpTouch;
+		a["playerGravity"] = playerGravity;
+		return a;
+	}
+
+};
+
+class HudConfig {
+public:
+	// HUD parameters
+	bool            enable = false;							            ///< Master control for all HUD elements
+	bool            showBanner = false;						                ///< Show the banner display
+	float           bannerVertVisible = 0.41f;				                ///< Vertical banner visibility
+	float           bannerLargeFontSize = 30.0f;				            ///< Banner percent complete font size
+	float           bannerSmallFontSize = 14.0f;				            ///< Banner detail font size
+	String          hudFont = "dominant.fnt";				                ///< Font to use for Heads Up Display
+
+	// Player health bar
+	bool            showPlayerHealthBar = false;							///< Display a player health bar?
+	Point2          playerHealthBarSize = Point2(200.0f, 20.0f);			///< Player health bar size (in pixels)
+	Point2          playerHealthBarPos = Point2(10.0f, 10.0f);				///< Player health bar position (in pixels)
+	Point2          playerHealthBarBorderSize = Point2(2.0f, 2.0f);			///< Player health bar border size
+	Color4          playerHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Player health bar border color
+	Array<Color4>   playerHealthBarColors = {								///< Player health bar start/end colors
+		Color4(0.0, 1.0, 0.0, 1.0),
+		Color4(1.0, 0.0, 0.0, 1.0)
+	};
+
+	// Weapon status
+	bool            showAmmo = false;											///< Display remaining ammo
+	Point2          ammoPosition = Point2(10.0f, 10.0f);						///< Position of the ammo indicator text
+	float           ammoSize = 24.0f;											///< Font size for ammo indicator text
+	Color4          ammoColor = Color4(1.0, 1.0, 1.0, 1.0);						///< Color for ammo indicator text
+	Color4          ammoOutlineColor = Color4(0.0, 0.0, 0.0, 1.0);				///< Outline color for ammo indicator text
+	bool            renderWeaponStatus = true;									///< Display weapon cooldown
+	String          cooldownMode = "ring";										///< Currently "ring" and "box" are supported
+	String          weaponStatusSide = "left";									///< Only applied in "box" mode, can be "right" or "left"
+	float           cooldownInnerRadius = 40.0f;								///< Inner radius for cooldown ring
+	float           cooldownThickness = 10.0f;									///< Thickness of cooldown ring
+	int             cooldownSubdivisions = 64;									///< Number of polygon divisions in the "ring"
+	Color4          cooldownColor = Color4(1.0f, 1.0f, 1.0f, 0.75f);			///< Cooldown ring color when active (transparent when inactive)
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("showHUD", enable);
 			reader.getIfPresent("showBanner", showBanner);
 			reader.getIfPresent("hudFont", hudFont);
 			reader.getIfPresent("showPlayerHealthBar", showPlayerHealthBar);
@@ -977,60 +964,15 @@ public:
 			reader.getIfPresent("cooldownThickness", cooldownThickness);
 			reader.getIfPresent("cooldownSubdivisions", cooldownSubdivisions);
 			reader.getIfPresent("cooldownColor", cooldownColor);
-			reader.getIfPresent("explosionSound", explosionSound);
-			reader.getIfPresent("explosionSoundVol", explosionSoundVol);
-			reader.getIfPresent("showTargetHealthBars", showTargetHealthBars);
-			reader.getIfPresent("targetHealthBarSize", targetHealthBarSize);
-			reader.getIfPresent("targetHealthBarOffset", targetHealthBarOffset);
-			reader.getIfPresent("targetHealthBarBorderSize", targetHealthBarBorderSize);
-			reader.getIfPresent("targetHealthBarBorderColor", targetHealthBarBorderColor);
-			reader.getIfPresent("targetHealthColors", targetHealthColors);
-			reader.getIfPresent("targetHealthBarColors", targetHealthBarColors);
-			reader.getIfPresent("showFloatingCombatText", showCombatText);
-			reader.getIfPresent("floatingCombatTextSize", combatTextSize);
-			reader.getIfPresent("floatingCombatTextFont", combatTextFont);
-			reader.getIfPresent("floatingCombatTextColor", combatTextColor);
-			reader.getIfPresent("floatingCombatTextOutlineColor", combatTextOutline);
-			reader.getIfPresent("floatingCombatTextOffset", combatTextOffset);
-			reader.getIfPresent("floatingCombatTextVelocity", combatTextVelocity);
-			reader.getIfPresent("floatingCombatTextFade", combatTextFade);
-			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
-			reader.getIfPresent("referenceTargetSize", refTargetSize);
-			reader.getIfPresent("referenceTargetColor", refTargetColor);
-			reader.getIfPresent("questions", questions);
 			break;
 		default:
-			debugPrintf("Settings version '%d' not recognized in FpsConfig.\n", settingsVersion);
+			throw format("Did not recognize settings version: %d", settingsVersion);
 			break;
 		}
 	}
 
-	Any toAny(const bool forceAll = true) const {
-		Any a(Any::TABLE);
-		a["settingsVersion"] = settingsVersion;
-		a["sceneName"] = sceneName;
-		a["frameRate"] = frameRate;
-		a["frameDelay"] = frameDelay;
-		a["feedbackDuration"] = feedbackDuration;
-		a["readyDuration"] = readyDuration;
-		a["taskDuration"] = taskDuration;
-		a["defaultTrialCount"] = defaultTrialCount;
-		a["horizontalFieldOfView"] = hFoV;
-		a["moveRate"] = moveRate;
-		a["playerHeight"] = playerHeight;
-		a["crouchHeight"] = crouchHeight;
-		a["jumpVelocity"] = jumpVelocity;
-		a["jumpInterval"] = jumpInterval;
-		a["jumpTouch"] = jumpTouch;
-		a["playerGravity"] = playerGravity;
-		a["weapon"] =  weapon;
-		a["renderClickPhoton"] = renderClickPhoton;
-		a["clickPhotonSide"] = clickPhotonSide;
-		a["clickPhotonSize"] = clickPhotonSize;
-		a["clickPhotonVertPos"] = clickPhotonVertPos;
-		a["clickPhotonColors"] = clickPhotonColors;
-		a["shader"] = shader;
-		a["showHUD"] = showHUD;
+	Any addToAny(Any a) const {
+		a["showHUD"] = enable;
 		a["showBanner"] = showBanner;
 		a["hudFont"] = hudFont;
 		a["showPlayerHealthBar"] = showPlayerHealthBar;
@@ -1051,15 +993,80 @@ public:
 		a["cooldownThickness"] = cooldownThickness;
 		a["cooldownSubdivisions"] = cooldownSubdivisions;
 		a["cooldownColor"] = cooldownColor;
-		a["explosionSound"] = explosionSound;
-		a["explosionSoundVol"] = explosionSoundVol;
-		a["showTargetHealthBars"] = showTargetHealthBars;
-		a["targetHealthBarSize"] = targetHealthBarSize;
-		a["targetHealthBarOffset"] = targetHealthBarOffset;
-		a["targetHealthBarBorderSize"] = targetHealthBarBorderSize;
-		a["targetHealthBarBorderColor"] = targetHealthBarBorderColor;
-		a["targetHealthColors"] = targetHealthColors;
-		a["targetHealthBarColors"] = targetHealthBarColors;
+		return a;
+	}
+};
+
+class TargetViewConfig {
+public:
+	// Target color based on health
+	Array<Color3>   healthColors = {									    ///< Target start/end color (based on target health)
+		Color3(0.0, 1.0, 0.0),
+		Color3(1.0, 0.0, 0.0)
+	};
+
+	// Target health bars
+	bool            showHealthBars = false;									///< Display a target health bar?
+	Point2          healthBarSize = Point2(100.0f, 10.0f);					///< Health bar size (in pixels)
+	Point3          healthBarOffset = Point3(0.0f, -50.0f, 0.0f);			///< Offset from target to health bar (in pixels)
+	Point2          healthBarBorderSize = Point2(2.0f, 2.0f);				///< Thickness of the target health bar border
+	Color4          healthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);	///< Health bar border color
+	Array<Color4>   healthBarColors = {										///< Target health bar start/end color
+		Color4(0.0, 1.0, 0.0, 1.0),
+		Color4(1.0, 0.0, 0.0, 1.0)
+	};
+
+	// Floating combat text controls
+	bool            showCombatText = false;								///< Display floating combat text?
+	String          combatTextFont = "dominant.fnt";					///< Font to use for combat text
+	float           combatTextSize = 16.0;								///< Font size for floating combat text
+	Color4          combatTextColor = Color4(1.0, 0.0, 0.0, 1.0);		///< The main color for floating combat text
+	Color4          combatTextOutline = Color4(0.0, 0.0, 0.0, 1.0);		///< Combat text outline color
+	Point3          combatTextOffset = Point3(0.0, -10.0, 0.0);			///< Initial offset for combat text
+	Point3          combatTextVelocity = Point3(0.0, -100.0, 0.0);		///< Move rate/vector for combat text
+	float           combatTextFade = 0.98f;								///< Fade rate for combat text (0 implies don't fade)	
+	float           combatTextTimeout = 0.5f;							///< Time for combat text to disappear (in seconds)
+
+	// Reference/dummy target
+	float           refTargetSize = 0.01f;								///< Size of the reference target
+	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("showTargetHealthBars", showHealthBars);
+			reader.getIfPresent("targetHealthBarSize", healthBarSize);
+			reader.getIfPresent("targetHealthBarOffset", healthBarOffset);
+			reader.getIfPresent("targetHealthBarBorderSize", healthBarBorderSize);
+			reader.getIfPresent("targetHealthBarBorderColor", healthBarBorderColor);
+			reader.getIfPresent("targetHealthColors", healthColors);
+			reader.getIfPresent("targetHealthBarColors", healthBarColors);
+			reader.getIfPresent("showFloatingCombatText", showCombatText);
+			reader.getIfPresent("floatingCombatTextSize", combatTextSize);
+			reader.getIfPresent("floatingCombatTextFont", combatTextFont);
+			reader.getIfPresent("floatingCombatTextColor", combatTextColor);
+			reader.getIfPresent("floatingCombatTextOutlineColor", combatTextOutline);
+			reader.getIfPresent("floatingCombatTextOffset", combatTextOffset);
+			reader.getIfPresent("floatingCombatTextVelocity", combatTextVelocity);
+			reader.getIfPresent("floatingCombatTextFade", combatTextFade);
+			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
+			reader.getIfPresent("referenceTargetSize", refTargetSize);
+			reader.getIfPresent("referenceTargetColor", refTargetColor);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a) const {
+		a["showTargetHealthBars"] = showHealthBars;
+		a["targetHealthBarSize"] = healthBarSize;
+		a["targetHealthBarOffset"] = healthBarOffset;
+		a["targetHealthBarBorderSize"] = healthBarBorderSize;
+		a["targetHealthBarBorderColor"] = healthBarBorderColor;
+		a["targetHealthColors"] = healthColors;
+		a["targetHealthBarColors"] = healthBarColors;
 		a["showFloatingCombatText"] = showCombatText;
 		a["floatingCombatTextSize"] = combatTextSize;
 		a["floatingCombatTextFont"] = combatTextFont;
@@ -1075,15 +1082,212 @@ public:
 	}
 };
 
+class ClickToPhotonConfig {
+public:
+	// Click-to-photon
+	bool            enabled = false;                            ///< Render click to photon box
+	String          side = "right";                             ///< "right" for right side, otherwise left
+	Point2          size = Point2(0.05f, 0.035f);				///< Size of the click-to-photon area (ratio of screen space)
+	float           vertPos = 0.5f;				                ///< Percentage of the screen down to locate the box
+	Array<Color3>   colors = {				                    ///< Colors to apply to click to photon box
+		Color3::white() * 0.2f,
+		Color3::white() * 0.8f
+	};
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("renderClickPhoton", enabled);
+			reader.getIfPresent("clickPhotonSide", side);
+			reader.getIfPresent("clickPhotonSize", size);
+			reader.getIfPresent("clickPhotonVertPos", vertPos);
+			reader.getIfPresent("clickPhotonColors", colors);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a) const {
+		a["renderClickPhoton"] = enabled;
+		a["clickPhotonSide"] = side;
+		a["clickPhotonSize"] = size;
+		a["clickPhotonVertPos"] = vertPos;
+		a["clickPhotonColors"] = colors;
+		return a;
+	}
+};
+
+class AudioConfig {
+public:
+	// Sounds
+	String          explosionSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
+	float           explosionSoundVol = 10.0f;
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("explosionSound", explosionSound);
+			reader.getIfPresent("explosionSoundVol", explosionSoundVol);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a) const {
+		a["explosionSound"] = explosionSound;
+		a["explosionSoundVol"] = explosionSoundVol;
+		return a;
+	}
+};
+
+class TimingConfig {
+public:
+	// Timing parameters
+	float           readyDuration = 0.5f;						///< Time in ready state in seconds
+	float           taskDuration = 100000.0f;					///< Maximum time spent in any one task
+	float           feedbackDuration = 1.0f;					///< Time in feedback state in seconds
+	// Trial count
+	int             defaultTrialCount = 5;						///< Default trial count
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("feedbackDuration", feedbackDuration);
+			reader.getIfPresent("readyDuration", readyDuration);
+			reader.getIfPresent("taskDuration", taskDuration);
+			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a) const {
+		a["feedbackDuration"] = feedbackDuration;
+		a["readyDuration"] = readyDuration;
+		a["taskDuration"] = taskDuration;
+		a["defaultTrialCount"] = defaultTrialCount;
+		return a;
+	}
+};
+
+class LoggerConfig {
+public:
+	// Enable flags for log
+	bool enable					= true;		///< High-level logging enable flag (if false no output is created)							
+	bool logTargetTrajectories	= true;		///< Log target trajectories in table?
+	bool logFrameInfo			= true;		///< Log frame info in table?
+	bool logPlayerActions		= true;		///< Log player actions in table?
+	bool logTrialResponse		= true;		///< Log trial response in table?
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("logEnable", enable);
+			reader.getIfPresent("logTargetTrajectories", logTargetTrajectories);
+			reader.getIfPresent("logFrameInfo", logFrameInfo);
+			reader.getIfPresent("logPlayerActions", logPlayerActions);
+			reader.getIfPresent("logTrialResponse", logTrialResponse);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a) const {
+		a["logEnable"] = enable;
+		a["logTargetTrajectories"] = logTargetTrajectories;
+		a["logFrameInfo"] = logFrameInfo;
+		a["logPlayerActions"] = logPlayerActions;
+		a["logTrialResponse"] = logTrialResponse;
+		return a;
+	}
+};
+
+class FpsConfig : public ReferenceCountedObject {
+public:
+	int	            settingsVersion = 1;						///< Settings version
+	String          sceneName = "";							    ///< Scene name
+
+	// Sub structures
+	RenderConfig		render;									///< Render related config parameters
+	PlayerConfig		player;									///< Player related config parameters
+	HudConfig			hud;									///< HUD related config parameters
+	AudioConfig			audio;									///< Audio related config parameters
+	TimingConfig		timing;									///< Timing related config parameters
+	TargetViewConfig	targetView;								///< Target drawing config parameters
+	ClickToPhotonConfig clickToPhoton;							///< Click to photon config parameters
+	LoggerConfig		logger;									///< Logging configuration
+	WeaponConfig		weapon;			                        ///< Weapon to be used
+	Array<Question> questionArray;								///< Array of questions for this experiment/trial
+
+	// Constructors
+	FpsConfig(const Any& any) {
+		load(any);
+	}
+
+	FpsConfig(const Any& any, const FpsConfig& defaultConfig) {
+		*this = defaultConfig;
+		load(any);
+	}
+
+	FpsConfig() {}
+
+	void load(const Any& any) {
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+		render.load(reader, settingsVersion);
+		player.load(reader, settingsVersion);
+		hud.load(reader, settingsVersion);
+		targetView.load(reader, settingsVersion);
+		clickToPhoton.load(reader, settingsVersion);
+		audio.load(reader, settingsVersion);
+		timing.load(reader, settingsVersion);
+		logger.load(reader, settingsVersion);
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("sceneName", sceneName);
+			reader.getIfPresent("weapon", weapon);
+			reader.getIfPresent("questions", questionArray);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in FpsConfig.\n", settingsVersion);
+			break;
+		}
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["settingsVersion"] = settingsVersion;
+		a["sceneName"] = sceneName;
+		a = render.addToAny(a);
+		a = player.addToAny(a);
+		a = hud.addToAny(a);
+		a = targetView.addToAny(a);
+		a = clickToPhoton.addToAny(a);
+		a = audio.addToAny(a);
+		a = timing.addToAny(a);
+		a = logger.addToAny(a);
+		a["weapon"] =  weapon;
+		return a;
+	}
+};
+
 /** Configuration for a session worth of trials */
 class SessionConfig : public FpsConfig {
 public:
-	String id;									///< Session ID
-	String  sessDescription = "Session";		///< String indicating whether session is training or real
-	Array<TrialCount> trials;					///< Array of trials (and their counts) to be performed
-	static FpsConfig defaultConfig;
+	String				id;								///< Session ID
+	String				description = "Session";		///< String indicating whether session is training or real
+	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
+	static FpsConfig	defaultConfig;
 
-	SessionConfig() : FpsConfig(defaultConfig) {};
+	SessionConfig() : FpsConfig(defaultConfig) {}
 
 	static shared_ptr<SessionConfig> create() {
 		return createShared<SessionConfig>();
@@ -1091,13 +1295,13 @@ public:
 
 	/** Load from Any */
 	SessionConfig(const Any& any) : FpsConfig(any, defaultConfig) {
-		TrialCount::defaultCount = defaultTrialCount;
+		TrialCount::defaultCount = timing.defaultTrialCount;
 		AnyTableReader reader(any);
 		switch (settingsVersion) {
 		case 1:
 			// Unique session info
 			reader.getIfPresent("id", id);
-			reader.getIfPresent("description", sessDescription);
+			reader.getIfPresent("description", description);
 			if (!reader.getIfPresent("trials", trials)){
 				throw format("A \"trials\" array must be specified with each session! See session: \"%s\"", id);
 			}
@@ -1110,10 +1314,11 @@ public:
 
 	Any toAny(const bool forceAll = true) const {
 		// Get the base any config
-		Any a = ((FpsConfig*)this)->toAny();
+		Any a = FpsConfig::toAny();
+
 		// Update w/ the session-specific fields
 		a["id"] = id;
-		a["description"] = sessDescription;
+		a["description"] = description;
 		a["trials"] = trials;
 		return a;
 	}
@@ -1121,7 +1326,7 @@ public:
 	/** Get the total number of trials in this session */
 	int getTotalTrials(void) {
 		int count = 0;
-		for (TrialCount tc : trials) {
+		for (const TrialCount& tc : trials) {
 			count += tc.count;
 		}
 		return count;
@@ -1131,7 +1336,7 @@ public:
 /** Experiment configuration */
 class ExperimentConfig : public FpsConfig {
 public:
-	String expDescription = "Experiment";				///< Experiment description
+	String description = "Experiment";					///< Experiment description
 	Array<SessionConfig> sessions;						///< Array of sessions
 	Array<TargetConfig> targets;						///< Array of trial configs   
 
@@ -1143,7 +1348,7 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			// Experiment-specific info
-			reader.getIfPresent("description", expDescription);
+			reader.getIfPresent("description", description);
 			if(!reader.getIfPresent("targets", targets)){												// Get the targets (required)
 
 				throw "At least one target must be specified for the experiment!";
@@ -1160,108 +1365,66 @@ public:
 	}
 
 	/** Get an array of session IDs */
-	Array<String> getSessIds() {
-		Array<String> ids;
-		for (auto sess : sessions) {
-			ids.append(sess.id);
-		}
-		return ids;
+	void getSessionIds(Array<String>& ids) const {
+        ids.fastClear();
+		for (const SessionConfig& session : sessions) { ids.append(session.id); }
 	}
 
 	/** Get a session config based on its ID */
-	shared_ptr<SessionConfig> getSessionConfigById(String id) {
-		for (int i = 0; i < sessions.size(); i++) {
-			if (!sessions[i].id.compare(id)) return std::make_shared<SessionConfig>(sessions[i]);
+	shared_ptr<SessionConfig> getSessionConfigById(const String& id) const {
+		for (const SessionConfig& session : sessions) {
+			if (! session.id.compare(id)) {
+                return SessionConfig::createShared<SessionConfig>(session);
+            }
 		}
 		return nullptr;
 	}
 
 	/** Get the index of a session in the session array (by ID) */
-	int getSessionIndex(String id) {
-		for (int i = 0; i < sessions.size(); i++) {
-			auto aa = sessions[i];
-			if (!sessions[i].id.compare(id)) return i;
+	int getSessionIndex(const String& id) const {
+        debugAssert(sessions.size() >= 0 && sessions.size() < 100000);
+        for (int i = 0; i < sessions.size(); ++i) {
+			if (! sessions[i].id.compare(id)) {
+                return i;
+            }
 		}
-        // wasn't found, probably will segfault
-        return -1;
+		throw format("Could not find session:\"%s\"", id);
 	}
 	
-	// Get a pointer to a target config by ID
-	shared_ptr<TargetConfig> getTargetConfigById(String id) {
-		for (int i = 0; i < targets.size(); i++) {
-			if (!targets[i].id.compare(id)) {
-				return std::make_shared<TargetConfig>(targets[i]);
+	/** Get a pointer to a target config by ID */
+	shared_ptr<TargetConfig> getTargetConfigById(const String& id) const {
+        for (const TargetConfig& target : targets) { 
+			if (!target.id.compare(id)) {
+				return TargetConfig::createShared<TargetConfig>(target);
 			}
 		}
 		return nullptr;
 	}
 
-	/** Get experiment conditions for a given session (by ID) */
-	Array<Array<Param>> getExpConditions(String id) {
-		int idx = getSessionIndex(id);
-		return getExpConditions(idx);
+	Array<Array<shared_ptr<TargetConfig>>> getTargetsForSession(const String& id) const {
+		return getTargetsForSession(getSessionIndex(id));
 	}
 
-	/** This is a kludge to quickly create param-based experiment conditions w/ appropriate parameters */
-	Array<Array<Param>> getExpConditions(int sessionIndex) {
-		Array<Array<Param>> sessParams;
-		for (int j = 0; j < sessions[sessionIndex].trials.size(); j++) {
-			// Append each trial worth of targets
-			Array<Param> targets;
-			for (String id : sessions[sessionIndex].trials[j].ids) {
-				// Append training target
-				Param p;
-				shared_ptr<TargetConfig> target = getTargetConfigById(id);
-				p.add("minEccH", target->eccH[0]);
-				p.add("minEccV", target->eccV[0]);
-				p.add("maxEccH", target->eccH[1]);
-				p.add("maxEccV", target->eccV[1]);
-				p.add("targetFrameRate", sessions[sessionIndex].frameRate);
-				p.add("targetFrameLag", (float)sessions[sessionIndex].frameDelay);
-				p.add("minVisualSize", target->visualSize[0]);
-				p.add("maxVisualSize", target->visualSize[1]);
-				p.add("minMotionChangePeriod", target->motionChangePeriod[0]);
-				p.add("maxMotionChangePeriod", target->motionChangePeriod[1]);
-				p.add("upperHemisphereOnly", (float)target->upperHemisphereOnly);
-				p.add("minSpeed", target->speed[0]);
-				p.add("maxSpeed", target->speed[1]);
-				p.add("minDistance", target->distance[0]);
-				p.add("maxDistance", target->distance[1]);
-				p.add("minJumpPeriod", target->jumpPeriod[0]);
-				p.add("maxJumpPeriod", target->jumpPeriod[1]);
-				p.add("minJumpSpeed", target->jumpSpeed[0]);
-				p.add("maxJumpSpeed", target->jumpSpeed[1]);
-				p.add("minGravity", target->accelGravity[0]);
-				p.add("maxGravity", target->accelGravity[1]);
-				p.add("trial_idx", (float)j);
-				p.add("trialCount", (float)sessions[sessionIndex].trials[j].count);
-				p.add("id", id.c_str());
-				p.add("sessionID", sessions[sessionIndex].id.c_str());
-				p.add("destCount", (float)target->destinations.size());
-				p.add("destSpace", target->destSpace.c_str());
-				p.add("respawns", (float)target->respawnCount);
-				p.destinations = target->destinations;
-				p.bounds = target->bbox;
-				String modelName = target->modelSpec["filename"];
-				p.add("model", modelName.c_str());
-				if (target->jumpEnabled) {
-					p.add("jumpEnabled", "true");
-				}
-				else {
-					p.add("jumpEnabled", "false");
-				}
-				targets.append(p);
+	Array<Array<shared_ptr<TargetConfig>>> getTargetsForSession(int sessionIndex) const {
+		Array<Array<shared_ptr<TargetConfig>>> trials;
+		// Iterate through the trials
+		for (int i = 0; i < sessions[sessionIndex].trials.size(); i++) {
+			Array<shared_ptr<TargetConfig>> targets;
+			for (String id : sessions[sessionIndex].trials[i].ids) {
+				const shared_ptr<TargetConfig> t = getTargetConfigById(id);
+				targets.append(t);
 			}
-			sessParams.append(targets);
+			trials.append(targets);
 		}
-		return sessParams;
+		return trials;
 	}
 
 	Any toAny(const bool forceAll = true) const {
 		// Get the base any config
-		Any a = ((FpsConfig*)this)->toAny();
+		Any a = FpsConfig::toAny();
+
 		// Write the experiment configuration-specific 
-		a["description"] = expDescription;
+		a["description"] = description;
 		a["targets"] = targets;
 		a["sessions"] = sessions;
 		return a;
@@ -1269,8 +1432,9 @@ public:
 
 	/** Get the experiment config from file */
 	static ExperimentConfig load(String filename) {
-		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, build a default
-			ExperimentConfig ex = ExperimentConfig();
+        // if file not found, build a default
+        if (!FileSystem::exists(System::findDataFile(filename, false))) {
+            ExperimentConfig ex = ExperimentConfig();
 			ex.toAny().save("experimentconfig.Any");
 			SessionConfig::defaultConfig = (FpsConfig)ex;
 			return ex;
@@ -1281,12 +1445,12 @@ public:
 	/** Print the experiment config to the log */
 	void printToLog() {
 		logPrintf("-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-			expDescription, sceneName, feedbackDuration, readyDuration, taskDuration, weapon.maxAmmo);
+			description, sceneName, timing.feedbackDuration, timing.readyDuration, timing.taskDuration, weapon.maxAmmo);
 		// Iterate through sessions and print them
 		for (int i = 0; i < sessions.size(); i++) {
 			SessionConfig sess = sessions[i];
 			logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n",
-				sess.id, sess.frameRate, sess.frameDelay);
+				sess.id, sess.render.frameRate, sess.render.frameDelay);
 			// Now iterate through each run
 			for (int j = 0; j < sess.trials.size(); j++) {
 				logPrintf("\t\tTrial Run Config: IDs = %s, Count = %d\n",
@@ -1296,8 +1460,9 @@ public:
 		// Iterate through trials and print them
 		for (int i = 0; i < targets.size(); i++) {
 			TargetConfig target = targets[i];
-			logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tUpper Hemisphere Only = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n",
-				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.visualSize[0], target.visualSize[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1]);
+			logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tUpper Hemisphere Only = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n\tAxis Lock = [%s, %s, %s]\n",
+				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.size[0], target.size[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1],
+				target.axisLock[0]?"true":"false", target.axisLock[1] ? "true" : "false", target.axisLock[2] ? "true" : "false");
 		}
 	}
 };

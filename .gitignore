@@ -1,7 +1,11 @@
+# Don't check in the VS (Code) directories (if used)
 .vscode
-*.pyc
 .vs
+# Don't check in any compiled results
 x64
+# Avoid .pyc files (everywhere)
+*.pyc
+# Don't check-in any of these data-files
 data-files/debugging_db.db
 data-files/g3d-license.txt
 data-files/log.txt
@@ -9,12 +13,17 @@ data-files/*.db
 data-files/*.csv
 data-files/*.pdn
 data-files/result_data
-data-files/experimentconfig.Any
-data-files/userconfig.Any
-data-files/systemconfig.Any
-data-files/startupconfig.Any
-data-files/userstatus.Any
+data-files/*.Any
+data-files/*.jpg
+#Don't check in any results
 "scripts/event logger/software/Logs"
 scripts/configs/*.Any
 results/
+# This avoids checking-in experiment-specific files
 data-files/sound
+data-files/scene
+data-files/model
+# This stuff ignores any packaged outputs
+packaged
+*.zip
+*.tar

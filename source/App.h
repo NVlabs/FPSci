@@ -10,14 +10,13 @@
  */
 #pragma once
 #include <G3D/G3D.h>
-#include "TargetEntity.h"
 #include "ExperimentConfig.h"
-#include "Session.h"
-#include "Logger.h"
-#include "PhysicsScene.h"
-#include <chrono>
+#include "TargetEntity.h"
 #include "GuiElements.h"
 #include "PyLogger.h"
+
+class Session;
+class G3Dialog;
 
 // An enum that tracks presentation state within a trial. Duration defined in session.h
 // ready: ready scene that happens before beginning of a task.
@@ -117,8 +116,6 @@ protected:
 	shared_ptr<VisibleEntity>		m_explosion;						///< Model for target destroyed decal
 	RealTime						m_explosionEndTime;					///< Time for end of explosion
 		
-	shared_ptr<PhysicsScene>		m_scene;							///< Pointer to the physics scene
-
 	const int m_MatTableSize = 10;										///< Set this to set # of color "levels"
 	Array<shared_ptr<UniversalMaterial>>	m_materials;				///< This stores the color materials
 
@@ -127,21 +124,19 @@ protected:
 	GuiLabel*						m_mouseDPILabel;					///< Label for mouse DPI field
 	GuiLabel*						m_cm360Label;						///< Label for cm/360 field
 
-	Array<Destination> m_waypoints;			///< Store way points for path creation here
-	Array<DebugID> m_waypointIDs;			///< Storage for IDs for point spheres
-	Array<DebugID> m_arrowIDs;				///< Storage for IDs for connecting arrows	
-	shared_ptr<WaypointDisplay> m_waypointWindow;
-	shared_ptr<PlayerControls> m_playerWindow;
-	shared_ptr<RenderControls> m_renderWindow;
-	DebugID m_highlighted;					///< ID for the waypoint window highlighter
+	Array<Destination>				m_waypoints;						///< Store way points for path creation here
+	Array<DebugID>					m_waypointIDs;						///< Storage for IDs for point spheres
+	Array<DebugID>					m_arrowIDs;							///< Storage for IDs for connecting arrows	
+	shared_ptr<WaypointDisplay>		m_waypointControls;
+	shared_ptr<PlayerControls>		m_playerControls;
+	shared_ptr<RenderControls>		m_renderControls;
+	shared_ptr<WeaponControls>		m_weaponControls;
+	DebugID							m_highlighted;						///< ID for the waypoint window highlighter
 		
-	RealTime m_recordStart = nan();			///< Start time for recording
-	int m_previewIdx = -1;					///< Index of the preview target in the targetArray
-	float m_lastRecordTime = 0.0;			///< Time storage for recording
+	RealTime						m_recordStart = nan();				///< Start time for recording
+	int								m_previewIdx = -1;					///< Index of the preview target in the targetArray
+	float							m_lastRecordTime = 0.0;				///< Time storage for recording
 	
-	float m_resetHeight;					///< Height at which to reset player location (fell through floor)
-	Point3 m_spawnPosition;					///< Position for player spawn
-
 	// Internal controls for waypoint visualization
 	const Color4 m_waypointColor = Color4(0.0f, 1.0f, 0.0f, 0.7f);	///< Color for waypoint visualization
 	const Color4 m_highlightColor = Color4(1.0f, 1.0f, 0.0f, 1.0f);	///< Highlight color
@@ -194,10 +189,13 @@ protected:
 
 	/** Called from onInit */
 	void makeGUI();
+	void updateControls();
 	void loadModels();
 	void destroyTarget(int index);
 	void updateUser(void);
     void updateUserGUI();
+
+	void drawHUD(RenderDevice *rd);
 
 public:
 	/* Moving from proctected so that Experiment classes can use it. */
@@ -235,8 +233,8 @@ public:
 
 	bool renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
 	int  displayLagFrames = 0;			///< Count of frames of latency to add
+	float lastSetFrameRate = 0.0f;		///< Last set frame rate
 	const int numReticles = 55;			///< Total count of reticles available to choose from
-	int  reticleIndex = numReticles;	///< Start by selecting the last reticle
 	float sceneBrightness = 1.0f;		///< Scene brightness scale factor
 
 	/** Call to change the reticle. */
@@ -270,16 +268,13 @@ public:
 	void showPlayerControls();
 	/** Show the render controls */
 	void showRenderControls();
+	/** Show the weapon controls */
+	void showWeaponControls();
 	/** Save scene w/ updated player position */
 	void exportScene();
 
 	float debugMenuHeight() {
 		return m_debugMenuHeight;
-	}
-
-	/** Increment the current reticle index */
-	void nextReticle() {
-		setReticle((reticleIndex + 1) % (numReticles+1));
 	}
 
     /** Creates a random target with motion based on parameters 
@@ -290,7 +285,7 @@ public:
     @param scale size of target TODO: is this radius or diameter in meters?*/
     void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
 
-	shared_ptr<TargetEntity> spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color, String id, int paramIdx, int respawns = 0, String name="");
+	shared_ptr<TargetEntity> spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color, String id, int paramIdx, int respawns = 0, String name="", bool isLogged=true);
 
 	/** Creates a random target in front of the player */
 	void spawnRandomTarget();
@@ -309,8 +304,10 @@ public:
 		Point3 orbitCenter,
 		String modelName,
 		int paramIdx,
+		Array<bool> axisLock,
 		int respawns = 0,
-		String name = ""
+		String name = "",
+		bool isLogged=true
 	);
 
 	/** Creates a jumping target */
@@ -328,8 +325,10 @@ public:
 		float targetDistance,
 		String modelName,
 		int paramIdx,
+		Array<bool> axisLock,
 		int respawns = 0,
-		String name = ""
+		String name = "",
+		bool isLogged=true
 	);
 
 
@@ -340,7 +339,8 @@ public:
 	String getDropDownSessId(void);
 	void markSessComplete(String id);
 	void updateSessionPress(void);
-	void updateSession(String id);
+	void updateSession(const String& id);
+	void updateParameters(int frameDelay, float frameRate);
 	void presentQuestion(Question question);
 
 	String getDropDownUserId(void);
@@ -390,7 +390,6 @@ public:
 		Vector2 screenSize = resolution * pixelSize;
 	} m_screenSetting;
 
-	//Color3                          m_reticleColor;
 	bool							m_buttonUp = true;
 };
 

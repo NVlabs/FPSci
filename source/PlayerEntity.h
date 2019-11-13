@@ -1,11 +1,8 @@
-#ifndef PlayerEntity_h
-#define PlayerEntity_h
-
+#pragma once
 #include <G3D/G3D.h>
 
 class PlayerEntity : public VisibleEntity {
 protected:
-	float			m_jumpVelocity = 0.0f;
     Vector3         m_desiredOSVelocity;
     /** In object-space */
     Sphere          m_collisionProxySphere;
@@ -19,7 +16,14 @@ protected:
     /** Unused for rendering, for use by a fps cam. */
     float           m_headTilt;
 
+	float			m_respawnHeight;
+	Point3			m_respawnPosition;
+
+	RealTime		m_lastJumpTime;
+
 	bool			m_crouched = false;					///< Is the player crouched?
+	bool			m_inAir = true;						///< Is the player in the air (i.e. not in collision w/ a ground plane)?
+	float			m_lastJumpVelocity;
 	float			m_health = 1.0f;					///< Player health storage
 
 	bool			m_inContact = false;				///< Is the player in contact w/ anything?
@@ -39,6 +43,15 @@ protected:
 
 public:
 
+	float moveRate;
+	float mouseSensitivity;
+
+	float jumpVelocity;
+	RealTime jumpInterval;
+	bool jumpTouch = true;
+
+	float height;
+	float crouchHeight;
 
     /** \brief Computes all triangles that could be hit during a
         slideMove with the current \a velocity, allowing that the
@@ -68,24 +81,38 @@ public:
      collisions.  Called from onSimulation(). */
     bool slideMove(SimTime deltaTime);
 
+	float heightOffset(float height) const;
 
     /** In world space */
     Sphere collisionProxy() const {
         return Sphere(m_frame.pointToWorldSpace(m_collisionProxySphere.center), m_collisionProxySphere.radius);
     }
 
+	const CFrame getCameraFrame() const {
+		CFrame f = frame();
+		f.translation += Point3(0.0f, heightOffset(m_crouched ? crouchHeight : height), 0.0f);
+		return f;
+	}
+
     /** In radians... not used for rendering, use for first-person cameras */
     float headTilt() const {
         return m_headTilt;
     }
-
-	float heightOffset(float height);
-
+	   
 	void setCrouched(bool crouched);
-	bool crouched(void);
-	bool inContact(void);
 
-	float health(void);
+	void setRespawnPosition(Point3 pos) {
+		m_respawnPosition = pos;
+	}
+
+	void setRespawnHeight(float height) {
+		m_respawnHeight = height;
+	}
+
+	float health(void) {
+		return m_health;
+	}
+
 	bool doDamage(float damage);
 
 	float heading() {
@@ -126,9 +153,7 @@ public:
     virtual Any toAny(const bool forceAll = false) const override;
     
     virtual void onPose(Array<shared_ptr<Surface> >& surfaceArray) override;
-
-    virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;
+	virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;
+	void updateFromInput(UserInput* ui);
 
 };
-
-#endif

@@ -28,14 +28,12 @@
 #pragma once
 
 #include <G3D/G3D.h>
-#include "Param.h"
 #include "ExperimentConfig.h"
-#include "sqlHelpers.h"
-#include "Logger.h"
-#include "Dialogs.h"
 #include <ctime>
 
 class App;
+class TargetEntity;
+class Logger;
 
 // Simple timer for measuring time offsets
 class Timer
@@ -51,14 +49,69 @@ public:
 	};
 };
 
+ struct FrameInfo {
+	FILETIME time;
+	//float idt = 0.0f;
+	float sdt = 0.0f;
+
+	FrameInfo() {};
+
+	FrameInfo(FILETIME t, float simDeltaTime) {
+		time = t;
+		sdt = simDeltaTime;
+	}
+};
+
+struct TargetLocation {
+	FILETIME time;
+	String name = "";
+	Point3 position = Point3::zero();
+
+	TargetLocation() {};
+
+	TargetLocation(FILETIME t, String targetName, Point3 targetPosition) {
+		time = t;
+		name = targetName;
+		position = targetPosition;
+	}
+};
+
+enum PlayerActionType{
+	None,
+	Aim,
+	Invalid,
+	Nontask,
+	Miss,
+	Hit,
+	Destroy
+};
+
+struct PlayerAction {
+	FILETIME			time;
+	Point2				viewDirection = Point2::zero();
+	Point3				position = Point3::zero();
+	PlayerActionType	action = PlayerActionType::None;
+	String				targetName = "";
+
+	PlayerAction() {};
+
+	PlayerAction(FILETIME t, Point2 playerViewDirection, Point3 playerPosition, PlayerActionType playerAction, String name) {
+		time = t;
+		viewDirection = playerViewDirection;
+		position = playerPosition;
+		action = playerAction;
+		targetName = name;
+	}
+};
+
 class Session : public ReferenceCountedObject {
 protected:
-	App* m_app;											///< Pointer to the app
-	shared_ptr<SessionConfig> m_config = nullptr;		///< The session this experiment will run
-	shared_ptr<Logger> m_logger = nullptr;				///< Output results logger
+	App* m_app = nullptr;								///< Pointer to the app
+	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
+	shared_ptr<Logger> m_logger;						///< Output results logger
 
 	// Experiment management					
-	int m_response;										///< 0 indicates failure (didn't hit the target), 1 indicates sucess (hit the target)
+	int m_remainingTargets;								///< Number of remaining targets (calculated at the end of the session)
 	int m_destroyedTargets = 0;							///< Number of destroyed target
 	int m_clickCount = 0;								///< Count of total clicks in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
@@ -66,16 +119,16 @@ protected:
 
 	int m_currTrialIdx;									///< Current trial
 	int m_currQuestionIdx = -1;							///< Current question index
-	Array<int> m_remaining;								///< Completed flags
-	Array<Array<Param>> m_trialParams;					///< Trial (target) parameters
+	Array<int> m_remainingTrials;								///< Completed flags
+	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;			///< Target configurations by trial
 
 	// Time-based parameters
-	double m_taskExecutionTime;							///< Task completion time for the most recent trial
+	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial
 	String m_taskStartTime;								///< Recorded task start timestamp							
 	String m_taskEndTime;								///< Recorded task end timestamp
-	double m_totalRemainingTime = 0;					///< Time remaining in the trial
-	double m_scoreboardDuration = 10.0;					///< Show the score for at least this amount of seconds.
-	double m_lastFireAt = 0.f;							///< Time of the last shot
+	RealTime m_totalRemainingTime = 0;					///< Time remaining in the trial
+	RealTime m_scoreboardDuration = 10.0;				///< Show the score for at least this amount of seconds.
+	RealTime m_lastFireAt = 0.f;						///< Time of the last shot
 	Timer m_timer;										///< Timer used for timing tasks	
 	// Could move timer above to stopwatch in future
 	//Stopwatch stopwatch;			
@@ -84,9 +137,9 @@ protected:
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	
 	// Reported data storage
-	Array<Array<String>> m_playerActions;				///< Storage for player action (hit, miss, aim)
-	Array<Array<String>> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
-	Array<Array<String>> m_frameInfo;					///< Storage for frame info (sdt, idt, rdt)
+	Array<PlayerAction> m_playerActions;				///< Storage for player action (hit, miss, aim)
+	Array<TargetLocation> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
+	Array<FrameInfo> m_frameInfo;						///< Storage for frame info (sdt, idt, rdt)
 
 	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app) {
 		m_config = config;
@@ -113,24 +166,31 @@ public:
 		return createShared<Session>(app, config);
 	}
 
-	void randomizePosition(shared_ptr<TargetEntity> target);
-	/** creates a new target with randomized motion path and gives it to the app */
+	void randomizePosition(const shared_ptr<TargetEntity>& target) const;
 	void initTargetAnimation();
-	/** gets the current weapon cooldown as a ratio **/
-	double weaponCooldownPercent();
-	int remainingAmmo();
+	float weaponCooldownPercent() const;
+	RealTime lastFireTime() const {
+		return m_lastFireAt;
+	}
+	int remainingAmmo() const;
 
-	void addTrial(Array<Param> params);
-	bool isComplete();
+	bool isComplete() const;
 	void nextCondition();
 
-	/** randomly returns either +1 or -1 **/
-	float randSign();
+	/** randomly returns either +1 or -1 **/	
+	static float randSign() {
+		if (Random::common().uniform() > 0.5) {
+			return 1;
+		} else {
+			return -1;
+		}
+	}
+	
 	void updatePresentationState();
 	void onInit(String filename, String userName, String description);
 	void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
 	void processResponse();
-	void recordTrialResponse();
+	void recordTrialResponse(int remainingTargets, int totalTargets);
 	void accumulateTrajectories();
 	void accumulateFrameInfo(RealTime rdt, float sdt, float idt);
 
@@ -145,9 +205,11 @@ public:
 
 	/** queues action with given name to insert into database when trial completes
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */
-	void accumulatePlayerAction(String action, String target="");
-	bool responseReady();
-	bool setupTrialParams(Array<Array<Param>> params);
+	void accumulatePlayerAction(PlayerActionType action, String target="");
+	bool canFire();
+
+	bool setupTrialParams(Array<Array<shared_ptr<TargetConfig>>> trials);
+
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState presentationState;			///< Current presentation state
 

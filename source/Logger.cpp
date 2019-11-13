@@ -1,15 +1,31 @@
 #include "Logger.h"
+#include "Session.h"
 
 // TODO: Replace with the G3D timestamp uses.
 // utility function for generating a unique timestamp.
 String Logger::genUniqueTimestamp() {
-	_SYSTEMTIME t;
-	GetLocalTime(&t);
+	return formatFileTime(getFileTime());
+}
+
+FILETIME Logger::getFileTime() {
+	FILETIME ft;
+	GetSystemTimePreciseAsFileTime(&ft);
+	return ft;
+}
+
+String Logger::formatFileTime(FILETIME ft) {
+	unsigned long long usecsinceepoch = (static_cast<unsigned long long>(ft.dwHighDateTime) << 32 | ft.dwLowDateTime) / 10;		// Get time since epoch in usec
+	int usec = usecsinceepoch % 1000000;
+
+	SYSTEMTIME datetime;
+	FileTimeToSystemTime(&ft, &datetime);
+
 	char tmCharArray[30] = { 0 };
-	sprintf(tmCharArray, "%04d-%02d-%02d %02d:%02d:%02d.%06d", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond, t.wMilliseconds*1000);
+	sprintf(tmCharArray, "%04d-%02d-%02d %02d:%02d:%02d.%06d", datetime.wYear, datetime.wMonth, datetime.wDay, datetime.wHour, datetime.wMinute, datetime.wSecond, usec);
 	std::string timeStr(tmCharArray);
 	return String(timeStr);
 }
+
 
 String Logger::genFileTimestamp() {
 	_SYSTEMTIME t;
@@ -39,7 +55,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	// create tables inside the db file.
 	// 1. Experiment description (time and subject ID)
 	// create sqlite table
-	Array<Array<String>> expColumns = {
+	Columns expColumns = {
 		// format: column name, data type, sqlite modifier(s)
 			{ "time", "text", "NOT NULL" },
 			{ "subjectID", "text", "NOT NULL" },
@@ -48,7 +64,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Experiments", expColumns); // no need of Primary Key for this table.
 
 	// populate table
-	Array<String> expValues = {
+	RowEntry expValues = {
 		"'" + timeStr + "'",
 		"'" + subjectID + "'",
 		"'" + description + "'"
@@ -57,12 +73,13 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 
 	// 2. Targets
 	// create sqlite table
-	Array<Array<String>> targetColumns = {
-			{ "trial_id", "integer"}, // Trial ID refers to the trial which this target is affiliated with
-			{ "target_id", "text" },
+	Columns targetColumns = {
+			{ "name", "text"},
+			{ "id", "text" },
 			{ "type", "text"},
-			{ "refresh_rate", "real" },
-			{ "added_frame_lag", "real" },
+			{ "destSpace", "text"},
+			{ "min_size", "real"},
+			{ "max_size", "real"},
 			{ "min_ecc_h", "real" },
 			{ "min_ecc_V", "real" },
 			{ "max_ecc_h", "real" },
@@ -72,12 +89,12 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 			{ "min_motion_change_period", "real" },
 			{ "max_motion_change_period", "real" },
 			{ "jump_enabled", "text" },
-			{ "model", "text" }
+			{ "model_file", "text" }
 	};
 	createTableInDB(m_db, "Targets", targetColumns); // Primary Key needed for this table.
 
 	// 3. Trials, only need to create the table.
-	Array<Array<String>> trialColumns = {
+	Columns trialColumns = {
 			{ "trial_id", "integer" },
 			{ "session_id", "text" },
 			{ "session_mode", "text" },
@@ -89,7 +106,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Trials", trialColumns);
 
 	// 4. Target_Trajectory, only need to create the table.
-	Array<Array<String>> targetTrajectoryColumns = {
+	Columns targetTrajectoryColumns = {
 			{ "time", "text" },
 			{ "target_id", "text"},
 			{ "position_x", "real" },
@@ -99,7 +116,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Target_Trajectory", targetTrajectoryColumns);
 
 	// 5. Player_Action, only need to create the table.
-	Array<Array<String>> viewTrajectoryColumns = {
+	Columns viewTrajectoryColumns = {
 			{ "time", "text" },
 			{ "position_az", "real" },
 			{ "position_el", "real" },
@@ -112,15 +129,15 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
 
 	// 6. Frame_Info, create the table
-	Array<Array<String>> frameInfoColumns = {
+	Columns frameInfoColumns = {
 			{"time", "text"},
-			{"idt", "real"},
+			//{"idt", "real"},
 			{"sdt", "real"},
 	};
 	createTableInDB(m_db, "Frame_Info", frameInfoColumns);
 
 	// 7. Question responses
-	Array<Array<String>> questionColumns = {
+	Columns questionColumns = {
 		{"Session", "text"},
 		{"Question", "text"},
 		{"Response", "text"}
@@ -128,50 +145,92 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Questions", questionColumns);
 }
 
-void Logger::recordTargetTrajectory(Array<Array<String>> trajectory) {
-	insertRowsIntoDB(m_db, "Target_Trajectory", trajectory);
-}
-
-void Logger::recordPlayerActions(Array<Array<String>> actions) {
-	insertRowsIntoDB(m_db, "Player_Action", actions);
-}
-
-void Logger::recordFrameInfo(Array<Array<String>> info) {
-	insertRowsIntoDB(m_db, "Frame_Info", info);
-}
-
-void Logger::addTargets(Array<Array<Param>> targetParams) {
-	for (int i = 0; i < targetParams.size(); i++) {
-		for (Param tparam : targetParams[i]) {
-			const String type = (tparam.val["destCount"] > 0) ? "waypoint" : "parametrized";
-			Array<String> targetValues = {
-				String(std::to_string(i)),										// This is the trial ID
-				"'" + String(tparam.str["name"]) +"'",							// This is the target name
-				"'" + type + "'",
-				String(std::to_string(tparam.val["targetFrameRate"])),			
-				String(std::to_string(tparam.val["targetFrameLag"])),
-				String(std::to_string(tparam.val["minEccH"])),
-				String(std::to_string(tparam.val["minEccV"])),
-				String(std::to_string(tparam.val["maxEccH"])),
-				String(std::to_string(tparam.val["maxEccV"])),
-				String(std::to_string(tparam.val["minSpeed"])),
-				String(std::to_string(tparam.val["maxSpeed"])),
-				String(std::to_string(tparam.val["minMotionChangePeriod"])),
-				String(std::to_string(tparam.val["maxMotionChangePeriod"])),
-				"'" + String(tparam.str["jumpEnabled"]) + "'",
-				"'" + String(tparam.str["model"] + "'")
-			};
-			insertRowIntoDB(m_db, "Targets", targetValues);
-		}
+void Logger::recordTargetTrajectory(Array<TargetLocation> trajectory) {
+	Array<RowEntry> rows;
+	for (TargetLocation loc : trajectory) {
+		Array<String> targetTrajectoryValues = {
+			"'" + Logger::formatFileTime(loc.time) + "'",
+			"'" + loc.name + "'",
+			String(std::to_string(loc.position.x)),
+			String(std::to_string(loc.position.y)),
+			String(std::to_string(loc.position.z)),
+		};
+		rows.append(targetTrajectoryValues);
 	}
+	insertRowsIntoDB(m_db, "Target_Trajectory", rows);
 }
 
-void Logger::recordTrialResponse(Array<String> values) {
+void Logger::recordPlayerActions(Array<PlayerAction> actions) {
+	Array<RowEntry> rows;
+	for (PlayerAction action : actions) {
+		String actionStr = "";
+		switch (action.action) {
+		case Invalid: actionStr = "invalid"; break;
+		case Nontask: actionStr = "non-task"; break;
+		case Aim: actionStr = "aim"; break;
+		case Miss: actionStr = "miss"; break;
+		case Hit: actionStr = "hit"; break;
+		case Destroy: actionStr = "destroy"; break;
+		}
+		Array<String> playerActionValues = {
+		"'" + Logger::formatFileTime(action.time) + "'",
+		String(std::to_string(action.viewDirection.x)),
+		String(std::to_string(action.viewDirection.y)),
+		String(std::to_string(action.position.x)),
+		String(std::to_string(action.position.y)),
+		String(std::to_string(action.position.z)),
+		"'" + actionStr + "'",
+		"'" + action.targetName + "'",
+		};
+		rows.append(playerActionValues);
+	}
+	insertRowsIntoDB(m_db, "Player_Action", rows);
+}
+
+void Logger::recordFrameInfo(Array<FrameInfo> frameInfo) {
+	Array<RowEntry> rows;
+	for (FrameInfo info : frameInfo) {
+		Array<String> frameValues = {
+			"'" + Logger::formatFileTime(info.time) + "'",
+			//String(std::to_string(info.idt)),
+			String(std::to_string(info.sdt))
+		};
+		rows.append(frameValues);
+	}
+	insertRowsIntoDB(m_db, "Frame_Info", rows);
+}
+
+void Logger::addTarget(String name, shared_ptr<TargetConfig> config) {
+	const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
+	const String jumpEnabled = config->jumpEnabled ? "True" : "False";
+	const String modelName = config->modelSpec["filename"];
+	const RowEntry targetValues = {
+		"'" + name + "'",
+		"'" + config->id + "'",
+		"'" + type + "'",
+		"'" + config->destSpace + "'",
+		String(std::to_string(config->size[0])),
+		String(std::to_string(config->size[1])),
+		String(std::to_string(config->eccH[0])),
+		String(std::to_string(config->eccH[1])),
+		String(std::to_string(config->eccV[0])),
+		String(std::to_string(config->eccV[1])),
+		String(std::to_string(config->speed[0])),
+		String(std::to_string(config->speed[1])),
+		String(std::to_string(config->motionChangePeriod[0])),
+		String(std::to_string(config->motionChangePeriod[1])),
+		"'" + jumpEnabled + "'",
+		"'" + modelName + "'"
+	};
+	insertRowIntoDB(m_db, "Targets", targetValues);
+}
+
+void Logger::recordTrialResponse(RowEntry values) {
 	insertRowIntoDB(m_db, "Trials", values);
 }
 
 void Logger::addQuestion(Question q, String session) {
-	Array<String> rowContents = {
+	RowEntry rowContents = {
 		"'" + session + "'",
 		"'" + q.prompt + "'",
 		"'" + q.result + "'"
