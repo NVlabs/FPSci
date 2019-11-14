@@ -103,7 +103,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 			{ "start_time", "text" },
 			{ "end_time", "text" },
 			{ "task_execution_time", "real" },
-			{ "remaining_targets", "real" },
+			{ "destroyed_targets", "real" },
 			{ "total_targets", "real"}
 	};
 	createTableInDB(m_db, "Trials", trialColumns);
