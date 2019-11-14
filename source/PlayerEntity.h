@@ -16,7 +16,7 @@ protected:
     /** Unused for rendering, for use by a fps cam. */
     float           m_headTilt;
 
-	float			m_respawnHeight;
+	float			m_respawnHeight = fnan();
 	Point3			m_respawnPosition;
 
 	RealTime		m_lastJumpTime;

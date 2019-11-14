@@ -142,7 +142,7 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		m_frame.rotation = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians) * Matrix3::fromAxisAngle(Vector3::unitX(), m_headTilt);
 
 		// Check for "off map" condition and reset position here...
-		if (m_frame.translation.y < m_respawnHeight) {
+		if (!isNaN(m_respawnHeight) && m_frame.translation.y < m_respawnHeight) {
 			m_frame.translation = m_respawnPosition;
 		}
 	}
@@ -232,7 +232,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
 		m_inAir = true;
 		// Jump occurring, need to track this
 		m_lastJumpVelocity = m_desiredOSVelocity.y;
-	}
+		}
 	else if (m_inAir) {
 		// Already in a jump, apply gravity and enforce terminal velocity
 		m_lastJumpVelocity += ygrav * deltaTime;
