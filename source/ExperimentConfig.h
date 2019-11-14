@@ -249,6 +249,10 @@ public:
 		a["id"] = id;										// Include subject ID
 		a["mouseDPI"] = mouseDPI;							// Include mouse DPI
 		a["cmp360"] = cmp360;								// Include cm/360
+		a["reticleIndex"] = reticleIndex;
+		a["reticleScale"] = reticleScale;
+		a["reticleColor"] = reticleColor;
+		a["reticleShrinkTime"] = reticleShrinkTimeS;
 		return a;
 	}
 };
