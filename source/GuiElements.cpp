@@ -207,13 +207,18 @@ RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& dr
 
 	auto drawPane = pane->addPane("Drawing");
 	drawPane->beginRow(); {
-		drawPane->addCheckBox("Show HUD", &(config.hud.enable));
-		drawPane->addCheckBox("Show Bullets", &(config.weapon.renderBullets));
 		auto cb = drawPane->addCheckBox("Show Weapon", &(config.weapon.renderModel));
 		cb->setEnabled(!config.weapon.modelSpec.filename.empty());
+		drawPane->addCheckBox("Show Bullets", &(config.weapon.renderBullets));
 		drawPane->addCheckBox("Show cooldown", &config.hud.renderWeaponStatus);
-
 	}drawPane->endRow();
+	drawPane->beginRow(); {
+		drawPane->addCheckBox("Show HUD", &(config.hud.enable));
+		drawPane->addCheckBox("Show Banner", &(config.hud.showBanner));
+		drawPane->addCheckBox("Show Ammo", &(config.hud.showAmmo));
+		drawPane->addCheckBox("Show Health", &(config.hud.showPlayerHealthBar));
+	} drawPane->endRow();
+
 	
 	auto framePane = pane->addPane("Frame Rate/Delay");
 	framePane->beginRow(); {
@@ -234,17 +239,20 @@ RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& dr
 	reticlePane->beginRow(); {
 		auto c = reticlePane->addNumberBox("Reticle", &(user.reticleIndex), "", GuiTheme::LINEAR_SLIDER, 0, numReticles, 1);
 		c->setWidth(width*0.95f);
-	}
+	} reticlePane->endRow();
+
 	reticlePane->beginRow(); {
 		auto c = reticlePane->addNumberBox("Reticle Scale Min", &(user.reticleScale[0]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
 		c->setCaptionWidth(120.0f);
 		c->setWidth(width*0.95f);
-	}
+	} reticlePane->endRow();
+
 	reticlePane->beginRow(); {
 		auto c = reticlePane->addNumberBox("Reticle Scale Max", &(user.reticleScale[1]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
 		c->setCaptionWidth(120.0f);
 		c->setWidth(width*0.95f);
-	}
+	} reticlePane->endRow();
+
 	reticlePane->beginRow(); {
 		auto l = reticlePane->addLabel("Reticle Color Min");
 		l->setWidth(100.0f);
