@@ -378,7 +378,7 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 }
 
 void App::loadModels() {
-	if (experimentConfig.weapon.renderModel || startupConfig.playMode == false) {
+	if ((experimentConfig.weapon.renderModel || startupConfig.playMode == false) && !experimentConfig.weapon.modelSpec.filename.empty()) {
 		// Load the model if we (might) need it
 		m_viewModel = ArticulatedModel::create(experimentConfig.weapon.modelSpec, "viewModel");
 	}
