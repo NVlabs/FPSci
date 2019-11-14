@@ -56,7 +56,7 @@ bool Session::setupTrialParams(Array<Array<shared_ptr<TargetConfig>>> trials) {
 		for (int j = 0; j < targets.size(); j++) {
 			const String name = format("%s_%d_%s_%d", m_config->id, i, targets[j]->id, j);
 			if (m_config->logger.enable) {
-				m_logger->addTarget(name, targets[j]);
+				m_logger->addTarget(name, targets[j], m_config->render.frameRate, m_config->render.frameDelay);
 			}			
 		}
 		m_remainingTrials.append(m_config->trials[i].count);
@@ -223,11 +223,11 @@ void Session::processResponse()
 	int totalTargets = 0;
 	for (shared_ptr<TargetConfig> target : m_targetConfigs[m_currTrialIdx]) {
 		if (target->respawnCount == -1) {
-			totalTargets = MAXINT;		// Ininite spawn case
+			totalTargets = -1;		// Ininite spawn case
 			break;
 		}
 		else {
-			totalTargets += target->respawnCount;
+			totalTargets += (target->respawnCount+1);
 		}
 	}		
 	m_remainingTargets = totalTargets - m_destroyedTargets; // Number of targets remaining
@@ -389,6 +389,7 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 void Session::recordTrialResponse(int remainingTargets, int totalTargets)
 {
 	if (!m_config->logger.enable) return;		// Skip this if the logger is disabled
+	const String totalTargetStr = (totalTargets == -1) ? "inf" : String(std::to_string(totalTargets));
 	if (m_config->logger.logTrialResponse) {
 		// Trials table. Record trial start time, end time, and task completion time.
 		Array<String> trialValues = {
@@ -399,7 +400,7 @@ void Session::recordTrialResponse(int remainingTargets, int totalTargets)
 			"'" + m_taskEndTime + "'",
 			String(std::to_string(m_taskExecutionTime)),
 			String(std::to_string(remainingTargets)),
-			String(std::to_string(totalTargets))
+			totalTargetStr
 		};
 		m_logger->recordTrialResponse(trialValues);
 	}
