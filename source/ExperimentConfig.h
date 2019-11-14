@@ -628,7 +628,7 @@ public:
 	Array<float>	accelGravity = { 9.8f, 9.8f };			///< Range of acceleration due to gravity in meters/s^2
 	Array<Destination> destinations;						///< Array of destinations to traverse
 	String			destSpace = "world";					///< Space to use for destinations (implies offset) can be "world" or "player"
-	int				respawnCount = 0;						///< Number of times to respawn
+	float			respawnCount = 0;						///< Number of times to respawn
 	AABox			bbox;									///< Bounding box
 	Array<bool>		axisLock = { false, false, false };					///< Array of axis lock values
 
