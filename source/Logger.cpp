@@ -78,6 +78,8 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 			{ "id", "text" },
 			{ "type", "text"},
 			{ "destSpace", "text"},
+			{ "refresh_rate", "real"},
+			{ "added_frame_lag", "real"},
 			{ "min_size", "real"},
 			{ "max_size", "real"},
 			{ "min_ecc_h", "real" },
@@ -102,6 +104,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 			{ "end_time", "text" },
 			{ "task_execution_time", "real" },
 			{ "remaining_targets", "real" },
+			{ "total_targets", "real"}
 	};
 	createTableInDB(m_db, "Trials", trialColumns);
 
@@ -200,7 +203,7 @@ void Logger::recordFrameInfo(Array<FrameInfo> frameInfo) {
 	insertRowsIntoDB(m_db, "Frame_Info", rows);
 }
 
-void Logger::addTarget(String name, shared_ptr<TargetConfig> config) {
+void Logger::addTarget(String name, shared_ptr<TargetConfig> config, float refreshRate, int addedFrameLag) {
 	const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
 	const String jumpEnabled = config->jumpEnabled ? "True" : "False";
 	const String modelName = config->modelSpec["filename"];
@@ -209,6 +212,8 @@ void Logger::addTarget(String name, shared_ptr<TargetConfig> config) {
 		"'" + config->id + "'",
 		"'" + type + "'",
 		"'" + config->destSpace + "'",
+		String(std::to_string(refreshRate)),
+		String(std::to_string(addedFrameLag)),
 		String(std::to_string(config->size[0])),
 		String(std::to_string(config->size[1])),
 		String(std::to_string(config->eccH[0])),

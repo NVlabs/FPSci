@@ -39,7 +39,7 @@ public:
 	static String genFileTimestamp();
 
 	/** Add a target to an experiment */
-	void addTarget(String name, shared_ptr<TargetConfig> targetConfig);
+	void addTarget(String name, shared_ptr<TargetConfig> targetConfig, float refreshRate, int addedFrameLag);
 
 	/** Create a results file */
 	void createResultsFile(String filename, String subjectID, String description="None");
