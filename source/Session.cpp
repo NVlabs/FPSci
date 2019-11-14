@@ -101,7 +101,7 @@ void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
 	else {
 		const float rot_pitch = randSign() * Random::common().uniform(config->eccV[0], config->eccV[1]);
 		const float rot_yaw = randSign() * Random::common().uniform(config->eccH[0], config->eccH[1]);
-		const CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw, rot_pitch, 0.0f);
+		const CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw - 180.0f/(float)pi()*initialHeadingRadians, rot_pitch, 0.0f);
 		loc = f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 	}
 	target->setFrame(loc);
