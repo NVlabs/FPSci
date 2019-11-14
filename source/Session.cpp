@@ -137,7 +137,7 @@ void Session::initTargetAnimation() {
 					m_config->targetView.healthColors[0],
 					target->id,
 					i,
-					target->respawnCount,
+					(int)target->respawnCount,
 					name,
 					target->logTargetTrajectory
 				);
@@ -160,7 +160,7 @@ void Session::initTargetAnimation() {
 					target->id,
 					i,
 					target->axisLock,
-					target->respawnCount,
+					(int)target->respawnCount,
 					name,
 					target->logTargetTrajectory
 				);
@@ -182,7 +182,7 @@ void Session::initTargetAnimation() {
 					target->id,
 					i,
 					target->axisLock,
-					target->respawnCount,
+					(int)target->respawnCount,
 					name,
 					target->logTargetTrajectory
 				);
@@ -227,12 +227,11 @@ void Session::processResponse()
 			break;
 		}
 		else {
-			totalTargets += (target->respawnCount+1);
+			totalTargets += ((int)target->respawnCount+1);
 		}
-	}		
-	m_remainingTargets = totalTargets - m_destroyedTargets; // Number of targets remaining
-	recordTrialResponse(m_remainingTargets, totalTargets); // NOTE: we need record response first before processing it with PsychHelper.
+	}
 	
+	recordTrialResponse(m_destroyedTargets, totalTargets); // NOTE: we need record response first before processing it with PsychHelper.
 	m_remainingTrials[m_currTrialIdx] -= 1;
 
 	// Check for whether all targets have been destroyed
@@ -386,10 +385,9 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	}
 }
 
-void Session::recordTrialResponse(int remainingTargets, int totalTargets)
+void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 {
 	if (!m_config->logger.enable) return;		// Skip this if the logger is disabled
-	const String totalTargetStr = (totalTargets == -1) ? "inf" : String(std::to_string(totalTargets));
 	if (m_config->logger.logTrialResponse) {
 		// Trials table. Record trial start time, end time, and task completion time.
 		Array<String> trialValues = {
@@ -399,8 +397,8 @@ void Session::recordTrialResponse(int remainingTargets, int totalTargets)
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
 			String(std::to_string(m_taskExecutionTime)),
-			String(std::to_string(remainingTargets)),
-			totalTargetStr
+			String(std::to_string(destroyedTargets)),
+			String(std::to_string(totalTargets))
 		};
 		m_logger->recordTrialResponse(trialValues);
 	}

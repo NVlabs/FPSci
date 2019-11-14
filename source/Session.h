@@ -190,7 +190,7 @@ public:
 	void onInit(String filename, String userName, String description);
 	void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
 	void processResponse();
-	void recordTrialResponse(int remainingTargets, int totalTargets);
+	void recordTrialResponse(int destroyedTargets, int totalTargets);
 	void accumulateTrajectories();
 	void accumulateFrameInfo(RealTime rdt, float sdt, float idt);
 
