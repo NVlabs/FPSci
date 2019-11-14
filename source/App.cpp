@@ -988,6 +988,9 @@ void App::updateSession(const String& id) {
 	SystemConfig sysConfig = SystemConfig::load();
 	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
 	if (sysConfig.hasLogger) {
+		if (!sessConfig->clickToPhoton.enabled) {
+			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
+		}
 		if (m_pyLogger == nullptr) {
 			m_pyLogger = PythonLogger::create(sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
 		}
