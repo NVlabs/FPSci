@@ -975,6 +975,7 @@ void App::updateSession(const String& id) {
 	player->mouseSensitivity = (float)mouseSens;
 	player->moveRate = sessConfig->player.moveRate;
 	player->moveScale = sessConfig->player.moveScale;
+	player->axisLock = sessConfig->player.axisLock;
 	player->jumpVelocity = sessConfig->player.jumpVelocity;
 	player->jumpInterval = sessConfig->player.jumpInterval;
 	player->jumpTouch = sessConfig->player.jumpTouch;
@@ -1023,10 +1024,10 @@ void App::quitRequest() {
 
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	// Pick between experiment and session settings
-	Vector3 grav = experimentConfig.player.playerGravity;
+	Vector3 grav = experimentConfig.player.gravity;
 	float FoV = experimentConfig.render.hFoV;
 	if (sessConfig != nullptr) {
-		grav = sessConfig->player.playerGravity;
+		grav = sessConfig->player.gravity;
 		FoV = sessConfig->render.hFoV;
 	}
 	// Set the active camera to the player

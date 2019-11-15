@@ -877,8 +877,9 @@ public:
 	float           jumpVelocity = 7.0f;						///< Jump velocity for the player
 	float           jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
 	bool            jumpTouch = true;							///< Require the player to be touch a surface to jump?
-	Vector3         playerGravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
+	Vector3         gravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
 	Vector2			moveScale = Vector2(1.0f, 1.0f);			///< Player X/Y motion scaler
+	Array<bool>		axisLock = { false, false, false };			///< World-space player motion axis lock
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
@@ -890,7 +891,8 @@ public:
 			reader.getIfPresent("jumpVelocity", jumpVelocity);
 			reader.getIfPresent("jumpInterval", jumpInterval);
 			reader.getIfPresent("jumpTouch", jumpTouch);
-			reader.getIfPresent("playerGravity", playerGravity);
+			reader.getIfPresent("playerGravity", gravity);
+			reader.getIfPresent("playerAxisLock", axisLock);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -906,7 +908,8 @@ public:
 		a["jumpVelocity"] = jumpVelocity;
 		a["jumpInterval"] = jumpInterval;
 		a["jumpTouch"] = jumpTouch;
-		a["playerGravity"] = playerGravity;
+		a["playerGravity"] = gravity;
+		a["playerAxisLock"] = axisLock;
 		return a;
 	}
 

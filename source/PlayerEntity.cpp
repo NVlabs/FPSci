@@ -218,14 +218,19 @@ bool PlayerEntity::findFirstCollision
 }
 
 bool PlayerEntity::slideMove(SimTime deltaTime) { 
-    static const float epsilon = 0.0001f;
+	if (deltaTime == 0.0f) return false;
+	static const float epsilon = 0.0001f;
 	Point3 loc;
 
 	// Only allow y-axis gravity for now
     alwaysAssertM(((PhysicsScene*)m_scene)->gravity().x == 0.0f && ((PhysicsScene*)m_scene)->gravity().z == 0.0f, 
                             "We assume gravity points along the y axis to simplify implementation");
+	alwaysAssertM(axisLock.size() == 3, "Player axis lock must have length 3!");
 	float ygrav = ((PhysicsScene*)m_scene)->gravity().y;
 	Vector3 velocity = frame().vectorToWorldSpace(m_desiredOSVelocity);
+	velocity.x = axisLock[0] ? 0.0f : velocity.x;
+	velocity.y = axisLock[1] ? 0.0f : velocity.y;
+	velocity.z = axisLock[2] ? 0.0f : velocity.z;
 
 	// Apply the velocity using a terminal velocity of about 5.4s of acceleration (human is ~53m/s w/ 9.8m/s^2)
 	if (m_desiredOSVelocity.y > 0) {

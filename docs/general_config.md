@@ -66,7 +66,8 @@ The following settings allow the user to control various timings/durations aroun
 | Parameter Name     |Units| Description                                                                        |
 |--------------------|-----|------------------------------------------------------------------------------------|
 |`moveRate`          |m/s  | The rate of player motion, set this parameter to `0` to disable player motion      |
-|`moveScale`        |`Vector2`| A scaler for X/Y player motion (set to 0 to lock axis)|
+|`moveScale`        |`Vector2`| A scaler for X/Y player-space motion (set to 0 to lock forward/back, strafe motion)|
+|`playerAxisLock`   |`Array`<bool>| Axis aligned motion lock for player             |
 |`playerHeight`      |m    | The height of the player above the ground when "standing"                          |
 |`crouchHeight`      |m    | The height of the player when crouched (set equal to `playerHeight` for no crouch) |
 |`jumpVelocity`      |m/s  | The magnitude of the upward impulse introduced by a jump (set to 0 for no jump)    |

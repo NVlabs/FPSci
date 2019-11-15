@@ -45,6 +45,7 @@ public:
 
 	float moveRate;					///< Player movement rate (m/s)
 	Vector2 moveScale;				///< Player X/Y movement scale vector (interpreted as unit vector)
+	Array<bool> axisLock;			///< World-space axis lock
 	float mouseSensitivity;			///< Player mouse sensitivity
 
 	float jumpVelocity;				///< Player vertical (+Y) jump velocity
