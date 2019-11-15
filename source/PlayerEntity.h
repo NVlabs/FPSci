@@ -43,15 +43,16 @@ protected:
 
 public:
 
-	float moveRate;
-	float mouseSensitivity;
+	float moveRate;					///< Player movement rate (m/s)
+	Vector2 moveScale;				///< Player X/Y movement scale vector (interpreted as unit vector)
+	float mouseSensitivity;			///< Player mouse sensitivity
 
-	float jumpVelocity;
-	RealTime jumpInterval;
-	bool jumpTouch = true;
+	float jumpVelocity;				///< Player vertical (+Y) jump velocity
+	RealTime jumpInterval;			///< Player minimum jump interval limit
+	bool jumpTouch = true;			///< Require contact for jump?
 
-	float height;
-	float crouchHeight;
+	float height;					///< Player height when standing
+	float crouchHeight;				///< Player height when crouched
 
     /** \brief Computes all triangles that could be hit during a
         slideMove with the current \a velocity, allowing that the

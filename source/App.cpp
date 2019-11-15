@@ -974,6 +974,7 @@ void App::updateSession(const String& id) {
 	mouseSens *= 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
 	player->mouseSensitivity = (float)mouseSens;
 	player->moveRate = sessConfig->player.moveRate;
+	player->moveScale = sessConfig->player.moveScale;
 	player->jumpVelocity = sessConfig->player.jumpVelocity;
 	player->jumpInterval = sessConfig->player.jumpInterval;
 	player->jumpTouch = sessConfig->player.jumpTouch;

@@ -872,17 +872,19 @@ class PlayerConfig {
 public:
 	// View parameters
 	float           moveRate = 0.0f;							///< Player move rate (defaults to no motion)
-	float           height = 1.5f;						///< Height for the player view (in walk mode)
+	float           height = 1.5f;								///< Height for the player view (in walk mode)
 	float           crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
 	float           jumpVelocity = 7.0f;						///< Jump velocity for the player
 	float           jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
 	bool            jumpTouch = true;							///< Require the player to be touch a surface to jump?
 	Vector3         playerGravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
+	Vector2			moveScale = Vector2(1.0f, 1.0f);			///< Player X/Y motion scaler
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("moveRate", moveRate);
+			reader.getIfPresent("moveScale", moveScale);
 			reader.getIfPresent("playerHeight", height);
 			reader.getIfPresent("crouchHeight", crouchHeight);
 			reader.getIfPresent("jumpVelocity", jumpVelocity);
@@ -898,6 +900,7 @@ public:
 
 	Any addToAny(Any a) const {
 		a["moveRate"] = moveRate;
+		a["moveScale"] = moveScale;
 		a["playerHeight"] = height;
 		a["crouchHeight"] = crouchHeight;
 		a["jumpVelocity"] = jumpVelocity;

@@ -101,7 +101,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	const float walkSpeed = moveRate * units::meters() / units::seconds();
 
 	// Get walking speed here (and normalize if necessary)
-	Vector3 linear = Vector3(ui->getX(), 0, -ui->getY());
+	Vector3 linear = Vector3(ui->getX()*moveScale.x, 0, -ui->getY()*moveScale.y);
 	if (linear.magnitude() > 0) {
 		linear = linear.direction() * walkSpeed;
 	}
