@@ -101,8 +101,8 @@ void App::updateMouseSensitivity() {
         fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
     }
 	// Control player motion using the experiment config parameter
-	//fpm->setMoveRate(sessConfig->moveRate);
-    fpm->setTurnRate(mouseSensitivity);
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+	if(notNull(player)) player->mouseSensitivity = (float)mouseSensitivity;
 }
 
 void App::updateMoveRate(float rate) {
@@ -1162,11 +1162,6 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
 	activeCamera()->setFrame(p->getCameraFrame());
 	
-	// Update the mouse sensitivity
-	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
-	mouseSens *= 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
-	p->mouseSensitivity = (float)mouseSens;
-
 	// Handle developer mode features here
 	if (!startupConfig.playMode) {
 		// Copy over dynamic elements
