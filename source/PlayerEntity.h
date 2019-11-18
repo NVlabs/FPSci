@@ -47,6 +47,7 @@ public:
 	Vector2 moveScale;				///< Player X/Y movement scale vector (interpreted as unit vector)
 	Array<bool> axisLock;			///< World-space axis lock
 	float mouseSensitivity;			///< Player mouse sensitivity
+	Vector2 turnScale;				///< Player mouse turn rate scaler
 
 	float jumpVelocity;				///< Player vertical (+Y) jump velocity
 	RealTime jumpInterval;			///< Player minimum jump interval limit

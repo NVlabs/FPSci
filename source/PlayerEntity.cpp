@@ -117,7 +117,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	}
 
 	// Get the mouse rotation here
-	Vector2 mouseRotate = ui->mouseDXY() * (float)mouseSensitivity / 2000.0f;
+	Vector2 mouseRotate = ui->mouseDXY() * turnScale * (float)mouseSensitivity / 2000.0f;
 	float yaw = mouseRotate.x;
 	float pitch = mouseRotate.y;
 

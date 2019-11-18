@@ -839,7 +839,7 @@ public:
 class RenderConfig {
 public:
 	// Rendering parameters
-	float           frameRate = 0.0f;							///< Target (goal) frame rate (in Hz)
+	float           frameRate = 1000.0f;						///< Target (goal) frame rate (in Hz)
 	int             frameDelay = 0;								///< Integer frame delay (in frames)
 	String          shader = "";								///< Option for a custom shader name
 	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
@@ -878,7 +878,8 @@ public:
 	float           jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
 	bool            jumpTouch = true;							///< Require the player to be touch a surface to jump?
 	Vector3         gravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
-	Vector2			moveScale = Vector2(1.0f, 1.0f);			///< Player X/Y motion scaler
+	Vector2			moveScale = Vector2(1.0f, 1.0f);			///< Player (X/Y) motion scaler
+	Vector2			turnScale = Vector2(1.0f, 1.0f);			///< Player (horizontal/vertical) turn rate scaler
 	Array<bool>		axisLock = { false, false, false };			///< World-space player motion axis lock
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
@@ -886,6 +887,7 @@ public:
 		case 1:
 			reader.getIfPresent("moveRate", moveRate);
 			reader.getIfPresent("moveScale", moveScale);
+			reader.getIfPresent("turnScale", turnScale);
 			reader.getIfPresent("playerHeight", height);
 			reader.getIfPresent("crouchHeight", crouchHeight);
 			reader.getIfPresent("jumpVelocity", jumpVelocity);
