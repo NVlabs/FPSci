@@ -148,22 +148,20 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	createTableInDB(m_db, "Questions", questionColumns);
 }
 
-void Logger::recordTargetTrajectory(Array<TargetLocation> trajectory) {
+void Logger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
 	Array<RowEntry> rows;
-	for (TargetLocation loc : trajectory) {
-		Array<String> targetTrajectoryValues = {
-			"'" + Logger::formatFileTime(loc.time) + "'",
-			"'" + loc.name + "'",
-			String(std::to_string(loc.position.x)),
-			String(std::to_string(loc.position.y)),
-			String(std::to_string(loc.position.z)),
+	for (FrameInfo info : frameInfo) {
+		Array<String> frameValues = {
+			"'" + Logger::formatFileTime(info.time) + "'",
+			//String(std::to_string(info.idt)),
+			String(std::to_string(info.sdt))
 		};
-		rows.append(targetTrajectoryValues);
+		rows.append(frameValues);
 	}
-	insertRowsIntoDB(m_db, "Target_Trajectory", rows);
+	insertRowsIntoDB(m_db, "Frame_Info", rows);
 }
 
-void Logger::recordPlayerActions(Array<PlayerAction> actions) {
+void Logger::recordPlayerActions(const Array<PlayerAction>& actions) {
 	Array<RowEntry> rows;
 	for (PlayerAction action : actions) {
 		String actionStr = "";
@@ -190,17 +188,123 @@ void Logger::recordPlayerActions(Array<PlayerAction> actions) {
 	insertRowsIntoDB(m_db, "Player_Action", rows);
 }
 
-void Logger::recordFrameInfo(Array<FrameInfo> frameInfo) {
-	Array<RowEntry> rows;
-	for (FrameInfo info : frameInfo) {
-		Array<String> frameValues = {
-			"'" + Logger::formatFileTime(info.time) + "'",
-			//String(std::to_string(info.idt)),
-			String(std::to_string(info.sdt))
-		};
-		rows.append(frameValues);
+void Logger::recordQuestions(const Array<QuestionResult>& questions)
+{
+	for (const auto& item : questions) {
+		insertRowIntoDB(m_db, "Questions", item);
 	}
-	insertRowsIntoDB(m_db, "Frame_Info", rows);
+}
+
+void Logger::recordTargetLocations(const Array<TargetLocation>& locations) {
+	Array<RowEntry> rows;
+	for (const auto& loc : locations) {
+		Array<String> targetTrajectoryValues = {
+			"'" + Logger::formatFileTime(loc.time) + "'",
+			"'" + loc.name + "'",
+			String(std::to_string(loc.position.x)),
+			String(std::to_string(loc.position.y)),
+			String(std::to_string(loc.position.z)),
+		};
+		rows.append(targetTrajectoryValues);
+	}
+	insertRowsIntoDB(m_db, "Target_Trajectory", rows);
+}
+
+void Logger::recordTargets(const Array<TargetInfo>& targets)
+{
+	for (const auto& item : targets) {
+		insertRowIntoDB(m_db, "Targets", item);
+	}
+}
+
+void Logger::recordTrialResponse(const Array<TrialValues>& values)
+{
+	for (const auto& item : values) {
+		insertRowIntoDB(m_db, "Trials", item);
+	}
+}
+
+void Logger::loggerThreadEntry()
+{
+	std::unique_lock<std::mutex> lk(m_queueMutex);
+	while (m_running) {
+
+		m_queueCV.wait(lk, [this]{
+			return !m_running || m_flushNow || getTotalQueueBytes() >= m_bufferLimit;
+		});
+
+		// Move all the queues into temporary local copies.
+		// This is so we can release the lock and allow the queues to grow again while writing out the results.
+		// Also allocate new storage for each.
+		decltype(m_frameInfo) frameInfo;
+		frameInfo.swap(m_frameInfo, frameInfo);
+		m_frameInfo.reserve(frameInfo.size() * 2);
+
+		decltype(m_playerActions) playerActions;
+		playerActions.swap(m_playerActions, playerActions);
+		m_playerActions.reserve(playerActions.size() * 2);
+
+		decltype(m_questions) questions;
+		questions.swap(m_questions, questions);
+		m_questions.reserve(questions.size() * 2);
+
+		decltype(m_targetLocations) targetLocations;
+		targetLocations.swap(m_targetLocations, targetLocations);
+		m_targetLocations.reserve(targetLocations.size() * 2);
+
+		decltype(m_targets) targets;
+		targets.swap(m_targets, targets);
+		m_targets.reserve(targets.size() * 2);
+
+		decltype(m_trials) trials;
+		trials.swap(m_trials, trials);
+		m_trials.reserve(trials.size() * 2);
+
+		// Unlock all the now-empty queues and write out our temporary copies
+		lk.unlock();
+		recordFrameInfo(frameInfo);
+		recordPlayerActions(playerActions);
+		recordQuestions(questions);
+		recordTargetLocations(targetLocations);
+		recordTargets(targets);
+		recordTrialResponse(trials);
+		lk.lock();
+	}
+}
+
+Logger::Logger(String filename, String subjectID, String description) : m_db(nullptr) {
+	// secure vector capacity large enough so as to avoid memory allocation time.
+	m_playerActions.reserve(5000);
+	m_targetLocations.reserve(5000);
+	
+	createResultsFile(filename, subjectID, description);
+
+	m_running = true;
+	m_thread = std::thread(&Logger::loggerThreadEntry, this);
+}
+
+Logger::~Logger()
+{
+	{
+		std::lock_guard<std::mutex> lk(m_queueMutex);
+		m_running = false;
+	}
+	m_queueCV.notify_one();
+	m_thread.join();
+
+	closeResultsFile();
+}
+
+void Logger::flush(bool blockUntilDone)
+{
+	// Not implemented. Make another condition variable if this is needed.
+	assert(!blockUntilDone);
+	
+	{
+		std::lock_guard<std::mutex> lk(m_queueMutex);
+		m_flushNow = true;
+	}
+	m_queueCV.notify_one();
 }
 
 void Logger::addTarget(String name, shared_ptr<TargetConfig> config, float refreshRate, int addedFrameLag) {
@@ -227,11 +331,7 @@ void Logger::addTarget(String name, shared_ptr<TargetConfig> config, float refre
 		"'" + jumpEnabled + "'",
 		"'" + modelName + "'"
 	};
-	insertRowIntoDB(m_db, "Targets", targetValues);
-}
-
-void Logger::recordTrialResponse(RowEntry values) {
-	insertRowIntoDB(m_db, "Trials", values);
+	logTargetInfo(targetValues);
 }
 
 void Logger::addQuestion(Question q, String session) {
@@ -240,7 +340,7 @@ void Logger::addQuestion(Question q, String session) {
 		"'" + q.prompt + "'",
 		"'" + q.result + "'"
 	};
-	insertRowIntoDB(m_db, "Questions", rowContents);
+	logQuestionResult(rowContents);
 }
 
 void Logger::closeResultsFile() {

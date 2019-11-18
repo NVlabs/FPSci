@@ -73,8 +73,7 @@ void Session::onInit(String filename, String userName, String description) {
 
 	if (m_config->logger.enable) {
 		// Setup the logger and create results file
-		m_logger = Logger::create();
-		m_logger->createResultsFile(filename, userName, description);
+		m_logger = Logger::create(filename, userName, description);
 	}
 
 	// Check for valid session
@@ -312,7 +311,7 @@ void Session::updatePresentationState()
 				}
 				else {
 					if (m_config->logger.enable) {
-						m_logger->closeResultsFile();															// Close the current results file (if open)
+						m_logger.reset();															// Close the current results file (if open)
 					}
 					m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
 					m_app->updateSessionDropDown();
@@ -390,7 +389,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 	if (!m_config->logger.enable) return;		// Skip this if the logger is disabled
 	if (m_config->logger.logTrialResponse) {
 		// Trials table. Record trial start time, end time, and task completion time.
-		Array<String> trialValues = {
+		Logger::TrialValues trialValues = {
 			String(std::to_string(m_currTrialIdx)),
 			"'" + m_config->id + "'",
 			"'" + m_config->description + "'",
@@ -400,25 +399,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 			String(std::to_string(destroyedTargets)),
 			String(std::to_string(totalTargets))
 		};
-		m_logger->recordTrialResponse(trialValues);
-	}
-
-	// Target_Trajectory table. Write down the recorded target trajectories.
-	if (m_config->logger.logTargetTrajectories) {
-		m_logger->recordTargetTrajectory(m_targetTrajectory);
-		m_targetTrajectory.clear();
-	}
-
-	// Player_Action table. Write down the recorded player actions.
-	if (m_config->logger.logPlayerActions) {
-		m_logger->recordPlayerActions(m_playerActions);
-		m_playerActions.clear();
-	}
-
-	// Frame_Info table. Write down all frame info.
-	if (m_config->logger.logFrameInfo) {
-		m_logger->recordFrameInfo(m_frameInfo);
-		m_frameInfo.clear();
+		m_logger->logTrial(trialValues);
 	}
 }
 
@@ -437,7 +418,7 @@ void Session::accumulateTrajectories()
 			//float az = atan2(-t.z, -t.x) * 180 / pif();
 			//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
 			TargetLocation location = TargetLocation(Logger::getFileTime(), target->name(), targetPosition);
-			m_targetTrajectory.push_back(location);
+			m_logger->logTargetLocation(location);
 		}
 	}
 	// recording view direction trajectories
@@ -452,14 +433,14 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 		Point2 dir = m_app->getViewDirection();
 		Point3 loc = m_app->getPlayerLocation();
 		PlayerAction pa = PlayerAction(Logger::getFileTime(), dir, loc, action, targetName);
-		m_playerActions.push_back(pa);
+		m_logger->logPlayerAction(pa);
 		END_PROFILER_EVENT();
 	}
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 	if (m_config->logger.logFrameInfo) {
-		m_frameInfo.push_back(FrameInfo(Logger::getFileTime(), sdt));
+		m_logger->logFrameInfo(FrameInfo(Logger::getFileTime(), sdt));
 	}
 }
 

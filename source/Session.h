@@ -136,23 +136,12 @@ protected:
 	// Target parameters
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	
-	// Reported data storage
-	Array<PlayerAction> m_playerActions;				///< Storage for player action (hit, miss, aim)
-	Array<TargetLocation> m_targetTrajectory;			///< Storage for target trajectory (vector3 cartesian)
-	Array<FrameInfo> m_frameInfo;						///< Storage for frame info (sdt, idt, rdt)
-
 	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app) {
 		m_config = config;
 		m_hasSession = notNull(m_config);
-		// secure vector capacity large enough so as to avoid memory allocation time.
-		m_playerActions.reserve(5000);
-		m_targetTrajectory.reserve(5000);
 	};
 
 	Session(App* app) : m_app(app){
-		// secure vector capacity large enough so as to avoid memory allocation time.
-		m_playerActions.reserve(5000);
-		m_targetTrajectory.reserve(5000);
 		m_hasSession = false;
 	}
 
