@@ -973,6 +973,7 @@ void App::updateSession(const String& id) {
 	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
 	mouseSens *= 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
 	player->mouseSensitivity = (float)mouseSens;
+	player->turnScale = sessConfig->player.turnScale;
 	player->moveRate = sessConfig->player.moveRate;
 	player->moveScale = sessConfig->player.moveScale;
 	player->axisLock = sessConfig->player.axisLock;
