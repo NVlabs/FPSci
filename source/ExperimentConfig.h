@@ -839,7 +839,7 @@ public:
 class RenderConfig {
 public:
 	// Rendering parameters
-	float           frameRate = 0.0f;							///< Target (goal) frame rate (in Hz)
+	float           frameRate = 1000.0f;						///< Target (goal) frame rate (in Hz)
 	int             frameDelay = 0;								///< Integer frame delay (in frames)
 	String          shader = "";								///< Option for a custom shader name
 	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
