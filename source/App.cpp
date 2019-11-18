@@ -920,7 +920,7 @@ void App::updateSession(const String& id) {
 	}
 	else {
 		sessConfig = SessionConfig::create();										// Create an empty session
-		sess = Session::create(this, sessConfig);											
+		sess = Session::create(this);
 	}
 
 	// Update the controls for this session

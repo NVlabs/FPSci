@@ -71,13 +71,12 @@ void Session::onInit(String filename, String userName, String description) {
 	presentationState = PresentationState::initial;
 	m_feedbackMessage = "Click to spawn a target, then use shift on red target to begin.";
 
-	if (m_config->logger.enable) {
-		// Setup the logger and create results file
-		m_logger = Logger::create(filename, userName, description);
-	}
-
 	// Check for valid session
 	if (m_hasSession) {
+		if (m_config->logger.enable) {
+			// Setup the logger and create results file
+			m_logger = Logger::create(filename, userName, description);
+		}
 		// Iterate over the sessions here and add a config for each
 		Array<Array<shared_ptr<TargetConfig>>> trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
 		setupTrialParams(trials);
@@ -345,12 +344,10 @@ void Session::updatePresentationState()
 					moveOn = true;														// Check for session complete (signal start of next session)
 				}
 			}
-		//}
-		//else {
-		//	newState = PresentationState::complete;
-		//	m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
-		//	moveOn = false;
-		//}
+			else {
+				m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
+				moveOn = false;
+		}
 	}
 
 	else {
