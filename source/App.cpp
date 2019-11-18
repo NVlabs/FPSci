@@ -90,7 +90,7 @@ void App::updateMouseSensitivity() {
     // the screen resolution (dots), cm->in factor (2.54) and 2PI
     double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
     // additional correction factor based on few samples - TODO: need more careful setup to study this
-    mouseSensitivity = mouseSensitivity * 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
+    mouseSensitivity = mouseSensitivity * 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
     const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
     if (m_userSettingsMode) {
         // set to 3rd person
@@ -971,7 +971,7 @@ void App::updateSession(const String& id) {
 	sess->initialHeadingRadians = player->heading();
 	// Copied from old FPM code
 	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
-	mouseSens *= 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
+	mouseSens *= 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
 	player->mouseSensitivity = (float)mouseSens;
 	player->moveRate = sessConfig->player.moveRate;
 	player->moveScale = sessConfig->player.moveScale;
