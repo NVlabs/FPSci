@@ -1159,6 +1159,11 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// Move the player
 	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
 	activeCamera()->setFrame(p->getCameraFrame());
+	
+	// Update the mouse sensitivity
+	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
+	mouseSens *= 1.0675; // 10.5 / 10.0 * 30.5 / 30.0
+	p->mouseSensitivity = (float)mouseSens;
 
 	// Handle developer mode features here
 	if (!startupConfig.playMode) {
