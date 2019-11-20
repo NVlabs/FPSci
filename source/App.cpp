@@ -102,7 +102,10 @@ void App::updateMouseSensitivity() {
     }
 	// Control player motion using the experiment config parameter
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-	if(notNull(player)) player->mouseSensitivity = (float)mouseSensitivity;
+	if (notNull(player)) {
+		player->mouseSensitivity = (float)mouseSensitivity;
+		player->turnScale = sessConfig->player.turnScale * userTable.getCurrentUser()->turnScale;
+	}
 }
 
 void App::updateMoveRate(float rate) {
@@ -811,10 +814,13 @@ void App::updateUser(void){
 
 void App::updateUserGUI() {
     m_currentUserPane->removeAllChildren();
+	UserConfig *user = userTable.getCurrentUser();
     m_currentUserPane->addLabel(format("Current User: %s", userTable.currentUser));
-    m_mouseDPILabel = m_currentUserPane->addLabel(format("Mouse DPI: %f", userTable.getCurrentUser()->mouseDPI));
-    m_currentUserPane->addNumberBox("Mouse 360", &(userTable.getCurrentUser()->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
-    m_currentUserPane->addButton("Save cm/360", this, &App::userSaveButtonPress);
+    m_mouseDPILabel = m_currentUserPane->addLabel(format("Mouse DPI: %f", user->mouseDPI));
+    m_currentUserPane->addNumberBox("Mouse 360", &(user->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
+	m_currentUserPane->addNumberBox("Turn Scale X", &(user->turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f);
+	m_currentUserPane->addNumberBox("Turn Scale Y", &(user->turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f);
+    m_currentUserPane->addButton("Save settings", this, &App::userSaveButtonPress);
 }
 
 Array<String> App::updateSessionDropDown(void) {
