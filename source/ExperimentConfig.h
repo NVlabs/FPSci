@@ -213,12 +213,16 @@ public:
     String			id					= "anon";						///< Subject ID (as recorded in output DB)
     double			mouseDPI			= 800.0;						///< Mouse DPI setting
     double			cmp360				= 12.75;						///< Mouse sensitivity, reported as centimeters per 360�
+	Vector2			turnScale			= Vector2(1.0f, 1.0f);			///< Turn scale for player, can be used to invert controls in either direction
+
 	int				currentSession		= 0;							///< Currently selected session
+		
 	int				reticleIndex		= -1;							///< Reticle to show for this user
 	Array<float>	reticleScale		= { 1.0f, 1.0f };				///< Scale for the user's reticle
 	Array<Color4>	reticleColor		= {Color4(1.0, 0.0, 0.0, 1.0),	///< Color for the user's reticle
 										Color4(1.0, 0.0, 0.0, 1.0)};	
 	float			reticleShrinkTimeS	= 0.3f;							///< Time for reticle to contract after expand on shot (in seconds)
+
 
 	UserConfig() {};
 
@@ -236,6 +240,7 @@ public:
 			reader.getIfPresent("reticleScale", reticleScale);
 			reader.getIfPresent("reticleColor", reticleColor);
 			reader.getIfPresent("reticleShrinkTime", reticleShrinkTimeS);
+			reader.getIfPresent("turnScale", turnScale);
 			break;
         default:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
@@ -253,6 +258,7 @@ public:
 		a["reticleScale"] = reticleScale;
 		a["reticleColor"] = reticleColor;
 		a["reticleShrinkTime"] = reticleShrinkTimeS;
+		a["turnScale"] = turnScale;
 		return a;
 	}
 };

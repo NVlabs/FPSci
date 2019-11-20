@@ -969,11 +969,12 @@ void App::updateSession(const String& id) {
 	// Player parameters
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	sess->initialHeadingRadians = player->heading();
+	UserConfig *user = userTable.getCurrentUser();
 	// Copied from old FPM code
-	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
+	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (user->cmp360 * user->mouseDPI);
 	mouseSens *= 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
 	player->mouseSensitivity = (float)mouseSens;
-	player->turnScale = sessConfig->player.turnScale;
+	player->turnScale = sessConfig->player.turnScale * user->turnScale;		// Compound the session turn scale w/ the user turn scale...
 	player->moveRate = sessConfig->player.moveRate;
 	player->moveScale = sessConfig->player.moveScale;
 	player->axisLock = sessConfig->player.axisLock;

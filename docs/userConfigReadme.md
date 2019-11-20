@@ -17,6 +17,8 @@ Each entry in the user table contains the following fields:
 * `reticleIndex` refers to which reticle this user prefers (if not required for the study)
 * `reticleScale` provides a range of reticle sizes over which to set the scale as an `Array` w/ 2 elements (min, max)
 * `reticleColor` provides a range of colors (as `Color4`) over which to set the reticle color as an `Array` w/ 2 elements (min, max)
+* `reticleShrinkTime` provides the time for the reticle to contract following a shot (in seconds)
+* `turnScale` provides a per-player motion scale, designed to compound with the experiment/session-level `turnScale`. By setting the X/Y of this `Vector2` to `-1` we can produce inversion for the controls on a per-player basis.
 
 Refer to the [SAMPLEuserconfig.Any file](SAMPLE%20configs/SAMPLEuserconfig.Any) for an example of these settings.
 
@@ -50,6 +52,7 @@ users = [
           Color4(0.0, 0.0, 1.0, 0.8),
         ];
         reticleShrinkTime = 1.0;            // Scale the reticle back to 50% over 1s after fire
+        turnScale = Vector2(1.0, 1.0);      // This is the default condition (no turn scale) set to -1 for invert X/Y
     }, 
 ... 
 ```
