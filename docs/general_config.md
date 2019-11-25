@@ -214,6 +214,8 @@ Each question in the array is then asked of the user (via an independent time-se
 ```
 
 ## Click to Photon Monitoring
+These flags help control the behavior of click-to-photon monitoring in application:
+
 | Parameter Name     |Units                 | Description                                                                        |
 |--------------------|----------------------|------------------------------------------------------------------------------------|
 |`renderClickPhoton` |bool                  | Whether or not the click-to-photon indicator box is drawn to the screen            |
@@ -299,6 +301,27 @@ Each question in the array is then asked of the user (via an independent time-se
 "floatingCombatTextVelocity": Point3(0.0,-100.0,0.0),       // Move the combat text up at 100px/s                    
 "floatingCombatTextFade": 0.98,                             // Fade rate for the combat text
 "floatingCombatTextTimeout": 0.5,                           // Fade out the combat text in 0.5s
+```
+
+## Logger Config
+These flags control whether various information is written to the output database file:
+
+| Parameter Name                    | Type  | Description                                                           |
+|-----------------------------------|-------|-----------------------------------------------------------------------|
+|`logEnable`                        |`bool` | Enable/disable for all output (SQL) database logging                  |
+|`logTargetTrajectories`            |`bool` | Enable/disable for logging target position to database (per frame)    |
+|`logFrameInfo`                     |`bool` | Enable/disable for logging frame info to database (per frame)         |
+|`logPlayerActions`                 |`bool` | Enable/disable for logging player position, aim , and actions to database (per frame) |
+|`logTrialResponse`                 |`bool` | Enable/disable for logging trial responses to database (per trial)    |
+|`logUsers`                         |`bool` | Enable/disable for logging users to database (per session)            |
+
+```
+"logEnable" = true,
+"logTargetTrajectories" = true,
+"logFrameInfo" = true,
+"logPlayerActions" = true,
+"logTrialResponse" = true,
+"logUsers" = true,
 ```
 
 # Frame Rate Modes

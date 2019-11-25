@@ -20,7 +20,8 @@ class Logger : public ReferenceCountedObject {
 public:
 	using TargetInfo = RowEntry;
 	using QuestionResult = RowEntry;
-	using TrialValues = Array<String>;
+	using TrialValues = RowEntry;
+	using UserValues = RowEntry;
 
 protected:
 	sqlite3* m_db = nullptr;						///< The db used for logging
@@ -40,6 +41,7 @@ protected:
 	Array<TargetLocation> m_targetLocations;			///< Storage for target trajectory (vector3 cartesian)
 	Array<TargetInfo> m_targets;
 	Array<TrialValues> m_trials;						///< Trial ID, start/end time etc.
+	Array<UserValues> m_users;
 
 	size_t getTotalQueueBytes()
 	{
@@ -67,23 +69,17 @@ protected:
 
 	void loggerThreadEntry();
 	
+	/** Generic function for writing Array<String> to db table */
+	void recordToDb(const Array<RowEntry>& rows, String tableName);
+
 	/** Record an array of frame timing info */
 	void recordFrameInfo(const Array<FrameInfo>& info);
 
 	/** Record an array of player actions */
 	void recordPlayerActions(const Array<PlayerAction>& actions);
 
-	/** Record a question and its response */
-	void recordQuestions(const Array<QuestionResult>& questions);
-
 	/** Record an array of target locations */
 	void recordTargetLocations(const Array<TargetLocation>& locations);
-
-	/** Add a target to an experiment */
-	void recordTargets(const Array<TargetInfo>& targets);
-
-	/** Record a response for a trial */
-	void recordTrialResponse(const Array<TrialValues>& values);
 
 	/** Create a results file */
 	void createResultsFile(String filename, String subjectID, String description);
@@ -106,6 +102,8 @@ public:
 	void logTargetLocation(const TargetLocation& targetLocation) { addToQueue(m_targetLocations, targetLocation); }
 	void logTargetInfo(const TargetInfo& targetInfo) { addToQueue(m_targets, targetInfo); }
 	void logTrial(const TrialValues& trial) { addToQueue(m_trials, trial); }
+
+	void logUserConfig(const UserConfig& userConfig);
 
 	/** Wakes up the logging thread and flushes even if the buffer limit is not reached yet. */
 	void flush(bool blockUntilDone);

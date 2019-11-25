@@ -1202,6 +1202,7 @@ public:
 	bool logFrameInfo			= true;		///< Log frame info in table?
 	bool logPlayerActions		= true;		///< Log player actions in table?
 	bool logTrialResponse		= true;		///< Log trial response in table?
+	bool logUsers				= true;		///< Log user infomration in table?
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
@@ -1211,6 +1212,7 @@ public:
 			reader.getIfPresent("logFrameInfo", logFrameInfo);
 			reader.getIfPresent("logPlayerActions", logPlayerActions);
 			reader.getIfPresent("logTrialResponse", logTrialResponse);
+			reader.getIfPresent("logUsers", logUsers);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1224,6 +1226,7 @@ public:
 		a["logFrameInfo"] = logFrameInfo;
 		a["logPlayerActions"] = logPlayerActions;
 		a["logTrialResponse"] = logTrialResponse;
+		a["logUsers"] = logUsers;
 		return a;
 	}
 };

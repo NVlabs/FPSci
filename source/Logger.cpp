@@ -146,6 +146,21 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 		{"Response", "text"}
 	};
 	createTableInDB(m_db, "Questions", questionColumns);
+
+	//8. User information
+	Columns userColumns = {
+		{"subjectID", "text"},
+		{"cmp360", "real"},
+		{"mouseDPI", "real"},
+		{"reticleIndex", "int"},
+		{"reticleScaleMin", "real"},
+		{"reticleScaleMax", "real"},
+		{"reticleColorMinScale", "text"},
+		{"reticleColorMaxScale", "text"},
+		{"turnScaleX", "real"},
+		{"turnScaleY", "real"}
+	};
+	createTableInDB(m_db, "Users", userColumns);
 }
 
 void Logger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
@@ -188,13 +203,6 @@ void Logger::recordPlayerActions(const Array<PlayerAction>& actions) {
 	insertRowsIntoDB(m_db, "Player_Action", rows);
 }
 
-void Logger::recordQuestions(const Array<QuestionResult>& questions)
-{
-	for (const auto& item : questions) {
-		insertRowIntoDB(m_db, "Questions", item);
-	}
-}
-
 void Logger::recordTargetLocations(const Array<TargetLocation>& locations) {
 	Array<RowEntry> rows;
 	for (const auto& loc : locations) {
@@ -210,19 +218,13 @@ void Logger::recordTargetLocations(const Array<TargetLocation>& locations) {
 	insertRowsIntoDB(m_db, "Target_Trajectory", rows);
 }
 
-void Logger::recordTargets(const Array<TargetInfo>& targets)
-{
-	for (const auto& item : targets) {
-		insertRowIntoDB(m_db, "Targets", item);
+void Logger::recordToDb(const Array<RowEntry>& rows, String tableName) {
+	for (const auto& row : rows) {
+		insertRowIntoDB(m_db, tableName, row);
 	}
 }
 
-void Logger::recordTrialResponse(const Array<TrialValues>& values)
-{
-	for (const auto& item : values) {
-		insertRowIntoDB(m_db, "Trials", item);
-	}
-}
+
 
 void Logger::loggerThreadEntry()
 {
@@ -260,14 +262,22 @@ void Logger::loggerThreadEntry()
 		trials.swap(m_trials, trials);
 		m_trials.reserve(trials.size() * 2);
 
+		decltype(m_users) users;
+		users.swap(m_users, users);
+		m_users.reserve(users.size() * 2);
+
 		// Unlock all the now-empty queues and write out our temporary copies
 		lk.unlock();
+
 		recordFrameInfo(frameInfo);
 		recordPlayerActions(playerActions);
-		recordQuestions(questions);
 		recordTargetLocations(targetLocations);
-		recordTargets(targets);
-		recordTrialResponse(trials);
+
+		recordToDb(questions, "Questions");
+		recordToDb(targets, "Targets");
+		recordToDb(users, "Users");
+		recordToDb(trials, "Trials");
+
 		lk.lock();
 	}
 }
@@ -341,6 +351,22 @@ void Logger::addQuestion(Question q, String session) {
 		"'" + q.result + "'"
 	};
 	logQuestionResult(rowContents);
+}
+
+void Logger::logUserConfig(const UserConfig& user) {
+	RowEntry row = {
+		"'" + user.id + "'",
+		String(std::to_string(user.cmp360)),
+		String(std::to_string(user.mouseDPI)),
+		String(std::to_string(user.reticleIndex)),
+		String(std::to_string(user.reticleScale[0])),
+		String(std::to_string(user.reticleScale[1])),
+		"'" + user.reticleColor[0].toString() + "'",
+		"'" + user.reticleColor[1].toString() + "'",
+		String(std::to_string(user.turnScale.x)),
+		String(std::to_string(user.turnScale.y))
+	};
+	m_users.append(row);
 }
 
 void Logger::closeResultsFile() {
