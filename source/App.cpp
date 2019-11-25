@@ -1370,6 +1370,134 @@ bool App::onEvent(const GEvent& event) {
 }
 
 void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
+	// Put elements that should be delayed along w/ 3D here
+	rd->push2D(); {
+		const float scale = rd->viewport().width() / 1920.0f;
+		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+
+		// Reticle
+		UserConfig* user = userTable.getCurrentUser();
+		float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleShrinkTimeS), 1.0f), 0.0f);
+		float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
+		Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
+		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
+
+		// Draw target health bars
+		if (sessConfig->targetView.showHealthBars) {
+			for (auto const& target : targetArray) {
+				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
+					sessConfig->targetView.healthBarSize,
+					sessConfig->targetView.healthBarOffset,
+					sessConfig->targetView.healthBarBorderSize,
+					sessConfig->targetView.healthBarColors,
+					sessConfig->targetView.healthBarBorderColor);
+			}
+		}
+
+		// Draw the combat text
+		if (sessConfig->targetView.showCombatText) {
+			Array<int> toRemove;
+			for (int i = 0; i < m_combatTextList.size(); i++) {
+				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
+				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
+			}
+			// Remove the expired elements here
+			m_combatTextList.removeNulls();
+		}
+
+		// Paint both sides by the width of latency measuring box.
+		Point2 latencyRect = sessConfig->clickToPhoton.size;
+		// weapon ready status
+		if (sessConfig->hud.renderWeaponStatus) {
+			// Draw the "active" cooldown box
+			if (sessConfig->hud.cooldownMode == "box") {
+				float boxLeft = (float)rd->viewport().width() * 0.0f;
+				if (sessConfig->hud.weaponStatusSide == "right") {
+					// swap side
+					boxLeft = (float)rd->viewport().width() * (1.0f - latencyRect.x);
+				}
+				Draw::rect2D(
+					Rect2D::xywh(
+						boxLeft,
+						(float)rd->viewport().height() * (float)(sess->weaponCooldownPercent()),
+						(float)rd->viewport().width() * latencyRect.x,
+						(float)rd->viewport().height() * (float)(1.0 - sess->weaponCooldownPercent())
+					), rd, Color3::white() * 0.8f
+				);
+			}
+			else if (sessConfig->hud.cooldownMode == "ring") {
+				// Draw cooldown "ring" instead of box
+				const float iRad = sessConfig->hud.cooldownInnerRadius;
+				const float oRad = iRad + sessConfig->hud.cooldownThickness;
+				const int segments = sessConfig->hud.cooldownSubdivisions;
+				int segsToLight = static_cast<int>(ceilf((1 - sess->weaponCooldownPercent())*segments));
+				// Create the segments
+				for (int i = 0; i < segsToLight; i++) {
+					const float inc = static_cast<float>(2 * pi() / segments);
+					const float theta = -i * inc;
+					Vector2 center = Vector2(rd->viewport().width() / 2.0f, rd->viewport().height() / 2.0f);
+					Array<Vector2> verts = {
+						center + Vector2(oRad*sin(theta), -oRad * cos(theta)),
+						center + Vector2(oRad*sin(theta + inc), -oRad * cos(theta + inc)),
+						center + Vector2(iRad*sin(theta + inc), -iRad * cos(theta + inc)),
+						center + Vector2(iRad*sin(theta), -iRad * cos(theta))
+					};
+					Draw::poly2D(verts, rd, sessConfig->hud.cooldownColor);
+				}
+			}
+		}
+
+		// Click to photon latency measuring corner box
+		if (sessConfig->clickToPhoton.enabled) {
+			float boxLeft = 0.0f;
+			if (sessConfig->clickToPhoton.side == "right") {
+				// swap side
+				boxLeft = (float)rd->viewport().width() * (1.0f - latencyRect.x);
+			}
+			// Draw the "active" box
+			Color3 cornerColor = (m_buttonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+			Draw::rect2D(
+				Rect2D::xywh(
+					boxLeft,
+					(float)rd->viewport().height() * (sessConfig->clickToPhoton.vertPos - latencyRect.y / 2),
+					(float)rd->viewport().width() * latencyRect.x,
+					(float)rd->viewport().height() * latencyRect.y
+				), rd, cornerColor
+			);
+		}
+
+		// Draw the HUD here
+		if (sessConfig->hud.enable) {
+			drawHUD(rd);
+		}
+
+		// Handle the feedback message
+		String message = sess->getFeedbackMessage();
+		if (!message.empty()) {
+			outputFont->draw2D(rd, message.c_str(),
+				(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+		}
+
+		if (sessConfig->render.shader != "") {
+			// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
+			// latency queue copy
+
+			// Think about whether or not this is the right place to run the shader...
+
+			// Copy the post-VFX HDR framebuffer
+			static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("temp distortion source", 256, 256, m_framebuffer->texture(0)->format()));
+			temp->resize(m_framebuffer->width(), m_framebuffer->height());
+			m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
+
+			rd->push2D(m_framebuffer); {
+				Args args;
+				args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
+				args.setRect(rd->viewport());
+				LAUNCH_SHADER(sessConfig->render.shader, args);
+			} rd->pop2D();
+		}
+	}rd->pop2D();
+
 	GApp::onPostProcessHDR3DEffects(rd);
 }
 
@@ -1776,131 +1904,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			Draw::point(Point2(window()->width()*0.9f - 15.0f, 20.0f+m_debugMenuHeight*scale), rd, Color3::red(), 10.0f);
 			outputFont->draw2D(rd, "Recording Position", Point2(window()->width()*0.9f, m_debugMenuHeight*scale), 20.0f, Color3::red());
 		}
-
-		// Reticle
-		UserConfig* user = userTable.getCurrentUser();
-		float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleShrinkTimeS), 1.0f), 0.0f);
-		float rScale = tscale*user->reticleScale[0]+(1.0f-tscale)*user->reticleScale[1];
-		Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
-		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds()/ 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
-
-		// Draw target health bars
-		if (sessConfig->targetView.showHealthBars) {
-			for (auto const& target : targetArray) {
-				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
-					sessConfig->targetView.healthBarSize,
-					sessConfig->targetView.healthBarOffset,
-					sessConfig->targetView.healthBarBorderSize,
-					sessConfig->targetView.healthBarColors,
-					sessConfig->targetView.healthBarBorderColor);
-			}
-		}
-
-		// Draw the combat text
-		if (sessConfig->targetView.showCombatText) {
-			Array<int> toRemove;
-			for (int i = 0; i < m_combatTextList.size(); i++) {
-				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
-				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
-			}
-			// Remove the expired elements here
-			m_combatTextList.removeNulls();
-		}
-
-		// Paint both sides by the width of latency measuring box.
-		Point2 latencyRect = sessConfig->clickToPhoton.size;
-		// weapon ready status
-		if (sessConfig->hud.renderWeaponStatus) {
-			// Draw the "active" cooldown box
-			if (sessConfig->hud.cooldownMode == "box") {
-				float boxLeft = (float)rd->viewport().width() * 0.0f;
-				if (sessConfig->hud.weaponStatusSide == "right") {
-					// swap side
-					boxLeft = (float)rd->viewport().width() * (1.0f - latencyRect.x);
-				}
-				Draw::rect2D(
-					Rect2D::xywh(
-						boxLeft,
-						(float)rd->viewport().height() * (float)(sess->weaponCooldownPercent()),
-						(float)rd->viewport().width() * latencyRect.x,
-						(float)rd->viewport().height() * (float)(1.0 - sess->weaponCooldownPercent())
-					), rd, Color3::white() * 0.8f
-				);
-			}
-			else if (sessConfig->hud.cooldownMode == "ring") {
-				// Draw cooldown "ring" instead of box
-				const float iRad = sessConfig->hud.cooldownInnerRadius;
-				const float oRad = iRad + sessConfig->hud.cooldownThickness;
-				const int segments = sessConfig->hud.cooldownSubdivisions;
-				int segsToLight = static_cast<int>(ceilf((1 - sess->weaponCooldownPercent())*segments));
-				// Create the segments
-				for (int i = 0; i < segsToLight; i++) {
-					const float inc = static_cast<float>(2 * pi() / segments);
-					const float theta = -i * inc;
-					Vector2 center = Vector2(rd->viewport().width() / 2.0f, rd->viewport().height() / 2.0f);
-					Array<Vector2> verts = {
-						center + Vector2(oRad*sin(theta), -oRad * cos(theta)),
-						center + Vector2(oRad*sin(theta + inc), -oRad * cos(theta + inc)),
-						center + Vector2(iRad*sin(theta + inc), -iRad * cos(theta + inc)),
-						center + Vector2(iRad*sin(theta), -iRad * cos(theta))
-					};
-					Draw::poly2D(verts, rd, sessConfig->hud.cooldownColor);
-				}
-			}
-		}
-
-		// Click to photon latency measuring corner box
-		if (sessConfig->clickToPhoton.enabled) {
-			float boxLeft = 0.0f;
-			if (sessConfig->clickToPhoton.side == "right") {
-				// swap side
-				boxLeft = (float)rd->viewport().width() * (1.0f - latencyRect.x);
-			}
-			// Draw the "active" box
-			Color3 cornerColor = (m_buttonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
-			Draw::rect2D(
-				Rect2D::xywh(
-					boxLeft,
-					(float)rd->viewport().height() * (sessConfig->clickToPhoton.vertPos - latencyRect.y / 2),
-					(float)rd->viewport().width() * latencyRect.x,
-					(float)rd->viewport().height() * latencyRect.y
-				), rd, cornerColor
-			);
-		}
-
-		// Draw the HUD here
-		if (sessConfig->hud.enable) {
-			drawHUD(rd);
-		}
-
-		// Handle the feedback message
-		String message = sess->getFeedbackMessage();
-		if (!message.empty()) {
-			outputFont->draw2D(rd, message.c_str(),
-				(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-		}
-
-
 	} rd->pop2D();
-
-	if (sessConfig->render.shader != "") {
-		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
-		// latency queue copy
-
-		// Think about whether or not this is the right place to run the shader...
-
-		// Copy the post-VFX HDR framebuffer
-		static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("temp distortion source", 256, 256, m_framebuffer->texture(0)->format()));
-		temp->resize(m_framebuffer->width(), m_framebuffer->height());
-		m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
-
-		rd->push2D(m_framebuffer); {
-			Args args;
-			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
-			args.setRect(rd->viewport());
-			LAUNCH_SHADER(sessConfig->render.shader, args);
-		} rd->pop2D();
-	}
 
 	// Might not need this on the reaction trial
 	// This is rendering the GUI. Can remove if desired.
