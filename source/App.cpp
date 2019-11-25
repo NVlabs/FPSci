@@ -531,7 +531,7 @@ void App::makeGUI() {
 
     // set up user settings window
     m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, 
-        Rect2D::xywh((float)window()->width() * 0.5f - 200.0f, (float)window()->height() * 0.5f - 100.0f, 400.0f, 200.0f));
+        Rect2D::xywh((float)window()->renderDevice()->viewport().width() * 0.5f - 200.0f, (float)window()->renderDevice()->viewport().height() * 0.5f - 100.0f, 400.0f, 200.0f));
     addWidget(m_userSettingsWindow);
     GuiPane* p = m_userSettingsWindow->pane();
     m_currentUserPane = p->addPane("Current User Settings");
@@ -552,7 +552,7 @@ void App::makeGUI() {
     m_userSettingsWindow->setVisible(m_userSettingsMode);
 
 	debugWindow->pack();
-	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
+	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->renderDevice()->viewport().width(), debugWindow->rect().height()));
 	m_debugMenuHeight = startupConfig.playMode ? 0.0f : debugWindow->rect().height();
 }
 
@@ -1475,7 +1475,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		String message = sess->getFeedbackMessage();
 		if (!message.empty()) {
 			outputFont->draw2D(rd, message.c_str(),
-				(Point2((float)window()->width() / 2, (float)window()->height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+				(Point2((float)rd->viewport().width() / 2, (float)rd->viewport().height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
 		}
 
 		if (sessConfig->render.shader != "") {
@@ -1901,8 +1901,8 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 
 		// Handle recording indicator
 		if (recordMotion) {
-			Draw::point(Point2(window()->width()*0.9f - 15.0f, 20.0f+m_debugMenuHeight*scale), rd, Color3::red(), 10.0f);
-			outputFont->draw2D(rd, "Recording Position", Point2(window()->width()*0.9f, m_debugMenuHeight*scale), 20.0f, Color3::red());
+			Draw::point(Point2(rd->viewport().width()*0.9f - 15.0f, 20.0f+m_debugMenuHeight*scale), rd, Color3::red(), 10.0f);
+			outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f , m_debugMenuHeight*scale), 20.0f, Color3::red());
 		}
 	} rd->pop2D();
 
