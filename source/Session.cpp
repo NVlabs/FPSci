@@ -66,7 +66,7 @@ bool Session::setupTrialParams(Array<Array<shared_ptr<TargetConfig>>> trials) {
 	return true;
 }
 
-void Session::onInit(String filename, String userName, String description) {
+void Session::onInit(String filename, String description) {
 	// Initialize presentation states
 	presentationState = PresentationState::initial;
 	m_feedbackMessage = "Click to spawn a target, then use shift on red target to begin.";
@@ -74,8 +74,12 @@ void Session::onInit(String filename, String userName, String description) {
 	// Check for valid session
 	if (m_hasSession) {
 		if (m_config->logger.enable) {
+			UserConfig user = *m_app->getCurrUser();
 			// Setup the logger and create results file
-			m_logger = Logger::create(filename, userName, description);
+			m_logger = Logger::create(filename, user.id, description);
+			if (m_config->logger.logUsers) {
+				m_logger->logUserConfig(user);
+			}
 		}
 		// Iterate over the sessions here and add a config for each
 		Array<Array<shared_ptr<TargetConfig>>> trials = m_app->experimentConfig.getTargetsForSession(m_config->id);

@@ -1013,7 +1013,7 @@ void App::updateSession(const String& id) {
 	}
 
 	// Initialize the experiment (this creates the results file)
-	sess->onInit(logName+".db", userTable.currentUser, experimentConfig.description + "/" + sessConfig->description);
+	sess->onInit(logName+".db", experimentConfig.description + "/" + sessConfig->description);
 	// Don't create a results file for a user w/ no sessions left
 	if (m_sessDropDown->numElements() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");

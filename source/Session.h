@@ -176,7 +176,7 @@ public:
 	}
 	
 	void updatePresentationState();
-	void onInit(String filename, String userName, String description);
+	void onInit(String filename, String description);
 	void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
 	void processResponse();
 	void recordTrialResponse(int destroyedTargets, int totalTargets);
