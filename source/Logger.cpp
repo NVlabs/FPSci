@@ -104,7 +104,7 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 			{ "end_time", "text" },
 			{ "task_execution_time", "real" },
 			{ "destroyed_targets", "real" },
-			{ "total_targets", "real"}
+			{ "total_targets", "real" }
 	};
 	createTableInDB(m_db, "Trials", trialColumns);
 
@@ -150,6 +150,8 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	//8. User information
 	Columns userColumns = {
 		{"subjectID", "text"},
+		{"session", "text"},
+		{"time", "text"},
 		{"cmp360", "real"},
 		{"mouseDPI", "real"},
 		{"reticleIndex", "int"},
@@ -353,9 +355,11 @@ void Logger::addQuestion(Question q, String session) {
 	logQuestionResult(rowContents);
 }
 
-void Logger::logUserConfig(const UserConfig& user) {
+void Logger::logUserConfig(const UserConfig& user, const String session_ref, const String position) {
 	RowEntry row = {
 		"'" + user.id + "'",
+		"'" + session_ref + "'",
+		"'" + position + "'",
 		String(std::to_string(user.cmp360)),
 		String(std::to_string(user.mouseDPI)),
 		String(std::to_string(user.reticleIndex)),

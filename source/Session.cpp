@@ -78,7 +78,7 @@ void Session::onInit(String filename, String description) {
 			// Setup the logger and create results file
 			m_logger = Logger::create(filename, user.id, description);
 			if (m_config->logger.logUsers) {
-				m_logger->logUserConfig(user);
+				m_logger->logUserConfig(user, m_config->id, "start");
 			}
 		}
 		// Iterate over the sessions here and add a config for each
@@ -291,7 +291,6 @@ void Session::updatePresentationState()
 		{
 			if (isComplete()) {
 				if (m_config->questionArray.size() > 0 && m_currQuestionIdx < m_config->questionArray.size()) {			// Pop up question dialog(s) here if we need to
-
 					if (m_currQuestionIdx == -1){
 						m_currQuestionIdx = 0;
 						m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
@@ -314,7 +313,9 @@ void Session::updatePresentationState()
 				}
 				else {
 					if (m_config->logger.enable) {
-						m_logger.reset();															// Close the current results file (if open)
+						m_logger->logUserConfig(*m_app->getCurrUser(), m_config->id, "end");
+						m_logger->flush(false);
+						m_logger.reset();
 					}
 					m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
 					m_app->updateSessionDropDown();
