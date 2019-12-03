@@ -196,6 +196,7 @@ protected:
     void updateUserGUI();
 
 	void drawHUD(RenderDevice *rd);
+	void drawClickIndicator(RenderDevice *rd, String mode);
 
 public:
 	/* Moving from proctected so that Experiment classes can use it. */

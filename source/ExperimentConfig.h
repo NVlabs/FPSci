@@ -1105,6 +1105,7 @@ public:
 	// Click-to-photon
 	bool            enabled = false;                            ///< Render click to photon box
 	String          side = "right";                             ///< "right" for right side, otherwise left
+	String			mode = "total";								///< Mode used to signal either minimum system latency ("minimum"), or added latency ("total"), or "both"
 	Point2          size = Point2(0.05f, 0.035f);				///< Size of the click-to-photon area (ratio of screen space)
 	float           vertPos = 0.5f;				                ///< Percentage of the screen down to locate the box
 	Array<Color3>   colors = {				                    ///< Colors to apply to click to photon box
@@ -1117,6 +1118,7 @@ public:
 		case 1:
 			reader.getIfPresent("renderClickPhoton", enabled);
 			reader.getIfPresent("clickPhotonSide", side);
+			reader.getIfPresent("clickPhotonMode", mode);		
 			reader.getIfPresent("clickPhotonSize", size);
 			reader.getIfPresent("clickPhotonVertPos", vertPos);
 			reader.getIfPresent("clickPhotonColors", colors);

@@ -220,6 +220,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 |--------------------|----------------------|------------------------------------------------------------------------------------|
 |`renderClickPhoton` |bool                  | Whether or not the click-to-photon indicator box is drawn to the screen            |
 |`clickPhotonSide`   |`"right"` or `"left"` | Which side of the display (`left` vs `right`) the click-to-photon indicator box is drawn on |
+|`clickPhotonMode`   |`"minimum"` or `"total"`| Which click to photon time is recorded, `minimum` does not include added frame delay, while `total` does |
 |`clickPhotonSize`   |`Point2`(ratio)       | The size of the click-to-photon box as a ratio of total screen size               |
 |`clickPhotonVertPos`|ratio                 | The vertical position of the click-to-photon output box on the `clickPhotonSide` of the display |
 |`clickPhotonColors` |[`Color3`, `Color3`]  | The mouse up/down colors for the click-to-photon indicator box, order is [mouse down color, mouse up color] |
@@ -227,6 +228,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 ```
 "renderClickPhoton": true,              // Draw the click to photon box
 "clickPhotonSide": "right",             // Draw the box on the right side (opposite weapon status)
+"clickPhotonMode": "total",             // Use the total click-to-photon time
 "clickPhotonVertPos": 0.5,              // Draw the click to photon box in the middle of the display
 "clickPhotonSize" : Point2(0.05,0.035), // Size of the box (as a ratio of screen space)
 "clickPhotonColors": [                  // Array of mouse up/down colors

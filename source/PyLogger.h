@@ -7,6 +7,7 @@ protected:
 	bool							m_loggerRunning = false;			///< Flag to indicate whether a python logger (for HW logger) is running (i.e. needs to be closed)
 	HANDLE							m_loggerHandle = 0;					///< Process handle for the python logger instance (for HW logger) if running
 	String							m_logName;							///< The log name used by the python logger instance (for HW logger) if running
+	String							m_mode;								///< This stores the logging mode ("minimum" latency or "total" latency for now)
 	String							m_com;
 	bool							m_hasSync = false;
 	String							m_syncComPort = "";
@@ -36,8 +37,10 @@ public:
 		return createShared<PythonLogger>(com, hasSync, syncComPort);
 	}
 
-	void run(String logName) {
+	void run(String logName, String mode = "minimum") {
 		m_logName = logName;
+		m_mode = mode;
+
 		// Variables for creating process/getting handle
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
@@ -60,12 +63,15 @@ public:
 		m_loggerHandle = pi.hProcess;
 	}
 
-	bool pythonMergeLogs(String basename) {
+	bool pythonMergeLogs(String basename, bool block=false) {
 		String dbFile = basename + ".db";
 		String eventFile = basename + "_event.csv";
-
+		
 		// If we can't find either the db output file or the csv input return false
-		if (!FileSystem::exists(dbFile) || !FileSystem::exists(eventFile)) return false;
+		if (!FileSystem::exists(dbFile, false) || !FileSystem::exists(eventFile, false)) {
+			logPrintf("Could not find db file: '%s' or csv file: '%s'\n", dbFile, eventFile);
+			return false;
+		}
 
 		// Variables for creating process/getting handle
 		STARTUPINFO si;
@@ -74,10 +80,17 @@ public:
 		si.cb = sizeof(si);
 		ZeroMemory(&pi, sizeof(pi));
 
-		String cmd = "python ../scripts/\"event logger\"/software/event_log_insert.py " + eventFile + " " + dbFile;
+		String cmd = "python ../scripts/\"event logger\"/software/event_log_insert.py " + eventFile + " " + dbFile + " " + m_mode;
+		logPrintf("Running python merge script: '%s'\n", cmd.c_str());
+
 		LPSTR command = LPSTR(cmd.c_str());
 		if (!CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
 			logPrintf("Failed to merge results: %s\n", GetLastErrorString());
+		}
+		else if (block) {
+			WaitForSingleObject(pi.hProcess, INFINITE);
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
 		}
 		return true;
 	}
@@ -87,10 +100,10 @@ public:
 		m_loggerRunning = false;
 	}
 
-	void mergeLogToDb() {
+	void mergeLogToDb(bool block=false) {
 		if (m_loggerRunning) {
 			killPythonLogger();
-			pythonMergeLogs(m_logName);
+			alwaysAssertM(pythonMergeLogs(m_logName, block), "Failed to merge logs! See log.txt for details...");
 		}
 	}
 
