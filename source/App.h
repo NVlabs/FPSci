@@ -392,6 +392,7 @@ public:
 	} m_screenSetting;
 
 	bool							m_buttonUp = true;
+	bool							m_frameToggle = false;		///< Simple toggle flag used for frame rate click-to-photon monitoring
 };
 
 // The "old" way of animation

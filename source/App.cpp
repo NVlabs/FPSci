@@ -1448,8 +1448,13 @@ void App::drawClickIndicator(RenderDevice *rd, String mode) {
 			boxLeft = (float)rd->viewport().width() - (guardband + latencyRect.x);
 		}
 		// Draw the "active" box
-		Color3 cornerColor = (m_buttonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
-		Draw::rect2D(Rect2D::xywh(boxLeft, boxTop, latencyRect.x, latencyRect.y), rd, cornerColor);
+		Color3 boxColor;
+		if (sessConfig->clickToPhoton.mode == "frameRate") {
+			boxColor = (m_frameToggle) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+			m_frameToggle = !m_frameToggle;
+		}
+		else boxColor = (m_buttonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+		Draw::rect2D(Rect2D::xywh(boxLeft, boxTop, latencyRect.x, latencyRect.y), rd, boxColor);
 	}
 }
 
@@ -1897,8 +1902,8 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f , m_debugMenuHeight*scale), 20.0f, Color3::red());
 		}
 
-		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode == "minimum") {
-			drawClickIndicator(rd, "minimum");
+		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode != "total") {
+			drawClickIndicator(rd, sessConfig->clickToPhoton.mode);
 		}
 
 		// Reticle
