@@ -339,7 +339,7 @@ void Session::updatePresentationState()
 			m_app->openUserSettingsWindow();
 			if (m_hasSession) {
 				m_app->userSaveButtonPress();												// Press the save button for the user...
-				Array<String> remaining = m_app		->updateSessionDropDown();
+				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
 					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
 					moveOn = false;

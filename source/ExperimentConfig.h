@@ -365,6 +365,7 @@ public:
 	Array<String>			sessionOrder = {};				///< Array containing session ordering
 	Array<String>			completedSessions = {};			///< Array containing all completed session ids for this user
 	static Array<String>	defaultSessionOrder;			///< Default session order
+	static bool				randomizeDefaults;				///< Randomize default session order when applying to individual?
 
 	UserSessionStatus() {}
 
@@ -379,10 +380,14 @@ public:
 			if(!reader.getIfPresent("id", id)){
 				throw "All user status fields must include the user ID!";
 			}
+
+			// Setup default session order			
 			sessionOrder = defaultSessionOrder;
-			// Check for empty session list here (no default) require a per user session order in this case
-			if (sessionOrder.size() == 0 && !reader.getIfPresent("sessions", sessionOrder)) {
-				throw format("Must provide \"sessions\" array for User ID:\"%s\" in user status!", id);
+			if (randomizeDefaults) sessionOrder.randomize();
+
+			// Override the default session order if one is provided for this user
+			if (!reader.getIfPresent("sessions", sessionOrder)) {
+				if(sessionOrder.length() == 0) throw format("Must provide \"sessions\" array for User ID:\"%s\" in user status!", id);
 			}
 			reader.getIfPresent("completedSessions", completedSessions);
 			break;
@@ -405,7 +410,8 @@ public:
 /** Class for representing user status tables */
 class UserStatusTable {
 public:
-	bool sequence = false;								///< Flag for whether to sequence these experiments (allow duplicates)
+	bool allowRepeat = false;							///< Flag for whether to (strictly) sequence these experiments (allow duplicates)
+	bool randomizeDefaults = false;						///< Randomize from default session order when applying to user
 	Array<String> defaultSessionOrder = {};				///< Default session ordering (for all unspecified users)
 	Array<UserSessionStatus> userInfo = {};				///< Array of user status
 
@@ -419,9 +425,11 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("sequence", sequence);
+			reader.getIfPresent("allowRepeat", allowRepeat);
 			reader.getIfPresent("sessions", defaultSessionOrder);
 			UserSessionStatus::defaultSessionOrder = defaultSessionOrder;				// Set the default order here
+			reader.getIfPresent("randomizeSessionOrder", randomizeDefaults);			
+			UserSessionStatus::randomizeDefaults = randomizeDefaults;					// Set whether default session order is randomized
 			if(!reader.getIfPresent("users", userInfo)){
 				throw "The \"users\" array must bree present in the user status file!";
 			}
@@ -436,7 +444,8 @@ public:
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
 		a["settingsVersion"] = 1;						// Create a version 1 file
-		a["sequence"] = sequence;
+		a["allowRepeat"] = allowRepeat;
+		a["randomizeSessionOrder"] = randomizeDefaults;
 		a["sessions"] = defaultSessionOrder;
 		a["users"] = userInfo;							// Include updated subject table
 		return a;
@@ -466,7 +475,7 @@ public:
 		// Return the first valid session that has not been completed
 		shared_ptr<UserSessionStatus> status = getUserStatus(userId);
 		// Handle sequence mode here (can be repeats)
-		if (sequence) {
+		if (allowRepeat) {
 			int j = 0;
 			for (int i = 0; i < status->sessionOrder.size(); i++) {
 				if (status->completedSessions.size() <= i) {						// If there aren't enough entries in completed sessions to support this

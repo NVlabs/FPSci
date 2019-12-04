@@ -15,6 +15,7 @@ const float App::TARGET_MODEL_ARRAY_OFFSET = 20;
 FpsConfig SessionConfig::defaultConfig;
 int TrialCount::defaultCount;
 Array<String> UserSessionStatus::defaultSessionOrder;
+bool UserSessionStatus::randomizeDefaults;
 
 /** global startup config - sets playMode and experiment/user paths */
 StartupConfig startupConfig;
@@ -838,13 +839,25 @@ Array<String> App::updateSessionDropDown(void) {
 		userStatus = userStatusTable.getUserStatus(userId);
 		userStatusTable.toAny().save("userstatus.Any");
 	}
+
 	Array<String> remainingSess = {};
-	for (int i = 0; i < userStatus->sessionOrder.size(); i++) {
-        // user hasn't completed this session
-        if (!userStatus->completedSessions.contains(userStatus->sessionOrder[i])) {
-            remainingSess.append(userStatus->sessionOrder[i]);
-        }
-    }
+	if (userStatusTable.allowRepeat) {
+		remainingSess = userStatus->sessionOrder;
+		for (int i = 0; i < userStatus->completedSessions.size(); i++) {
+			if (remainingSess.contains(userStatus->completedSessions[i])) {
+				int idx = remainingSess.findIndex(userStatus->completedSessions[i]);
+				remainingSess.remove(idx, 1);
+			}
+		}
+	}
+	else{
+		for (int i = 0; i < userStatus->sessionOrder.size(); i++) {
+			if(!userStatus->completedSessions.contains(userStatus->sessionOrder[i])) {
+				// user hasn't (ever) completed this session
+				remainingSess.append(userStatus->sessionOrder[i]);
+			}
+		}
+	}
 	m_sessDropDown->setList(remainingSess);
 
 	// Print message to log

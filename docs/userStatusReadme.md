@@ -9,7 +9,8 @@ The [`userstatus.Any` file](../data-files/userconfig.Any) is located in the [`da
 # User Table
 The top-level user status table contains the following fields:
 
-* `sequence` determines whether or not to (strictly) sequence the trials (this allows repeated trials)
+* `allowRepeat` determines whether or not to (strictly) sequence the trials, allowing for repeats
+* `randomizeSessionOrder` determines whether or not individual users are assigned randomized orderings from the (default) `sessions` array (defined below)
 * `sessions` is the default sessions list for any user in the file that does not have a sessions list specified
 
 Each entry in the user table contains the following fields:
