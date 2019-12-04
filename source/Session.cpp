@@ -76,7 +76,7 @@ void Session::onInit(String filename, String description) {
 		if (m_config->logger.enable) {
 			UserConfig user = *m_app->getCurrUser();
 			// Setup the logger and create results file
-			m_logger = Logger::create(filename, user.id, description);
+			m_logger = Logger::create(filename, user.id, m_config->id, description);
 			if (m_config->logger.logUsers) {
 				m_logger->logUserConfig(user, m_config->id, "start");
 			}

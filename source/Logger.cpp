@@ -36,7 +36,7 @@ String Logger::genFileTimestamp() {
 	return String(timeStr);
 }
 
-void Logger::createResultsFile(String filename, String subjectID, String description)
+void Logger::createResultsFile(String filename, String subjectID, String sessionID, String description)
 {
 	// generate folder result_data if it does not exist.
 	if (!FileSystem::isDirectory(String("../results"))) {
@@ -55,21 +55,23 @@ void Logger::createResultsFile(String filename, String subjectID, String descrip
 	// create tables inside the db file.
 	// 1. Experiment description (time and subject ID)
 	// create sqlite table
-	Columns expColumns = {
+	Columns sessColumns = {
 		// format: column name, data type, sqlite modifier(s)
+			{ "sessionID", "text", "NOT NULL"},
 			{ "time", "text", "NOT NULL" },
 			{ "subjectID", "text", "NOT NULL" },
 			{ "appendingDescription", "text"}
 	};
-	createTableInDB(m_db, "Experiments", expColumns); // no need of Primary Key for this table.
+	createTableInDB(m_db, "Sessions", sessColumns); // no need of Primary Key for this table.
 
 	// populate table
-	RowEntry expValues = {
+	RowEntry sessValues = {
+		"'" + sessionID + "'",
 		"'" + timeStr + "'",
 		"'" + subjectID + "'",
 		"'" + description + "'"
 	};
-	insertRowIntoDB(m_db, "Experiments", expValues);
+	insertRowIntoDB(m_db, "Sessions", sessValues);
 
 	// 2. Targets
 	// create sqlite table
@@ -284,12 +286,12 @@ void Logger::loggerThreadEntry()
 	}
 }
 
-Logger::Logger(String filename, String subjectID, String description) : m_db(nullptr) {
+Logger::Logger(String filename, String subjectID, String sessionID, String description) : m_db(nullptr) {
 	// secure vector capacity large enough so as to avoid memory allocation time.
 	m_playerActions.reserve(5000);
 	m_targetLocations.reserve(5000);
 	
-	createResultsFile(filename, subjectID, description);
+	createResultsFile(filename, subjectID,  sessionID, description);
 
 	m_running = true;
 	m_thread = std::thread(&Logger::loggerThreadEntry, this);
