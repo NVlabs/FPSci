@@ -952,6 +952,9 @@ void App::updateSession(const String& id) {
 	hudFont = GFont::fromFile(System::findDataFile(sessConfig->hud.hudFont));
 	m_combatFont = GFont::fromFile(System::findDataFile(sessConfig->targetView.combatTextFont));
 
+	// Handle clearing the targets here (clear any remaining targets before loading a new scene)
+	if (notNull(scene())) clearTargets();
+
 	// Load the experiment scene if we haven't already (target only)
 	if (sessConfig->sceneName.empty()) {
 		if (m_loadedScene.empty()) {		// No scene specified
@@ -1003,9 +1006,6 @@ void App::updateSession(const String& id) {
 	player->height = sessConfig->player.height;
 	player->crouchHeight = sessConfig->player.crouchHeight;
 	updateMoveRate(sessConfig->player.moveRate);
-
-	// Make sure all targets are cleared
-	clearTargets();
 
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::load();
