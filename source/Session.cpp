@@ -139,7 +139,7 @@ void Session::initTargetAnimation() {
 					m_config->targetView.healthColors[0],
 					target->id,
 					i,
-					(int)target->respawnCount,
+					target->respawnCount,
 					name,
 					target->logTargetTrajectory
 				);
@@ -162,7 +162,7 @@ void Session::initTargetAnimation() {
 					target->id,
 					i,
 					target->axisLock,
-					(int)target->respawnCount,
+					target->respawnCount,
 					name,
 					target->logTargetTrajectory
 				);
@@ -184,7 +184,7 @@ void Session::initTargetAnimation() {
 					target->id,
 					i,
 					target->axisLock,
-					(int)target->respawnCount,
+					target->respawnCount,
 					name,
 					target->logTargetTrajectory
 				);
@@ -229,7 +229,7 @@ void Session::processResponse()
 			break;
 		}
 		else {
-			totalTargets += ((int)target->respawnCount+1);
+			totalTargets += (target->respawnCount+1);
 		}
 	}
 	

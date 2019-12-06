@@ -362,8 +362,8 @@ public:
 class UserSessionStatus {
 public:
 	String					id = "anon";					///< User ID
-	Array<String>			sessionOrder = {};				///< Array containing session ordering
-	Array<String>			completedSessions = {};			///< Array containing all completed session ids for this user
+	Array<String>			sessionOrder;					///< Array containing session ordering
+	Array<String>			completedSessions;				///< Array containing all completed session ids for this user
 	static Array<String>	defaultSessionOrder;			///< Default session order
 	static bool				randomizeDefaults;				///< Randomize default session order when applying to individual?
 
@@ -643,7 +643,7 @@ public:
 	Array<float>	accelGravity = { 9.8f, 9.8f };			///< Range of acceleration due to gravity in meters/s^2
 	Array<Destination> destinations;						///< Array of destinations to traverse
 	String			destSpace = "world";					///< Space to use for destinations (implies offset) can be "world" or "player"
-	float			respawnCount = 0;						///< Number of times to respawn
+	int				respawnCount = 0;						///< Number of times to respawn
 	AABox			bbox;									///< Bounding box
 	Array<bool>		axisLock = { false, false, false };					///< Array of axis lock values
 
