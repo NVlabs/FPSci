@@ -276,7 +276,7 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("currentUser", currentUser);
-			reader.get("users", users, "The \"users\" array must be specified in the user configuration file!");
+			reader.get("users", users, "Issue in the (required) \"users\" array in the user config file!");
 			if (users.size() == 0) {
 				throw "At least 1 user must be specified in the \"users\" array within the user configuration file!";
 			}
@@ -378,7 +378,7 @@ public:
 			if (randomizeDefaults) sessionOrder.randomize();
 			reader.getIfPresent("sessions", sessionOrder);			// Override the default session order if one is provided for this user
 			if (sessionOrder.length() == 0) {						// Check for sessions in list
-				throw format("Must provide \"sessions\" array for User ID:\"%s\" in user status!", id);
+				throw format("Must provide \"sessions\" array (or default) for User ID:\"%s\" in user status!", id);
 			}
 			// Get the completed sessions array
 			reader.getIfPresent("completedSessions", completedSessions);
@@ -422,7 +422,7 @@ public:
 			UserSessionStatus::defaultSessionOrder = defaultSessionOrder;				// Set the default order here
 			reader.getIfPresent("randomizeSessionOrder", randomizeDefaults);			
 			UserSessionStatus::randomizeDefaults = randomizeDefaults;					// Set whether default session order is randomized
-			reader.get("users", userInfo, "The \"users\" array must bree present in the user status file!");
+			reader.get("users", userInfo, "Issue in the (required) \"users\" array from the user status file!");
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in UserStatus.\n", settingsVersion);
@@ -1302,7 +1302,7 @@ public:
 			// Unique session info
 			reader.get("id", id, "An \"id\" field must be provided for each session!");
 			reader.getIfPresent("description", description);
-			reader.get("trials", trials, format("A \"trials\" array must be specified with each session! See session: \"%s\"", id));
+			reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -1349,8 +1349,8 @@ public:
 			SessionConfig::defaultConfig = (FpsConfig)(*this);												// Setup the default configuration here
 			// Experiment-specific info
 			reader.getIfPresent("description", description);
-			reader.get("targets", targets, "The \"targets\" array must be specified for the experiment!");	// Targets must be specified for the experiment
-			reader.get("sessions", sessions, "The \"sessions\" array must be provided as part of the experiment config!");
+			reader.get("targets", targets, "Issue in the (required) \"targets\" array for the experiment!");	// Targets must be specified for the experiment
+			reader.get("sessions", sessions, "Issue in the (required) \"sessions\" array for the experiment config!");
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);
