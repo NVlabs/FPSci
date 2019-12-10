@@ -83,13 +83,9 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			if(!reader.getIfPresent("HasLogger", hasLogger)){
-				throw "System config must specify the \"HasLogger\" flag!";
-			}
+			reader.get("HasLogger", hasLogger, "System config must specify the \"HasLogger\" flag!");
+			reader.get("HasSync", hasSync, "System config must specify the \"HasSync\" flag!");
 			reader.getIfPresent("LoggerComPort", loggerComPort);
-			if(!reader.getIfPresent("HasSync", hasSync)){
-				throw "System config must specify the \"HasSync\" flag!";
-			}
 			reader.getIfPresent("SyncComPort", syncComPort);
 			break;
 		default:
@@ -280,9 +276,7 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("currentUser", currentUser);
-			if(!reader.getIfPresent("users", users)){
-				throw "The \"users\" array must be specified in the user configuration file!";
-			}
+			reader.get("users", users, "The \"users\" array must be specified in the user configuration file!");
 			if (users.size() == 0) {
 				throw "At least 1 user must be specified in the \"users\" array within the user configuration file!";
 			}
@@ -377,18 +371,16 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			if(!reader.getIfPresent("id", id)){
-				throw "All user status fields must include the user ID!";
-			}
-
-			// Setup default session order			
+			// Require a user ID
+			reader.get("id", id, "All user status fields must include the user ID!");
+			// Setup default session order, then overwrite if specified	
 			sessionOrder = defaultSessionOrder;
 			if (randomizeDefaults) sessionOrder.randomize();
-
-			// Override the default session order if one is provided for this user
-			if (!reader.getIfPresent("sessions", sessionOrder)) {
-				if(sessionOrder.length() == 0) throw format("Must provide \"sessions\" array for User ID:\"%s\" in user status!", id);
+			reader.getIfPresent("sessions", sessionOrder);			// Override the default session order if one is provided for this user
+			if (sessionOrder.length() == 0) {						// Check for sessions in list
+				throw format("Must provide \"sessions\" array for User ID:\"%s\" in user status!", id);
 			}
+			// Get the completed sessions array
 			reader.getIfPresent("completedSessions", completedSessions);
 			break;
 		default:
@@ -430,9 +422,7 @@ public:
 			UserSessionStatus::defaultSessionOrder = defaultSessionOrder;				// Set the default order here
 			reader.getIfPresent("randomizeSessionOrder", randomizeDefaults);			
 			UserSessionStatus::randomizeDefaults = randomizeDefaults;					// Set whether default session order is randomized
-			if(!reader.getIfPresent("users", userInfo)){
-				throw "The \"users\" array must bree present in the user status file!";
-			}
+			reader.get("users", userInfo, "The \"users\" array must bree present in the user status file!");
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in UserStatus.\n", settingsVersion);
@@ -571,14 +561,10 @@ public:
 			reader.getIfPresent("firePeriod", firePeriod);
 			reader.getIfPresent("autoFire", autoFire);
 			reader.getIfPresent("damagePerSecond", damagePerSecond);
-			
 			reader.getIfPresent("fireSound", fireSound);
-
 			reader.getIfPresent("renderModel", renderModel);
 			if (renderModel) {
-				if(!reader.getIfPresent("modelSpec", modelSpec)){
-					throw "If \"renderModel\" is set to true within a weapon config then a \"modelSpec\" must be provided!";
-				}
+				reader.get("modelSpec", modelSpec, "If \"renderModel\" is set to true within a weapon config then a \"modelSpec\" must be provided!");
 			}
 			else {
 				reader.getIfPresent("modelSpec", modelSpec);
@@ -606,9 +592,7 @@ public:
 		a["firePeriod"] = firePeriod;
 		a["autoFire"] = autoFire;
 		a["damagePerSecond"] = damagePerSecond;
-		
 		a["fireSound"] = fireSound;
-
 		a["renderModel"] = renderModel;
 		a["modelSpec"] = modelSpec;
 		a["muzzleOffset"] = muzzleOffset;
@@ -616,7 +600,6 @@ public:
 		a["renderDecals"] = renderDecals;
 		a["renderBullets"] = renderBullets;
 		a["bulletSpeed"] = bulletSpeed;
-
 		a["fireSpread"] = fireSpread;
 		a["damageRollOffAim"] = damageRollOffAim;
 		a["damageRollOffDistance"] = damageRollOffDistance;
@@ -672,9 +655,7 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			if(!reader.getIfPresent("id", id)){
-				throw "An \"id\" field must be provided for every target config!";
-			}
+			reader.get("id", id, "An \"id\" field must be provided for every target config!");
 			//reader.getIfPresent("elevationLocked", elevLocked);
 			reader.getIfPresent("upperHemisphereOnly", upperHemisphereOnly);
 			reader.getIfPresent("logTargetTrajectory", logTargetTrajectory);
@@ -693,9 +674,7 @@ public:
 			reader.getIfPresent("destinations", destinations);
 			reader.getIfPresent("respawnCount", respawnCount);
 			if (destSpace == "world" && destinations.size() == 0) {
-				if(!reader.getIfPresent("bounds", bbox)){
-					throw format("A world-space target must either specify destinations or a bounding box. See target: \"%s\"", id);
-				}
+				reader.get("bounds", bbox, format("A world-space target must either specify destinations or a bounding box. See target: \"%s\"", id));
 			}
 			else {
 				reader.getIfPresent("bounds", bbox);
@@ -725,11 +704,11 @@ public:
 		a["visualSize"] = size;
 		a["modelSpec"] = modelSpec;
 		a["logTargetTrajectory"] = logTargetTrajectory;
-		if (destinations.size() > 0) {
+		if (destinations.size() > 0) {						// Destination-based target
 			a["destSpace"] = destSpace;
 			a["destinations"] = destinations;
 		}
-		else {
+		else {												// Parametric target
 			a["upperHemisphereOnly"] = upperHemisphereOnly;
 			a["distance"] = distance;
 			a["motionChangePeriod"] = motionChangePeriod;
@@ -764,12 +743,9 @@ public:
 		AnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
 
-
 		switch (settingsVersion) {
 		case 1:
-			if(!reader.getIfPresent("ids", ids)){
-				throw "An \"ids\" field must be provided for each set of trials!";
-			}
+			reader.get("ids", ids, "An \"ids\" field must be provided for each set of trials!");
 			if (!reader.getIfPresent("count", count)) {
 				count = defaultCount;
 			}
@@ -814,33 +790,25 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			// Get the question type
-			if (!reader.getIfPresent("type", typeStr)) {
-				throw "A \"type\" field must be provided with every question!";
-			}
+			reader.get("type", typeStr, "A \"type\" field must be provided with every question!");
 			// Pase the type and get options for multiple choice
 			if (!typeStr.compare("MultipleChoice")) {
 				type = Type::MultipleChoice;
-				if (!reader.getIfPresent("options", options)) {
-					throw "An \"options\" Array must be specified with \"MultipleChoice\" style questions!";
-				}
+				reader.get("options", options, "An \"options\" Array must be specified with \"MultipleChoice\" style questions!");
 			}
 			else if (!typeStr.compare("Entry")) {
 				type = Type::Entry;
 			}
 			else if (!typeStr.compare("Rating")) {
 				type = Type::Rating;
-				if (!reader.getIfPresent("options", options)) {
-					throw "An \"options\" Array must be specified with \"Rating\" style questions!";
-				}
+				reader.get("options", options, "An \"options\" Array must be specified with \"Rating\" style questions!");
 			}
 			else {
 				throw format("Unrecognized question \"type\" String \"%s\". Valid options are \"MultipleChoice\" or \"Entry\"", typeStr);
 			}
 
-			// Get the question prompt
-			if(!reader.getIfPresent("prompt", prompt)){
-				throw "A \"prompt\" field must be provided with every question!";
-			}
+			// Get the question prompt (required) and title (optional)
+			reader.get("prompt", prompt, "A \"prompt\" field must be provided with every question!");
 			reader.getIfPresent("title", title);
 			break;
 		default:
@@ -1332,11 +1300,9 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			// Unique session info
-			reader.getIfPresent("id", id);
+			reader.get("id", id, "An \"id\" field must be provided for each session!");
 			reader.getIfPresent("description", description);
-			if (!reader.getIfPresent("trials", trials)){
-				throw format("A \"trials\" array must be specified with each session! See session: \"%s\"", id);
-			}
+			reader.get("trials", trials, format("A \"trials\" array must be specified with each session! See session: \"%s\"", id));
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -1379,16 +1345,12 @@ public:
 		AnyTableReader reader(any);
 		switch (settingsVersion) {
 		case 1:
+			// Setup the default FPS config based on this
+			SessionConfig::defaultConfig = (FpsConfig)(*this);												// Setup the default configuration here
 			// Experiment-specific info
 			reader.getIfPresent("description", description);
-			if(!reader.getIfPresent("targets", targets)){												// Get the targets (required)
-
-				throw "At least one target must be specified for the experiment!";
-			}
-			SessionConfig::defaultConfig = (FpsConfig)(*this);											// Setup the default configuration here
-			if(!reader.getIfPresent("sessions", sessions)){												// Get the sessions (required)
-				throw "The \"sessions\" array must be provided as part of the experiment config!";
-			}
+			reader.get("targets", targets, "The \"targets\" array must be specified for the experiment!");	// Targets must be specified for the experiment
+			reader.get("sessions", sessions, "The \"sessions\" array must be provided as part of the experiment config!");
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);
