@@ -511,7 +511,7 @@ public:
 		for (UserSessionStatus userStatus : userInfo) {
 			for (String userSessId : userStatus.sessionOrder) {
 				if (!sessions.contains(userSessId)) {
-					throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in experimenyconfig.Any's \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
+					throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in the experimentconfig.Any \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
 				}
 			}
 		}
