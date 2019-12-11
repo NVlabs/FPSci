@@ -496,7 +496,7 @@ public:
 	void validate(Array<String> sessions) {
 		// Build a string list of valid options for session IDs from the experiment
 		String expSessions = "[";
-		for (String sess : sessions) expSessions += sess + ", ";
+		for (String sess : sessions) expSessions += "\"" + sess + "\", ";
 		expSessions = expSessions.substr(0, expSessions.size() - 2);
 		expSessions += "]";
 
