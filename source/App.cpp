@@ -30,18 +30,22 @@ void App::onInit() {
 	// Initialize the app
 	GApp::onInit();
 
-	// Load per user settings from file
-	userTable = UserTable::load(startupConfig.userConfig());
-	userTable.printToLog();
-
-	// Load per experiment user settings from file
-	userStatusTable = UserStatusTable::load();
-	userStatusTable.printToLog();
-
 	// Load experiment setting from file
 	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfig());
 	experimentConfig.printToLog();
 
+	Array<String> sessionIds;
+	experimentConfig.getSessionIds(sessionIds);
+
+	// Load per user settings from file
+	userTable = UserTable::load(startupConfig.userConfig());
+	userTable.printToLog();
+
+	// Load per experiment user settings from file and make sure they are valid
+	userStatusTable = UserStatusTable::load();
+	userStatusTable.printToLog();
+	userStatusTable.validate(sessionIds);
+	
 	// Get and save system configuration
 	SystemConfig sysConfig = SystemConfig::load();
 	sysConfig.printToLog();											// Print system info to log.txt

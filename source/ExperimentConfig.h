@@ -493,6 +493,30 @@ public:
 		}
 	}
 
+	void validate(Array<String> sessions) {
+		// Build a string list of valid options for session IDs from the experiment
+		String expSessions = "[";
+		for (String sess : sessions) expSessions += sess + ", ";
+		expSessions = expSessions.substr(0, expSessions.size() - 2);
+		expSessions += "]";
+
+		// Check default sessions for valid ids
+		for(String defSessId : defaultSessionOrder) {
+			if (!sessions.contains(defSessId)) {
+				throw format("Default session config in user status has session with ID: \"%s\". This session ID does not appear in experimentconfig.Any's \"sessions\" array. Valid options are: %s", defSessId, expSessions);
+			}
+		}
+
+		// Check each user for valid options
+		for (UserSessionStatus userStatus : userInfo) {
+			for (String userSessId : userStatus.sessionOrder) {
+				if (!sessions.contains(userSessId)) {
+					throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in experimenyconfig.Any's \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
+				}
+			}
+		}
+	}
+
 	/** Print the user status table to the log */
 	void printToLog() {
 		for (UserSessionStatus status : userInfo) {
