@@ -42,19 +42,19 @@ protected:
 #endif
 
 public:
+	float			mouseSensitivity;		///< Player mouse sensitivity
+	Vector2			turnScale;				///< Player mouse turn rate scaler
 
-	float moveRate;					///< Player movement rate (m/s)
-	Vector2 moveScale;				///< Player X/Y movement scale vector (interpreted as unit vector)
-	Array<bool> axisLock;			///< World-space axis lock
-	float mouseSensitivity;			///< Player mouse sensitivity
-	Vector2 turnScale;				///< Player mouse turn rate scaler
+	float*			moveRate;				///< Player movement rate (m/s)
+	Vector2*		moveScale;				///< Player X/Y movement scale vector (interpreted as unit vector)
+	Array<bool>*	axisLock;				///< World-space axis lock
+	
+	float*			jumpVelocity;			///< Player vertical (+Y) jump velocity
+	float*			jumpInterval;			///< Player minimum jump interval limit
+	bool*			jumpTouch;				///< Require contact for jump?
 
-	float jumpVelocity;				///< Player vertical (+Y) jump velocity
-	RealTime jumpInterval;			///< Player minimum jump interval limit
-	bool jumpTouch = true;			///< Require contact for jump?
-
-	float height;					///< Player height when standing
-	float crouchHeight;				///< Player height when crouched
+	float*			height;					///< Player height when standing
+	float*			crouchHeight;			///< Player height when crouched
 
     /** \brief Computes all triangles that could be hit during a
         slideMove with the current \a velocity, allowing that the
@@ -93,7 +93,7 @@ public:
 
 	const CFrame getCameraFrame() const {
 		CFrame f = frame();
-		f.translation += Point3(0.0f, heightOffset(m_crouched ? crouchHeight : height), 0.0f);
+		f.translation += Point3(0.0f, heightOffset(m_crouched ? *crouchHeight : *height), 0.0f);
 		return f;
 	}
 

@@ -995,14 +995,14 @@ void App::updateSession(const String& id) {
 	mouseSens *= 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
 	player->mouseSensitivity = (float)mouseSens;
 	player->turnScale = sessConfig->player.turnScale * user->turnScale;		// Compound the session turn scale w/ the user turn scale...
-	player->moveRate = sessConfig->player.moveRate;
-	player->moveScale = sessConfig->player.moveScale;
-	player->axisLock = sessConfig->player.axisLock;
-	player->jumpVelocity = sessConfig->player.jumpVelocity;
-	player->jumpInterval = sessConfig->player.jumpInterval;
-	player->jumpTouch = sessConfig->player.jumpTouch;
-	player->height = sessConfig->player.height;
-	player->crouchHeight = sessConfig->player.crouchHeight;
+	player->moveRate =		&sessConfig->player.moveRate;
+	player->moveScale =		&sessConfig->player.moveScale;
+	player->axisLock =		&sessConfig->player.axisLock;
+	player->jumpVelocity =	&sessConfig->player.jumpVelocity;
+	player->jumpInterval =	&sessConfig->player.jumpInterval;
+	player->jumpTouch =		&sessConfig->player.jumpTouch;
+	player->height =		&sessConfig->player.height;
+	player->crouchHeight =	&sessConfig->player.crouchHeight;
 
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::load();
@@ -1182,16 +1182,6 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	
 	// Handle developer mode features here
 	if (!startupConfig.playMode) {
-		// Copy over dynamic elements
-		// TODO:Consider moving to App owning GuiPane, and no need for all this copy-over...
-		shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-		player->height = sessConfig->player.height;
-		player->crouchHeight = sessConfig->player.crouchHeight;
-		player->moveRate = sessConfig->player.moveRate;
-		player->jumpVelocity = sessConfig->player.jumpVelocity;
-		player->jumpInterval = sessConfig->player.jumpInterval;
-		player->jumpTouch = sessConfig->player.jumpTouch;
-
 		// Handle frame rate/delay updates here
 		if (sessConfig->render.frameRate != lastSetFrameRate || displayLagFrames != sessConfig->render.frameDelay) {
 			updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);

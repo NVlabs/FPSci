@@ -98,20 +98,20 @@ void PlayerEntity::onPose(Array<shared_ptr<Surface> >& surfaceArray) {
 
 void PlayerEntity::updateFromInput(UserInput* ui) {
 
-	const float walkSpeed = moveRate * units::meters() / units::seconds();
+	const float walkSpeed = *moveRate * units::meters() / units::seconds();
 
 	// Get walking speed here (and normalize if necessary)
-	Vector3 linear = Vector3(ui->getX()*moveScale.x, 0, -ui->getY()*moveScale.y);
+	Vector3 linear = Vector3(ui->getX()*moveScale->x, 0, -ui->getY()*moveScale->y);
 	if (linear.magnitude() > 0) {
 		linear = linear.direction() * walkSpeed;
 	}
 	// Add jump here (if needed)
 	RealTime timeSinceLastJump = System::time() - m_lastJumpTime;
-	if (ui->keyPressed(GKey::SPACE) && timeSinceLastJump > jumpInterval) {
+	if (ui->keyPressed(GKey::SPACE) && timeSinceLastJump > *jumpInterval) {
 		// Allow jumping if jumpTouch = False or if jumpTouch = True and the player is in contact w/ the map
-		if (!jumpTouch || m_inContact) {
-			static const Vector3 jumpVelocity(0, jumpVelocity * units::meters() / units::seconds(), 0);
-			linear += jumpVelocity;
+		if (!(*jumpTouch) || m_inContact) {
+			const Vector3 jv(0, *jumpVelocity * units::meters() / units::seconds(), 0);
+			linear += jv;
 			m_lastJumpTime = System::time();
 		}
 	}
@@ -225,12 +225,12 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
 	// Only allow y-axis gravity for now
     alwaysAssertM(((PhysicsScene*)m_scene)->gravity().x == 0.0f && ((PhysicsScene*)m_scene)->gravity().z == 0.0f, 
                             "We assume gravity points along the y axis to simplify implementation");
-	alwaysAssertM(axisLock.size() == 3, "Player axis lock must have length 3!");
+	alwaysAssertM(axisLock->size() == 3, "Player axis lock must have length 3!");
 	float ygrav = ((PhysicsScene*)m_scene)->gravity().y;
 	Vector3 velocity = frame().vectorToWorldSpace(m_desiredOSVelocity);
-	velocity.x = axisLock[0] ? 0.0f : velocity.x;
-	velocity.y = axisLock[1] ? 0.0f : velocity.y;
-	velocity.z = axisLock[2] ? 0.0f : velocity.z;
+	velocity.x = (*axisLock)[0] ? 0.0f : velocity.x;
+	velocity.y = (*axisLock)[1] ? 0.0f : velocity.y;
+	velocity.z = (*axisLock)[2] ? 0.0f : velocity.z;
 
 	// Apply the velocity using a terminal velocity of about 5.4s of acceleration (human is ~53m/s w/ 9.8m/s^2)
 	if (m_desiredOSVelocity.y > 0) {
@@ -270,7 +270,8 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
         debugPrintf("Initial velocity = %s; position = %s\n", velocity.toString().c_str(),  m_frame.translation.toString().c_str());
 #   endif
     int iterations = 0;
-	bool collided = m_inContact;
+	if (velocity.length() <= epsilon) return m_inContact;		// Handle case where there is no motion here (return last collision state)
+	bool collided = false;
     while ((deltaTime > epsilon) && (velocity.length() > epsilon)) {
         float stepTime = float(deltaTime);
         Vector3 collisionNormal;
