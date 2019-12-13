@@ -86,6 +86,8 @@ The following settings allow the user to control various timings/durations aroun
 "playerHeight":  1.5,                       // Normal player height
 "crouchHeight": 0.8,                        // Crouch height
 "playerGravity": Vector3(0.0, -5.0, 0.0),   // Player gravity
+"disablePlayerMotionBetweenTrials": false,  // Don't allow the player to move in between trials
+"resetPlayerPositionBetweenTrials": false,  // Respawn the player in the starting location between trials
 ```
 
 ## Logging Controls
