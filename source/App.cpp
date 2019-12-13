@@ -77,7 +77,6 @@ void App::onInit() {
 	setReticle(userTable.getCurrentUser()->reticleIndex);
 
 	updateMouseSensitivity();			// Update (apply) mouse sensitivity
-	updateMoveRate(experimentConfig.player.moveRate);
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
 	updateSessionPress();				// Update session to create results file/start collection
 }
@@ -111,11 +110,6 @@ void App::updateMouseSensitivity() {
 		player->mouseSensitivity = (float)mouseSensitivity;
 		player->turnScale = sessConfig->player.turnScale * userTable.getCurrentUser()->turnScale;
 	}
-}
-
-void App::updateMoveRate(float rate) {
-	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-	fpm->setMoveRate(rate);
 }
 
 /** Spawn a randomly parametrized target */
@@ -1009,7 +1003,6 @@ void App::updateSession(const String& id) {
 	player->jumpTouch = sessConfig->player.jumpTouch;
 	player->height = sessConfig->player.height;
 	player->crouchHeight = sessConfig->player.crouchHeight;
-	updateMoveRate(sessConfig->player.moveRate);
 
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::load();

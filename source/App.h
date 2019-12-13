@@ -354,7 +354,6 @@ public:
 
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
-	void updateMoveRate(float rate);
 
 	/** Fire the weapon - hits targets, draws decals, starts explosions */
 	shared_ptr<TargetEntity> fire(bool destroyImmediately=false);
