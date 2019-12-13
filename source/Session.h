@@ -32,6 +32,7 @@
 #include <ctime>
 
 class App;
+class PlayerEntity;
 class TargetEntity;
 class Logger;
 
@@ -109,6 +110,7 @@ protected:
 	App* m_app = nullptr;								///< Pointer to the app
 	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
 	shared_ptr<Logger> m_logger;						///< Output results logger
+	shared_ptr<PlayerEntity> m_player;					///< Player entity
 
 	// Experiment management					
 	int m_remainingTargets;								///< Number of remaining targets (calculated at the end of the session)

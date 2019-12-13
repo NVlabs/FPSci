@@ -62,10 +62,6 @@ void PlayerEntity::init(AnyTableReader& propertyTable) {
     init(v, s, heading);
 }
 
-void PlayerEntity::setCrouched(bool crouched) {
-	m_crouched = crouched;
-}
-
 float PlayerEntity::heightOffset(float height) const {
 	return height - m_collisionProxySphere.radius;
 }
@@ -135,7 +131,7 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     simulatePose(absoluteTime, deltaTime);
 
 	if (!isNaN(deltaTime)) {
-		m_inContact = slideMove(deltaTime);
+		if(m_motionEnable) m_inContact = slideMove(deltaTime);
 		m_headingRadians += m_desiredYawVelocity;	// *(float)deltaTime;		// Don't scale by time here
 		m_headingRadians = mod1(m_headingRadians / (2 * pif())) * 2 * pif();
 		m_headTilt = clamp(m_headTilt - m_desiredPitchVelocity, -89.9f * units::degrees(), 89.9f * units::degrees());
@@ -143,7 +139,7 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
 		// Check for "off map" condition and reset position here...
 		if (!isNaN(m_respawnHeight) && m_frame.translation.y < m_respawnHeight) {
-			m_frame.translation = m_respawnPosition;
+			respawn();
 		}
 	}
 }

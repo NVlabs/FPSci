@@ -1068,7 +1068,7 @@ void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	player->setVisible(false);
 	player->setRespawnHeight(resetHeight);
-	player->setRespawnPosition(activeCamera()->frame().translation);
+	player->setRespawnPosition(player->frame().translation);
 	activeCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
 }
 

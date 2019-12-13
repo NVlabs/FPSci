@@ -888,6 +888,8 @@ public:
 	Vector2			moveScale = Vector2(1.0f, 1.0f);			///< Player (X/Y) motion scaler
 	Vector2			turnScale = Vector2(1.0f, 1.0f);			///< Player (horizontal/vertical) turn rate scaler
 	Array<bool>		axisLock = { false, false, false };			///< World-space player motion axis lock
+	bool			stillBetweenTrials = false;					///< Disable player motion between trials?
+	bool			resetPositionPerTrial = false;				///< Reset the player's position on a per trial basis (to scene default)
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
@@ -902,6 +904,8 @@ public:
 			reader.getIfPresent("jumpTouch", jumpTouch);
 			reader.getIfPresent("playerGravity", gravity);
 			reader.getIfPresent("playerAxisLock", axisLock);
+			reader.getIfPresent("disablePlayerMotionBetweenTrials", stillBetweenTrials);
+			reader.getIfPresent("resetPlayerPositionBetweenTrials", resetPositionPerTrial);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -919,6 +923,8 @@ public:
 		a["jumpTouch"] = jumpTouch;
 		a["playerGravity"] = gravity;
 		a["playerAxisLock"] = axisLock;
+		a["disablePlayerMotionBetweenTrials"] = stillBetweenTrials;
+		a["resetPlayerPositionBetweenTrials"] = resetPositionPerTrial;
 		return a;
 	}
 

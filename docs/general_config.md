@@ -4,7 +4,7 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ## Settings Version
 | Parameter Name     |Units| Description                                                        |
 |--------------------|-----|--------------------------------------------------------------------|
-|`settingsVersion`   |N/A  |The version of the contents of this file, unless you are aware of changes that need to be made, don't change this number. |
+|`settingsVersion`   |`int`|The version of the contents of this file, unless you are aware of changes that need to be made, don't change this number. |
 ```
 "settingsVersion": 1,     // Used for file parsing (do not change unless you are introducing a new any parser)
 ```
@@ -19,9 +19,9 @@ The `sceneName` parameter allows the user to control the scene in which the appl
 If a scene name is specified at the experiment level it will be applied to all scenes that do not have a `sceneName` specified. If you do not specify a `sceneName` in the experiment config, and do not specify `sceneName` for every session, then session ordering may have an impact on which scene pairs with which session.
 
 
-| Parameter Name     |Units| Description                                                            |
-|--------------------|-----|------------------------------------------------------------------------|
-|`sceneName`         |name |The `name` of the (virtual) scene (not necessarily the filename!)       |
+| Parameter Name     |Units   | Description                                                            |
+|--------------------|--------|------------------------------------------------------------------------|
+|`sceneName`         |`String`|The `name` of the (virtual) scene (not necessarily the filename!)       |
 
 ```
 "sceneName": "eSports Simple Hallway",              // Default scene
@@ -67,14 +67,16 @@ The following settings allow the user to control various timings/durations aroun
 |--------------------|-----|------------------------------------------------------------------------------------|
 |`moveRate`          |m/s  | The rate of player motion, set this parameter to `0` to disable player motion      |
 |`moveScale`         |`Vector2`| A scaler for X/Y player-space motion (set to 0 to lock forward/back, strafe motion)|
-|`playerAxisLock`    |`Array`<bool>| Axis aligned motion lock for player                                        |
+|`playerAxisLock`    |`Array<bool>`| Axis aligned motion lock for player                                        |
 |`turnScale`         |`Vector2`| A scaler for horizontal/vertical player mouse motion (set to 0 to disable)     |
 |`playerHeight`      |m    | The height of the player above the ground when "standing"                          |
 |`crouchHeight`      |m    | The height of the player when crouched (set equal to `playerHeight` for no crouch) |
 |`jumpVelocity`      |m/s  | The magnitude of the upward impulse introduced by a jump (set to 0 for no jump)    |
 |`jumpInterval`      |s    | The minimum time between player jumps in seconds (set to 0 for no limiting)        |
-|`jumpTouch`         |bool | Whether or not the player needs to be in contact w/ a surface to jump              |
-|`playerGravity`     |m/s^2| The graivty vector that impacts the player
+|`jumpTouch`         |`bool` | Whether or not the player needs to be in contact w/ a surface to jump              |
+|`playerGravity`     |m/s^2| The graivty vector that impacts the player                                         |
+|`disablePlayerMotionBetweenTrials`|`bool`|Don't allow the player to move when not in a trial?                    |
+|`resetPlayerPositionBetweenTrials`|`bool`|Respawn the player to their original position between trials?          |
 
 ```
 "moveRate": 0.0,                            // Player move rate (0 for no motion)
@@ -91,11 +93,11 @@ As part of the general configuration parameters several controls over reporting 
 
 | Parameter Name        | Units | Description                                                                      |
 |-----------------------|-------|----------------------------------------------------------------------------------|
-|`logEnable`            |bool   | Enables the logger and creation of an output database                            |
-|`logTargetTrajectories`|bool   | Whether or not to log target position to the `Target_Trajectory` table           |
-|`logFrameInfo`         |bool   | Whether or not to log frame info into the `Frame_Info` table                     |
-|`logPlayerActions`     |bool   | Whether or not to log player actions into the `Player_Action` table              |
-|`logTrialResponse`     |bool   | Whether or not to log trial responses into the `Trials` table                    |
+|`logEnable`            |`bool` | Enables the logger and creation of an output database                            |
+|`logTargetTrajectories`|`bool` | Whether or not to log target position to the `Target_Trajectory` table           |
+|`logFrameInfo`         |`bool` | Whether or not to log frame info into the `Frame_Info` table                     |
+|`logPlayerActions`     |`bool` | Whether or not to log player actions into the `Player_Action` table              |
+|`logTrialResponse`     |`bool` | Whether or not to log trial responses into the `Trials` table                    |
 
 ```
 "logEnable" : true,
@@ -110,12 +112,12 @@ In addition to supporting in-app performance-based reporting the application als
 
 Questions are configured on a per experiment/session basis using the `questions` array within the general config parameters. Each element of the `questions` array specifies the following:
 
-| Parameter Name        | Units | Description                                                                      |
-|-----------------------|-------|----------------------------------------------------------------------------------|
-|`type`                 |N/A    | The question type (required), can be `"MultipleChoice"` or (text) `"Entry"`      |
-|`prompt`               |N/A    | The question prompt (required), a string to present the user with                |
-|`title`                |N/A    | The title for the feedback prompt                                                |
-|`options`              |Array<String>| An array of `String` options for `MultipleChoice` questions only           |
+| Parameter Name        | Units  | Description                                                                      |
+|-----------------------|--------|----------------------------------------------------------------------------------|
+|`type`                 |`String`| The question type (required), can be `"MultipleChoice"` or (text) `"Entry"`      |
+|`prompt`               |`String`| The question prompt (required), a string to present the user with                |
+|`title`                |`String`| The title for the feedback prompt                                                |
+|`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only           |
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
 
@@ -137,13 +139,13 @@ The user can specify one or more questions using the `questions` array, as demon
 Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log.
 
 ## HUD settings
-| Parameter Name        |Units| Description                                                                        |
-|-----------------------|-----|------------------------------------------------------------------------------------|
-|`showHUD`              |bool | The master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator) |
-|`showBanner`           |bool | Whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score)     |
-|`bannerLargeFontSize`  |pt   | The "large" font for the percent complete in the banner
-|`bannerSmallFontSize`  |pt   | The "small" font for the time remaining and score
-|`hudFont`              |file | The font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/  data-files/font`). We suggest using a fixed width font (such as `console.fnt`) for HUD elements|
+| Parameter Name        |Units  | Description                                                                        |
+|-----------------------|-------|------------------------------------------------------------------------------------|
+|`showHUD`              |`bool` | The master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator) |
+|`showBanner`           |`bool` | Whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score)     |
+|`bannerLargeFontSize`  |pt     | The "large" font for the percent complete in the banner
+|`bannerSmallFontSize`  |pt     | The "small" font for the time remaining and score
+|`hudFont`              |file   | The font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/  data-files/font`). We suggest using a fixed width font (such as `console.fnt`) for HUD elements|
 
 ```
 "showHUD":  true,               // Show the player HUD (banner, ammo, health bar)
@@ -156,7 +158,7 @@ Each question in the array is then asked of the user (via an independent time-se
 ### Player Health Bar
 | Parameter Name                |Units          | Description                                                                        |
 |-------------------------------|---------------|------------------------------------------------------------------------------------|
-|`showPlayerHealthBar`          |bool           | Whether or not a player health bar is drawn to the HUD                             |
+|`showPlayerHealthBar`          |`bool`         | Whether or not a player health bar is drawn to the HUD                             |
 |`playerHealthBarSize`          |`Point2`(px)   | The size of the player health bar                                                  |
 |`playerHealthBarPosition`      |`Point2`(px)   | The position of the player health bar (from the top right of the screen)           |
 |`playerHealthBarBorderSize`    |`Point2`(px)   | The width of the player health bar border                                          |
@@ -178,7 +180,7 @@ Each question in the array is then asked of the user (via an independent time-se
 ### Ammo Indicator
 | Parameter Name     |Units         | Description                                                                            |
 |--------------------|--------------|----------------------------------------------------------------------------------------|
-|`showAmmo`          |bool          | Whether the ammo indicator is drawn in the HUD                                         |
+|`showAmmo`          |`bool`        | Whether the ammo indicator is drawn in the HUD                                         |
 |`ammoPostion`       |`Point2`(px)  | The position of the ammo indicator (as an offset from the bottom right of the display) |
 |`ammoSize`          |pt            | The font size for the ammo indicator                                                   |
 |`ammoColor`         |`Color4`      | The (foreground) color for the ammo indicator. If applying low alpha values here, consider also applying these to `ammoOutlineColor` to create a true transparency to the text. |
@@ -195,7 +197,7 @@ Each question in the array is then asked of the user (via an independent time-se
 ### Weapon Cooldown
 | Parameter Name        |Units| Description                                                                             |
 |-----------------------|-----|-----------------------------------------------------------------------------------------|
-|`renderWeaponStatus`   |bool | Whether or not the weapon cooldown is rendered                                          |
+|`renderWeaponStatus`   |`bool`| Whether or not the weapon cooldown is rendered                                          |
 |`cooldownMode`         |`"ring"` or `"box"` | The type of display used for weapon cooldown                             |
 |`weaponStatusSide`     |`"right"` or `"left"`| Which side of the display the weapon status is drawn on in "box" mode   |
 |`cooldownInnerRadius`  |px   | The inner radius of the cooldown ring in "ring" mode                                    |
@@ -218,7 +220,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 
 | Parameter Name     |Units                 | Description                                                                        |
 |--------------------|----------------------|------------------------------------------------------------------------------------|
-|`renderClickPhoton` |bool                  | Whether or not the click-to-photon indicator box is drawn to the screen            |
+|`renderClickPhoton` |`bool`                | Whether or not the click-to-photon indicator box is drawn to the screen            |
 |`clickPhotonSide`   |`"right"` or `"left"` | Which side of the display (`left` vs `right`) the click-to-photon indicator box is drawn on |
 |`clickPhotonMode`   |`"minimum"` or `"total"`| Which click to photon time is recorded, `minimum` does not include added frame delay, while `total` does |
 |`clickPhotonSize`   |`Point2`(ratio)       | The size of the click-to-photon box as a ratio of total screen size               |
@@ -261,7 +263,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 ### Target Health Bars
 | Parameter Name                |Units          | Description                                                                           |
 |-------------------------------|---------------|---------------------------------------------------------------------------------------|
-|`showTargetHealthBars`         |bool           | Whether or not target health bars are drawn for each target                           |
+|`showTargetHealthBars`         |`bool`         | Whether or not target health bars are drawn for each target                           |
 |`targetHealthBarSize`          |`Point2`(px)   | The size of the health bar                                                            |
 |`targetHealthBarOffset`        |`Point3`(px)   | The offset of the health bar relative to the target                                   |
 |`targetHealthBarBorderSize`    |`Point2`(px)   | The size of the border around the target (see `targetHealthBarBorderColor` to set the color as well) |
@@ -283,7 +285,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 ### Floating Combat Text
 | Parameter Name                    |Units          | Description                                                                           |
 |-----------------------------------|---------------|---------------------------------------------------------------------------------------|
-|`showFloatingCombatText`           |bool           | Whether or not combat text is drawn for hit targets                                   |
+|`showFloatingCombatText`           |`bool`         | Whether or not combat text is drawn for hit targets                                   |
 |`floatingCombatTextSize`           |pt             | The size of the combat text font                                                      |
 |`floatingCombatTextFont`           |font           | The font used for the floating combat text (as an `.fnt` file)                        |   
 |`floatingCombatTextColor`          |`Color4`       | The (foreground) combat text color                                                    |

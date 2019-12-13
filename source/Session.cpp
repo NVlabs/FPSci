@@ -29,6 +29,7 @@
 #include "App.h"
 #include "Logger.h"
 #include "TargetEntity.h"
+#include "PlayerEntity.h"
 #include "Dialogs.h"
 
 void Session::nextCondition() {
@@ -71,6 +72,9 @@ void Session::onInit(String filename, String description) {
 	presentationState = PresentationState::initial;
 	m_feedbackMessage = "Click to spawn a target, then use shift on red target to begin.";
 
+	// Get the player from the app
+	m_player = m_app->scene()->typedEntity<PlayerEntity>("player");
+
 	// Check for valid session
 	if (m_hasSession) {
 		if (m_config->logger.enable) {
@@ -112,8 +116,7 @@ void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
 void Session::initTargetAnimation() {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
-	//static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation + Point3(-m_userSpawnDistance, 0.0f, 0.0f);
-	const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation;
+	const Point3 initialSpawnPos = m_player->getCameraFrame().translation;
 	CFrame f = CFrame::fromXYZYPRRadians(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians, 0.0f, 0.0f);
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
@@ -257,11 +260,13 @@ void Session::updatePresentationState()
 	PresentationState newState;
 	int remainingTargets = m_app->targetArray.size();
 	float stateElapsedTime = m_timer.getTime();
-
 	newState = currentState;
 
 	if (currentState == PresentationState::initial)
 	{
+		if (m_config->player.stillBetweenTrials) {
+			m_player->setMoveEnable(false);
+		}
 		if (!m_app->m_buttonUp)
 		{
 			//m_feedbackMessage = "";
@@ -273,6 +278,9 @@ void Session::updatePresentationState()
 		if (stateElapsedTime > m_config->timing.readyDuration)
 		{
 			newState = PresentationState::task;
+			if (m_config->player.stillBetweenTrials) {
+				m_player->setMoveEnable(true);
+			}
 		}
 	}
 	else if (currentState == PresentationState::task)
@@ -283,6 +291,12 @@ void Session::updatePresentationState()
 			processResponse();
 			m_app->clearTargets(); // clear all remaining targets
 			newState = PresentationState::feedback;
+			if (m_config->player.stillBetweenTrials) {
+				m_player->setMoveEnable(false);
+			}
+			if (m_config->player.resetPositionPerTrial) {
+				m_player->respawn();
+			}
 		}
 	}
 	else if (currentState == PresentationState::feedback)

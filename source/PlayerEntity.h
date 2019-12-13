@@ -27,6 +27,7 @@ protected:
 	float			m_health = 1.0f;					///< Player health storage
 
 	bool			m_inContact = false;				///< Is the player in contact w/ anything?
+	bool			m_motionEnable = true;				///< Flag to disable player motion
 
     PlayerEntity() {}
 
@@ -102,14 +103,24 @@ public:
         return m_headTilt;
     }
 	   
-	void setCrouched(bool crouched);
+	void setCrouched(bool crouched) {
+		m_crouched = crouched;
+	};
+
+	void setMoveEnable(bool enabled) {
+		m_motionEnable = enabled;
+	}
 
 	void setRespawnPosition(Point3 pos) {
-		m_respawnPosition = pos;
+			m_respawnPosition = pos;
 	}
 
 	void setRespawnHeight(float height) {
 		m_respawnHeight = height;
+	}
+
+	void respawn() {
+		m_frame.translation = m_respawnPosition;
 	}
 
 	float health(void) {
