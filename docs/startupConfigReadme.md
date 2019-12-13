@@ -7,7 +7,8 @@ The [`startupconfig.Any` file](../data-files/startupconfig.Any) is located in th
 # Fields
 The following fields are valid for a startupconfig.Any file:
 
-* `playMode` controls whether the application is run in experiment mode, or debug mode. When `playMode`=`True` the application is in experiment mode. Here the application runs fullscreen as intended for measurements. In debug mode (`playMode`=`False`) the application is drawn as windowed with additional dialogs available for user mouse interaction. This is recommended for developers only.
+* `playMode` controls whether the application is run in experiment mode, or debug mode. When `playMode`=`True` the application is in experiment mode. In debug mode (`playMode`=`False`) the application isrun with additional windows available for user mouse interaction. This is recommended for developers only.
+* `fullscreen` controls whether the application is run in fullscreen mode or windowed (independent of other options)
 * `experimentConfigPath` sets the path to an [experiment config file](./experimentConfigReadme.md) for futher configuration of an experiment.
 * `userConfigPath` sets the path to a user config file for per user setup.
 * `audioEnable` turns on or off audio
@@ -16,7 +17,8 @@ The default `startup.Any` file is included below:
 
 ```
 "playMode" = true;              // Set this to false for developer mode
+"fullscreen" = true;            // Set this to false to run in windowed mode
 "experimentConfigPath" = "";    // Leave this empty for default "experimentconfig.Any"
 "userConfigPath" = "";          // Leave this empty for default "userconfig.Any"
-audioEnable = true;             // Set false to turn off audio
+"audioEnable" = true;           // Set false to turn off audio
 ```

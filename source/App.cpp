@@ -2181,13 +2181,13 @@ int main(int argc, const char* argv[]) {
 	(void)argc; (void)argv;
 	GApp::Settings settings(argc, argv);
 
-	if (startupConfig.playMode) {
+	if (startupConfig.fullscreen) {
 		settings.window.width = 1920; settings.window.height = 1080;
 	}
 	else {
 		settings.window.width = 1920; settings.window.height = 980;
 	}
-	settings.window.fullScreen = startupConfig.playMode;
+	settings.window.fullScreen = startupConfig.fullscreen;
 	settings.window.resizable = !settings.window.fullScreen;
 
     // V-sync off always
