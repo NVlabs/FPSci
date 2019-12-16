@@ -14,6 +14,7 @@
 #include "TargetEntity.h"
 #include "GuiElements.h"
 #include "PyLogger.h"
+#include "KeyMapping.h"
 
 class Session;
 class G3Dialog;
@@ -218,6 +219,7 @@ public:
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
+	KeyMapping						keyMap;
 	shared_ptr<SessionConfig>		sessConfig = SessionConfig::create();			///< Current session config
 	shared_ptr<G3Dialog>			dialog;							///< Dialog box
 

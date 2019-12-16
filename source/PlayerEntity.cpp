@@ -103,7 +103,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	}
 	// Add jump here (if needed)
 	RealTime timeSinceLastJump = System::time() - m_lastJumpTime;
-	if (ui->keyPressed(GKey::SPACE) && timeSinceLastJump > *jumpInterval) {
+	if (m_jumpPressed && timeSinceLastJump > *jumpInterval) {
 		// Allow jumping if jumpTouch = False or if jumpTouch = True and the player is in contact w/ the map
 		if (!(*jumpTouch) || m_inContact) {
 			const Vector3 jv(0, *jumpVelocity * units::meters() / units::seconds(), 0);
@@ -111,6 +111,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 			m_lastJumpTime = System::time();
 		}
 	}
+	m_jumpPressed = false;
 
 	// Get the mouse rotation here
 	Vector2 mouseRotate = ui->mouseDXY() * turnScale * (float)mouseSensitivity / 2000.0f;

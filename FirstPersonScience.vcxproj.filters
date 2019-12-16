@@ -54,6 +54,9 @@
     <ClInclude Include="source\Dialogs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="source\KeyMapping.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp">
@@ -103,6 +106,9 @@
       <Filter>Config Files</Filter>
     </None>
     <None Include="data-files\startupconfig.Any">
+      <Filter>Config Files</Filter>
+    </None>
+    <None Include="data-files\keymap.Any">
       <Filter>Config Files</Filter>
     </None>
   </ItemGroup>

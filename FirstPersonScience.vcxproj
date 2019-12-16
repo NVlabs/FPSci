@@ -132,6 +132,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="source\App.h" />
+    <ClInclude Include="source\KeyMapping.h" />
     <ClInclude Include="source\Session.h" />
     <ClInclude Include="source\ExperimentConfig.h" />
     <ClInclude Include="source\Logger.h" />
@@ -158,6 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="data-files\experimentconfig.Any" />
+    <None Include="data-files\keymap.Any" />
     <None Include="data-files\shader\distort.pix" />
     <None Include="data-files\startupconfig.Any" />
     <None Include="data-files\systemconfig.Any" />

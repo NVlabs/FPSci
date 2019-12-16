@@ -51,6 +51,9 @@ void App::onInit() {
 	sysConfig.printToLog();											// Print system info to log.txt
 	sysConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
 
+	// Load the key binds
+	keyMap = KeyMapping::load();
+
 	// Setup the display mode
 	setSubmitToDisplayMode(
 		//SubmitToDisplayMode::EXPLICIT);
@@ -1244,55 +1247,42 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 }
 
 bool App::onEvent(const GEvent& event) {
+	GKey ksym = event.key.keysym.sym;
 	// Handle playMode=False shortcuts here...
 	if (!startupConfig.playMode) {
 		if (event.type == GEventType::KEY_DOWN) {
 			bool foundKey = true;
 			int selIdx = m_waypointControls->getSelected();
-			switch (event.key.keysym.sym) {
-			// Handle "hot keys" here
-			case 'q':							// Use 'q' to drop a waypoint
-				dropWaypoint();
-				break;
-			case 'r':							// Use 'r' to toggle recording of player motion
-				recordMotion = !recordMotion;
-				break;
 
-			// Handle shortcuts for opening sub-menus here
-			case '1':							// Use '1' to toggle the rendering controls
+			// Window display toggle
+			if (keyMap.toggleRenderWindow.contains(ksym)) {
 				m_renderControls->setVisible(!m_renderControls->visible());
-				break;
-			case '2':							// Use '2' to toggle the player controls
+			} else if (keyMap.togglePlayerWindow.contains(ksym)) {
 				m_playerControls->setVisible(!m_playerControls->visible());
-				break;
-			case '3':							// Use '3' to toggle the weapon controls
+			} else if (keyMap.toggleWeaponWindow.contains(ksym)) {
 				m_weaponControls->setVisible(!m_weaponControls->visible());
-				break;
-			case '4':							// Use '4' to toggle the waypoint controls
+			} else if (keyMap.toggleWaypointWindow.contains(ksym)){
 				m_waypointControls->setVisible(!m_waypointControls->visible());
-				break;
-			case GKey::PAGEUP:
+			} 
+			// Waypoint movement controls
+			else if (keyMap.toggleRecording.contains(ksym)) {
+				recordMotion = !recordMotion;
+			} else if (keyMap.dropWaypoint.contains(ksym)) {
+				dropWaypoint();
+			} else if (keyMap.moveWaypointUp.contains(ksym)) {
 				m_waypointMoveMask += Vector3(0.0f, 1.0f, 0.0f);
-				break;
-			case GKey::PAGEDOWN:
-				m_waypointMoveMask += Vector3(0.0f, -1, 0);
-				break;
-			case GKey::HOME:
-				m_waypointMoveMask += Vector3(0, 0, 1);
-				break;
-			case GKey::END:
-				m_waypointMoveMask += Vector3(0, 0, -1);
-				break;
-			case GKey::INSERT:
-				m_waypointMoveMask += Vector3(1, 0, 0);
-				break;
-			case GKey::DELETE:
-				m_waypointMoveMask += Vector3(-1, 0, 0);
-				break;
-			// Handle unknown keypress here...
-			default:
+			} else if (keyMap.moveWaypointDown.contains(ksym)){
+				m_waypointMoveMask += Vector3(0.0f, -1.0f, 0.0f);
+			} else if (keyMap.moveWaypointIn.contains(ksym)){
+				m_waypointMoveMask += Vector3(0.0f, 0.0f, 1.0f);
+			} else if (keyMap.moveWaypointOut.contains(ksym)){
+				m_waypointMoveMask += Vector3(0.0f, 0.0f, -1.0f);
+			} else if (keyMap.moveWaypointRight.contains(ksym)){
+				m_waypointMoveMask += Vector3(1.0f, 0.0f, 0.0f);
+			} else if (keyMap.moveWaypointLeft.contains(ksym)){
+				m_waypointMoveMask += Vector3(-1.0f, 0.0f, 0.0f);
+			} else {
 				foundKey = false;
-				break;
 			}
 			if (foundKey) {
 				return true;
@@ -1300,27 +1290,19 @@ bool App::onEvent(const GEvent& event) {
 		}
 		else if (event.type == GEventType::KEY_UP) {
 			bool foundKey = true;
-			// Handle release for waypoint keys here...
-			switch (event.key.keysym.sym) {
-			case GKey::PAGEUP:
-				m_waypointMoveMask -= Vector3(0, 1, 0);
-				break;
-			case GKey::PAGEDOWN:
-				m_waypointMoveMask -= Vector3(0, -1, 0);
-				break;
-			case GKey::HOME:
-				m_waypointMoveMask -= Vector3(0, 0, 1);
-				break;
-			case GKey::END:
-				m_waypointMoveMask -= Vector3(0, 0, -1);
-				break;
-			case GKey::INSERT:
-				m_waypointMoveMask -= Vector3(1, 0, 0);
-				break;
-			case GKey::DELETE:
-				m_waypointMoveMask -= Vector3(-1, 0, 0);
-				break;
-			default: 
+			if (keyMap.moveWaypointUp.contains(ksym)) {
+				m_waypointMoveMask -= Vector3(0.0f, 1.0f, 0.0f);
+			} else if(keyMap.moveWaypointDown.contains(ksym)){
+				m_waypointMoveMask -= Vector3(0.0f, -1.0f, 0.0f);
+			} else if(keyMap.moveWaypointIn.contains(ksym)){
+				m_waypointMoveMask -= Vector3(0.0f, 0.0f, 1.0f);
+			} else if(keyMap.moveWaypointOut.contains(ksym)){
+				m_waypointMoveMask -= Vector3(0.0f, 0.0f, -1.0f);
+			} else if(keyMap.moveWaypointRight.contains(ksym)){
+				m_waypointMoveMask -= Vector3(1.0f, 0.0f, 0.0f);
+			} else if (keyMap.moveWaypointLeft.contains(ksym)) {
+				m_waypointMoveMask -= Vector3(-1.0f, 0.0f, 0.0f);
+			} else {
 				foundKey = false;
 			}
 			if (foundKey) {
@@ -1331,7 +1313,7 @@ bool App::onEvent(const GEvent& event) {
 	
 	// Handle normal keypresses
 	if (event.type == GEventType::KEY_DOWN) {
-		if (event.key.keysym.sym == GKey::ESCAPE || event.key.keysym.sym == GKey::TAB) {
+		if (keyMap.openMenu.contains(ksym)) {
 			m_userSettingsMode = !m_userSettingsMode;
 			m_userSettingsWindow->setVisible(m_userSettingsMode);
 			if (m_userSettingsMode) {
@@ -1343,25 +1325,30 @@ bool App::onEvent(const GEvent& event) {
 			return true;
 		}
 
-		// Override 'q', 'z', 'c', and 'e' keys
-		else if ((event.key.keysym.sym == 'e'
-			|| event.key.keysym.sym == 'z'
-			|| event.key.keysym.sym == 'c'
-			|| event.key.keysym.sym == 'q')) {
+		// Override 'q', 'z', 'c', and 'e' keys (unused)
+		const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
+		if (unused.contains(ksym)) {
 			return true;
+		
 		}
-		else if (event.key.keysym.sym == GKey::KP_MINUS) {
+		else if (keyMap.quit.contains(ksym)) {
 			quitRequest();
 			return true;
 		}
-		else if (event.key.keysym.sym == GKey::LCTRL) {
+		else if (keyMap.crouch.contains(ksym)) {
 			scene()->typedEntity<PlayerEntity>("player")->setCrouched(true);
 			return true;
 		}
+		else if (keyMap.jump.contains(ksym)) {
+			scene()->typedEntity<PlayerEntity>("player")->setJumpPressed(true);
+			return true;
+		}
 	}
-	else if ((event.type == GEventType::KEY_UP) && (event.key.keysym.sym == GKey::LCTRL)) {
-		scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
-		return true;
+	else if ((event.type == GEventType::KEY_UP)){
+		if (keyMap.crouch.contains(ksym)) {
+			scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
+			return true;
+		}
 	}
 
 	// Handle super-class events
@@ -1729,7 +1716,7 @@ void App::clearTargets() {
 
 /** Handle user input here */
 void App::onUserInput(UserInput* ui) {
-    BEGIN_PROFILER_EVENT("onUserInput");
+	BEGIN_PROFILER_EVENT("onUserInput");
 	static bool haveReleased = false;
 	static bool fired = false;
 	GApp::onUserInput(ui);
@@ -1737,7 +1724,7 @@ void App::onUserInput(UserInput* ui) {
 
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
 	if (!m_userSettingsMode && notNull(player)) {
-			player->updateFromInput(ui);
+		player->updateFromInput(ui);
 	}
 	else {	// Zero the player velocity and rotation when in the setting menu
 		player->setDesiredOSVelocity(Vector3::zero());
@@ -1745,81 +1732,85 @@ void App::onUserInput(UserInput* ui) {
 	}
 
 	// Require release between clicks for non-autoFire modes
-	if (ui->keyReleased(GKey::LEFT_MOUSE)) {
-		m_buttonUp = true;
+	for (GKey shootButton : keyMap.shoot) {
+		if (ui->keyReleased(shootButton)) {
+			m_buttonUp = true;
 			if (!sessConfig->weapon.autoFire) {
-			haveReleased = true;
-			fired = false;
+				haveReleased = true;
+				fired = false;
+			}
 		}
 	}
 
 	// Handle the mouse down events
-	if (ui->keyDown(GKey::LEFT_MOUSE)) {
-		if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
-			// check for hit, add graphics, update target state
-			if ((sess->presentationState == PresentationState::task) && !m_userSettingsMode) {
-				if (sess->canFire()) {
+	for (GKey shootButton: keyMap.shoot) {
+		if (ui->keyDown(shootButton)) {
+			if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
+				// check for hit, add graphics, update target state
+				if ((sess->presentationState == PresentationState::task) && !m_userSettingsMode) {
+					if (sess->canFire()) {
 
-					fired = true;
-					sess->countClick();						        // Count clicks
-					shared_ptr<TargetEntity> t = fire();			// Fire the weapon
-					if (notNull(t)) {								// Check if we hit anything
-                        if (t->health() <= 0) {
-                            // Target eliminated, must be 'destroy'.
-                            sess->accumulatePlayerAction(PlayerActionType::Destroy, t->name());	
-                        }
-                        else {
-                            // Target 'hit', but still alive.
-                            sess->accumulatePlayerAction(PlayerActionType::Hit, t->name());
-                        }
+						fired = true;
+						sess->countClick();						        // Count clicks
+						shared_ptr<TargetEntity> t = fire();			// Fire the weapon
+						if (notNull(t)) {								// Check if we hit anything
+							if (t->health() <= 0) {
+								// Target eliminated, must be 'destroy'.
+								sess->accumulatePlayerAction(PlayerActionType::Destroy, t->name());
+							}
+							else {
+								// Target 'hit', but still alive.
+								sess->accumulatePlayerAction(PlayerActionType::Hit, t->name());
+							}
+						}
+						else {
+							// Target still present, must be 'miss'.
+							sess->accumulatePlayerAction(PlayerActionType::Miss);
+						}
 					}
-                    else {
-                        // Target still present, must be 'miss'.
-                        sess->accumulatePlayerAction(PlayerActionType::Miss);
-                    }
+					// Avoid accumulating invalid clicks during holds...
+					else {
+						// Invalid click since the trial isn't ready for response
+						sess->accumulatePlayerAction(PlayerActionType::Invalid);
+					}
 				}
-				// Avoid accumulating invalid clicks during holds...
-                else {
-                    // Invalid click since the trial isn't ready for response
-                    sess->accumulatePlayerAction(PlayerActionType::Invalid);
-                }
 			}
-		}
-		else {
-			sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
-		}
+			else {
+				sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
+			}
 
-		// Check for developer mode editing here
-		if (!startupConfig.playMode) {
-			const shared_ptr<Camera> cam = activeCamera();
-			float closest = 1e6;
-			int closestIdx = -1;
-			// Crude hit-scane here w/ spheres
-			for (int i = 0; i < m_waypoints.size(); i++) {
-				Sphere pt = Sphere(m_waypoints[i].position, m_waypointRad);
-				float distance = (m_waypoints[i].position - cam->frame().translation).magnitude();	// Get distance to the target
-				const Point3 center = cam->frame().translation + cam->frame().lookRay().direction()*distance;
+			// Check for developer mode editing here
+			if (!startupConfig.playMode) {
+				const shared_ptr<Camera> cam = activeCamera();
+				float closest = 1e6;
+				int closestIdx = -1;
+				// Crude hit-scane here w/ spheres
+				for (int i = 0; i < m_waypoints.size(); i++) {
+					Sphere pt = Sphere(m_waypoints[i].position, m_waypointRad);
+					float distance = (m_waypoints[i].position - cam->frame().translation).magnitude();	// Get distance to the target
+					const Point3 center = cam->frame().translation + cam->frame().lookRay().direction()*distance;
 					Sphere probe = Sphere(center, m_waypointRad / 4);
 					// Get closest intersection
 					if (pt.intersects(probe) && distance < closest) {
 						closestIdx = i;
 						closest = distance;
+					}
+				}
+				if (closestIdx != -1) {							// We are "hitting" this item
+					m_waypointControls->setSelected(closestIdx);
 				}
 			}
-			if (closestIdx != -1) {							// We are "hitting" this item
-				m_waypointControls->setSelected(closestIdx);
-			}
-		}
 
-		haveReleased = false;					// Make it known we are no longer in released state
-		m_buttonUp = false;
+			haveReleased = false;					// Make it known we are no longer in released state
+			m_buttonUp = false;
+		}
 	}
 	
-	// Handle spacebar during feedback
-    GKey initShootKey = GKey::RSHIFT;
-	if (ui->keyPressed(initShootKey) && (sess->presentationState == PresentationState::feedback)) {
-		fire(true); // Space for ready target (destroy this immediately regardless of weapon)
-	}	
+	for (GKey dummyShoot : keyMap.dummyShoot) {
+		if (ui->keyPressed(dummyShoot) && (sess->presentationState == PresentationState::feedback)) {
+			fire(true); // Fire at dummy target here...
+		}
+	}
 
 	if (m_lastReticleLoaded != userTable.getCurrentUser()->reticleIndex) {
 		// Slider was used to change the reticle

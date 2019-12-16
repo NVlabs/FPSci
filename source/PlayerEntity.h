@@ -28,6 +28,7 @@ protected:
 
 	bool			m_inContact = false;				///< Is the player in contact w/ anything?
 	bool			m_motionEnable = true;				///< Flag to disable player motion
+	bool			m_jumpPressed = false;				///< Indicates whether jump buton was pressed
 
     PlayerEntity() {}
 
@@ -106,6 +107,10 @@ public:
 	void setCrouched(bool crouched) {
 		m_crouched = crouched;
 	};
+
+	void setJumpPressed(bool pressed=true) {
+		m_jumpPressed = pressed;
+	}
 
 	void setMoveEnable(bool enabled) {
 		m_motionEnable = enabled;
