@@ -43,14 +43,13 @@ As an alternative to the standard key mappings provided above the user can chang
 
 This file associates each of the map names outlined below to an array of `GKey` strings indicating the key(s) that should be mapped to this action.
 
-<!-- |Move forward                       |                       |`["W"]`            |
-|Strafe left                        |                       |`["A"]`            |
-|Strafe right                       |                       |`["S"]`            |
-|Move backward                      |                       |`["D"]`            | -->
-
 
 |Action                             |Map Name               |Default Key(s)     |
 |-----------------------------------|-----------------------|-------------------|
+|Move forward                       |`moveForward`          |`["W", "Up"]`      |
+|Strafe left                        |`strafeLeft`           |`["A", "Left"]`    |
+|Move backward                      |`moveBackward`         |`["S", "Down"]`    |
+|Strafe right                       |`strafeRight`          |`["D", "Right"]`   |
 |Crouch                             |`crouch`               |`["L Ctrl"]`       |
 |Jump                               |`jump`                 |`["Spc"]`          |
 |Open in-game menu                  |`openMenu`             |`["Esc","Tab"]`    |
@@ -89,4 +88,6 @@ The table below provides some useful macros for mapping `String` --> `GKey`. Whe
 |Delete             |`"Del"`                        |
 |Escape             |`"Esc"`                        |
 |Tab                |`"Tab"`                        |
+|Up/Down (arrow)    |`"Up"`/`"Down"`                |
+|Left/Right (arrow) |`"Left"`/`"Right"`             |
 

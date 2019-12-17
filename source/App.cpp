@@ -53,6 +53,7 @@ void App::onInit() {
 
 	// Load the key binds
 	keyMap = KeyMapping::load();
+	userInput->setKeyMapping(&keyMap.uiMap);
 
 	// Setup the display mode
 	setSubmitToDisplayMode(
