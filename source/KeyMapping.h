@@ -2,70 +2,42 @@
 
 class KeyMapping {
 public:
+	Table<String, Array<GKey>> map;
+
 	// Default key mapping
-	Array<GKey> dropWaypoint			= {(GKey)'q'};
-	Array<GKey> toggleRecording			= {(GKey)'r'};
-	Array<GKey> toggleRenderWindow		= {(GKey)'1'};
-	Array<GKey> togglePlayerWindow		= {(GKey)'2'};
-	Array<GKey> toggleWeaponWindow		= {(GKey)'3'};
-	Array<GKey> toggleWaypointWindow	= {(GKey)'4'};
-	Array<GKey> moveWaypointUp			= {GKey::PAGEUP};
-	Array<GKey> moveWaypointDown		= {GKey::PAGEDOWN};
-	Array<GKey> moveWaypointIn			= {GKey::HOME};
-	Array<GKey> moveWaypointOut			= {GKey::END};
-	Array<GKey> moveWaypointRight		= {GKey::INSERT};
-	Array<GKey> moveWaypointLeft		= {GKey::DELETE};
-	Array<GKey> openMenu				= {GKey::ESCAPE, GKey::TAB};
-	Array<GKey> quit					= {GKey::MINUS};
-	Array<GKey> crouch					= {GKey::LCTRL};
-	Array<GKey> jump					= {GKey::SPACE};
-	Array<GKey> shoot					= {GKey::LEFT_MOUSE};
-	Array<GKey> dummyShoot				= {GKey::RSHIFT};
+	KeyMapping() {
+		map.set("openMenu",				Array<GKey>{ GKey::ESCAPE, GKey::TAB });
+		map.set("quit",					Array<GKey>{ GKey::MINUS });
+		map.set("crouch",				Array<GKey>{ GKey::LCTRL });
+		map.set("jump",					Array<GKey>{ GKey::SPACE });
+		map.set("shoot",				Array<GKey>{ GKey::LEFT_MOUSE });
+		map.set("dummyShoot",			Array<GKey>{ GKey::RSHIFT });
+		map.set("dropWaypoint",			Array<GKey>{ (GKey)'q' });
+		map.set("toggleRecording",		Array<GKey>{ (GKey)'r' });
+		map.set("toggleRenderWindow",	Array<GKey>{ (GKey)'1' });
+		map.set("togglePlayerWindow",	Array<GKey>{ (GKey)'2' });
+		map.set("toggleWeaponWindow",	Array<GKey>{ (GKey)'3' });
+		map.set("toggleWaypointWindow",	Array<GKey>{ (GKey)'4' });
+		map.set("moveWaypointUp",		Array<GKey>{ GKey::PAGEUP });
+		map.set("moveWaypointDown",		Array<GKey>{ GKey::PAGEDOWN });
+		map.set("moveWaypointIn",		Array<GKey>{ GKey::HOME });
+		map.set("moveWaypointOut",		Array<GKey>{ GKey::END });
+		map.set("moveWaypointRight",	Array<GKey>{ GKey::INSERT });
+		map.set("moveWaypointLeft",		Array<GKey>{ GKey::DELETE });
+	};
 
-	KeyMapping() {};
-
-	KeyMapping(const Any& any) {
+	KeyMapping(const Any& any) : KeyMapping() {
 		AnyTableReader reader = AnyTableReader(any);
-		reader.getIfPresent("dropWaypoint", dropWaypoint);
-		reader.getIfPresent("toggleRecording", toggleRecording);
-		reader.getIfPresent("toggleRenderWindow", toggleRenderWindow);
-		reader.getIfPresent("togglePlayerWindow", togglePlayerWindow);
-		reader.getIfPresent("toggleWeaponWindow", toggleWeaponWindow);
-		reader.getIfPresent("toggleWaypintWindow", toggleWaypointWindow);
-		reader.getIfPresent("moveWaypointUp", moveWaypointUp);
-		reader.getIfPresent("moveWaypointDown", moveWaypointDown);
-		reader.getIfPresent("moveWaypointIn", moveWaypointIn);
-		reader.getIfPresent("moveWaypointOut", moveWaypointOut);
-		reader.getIfPresent("moveWaypointLeft", moveWaypointLeft);
-		reader.getIfPresent("moveWaypointRight", moveWaypointRight);
-		reader.getIfPresent("openMenu", openMenu);
-		reader.getIfPresent("quit", quit);
-		reader.getIfPresent("crouch", crouch);
-		reader.getIfPresent("jump", jump);
-		reader.getIfPresent("shoot", shoot);
-		reader.getIfPresent("dummyShoot", dummyShoot);
+		for (String actionName : map.getKeys()) {
+			reader.getIfPresent(actionName, map[actionName]);
+		}
 	}
 
 	Any toAny(const bool forceAll=true) const{
 		Any a(Any::TABLE);
-		a["dropWaypoint"] = dropWaypoint;
-		a["toggleRecording"] = toggleRecording;
-		a["toggleRenderWindow"] = toggleRenderWindow;
-		a["togglePlayerWindow"] = togglePlayerWindow;
-		a["toggleWeaponWindow"] = toggleWeaponWindow;
-		a["toggleWaypintWindow"] = toggleWaypointWindow;
-		a["moveWaypointUp"] = moveWaypointUp;
-		a["moveWaypointDown"] = moveWaypointDown;
-		a["moveWaypointIn"] = moveWaypointIn;
-		a["moveWaypointOut"] = moveWaypointOut;
-		a["moveWaypointLeft"] = moveWaypointLeft;
-		a["moveWaypointRight"] = moveWaypointRight;
-		a["openMenu"] = openMenu;
-		a["quit"] = quit;
-		a["crouch"] = crouch;
-		a["jump"] = jump;
-		a["shoot"] = shoot;
-		a["dummyShoot"] = dummyShoot;
+		for (String actionName : map.getKeys()) {
+			a[actionName] = map[actionName];
+		}
 		return a;
 	}
 
@@ -77,23 +49,4 @@ public:
 		}
 		return Any::fromFile(System::findDataFile(filename));
 	}
-
-	// Option for friendly string-based conversion of GKey (will stick w/ default serializer for now...)
-	//GKey stringToKey(String key) {
-	//	key = toLower(key);
-	//	if (key == "pageup") return GKey::PAGEUP;
-	//	else if (key == "pagedown") return GKey::PAGEDOWN;
-	//	else if (key == "home") return GKey::HOME;
-	//	else if (key == "end") return GKey::END;
-	//	else if (key == "insert") return GKey::INSERT;
-	//	else if (key == "delete") return GKey::DELETE;
-	//	else if (key == "esc") return GKey::ESCAPE;
-	//	else if (key == "tab") return GKey::TAB;
-	//	else if (key == "lctrl"||key == "leftctrl"||key == "lcontrol"||key == "leftcontrol") return GKey::LCTRL;
-	//	else if (key == "rctrl"||key == "rightctrl"||key=="rcontrol"||key == "rightcontrol") return GKey::RCTRL;
-	//	else if (key == "lshift"||key == "leftshift") return GKey::LSHIFT;
-	//	else if (key == "rshift"||key == "rightshift") return GKey::RSHIFT;
-	//	else return GKey::fromString(key);
-	//}
-
 };

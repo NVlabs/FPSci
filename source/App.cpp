@@ -1255,31 +1255,31 @@ bool App::onEvent(const GEvent& event) {
 			int selIdx = m_waypointControls->getSelected();
 
 			// Window display toggle
-			if (keyMap.toggleRenderWindow.contains(ksym)) {
+			if (keyMap.map["toggleRenderWindow"].contains(ksym)) {
 				m_renderControls->setVisible(!m_renderControls->visible());
-			} else if (keyMap.togglePlayerWindow.contains(ksym)) {
+			} else if (keyMap.map["togglePlayerWindow"].contains(ksym)) {
 				m_playerControls->setVisible(!m_playerControls->visible());
-			} else if (keyMap.toggleWeaponWindow.contains(ksym)) {
+			} else if (keyMap.map["toggleWeaponWindow"].contains(ksym)) {
 				m_weaponControls->setVisible(!m_weaponControls->visible());
-			} else if (keyMap.toggleWaypointWindow.contains(ksym)){
+			} else if (keyMap.map["toggleWaypointWindow"].contains(ksym)){
 				m_waypointControls->setVisible(!m_waypointControls->visible());
 			} 
 			// Waypoint movement controls
-			else if (keyMap.toggleRecording.contains(ksym)) {
+			else if (keyMap.map["toggleRecording"].contains(ksym)) {
 				recordMotion = !recordMotion;
-			} else if (keyMap.dropWaypoint.contains(ksym)) {
+			} else if (keyMap.map["dropWaypoint"].contains(ksym)) {
 				dropWaypoint();
-			} else if (keyMap.moveWaypointUp.contains(ksym)) {
+			} else if (keyMap.map["moveWaypointUp"].contains(ksym)) {
 				m_waypointMoveMask += Vector3(0.0f, 1.0f, 0.0f);
-			} else if (keyMap.moveWaypointDown.contains(ksym)){
+			} else if (keyMap.map["moveWaypointDown"].contains(ksym)){
 				m_waypointMoveMask += Vector3(0.0f, -1.0f, 0.0f);
-			} else if (keyMap.moveWaypointIn.contains(ksym)){
+			} else if (keyMap.map["moveWaypointIn"].contains(ksym)){
 				m_waypointMoveMask += Vector3(0.0f, 0.0f, 1.0f);
-			} else if (keyMap.moveWaypointOut.contains(ksym)){
+			} else if (keyMap.map["moveWaypointOut"].contains(ksym)){
 				m_waypointMoveMask += Vector3(0.0f, 0.0f, -1.0f);
-			} else if (keyMap.moveWaypointRight.contains(ksym)){
+			} else if (keyMap.map["moveWaypointRight"].contains(ksym)){
 				m_waypointMoveMask += Vector3(1.0f, 0.0f, 0.0f);
-			} else if (keyMap.moveWaypointLeft.contains(ksym)){
+			} else if (keyMap.map["moveWaypointLeft"].contains(ksym)){
 				m_waypointMoveMask += Vector3(-1.0f, 0.0f, 0.0f);
 			} else {
 				foundKey = false;
@@ -1290,17 +1290,17 @@ bool App::onEvent(const GEvent& event) {
 		}
 		else if (event.type == GEventType::KEY_UP) {
 			bool foundKey = true;
-			if (keyMap.moveWaypointUp.contains(ksym)) {
+			if (keyMap.map["moveWaypointUp"].contains(ksym)) {
 				m_waypointMoveMask -= Vector3(0.0f, 1.0f, 0.0f);
-			} else if(keyMap.moveWaypointDown.contains(ksym)){
+			} else if(keyMap.map["moveWaypointDown"].contains(ksym)){
 				m_waypointMoveMask -= Vector3(0.0f, -1.0f, 0.0f);
-			} else if(keyMap.moveWaypointIn.contains(ksym)){
+			} else if(keyMap.map["moveWaypointIn"].contains(ksym)){
 				m_waypointMoveMask -= Vector3(0.0f, 0.0f, 1.0f);
-			} else if(keyMap.moveWaypointOut.contains(ksym)){
+			} else if(keyMap.map["moveWaypointOut"].contains(ksym)){
 				m_waypointMoveMask -= Vector3(0.0f, 0.0f, -1.0f);
-			} else if(keyMap.moveWaypointRight.contains(ksym)){
+			} else if(keyMap.map["moveWaypointRight"].contains(ksym)){
 				m_waypointMoveMask -= Vector3(1.0f, 0.0f, 0.0f);
-			} else if (keyMap.moveWaypointLeft.contains(ksym)) {
+			} else if (keyMap.map["moveWaypointLeft"].contains(ksym)) {
 				m_waypointMoveMask -= Vector3(-1.0f, 0.0f, 0.0f);
 			} else {
 				foundKey = false;
@@ -1313,7 +1313,7 @@ bool App::onEvent(const GEvent& event) {
 	
 	// Handle normal keypresses
 	if (event.type == GEventType::KEY_DOWN) {
-		if (keyMap.openMenu.contains(ksym)) {
+		if (keyMap.map["openMenu"].contains(ksym)) {
 			m_userSettingsMode = !m_userSettingsMode;
 			m_userSettingsWindow->setVisible(m_userSettingsMode);
 			if (m_userSettingsMode) {
@@ -1331,21 +1331,21 @@ bool App::onEvent(const GEvent& event) {
 			return true;
 		
 		}
-		else if (keyMap.quit.contains(ksym)) {
+		else if (keyMap.map["quit"].contains(ksym)) {
 			quitRequest();
 			return true;
 		}
-		else if (keyMap.crouch.contains(ksym)) {
+		else if (keyMap.map["crouch"].contains(ksym)) {
 			scene()->typedEntity<PlayerEntity>("player")->setCrouched(true);
 			return true;
 		}
-		else if (keyMap.jump.contains(ksym)) {
+		else if (keyMap.map["jump"].contains(ksym)) {
 			scene()->typedEntity<PlayerEntity>("player")->setJumpPressed(true);
 			return true;
 		}
 	}
 	else if ((event.type == GEventType::KEY_UP)){
-		if (keyMap.crouch.contains(ksym)) {
+		if (keyMap.map["crouch"].contains(ksym)) {
 			scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
 			return true;
 		}
@@ -1731,8 +1731,9 @@ void App::onUserInput(UserInput* ui) {
 		player->setDesiredAngularVelocity(0.0, 0.0);
 	}
 
-	// Require release between clicks for non-autoFire modes
-	for (GKey shootButton : keyMap.shoot) {
+	// Handle fire up/down events
+	for (GKey shootButton : keyMap.map["shoot"]) {
+		// Require release between clicks for non-autoFire modes
 		if (ui->keyReleased(shootButton)) {
 			m_buttonUp = true;
 			if (!sessConfig->weapon.autoFire) {
@@ -1740,10 +1741,7 @@ void App::onUserInput(UserInput* ui) {
 				fired = false;
 			}
 		}
-	}
-
-	// Handle the mouse down events
-	for (GKey shootButton: keyMap.shoot) {
+		// Handle shoot down (fire) event here
 		if (ui->keyDown(shootButton)) {
 			if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
 				// check for hit, add graphics, update target state
@@ -1806,7 +1804,7 @@ void App::onUserInput(UserInput* ui) {
 		}
 	}
 	
-	for (GKey dummyShoot : keyMap.dummyShoot) {
+	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
 		if (ui->keyPressed(dummyShoot) && (sess->presentationState == PresentationState::feedback)) {
 			fire(true); // Fire at dummy target here...
 		}
