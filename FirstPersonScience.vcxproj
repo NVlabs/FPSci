@@ -143,6 +143,7 @@
     <ClInclude Include="source\TargetEntity.h" />
     <ClInclude Include="source\GuiElements.h" />
     <ClInclude Include="source\Dialogs.h" />
+    <ClInclude Include="source\WaypointManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp" />
@@ -153,6 +154,7 @@
     <ClCompile Include="source\sqlHelpers.cpp" />
     <ClCompile Include="source\TargetEntity.cpp" />
     <ClCompile Include="source\GuiElements.cpp" />
+    <ClCompile Include="source\WaypointManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resources.rc" />

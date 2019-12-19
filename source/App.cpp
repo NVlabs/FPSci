@@ -5,6 +5,7 @@
 #include "Logger.h"
 #include "Session.h"
 #include "PhysicsScene.h"
+#include "WaypointManager.h"
 #include <chrono>
 
 // Scale and offset for target
@@ -55,6 +56,9 @@ void App::onInit() {
 	keyMap = KeyMapping::load();
 	userInput->setKeyMapping(&keyMap.uiMap);
 
+	// Setup/update waypoint manager
+	waypointManager = WaypointManager::create(this);
+
 	// Setup the display mode
 	setSubmitToDisplayMode(
 		//SubmitToDisplayMode::EXPLICIT);
@@ -70,7 +74,6 @@ void App::onInit() {
 	// Setup the GUI
 	showRenderingStats = false;
 	makeGUI();
-	developerWindow->videoRecordDialog->setCaptureGui(true);
 	   
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
@@ -491,11 +494,8 @@ void App::loadModels() {
 }
 
 void App::updateControls() {
-	// Setup the waypoint config/display
-	WaypointDisplayConfig config = WaypointDisplayConfig();
-	m_waypointControls = WaypointDisplay::create(this, theme, config, (shared_ptr<Array<Destination>>)&m_waypoints);
-	m_waypointControls->setVisible(false);
-	this->addWidget(m_waypointControls);
+	// Update the waypoint manager
+	waypointManager->updateControls();
 
 	// Setup the player control
 	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&App::exportScene, this), theme);
@@ -518,6 +518,7 @@ void App::makeGUI() {
 	developerWindow->sceneEditorWindow->setVisible(!startupConfig.playMode);
 	developerWindow->cameraControlWindow->setVisible(!startupConfig.playMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
+	developerWindow->videoRecordDialog->setCaptureGui(true);
 
 	theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
 
@@ -529,7 +530,7 @@ void App::makeGUI() {
 		debugPane->addButton("Render Controls [1]", this, &App::showRenderControls);
 		debugPane->addButton("Player Controls [2]", this, &App::showPlayerControls);
 		debugPane->addButton("Weapon Controls [3]", this, &App::showWeaponControls);
-		debugPane->addButton("Waypoint Manager [4]", this, &App::showWaypointManager);
+		debugPane->addButton("Waypoint Manager [4]", waypointManager, &WaypointManager::showWaypointWindow);
 	}debugPane->endRow();
 
     // set up user settings window
@@ -559,226 +560,11 @@ void App::makeGUI() {
 	m_debugMenuHeight = startupConfig.playMode ? 0.0f : debugWindow->rect().height();
 }
 
-void App::dropWaypoint(void) {
-	// Create the destination
-	Point3 xyz = activeCamera()->frame().translation;
-	SimTime time = m_waypoints.size() == 0 ? 0.0f : m_waypoints.last().time + waypointDelay;
-	Destination dest = Destination(xyz, time);
-	dropWaypoint(dest, Point3(0, -waypointVertOffset, 0));
-}
-
-void App::dropWaypoint(Destination dest, Point3 offset) {
-	// Apply the offset
-	dest.position += offset;
-
-	// If this isn't the first point, connect it to the last one with a line
-	if (m_waypoints.size() > 0) {
-		shared_ptr<CylinderShape> shape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
-			m_waypoints.last().position,
-			dest.position, 
-			m_waypointConnectRad)));
-		DebugID arrowID = debugDraw(shape, finf(), m_waypointColor, Color4::clear());
-		m_arrowIDs.append(arrowID);
-	}
-
-	// Draw the waypoint (as a sphere)
-	DebugID pointID = debugDraw(Sphere(dest.position, m_waypointRad), finf(), m_waypointColor, Color4::clear());
-
-	// Update the arrays and time tracking
-	m_waypoints.append(dest);
-	m_waypointIDs.append(pointID);
-
-	// Print to the log
-	logPrintf("Dropped waypoint... Time: %f, XYZ:[%f,%f,%f]\n", dest.time, dest.position[0], dest.position[1], dest.position[2]);
-}
-
-bool App::updateWaypoint(Destination dest, int idx) {
-	// Check for valid indexing
-	if (idx < 0) {
-		idx = m_waypointControls->getSelected();	// Use the selected item if no index is passed in
-	}
-	else if (idx > m_waypoints.lastIndex()) 
-		return false;							// If the index is too high don't update
-
-	// Handle drawing highlight
-	if(m_highlighted != m_waypointIDs[idx]){
-		removeDebugShape(m_highlighted);
-		m_highlighted = debugDraw(Sphere(dest.position, m_waypointRad*1.1f), finf(), Color4::clear(), m_highlightColor);
-	}
-
-	// Skip points w/ no change
-	if (dest.position == m_waypoints[idx].position) {
-		return true;
-	}
-
-	// Array management
-	m_waypoints[idx] = dest;
-
-	// Remove the waypoint debugDraw, then replace it w/ a new one
-	DebugID pointID = m_waypointIDs[idx];
-	removeDebugShape(pointID);
-	pointID = debugDraw(Sphere(dest.position, m_waypointRad), finf(), m_waypointColor, Color4::clear());
-	m_waypointIDs[idx] = pointID;
-
-	// Update the arrows around this point
-	if (idx > 0 && idx < m_waypoints.lastIndex()) {
-		shared_ptr<CylinderShape> toShape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
-			m_waypoints[idx - 1].position,
-			dest.position,
-			m_waypointConnectRad)));
-		shared_ptr<CylinderShape> fromShape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
-			dest.position,
-			m_waypoints[idx + 1].position,
-			m_waypointConnectRad)));
-		// Internal point (2 arrows to update)
-		removeDebugShape(m_arrowIDs[idx - 1]);
-		removeDebugShape(m_arrowIDs[idx]);
-		m_arrowIDs[idx-1] = debugDraw(toShape, finf(), m_waypointColor, Color4::clear());
-		m_arrowIDs[idx] = debugDraw(fromShape, finf(), m_waypointColor, Color4::clear());
-	}
-	else if (idx == m_waypoints.lastIndex()) {
-		shared_ptr<CylinderShape> toShape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
-			m_waypoints[idx - 1].position,
-			dest.position,
-			m_waypointConnectRad)));
-		// Last point (just remove "to" arrow)
-		removeDebugShape(m_arrowIDs[idx - 1]);
-		m_arrowIDs[idx - 1] = debugDraw(toShape, finf(), m_waypointColor, Color4::clear());
-	}
-	else if (idx == 0) {
-		shared_ptr<CylinderShape> fromShape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
-			dest.position,
-			m_waypoints[idx + 1].position,
-			m_waypointConnectRad)));
-		// First point (just remove the "from" arrow)
-		removeDebugShape(m_arrowIDs[idx]);
-		m_arrowIDs[idx] = debugDraw(fromShape, finf(), m_waypointColor, Color4::clear());
-	}
-	return true;
-}
-
-void App::removeHighlighted(void) {
-	// Remove the selected waypoint
-	removeWaypoint(m_waypointControls->getSelected());
-}
-
-bool App::removeWaypoint(int idx) {
-	// Check for valid idx
-	if (idx >= 0 && idx < m_waypoints.size()) {
-		// Check if we are not at the first or last point
-		if (idx > 0 && idx < m_waypoints.lastIndex()) {
-			// Remove the arrows to and from this point
-			removeDebugShape(m_arrowIDs[idx]);
-			removeDebugShape(m_arrowIDs[idx-1]);
-			m_arrowIDs.remove(idx-1, 2);
-			// Draw a new arrow "around" the point
-			shared_ptr<CylinderShape> shape = std::make_shared<CylinderShape>(CylinderShape(Cylinder(
-				m_waypoints[idx-1].position,
-				m_waypoints[idx+1].position,
-				m_waypointConnectRad)));
-			DebugID arrowID = debugDraw(shape, finf(), m_waypointColor, Color4::clear());
-			m_arrowIDs.insert(idx-1, arrowID);
-		}
-		// Otherwise check if we are at the last index (just remove the arrow to this point)
-		else if (idx == m_waypoints.lastIndex() && idx > 0) {
-			// Remove the arrow from this point
-			removeDebugShape(m_arrowIDs.last());
-			m_arrowIDs.remove(m_arrowIDs.lastIndex());
-		}
-
-		// Remove the waypoint and its debug shape
-		removeDebugShape(m_waypointIDs[idx]);
-		m_waypointIDs.fastRemove(idx);
-		m_waypoints.fastRemove(idx);
-
-		// Get rid of the debug highlight and clear selection
-		m_waypointControls->setSelected(-1);
-		removeDebugShape(m_highlighted);
-		return true;
-	}
-	else 
-		return false;
-}
-
-void App::removeLastWaypoint(void) {
-	if (m_waypoints.size() > 0) {
-		removeWaypoint(m_waypoints.lastIndex());
-	}
-}
-
-void App::clearWaypoints(void) {
-	m_waypoints.clear();
-	for (DebugID id : m_waypointIDs) {
-		removeDebugShape(id);
-	}
-	m_waypointIDs.clear();
-	for (DebugID id : m_arrowIDs) {
-		removeDebugShape(id);
-	}
-	m_arrowIDs.clear();
-	// Clear the highlighted shape
-	removeDebugShape(m_highlighted);
-	m_waypointControls->setSelected(-1);
-}
-
-void App::exportWaypoints(void) {
-	TargetConfig t = TargetConfig();
-	t.id = "test";
-	t.destSpace = "world";
-	t.destinations = m_waypoints;
-	t.toAny().save(waypointFile);		// Save the file
-}
-
-void App::loadWaypoints(void) {
-	String fname;
-	bool gotName = FileDialog::getFilename(fname, "Any", false);
-	if (!gotName) return;
-
-	recordMotion = false;		// Stop recording (if doing so)
-	clearWaypoints();			// Clear the current waypoints
-
-	TargetConfig t = TargetConfig::load(fname);	// Load the target config
-	if (t.destinations.size() > 0) {
-		setWaypoints(t.destinations);
-	}
-}
-
-void App::setWaypoints(Array<Destination> waypoints) {
-	m_waypoints = waypoints;
-	for (Destination d : waypoints) {
-		dropWaypoint(d);
-	}
-}
-
-void App::previewWaypoints(void) {
-	// Check if a preview target exists, if so remove it
-	if (m_previewIdx >= 0) {
-		destroyTarget(m_previewIdx);
-		m_previewIdx = -1;
-	}
-	if (m_waypoints.size() > 1) {
-		// Create a new target and set its index
-		spawnDestTarget(Vector3::zero(), m_waypoints, 1.0, Color3::white(), "reference", 0, 0, "preview");
-		m_previewIdx = targetArray.size() - 1;
-	}
-}
-
-void App::stopPreview(void) {
-	if (m_previewIdx >= 0) {			// Check if a preview target exists
-		destroyTarget(m_previewIdx);	// Destory the target
-		m_previewIdx = -1;				// Use -1 value to indicate no preview present
-	}
-}
-
 void App::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
 	String filename = Scene::sceneNameToFilename(sessConfig->sceneName);
 	scene()->toAny().save(filename);
-}
-
-void App::showWaypointManager() {
-	m_waypointControls->setVisible(true);
 }
 
 void App::showPlayerControls() {
@@ -1192,48 +978,10 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		}
 
 		// Handle highlighting for selected target
-		int selIdx = m_waypointControls->getSelected();
-		if (selIdx >= 0) {
-			// Handle position update
-			Destination dest = m_waypoints[selIdx];
-			dest.position += m_waypointMoveRate * m_waypointMoveMask;
-			// This handles drawing the "highlight"
-			updateWaypoint(dest);
-		}
+		waypointManager->updateSelected();
 
 		// Handle player motion recording here (if we are doing so w/ playMode=False)
-		if (recordMotion) {
-			// Get the start time here if needed (this is the first iteration after enable)
-			if (isnan(m_recordStart)) {
-				m_recordStart = now;
-				clearWaypoints();		// Just clear the waypoints for now
-				dropWaypoint(Destination(p->getCameraFrame().translation, 0.0f));
-			}
-			else {
-				SimTime t = static_cast<SimTime>(now - m_recordStart);
-				float distance = (m_waypoints.last().position - p->getCameraFrame().translation).magnitude();
-				switch (recordMode) {
-				case 0: // This is fixed distance mode, check if we've moved "far enough" to drop a new waypoint
-					if (distance > recordInterval) {
-						// Use the m_waypointDelay to meter out time when in constant distance mode
-						t = m_waypoints.size() * waypointDelay;
-						dropWaypoint(Destination(p->getCameraFrame().translation, t));
-					}
-					break;
-				case 1: // This is fixed time mode, check if we are beyond the sampling interval and need a new waypoint
-					if ((t - m_lastRecordTime) > recordInterval) {
-						m_lastRecordTime = t;
-						// Apply the recording time-scaling here (after checking for record interval)
-						dropWaypoint(Destination(p->getCameraFrame().translation, t / recordTimeScaling));
-					}
-					break;
-				}
-			}
-		}
-		else {
-			m_recordStart = nan();
-			m_lastRecordTime = 0.0f;
-		}
+		waypointManager->updatePlayerPosition(p->getCameraFrame().translation);
 
 		// Example GUI dynamic layout code.  Resize the debugWindow to fill
 		// the screen horizontally.
@@ -1253,7 +1001,6 @@ bool App::onEvent(const GEvent& event) {
 	if (!startupConfig.playMode) {
 		if (event.type == GEventType::KEY_DOWN) {
 			bool foundKey = true;
-			int selIdx = m_waypointControls->getSelected();
 
 			// Window display toggle
 			if (keyMap.map["toggleRenderWindow"].contains(ksym)) {
@@ -1263,25 +1010,25 @@ bool App::onEvent(const GEvent& event) {
 			} else if (keyMap.map["toggleWeaponWindow"].contains(ksym)) {
 				m_weaponControls->setVisible(!m_weaponControls->visible());
 			} else if (keyMap.map["toggleWaypointWindow"].contains(ksym)){
-				m_waypointControls->setVisible(!m_waypointControls->visible());
+				waypointManager->toggleWaypointWindow();
 			} 
 			// Waypoint movement controls
 			else if (keyMap.map["toggleRecording"].contains(ksym)) {
-				recordMotion = !recordMotion;
+				waypointManager->recordMotion = !waypointManager->recordMotion;
 			} else if (keyMap.map["dropWaypoint"].contains(ksym)) {
-				dropWaypoint();
+				waypointManager->dropWaypoint();
 			} else if (keyMap.map["moveWaypointUp"].contains(ksym)) {
-				m_waypointMoveMask += Vector3(0.0f, 1.0f, 0.0f);
+				waypointManager->moveMask += Vector3(0.0f, 1.0f, 0.0f);
 			} else if (keyMap.map["moveWaypointDown"].contains(ksym)){
-				m_waypointMoveMask += Vector3(0.0f, -1.0f, 0.0f);
+				waypointManager->moveMask += Vector3(0.0f, -1.0f, 0.0f);
 			} else if (keyMap.map["moveWaypointIn"].contains(ksym)){
-				m_waypointMoveMask += Vector3(0.0f, 0.0f, 1.0f);
+				waypointManager->moveMask += Vector3(0.0f, 0.0f, 1.0f);
 			} else if (keyMap.map["moveWaypointOut"].contains(ksym)){
-				m_waypointMoveMask += Vector3(0.0f, 0.0f, -1.0f);
+				waypointManager->moveMask += Vector3(0.0f, 0.0f, -1.0f);
 			} else if (keyMap.map["moveWaypointRight"].contains(ksym)){
-				m_waypointMoveMask += Vector3(1.0f, 0.0f, 0.0f);
+				waypointManager->moveMask += Vector3(1.0f, 0.0f, 0.0f);
 			} else if (keyMap.map["moveWaypointLeft"].contains(ksym)){
-				m_waypointMoveMask += Vector3(-1.0f, 0.0f, 0.0f);
+				waypointManager->moveMask += Vector3(-1.0f, 0.0f, 0.0f);
 			} else {
 				foundKey = false;
 			}
@@ -1292,17 +1039,17 @@ bool App::onEvent(const GEvent& event) {
 		else if (event.type == GEventType::KEY_UP) {
 			bool foundKey = true;
 			if (keyMap.map["moveWaypointUp"].contains(ksym)) {
-				m_waypointMoveMask -= Vector3(0.0f, 1.0f, 0.0f);
+				waypointManager->moveMask -= Vector3(0.0f, 1.0f, 0.0f);
 			} else if(keyMap.map["moveWaypointDown"].contains(ksym)){
-				m_waypointMoveMask -= Vector3(0.0f, -1.0f, 0.0f);
+				waypointManager->moveMask -= Vector3(0.0f, -1.0f, 0.0f);
 			} else if(keyMap.map["moveWaypointIn"].contains(ksym)){
-				m_waypointMoveMask -= Vector3(0.0f, 0.0f, 1.0f);
+				waypointManager->moveMask -= Vector3(0.0f, 0.0f, 1.0f);
 			} else if(keyMap.map["moveWaypointOut"].contains(ksym)){
-				m_waypointMoveMask -= Vector3(0.0f, 0.0f, -1.0f);
+				waypointManager->moveMask -= Vector3(0.0f, 0.0f, -1.0f);
 			} else if(keyMap.map["moveWaypointRight"].contains(ksym)){
-				m_waypointMoveMask -= Vector3(1.0f, 0.0f, 0.0f);
+				waypointManager->moveMask -= Vector3(1.0f, 0.0f, 0.0f);
 			} else if (keyMap.map["moveWaypointLeft"].contains(ksym)) {
-				m_waypointMoveMask -= Vector3(-1.0f, 0.0f, 0.0f);
+				waypointManager->moveMask -= Vector3(-1.0f, 0.0f, 0.0f);
 			} else {
 				foundKey = false;
 			}
@@ -1778,26 +1525,9 @@ void App::onUserInput(UserInput* ui) {
 				sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
 			}
 
-			// Check for developer mode editing here
+			// Check for developer mode editing here, if so set selected waypoint using the camera
 			if (!startupConfig.playMode) {
-				const shared_ptr<Camera> cam = activeCamera();
-				float closest = 1e6;
-				int closestIdx = -1;
-				// Crude hit-scane here w/ spheres
-				for (int i = 0; i < m_waypoints.size(); i++) {
-					Sphere pt = Sphere(m_waypoints[i].position, m_waypointRad);
-					float distance = (m_waypoints[i].position - cam->frame().translation).magnitude();	// Get distance to the target
-					const Point3 center = cam->frame().translation + cam->frame().lookRay().direction()*distance;
-					Sphere probe = Sphere(center, m_waypointRad / 4);
-					// Get closest intersection
-					if (pt.intersects(probe) && distance < closest) {
-						closestIdx = i;
-						closest = distance;
-					}
-				}
-				if (closestIdx != -1) {							// We are "hitting" this item
-					m_waypointControls->setSelected(closestIdx);
-				}
+				waypointManager->aimSelectWaypoint(activeCamera());
 			}
 
 			haveReleased = false;					// Make it known we are no longer in released state
@@ -1887,7 +1617,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 		}
 
 		// Handle recording indicator
-		if (recordMotion) {
+		if (waypointManager->recordMotion) {
 			Draw::point(Point2(rd->viewport().width()*0.9f - 15.0f, 20.0f+m_debugMenuHeight*scale), rd, Color3::red(), 10.0f);
 			outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f , m_debugMenuHeight*scale), 20.0f, Color3::red());
 		}

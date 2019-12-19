@@ -18,6 +18,7 @@
 
 class Session;
 class G3Dialog;
+class WaypointManager;
 
 // An enum that tracks presentation state within a trial. Duration defined in session.h
 // ready: ready scene that happens before beginning of a task.
@@ -125,34 +126,14 @@ protected:
 	GuiLabel*						m_mouseDPILabel;					///< Label for mouse DPI field
 	GuiLabel*						m_cm360Label;						///< Label for cm/360 field
 
-	Array<Destination>				m_waypoints;						///< Store way points for path creation here
-	Array<DebugID>					m_waypointIDs;						///< Storage for IDs for point spheres
-	Array<DebugID>					m_arrowIDs;							///< Storage for IDs for connecting arrows	
-	shared_ptr<WaypointDisplay>		m_waypointControls;
 	shared_ptr<PlayerControls>		m_playerControls;
 	shared_ptr<RenderControls>		m_renderControls;
 	shared_ptr<WeaponControls>		m_weaponControls;
-	DebugID							m_highlighted;						///< ID for the waypoint window highlighter
-		
-	RealTime						m_recordStart = nan();				///< Start time for recording
-	int								m_previewIdx = -1;					///< Index of the preview target in the targetArray
-	float							m_lastRecordTime = 0.0;				///< Time storage for recording
-	
-	// Internal controls for waypoint visualization
-	const Color4 m_waypointColor = Color4(0.0f, 1.0f, 0.0f, 0.7f);	///< Color for waypoint visualization
-	const Color4 m_highlightColor = Color4(1.0f, 1.0f, 0.0f, 1.0f);	///< Highlight color
-	const float m_waypointRad = 0.1f;								///< Waypoint sphere radius
-	const float m_waypointConnectRad = 0.02f;						///< Waypoint connecting rod radius
 
-	Vector3	 m_waypointMoveMask = Vector3::zero();					///< Mask for moving waypoints
-	Vector3  m_waypointMoveRate = Vector3(0.01f, 0.01f, 0.01f);		///< Movement rate (m/s) for targets
-
-	/** m_targetModelArray[10] is the base size. Away from that they get larger/smaller by TARGET_MODEL_ARRAY_SCALING */
-	//Array<shared_ptr<ArticulatedModel>>  m_targetModelArray;			///< Array of various scaled target models
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_targetModels;
-	Array<shared_ptr<ArticulatedModel>> m_explosionModels;
-
 	const int m_modelScaleCount = 30;
+
+	Array<shared_ptr<ArticulatedModel>> m_explosionModels;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
 	Queue<float>                    m_frameDurationQueue;				///< Queue for history of frrame times
@@ -192,7 +173,6 @@ protected:
 	void makeGUI();
 	void updateControls();
 	void loadModels();
-	void destroyTarget(int index);
 	void updateUser(void);
     void updateUserGUI();
 
@@ -220,19 +200,12 @@ public:
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
 	KeyMapping						keyMap;
+	shared_ptr<WaypointManager>		waypointManager;				///< Waypoint mananger pointer
+	
 	shared_ptr<SessionConfig>		sessConfig = SessionConfig::create();			///< Current session config
 	shared_ptr<G3Dialog>			dialog;							///< Dialog box
 
-
 	shared_ptr<Session> sess;										///< Pointer to the experiment
-
-	float waypointDelay = 0.5;			///< Store the delay between way points here
-	float waypointVertOffset = 0.2f;	///< Offset between camera and target position
-	String waypointFile = "target.Any";	///< Filename for save/load
-	bool recordMotion = false;			///< Player motion recording
-	int recordMode = 0;					///< Recording mode
-	float recordInterval = 0.1f;		///< Recording interval (either time or distance)
-	float recordTimeScaling = 1.0;		///< Time scaling for time-based recording
 
 	bool renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
 	int  displayLagFrames = 0;			///< Count of frames of latency to add
@@ -242,31 +215,8 @@ public:
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
-
-	/** Drop a single waypoint at the current position */
-	void dropWaypoint();
-	/** Drop a single waypoint at the destination provided */
-	void dropWaypoint(Destination dest, Point3 offset = Point3::zero());
-	/** Remove a particular waypoint */
-	bool removeWaypoint(int idx);
-	bool updateWaypoint(Destination dest, int idx=-1);
-	void removeHighlighted();
-	/** Clear just the last waypoint */
-	void removeLastWaypoint();
-	/** Clear all waypoints */
-	void clearWaypoints();
-	/** Export waypoints to a .Any file */
-	void exportWaypoints();
-	/** Load waypoints from a .Any file */
-	void loadWaypoints();
-	/** Set/visualize the input waypoint array */
-	void setWaypoints(Array<Destination> waypoints);
-	/** Preview the waypoints with a moving target */
-	void previewWaypoints();
-	/** Stop the preview */
-	void stopPreview();
-	/** Show the waypoint manager */
-	void showWaypointManager();
+	/** Destroy a target from the targets array */
+	void destroyTarget(int index);
 	/** Show the player controls */
 	void showPlayerControls();
 	/** Show the render controls */

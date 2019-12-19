@@ -57,6 +57,9 @@
     <ClInclude Include="source\KeyMapping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="source\WaypointManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp">
@@ -81,6 +84,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\Session.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\WaypointManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

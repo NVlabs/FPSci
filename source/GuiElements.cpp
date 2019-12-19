@@ -1,4 +1,5 @@
 #include "GuiElements.h"
+#include "WaypointManager.h"
 #include "App.h"
 
 bool WaypointDisplay::TreeDisplay::onEvent(const GEvent & event) {
@@ -69,27 +70,27 @@ WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, Wa
 	// Basic control
 	auto addPane = pane->addPane("Add Waypoints");
 	addPane->beginRow(); {
-		addPane->addButton("Drop waypoint", m_app, &App::dropWaypoint);
-		auto c = addPane->addNumberBox("Delay", &m_app->waypointDelay, "s");
+		addPane->addButton("Drop waypoint", m_app->waypointManager, &WaypointManager::dropWaypoint);
+		auto c = addPane->addNumberBox("Delay", &m_app->waypointManager->waypointDelay, "s");
 		c->setCaptionWidth(40.0f);
 		c->setWidth(120.0f);
-		addPane->addNumberBox("Height Offset", &m_app->waypointVertOffset, "m")->setWidth(150.0f);
+		addPane->addNumberBox("Height Offset", &m_app->waypointManager->waypointVertOffset, "m")->setWidth(150.0f);
 	}; addPane->endRow();
 
 	// Removing waypoints
 	auto removePane = pane->addPane("Remove Waypoints");
 	removePane->beginRow(); {
-		removePane->addButton("Remove waypoint", m_app, &App::removeHighlighted);
-		removePane->addButton("Remove last", m_app, &App::removeLastWaypoint);
-		removePane->addButton("Clear all", m_app, &App::clearWaypoints);
+		removePane->addButton("Remove waypoint", m_app->waypointManager, &WaypointManager::removeHighlighted);
+		removePane->addButton("Remove last", m_app->waypointManager, &WaypointManager::removeLastWaypoint);
+		removePane->addButton("Clear all", m_app->waypointManager, &WaypointManager::clearWaypoints);
 	} removePane->endRow();
 
 	// File control
 	auto filePane = pane->addPane("File Input/Output");
 	filePane->beginRow(); {
-		filePane->addButton("Load", m_app, &App::loadWaypoints);
-		filePane->addButton("Save", m_app, &App::exportWaypoints);
-		auto t = filePane->addTextBox("Filename", &m_app->waypointFile);
+		filePane->addButton("Load", m_app->waypointManager, &WaypointManager::loadWaypoints);
+		filePane->addButton("Save", m_app->waypointManager, &WaypointManager::exportWaypoints);
+		auto t = filePane->addTextBox("Filename", &m_app->waypointManager->exportFilename);
 		t->setCaptionWidth(60.0f);
 		t->setWidth(180.0f);
 	} filePane->endRow();
@@ -97,23 +98,23 @@ WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, Wa
 	// Preview
 	auto previewPane = pane->addPane("Preview");
 	previewPane->beginRow(); {
-		previewPane->addButton("Preview", m_app, &App::previewWaypoints);
-		previewPane->addButton("Stop Preview", m_app, &App::stopPreview);
+		previewPane->addButton("Preview", m_app->waypointManager, &WaypointManager::previewWaypoints);
+		previewPane->addButton("Stop Preview", m_app->waypointManager, &WaypointManager::stopPreview);
 	} previewPane->endRow();
 
 	// Recording
 	auto recordPane = pane->addPane("Recording");
 	recordPane->beginRow(); {
-		recordPane->addCheckBox("Record motion", &m_app->recordMotion);
+		recordPane->addCheckBox("Record motion", &m_app->waypointManager->recordMotion);
 		recordPane->addDropDownList("Record Mode",
 			Array<GuiText> {GuiText("Fixed Distance"), GuiText("Fixed Time")},
-			&m_app->recordMode);
+			&m_app->waypointManager->recordMode);
 	} recordPane->endRow();
 	pane->beginRow();{
-		auto c = recordPane->addNumberBox("Interval", &m_app->recordInterval);
+		auto c = recordPane->addNumberBox("Interval", &m_app->waypointManager->recordInterval);
 		c->setCaptionWidth(50.0f);
 		c->setWidth(120.0f);
-		c = recordPane->addNumberBox("Time Scale", &m_app->recordTimeScaling, "x");
+		c = recordPane->addNumberBox("Time Scale", &m_app->waypointManager->recordTimeScaling, "x");
 		c->setCaptionWidth(80.0f);
 		c->setWidth(150.0f);
 	} recordPane->endRow();
