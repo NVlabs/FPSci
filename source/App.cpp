@@ -503,7 +503,7 @@ void App::updateControls() {
 	this->addWidget(m_playerControls);
 
 	// Setup the render control
-	m_renderControls = RenderControls::create(*sessConfig, *(userTable.getCurrentUser()), renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme);
+	m_renderControls = RenderControls::create(*sessConfig, *(userTable.getCurrentUser()), renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(false);
 	this->addWidget(m_renderControls);
 

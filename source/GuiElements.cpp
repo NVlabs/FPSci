@@ -200,7 +200,7 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 }
 
 RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
-	const shared_ptr<GuiTheme>& theme, float width, float height) :
+	const shared_ptr<GuiTheme>& theme, const int maxFrameDelay, const float minFrameRate, const float maxFrameRate, float width, float height) :
 	GuiWindow("Render Controls", theme, Rect2D::xywh(5,5,width,height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
 {
 	// Create the GUI pane
@@ -227,11 +227,11 @@ RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& dr
 		framePane->addCheckBox("Turbo mode", &turbo);
 	}framePane->endRow();
 	framePane->beginRow(); {
-		auto c = framePane->addNumberBox("Framerate", &(config.render.frameRate), "fps", GuiTheme::LINEAR_SLIDER, 1.0f, 1000.0f, 1.0f);
+		auto c = framePane->addNumberBox("Framerate", &(config.render.frameRate), "fps", GuiTheme::LINEAR_SLIDER, minFrameRate, maxFrameRate, 1.0f);
 		c->setWidth(width*0.95f);
 	} framePane->endRow();
 	framePane->beginRow(); {
-		auto c = framePane->addNumberBox("Display Lag", &(config.render.frameDelay), "f", GuiTheme::LINEAR_SLIDER, 0, 60);
+		auto c = framePane->addNumberBox("Display Lag", &(config.render.frameDelay), "f", GuiTheme::LINEAR_SLIDER, 0, maxFrameDelay);
 		c->setWidth(width*0.95f);
 	}framePane->endRow();
 
