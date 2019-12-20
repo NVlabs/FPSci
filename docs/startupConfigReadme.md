@@ -7,7 +7,8 @@ The [`startupconfig.Any` file](../data-files/startupconfig.Any) is located in th
 # Fields
 The following fields are valid for a startupconfig.Any file:
 
-* `playMode` controls whether the application is run in experiment mode, or debug mode. When `playMode`=`True` the application is in experiment mode. In debug mode (`playMode`=`False`) the application isrun with additional windows available for user mouse interaction. This is recommended for developers only.
+* `developerMode` controls whether the application is run in experiment mode, or [developer mode](./developermode.md). When `false` the application is in experiment/play mode and is ready to collect data. In developer mode (`developerMode`=`true`) the application is run with additional windows available for user mouse interaction.
+* `waypointEditorMode` controls whether the application is run including additional support for [target path creation/waypoint editing](./patheditor.md). Waypoint editor mode **only applies when `developerMode`=`true`**! In waypoint editor mode an additional menu is made available and the user can drop waypoints or start/stop record their motion using key bound functions.
 * `fullscreen` controls whether the application is run in fullscreen mode or windowed (independent of other options)
 * `experimentConfigPath` sets the path to an [experiment config file](./experimentConfigReadme.md) for futher configuration of an experiment.
 * `userConfigPath` sets the path to a user config file for per user setup.
@@ -16,7 +17,8 @@ The following fields are valid for a startupconfig.Any file:
 The default `startup.Any` file is included below:
 
 ```
-"playMode" = true;              // Set this to false for developer mode
+"developerMode" = false;        // Set this to true to enable developer mode (extra windows)
+"waypointEditorMode" = false;   // Set this to true to enable waypoint editor mode (target path creation)
 "fullscreen" = true;            // Set this to false to run in windowed mode
 "experimentConfigPath" = "";    // Leave this empty for default "experimentconfig.Any"
 "userConfigPath" = "";          // Leave this empty for default "userconfig.Any"

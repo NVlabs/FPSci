@@ -6,7 +6,8 @@
 /** Configure how the application should start */
 class StartupConfig {
 public:
-    bool	playMode = true;					///< Sets whether the experiment is run in full-screen "playMode" (true for real data)
+    bool	developerMode = false;				///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
+	bool	waypointEditorMode = false;			///< Sets whether the app is run w/ the waypoint editor available
 	bool	fullscreen = true;					///< Whether the app runs in windowed mode
     String	experimentConfigPath = "";			///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
     String	userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
@@ -22,7 +23,8 @@ public:
 
         switch (settingsVersion) {
         case 1:
-            reader.getIfPresent("playMode", playMode);
+            reader.getIfPresent("developerMode", developerMode);
+			reader.getIfPresent("waypointEditorMode", waypointEditorMode);
 			reader.getIfPresent("fullscreen", fullscreen);
             reader.getIfPresent("experimentConfigPath", experimentConfigPath);
             reader.getIfPresent("userConfigPath", userConfigPath);
@@ -37,7 +39,8 @@ public:
 	/** Allow this to be converted back to any */
     Any toAny(const bool forceAll = true) const {
         Any a(Any::TABLE);
-        a["playMode"] = playMode;
+        a["developerMode"] = developerMode;
+		a["waypointEditorMode"] = waypointEditorMode;
 		a["fullscreen"] = fullscreen;
         a["experimentConfigPath"] = experimentConfigPath;
         a["userConfigPath"] = userConfigPath;

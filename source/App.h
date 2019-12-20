@@ -142,7 +142,7 @@ protected:
 
 	/** Used to detect GUI changes to m_reticleIndex */
 	int                             m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
-	float							m_debugMenuHeight = 0.0f;			///< Height of the debug menu when playMode=False
+	float							m_debugMenuHeight = 0.0f;			///< Height of the debug menu when in developer mode
     GuiPane*                        m_currentUserPane;					///< Current user information pane
 
 	// Drop down selection writebacks

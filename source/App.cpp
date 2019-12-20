@@ -18,7 +18,7 @@ int TrialCount::defaultCount;
 Array<String> UserSessionStatus::defaultSessionOrder;
 bool UserSessionStatus::randomizeDefaults;
 
-/** global startup config - sets playMode and experiment/user paths */
+/** global startup config - sets developer flags and experiment/user paths */
 StartupConfig startupConfig;
 
 App::App(const GApp::Settings& settings) : GApp(settings) {}
@@ -387,7 +387,7 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 }
 
 void App::loadModels() {
-	if ((experimentConfig.weapon.renderModel || startupConfig.playMode == false) && !experimentConfig.weapon.modelSpec.filename.empty()) {
+	if ((experimentConfig.weapon.renderModel || startupConfig.developerMode) && !experimentConfig.weapon.modelSpec.filename.empty()) {
 		// Load the model if we (might) need it
 		m_viewModel = ArticulatedModel::create(experimentConfig.weapon.modelSpec, "viewModel");
 	}
@@ -513,10 +513,10 @@ void App::updateControls() {
 }
 
 void App::makeGUI() {
-	debugWindow->setVisible(!startupConfig.playMode);
-	developerWindow->setVisible(!startupConfig.playMode);
-	developerWindow->sceneEditorWindow->setVisible(!startupConfig.playMode);
-	developerWindow->cameraControlWindow->setVisible(!startupConfig.playMode);
+	debugWindow->setVisible(startupConfig.developerMode);
+	developerWindow->setVisible(startupConfig.developerMode);
+	developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
+	developerWindow->cameraControlWindow->setVisible(startupConfig.developerMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
 	developerWindow->videoRecordDialog->setCaptureGui(true);
 
@@ -530,7 +530,7 @@ void App::makeGUI() {
 		debugPane->addButton("Render Controls [1]", this, &App::showRenderControls);
 		debugPane->addButton("Player Controls [2]", this, &App::showPlayerControls);
 		debugPane->addButton("Weapon Controls [3]", this, &App::showWeaponControls);
-		debugPane->addButton("Waypoint Manager [4]", waypointManager, &WaypointManager::showWaypointWindow);
+		if(startupConfig.waypointEditorMode) debugPane->addButton("Waypoint Manager [4]", waypointManager, &WaypointManager::showWaypointWindow);
 	}debugPane->endRow();
 
     // set up user settings window
@@ -557,7 +557,7 @@ void App::makeGUI() {
 
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->renderDevice()->viewport().width(), debugWindow->rect().height()));
-	m_debugMenuHeight = startupConfig.playMode ? 0.0f : debugWindow->rect().height();
+	m_debugMenuHeight = startupConfig.developerMode ? debugWindow->rect().height() : 0.0f;
 }
 
 void App::exportScene() {
@@ -971,17 +971,18 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	activeCamera()->setFrame(p->getCameraFrame());
 	
 	// Handle developer mode features here
-	if (!startupConfig.playMode) {
+	if (startupConfig.developerMode) {
 		// Handle frame rate/delay updates here
 		if (sessConfig->render.frameRate != lastSetFrameRate || displayLagFrames != sessConfig->render.frameDelay) {
 			updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
 		}
 
-		// Handle highlighting for selected target
-		waypointManager->updateSelected();
-
-		// Handle player motion recording here (if we are doing so w/ playMode=False)
-		waypointManager->updatePlayerPosition(p->getCameraFrame().translation);
+		if (startupConfig.waypointEditorMode) {
+			// Handle highlighting for selected target
+			waypointManager->updateSelected();
+			// Handle player motion recording here
+			waypointManager->updatePlayerPosition(p->getCameraFrame().translation);
+		}
 
 		// Example GUI dynamic layout code.  Resize the debugWindow to fill
 		// the screen horizontally.
@@ -997,11 +998,10 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 bool App::onEvent(const GEvent& event) {
 	GKey ksym = event.key.keysym.sym;
-	// Handle playMode=False shortcuts here...
-	if (!startupConfig.playMode) {
+	bool foundKey = true;
+	// Handle developer mode key-bound shortcuts here...
+	if (startupConfig.developerMode) {
 		if (event.type == GEventType::KEY_DOWN) {
-			bool foundKey = true;
-
 			// Window display toggle
 			if (keyMap.map["toggleRenderWindow"].contains(ksym)) {
 				m_renderControls->setVisible(!m_renderControls->visible());
@@ -1009,53 +1009,73 @@ bool App::onEvent(const GEvent& event) {
 				m_playerControls->setVisible(!m_playerControls->visible());
 			} else if (keyMap.map["toggleWeaponWindow"].contains(ksym)) {
 				m_weaponControls->setVisible(!m_weaponControls->visible());
-			} else if (keyMap.map["toggleWaypointWindow"].contains(ksym)){
-				waypointManager->toggleWaypointWindow();
-			} 
-			// Waypoint movement controls
-			else if (keyMap.map["toggleRecording"].contains(ksym)) {
-				waypointManager->recordMotion = !waypointManager->recordMotion;
-			} else if (keyMap.map["dropWaypoint"].contains(ksym)) {
-				waypointManager->dropWaypoint();
-			} else if (keyMap.map["moveWaypointUp"].contains(ksym)) {
-				waypointManager->moveMask += Vector3(0.0f, 1.0f, 0.0f);
-			} else if (keyMap.map["moveWaypointDown"].contains(ksym)){
-				waypointManager->moveMask += Vector3(0.0f, -1.0f, 0.0f);
-			} else if (keyMap.map["moveWaypointIn"].contains(ksym)){
-				waypointManager->moveMask += Vector3(0.0f, 0.0f, 1.0f);
-			} else if (keyMap.map["moveWaypointOut"].contains(ksym)){
-				waypointManager->moveMask += Vector3(0.0f, 0.0f, -1.0f);
-			} else if (keyMap.map["moveWaypointRight"].contains(ksym)){
-				waypointManager->moveMask += Vector3(1.0f, 0.0f, 0.0f);
-			} else if (keyMap.map["moveWaypointLeft"].contains(ksym)){
-				waypointManager->moveMask += Vector3(-1.0f, 0.0f, 0.0f);
-			} else {
+			} else if(!startupConfig.waypointEditorMode) {
 				foundKey = false;
+			}
+			// Waypoint editor only keys
+			else if (startupConfig.waypointEditorMode) {
+				if (keyMap.map["toggleWaypointWindow"].contains(ksym)) {
+					waypointManager->toggleWaypointWindow();
+				} else if (keyMap.map["toggleRecording"].contains(ksym)) {
+					waypointManager->recordMotion = !waypointManager->recordMotion;
+				}
+				// Waypoint movement controls
+				else if (keyMap.map["dropWaypoint"].contains(ksym)) {
+					waypointManager->dropWaypoint();
+				}
+				else if (keyMap.map["moveWaypointUp"].contains(ksym)) {
+					waypointManager->moveMask += Vector3(0.0f, 1.0f, 0.0f);
+				}
+				else if (keyMap.map["moveWaypointDown"].contains(ksym)) {
+					waypointManager->moveMask += Vector3(0.0f, -1.0f, 0.0f);
+				}
+				else if (keyMap.map["moveWaypointIn"].contains(ksym)) {
+					waypointManager->moveMask += Vector3(0.0f, 0.0f, 1.0f);
+				}
+				else if (keyMap.map["moveWaypointOut"].contains(ksym)) {
+					waypointManager->moveMask += Vector3(0.0f, 0.0f, -1.0f);
+				}
+				else if (keyMap.map["moveWaypointRight"].contains(ksym)) {
+					waypointManager->moveMask += Vector3(1.0f, 0.0f, 0.0f);
+				}
+				else if (keyMap.map["moveWaypointLeft"].contains(ksym)) {
+					waypointManager->moveMask += Vector3(-1.0f, 0.0f, 0.0f);
+				}
+				else {
+					foundKey = false;
+				}
 			}
 			if (foundKey) {
 				return true;
 			}
 		}
 		else if (event.type == GEventType::KEY_UP) {
-			bool foundKey = true;
-			if (keyMap.map["moveWaypointUp"].contains(ksym)) {
-				waypointManager->moveMask -= Vector3(0.0f, 1.0f, 0.0f);
-			} else if(keyMap.map["moveWaypointDown"].contains(ksym)){
-				waypointManager->moveMask -= Vector3(0.0f, -1.0f, 0.0f);
-			} else if(keyMap.map["moveWaypointIn"].contains(ksym)){
-				waypointManager->moveMask -= Vector3(0.0f, 0.0f, 1.0f);
-			} else if(keyMap.map["moveWaypointOut"].contains(ksym)){
-				waypointManager->moveMask -= Vector3(0.0f, 0.0f, -1.0f);
-			} else if(keyMap.map["moveWaypointRight"].contains(ksym)){
-				waypointManager->moveMask -= Vector3(1.0f, 0.0f, 0.0f);
-			} else if (keyMap.map["moveWaypointLeft"].contains(ksym)) {
-				waypointManager->moveMask -= Vector3(-1.0f, 0.0f, 0.0f);
-			} else {
-				foundKey = false;
+			if (startupConfig.waypointEditorMode) {
+				if (keyMap.map["moveWaypointUp"].contains(ksym)) {
+					waypointManager->moveMask -= Vector3(0.0f, 1.0f, 0.0f);
+				}
+				else if (keyMap.map["moveWaypointDown"].contains(ksym)) {
+					waypointManager->moveMask -= Vector3(0.0f, -1.0f, 0.0f);
+				}
+				else if (keyMap.map["moveWaypointIn"].contains(ksym)) {
+					waypointManager->moveMask -= Vector3(0.0f, 0.0f, 1.0f);
+				}
+				else if (keyMap.map["moveWaypointOut"].contains(ksym)) {
+					waypointManager->moveMask -= Vector3(0.0f, 0.0f, -1.0f);
+				}
+				else if (keyMap.map["moveWaypointRight"].contains(ksym)) {
+					waypointManager->moveMask -= Vector3(1.0f, 0.0f, 0.0f);
+				}
+				else if (keyMap.map["moveWaypointLeft"].contains(ksym)) {
+					waypointManager->moveMask -= Vector3(-1.0f, 0.0f, 0.0f);
+				}
+				else {
+					foundKey = false;
+				}
 			}
-			if (foundKey) {
-				return true;
-			}
+		}
+		if (foundKey) {
+			return true;
 		}
 	}
 	
@@ -1526,7 +1546,7 @@ void App::onUserInput(UserInput* ui) {
 			}
 
 			// Check for developer mode editing here, if so set selected waypoint using the camera
-			if (!startupConfig.playMode) {
+			if (startupConfig.developerMode && startupConfig.waypointEditorMode) {
 				waypointManager->aimSelectWaypoint(activeCamera());
 			}
 
