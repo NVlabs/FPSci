@@ -132,9 +132,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="source\App.h" />
-    <ClInclude Include="source\KeyMapping.h" />
     <ClInclude Include="source\Session.h" />
-    <ClInclude Include="source\ExperimentConfig.h" />
+    <ClInclude Include="source\ConfigFiles.h" />
     <ClInclude Include="source\Logger.h" />
     <ClInclude Include="source\PhysicsScene.h" />
     <ClInclude Include="source\PlayerEntity.h" />

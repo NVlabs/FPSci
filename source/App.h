@@ -10,11 +10,10 @@
  */
 #pragma once
 #include <G3D/G3D.h>
-#include "ExperimentConfig.h"
+#include "ConfigFiles.h"
 #include "TargetEntity.h"
 #include "GuiElements.h"
 #include "PyLogger.h"
-#include "KeyMapping.h"
 
 class Session;
 class G3Dialog;

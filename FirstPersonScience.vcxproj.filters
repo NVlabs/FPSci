@@ -24,9 +24,6 @@
     <ClInclude Include="source\App.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\ExperimentConfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="source\sqlHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -54,10 +51,10 @@
     <ClInclude Include="source\Dialogs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\KeyMapping.h">
+    <ClInclude Include="source\WaypointManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\WaypointManager.h">
+    <ClInclude Include="source\ConfigFiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

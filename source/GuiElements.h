@@ -1,6 +1,6 @@
 #pragma once
 #include <G3D/G3D.h>
-#include "ExperimentConfig.h"
+#include "ConfigFiles.h"
 #include "TargetEntity.h"
 
 class App;

@@ -1,7 +1,7 @@
 #pragma once
 #include <G3D/G3D.h>
 #include "sqlHelpers.h"
-#include "ExperimentConfig.h"
+#include "ConfigFiles.h"
 
 using RowEntry = Array<String>;
 using Columns = Array<Array<String>>;
