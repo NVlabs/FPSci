@@ -1922,10 +1922,12 @@ int main(int argc, const char* argv[]) {
 	GApp::Settings settings(argc, argv);
 
 	if (startupConfig.fullscreen) {
-		settings.window.width = 1920; settings.window.height = 1080;
+		settings.window.width = 1920;
+		settings.window.height = 1080;
 	}
 	else {
-		settings.window.width = 1920; settings.window.height = 980;
+		settings.window.width = (int)startupConfig.windowSize.x; 
+		settings.window.height = (int)startupConfig.windowSize.y;
 	}
 	settings.window.fullScreen = startupConfig.fullscreen;
 	settings.window.resizable = !settings.window.fullScreen;
