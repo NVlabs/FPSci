@@ -1657,7 +1657,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 		String message = sess->getFeedbackMessage();
 		if (!message.empty()) {
 			outputFont->draw2D(rd, message.c_str(),
-				(Point2((float)rd->viewport().width() / 2, (float)rd->viewport().height() / 2) * scale).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+				(Point2((float)rd->viewport().width()/2, (float)rd->viewport().height()*0.4)).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
 		}
 
 	} rd->pop2D();
