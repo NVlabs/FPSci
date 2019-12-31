@@ -534,9 +534,14 @@ void App::makeGUI() {
 	}debugPane->endRow();
 
     // set up user settings window
-    m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, 
-        Rect2D::xywh((float)window()->renderDevice()->viewport().width() * 0.5f - 200.0f, (float)window()->renderDevice()->viewport().height() * 0.5f - 100.0f, 400.0f, 200.0f));
-    addWidget(m_userSettingsWindow);
+	Rect2D vp = renderDevice->viewport();
+	// handle positioning the window correctly here
+	Rect2D windowRect;
+	if (startupConfig.fullscreen) windowRect = Rect2D::xywh(vp.width()*0.5f - 200.0f, vp.height()*0.5f - 100.0f, 400.0f, 200.0f);
+	else windowRect = Rect2D::xywh(vp.width()*0.25f - 200.0f, vp.height()*0.25f - 100.0f, 400.0f, 200.0f);
+
+    m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, windowRect);
+	addWidget(m_userSettingsWindow);
     GuiPane* p = m_userSettingsWindow->pane();
     m_currentUserPane = p->addPane("Current User Settings");
     updateUserGUI();
