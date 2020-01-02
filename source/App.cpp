@@ -534,14 +534,7 @@ void App::makeGUI() {
 	}debugPane->endRow();
 
     // set up user settings window
-	Rect2D vp = renderDevice->viewport();
-	// handle positioning the window correctly here
-	Rect2D windowRect;
-	if (startupConfig.fullscreen) windowRect = Rect2D::xywh(vp.width()*0.5f - 200.0f, vp.height()*0.5f - 100.0f, 400.0f, 200.0f);
-	else windowRect = Rect2D::xywh(vp.width()*0.25f - 200.0f, vp.height()*0.25f - 100.0f, 400.0f, 200.0f);
-
-    m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, windowRect);
-	addWidget(m_userSettingsWindow);
+    m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
     GuiPane* p = m_userSettingsWindow->pane();
     m_currentUserPane = p->addPane("Current User Settings");
     updateUserGUI();
@@ -558,7 +551,14 @@ void App::makeGUI() {
 	    p->addButton("Select Session", this, &App::updateSessionPress);
     p->endRow();
     p->addButton("Quit", this, &App::quitRequest);
-    m_userSettingsWindow->setVisible(m_userSettingsMode);
+
+	m_userSettingsWindow->pack();
+	/*float scale = 0.5f / m_userSettingsWindow->pixelScale();
+	Vector2 pos = Vector2(renderDevice->viewport().width()*scale - m_userSettingsWindow->window()->width() / 2.0f,
+	renderDevice->viewport().height()*scale - m_userSettingsWindow->window()->height() / 2.0f);*/
+	m_userSettingsWindow->moveToCenter();
+	m_userSettingsWindow->setVisible(m_userSettingsMode);
+	addWidget(m_userSettingsWindow);
 
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->renderDevice()->viewport().width(), debugWindow->rect().height()));
