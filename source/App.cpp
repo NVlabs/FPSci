@@ -1003,84 +1003,89 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 bool App::onEvent(const GEvent& event) {
 	GKey ksym = event.key.keysym.sym;
-	bool foundKey = true;
+	bool foundKey = false;
+
 	// Handle developer mode key-bound shortcuts here...
 	if (startupConfig.developerMode) {
 		if (event.type == GEventType::KEY_DOWN) {
 			// Window display toggle
 			if (keyMap.map["toggleRenderWindow"].contains(ksym)) {
 				m_renderControls->setVisible(!m_renderControls->visible());
+				foundKey = true;
 			} else if (keyMap.map["togglePlayerWindow"].contains(ksym)) {
 				m_playerControls->setVisible(!m_playerControls->visible());
+				foundKey = true;
 			} else if (keyMap.map["toggleWeaponWindow"].contains(ksym)) {
 				m_weaponControls->setVisible(!m_weaponControls->visible());
-			} else if(!startupConfig.waypointEditorMode) {
-				foundKey = false;
+				foundKey = true;
 			}
 			// Waypoint editor only keys
 			else if (startupConfig.waypointEditorMode) {
 				if (keyMap.map["toggleWaypointWindow"].contains(ksym)) {
 					waypointManager->toggleWaypointWindow();
+					foundKey = true;
 				} else if (keyMap.map["toggleRecording"].contains(ksym)) {
 					waypointManager->recordMotion = !waypointManager->recordMotion;
+					foundKey = true;
 				}
 				// Waypoint movement controls
 				else if (keyMap.map["dropWaypoint"].contains(ksym)) {
 					waypointManager->dropWaypoint();
+					foundKey = true;
 				}
 				else if (keyMap.map["moveWaypointUp"].contains(ksym)) {
 					waypointManager->moveMask += Vector3(0.0f, 1.0f, 0.0f);
+					foundKey = true;
 				}
 				else if (keyMap.map["moveWaypointDown"].contains(ksym)) {
 					waypointManager->moveMask += Vector3(0.0f, -1.0f, 0.0f);
+					foundKey = true;
 				}
 				else if (keyMap.map["moveWaypointIn"].contains(ksym)) {
 					waypointManager->moveMask += Vector3(0.0f, 0.0f, 1.0f);
+					foundKey = true;
 				}
 				else if (keyMap.map["moveWaypointOut"].contains(ksym)) {
 					waypointManager->moveMask += Vector3(0.0f, 0.0f, -1.0f);
+					foundKey = true;
 				}
 				else if (keyMap.map["moveWaypointRight"].contains(ksym)) {
 					waypointManager->moveMask += Vector3(1.0f, 0.0f, 0.0f);
+					foundKey = true;
 				}
 				else if (keyMap.map["moveWaypointLeft"].contains(ksym)) {
 					waypointManager->moveMask += Vector3(-1.0f, 0.0f, 0.0f);
+					foundKey = true;
 				}
-				else {
-					foundKey = false;
-				}
-			}
-			if (foundKey) {
-				return true;
 			}
 		}
 		else if (event.type == GEventType::KEY_UP) {
 			if (startupConfig.waypointEditorMode) {
 				if (keyMap.map["moveWaypointUp"].contains(ksym)) {
 					waypointManager->moveMask -= Vector3(0.0f, 1.0f, 0.0f);
+					foundKey = true;
 				}
 				else if (keyMap.map["moveWaypointDown"].contains(ksym)) {
 					waypointManager->moveMask -= Vector3(0.0f, -1.0f, 0.0f);
+					foundKey = true;
 				}
 				else if (keyMap.map["moveWaypointIn"].contains(ksym)) {
 					waypointManager->moveMask -= Vector3(0.0f, 0.0f, 1.0f);
+					foundKey = true;
 				}
 				else if (keyMap.map["moveWaypointOut"].contains(ksym)) {
 					waypointManager->moveMask -= Vector3(0.0f, 0.0f, -1.0f);
+					foundKey = true;
 				}
 				else if (keyMap.map["moveWaypointRight"].contains(ksym)) {
 					waypointManager->moveMask -= Vector3(1.0f, 0.0f, 0.0f);
+					foundKey = true;
 				}
 				else if (keyMap.map["moveWaypointLeft"].contains(ksym)) {
 					waypointManager->moveMask -= Vector3(-1.0f, 0.0f, 0.0f);
-				}
-				else {
-					foundKey = false;
+					foundKey = true;
 				}
 			}
-		}
-		if (foundKey) {
-			return true;
 		}
 	}
 	
@@ -1095,38 +1100,45 @@ bool App::onEvent(const GEvent& event) {
 			}
 			// switch to first or 3rd person mode
 			updateMouseSensitivity();
-			return true;
+			foundKey = true;
 		}
 
 		// Override 'q', 'z', 'c', and 'e' keys (unused)
 		const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
 		if (unused.contains(ksym)) {
-			return true;
-		
-		}
-		else if (keyMap.map["quit"].contains(ksym)) {
-			quitRequest();
-			return true;
+			foundKey = true;
 		}
 		else if (keyMap.map["crouch"].contains(ksym)) {
 			scene()->typedEntity<PlayerEntity>("player")->setCrouched(true);
-			return true;
+			foundKey = true;
 		}
 		else if (keyMap.map["jump"].contains(ksym)) {
 			scene()->typedEntity<PlayerEntity>("player")->setJumpPressed(true);
+			foundKey = true;
+		}
+		else if (keyMap.map["quit"].contains(ksym)) {
+			quitRequest();
 			return true;
 		}
 	}
 	else if ((event.type == GEventType::KEY_UP)){
 		if (keyMap.map["crouch"].contains(ksym)) {
 			scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
-			return true;
+			foundKey = true;
 		}
+	}
+	if (foundKey) {
+		return true;
+	}
+
+	// Handle window-based close ("X" button)
+	if (event.type == GEventType::QUIT) {
+		quitRequest();
+		return true;
 	}
 
 	// Handle super-class events
-	if (GApp::onEvent(event)) { return true; }
-	return false;
+	return GApp::onEvent(event);
 }
 
 void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
@@ -1520,7 +1532,6 @@ void App::onUserInput(UserInput* ui) {
 				// check for hit, add graphics, update target state
 				if ((sess->presentationState == PresentationState::task) && !m_userSettingsMode) {
 					if (sess->canFire()) {
-
 						fired = true;
 						sess->countClick();						        // Count clicks
 						shared_ptr<TargetEntity> t = fire();			// Fire the weapon
