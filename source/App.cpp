@@ -553,10 +553,10 @@ void App::makeGUI() {
     p->addButton("Quit", this, &App::quitRequest);
 
 	m_userSettingsWindow->pack();
-	/*float scale = 0.5f / m_userSettingsWindow->pixelScale();
-	Vector2 pos = Vector2(renderDevice->viewport().width()*scale - m_userSettingsWindow->window()->width() / 2.0f,
-	renderDevice->viewport().height()*scale - m_userSettingsWindow->window()->height() / 2.0f);*/
-	m_userSettingsWindow->moveToCenter();
+	float scale = 0.5f / m_userSettingsWindow->pixelScale();
+	Vector2 pos = Vector2(renderDevice->viewport().width()*scale - m_userSettingsWindow->bounds().width() / 2.0f,
+		renderDevice->viewport().height()*scale - m_userSettingsWindow->bounds().height() / 2.0f);
+	m_userSettingsWindow->moveTo(pos);
 	m_userSettingsWindow->setVisible(m_userSettingsMode);
 	addWidget(m_userSettingsWindow);
 
