@@ -255,7 +255,7 @@ protected:
 	bool            m_isFirstFrame = true;		///< Initializer flag
 	SimTime			m_nextJumpTime = 0;			///< Next time at which to jump
 	
-	AABox			m_bounds = AABox();
+	AABox			m_moveBounds = AABox();
 	bool			m_axisLocks[3] = { false };	///< Axis locks (for world space motion)
 
 
@@ -287,8 +287,7 @@ public:
 		m_isFirstFrame = true;
 	}
 
-	void setBounds(AABox bounds) { m_bounds = bounds; }
-	AABox bounds() { return m_bounds; }
+	void setMoveBounds(AABox bounds) { m_moveBounds = bounds; }
 
 	/** For deserialization from Any / loading from file */
 	static shared_ptr<Entity> create 

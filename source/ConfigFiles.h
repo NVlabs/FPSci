@@ -719,7 +719,7 @@ public:
 	Array<float>	speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
 	Array<float>	eccH = { 5.0f, 15.0f };					///< Range of initial horizontal eccentricity
 	Array<float>	eccV = { 0.0f, 2.0f };					///< Range of initial vertical eccentricity
-	Array<float>	size = { 0.2f, 0.2f };			///< Visual size of the target (in degrees)
+	Array<float>	size = { 0.2f, 0.2f };					///< Visual size of the target (in degrees)
 	bool			jumpEnabled = false;					///< Flag indicating whether the target jumps
 	Array<float>	jumpPeriod = { 2.0f, 2.0f };			///< Range of time period between jumps in seconds
 	Array<float>	jumpSpeed = { 2.0f, 5.5f };				///< Range of jump speeds in meters/s
@@ -727,8 +727,9 @@ public:
 	Array<Destination> destinations;						///< Array of destinations to traverse
 	String			destSpace = "world";					///< Space to use for destinations (implies offset) can be "world" or "player"
 	int				respawnCount = 0;						///< Number of times to respawn
-	AABox			bbox;									///< Bounding box
-	Array<bool>		axisLock = { false, false, false };					///< Array of axis lock values
+	AABox			spawnBounds;							///< Spawn position bounding box
+	AABox			moveBounds;								///< Movemvent bounding box
+	Array<bool>		axisLock = { false, false, false };		///< Array of axis lock values
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
@@ -774,10 +775,19 @@ public:
 			reader.getIfPresent("destinations", destinations);
 			reader.getIfPresent("respawnCount", respawnCount);
 			if (destSpace == "world" && destinations.size() == 0) {
-				reader.get("bounds", bbox, format("A world-space target must either specify destinations or a bounding box. See target: \"%s\"", id));
+				reader.get("moveBounds", moveBounds, format("A world-space target must either specify destinations or a movement bounding box. See target: \"%s\"", id));
+				spawnBounds = moveBounds;
 			}
 			else {
-				reader.getIfPresent("bounds", bbox);
+				if (reader.getIfPresent("moveBounds", moveBounds)) {
+					spawnBounds = moveBounds;
+				}
+			}
+			reader.getIfPresent("spawnBounds", spawnBounds);
+			if (destSpace == "world" && !moveBounds.contains(spawnBounds)) {
+				String moveBoundStr = format("AABox{%s, %s}", moveBounds.high().toString(), moveBounds.low().toString());
+				String spawnBoundStr = format("AABox{%s, %s}", spawnBounds.high().toString(), spawnBounds.low().toString());
+				throw format("The \"moveBounds\" AABox (=%s) must contain the \"spawnBounds\" AABox (=%s)!", moveBoundStr, spawnBoundStr);
 			}
 			if (reader.getIfPresent("axisLocked", axisLock)) {
 				if (axisLock.size() < 3) {

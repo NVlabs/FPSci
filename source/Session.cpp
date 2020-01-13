@@ -101,8 +101,8 @@ void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
 	Point3 loc;
 
 	if (isWorldSpace) {
-		loc = config->bbox.randomInteriorPoint();		// Set a random position in the bounds
-		target->resetMotionParams();					// Reset the target motion behavior
+		loc = config->spawnBounds.randomInteriorPoint();		// Set a random position in the bounds
+		target->resetMotionParams();							// Reset the target motion behavior
 	}
 	else {
 		const float rot_pitch = randSign() * Random::common().uniform(config->eccV[0], config->eccV[1]);
@@ -149,7 +149,7 @@ void Session::initTargetAnimation() {
 			}
 			// Otherwise check if this is a jumping target
 			else if (target->jumpEnabled) {
-				Point3 offset = isWorldSpace ? target->bbox.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 				shared_ptr<JumpingEntity> t = m_app->spawnJumpingTarget(
 					offset,
 					visualSize,
@@ -171,11 +171,11 @@ void Session::initTargetAnimation() {
 				);
 				t->setWorldSpace(isWorldSpace);
 				if (isWorldSpace) {
-					t->setBounds(target->bbox);
+					t->setMoveBounds(target->moveBounds);
 				}
 			}
 			else {
-				Point3 offset = isWorldSpace ? target->bbox.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 				shared_ptr<FlyingEntity> t = m_app->spawnFlyingTarget(
 					offset,
 					visualSize,
@@ -193,7 +193,7 @@ void Session::initTargetAnimation() {
 				);
 				t->setWorldSpace(isWorldSpace);
 				if (isWorldSpace) {
-					t->setBounds(target->bbox);
+					t->setBounds(target->moveBounds);
 				}
 			}
 		}

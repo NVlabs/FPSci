@@ -543,7 +543,7 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			m_nextChangeTime = absoluteTime + motionChangeTime;
 			// Velocity to use for this next interval
 			float vel = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
-			Point3 destination = m_bounds.randomInteriorPoint();
+			Point3 destination = m_moveBounds.randomInteriorPoint();
 			if (m_axisLocks[0]) {
 				destination.x = frame().translation.x;
 			}
@@ -573,7 +573,7 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		if (m_inJump) {
 			pos.y = m_standingHeight;
 		}
-		if (!m_bounds.contains(pos)) {
+		if (!m_moveBounds.contains(pos)) {
 			m_velocity = Vector3(-m_velocity.x, -m_velocity.y, -m_velocity.z);
 		}
 		if (m_inJump) {

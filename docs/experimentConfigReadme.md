@@ -84,7 +84,8 @@ An example session configuration snippet is included below:
       * `t` the time (in seconds) for this point in the path
       * `xyz` the position for this point in the path
     * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
-    * `bounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
+    * `spawnBounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for the target's spawn location in cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
+    * `moveBounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for target motion in cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
     * `axisLocked` is a boolean array specifying which (if any) axes of motion are "locked" (i.e. disallowed) for this target's motion in [X,Y,Z] order. This only applies for world-space, parametric targets.
 
 #### Target Configuration Example
