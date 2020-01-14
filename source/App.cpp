@@ -1359,19 +1359,28 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 			}
 			bulletStartFrame.lookAt(aimPoint);
 			//bulletStartFrame.translation += bulletStartFrame.lookVector();
-			const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastUniqueID), scene().get(), m_bulletModel, bulletStartFrame);
-			bullet->setShouldBeSaved(false);
-			bullet->setCanCauseCollisions(false);
-			bullet->setCastsShadows(false);
+			
+			// Non-laser weapon
+			if (sessConfig->weapon.firePeriod > 0.0f && sessConfig->weapon.autoFire) {
+				const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastUniqueID), scene().get(), m_bulletModel, bulletStartFrame);
+				bullet->setShouldBeSaved(false);
+				bullet->setCanCauseCollisions(false);
+				bullet->setCastsShadows(false);
 
-			/*
-			const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
-				Any::parse(format("%s", bulletStartFrame.toXYZYPRDegreesString().c_str())));
-			bullet->setTrack(track);
-			*/
+				/*
+				const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
+					Any::parse(format("%s", bulletStartFrame.toXYZYPRDegreesString().c_str())));
+				bullet->setTrack(track);
+				*/
 
-			projectileArray.push(Projectile(bullet, System::time() + fmin(closest, 100.0f)/sessConfig->weapon.bulletSpeed));
-			scene()->insert(bullet);
+				projectileArray.push(Projectile(bullet, System::time() + fmin(closest, 100.0f) / sessConfig->weapon.bulletSpeed));
+				scene()->insert(bullet);
+			}
+			// Laser weapon (very hacky for now...)
+			else {
+				shared_ptr<CylinderShape> beam = std::make_shared<CylinderShape>(CylinderShape(Cylinder(bulletStartFrame.translation, aimPoint, 0.02f)));
+				debugDraw(beam, FLT_EPSILON, Color4(0.2, 0.8, 0.0, 0.5), Color4::clear());
+			}
 		}
 
 		for (int t = 0; t < targetArray.size(); ++t) {
