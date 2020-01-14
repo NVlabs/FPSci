@@ -192,7 +192,7 @@ public:
 
 	/** Array of all targets in the scene */
 	Array<shared_ptr<TargetEntity>> targetArray;					///< Array of drawn targets
-	Array<Projectile>                projectileArray;				///< Arrray of drawn projectiles
+	Array<Projectile>               projectileArray;				///< Arrray of drawn projectiles
 
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment

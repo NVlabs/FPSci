@@ -953,6 +953,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 		if (projectile.endTime < now) {
 			// Expire
+			scene()->removeEntity(projectile.entity->name());
 			projectileArray.fastRemove(p);
 			--p;
 		}
@@ -1339,10 +1340,40 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 		for (auto target : targetArray) {
 			dontHit.append(target);
 		}
-		// Check for closest hit
+
+		// Check for closest hit (in scene)
 		float closest = finf();
 		int closestIndex = -1;
-		scene()->intersect(ray, closest, false, dontHit);
+		Model::HitInfo info;
+		scene()->intersect(ray, closest, false, dontHit, info);
+
+		// Create the bullet
+		if (sessConfig->weapon.renderBullets) {
+			// Create the bullet start frame from the weapon frame plus muzzle offset
+			CFrame bulletStartFrame = m_weaponFrame;
+			bulletStartFrame.translation += sessConfig->weapon.muzzleOffset;
+
+			// Angle the bullet start frame towards the aim point
+			if (closest < finf()) {
+				aimPoint = info.point;
+			}
+			bulletStartFrame.lookAt(aimPoint);
+			//bulletStartFrame.translation += bulletStartFrame.lookVector();
+			const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastUniqueID), scene().get(), m_bulletModel, bulletStartFrame);
+			bullet->setShouldBeSaved(false);
+			bullet->setCanCauseCollisions(false);
+			bullet->setCastsShadows(false);
+
+			/*
+			const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
+				Any::parse(format("%s", bulletStartFrame.toXYZYPRDegreesString().c_str())));
+			bullet->setTrack(track);
+			*/
+
+			projectileArray.push(Projectile(bullet, System::time() + fmin(closest, 100.0f)/sessConfig->weapon.bulletSpeed));
+			scene()->insert(bullet);
+		}
+
 		for (int t = 0; t < targetArray.size(); ++t) {
 			if (targetArray[t]->intersect(ray, closest)) {
 				closestIndex = t;
@@ -1418,31 +1449,6 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 			}
 		}
 		else hitTarget = false;
-	}
-
-	// Create the bullet
-	if (sessConfig->weapon.renderBullets) {
-		// Create the bullet start frame from the weapon frame plus muzzle offset
-		CFrame bulletStartFrame = m_weaponFrame;
-		bulletStartFrame.translation += sessConfig->weapon.muzzleOffset;
-
-		// Angle the bullet start frame towards the aim point
-		bulletStartFrame.lookAt(aimPoint);
-
-		bulletStartFrame.translation += bulletStartFrame.lookVector() * 2.0f;
-		const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastUniqueID), scene().get(), m_bulletModel, bulletStartFrame);
-		bullet->setShouldBeSaved(false);
-		bullet->setCanCauseCollisions(false);
-		bullet->setCastsShadows(false);
-
-		/*
-		const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
-			Any::parse(format("%s", bulletStartFrame.toXYZYPRDegreesString().c_str())));
-		bullet->setTrack(track);
-		*/
-
-		projectileArray.push(Projectile(bullet, System::time() + 1.0f));
-		scene()->insert(bullet);
 	}
 
     // play sounds
@@ -1600,14 +1606,18 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 
 	typedScene<PhysicsScene>()->poseExceptExcluded(surface, "player");
 
-	if (sessConfig->weapon.renderModel) {
+	if (sessConfig->weapon.renderModel || sessConfig->weapon.renderBullets || sessConfig->weapon.renderMuzzleFlash) {
+		// Update the weapon frame for all of these cases
 		const float yScale = -0.12f;
 		const float zScale = -yScale * 0.5f;
 		const float lookY = activeCamera()->frame().lookVector().y;
-		const float prevLookY = activeCamera()->previousFrame().lookVector().y;
 		m_weaponFrame = activeCamera()->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
-		const CFrame prevWeaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f + prevLookY * yScale, -1.1f + prevLookY * zScale, 10, 5);
-		m_viewModel->pose(surface, m_weaponFrame, activeCamera()->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
+		// Pose the view model (weapon) for render here
+		if (sessConfig->weapon.renderModel) {
+			const float prevLookY = activeCamera()->previousFrame().lookVector().y;
+			const CFrame prevWeaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f + prevLookY * yScale, -1.1f + prevLookY * zScale, 10, 5);
+			m_viewModel->pose(surface, m_weaponFrame, activeCamera()->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
+		}
 	}
 }
 
