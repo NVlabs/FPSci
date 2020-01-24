@@ -784,7 +784,7 @@ public:
 				}
 			}
 			reader.getIfPresent("spawnBounds", spawnBounds);
-			if (destSpace == "world" && !moveBounds.contains(spawnBounds)) {
+			if (destSpace == "world" && destinations.size() == 0 && !moveBounds.contains(spawnBounds)) {
 				String moveBoundStr = format("AABox{%s, %s}", moveBounds.high().toString(), moveBounds.low().toString());
 				String spawnBoundStr = format("AABox{%s, %s}", spawnBounds.high().toString(), spawnBounds.low().toString());
 				throw format("The \"moveBounds\" AABox (=%s) must contain the \"spawnBounds\" AABox (=%s)!", moveBoundStr, spawnBoundStr);
