@@ -1951,8 +1951,8 @@ int main(int argc, const char* argv[]) {
         startupConfig = Any::fromFile("startupconfig.Any");
     }
     else {
-        // autogenerate if it wasn't there
-        startupConfig.toAny().save("startupconfig.Any");
+        // autogenerate if it wasn't there (force all fields into this any file)
+        startupConfig.toAny(true).save("startupconfig.Any");
     }
 
 	{

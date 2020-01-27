@@ -3,8 +3,17 @@
 #include <G3D/G3D.h>
 #include "TargetEntity.h"
 
+template <class T>
+static bool operator!=(Array<T> a1, Array<T> a2) {
+	for (int i = 0; i < a1.size(); i++) {
+		if (a1[i] != a2[i]) return true;
+	}
+	return false;
+}
+
 /** Configure how the application should start */
 class StartupConfig {
+private:
 public:
     bool	developerMode = false;				///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
 	bool	waypointEditorMode = false;			///< Sets whether the app is run w/ the waypoint editor available
@@ -40,13 +49,14 @@ public:
 
 	/** Allow this to be converted back to any */
     Any toAny(const bool forceAll = true) const {
+		StartupConfig def;		// Create a dummy default config for value testing
         Any a(Any::TABLE);
-        a["developerMode"] = developerMode;
-		a["waypointEditorMode"] = waypointEditorMode;
-		a["fullscreen"] = fullscreen;
-        a["experimentConfigPath"] = experimentConfigPath;
-        a["userConfigPath"] = userConfigPath;
-        a["audioEnable"] = audioEnable;
+        if(forceAll || def.developerMode != developerMode)					a["developerMode"] = developerMode;
+		if(forceAll || def.waypointEditorMode != waypointEditorMode)		a["waypointEditorMode"] = waypointEditorMode;
+		if(forceAll || def.fullscreen != fullscreen)						a["fullscreen"] = fullscreen;
+        if(forceAll || def.experimentConfigPath != experimentConfigPath)	a["experimentConfigPath"] = experimentConfigPath;
+        if(forceAll || def.userConfigPath != userConfigPath)				a["userConfigPath"] = userConfigPath;
+        if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
         return a;
     }
 
@@ -322,15 +332,16 @@ public:
 	
 	/** Serialize to Any */
 	Any toAny(const bool forceAll=true) const {
+		UserConfig def;
 		Any a(Any::TABLE);
 		a["id"] = id;										// Include subject ID
 		a["mouseDPI"] = mouseDPI;							// Include mouse DPI
 		a["cmp360"] = cmp360;								// Include cm/360
-		a["reticleIndex"] = reticleIndex;
-		a["reticleScale"] = reticleScale;
-		a["reticleColor"] = reticleColor;
-		a["reticleShrinkTime"] = reticleShrinkTimeS;
-		a["turnScale"] = turnScale;
+		if (forceAll || def.reticleIndex != reticleIndex)				a["reticleIndex"] = reticleIndex;
+		if (forceAll || def.reticleScale != reticleScale)				a["reticleScale"] = reticleScale;
+		if (forceAll || def.reticleColor != reticleColor)				a["reticleColor"] = reticleColor;
+		if (forceAll || def.reticleShrinkTimeS != reticleShrinkTimeS)	a["reticleShrinkTime"] = reticleShrinkTimeS;
+		if (forceAll || def.turnScale != turnScale)						a["turnScale"] = turnScale;
 		return a;
 	}
 };
@@ -507,11 +518,12 @@ public:
 	}
 
 	/** Serialzie to Any */
-	Any toAny(const bool forceAll = true) const {
+	Any toAny(const bool forceAll = false) const {
 		Any a(Any::TABLE);
+		UserStatusTable def;
 		a["settingsVersion"] = 1;						// Create a version 1 file
-		a["allowRepeat"] = allowRepeat;
-		a["randomizeSessionOrder"] = randomizeDefaults;
+		if (forceAll || def.allowRepeat != allowRepeat)				a["allowRepeat"] = allowRepeat;
+		if (forceAll || def.randomizeDefaults != randomizeDefaults)	a["randomizeSessionOrder"] = randomizeDefaults;
 		a["sessions"] = defaultSessionOrder;
 		a["users"] = userInfo;							// Include updated subject table
 		return a;
@@ -695,24 +707,25 @@ public:
 		}
 	}
 
-	Any toAny(const bool forceAll = true) const {
+	Any toAny(const bool forceAll = false) const {
 		Any a(Any::TABLE);
+		WeaponConfig def;
 		a["id"] = id;
-		a["maxAmmo"] = maxAmmo;
-		a["firePeriod"] = firePeriod;
-		a["autoFire"] = autoFire;
-		a["damagePerSecond"] = damagePerSecond;
-		a["fireSound"] = fireSound;
-		a["renderModel"] = renderModel;
-		a["modelSpec"] = modelSpec;
-		a["muzzleOffset"] = muzzleOffset;
-		a["renderMuzzleFlash"] = renderMuzzleFlash;
-		a["renderDecals"] = renderDecals;
-		a["renderBullets"] = renderBullets;
-		a["bulletSpeed"] = bulletSpeed;
-		a["fireSpread"] = fireSpread;
-		a["damageRollOffAim"] = damageRollOffAim;
-		a["damageRollOffDistance"] = damageRollOffDistance;
+		if(forceAll || def.maxAmmo != maxAmmo)								a["maxAmmo"] = maxAmmo;
+		if(forceAll || def.firePeriod != firePeriod)						a["firePeriod"] = firePeriod;
+		if(forceAll || def.autoFire != autoFire)							a["autoFire"] = autoFire;
+		if(forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
+		if(forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
+		if(forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
+		if(forceAll || def.muzzleOffset != muzzleOffset)					a["muzzleOffset"] = muzzleOffset;
+		if(forceAll || def.renderMuzzleFlash != renderMuzzleFlash)			a["renderMuzzleFlash"] = renderMuzzleFlash;
+		if(forceAll || def.renderDecals != renderDecals)					a["renderDecals"] = renderDecals;
+		if(forceAll || def.renderBullets != renderBullets)					a["renderBullets"] = renderBullets;
+		if(forceAll || def.bulletSpeed != bulletSpeed)						a["bulletSpeed"] = bulletSpeed;
+		if(forceAll || def.fireSpread != fireSpread)						a["fireSpread"] = fireSpread;
+		if(forceAll || def.damageRollOffAim != damageRollOffAim)			a["damageRollOffAim"] = damageRollOffAim;
+		if(forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
+		if(forceAll || !(def.modelSpec == modelSpec))						a["modelSpec"] = modelSpec;
 		return a;
 	}
 };
@@ -824,34 +837,34 @@ public:
 		}
 	}
 
-	Any toAny(const bool forceAll = true) const {
+	Any toAny(const bool forceAll = false) const {
 		Any a(Any::TABLE);
+		TargetConfig def;
 		a["id"] = id;
-		a["destSpace"] = destSpace;
-		a["respawnCount"] = respawnCount;
-		a["visualSize"] = size;
-		a["modelSpec"] = modelSpec;
-		a["logTargetTrajectory"] = logTargetTrajectory;
-		if (destinations.size() > 0) {						// Destination-based target
-			a["destSpace"] = destSpace;
-			a["destinations"] = destinations;
+		if(forceAll || !(def.modelSpec == modelSpec))							a["modelSpec"] = modelSpec;
+		if(forceAll || def.destSpace != destSpace)								a["destSpace"] = destSpace;
+		if(forceAll || def.respawnCount != respawnCount)						a["respawnCount"] = respawnCount;
+		if(forceAll || def.size != size)										a["visualSize"] = size;
+		if(forceAll || def.logTargetTrajectory != logTargetTrajectory)			a["logTargetTrajectory"] = logTargetTrajectory;
+		// Destination-based target
+		if (destinations.size() > 0) 											a["destinations"] = destinations;
+		// Parametric target
+		else {												
+			if(forceAll || def.upperHemisphereOnly != upperHemisphereOnly)		a["upperHemisphereOnly"] = upperHemisphereOnly;
+			if(forceAll || def.distance != distance)							a["distance"] = distance;
+			if(forceAll || def.motionChangePeriod != motionChangePeriod)		a["motionChangePeriod"] = motionChangePeriod; 
+			if(forceAll || def.speed != speed)									a["speed"] = speed;
+			if(forceAll || def.eccH != eccH)									a["eccH"] = eccH;
+			if(forceAll || def.eccV != eccV)									a["eccV"] = eccV;
+			if(forceAll || def.jumpEnabled != jumpEnabled)						a["jumpEnabled"] = jumpEnabled;
+			if(forceAll || def.jumpPeriod != jumpPeriod)						a["jumpPeriod"] = jumpPeriod;
+			if(forceAll || def.accelGravity != accelGravity)					a["accelGravity"] = accelGravity;
+			if(forceAll || def.axisLock != axisLock)							a["axisLocked"] = axisLock;
 		}
-		else {												// Parametric target
-			a["upperHemisphereOnly"] = upperHemisphereOnly;
-			a["distance"] = distance;
-			a["motionChangePeriod"] = motionChangePeriod;
-			a["speed"] = speed;
-			a["eccH"] = eccH;
-			a["eccV"] = eccV;
-			a["jumpEnabled"] = jumpEnabled;
-			a["jumpPeriod"] = jumpPeriod;
-			a["accelGravity"] = accelGravity;
-			a["axisLocked"] = axisLock;
-		}
-		a["hitSound"] = hitSound;
-		a["hitSoundVol"] = hitSoundVol;
-		a["explosionSound"] = destroyedSound;
-		a["explosionSoundVol"] = destroyedSoundVol;
+		if(forceAll || def.hitSound != hitSound)								a["hitSound"] = hitSound;
+		if(forceAll || def.hitSoundVol != hitSoundVol)							a["hitSoundVol"] = hitSoundVol;
+		if(forceAll || def.destroyedSound != destroyedSound)					a["explosionSound"] = destroyedSound;
+		if(forceAll || def.destroyedSoundVol != destroyedSoundVol)				a["explosionSoundVol"] = destroyedSoundVol;
 		return a;
 	};
 
@@ -978,11 +991,12 @@ public:
 		}
 	}
 
-	Any addToAny(Any a) const {
-		a["frameRate"] = frameRate;
-		a["frameDelay"] = frameDelay;
-		a["horizontalFieldOfView"] = hFoV;
-		a["shader"] = shader;
+	Any addToAny(Any a, bool forceAll = false) const {
+		RenderConfig def;
+		if(forceAll || def.frameRate != frameRate)		a["frameRate"] = frameRate;
+		if(forceAll || def.frameDelay != frameDelay)	a["frameDelay"] = frameDelay;
+		if(forceAll || def.hFoV != hFoV)				a["horizontalFieldOfView"] = hFoV;
+		if(forceAll || def.shader != shader)			a["shader"] = shader;
 		return a;
 	}
 
@@ -1026,18 +1040,19 @@ public:
 		}
 	}
 
-	Any addToAny(Any a) const {
-		a["moveRate"] = moveRate;
-		a["moveScale"] = moveScale;
-		a["playerHeight"] = height;
-		a["crouchHeight"] = crouchHeight;
-		a["jumpVelocity"] = jumpVelocity;
-		a["jumpInterval"] = jumpInterval;
-		a["jumpTouch"] = jumpTouch;
-		a["playerGravity"] = gravity;
-		a["playerAxisLock"] = axisLock;
-		a["disablePlayerMotionBetweenTrials"] = stillBetweenTrials;
-		a["resetPlayerPositionBetweenTrials"] = resetPositionPerTrial;
+	Any addToAny(Any a, bool forceAll = false) const {
+		PlayerConfig def;
+		if(forceAll || def.moveRate != moveRate )			a["moveRate"] = moveRate;
+		if(forceAll || def.moveScale != moveScale )			a["moveScale"] = moveScale;
+		if(forceAll || def.height != height )				a["playerHeight"] = height;
+		if(forceAll || def.crouchHeight != crouchHeight )	a["crouchHeight"] = crouchHeight;
+		if(forceAll || def.jumpVelocity != jumpVelocity)	a["jumpVelocity"] = jumpVelocity;
+		if(forceAll || def.jumpInterval != jumpInterval)	a["jumpInterval"] = jumpInterval;
+		if(forceAll || def.jumpTouch != jumpTouch)			a["jumpTouch"] = jumpTouch;
+		if(forceAll || def.gravity != gravity)				a["playerGravity"] = gravity;
+		if(forceAll || def.axisLock != axisLock)			a["playerAxisLock"] = axisLock;
+		if(forceAll || def.stillBetweenTrials != stillBetweenTrials)		a["disablePlayerMotionBetweenTrials"] = stillBetweenTrials;
+		if(forceAll || def.resetPositionPerTrial != resetPositionPerTrial)	a["resetPlayerPositionBetweenTrials"] = resetPositionPerTrial;
 		return a;
 	}
 
@@ -1109,28 +1124,29 @@ public:
 		}
 	}
 
-	Any addToAny(Any a) const {
-		a["showHUD"] = enable;
-		a["showBanner"] = showBanner;
-		a["hudFont"] = hudFont;
-		a["showPlayerHealthBar"] = showPlayerHealthBar;
-		a["playerHealthBarSize"] = playerHealthBarSize;
-		a["playerHealthBarPosition"] = playerHealthBarPos;
-		a["playerHealthBarBorderSize"] = playerHealthBarBorderSize;
-		a["playerHealthBarBorderColor"] = playerHealthBarBorderColor;
-		a["playerHealthBarColors"] = playerHealthBarColors;
-		a["showAmmo"] = showAmmo;
-		a["ammoPosition"] = ammoPosition;
-		a["ammoSize"] = ammoSize;
-		a["ammoColor"] = ammoColor;
-		a["ammoOutlineColor"] = ammoOutlineColor;
-		a["renderWeaponStatus"] = renderWeaponStatus;
-		a["weaponStatusSide"] = weaponStatusSide;
-		a["cooldownMode"] = cooldownMode;
-		a["cooldownInnerRadius"] = cooldownInnerRadius;
-		a["cooldownThickness"] = cooldownThickness;
-		a["cooldownSubdivisions"] = cooldownSubdivisions;
-		a["cooldownColor"] = cooldownColor;
+	Any addToAny(Any a, bool forceAll = false) const {
+		HudConfig def;
+		if(forceAll || def.enable != enable)											a["showHUD"] = enable;
+		if(forceAll || def.showBanner != showBanner)									a["showBanner"] = showBanner;
+		if(forceAll || def.hudFont != hudFont)											a["hudFont"] = hudFont;
+		if(forceAll || def.showPlayerHealthBar != showPlayerHealthBar)					a["showPlayerHealthBar"] = showPlayerHealthBar;
+		if(forceAll || def.playerHealthBarSize != playerHealthBarSize)					a["playerHealthBarSize"] = playerHealthBarSize;
+		if(forceAll || def.playerHealthBarPos != playerHealthBarPos)					a["playerHealthBarPosition"] = playerHealthBarPos;
+		if(forceAll || def.playerHealthBarBorderSize != playerHealthBarBorderSize)		a["playerHealthBarBorderSize"] = playerHealthBarBorderSize;
+		if(forceAll || def.playerHealthBarBorderColor != playerHealthBarBorderColor)	a["playerHealthBarBorderColor"] = playerHealthBarBorderColor;
+		if(forceAll || def.playerHealthBarColors != playerHealthBarColors)				a["playerHealthBarColors"] = playerHealthBarColors;
+		if(forceAll || def.showAmmo != showAmmo)										a["showAmmo"] = showAmmo;
+		if(forceAll || def.ammoPosition != ammoPosition)								a["ammoPosition"] = ammoPosition;
+		if(forceAll || def.ammoSize != ammoSize)										a["ammoSize"] = ammoSize;
+		if(forceAll || def.ammoColor != ammoColor)										a["ammoColor"] = ammoColor;
+		if(forceAll || def.ammoOutlineColor != ammoOutlineColor)						a["ammoOutlineColor"] = ammoOutlineColor;
+		if(forceAll || def.renderWeaponStatus != renderWeaponStatus)					a["renderWeaponStatus"] = renderWeaponStatus;
+		if(forceAll || def.weaponStatusSide != weaponStatusSide)						a["weaponStatusSide"] = weaponStatusSide;
+		if(forceAll || def.cooldownMode != cooldownMode)								a["cooldownMode"] = cooldownMode;
+		if(forceAll || def.cooldownInnerRadius != cooldownInnerRadius)					a["cooldownInnerRadius"] = cooldownInnerRadius;
+		if(forceAll || def.cooldownThickness != cooldownThickness)						a["cooldownThickness"] = cooldownThickness;
+		if(forceAll || def.cooldownSubdivisions != cooldownSubdivisions)				a["cooldownSubdivisions"] = cooldownSubdivisions;
+		if(forceAll || def.cooldownColor != cooldownColor)								a["cooldownColor"] = cooldownColor;
 		return a;
 	}
 };
@@ -1197,25 +1213,26 @@ public:
 		}
 	}
 
-	Any addToAny(Any a) const {
-		a["showTargetHealthBars"] = showHealthBars;
-		a["targetHealthBarSize"] = healthBarSize;
-		a["targetHealthBarOffset"] = healthBarOffset;
-		a["targetHealthBarBorderSize"] = healthBarBorderSize;
-		a["targetHealthBarBorderColor"] = healthBarBorderColor;
-		a["targetHealthColors"] = healthColors;
-		a["targetHealthBarColors"] = healthBarColors;
-		a["showFloatingCombatText"] = showCombatText;
-		a["floatingCombatTextSize"] = combatTextSize;
-		a["floatingCombatTextFont"] = combatTextFont;
-		a["floatingCombatTextColor"] = combatTextColor;
-		a["floatingCombatTextOutlineColor"] = combatTextOutline;
-		a["floatingCombatTextOffset"] = combatTextOffset;
-		a["floatingCombatTextVelocity"] = combatTextVelocity;
-		a["floatingCombatTextFade"] = combatTextFade;
-		a["floatingCombatTextTimeout"] = combatTextTimeout;
-		a["referenceTargetSize"] = refTargetSize;
-		a["referenceTargetColor"] = refTargetColor;
+	Any addToAny(Any a, bool forceAll = false) const {
+		TargetViewConfig def;
+		if(forceAll || def.showHealthBars != showHealthBars)				a["showTargetHealthBars"] = showHealthBars;
+		if(forceAll || def.healthBarSize != healthBarSize)					a["targetHealthBarSize"] = healthBarSize;
+		if(forceAll || def.healthBarOffset != healthBarOffset)				a["targetHealthBarOffset"] = healthBarOffset;
+		if(forceAll || def.healthBarBorderSize != healthBarBorderSize)		a["targetHealthBarBorderSize"] = healthBarBorderSize;
+		if(forceAll || def.healthBarBorderColor != healthBarBorderColor)	a["targetHealthBarBorderColor"] = healthBarBorderColor;
+		if(forceAll || def.healthColors != healthColors)					a["targetHealthColors"] = healthColors;
+		if(forceAll || def.healthBarColors != healthBarColors)				a["targetHealthBarColors"] = healthBarColors;
+		if(forceAll || def.showCombatText != showCombatText)				a["showFloatingCombatText"] = showCombatText;
+		if(forceAll || def.combatTextSize != combatTextSize)				a["floatingCombatTextSize"] = combatTextSize;
+		if(forceAll || def.combatTextFont != combatTextFont)				a["floatingCombatTextFont"] = combatTextFont;
+		if(forceAll || def.combatTextColor != combatTextColor)				a["floatingCombatTextColor"] = combatTextColor;
+		if(forceAll || def.combatTextOutline != combatTextOutline)			a["floatingCombatTextOutlineColor"] = combatTextOutline;
+		if(forceAll || def.combatTextOffset != combatTextOffset)			a["floatingCombatTextOffset"] = combatTextOffset;
+		if(forceAll || def.combatTextVelocity != combatTextVelocity)		a["floatingCombatTextVelocity"] = combatTextVelocity;
+		if(forceAll || def.combatTextFade != combatTextFade)				a["floatingCombatTextFade"] = combatTextFade;
+		if(forceAll || def.combatTextTimeout != combatTextTimeout)			a["floatingCombatTextTimeout"] = combatTextTimeout;
+		if(forceAll || def.refTargetSize != refTargetSize)					a["referenceTargetSize"] = refTargetSize;
+		if(forceAll || def.refTargetColor != refTargetColor)				a["referenceTargetColor"] = refTargetColor;
 		return a;
 	}
 };
@@ -1249,12 +1266,13 @@ public:
 		}
 	}
 
-	Any addToAny(Any a) const {
-		a["renderClickPhoton"] = enabled;
-		a["clickPhotonSide"] = side;
-		a["clickPhotonSize"] = size;
-		a["clickPhotonVertPos"] = vertPos;
-		a["clickPhotonColors"] = colors;
+	Any addToAny(Any a, bool forceAll = false) const {
+		ClickToPhotonConfig def;
+		if(forceAll || def.enabled != enabled)		a["renderClickPhoton"] = enabled;
+		if(forceAll || def.side != side)			a["clickPhotonSide"] = side;
+		if(forceAll || def.size != size)			a["clickPhotonSize"] = size;
+		if(forceAll || def.vertPos != vertPos)		a["clickPhotonVertPos"] = vertPos;
+		if(forceAll || def.colors != colors)		a["clickPhotonColors"] = colors;
 		return a;
 	}
 };
@@ -1277,9 +1295,10 @@ public:
 		}
 	}
 
-	Any addToAny(Any a) const {
-		a["sceneHitSound"] = sceneHitSound;
-		a["sceneHitSoundVol"] = sceneHitSoundVol;
+	Any addToAny(Any a, bool forceAll = false) const {
+		AudioConfig def;
+		if(forceAll || def.sceneHitSound != sceneHitSound)			a["sceneHitSound"] = sceneHitSound;
+		if(forceAll || def.sceneHitSoundVol != sceneHitSoundVol)	a["sceneHitSoundVol"] = sceneHitSoundVol;
 		return a;
 	}
 };
@@ -1307,11 +1326,12 @@ public:
 		}
 	}
 
-	Any addToAny(Any a) const {
-		a["feedbackDuration"] = feedbackDuration;
-		a["readyDuration"] = readyDuration;
-		a["taskDuration"] = taskDuration;
-		a["defaultTrialCount"] = defaultTrialCount;
+	Any addToAny(Any a, bool forceAll = false) const {
+		TimingConfig def;
+		if(forceAll || def.feedbackDuration != feedbackDuration)	a["feedbackDuration"] = feedbackDuration;
+		if(forceAll || def.readyDuration != readyDuration)			a["readyDuration"] = readyDuration;
+		if(forceAll || def.taskDuration != taskDuration)			a["taskDuration"] = taskDuration;
+		if(forceAll || def.defaultTrialCount != defaultTrialCount)	a["defaultTrialCount"] = defaultTrialCount;
 		return a;
 	}
 };
@@ -1342,13 +1362,14 @@ public:
 		}
 	}
 
-	Any addToAny(Any a) const {
-		a["logEnable"] = enable;
-		a["logTargetTrajectories"] = logTargetTrajectories;
-		a["logFrameInfo"] = logFrameInfo;
-		a["logPlayerActions"] = logPlayerActions;
-		a["logTrialResponse"] = logTrialResponse;
-		a["logUsers"] = logUsers;
+	Any addToAny(Any a, bool forceAll = false) const {
+		LoggerConfig def;
+		if(forceAll || def.enable != enable)								a["logEnable"] = enable;
+		if(forceAll || def.logTargetTrajectories != logTargetTrajectories)	a["logTargetTrajectories"] = logTargetTrajectories;
+		if(forceAll || def.logFrameInfo != logFrameInfo)					a["logFrameInfo"] = logFrameInfo;
+		if(forceAll || def.logPlayerActions != logPlayerActions)			a["logPlayerActions"] = logPlayerActions;
+		if(forceAll || def.logTrialResponse != logTrialResponse)			a["logTrialResponse"] = logTrialResponse;
+		if(forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
 		return a;
 	}
 };
@@ -1405,19 +1426,20 @@ public:
 		}
 	}
 
-	Any toAny(const bool forceAll = true) const {
+	Any toAny(const bool forceAll = false) const {
 		Any a(Any::TABLE);
+		FpsConfig def;
 		a["settingsVersion"] = settingsVersion;
-		a["sceneName"] = sceneName;
-		a = render.addToAny(a);
-		a = player.addToAny(a);
-		a = hud.addToAny(a);
-		a = targetView.addToAny(a);
-		a = clickToPhoton.addToAny(a);
-		a = audio.addToAny(a);
-		a = timing.addToAny(a);
-		a = logger.addToAny(a);
-		a["weapon"] =  weapon;
+		if(forceAll || def.sceneName != sceneName) a["sceneName"] = sceneName;
+		a = render.addToAny(a, forceAll);
+		a = player.addToAny(a, forceAll);
+		a = hud.addToAny(a, forceAll);
+		a = targetView.addToAny(a, forceAll);
+		a = clickToPhoton.addToAny(a, forceAll);
+		a = audio.addToAny(a, forceAll);
+		a = timing.addToAny(a, forceAll);
+		a = logger.addToAny(a, forceAll);
+		a["weapon"] =  weapon.toAny(forceAll);
 		return a;
 	}
 };
@@ -1453,9 +1475,9 @@ public:
 		}
 	}
 
-	Any toAny(const bool forceAll = true) const {
+	Any toAny(const bool forceAll = false) const {
 		// Get the base any config
-		Any a = FpsConfig::toAny();
+		Any a = FpsConfig::toAny(forceAll);
 
 		// Update w/ the session-specific fields
 		a["id"] = id;
@@ -1614,12 +1636,12 @@ public:
 		return trials;
 	}
 
-	Any toAny(const bool forceAll = true) const {
+	Any toAny(const bool forceAll = false) const {
 		// Get the base any config
-		Any a = FpsConfig::toAny();
-
+		Any a = FpsConfig::toAny(forceAll);
+		SessionConfig def;
 		// Write the experiment configuration-specific 
-		a["description"] = description;
+		if(forceAll || def.description != description) a["description"] = description;
 		a["targets"] = targets;
 		a["sessions"] = sessions;
 		return a;
