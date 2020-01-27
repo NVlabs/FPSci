@@ -521,7 +521,9 @@ public:
 	static UserStatusTable load(void) {
 		if (!FileSystem::exists("userstatus.Any")) { // if file not found, create a default userstatus.Any
 			UserStatusTable defStatus = UserStatusTable();			// Create empty status
-			defStatus.userInfo.append(UserSessionStatus());			// Add single "default" user
+			UserSessionStatus user;
+			user.sessionOrder = Array<String> ({ "60Hz", "30Hz" });	// Add "default" sessions we add to
+			defStatus.userInfo.append(user);						// Add single "default" user
 			defStatus.toAny().save("userstatus.Any");				// Save .any file
 			return defStatus;
 		}
@@ -570,6 +572,7 @@ public:
 	}
 
 	void validate(Array<String> sessions) {
+		bool noSessions = true;	// Flag to demark no sessions are present
 		// Build a string list of valid options for session IDs from the experiment
 		String expSessions = "[";
 		for (String sess : sessions) expSessions += "\"" + sess + "\", ";
@@ -578,6 +581,7 @@ public:
 
 		// Check default sessions for valid ids
 		for(String defSessId : defaultSessionOrder) {
+			noSessions = false;
 			if (!sessions.contains(defSessId)) {
 				throw format("Default session config in user status has session with ID: \"%s\". This session ID does not appear in experimentconfig.Any's \"sessions\" array. Valid options are: %s", defSessId, expSessions);
 			}
@@ -586,10 +590,16 @@ public:
 		// Check each user for valid options
 		for (UserSessionStatus userStatus : userInfo) {
 			for (String userSessId : userStatus.sessionOrder) {
+				noSessions = false;
 				if (!sessions.contains(userSessId)) {
 					throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in the experimentconfig.Any \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
 				}
 			}
+		}
+
+		// Check if no default/per user sessions are present
+		if (noSessions) { 
+			throw "Found no sessions in the userstatus.Any file!"; 
 		}
 	}
 
@@ -817,6 +827,7 @@ public:
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
 		a["id"] = id;
+		a["destSpace"] = destSpace;
 		a["respawnCount"] = respawnCount;
 		a["visualSize"] = size;
 		a["modelSpec"] = modelSpec;
@@ -829,7 +840,7 @@ public:
 			a["upperHemisphereOnly"] = upperHemisphereOnly;
 			a["distance"] = distance;
 			a["motionChangePeriod"] = motionChangePeriod;
-			a["visualSize"] = size;
+			a["speed"] = speed;
 			a["eccH"] = eccH;
 			a["eccV"] = eccV;
 			a["jumpEnabled"] = jumpEnabled;
@@ -857,6 +868,11 @@ public:
 	static int		defaultCount;	///< Default count to use
 
 	TrialCount() {};
+
+	TrialCount(Array<String> trialIds, int trialCount) {
+		ids = trialIds;
+		count = trialCount;
+	}
 
 	/** Load from Any */
 	TrialCount(const Any& any) {
@@ -1465,7 +1481,7 @@ public:
 	Array<SessionConfig> sessions;						///< Array of sessions
 	Array<TargetConfig> targets;						///< Array of trial configs   
 
-	ExperimentConfig() {}
+	ExperimentConfig() { init(); }
 	
 	/** Load from Any */
 	ExperimentConfig(const Any& any) : FpsConfig(any) {
@@ -1482,6 +1498,64 @@ public:
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);
 			break;
+		}
+
+		init();
+	}
+
+	void init() {
+		// This method handles setting up default targets and sessions when none are provided
+		bool addedTargets = false;
+		if (targets.size() == 0) {
+			addedTargets = true;
+			TargetConfig tStatic;
+			tStatic.id = "static";
+			tStatic.destSpace = "player";
+			tStatic.speed = Array<float>({ 0.f, 0.f });
+			tStatic.size = Array<float>({ 0.05f, 0.05f });
+			
+			targets.append(tStatic);
+
+			TargetConfig tMove;
+			tMove.id = "moving";
+			tMove.destSpace = "player";
+			tMove.size = Array<float>({ 0.05f, 0.05f });
+			tMove.speed = Array<float>({ 3.5f, 5.f });
+			tMove.motionChangePeriod = Array<float>({ 0.8f, 1.5f });
+			tMove.axisLock = Array<bool>({ false, false, true });
+			
+			targets.append(tMove);
+
+			TargetConfig tJump;
+			tJump.id = "jumping";
+			tJump.destSpace = "player";
+			tJump.size = Array<float>({ 0.05f, 0.05f });
+			tJump.speed = Array<float>({ 5.f, 5.f });
+			tJump.motionChangePeriod = Array<float>({ 0.8f, 1.5f });
+			tJump.jumpEnabled = true;
+			tJump.jumpSpeed = Array<float>({ 10.f, 10.f });
+			tJump.jumpPeriod = Array<float>({ 0.5f, 1.0f });
+			tMove.axisLock = Array<bool>({ false, false, true });
+			
+			targets.append(tJump);
+		}
+
+		if(sessions.size() == 0 && addedTargets){
+			SessionConfig sess60;
+			sess60.id = "60Hz";
+			sess60.description = "60Hz trials";
+			sess60.render.frameRate = 60.0f;
+			sess60.trials = Array<TrialCount>({ TrialCount(Array<String>({ "static", "moving", "jumping" }), 2) });
+
+			sessions.append(sess60);
+
+			SessionConfig sess30;
+			sess30.id = "30Hz";
+			sess30.description = "30Hz trials";
+			sess30.render.frameRate = 30.0f;
+			sess30.trials = Array<TrialCount>({ TrialCount(Array<String>({ "static", "moving", "jumping" }), 2) });
+			
+			sessions.append(sess30);
 		}
 	}
 
