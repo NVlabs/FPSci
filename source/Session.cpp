@@ -135,7 +135,7 @@ void Session::initTargetAnimation() {
 			// Check for case w/ destination array
 			if (target->destinations.size() > 0) {
 				Point3 offset =isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				m_app->spawnDestTarget(
+				shared_ptr<TargetEntity> t = m_app->spawnDestTarget(
 					offset,
 					target->destinations,
 					visualSize,
@@ -146,6 +146,8 @@ void Session::initTargetAnimation() {
 					name,
 					target->logTargetTrajectory
 				);
+				t->setHitSound(target->hitSound, target->hitSoundVol);
+				t->setDestoyedSound(target->destroyedSound, target->destroyedSoundVol);
 			}
 			// Otherwise check if this is a jumping target
 			else if (target->jumpEnabled) {
@@ -173,6 +175,8 @@ void Session::initTargetAnimation() {
 				if (isWorldSpace) {
 					t->setMoveBounds(target->moveBounds);
 				}
+				t->setHitSound(target->hitSound, target->hitSoundVol);
+				t->setDestoyedSound(target->destroyedSound, target->destroyedSoundVol);
 			}
 			else {
 				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
@@ -195,6 +199,8 @@ void Session::initTargetAnimation() {
 				if (isWorldSpace) {
 					t->setBounds(target->moveBounds);
 				}
+				t->setHitSound(target->hitSound, target->hitSoundVol);
+				t->setDestoyedSound(target->destroyedSound, target->destroyedSoundVol);
 			}
 		}
 	}

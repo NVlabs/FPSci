@@ -60,6 +60,10 @@ protected:
 	bool	m_isLogged			= true;				///< Control flag for logging
 	Point3	m_offset;								///< Offset for initial spawn
 	Array<Destination> m_destinations;				///< Array of destinations to visit
+	shared_ptr<Sound> m_hitSound;					///< Sound to play when hit
+	float m_hitSoundVol;
+	shared_ptr<Sound> m_destroyedSound;				///< Sound to play when destroyed
+	float m_destroyedSoundVol;
 
 	// Only used for flying/jumping entities
 	SimTime m_nextChangeTime = 0;
@@ -91,6 +95,36 @@ public:
 	}
 
 	void setWorldSpace(bool worldSpace) { m_worldSpace = worldSpace; }
+
+	void setHitSound(String hitSoundFilename, float hitSoundVol = 1.0f) {
+		if (hitSoundFilename == "") { m_hitSound = nullptr; }
+		else { 
+			m_hitSound = Sound::create(System::findDataFile(hitSoundFilename)); 
+			m_hitSoundVol = hitSoundVol;
+		}
+	}
+
+	void setDestoyedSound(String destroyedSoundFilename, float destroyedSoundVol = 1.0f){
+		if (destroyedSoundFilename == "") { m_destroyedSound = nullptr;  }
+		else {
+			m_destroyedSound = Sound::create(System::findDataFile(destroyedSoundFilename));
+			m_destroyedSoundVol = destroyedSoundVol;
+		}
+	}
+
+	void playHitSound(float volume=0.0f) {
+		if (notNull(m_hitSound)) {
+			if (volume > 0.0f) { m_hitSound->play(volume); }
+			else { m_hitSound->play(m_hitSoundVol); }
+		}
+	}
+
+	void playDestroySound(float volume = 0.0f) {
+		if (notNull(m_destroyedSound)) {
+			if (volume > 0.0f) { m_destroyedSound->play(volume);  }
+			else { m_destroyedSound->play(m_destroyedSoundVol); }
+		}
+	}
 
 	/**Simple routine to do damage */
 	bool doDamage(float damage) {

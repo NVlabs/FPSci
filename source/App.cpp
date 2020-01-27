@@ -763,7 +763,7 @@ void App::updateSession(const String& id) {
 
 	// Check for play mode specific parameters
 	m_fireSound = Sound::create(System::findDataFile(sessConfig->weapon.fireSound));
-	m_explosionSound = Sound::create(System::findDataFile(sessConfig->audio.explosionSound));
+	m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
 
 	// Update weapon model (if drawn)
 	if (sessConfig->weapon.renderModel) {
@@ -1328,6 +1328,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 	Point3 aimPoint = activeCamera()->frame().translation + activeCamera()->frame().lookVector() * 1000.0f;
 	bool destroyedTarget = false;
 	static bool hitTarget = false;
+	bool hitScene = false;
 	static RealTime lastTime;
 	shared_ptr<TargetEntity> target = nullptr;
 
@@ -1346,6 +1347,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 		int closestIndex = -1;
 		Model::HitInfo info;
 		scene()->intersect(ray, closest, false, dontHit, info);
+		hitScene = closest < finf();
 
 		// Create the bullet
 		if (sessConfig->weapon.renderBullets) {
@@ -1354,7 +1356,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 			bulletStartFrame.translation += sessConfig->weapon.muzzleOffset;
 
 			// Angle the bullet start frame towards the aim point
-			if (closest < finf()) {
+			if (hitScene) {
 				aimPoint = info.point;
 			}
 			bulletStartFrame.lookAt(aimPoint);
@@ -1460,12 +1462,18 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 		else hitTarget = false;
 	}
 
-    // play sounds
+    // Play sounds (destroyed/hit target vs hit scene)
     if (destroyedTarget) {
-		m_explosionSound->play(sessConfig->audio.explosionSoundVol);
-		//m_explosionSound->play(target->frame().translation, Vector3::zero(), 50.0f);
+		target->playDestroySound();
 	}
-	else if(sessConfig->weapon.firePeriod > 0.0f || !sessConfig->weapon.autoFire) {
+	else if (hitTarget) {
+		target->playHitSound();
+	}
+	else if (hitScene) {
+		m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
+	}
+	
+	if(sessConfig->weapon.firePeriod > 0.0f || !sessConfig->weapon.autoFire) {
 		m_fireSound->play(sessConfig->weapon.fireSoundVol);
 		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
 	}

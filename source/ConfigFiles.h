@@ -731,6 +731,11 @@ public:
 	AABox			moveBounds;								///< Movemvent bounding box
 	Array<bool>		axisLock = { false, false, false };		///< Array of axis lock values
 
+	String			hitSound = "sound/18397__inferno__smalllas.wav";	///< Sound to play when target is hit (but not destoyed)
+	float			hitSoundVol = 1.0f;						///< Hit sound volume
+	String          destroyedSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
+	float           destroyedSoundVol = 10.0f;
+
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
 		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
@@ -743,8 +748,6 @@ public:
 					maxSmoothAngleDegrees = 0;
 		    };
 		});
-
-	//String explosionSound;	// TODO: Add target explosion sound string here and use it for m_explosionSound
 
 	TargetConfig() {}
 
@@ -800,6 +803,10 @@ public:
 					throw format("Target \"%s\" locks all axes but has non-zero speed!", id);
 				}
 			}
+			reader.getIfPresent("hitSound", hitSound);
+			reader.getIfPresent("hitSoundVol", hitSoundVol);
+			reader.getIfPresent("destroyedSound", destroyedSound);
+			reader.getIfPresent("destroyedSoundVol", destroyedSoundVol);
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
@@ -830,6 +837,10 @@ public:
 			a["accelGravity"] = accelGravity;
 			a["axisLocked"] = axisLock;
 		}
+		a["hitSound"] = hitSound;
+		a["hitSoundVol"] = hitSoundVol;
+		a["explosionSound"] = destroyedSound;
+		a["explosionSoundVol"] = destroyedSoundVol;
 		return a;
 	};
 
@@ -1235,14 +1246,14 @@ public:
 class AudioConfig {
 public:
 	// Sounds
-	String          explosionSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
-	float           explosionSoundVol = 10.0f;
+	String			sceneHitSound = "sound/18382__inferno__hvylas.wav";								///< Sound to play when hitting the scene
+	float			sceneHitSoundVol = 1.0f;
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("explosionSound", explosionSound);
-			reader.getIfPresent("explosionSoundVol", explosionSoundVol);
+			reader.getIfPresent("sceneHitSound", sceneHitSound);
+			reader.getIfPresent("sceneHitSoundVol", sceneHitSoundVol);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1251,8 +1262,8 @@ public:
 	}
 
 	Any addToAny(Any a) const {
-		a["explosionSound"] = explosionSound;
-		a["explosionSoundVol"] = explosionSoundVol;
+		a["sceneHitSound"] = sceneHitSound;
+		a["sceneHitSoundVol"] = sceneHitSoundVol;
 		return a;
 	}
 };

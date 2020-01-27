@@ -105,7 +105,7 @@ protected:
 
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
 	shared_ptr<Sound>               m_fireSound;						///< Sound for weapon firing
-	shared_ptr<Sound>               m_explosionSound;					///< Sound for target exploding
+	shared_ptr<Sound>               m_sceneHitSound;					///< Sound for target exploding
 
 	shared_ptr<GFont>				m_combatFont;						///< Font used for floating combat text
 	Array<shared_ptr<FloatingCombatText>>	m_combatTextList;			///< Array of existing combat text

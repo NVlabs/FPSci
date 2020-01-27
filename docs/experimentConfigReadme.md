@@ -87,6 +87,10 @@ An example session configuration snippet is included below:
     * `spawnBounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for the target's spawn location in cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
     * `moveBounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for target motion in cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
     * `axisLocked` is a boolean array specifying which (if any) axes of motion are "locked" (i.e. disallowed) for this target's motion in [X,Y,Z] order. This only applies for world-space, parametric targets.
+    * `hitSound` is a filename for the sound to play when the target is hit but not destroyed.
+    * `hitSoundVol` provides the volume (as a float) for the hit sound to be played at (default is `1.0`).
+    * `destroyedSound` is a filename for the sound to play when the target is both hit and destroyed.
+    * `destroyedSoundVol` provides the volume (as a float) for the destroyed sound to be played at (default is `10.0`).
 
 #### Target Configuration Example
 An example target configuration snippet is provided below:
@@ -101,6 +105,10 @@ targets = [
         "speed": [1.0, 3.0],                // 1-3m/s speed
         "eccH" : [5.0, 15.0],               // 5-15° initial spawn location (horizontal)
         "eccV" : [0.0, 5.0],                // 0-5° intitial spawn location (vertical)
+        "hitSound" : "sound/18397__inferno__smalllas.wav",      // Sound to play when target hit
+        "hitSoundVol" : 1.0,                // Volume to play the hit sound at
+        "destroyedSound" : "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav", // Sound to play when target destroyed (explosion)
+        "destroyedSoundVol" : 10.0f,        // Volume to play destroyed sound at
     },
     {
         "id": "world-space paramtetric",

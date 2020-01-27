@@ -62,9 +62,20 @@ The following settings allow the user to control various timings/durations aroun
 "shader": "[your shader].pix",              // Default is "" or no shader
 ```
 
+## Audio Settings
+| Parameter Name        |Units  | Description                                                           |
+|-----------------------|-------|-----------------------------------------------------------------------|
+|`sceneHitSound`        |file   | The sound to play when the scene (not the target) is hit by a weapon  |
+|`sceneHitSoundVol`     |ratio  | The volume of the scene hit sound to play                             |
+
+```
+"sceneHitSound": "sound/18382__inferno__hvylas.wav",
+"sceneHitSoundVol": 1.0f,
+```
+
 ## Player Controls
-| Parameter Name     |Units| Description                                                                        |
-|--------------------|-----|------------------------------------------------------------------------------------|
+| Parameter Name     |Units | Description                                                                        |
+|--------------------|------|------------------------------------------------------------------------------------|
 |`moveRate`          |m/s  | The rate of player motion, set this parameter to `0` to disable player motion      |
 |`moveScale`         |`Vector2`| A scaler for X/Y player-space motion (set to 0 to lock forward/back, strafe motion)|
 |`playerAxisLock`    |`Array<bool>`| Axis aligned motion lock for player                                        |
@@ -73,10 +84,10 @@ The following settings allow the user to control various timings/durations aroun
 |`crouchHeight`      |m    | The height of the player when crouched (set equal to `playerHeight` for no crouch) |
 |`jumpVelocity`      |m/s  | The magnitude of the upward impulse introduced by a jump (set to 0 for no jump)    |
 |`jumpInterval`      |s    | The minimum time between player jumps in seconds (set to 0 for no limiting)        |
-|`jumpTouch`         |`bool` | Whether or not the player needs to be in contact w/ a surface to jump              |
+|`jumpTouch`         |`bool` | Whether or not the player needs to be in contact w/ a surface to jump            |
 |`playerGravity`     |m/s^2| The graivty vector that impacts the player                                         |
-|`disablePlayerMotionBetweenTrials`|`bool`|Don't allow the player to move when not in a trial?                    |
-|`resetPlayerPositionBetweenTrials`|`bool`|Respawn the player to their original position between trials?          |
+|`disablePlayerMotionBetweenTrials`|`bool`|Don't allow the player to move when not in a trial?                  |
+|`resetPlayerPositionBetweenTrials`|`bool`|Respawn the player to their original position between trials?        |
 
 ```
 "moveRate": 0.0,                            // Player move rate (0 for no motion)
@@ -244,11 +255,10 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 ## Target Rendering
 | Parameter Name        |Units                  | Description                                                                        |
 |-----------------------|-----------------------|------------------------------------------------------------------------------------|
-|`targetHealthColors`   |[`Color3`, `Color3`]   | The max/min health colors for the target as an array of [`max color`, `min color`], if you do not want the target to change color as its health drops, set these values both to the same color                                                  |
+|`targetHealthColors`   |[`Color3`, `Color3`]   | The max/min health colors for the target as an array of [`max color`, `min color`], if you do not want the target to change color as its health drops, set these values both to the same color                                              |
 |`referenceTargetColor` |`Color3`               | The color of the "reference" targets spawned between trials                        |
 |`referenceTargetSize`  |m                      | The size of the "reference" targets spawned between trials                         |
-|`explosionSound`       |file                   | The sound to play when a target is destroyed                                       |
-|`explosionSoundVol`    |ratio                  | The volume of the explosion sound to play                                          |
+
 
 ```
 "targetHealthColors": [                         // Array of two colors to interpolate between for target health
@@ -257,9 +267,6 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 ],
 "referenceTargetColor": Color3(1.0,1.0,1.0),    // Reference target color (return to "0" view direction)
 "referenceTargetSize": 0.01,                    // This is a size in meters
-"explosionSound": "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav",
-"explosionSoundVol": 10.0f,
-
 ```
 
 ### Target Health Bars
