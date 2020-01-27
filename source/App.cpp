@@ -1381,7 +1381,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 			// Laser weapon (very hacky for now...)
 			else {
 				shared_ptr<CylinderShape> beam = std::make_shared<CylinderShape>(CylinderShape(Cylinder(bulletStartFrame.translation, aimPoint, 0.02f)));
-				debugDraw(beam, FLT_EPSILON, Color4(0.2, 0.8, 0.0, 0.5), Color4::clear());
+				debugDraw(beam, FLT_EPSILON, Color4(0.2f, 0.8f, 0.0f, 1.0f), Color4::clear());
 			}
 		}
 
