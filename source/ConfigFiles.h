@@ -299,7 +299,7 @@ public:
 
 	int				currentSession		= 0;							///< Currently selected session
 		
-	int				reticleIndex		= -1;							///< Reticle to show for this user
+	int				reticleIndex		= 39;							///< Reticle to show for this user
 	Array<float>	reticleScale		= { 1.0f, 1.0f };				///< Scale for the user's reticle
 	Array<Color4>	reticleColor		= {Color4(1.0, 0.0, 0.0, 1.0),	///< Color for the user's reticle
 										Color4(1.0, 0.0, 0.0, 1.0)};	
