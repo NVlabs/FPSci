@@ -1182,7 +1182,7 @@ public:
 	float           combatTextTimeout = 0.5f;							///< Time for combat text to disappear (in seconds)
 
 	// Reference/dummy target
-	float           refTargetSize = 0.01f;								///< Size of the reference target
+	float           refTargetSize = 0.05f;								///< Size of the reference target
 	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {

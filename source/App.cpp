@@ -436,7 +436,6 @@ void App::loadModels() {
 					maxNormalWeldAngleDegrees = 0;
 					maxSmoothAngleDegrees = 0;
 		};
-		scale = 0.25;
 	}));
 
 	// Setup the explosion specification

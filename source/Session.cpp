@@ -205,7 +205,6 @@ void Session::initTargetAnimation() {
 		}
 	}
 	else {
-		Array<bool> locks = { true, true, true };
 		// Make sure we reset the target color here (avoid color bugs)
 		m_app->spawnFlyingTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
@@ -217,7 +216,7 @@ void Session::initTargetAnimation() {
 			initialSpawnPos,
 			"reference",
 			0,
-			locks
+			Array<bool>(true, true, true)
 		);
 	}
 
