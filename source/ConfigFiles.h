@@ -650,6 +650,7 @@ public:
 	bool	renderDecals = true;										///< Render decals when the shots miss?
 	bool	renderBullets = false;										///< Render bullets leaving the weapon
 	float	bulletSpeed = 1.0f;											///< Speed to draw at for rendered rounds (in m/s)
+	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
 	//String missDecal = "bullet-decal-256x256.png";					///< The decal to place where the shot misses
 	float	fireSpread = 0;												///< The spread of the fire
 	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
@@ -685,6 +686,7 @@ public:
 			reader.getIfPresent("damagePerSecond", damagePerSecond);
 			reader.getIfPresent("fireSound", fireSound);
 			reader.getIfPresent("renderModel", renderModel);
+			reader.getIfPresent("hitScan", hitScan);
 			if (renderModel) {
 				reader.get("modelSpec", modelSpec, "If \"renderModel\" is set to true within a weapon config then a \"modelSpec\" must be provided!");
 			}
@@ -717,6 +719,7 @@ public:
 		if(forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
 		if(forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
 		if(forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
+		if(forceAll || def.hitScan != hitScan)								a["hitScan"] = hitScan;
 		if(forceAll || def.muzzleOffset != muzzleOffset)					a["muzzleOffset"] = muzzleOffset;
 		if(forceAll || def.renderMuzzleFlash != renderMuzzleFlash)			a["renderMuzzleFlash"] = renderMuzzleFlash;
 		if(forceAll || def.renderDecals != renderDecals)					a["renderDecals"] = renderDecals;

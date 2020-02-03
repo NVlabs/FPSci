@@ -14,6 +14,7 @@
 #include "TargetEntity.h"
 #include "GuiElements.h"
 #include "PyLogger.h"
+#include "Weapon.h"
 
 class Session;
 class G3Dialog;
@@ -24,15 +25,6 @@ class WaypointManager;
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
 enum PresentationState { initial, ready, task, feedback, scoreboard, complete };
-
-class Projectile {
-public:
-	shared_ptr<VisibleEntity>       entity;
-	/** When in hitscan mode */
-	RealTime                        endTime;
-	Projectile() : endTime(0) {}
-	Projectile(const shared_ptr<VisibleEntity>& e, RealTime t = 0) : entity(e), endTime(t) {}
-};
 
 class FloatingCombatText : public VisibleEntity {
 protected:
@@ -102,15 +94,12 @@ protected:
 	static const float TARGET_MODEL_ARRAY_SCALING;						///< Target model scale factor
 	static const float TARGET_MODEL_ARRAY_OFFSET;						///< Target model offset
 	static const int MAX_HISTORY_TIMING_FRAMES = 360;					///< Length of the history queue for m_frameDurationQueue
-
-	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
-	shared_ptr<Sound>               m_fireSound;						///< Sound for weapon firing
 	shared_ptr<Sound>               m_sceneHitSound;					///< Sound for target exploding
 
 	shared_ptr<GFont>				m_combatFont;						///< Font used for floating combat text
 	Array<shared_ptr<FloatingCombatText>>	m_combatTextList;			///< Array of existing combat text
 
-	shared_ptr<ArticulatedModel>    m_bulletModel;						///< Model for the "bullet"
+	shared_ptr<Weapon>				m_weapon;
 	shared_ptr<ArticulatedModel>	m_decalModel;						///< Model for the miss decal
 	shared_ptr<VisibleEntity>		m_lastDecal;						///< Model for the last decal we created
 	shared_ptr<VisibleEntity>		m_firstDecal;						///< Model for the first decal we created
@@ -137,9 +126,6 @@ protected:
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
 	Queue<float>                    m_frameDurationQueue;				///< Queue for history of frrame times
 
-	/** Coordinate frame of the weapon, updated in onPose() */
-	CFrame                          m_weaponFrame;						///< Frame for the weapon
-
 	/** Used to detect GUI changes to m_reticleIndex */
 	int                             m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
 	float							m_debugMenuHeight = 0.0f;			///< Height of the debug menu when in developer mode
@@ -149,9 +135,6 @@ protected:
 	int								m_ddCurrentUser = 0;				///< Index of current user
 	int								m_lastSeenUser = -1;				///< Index of last seen user (used for change determination)
 	int								m_ddCurrentSession = 0;				///< Index of current session
-
-	/** Projectile if false         */
-	bool                            m_hitScan = true;					// NOTE: Projectile mode has not been implemented
 
 	RealTime						m_lastJumpTime = 0.0f;				///< Time of last jump
 
@@ -192,7 +175,6 @@ public:
 
 	/** Array of all targets in the scene */
 	Array<shared_ptr<TargetEntity>> targetArray;					///< Array of drawn targets
-	Array<Projectile>               projectileArray;				///< Arrray of drawn projectiles
 
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment

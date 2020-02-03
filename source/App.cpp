@@ -38,6 +38,8 @@ void App::onInit() {
 	Array<String> sessionIds;
 	experimentConfig.getSessionIds(sessionIds);
 
+	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon));
+
 	// Load per user settings from file
 	userTable = UserTable::load(startupConfig.userConfig());
 	userTable.printToLog();
@@ -389,21 +391,8 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 void App::loadModels() {
 	if ((experimentConfig.weapon.renderModel || startupConfig.developerMode) && !experimentConfig.weapon.modelSpec.filename.empty()) {
 		// Load the model if we (might) need it
-		m_viewModel = ArticulatedModel::create(experimentConfig.weapon.modelSpec, "viewModel");
+		m_weapon->loadModels();
 	}
-
-	const static Any bulletSpec = PARSE_ANY(ArticulatedModel::Specification{
-		filename = "ifs/d10.ifs";
-		preprocess = {
-			transformGeometry(all(), Matrix4::pitchDegrees(90));
-			transformGeometry(all(), Matrix4::scale(0.05,0.05,2));
-			setMaterial(all(), UniversalMaterial::Specification {
-				lambertian = Color3(0);
-			emissive = Power3(5,4,0);
-			});
-		}; });
-
-	m_bulletModel = ArticulatedModel::create(bulletSpec, "bulletModel");
 
 	const static Any decalSpec = PARSE_ANY(ArticulatedModel::Specification{
 		filename = "ifs/square.ifs";
@@ -761,13 +750,14 @@ void App::updateSession(const String& id) {
 	}
 
 	// Check for play mode specific parameters
-	m_fireSound = Sound::create(System::findDataFile(sessConfig->weapon.fireSound));
-	m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
+	m_weapon->setConfig(sessConfig->weapon);
+	m_weapon->setScene(scene());
+	m_weapon->setCamera(activeCamera());
 
-	// Update weapon model (if drawn)
-	if (sessConfig->weapon.renderModel) {
-		m_viewModel = ArticulatedModel::create(sessConfig->weapon.modelSpec, "viewModel");
-	}
+	// Update weapon model (if drawn) and sounds
+	m_weapon->loadModels();
+	m_weapon->loadSounds();
+	m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
 
 	// Create a series of colored materials to choose from for target health
 	for (int i = 0; i < m_MatTableSize; i++) {
@@ -943,24 +933,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 
 	const RealTime now = System::time();
-	for (int p = 0; p < projectileArray.size(); ++p) {
-		const Projectile& projectile = projectileArray[p];
-
-		if (!m_hitScan) {
-			// Check for collisions
-		}
-
-		if (projectile.endTime < now) {
-			// Expire
-			scene()->removeEntity(projectile.entity->name());
-			projectileArray.fastRemove(p);
-			--p;
-		}
-		else {
-			// Animate
-			projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * sessConfig->weapon.bulletSpeed);
-		}
-	}
+	m_weapon->onSimulation(rdt, scene());
 
 	// explosion animation
 	if (notNull(m_explosion) && m_explosionEndTime < now) {
@@ -1321,199 +1294,6 @@ void App::drawHUD(RenderDevice *rd) {
 	}
 }
 
-/** Method for handling weapon fire */
-shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
-    BEGIN_PROFILER_EVENT("fire");
-	Point3 aimPoint = activeCamera()->frame().translation + activeCamera()->frame().lookVector() * 1000.0f;
-	bool destroyedTarget = false;
-	static bool hitTarget = false;
-	bool hitScene = false;
-	static RealTime lastTime;
-	shared_ptr<TargetEntity> target = nullptr;
-
-	if (m_hitScan) {
-		const Ray& ray = activeCamera()->frame().lookRay();		// Use the camera lookray for hit detection
-		Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
-		for (auto projectile : projectileArray) {
-			dontHit.append(projectile.entity);
-		}
-		for (auto target : targetArray) {
-			dontHit.append(target);
-		}
-
-		// Check for closest hit (in scene)
-		float closest = finf();
-		int closestIndex = -1;
-		Model::HitInfo info;
-		scene()->intersect(ray, closest, false, dontHit, info);
-		hitScene = closest < finf();
-
-		// Create the bullet
-		if (sessConfig->weapon.renderBullets) {
-			// Create the bullet start frame from the weapon frame plus muzzle offset
-			CFrame bulletStartFrame = m_weaponFrame;
-			bulletStartFrame.translation += sessConfig->weapon.muzzleOffset;
-
-			// Angle the bullet start frame towards the aim point
-			if (hitScene) {
-				aimPoint = info.point;
-			}
-			bulletStartFrame.lookAt(aimPoint);
-			//bulletStartFrame.translation += bulletStartFrame.lookVector();
-			
-			// Non-laser weapon
-			if (sessConfig->weapon.firePeriod > 0.0f && sessConfig->weapon.autoFire) {
-				const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastUniqueID), scene().get(), m_bulletModel, bulletStartFrame);
-				bullet->setShouldBeSaved(false);
-				bullet->setCanCauseCollisions(false);
-				bullet->setCastsShadows(false);
-
-				/*
-				const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
-					Any::parse(format("%s", bulletStartFrame.toXYZYPRDegreesString().c_str())));
-				bullet->setTrack(track);
-				*/
-
-				projectileArray.push(Projectile(bullet, System::time() + fmin(closest, 100.0f) / sessConfig->weapon.bulletSpeed));
-				scene()->insert(bullet);
-			}
-			// Laser weapon (very hacky for now...)
-			else {
-				shared_ptr<CylinderShape> beam = std::make_shared<CylinderShape>(CylinderShape(Cylinder(bulletStartFrame.translation, aimPoint, 0.02f)));
-				debugDraw(beam, FLT_EPSILON, Color4(0.2f, 0.8f, 0.0f, 1.0f), Color4::clear());
-			}
-		}
-
-		for (int t = 0; t < targetArray.size(); ++t) {
-			if (targetArray[t]->intersect(ray, closest)) {
-				closestIndex = t;
-			}
-		}
-
-		// Hit logic
-		if (closestIndex >= 0) {
-			target = targetArray[closestIndex];			// Assign the target pointer here (not null indicates the hit)
-
-			// Damage the target
-			float damage;
-			if (destroyImmediately) damage = target->health();
-			else if (sessConfig->weapon.firePeriod == 0.0f && hitTarget) {		// Check if we are in "laser" mode hit the target last time
-				float dt = max(previousSimTimeStep(),0.0f);
-				damage = sessConfig->weapon.damagePerSecond * dt;
-			}
-			else {																// If we're not in "laser" mode then damage/shot is just damage/second * second/shot
-				damage = sessConfig->weapon.damagePerSecond * sessConfig->weapon.firePeriod;
-			}
-			hitTarget = true;
-
-			// Check if we need to add combat text for this damage
-			if (sessConfig->targetView.showCombatText) {
-				m_combatTextList.append(FloatingCombatText::create(
-					format("%2.0f", 100*damage),
-					m_combatFont,
-					sessConfig->targetView.combatTextSize,
-					sessConfig->targetView.combatTextColor,
-					sessConfig->targetView.combatTextOutline,
-					sessConfig->targetView.combatTextOffset,
-					sessConfig->targetView.combatTextVelocity,
-					sessConfig->targetView.combatTextFade,
-					sessConfig->targetView.combatTextTimeout));
-				m_combatTextList.last()->setFrame(target->frame());
-			}
-
-			destroyedTarget = target->doDamage(damage);
-			bool respawned = false;
-			if (destroyedTarget) {
-				// create explosion animation
-				CFrame explosionFrame = targetArray[closestIndex]->frame();
-				explosionFrame.rotation = activeCamera()->frame().rotation;
-				const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModels[target->scaleIndex()], explosionFrame);
-				scene()->insert(newExplosion);
-				m_explosion = newExplosion;
-				m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
-				sess->countDestroy();
-				respawned = target->respawn();
-				// check for respawn
-				if (!respawned) {
-					// This is the final respawn
-					destroyTarget(closestIndex);
-				}
-			}
-			if(!destroyedTarget || respawned)  {
-				// Handle randomizing position of non-destination targets here
-				if (target->destinations().size() == 0 && respawned) {
-					sess->randomizePosition(target);
-				}
-                BEGIN_PROFILER_EVENT("fire/changeColor");
-                    BEGIN_PROFILER_EVENT("fire/clone");
-				        shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(targetArray[closestIndex]->pose()->clone());
-                    END_PROFILER_EVENT();
-                    BEGIN_PROFILER_EVENT("fire/materialSet");
-						shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health()*m_MatTableSize), m_MatTableSize-1)];
-				        pose->materialTable.set("core/icosahedron_default", mat);
-                    END_PROFILER_EVENT();
-                    BEGIN_PROFILER_EVENT("fire/setPose");
-				        targetArray[closestIndex]->setPose(pose);
-                    END_PROFILER_EVENT();
-                END_PROFILER_EVENT();
-			}
-		}
-		else hitTarget = false;
-	}
-
-    // Play sounds (destroyed/hit target vs hit scene)
-    if (destroyedTarget) {
-		target->playDestroySound();
-	}
-	else if (hitTarget) {
-		target->playHitSound();
-	}
-	else if (hitScene) {
-		m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
-	}
-	
-	if(sessConfig->weapon.firePeriod > 0.0f || !sessConfig->weapon.autoFire) {
-		m_fireSound->play(sessConfig->weapon.fireSoundVol);
-		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
-	}
-
-	if (sessConfig->weapon.renderDecals && sessConfig->weapon.firePeriod > 0.0f && !hitTarget) {
-		// compute world intersection
-		const Ray& ray = activeCamera()->frame().lookRay();
-		float hitDist = finf();
-		Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
-		for (auto projectile : projectileArray) {
-			dontHit.append(projectile.entity);
-		}
-		for (auto target : targetArray) {
-			dontHit.append(target);
-		}
-
-		// Cast a ray against the scene to get the decal location/normal
-		Model::HitInfo info;
-		scene()->intersect(ray, hitDist, false, dontHit, info);
-		// Find where to put the decal
-		CFrame decalFrame = activeCamera()->frame();
-		decalFrame.translation += ray.direction() * (hitDist - 0.01f);
-		// Set the decal rotation to match the normal here
-		decalFrame.lookAt(decalFrame.translation - info.normal);
-
-		// Only allow 1 miss decal at a time (remove last decal if present)
-		if (notNull(m_lastDecal)) {
-			scene()->remove(m_lastDecal);
-		}
-
-		// Add the new decal to the scene
-		const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastUniqueID), scene().get(), m_decalModel, decalFrame);
-		newDecal->setCastsShadows(false);
-		scene()->insert(newDecal);
-		m_lastDecal = m_firstDecal;
-		m_firstDecal = newDecal;
-	}
-    END_PROFILER_EVENT();
-	return target;
-}
-
 /** Clear all targets one by one */
 void App::clearTargets() {
 	while (targetArray.size() > 0) {
@@ -1555,19 +1335,109 @@ void App::onUserInput(UserInput* ui) {
 				if ((sess->presentationState == PresentationState::task) && !m_userSettingsMode) {
 					if (sess->canFire()) {
 						fired = true;
-						sess->countClick();						        // Count clicks
-						shared_ptr<TargetEntity> t = fire();			// Fire the weapon
-						if (notNull(t)) {								// Check if we hit anything
-							if (t->health() <= 0) {
+						sess->countClick();														// Count clicks
+						Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
+						Model::HitInfo info;
+						float hitDist = fnan();
+						int hitIdx = -1;
+						shared_ptr<TargetEntity> target = m_weapon->fire(targetArray, hitIdx, hitDist, info, dontHit);			// Fire the weapon
+						if (notNull(target)) {														// Check if we hit anything
+							// Damage the target
+							float damage;
+							if (sessConfig->weapon.firePeriod == 0.0f) {						// Check if we are in "laser" mode hit the target last time
+								float dt = max(previousSimTimeStep(), 0.0f);
+								damage = sessConfig->weapon.damagePerSecond * dt;
+							}
+							else {																// If we're not in "laser" mode then damage/shot is just damage/second * second/shot
+								damage = sessConfig->weapon.damagePerSecond * sessConfig->weapon.firePeriod;
+							}
+							target->doDamage(damage);
+
+							// Check if we need to add combat text for this damage
+							if (sessConfig->targetView.showCombatText) {
+								m_combatTextList.append(FloatingCombatText::create(
+									format("%2.0f", 100 * damage),
+									m_combatFont,
+									sessConfig->targetView.combatTextSize,
+									sessConfig->targetView.combatTextColor,
+									sessConfig->targetView.combatTextOutline,
+									sessConfig->targetView.combatTextOffset,
+									sessConfig->targetView.combatTextVelocity,
+									sessConfig->targetView.combatTextFade,
+									sessConfig->targetView.combatTextTimeout));
+								m_combatTextList.last()->setFrame(target->frame());
+							}
+
+							// Check for "kill" condition
+							bool respawned = false;
+							bool destroyedTarget = false;
+							if (target->health() <= 0) {
+								// create explosion animation
+								CFrame explosionFrame = target->frame();
+								explosionFrame.rotation = activeCamera()->frame().rotation;
+								const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModels[target->scaleIndex()], explosionFrame);
+								scene()->insert(newExplosion);
+								m_explosion = newExplosion;
+								m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
+								target->playDestroySound();
+								sess->countDestroy();
+								respawned = target->respawn();
+								// check for respawn
+								if (!respawned) {
+									// This is the final respawn
+									destroyTarget(hitIdx);
+									destroyedTarget = true;
+									//destroyTarget(closestIndex);
+								}
 								// Target eliminated, must be 'destroy'.
-								sess->accumulatePlayerAction(PlayerActionType::Destroy, t->name());
+								sess->accumulatePlayerAction(PlayerActionType::Destroy, target->name());
 							}
 							else {
+								target->playHitSound();
 								// Target 'hit', but still alive.
-								sess->accumulatePlayerAction(PlayerActionType::Hit, t->name());
+								sess->accumulatePlayerAction(PlayerActionType::Hit, target->name());
+							}
+							if (!destroyedTarget || respawned) {
+								if (respawned) {
+									sess->randomizePosition(target);
+								}
+								BEGIN_PROFILER_EVENT("fire/changeColor");
+								BEGIN_PROFILER_EVENT("fire/clone");
+								shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
+								END_PROFILER_EVENT();
+								BEGIN_PROFILER_EVENT("fire/materialSet");
+								shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health()*m_MatTableSize), m_MatTableSize - 1)];
+								pose->materialTable.set("core/icosahedron_default", mat);
+								END_PROFILER_EVENT();
+								BEGIN_PROFILER_EVENT("fire/setPose");
+								target->setPose(pose);
+								END_PROFILER_EVENT();
+								END_PROFILER_EVENT();
 							}
 						}
-						else {
+						else {	// We didn't hit a target
+							m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
+							if (sessConfig->weapon.renderDecals && sessConfig->weapon.firePeriod > 0.0f) {
+								// compute world intersection
+								const Ray& ray = activeCamera()->frame().lookRay();
+								// Find where to put the decal
+								CFrame decalFrame = activeCamera()->frame();
+								decalFrame.translation += ray.direction() * (hitDist - 0.01f);
+								// Set the decal rotation to match the normal here
+								decalFrame.lookAt(decalFrame.translation - info.normal);
+
+								// Only allow 1 miss decal at a time (remove last decal if present)
+								if (notNull(m_lastDecal)) {
+									scene()->remove(m_lastDecal);
+								}
+
+								// Add the new decal to the scene
+								const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastUniqueID), scene().get(), m_decalModel, decalFrame);
+								newDecal->setCastsShadows(false);
+								scene()->insert(newDecal);
+								m_lastDecal = m_firstDecal;
+								m_firstDecal = newDecal;
+							}
 							// Target still present, must be 'miss'.
 							sess->accumulatePlayerAction(PlayerActionType::Miss);
 						}
@@ -1595,7 +1465,15 @@ void App::onUserInput(UserInput* ui) {
 	
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
 		if (ui->keyPressed(dummyShoot) && (sess->presentationState == PresentationState::feedback)) {
-			fire(true); // Fire at dummy target here...
+			Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
+			Model::HitInfo info;
+			float hitDist = fnan();
+			int hitIdx = -1;
+			shared_ptr<TargetEntity> target = m_weapon->fire(targetArray, hitIdx, hitDist, info, dontHit);			// Fire the weapon
+			if (notNull(target)) {
+				// If we hit a target, destroy it
+				destroyTarget(hitIdx);
+			}
 		}
 	}
 
@@ -1622,19 +1500,7 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 
 	typedScene<PhysicsScene>()->poseExceptExcluded(surface, "player");
 
-	if (sessConfig->weapon.renderModel || sessConfig->weapon.renderBullets || sessConfig->weapon.renderMuzzleFlash) {
-		// Update the weapon frame for all of these cases
-		const float yScale = -0.12f;
-		const float zScale = -yScale * 0.5f;
-		const float lookY = activeCamera()->frame().lookVector().y;
-		m_weaponFrame = activeCamera()->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
-		// Pose the view model (weapon) for render here
-		if (sessConfig->weapon.renderModel) {
-			const float prevLookY = activeCamera()->previousFrame().lookVector().y;
-			const CFrame prevWeaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f + prevLookY * yScale, -1.1f + prevLookY * zScale, 10, 5);
-			m_viewModel->pose(surface, m_weaponFrame, activeCamera()->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
-		}
-	}
+	m_weapon->onPose(surface, activeCamera());
 }
 
 void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
