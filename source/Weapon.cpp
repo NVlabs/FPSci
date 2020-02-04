@@ -4,9 +4,6 @@ void Weapon::onSimulation(RealTime rdt) {
 	for (int p = 0; p < m_projectileArray.size(); ++p) {
 		Projectile& projectile = m_projectileArray[p];
 		projectile.onSimulation(rdt);
-		if (!m_config->hitScan) {
-			// Hit detection here
-		}
 		// Remove the projectile for timeout
 		if (projectile.remainingTime() <= 0) {
 			// Expire
@@ -43,59 +40,56 @@ shared_ptr<TargetEntity> Weapon::fire(
 	static RealTime lastTime;
 	shared_ptr<TargetEntity> target = nullptr;
 
-	if (m_config->hitScan) {
-		const Ray& ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
+	const Ray& ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
+	// Add to don't hit list here
+	for (auto target : targets) { dontHit.append(target); }
+	for (auto projectile : m_projectileArray) { dontHit.append(projectile.entity); }
+	// Check for closest hit (in scene, otherwise this ray hits the skybox)
+	float closest = finf();
+	Model::HitInfo info;
+	m_scene->intersect(ray, closest, false, dontHit, info);
 
-		for (auto target : targets) {
-			dontHit.append(target);
+	// Create the bullet
+	if (m_config->renderBullets || !m_config->hitScan) {
+		// Create the bullet start frame from the weapon frame plus muzzle offset
+		CFrame bulletStartFrame = m_frame;
+		bulletStartFrame.translation += m_config->muzzleOffset;
+
+		// Angle the bullet start frame towards the aim point
+		Point3 aimPoint = m_camera->frame().translation + m_camera->frame().lookVector() * 1000.0f;
+		// If we hit the scene w/ this ray, angle it towards that collision point
+		if (closest < finf()) {
+			aimPoint = info.point;
 		}
-		for (auto projectile : m_projectileArray) {
-			dontHit.append(projectile.entity);
+		bulletStartFrame.lookAt(aimPoint);
+
+		// Non-laser weapon
+		if (m_config->firePeriod > 0.0f || !m_config->autoFire) {
+			const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastBulletId), m_scene.get(), m_bulletModel, bulletStartFrame);
+			bullet->setShouldBeSaved(false);
+			bullet->setCanCauseCollisions(false);
+			bullet->setCastsShadows(false);
+			bullet->setVisible(m_config->renderBullets);
+
+			/*	
+			const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
+				Any::parse(format("%s", bulletStartFrame.toXYZYPRDegreesString().c_str())));
+			bullet->setTrack(track);
+			*/
+
+			float grav = m_config->hitScan ? 0.0f : 10.0f;
+			m_projectileArray.push(Projectile(bullet, m_config->bulletSpeed, !m_config->hitScan, grav, fmin(closest, 100.0f) / m_config->bulletSpeed));
+			m_scene->insert(bullet);
 		}
-
-		// Check for closest hit (in scene, otherwise this ray hits the skybox)
-		float closest = finf();
-		Model::HitInfo info;
-		m_scene->intersect(ray, closest, false, dontHit, info);
-
-		// Create the bullet
-		if (m_config->renderBullets) {
-			// Create the bullet start frame from the weapon frame plus muzzle offset
-			CFrame bulletStartFrame = m_frame;
-			bulletStartFrame.translation += m_config->muzzleOffset;
-
-			// Angle the bullet start frame towards the aim point
-			Point3 aimPoint = m_camera->frame().translation + m_camera->frame().lookVector() * 1000.0f;
-			// If we hit the scene w/ this ray, angle it towards that collision point
-			if (closest < finf()) {
-				aimPoint = info.point;
-			}
-			bulletStartFrame.lookAt(aimPoint);
-
-			// Non-laser weapon
-			if (m_config->firePeriod > 0.0f && m_config->autoFire) {
-				const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastBulletId), m_scene.get(), m_bulletModel, bulletStartFrame);
-				bullet->setShouldBeSaved(false);
-				bullet->setCanCauseCollisions(false);
-				bullet->setCastsShadows(false);
-
-				/*
-				const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
-					Any::parse(format("%s", bulletStartFrame.toXYZYPRDegreesString().c_str())));
-				bullet->setTrack(track);
-				*/
-
-				float grav = m_config->hitScan ? 0.0f : 10.0f;
-				m_projectileArray.push(Projectile(bullet, m_config->bulletSpeed, !m_config->hitScan, grav, fmin(closest, 100.0f) / m_config->bulletSpeed));
-				m_scene->insert(bullet);
-			}
-			// Laser weapon (very hacky for now...)
-			else {
-				shared_ptr<CylinderShape> beam = std::make_shared<CylinderShape>(CylinderShape(Cylinder(bulletStartFrame.translation, aimPoint, 0.02f)));
-				debugDraw(beam, FLT_EPSILON, Color4(0.2f, 0.8f, 0.0f, 1.0f), Color4::clear());
-			}
+		// Laser weapon (very hacky for now...)
+		else {
+			shared_ptr<CylinderShape> beam = std::make_shared<CylinderShape>(CylinderShape(Cylinder(bulletStartFrame.translation, aimPoint, 0.02f)));
+			debugDraw(beam, FLT_EPSILON, Color4(0.2f, 0.8f, 0.0f, 1.0f), Color4::clear());
 		}
+	}
 
+	// Hit scan specific logic here
+	if(m_config->hitScan){
 		// Check whether we hit any targets
 		int closestIndex = -1;
 		for (int t = 0; t < targets.size(); ++t) {
@@ -110,7 +104,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 		}
 	}
 	else {
-		// Spawn moving projectile here
+		// Moving projectile specific code here
 	}
 
 	if (m_config->firePeriod > 0.0f || !m_config->autoFire) {

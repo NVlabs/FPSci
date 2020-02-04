@@ -158,6 +158,8 @@ protected:
 	void updateUser(void);
     void updateUserGUI();
 
+	void hitTarget(shared_ptr<TargetEntity>);
+
 	void drawHUD(RenderDevice *rd);
 	void drawClickIndicator(RenderDevice *rd, String mode);
 
@@ -198,6 +200,7 @@ public:
 	void setReticle(int r);
 	/** Destroy a target from the targets array */
 	void destroyTarget(int index);
+	void destroyTarget(shared_ptr<TargetEntity> target);
 	/** Show the player controls */
 	void showPlayerControls();
 	/** Show the render controls */

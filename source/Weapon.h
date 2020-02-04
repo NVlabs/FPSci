@@ -2,7 +2,7 @@
 #include <G3D/G3D.h>
 #include "ConfigFiles.h"
 
-class Projectile : Entity {
+class Projectile : public Entity {
 public:
 	shared_ptr<VisibleEntity>       entity;
 
@@ -53,7 +53,20 @@ public:
 
 	void loadModels() {
 		// Create the view model
-		m_viewModel = ArticulatedModel::create(m_config->modelSpec, "viewModel");
+		if (m_config->modelSpec.filename != "") {
+			m_viewModel = ArticulatedModel::create(m_config->modelSpec, "viewModel");
+		}
+		else {
+			const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
+				filename = "model/sniper/sniper.obj";
+				preprocess = {
+					transformGeometry(all(), Matrix4::yawDegrees(90));
+					transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
+				};
+				scale = 0.25;
+				});
+			m_viewModel = ArticulatedModel::create(modelSpec, "viewModel");
+		}
 
 		// Create the bullet model
 		const static Any bulletSpec = PARSE_ANY(ArticulatedModel::Specification{
@@ -77,6 +90,8 @@ public:
 	void setConfig(const WeaponConfig& config) { m_config = std::make_shared<WeaponConfig>(config); }
 	void setCamera(const shared_ptr<Camera>& cam) { m_camera = cam; }
 	void setScene(const shared_ptr<Scene>& scene) { m_scene = scene; }
+
+	Array<Projectile> projectiles() { return m_projectileArray;  };
 
 protected:
 	Weapon(shared_ptr<WeaponConfig> config, shared_ptr<Scene> scene, shared_ptr<Camera> cam) : m_config(config), m_scene(scene), m_camera(cam) {};

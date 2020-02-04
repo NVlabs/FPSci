@@ -649,26 +649,17 @@ public:
 	bool	renderMuzzleFlash = false;									///< Render a muzzle flash when the weapon fires?
 	bool	renderDecals = true;										///< Render decals when the shots miss?
 	bool	renderBullets = false;										///< Render bullets leaving the weapon
-	float	bulletSpeed = 1.0f;											///< Speed to draw at for rendered rounds (in m/s)
+	float	bulletSpeed = 100.0f;										///< Speed to draw at for rendered rounds (in m/s)
 	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
 	//String missDecal = "bullet-decal-256x256.png";					///< The decal to place where the shot misses
 	float	fireSpread = 0;												///< The spread of the fire
 	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
 	float	damageRollOffDistance = 0;									///< Damage roll of w/ distance
 	//String reticleImage;												///< Reticle image to show for this weapon
+
 	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
 
-	WeaponConfig() {
-	// Suggested any for "default" model, leaving this here for now... breaks debug config if uncommented
-			//PARSE_ANY(ArticulatedModel::Specification{
-			//	filename = "model/sniper/sniper.obj";
-			//	preprocess = {
-			//		transformGeometry(all(), Matrix4::yawDegrees(90));
-			//		transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
-			//	};
-			//	scale = 0.25;
-			//	};)
-	}
+	WeaponConfig() {}
 
 	/** Load from Any */
 	WeaponConfig(const Any& any) {

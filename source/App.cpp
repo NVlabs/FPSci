@@ -935,6 +935,22 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	const RealTime now = System::time();
 	m_weapon->onSimulation(rdt);
 
+	// Look for projectile/target intersection (not hitscan)
+	if (!sessConfig->weapon.hitScan) {
+		for (Projectile p : m_weapon->projectiles()) {
+			const float hitDistance = 0.1;
+			const Point3 projectilePos = p.entity->frame().translation;
+			for (shared_ptr<TargetEntity> t : targetArray) {
+				// Check for hit condition based on proximity
+				float proj2target = length(projectilePos - t->frame().translation);
+				if (proj2target <= hitDistance) {
+					hitTarget(t);
+				}
+			}
+
+		}
+	}
+
 	// explosion animation
 	if (notNull(m_explosion) && m_explosionEndTime < now) {
 		scene()->remove(m_explosion);
@@ -1301,6 +1317,81 @@ void App::clearTargets() {
 	}
 }
 
+void App::hitTarget(shared_ptr<TargetEntity> target) {
+	// Damage the target
+	float damage;
+	if (sessConfig->weapon.firePeriod == 0.0f) {						// Check if we are in "laser" mode hit the target last time
+		float dt = max(previousSimTimeStep(), 0.0f);
+		damage = sessConfig->weapon.damagePerSecond * dt;
+	}
+	else {																// If we're not in "laser" mode then damage/shot is just damage/second * second/shot
+		damage = sessConfig->weapon.damagePerSecond * sessConfig->weapon.firePeriod;
+	}
+	target->doDamage(damage);
+
+	// Check if we need to add combat text for this damage
+	if (sessConfig->targetView.showCombatText) {
+		m_combatTextList.append(FloatingCombatText::create(
+			format("%2.0f", 100 * damage),
+			m_combatFont,
+			sessConfig->targetView.combatTextSize,
+			sessConfig->targetView.combatTextColor,
+			sessConfig->targetView.combatTextOutline,
+			sessConfig->targetView.combatTextOffset,
+			sessConfig->targetView.combatTextVelocity,
+			sessConfig->targetView.combatTextFade,
+			sessConfig->targetView.combatTextTimeout));
+		m_combatTextList.last()->setFrame(target->frame());
+	}
+
+	// Check for "kill" condition
+	bool respawned = false;
+	bool destroyedTarget = false;
+	if (target->health() <= 0) {
+		// create explosion animation
+		CFrame explosionFrame = target->frame();
+		explosionFrame.rotation = activeCamera()->frame().rotation;
+		const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModels[target->scaleIndex()], explosionFrame);
+		scene()->insert(newExplosion);
+		m_explosion = newExplosion;
+		m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
+		target->playDestroySound();
+		sess->countDestroy();
+		respawned = target->respawn();
+		// check for respawn
+		if (!respawned) {
+			// This is the final respawn
+			//destroyTarget(hitIdx);
+			destroyTarget(target);
+			destroyedTarget = true;
+		}
+		// Target eliminated, must be 'destroy'.
+		sess->accumulatePlayerAction(PlayerActionType::Destroy, target->name());
+	}
+	else {
+		target->playHitSound();
+		// Target 'hit', but still alive.
+		sess->accumulatePlayerAction(PlayerActionType::Hit, target->name());
+	}
+	if (!destroyedTarget || respawned) {
+		if (respawned) {
+			sess->randomizePosition(target);
+		}
+		BEGIN_PROFILER_EVENT("fire/changeColor");
+		BEGIN_PROFILER_EVENT("fire/clone");
+		shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
+		END_PROFILER_EVENT();
+		BEGIN_PROFILER_EVENT("fire/materialSet");
+		shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health()*m_MatTableSize), m_MatTableSize - 1)];
+		pose->materialTable.set("core/icosahedron_default", mat);
+		END_PROFILER_EVENT();
+		BEGIN_PROFILER_EVENT("fire/setPose");
+		target->setPose(pose);
+		END_PROFILER_EVENT();
+		END_PROFILER_EVENT();
+	}
+}
+
 /** Handle user input here */
 void App::onUserInput(UserInput* ui) {
 	BEGIN_PROFILER_EVENT("onUserInput");
@@ -1341,79 +1432,8 @@ void App::onUserInput(UserInput* ui) {
 						float hitDist = finf();
 						int hitIdx = -1;
 						shared_ptr<TargetEntity> target = m_weapon->fire(targetArray, hitIdx, hitDist, info, dontHit);			// Fire the weapon
-						if (notNull(target)) {														// Check if we hit anything
-							// Damage the target
-							float damage;
-							if (sessConfig->weapon.firePeriod == 0.0f) {						// Check if we are in "laser" mode hit the target last time
-								float dt = max(previousSimTimeStep(), 0.0f);
-								damage = sessConfig->weapon.damagePerSecond * dt;
-							}
-							else {																// If we're not in "laser" mode then damage/shot is just damage/second * second/shot
-								damage = sessConfig->weapon.damagePerSecond * sessConfig->weapon.firePeriod;
-							}
-							target->doDamage(damage);
-
-							// Check if we need to add combat text for this damage
-							if (sessConfig->targetView.showCombatText) {
-								m_combatTextList.append(FloatingCombatText::create(
-									format("%2.0f", 100 * damage),
-									m_combatFont,
-									sessConfig->targetView.combatTextSize,
-									sessConfig->targetView.combatTextColor,
-									sessConfig->targetView.combatTextOutline,
-									sessConfig->targetView.combatTextOffset,
-									sessConfig->targetView.combatTextVelocity,
-									sessConfig->targetView.combatTextFade,
-									sessConfig->targetView.combatTextTimeout));
-								m_combatTextList.last()->setFrame(target->frame());
-							}
-
-							// Check for "kill" condition
-							bool respawned = false;
-							bool destroyedTarget = false;
-							if (target->health() <= 0) {
-								// create explosion animation
-								CFrame explosionFrame = target->frame();
-								explosionFrame.rotation = activeCamera()->frame().rotation;
-								const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModels[target->scaleIndex()], explosionFrame);
-								scene()->insert(newExplosion);
-								m_explosion = newExplosion;
-								m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
-								target->playDestroySound();
-								sess->countDestroy();
-								respawned = target->respawn();
-								// check for respawn
-								if (!respawned) {
-									// This is the final respawn
-									destroyTarget(hitIdx);
-									destroyedTarget = true;
-									//destroyTarget(closestIndex);
-								}
-								// Target eliminated, must be 'destroy'.
-								sess->accumulatePlayerAction(PlayerActionType::Destroy, target->name());
-							}
-							else {
-								target->playHitSound();
-								// Target 'hit', but still alive.
-								sess->accumulatePlayerAction(PlayerActionType::Hit, target->name());
-							}
-							if (!destroyedTarget || respawned) {
-								if (respawned) {
-									sess->randomizePosition(target);
-								}
-								BEGIN_PROFILER_EVENT("fire/changeColor");
-								BEGIN_PROFILER_EVENT("fire/clone");
-								shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
-								END_PROFILER_EVENT();
-								BEGIN_PROFILER_EVENT("fire/materialSet");
-								shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health()*m_MatTableSize), m_MatTableSize - 1)];
-								pose->materialTable.set("core/icosahedron_default", mat);
-								END_PROFILER_EVENT();
-								BEGIN_PROFILER_EVENT("fire/setPose");
-								target->setPose(pose);
-								END_PROFILER_EVENT();
-								END_PROFILER_EVENT();
-							}
+						if (notNull(target)) {					// Check if we hit anything
+							hitTarget(target);					// If we did, apply the damage and manage the target here
 						}
 						else {	// We didn't hit a target
 							m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
@@ -1492,6 +1512,15 @@ void App::destroyTarget(int index) {
 	// Remove the target from the target array
 	targetArray.fastRemove(index);
 	// Remove the target from the scene
+	scene()->removeEntity(target->name());
+}
+
+void App::destroyTarget(shared_ptr<TargetEntity> target) {
+	for (int i = 0; i < targetArray.size(); i++) {
+		if (targetArray[i]->name() == target->name()) {
+			targetArray.fastRemove(i);
+		}
+	}
 	scene()->removeEntity(target->name());
 }
 
