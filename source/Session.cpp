@@ -127,7 +127,7 @@ void Session::initTargetAnimation() {
 			shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
 			float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
 			float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
-			float visualSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
+			float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
 			bool isWorldSpace = target->destSpace == "world";
 
 			CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw- (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
@@ -138,7 +138,7 @@ void Session::initTargetAnimation() {
 				shared_ptr<TargetEntity> t = m_app->spawnDestTarget(
 					offset,
 					target->destinations,
-					visualSize,
+					targetSize,
 					m_config->targetView.healthColors[0],
 					target->id,
 					i,
@@ -154,7 +154,7 @@ void Session::initTargetAnimation() {
 				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 				shared_ptr<JumpingEntity> t = m_app->spawnJumpingTarget(
 					offset,
-					visualSize,
+					targetSize,
 					m_config->targetView.healthColors[0],
 					{ target->speed[0], target->speed[1] },
 					{ target->motionChangePeriod[0], target->motionChangePeriod[1] },
@@ -182,7 +182,7 @@ void Session::initTargetAnimation() {
 				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 				shared_ptr<FlyingEntity> t = m_app->spawnFlyingTarget(
 					offset,
-					visualSize,
+					targetSize,
 					m_config->targetView.healthColors[0],
 					{ target->speed[0], target->speed[1] },
 					{ target->motionChangePeriod[0], target->motionChangePeriod[1] },
