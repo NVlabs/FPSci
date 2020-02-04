@@ -54,6 +54,7 @@ This file associates each of the map names outlined below to an array of `GKey` 
 |Jump                               |`jump`                 |`["Spc"]`          |
 |Open in-game menu                  |`openMenu`             |`["Esc","Tab"]`    |
 |Fire the weapon during trial       |`shoot`                |`["L Mouse"]`      |
+|Use a scope                        |`scope`                |`["R Mouse"]`      |
 |Fire the weapon pre-trial          |`dummyShoot`           |`["R Shift"]`      |
 |Quit the application               |`quit`                 |`["-"]`            |
 |Drop a waypoint                    |`dropWaypoint`         |`["Q"]`            |

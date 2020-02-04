@@ -1419,6 +1419,30 @@ void App::onUserInput(UserInput* ui) {
 		player->setDesiredAngularVelocity(0.0, 0.0);
 	}
 
+	// Handle scope behavior
+	for (GKey scopeButton : keyMap.map["scope"]) {
+		// Are we using scope toggling?
+		if (sessConfig->weapon.scopeToggle) {
+			if (ui->keyPressed(scopeButton)) {
+				bool scoped = !m_weapon->scoped();
+				m_weapon->setScoped(scoped);
+				float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
+				float FoV = scoped ? scopeFoV : sessConfig->render.hFoV;
+				FoV *= pif() / 180.0f;
+				activeCamera()->setFieldOfView(FoV, FOVDirection::HORIZONTAL);
+			}
+		}
+		// Otherwise just set scope based on the state of the scope button
+		else {
+			if (ui->keyDown(scopeButton)) {
+				activeCamera()->setFieldOfView(sessConfig->weapon.scopeFoV * pif() / 180.0f, FOVDirection::HORIZONTAL);
+			}
+			else {
+				activeCamera()->setFieldOfView(sessConfig->render.hFoV * pif() / 180.0f, FOVDirection::HORIZONTAL);
+			}
+		}
+	}
+
 	// Handle fire up/down events
 	for (GKey shootButton : keyMap.map["shoot"]) {
 		// Require release between clicks for non-autoFire modes

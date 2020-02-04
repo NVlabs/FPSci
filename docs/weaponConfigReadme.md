@@ -36,6 +36,8 @@ This file provides information about the weapon to be used in the experiment. De
 |`renderDecals`         |bool       | Whether or not bullet hole decals are put on misses when `autoFire` is `False` and `firePeriod` > 0 (i.e. not in laser mode) |
 |`renderMuzzleFlash`    |bool       | Whether or not a muzzle flash is rendered for the weapon                                  |
 |`muzzleOffset`         |`Vector3`(m)| The offset of the muzzle within the weapon frame                                         |
+|`scopeFoV`             |float      | (Horizontal) field of view for the camera when using a scope (set to `0` for no scope)                |
+|`scopeToggle`          |bool       | Whether or not the scope is active when the keymapped button is held (false) or toggled using this button (true)|
 
 **Example**
 ```
@@ -55,10 +57,14 @@ This file provides information about the weapon to be used in the experiment. De
 	scale = 0.25;
 },
 "renderBullets": true,      // Default is false
-"bulletSpeed": 1.0,         // Bullets move at 1m/s
+"hitScan": false,
+"bulletSpeed": 100.0,       // Bullets move at 100m/s
+"bulletGravity": 10.0,      // Bullets accelerate down at 10m/s²
 "renderDecals": true,       // Draw hit decals on walls for misses
 "renderMuzzleFlash": false, // Draw a muzzle flash
 "muzzleOffset": Vector3(0.0,-0.8,0.0)        // Add an offset here to correct the barrel location (default is [0,0,0])
+"scopeFoV": 0.0,            // No scope
+"scopeToggle": false,       // Scope in "on-demand" mode (not toggled)
 ```
  
 # Weapon Modes and Damage

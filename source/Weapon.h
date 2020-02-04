@@ -99,8 +99,10 @@ public:
 	void setConfig(const WeaponConfig& config) { m_config = std::make_shared<WeaponConfig>(config); }
 	void setCamera(const shared_ptr<Camera>& cam) { m_camera = cam; }
 	void setScene(const shared_ptr<Scene>& scene) { m_scene = scene; }
+	void setScoped(bool state = true) { m_scoped = state; }
 
 	Array<Projectile> projectiles() { return m_projectileArray;  };
+	bool scoped() { return m_scoped;  }
 
 protected:
 	Weapon(shared_ptr<WeaponConfig> config, shared_ptr<Scene> scene, shared_ptr<Camera> cam) : m_config(config), m_scene(scene), m_camera(cam) {};
@@ -111,6 +113,7 @@ protected:
 
 	shared_ptr<WeaponConfig>		m_config;							///< Weapon configuration
 	int								m_lastBulletId = 0;					///< Bullet ID (auto incremented)
+	bool							m_scoped = false;
 
 	shared_ptr<Scene>				m_scene;							///< Scene for weapon
 	shared_ptr<Camera>				m_camera;							///< Camera for weapon

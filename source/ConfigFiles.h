@@ -88,6 +88,7 @@ public:
 		map.set("crouch", Array<GKey>{ GKey::LCTRL });
 		map.set("jump", Array<GKey>{ GKey::SPACE });
 		map.set("shoot", Array<GKey>{ GKey::LEFT_MOUSE });
+		map.set("scope", Array<GKey>{ GKey::RIGHT_MOUSE});
 		map.set("dummyShoot", Array<GKey>{ GKey::LSHIFT });
 		map.set("dropWaypoint", Array<GKey>{ (GKey)'q' });
 		map.set("toggleRecording", Array<GKey>{ (GKey)'r' });
@@ -656,6 +657,8 @@ public:
 	float	fireSpread = 0;												///< The spread of the fire
 	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
 	float	damageRollOffDistance = 0;									///< Damage roll of w/ distance
+	float	scopeFoV = 0.0f;											///< Field of view when scoped
+	bool	scopeToggle = false;										///< Scope toggle behavior
 	//String reticleImage;												///< Reticle image to show for this weapon
 
 	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
@@ -695,6 +698,8 @@ public:
 			reader.getIfPresent("fireSpread", fireSpread);
 			reader.getIfPresent("damageRollOffAim", damageRollOffAim);
 			reader.getIfPresent("damageRollOffDistance", damageRollOffDistance);
+			reader.getIfPresent("scopeFoV", scopeFoV);
+			reader.getIfPresent("scopeToggle", scopeToggle);
 			//reader.getIfPresent("recticleImage", reticleImage);
 		default:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
@@ -722,6 +727,8 @@ public:
 		if(forceAll || def.fireSpread != fireSpread)						a["fireSpread"] = fireSpread;
 		if(forceAll || def.damageRollOffAim != damageRollOffAim)			a["damageRollOffAim"] = damageRollOffAim;
 		if(forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
+		if(forceAll || def.scopeFoV != scopeFoV)							a["scopeFoV"] = scopeFoV;
+		if (forceAll || def.scopeToggle != scopeToggle)						a["scopeToggle"] = scopeToggle;
 		if(forceAll || !(def.modelSpec == modelSpec))						a["modelSpec"] = modelSpec;
 		return a;
 	}
