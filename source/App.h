@@ -91,8 +91,6 @@ public:
 
 class App : public GApp {
 protected:
-	static const float TARGET_MODEL_ARRAY_SCALING;						///< Target model scale factor
-	static const float TARGET_MODEL_ARRAY_OFFSET;						///< Target model offset
 	static const int MAX_HISTORY_TIMING_FRAMES = 360;					///< Length of the history queue for m_frameDurationQueue
 	shared_ptr<Sound>               m_sceneHitSound;					///< Sound for target exploding
 

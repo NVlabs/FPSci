@@ -4,6 +4,10 @@
 //#define DRAW_BOUNDING_SPHERES	1		// Uncomment this to draw bounding spheres (useful for target sizing)
 #define BOUNDING_SPHERE_RADIUS	0.5		///< Use a 0.5m radius for sizing here
 
+// Scale and offset for target
+const float TARGET_MODEL_ARRAY_SCALING = 0.2f;
+const float TARGET_MODEL_ARRAY_OFFSET = 20;
+
 struct Destination{
 public:
 	Point3 position = Point3(0,0,0);
@@ -124,6 +128,10 @@ public:
 			if (volume > 0.0f) { m_destroyedSound->play(volume);  }
 			else { m_destroyedSound->play(m_destroyedSoundVol); }
 		}
+	}
+
+	float size() {
+		return pow(1.0f + TARGET_MODEL_ARRAY_SCALING, m_scaleIdx - TARGET_MODEL_ARRAY_OFFSET);
 	}
 
 	/**Simple routine to do damage */

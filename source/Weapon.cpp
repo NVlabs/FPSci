@@ -49,11 +49,11 @@ shared_ptr<TargetEntity> Weapon::fire(
 	Model::HitInfo info;
 	m_scene->intersect(ray, closest, false, dontHit, info);
 
-	// Create the bullet
+	// Create the bullet (if we need to draw it or are using non-hitscan behavior)
 	if (m_config->renderBullets || !m_config->hitScan) {
 		// Create the bullet start frame from the weapon frame plus muzzle offset
-		CFrame bulletStartFrame = m_frame;
-		bulletStartFrame.translation += m_config->muzzleOffset;
+		CFrame bulletStartFrame = m_camera->frame();
+		//bulletStartFrame.translation += m_config->muzzleOffset;
 
 		// Angle the bullet start frame towards the aim point
 		Point3 aimPoint = m_camera->frame().translation + m_camera->frame().lookVector() * 1000.0f;
@@ -78,7 +78,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 			*/
 
 			float grav = m_config->hitScan ? 0.0f : 10.0f;
-			m_projectileArray.push(Projectile(bullet, m_config->bulletSpeed, !m_config->hitScan, grav, fmin(closest, 100.0f) / m_config->bulletSpeed));
+			m_projectileArray.push(Projectile(bullet, m_config->bulletSpeed, !m_config->hitScan, grav, fmin(closest+1.0f, 100.0f) / m_config->bulletSpeed));
 			m_scene->insert(bullet);
 		}
 		// Laser weapon (very hacky for now...)
@@ -105,6 +105,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 	}
 	else {
 		// Moving projectile specific code here
+		target = nullptr;
 	}
 
 	if (m_config->firePeriod > 0.0f || !m_config->autoFire) {

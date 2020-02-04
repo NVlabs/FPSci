@@ -8,9 +8,7 @@
 #include "WaypointManager.h"
 #include <chrono>
 
-// Scale and offset for target
-const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
-const float App::TARGET_MODEL_ARRAY_OFFSET = 20;
+//#define DRAW_BULLET_PROXIES
 
 // Storage for configuration static vars
 FpsConfig SessionConfig::defaultConfig;
@@ -938,16 +936,21 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// Look for projectile/target intersection (not hitscan)
 	if (!sessConfig->weapon.hitScan) {	
 		for (Projectile p : m_weapon->projectiles()) {
-			const float hitDistance = 0.2;
-			const Point3 projectilePos = p.entity->frame().translation;
+			const LineSegment projectileLine = p.getCollisionSegment();
+#ifdef DRAW_BULLET_PROXIES
+			const shared_ptr<CylinderShape> lineProxy = std::make_shared<CylinderShape>(Cylinder(projectileLine.point(0), projectileLine.point(1), 0.01));
+			debugDraw(lineProxy, 0.01, Color3::green(), Color4::clear());
+#endif
 			for (shared_ptr<TargetEntity> t : targetArray) {
-				// Check for hit condition based on proximity (naive approach)
-				float proj2target = length(projectilePos - t->frame().translation);
-				if (proj2target <= hitDistance) {
+				const Sphere tSphere = Sphere(t->frame().translation, t->size());
+#ifdef DRAW_BULLET_PROXIES
+				debugDraw(tSphere, 0.01, Color3::yellow(), Color4::clear());
+#endif
+				// Check for hit condition based on line segment/sphere intersection (naive approach)
+				if(projectileLine.intersectsSolidSphere(tSphere)){
 					hitTarget(t);
 				}
 			}
-
 		}
 	}	
 

@@ -16,10 +16,18 @@ public:
 		m_gravity(gravity){}
 
 	void onSimulation(RealTime rdt) {
+		// Manage time to display
 		m_totalTime -= (float)rdt;
+		// Update gravitational velocity component
 		m_gravVel += m_gravity * (float)rdt;
 		m_gravVel = fmin(m_gravVel, m_maxVel);
+		// Save the last position and update
+		m_lastPos = entity->frame().translation;
 		entity->setFrame(entity->frame() + entity->frame().lookVector()*m_velocity*(float)rdt - Vector3(0,m_gravVel,0)*(float)rdt);
+	}
+
+	LineSegment getCollisionSegment() {
+		return LineSegment::fromTwoPoints(m_lastPos, entity->frame().translation);
 	}
 
 	double remainingTime() { return m_totalTime; }
@@ -33,6 +41,7 @@ protected:
 	float							m_gravity = 10.0f;
 	float							m_gravVel = 0.0f;
 	float							m_maxVel = 100.0f;
+	Point3							m_lastPos = Point3::zero();
 };
 
 
