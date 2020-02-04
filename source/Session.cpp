@@ -216,7 +216,9 @@ void Session::initTargetAnimation() {
 			initialSpawnPos,
 			"reference",
 			0,
-			Array<bool>(true, true, true)
+			Array<bool>(true, true, true),
+			0, 
+			"reference"
 		);
 	}
 

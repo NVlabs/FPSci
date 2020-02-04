@@ -157,8 +157,8 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 }
 
 
-shared_ptr<FlyingEntity> FlyingEntity::create
-(const String&                           name,
+shared_ptr<FlyingEntity> FlyingEntity::create(
+	const String&							name,
 	Scene*                                  scene,
 	const shared_ptr<Model>&                model,
 	int										scaleIdx,

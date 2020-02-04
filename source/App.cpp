@@ -936,12 +936,12 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	m_weapon->onSimulation(rdt);
 
 	// Look for projectile/target intersection (not hitscan)
-	if (!sessConfig->weapon.hitScan) {
+	if (!sessConfig->weapon.hitScan) {	
 		for (Projectile p : m_weapon->projectiles()) {
-			const float hitDistance = 0.1;
+			const float hitDistance = 0.2;
 			const Point3 projectilePos = p.entity->frame().translation;
 			for (shared_ptr<TargetEntity> t : targetArray) {
-				// Check for hit condition based on proximity
+				// Check for hit condition based on proximity (naive approach)
 				float proj2target = length(projectilePos - t->frame().translation);
 				if (proj2target <= hitDistance) {
 					hitTarget(t);
@@ -949,7 +949,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			}
 
 		}
-	}
+	}	
 
 	// explosion animation
 	if (notNull(m_explosion) && m_explosionEndTime < now) {
@@ -1347,7 +1347,14 @@ void App::hitTarget(shared_ptr<TargetEntity> target) {
 	// Check for "kill" condition
 	bool respawned = false;
 	bool destroyedTarget = false;
-	if (target->health() <= 0) {
+	if (target->name() == "reference") {
+		// Handle reference target here
+		destroyTarget(target);
+		destroyedTarget = true;
+		sess->accumulatePlayerAction(PlayerActionType::Nontask, target->name());
+
+	}
+	else if (target->health() <= 0) {
 		// create explosion animation
 		CFrame explosionFrame = target->frame();
 		explosionFrame.rotation = activeCamera()->frame().rotation;
