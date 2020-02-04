@@ -1338,7 +1338,7 @@ void App::onUserInput(UserInput* ui) {
 						sess->countClick();														// Count clicks
 						Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
 						Model::HitInfo info;
-						float hitDist = fnan();
+						float hitDist = finf();
 						int hitIdx = -1;
 						shared_ptr<TargetEntity> target = m_weapon->fire(targetArray, hitIdx, hitDist, info, dontHit);			// Fire the weapon
 						if (notNull(target)) {														// Check if we hit anything
@@ -1417,7 +1417,7 @@ void App::onUserInput(UserInput* ui) {
 						}
 						else {	// We didn't hit a target
 							m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
-							if (sessConfig->weapon.renderDecals && sessConfig->weapon.firePeriod > 0.0f) {
+							if (sessConfig->weapon.renderDecals && sessConfig->weapon.firePeriod > 0.0f && hitDist < finf()) {
 								// compute world intersection
 								const Ray& ray = activeCamera()->frame().lookRay();
 								// Find where to put the decal

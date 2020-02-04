@@ -1,23 +1,18 @@
 #include "Weapon.h"
 
-void Weapon::onSimulation(RealTime now, const shared_ptr<Scene>& scene) {
+void Weapon::onSimulation(RealTime rdt, const shared_ptr<Scene>& scene) {
 	for (int p = 0; p < m_projectileArray.size(); ++p) {
-		const Projectile& projectile = m_projectileArray[p];
-
+		Projectile& projectile = m_projectileArray[p];
+		projectile.onSimulation(rdt);
 		if (!m_config->hitScan) {
-			// Check for collisions
-
+			// Check for target intersection here
 		}
-
-		if (projectile.endTime < now) {
+		// Remove the projectile for timeout
+		if (projectile.remainingTime() <= 0) {
 			// Expire
 			scene->removeEntity(projectile.entity->name());
 			m_projectileArray.fastRemove(p);
 			--p;
-		}
-		else {
-			// Animate
-			projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * m_config->bulletSpeed);
 		}
 	}
 }
@@ -90,7 +85,8 @@ shared_ptr<TargetEntity> Weapon::fire(
 				bullet->setTrack(track);
 				*/
 
-				m_projectileArray.push(Projectile(bullet, System::time() + fmin(closest, 100.0f) / m_config->bulletSpeed));
+				float grav = m_config->hitScan ? 0.0f : 10.0f;
+				m_projectileArray.push(Projectile(bullet, m_config->bulletSpeed, !m_config->hitScan, grav, fmin(closest, 100.0f) / m_config->bulletSpeed));
 				m_scene->insert(bullet);
 			}
 			// Laser weapon (very hacky for now...)
@@ -100,7 +96,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 			}
 		}
 
-		// Check wheter we hit any targets
+		// Check whether we hit any targets
 		int closestIndex = -1;
 		for (int t = 0; t < targets.size(); ++t) {
 			if (targets[t]->intersect(ray, closest)) {

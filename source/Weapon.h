@@ -5,27 +5,37 @@
 class Projectile : Entity {
 public:
 	shared_ptr<VisibleEntity>       entity;
-	bool							collision = false;
-	/** When in hitscan mode */
-	RealTime                        endTime;
-	Projectile() : endTime(0) {}
-	Projectile(const shared_ptr<VisibleEntity>& e, RealTime t = 0) : entity(e), endTime(t) {}
-	Projectile(const shared_ptr<VisibleEntity>& e, Vector3 position, Vector3 velocity, Vector3 gravity = Vector3(0, -10, 0), bool collision = false) {
-		m_frame = position;
-		m_velocity = velocity;
-		m_gravity = gravity;
-	}
+
+	Projectile() : m_totalTime(0) {}
+	Projectile(const shared_ptr<VisibleEntity>& e, RealTime t = 0) : entity(e), m_totalTime(t) {}
+	Projectile(const shared_ptr<VisibleEntity>& e, float velocity, bool collision = true, float gravity = 0.0f, RealTime t = 5.0) :
+		entity(e),
+		m_totalTime(t),
+		m_collision(collision),
+		m_velocity(velocity),
+		m_gravity(gravity){}
 
 	void onSimulation(RealTime rdt) {
-		m_frame.translation += m_velocity * rdt + m_gravity * rdt*rdt;
-		if (collision) {
+		m_totalTime -= (float)rdt;
+		m_gravVel += m_gravity * (float)rdt;
+		m_gravVel = fmin(m_gravVel, m_maxVel);
+		entity->setFrame(entity->frame() + entity->frame().lookVector()*m_velocity*(float)rdt - Vector3(0,m_gravVel,0)*(float)rdt);
+		if (m_collision) {
 			// Implement bullet collision detection here
 		}
 	}
+
+	double remainingTime() { return m_totalTime; }
+
 protected:
+	// Timed mode
+	double							m_totalTime = 5.0;
 	// Propagation mode
-	Vector3							m_velocity;
-	Vector3							m_gravity;
+	bool							m_collision = false;
+	float							m_velocity = 0.0f;
+	float							m_gravity = 10.0f;
+	float							m_gravVel = 0.0f;
+	float							m_maxVel = 100.0f;
 };
 
 
@@ -66,16 +76,13 @@ public:
 	void loadSounds() {
 		// Check for play mode specific parameters
 		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound));
-
 	}
-
 	void setConfig(const WeaponConfig& config) {
 		m_config = std::make_shared<WeaponConfig>(config);
 	}
 	void setCamera(const shared_ptr<Camera>& cam) {
 		m_camera = cam;
 	}
-
 	void setScene(const shared_ptr<Scene>& scene) {
 		m_scene = scene;
 	}
