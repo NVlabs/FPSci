@@ -14,16 +14,16 @@ public:
 		m_collision(collision),
 		m_velocity(velocity),
 		m_gravity(gravity){}
-
-	void onSimulation(RealTime rdt) {
+	
+	void onSimulation(RealTime dt) {
 		// Manage time to display
-		m_totalTime -= (float)rdt;
+		m_totalTime -= (float)dt;
 		// Update gravitational velocity component
-		m_gravVel += m_gravity * (float)rdt;
+		m_gravVel += m_gravity * (float)dt;
 		m_gravVel = fmin(m_gravVel, m_maxVel);
 		// Save the last position and update
 		m_lastPos = entity->frame().translation;
-		entity->setFrame(entity->frame() + entity->frame().lookVector()*m_velocity*(float)rdt - Vector3(0,m_gravVel,0)*(float)rdt);
+		entity->setFrame(entity->frame() + entity->frame().lookVector()*m_velocity*(float)dt - Vector3(0,m_gravVel,0)*(float)dt);
 	}
 
 	LineSegment getCollisionSegment() {

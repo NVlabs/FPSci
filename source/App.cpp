@@ -930,21 +930,20 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		m_userSettingsWindow->setVisible(m_userSettingsMode);		// Make sure window stays coherent w/ user settings mode
 	}
 
-	const RealTime now = System::time();
-	m_weapon->onSimulation(rdt);
+	m_weapon->onSimulation(sdt);
 
 	// Look for projectile/target intersection (not hitscan)
 	if (!sessConfig->weapon.hitScan) {	
 		for (Projectile p : m_weapon->projectiles()) {
 			const LineSegment projectileLine = p.getCollisionSegment();
 #ifdef DRAW_BULLET_PROXIES
-			const shared_ptr<CylinderShape> lineProxy = std::make_shared<CylinderShape>(Cylinder(projectileLine.point(0), projectileLine.point(1), 0.01));
-			debugDraw(lineProxy, 0.01, Color3::green(), Color4::clear());
+			const shared_ptr<CylinderShape> lineProxy = std::make_shared<CylinderShape>(Cylinder(projectileLine.point(0), projectileLine.point(1), 0.01f));
+			debugDraw(lineProxy, 0.01f, Color3::green(), Color4::clear());
 #endif
 			for (shared_ptr<TargetEntity> t : targetArray) {
 				const Sphere tSphere = Sphere(t->frame().translation, t->size());
 #ifdef DRAW_BULLET_PROXIES
-				debugDraw(tSphere, 0.01, Color3::yellow(), Color4::clear());
+				debugDraw(tSphere, 0.01f, Color3::yellow(), Color4::clear());
 #endif
 				// Check for hit condition based on line segment/sphere intersection (naive approach)
 				if(projectileLine.intersectsSolidSphere(tSphere)){
@@ -955,6 +954,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}	
 
 	// explosion animation
+	const RealTime now = System::time();
 	if (notNull(m_explosion) && m_explosionEndTime < now) {
 		scene()->remove(m_explosion);
 		m_explosion = nullptr;

@@ -650,6 +650,7 @@ public:
 	bool	renderDecals = true;										///< Render decals when the shots miss?
 	bool	renderBullets = false;										///< Render bullets leaving the weapon
 	float	bulletSpeed = 100.0f;										///< Speed to draw at for rendered rounds (in m/s)
+	float	bulletGravity = 0.0f;										///< Gravity to use for bullets (default is no droop)
 	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
 	//String missDecal = "bullet-decal-256x256.png";					///< The decal to place where the shot misses
 	float	fireSpread = 0;												///< The spread of the fire
@@ -689,6 +690,7 @@ public:
 			reader.getIfPresent("renderDecals", renderDecals);
 			reader.getIfPresent("renderBullets", renderBullets);
 			reader.getIfPresent("bulletSpeed", bulletSpeed);
+			reader.getIfPresent("bulletGravity", bulletGravity);
 			//reader.getIfPresent("missDecal", missDecal);
 			reader.getIfPresent("fireSpread", fireSpread);
 			reader.getIfPresent("damageRollOffAim", damageRollOffAim);
@@ -716,6 +718,7 @@ public:
 		if(forceAll || def.renderDecals != renderDecals)					a["renderDecals"] = renderDecals;
 		if(forceAll || def.renderBullets != renderBullets)					a["renderBullets"] = renderBullets;
 		if(forceAll || def.bulletSpeed != bulletSpeed)						a["bulletSpeed"] = bulletSpeed;
+		if(forceAll || def.bulletGravity != bulletGravity)					a["bulletGravity"] = bulletGravity;
 		if(forceAll || def.fireSpread != fireSpread)						a["fireSpread"] = fireSpread;
 		if(forceAll || def.damageRollOffAim != damageRollOffAim)			a["damageRollOffAim"] = damageRollOffAim;
 		if(forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;

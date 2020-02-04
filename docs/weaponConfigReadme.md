@@ -19,18 +19,20 @@ As an example of this concept, you **cannot** (currently) specify a weapon at th
 
 This file provides information about the weapon to be used in the experiment. Detailed field descriptions are provided below.
 
-| Parameter Name        |Units      | Description                                                                               |
-|-----------------------|-----------|-------------------------------------------------------------------------------------------|
-|`maxAmmo`              |shots      | The maximum number of clicks a user can make in any given trial                           |
-|`firePeriod`           |s/shot     | The minimum fire period allowed in the session (set this to 0 if you want "laser" mode)   |
-|`autoFire`             |bool       | Whether or not the weapon fires when the left mouse is held, or requires release between fire |
-|`damagePerSecond`      |damage/s   | The damage done by the weapon per second, when `firePeriod` > 0 the damage per round is set by `damagePerSecond`*`firePeriod`, when `firePeriod` is 0 and `autoFire` is `True` damage is computed based on time hitting the target. |
-|`fireSound`            |file       | The filename/location of the audio clip to use for the weapon firing                      |
-|`fireSoundVol`         |ratio      | The volume to play the `fireSound` clip with                                              |
-|`renderModel`          |bool       | Whether or not a weapon model is rendered in the first-person view                        |
-|`modelSpec`            |`ArticulatedModel::Specification` | Any-based specification for the weapon being used                  |
-|`renderBullets`        |bool       | Whether or not bullets are rendered from the barrel of the weapon when fired              |
-|`bulletSpeed`          |m/s        | The speed of rendered bullets                                                             |
+| Parameter Name        |Units      | Description                                                                                           |
+|-----------------------|-----------|-------------------------------------------------------------------------------------------------------|
+|`maxAmmo`              |shots      | The maximum number of clicks a user can make in any given trial                                       |
+|`firePeriod`           |s/shot     | The minimum fire period allowed in the session (set this to 0 if you want "laser" mode)               |
+|`autoFire`             |bool       | Whether or not the weapon fires when the left mouse is held, or requires release between fire         |
+|`damagePerSecond`      |damage/s   | The damage done by the weapon per second, when `firePeriod` > 0 the damage per round is set by `damagePerSecond`*`firePeriod`, when `firePeriod` is 0 and `autoFire` is `True` damage is computed based on time hitting the target.        |
+|`hitScan`              |bool       | Whether or not the weapon acts as an instantaneous hitscan (true) vs propagated projectile (false)    |
+|`fireSound`            |file       | The filename/location of the audio clip to use for the weapon firing                                  |
+|`fireSoundVol`         |ratio      | The volume to play the `fireSound` clip with                                                          |
+|`renderModel`          |bool       | Whether or not a weapon model is rendered in the first-person view                                    |
+|`modelSpec`            |`ArticulatedModel::Specification` | Any-based specification for the weapon being used                              |
+|`renderBullets`        |bool       | Whether or not bullets are rendered from the barrel of the weapon when fired                          |
+|`bulletSpeed`          |m/s        | The speed of rendered bullets                                                                         |
+|`bulletGravity`        |m/s²       | The gravity to apply to bullets (0 for no droop)                                                      |
 |`renderDecals`         |bool       | Whether or not bullet hole decals are put on misses when `autoFire` is `False` and `firePeriod` > 0 (i.e. not in laser mode) |
 |`renderMuzzleFlash`    |bool       | Whether or not a muzzle flash is rendered for the weapon                                  |
 |`muzzleOffset`         |`Vector3`(m)| The offset of the muzzle within the weapon frame                                         |

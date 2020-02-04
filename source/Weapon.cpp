@@ -1,9 +1,9 @@
 #include "Weapon.h"
 
-void Weapon::onSimulation(RealTime rdt) {
+void Weapon::onSimulation(RealTime dt) {
 	for (int p = 0; p < m_projectileArray.size(); ++p) {
 		Projectile& projectile = m_projectileArray[p];
-		projectile.onSimulation(rdt);
+		projectile.onSimulation(dt);
 		// Remove the projectile for timeout
 		if (projectile.remainingTime() <= 0) {
 			// Expire
@@ -77,8 +77,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 			bullet->setTrack(track);
 			*/
 
-			float grav = m_config->hitScan ? 0.0f : 10.0f;
-			m_projectileArray.push(Projectile(bullet, m_config->bulletSpeed, !m_config->hitScan, grav, fmin(closest+1.0f, 100.0f) / m_config->bulletSpeed));
+			m_projectileArray.push(Projectile(bullet, m_config->bulletSpeed, !m_config->hitScan, m_config->bulletGravity, fmin(closest+1.0f, 100.0f) / m_config->bulletSpeed));
 			m_scene->insert(bullet);
 		}
 		// Laser weapon (very hacky for now...)
