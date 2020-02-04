@@ -38,8 +38,6 @@ void App::onInit() {
 	Array<String> sessionIds;
 	experimentConfig.getSessionIds(sessionIds);
 
-	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon));
-
 	// Load per user settings from file
 	userTable = UserTable::load(startupConfig.userConfig());
 	userTable.printToLog();
@@ -72,6 +70,8 @@ void App::onInit() {
 	setScene(PhysicsScene::create(m_ambientOcclusion));
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
+
+	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), scene(), activeCamera());
 
 	// Setup the GUI
 	showRenderingStats = false;
@@ -933,7 +933,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 
 	const RealTime now = System::time();
-	m_weapon->onSimulation(rdt, scene());
+	m_weapon->onSimulation(rdt);
 
 	// explosion animation
 	if (notNull(m_explosion) && m_explosionEndTime < now) {
@@ -1500,7 +1500,7 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 
 	typedScene<PhysicsScene>()->poseExceptExcluded(surface, "player");
 
-	m_weapon->onPose(surface, activeCamera());
+	m_weapon->onPose(surface);
 }
 
 void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {

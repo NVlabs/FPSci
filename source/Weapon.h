@@ -20,9 +20,6 @@ public:
 		m_gravVel += m_gravity * (float)rdt;
 		m_gravVel = fmin(m_gravVel, m_maxVel);
 		entity->setFrame(entity->frame() + entity->frame().lookVector()*m_velocity*(float)rdt - Vector3(0,m_gravVel,0)*(float)rdt);
-		if (m_collision) {
-			// Implement bullet collision detection here
-		}
 	}
 
 	double remainingTime() { return m_totalTime; }
@@ -41,8 +38,8 @@ protected:
 
 class Weapon : Entity {
 public:
-	static shared_ptr<Weapon> create(shared_ptr<WeaponConfig> config) {
-		return createShared<Weapon>(config);
+	static shared_ptr<Weapon> create(shared_ptr<WeaponConfig> config, shared_ptr<Scene> scene, shared_ptr<Camera> cam) {
+		return createShared<Weapon>(config, scene, cam);
 	};
 
 	shared_ptr<TargetEntity> fire(const Array<shared_ptr<TargetEntity>>& targets, 
@@ -51,8 +48,8 @@ public:
 		Model::HitInfo &hitInfo, 
 		Array<shared_ptr<Entity>> dontHit = Array<shared_ptr<Entity>>());
 
-	void onSimulation(RealTime rdt, const shared_ptr<Scene>& scene);
-	void onPose(Array<shared_ptr<Surface> >& surface, const shared_ptr<Camera>& camera);
+	void onSimulation(RealTime rdt);
+	void onPose(Array<shared_ptr<Surface> >& surface);
 
 	void loadModels() {
 		// Create the view model
@@ -77,28 +74,22 @@ public:
 		// Check for play mode specific parameters
 		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound));
 	}
-	void setConfig(const WeaponConfig& config) {
-		m_config = std::make_shared<WeaponConfig>(config);
-	}
-	void setCamera(const shared_ptr<Camera>& cam) {
-		m_camera = cam;
-	}
-	void setScene(const shared_ptr<Scene>& scene) {
-		m_scene = scene;
-	}
+	void setConfig(const WeaponConfig& config) { m_config = std::make_shared<WeaponConfig>(config); }
+	void setCamera(const shared_ptr<Camera>& cam) { m_camera = cam; }
+	void setScene(const shared_ptr<Scene>& scene) { m_scene = scene; }
 
 protected:
-	Weapon(shared_ptr<WeaponConfig> config) : m_config(config) {};
+	Weapon(shared_ptr<WeaponConfig> config, shared_ptr<Scene> scene, shared_ptr<Camera> cam) : m_config(config), m_scene(scene), m_camera(cam) {};
 	
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
 	shared_ptr<ArticulatedModel>    m_bulletModel;						///< Model for the "bullet"
 	shared_ptr<Sound>               m_fireSound;						///< Sound for weapon firing
 
-	shared_ptr<WeaponConfig>		m_config;
-	int								m_lastBulletId = 0;
+	shared_ptr<WeaponConfig>		m_config;							///< Weapon configuration
+	int								m_lastBulletId = 0;					///< Bullet ID (auto incremented)
 
-	shared_ptr<Scene>				m_scene;
-	shared_ptr<Camera>				m_camera;
+	shared_ptr<Scene>				m_scene;							///< Scene for weapon
+	shared_ptr<Camera>				m_camera;							///< Camera for weapon
 
 	Array<Projectile>               m_projectileArray;					///< Arrray of drawn projectiles
 };

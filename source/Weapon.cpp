@@ -1,34 +1,34 @@
 #include "Weapon.h"
 
-void Weapon::onSimulation(RealTime rdt, const shared_ptr<Scene>& scene) {
+void Weapon::onSimulation(RealTime rdt) {
 	for (int p = 0; p < m_projectileArray.size(); ++p) {
 		Projectile& projectile = m_projectileArray[p];
 		projectile.onSimulation(rdt);
 		if (!m_config->hitScan) {
-			// Check for target intersection here
+			// Hit detection here
 		}
 		// Remove the projectile for timeout
 		if (projectile.remainingTime() <= 0) {
 			// Expire
-			scene->removeEntity(projectile.entity->name());
+			m_scene->removeEntity(projectile.entity->name());
 			m_projectileArray.fastRemove(p);
 			--p;
 		}
 	}
 }
 
-void Weapon::onPose(Array<shared_ptr<Surface> >& surface, const shared_ptr<Camera>& camera) {
+void Weapon::onPose(Array<shared_ptr<Surface> >& surface) {
 	if (m_config->renderModel || m_config->renderBullets || m_config->renderMuzzleFlash) {
 		// Update the weapon frame for all of these cases
 		const float yScale = -0.12f;
 		const float zScale = -yScale * 0.5f;
-		const float lookY = camera->frame().lookVector().y;
-		m_frame = camera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
+		const float lookY = m_camera->frame().lookVector().y;
+		m_frame = m_camera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
 		// Pose the view model (weapon) for render here
 		if (m_config->renderModel) {
-			const float prevLookY = camera->previousFrame().lookVector().y;
+			const float prevLookY = m_camera->previousFrame().lookVector().y;
 			const CFrame prevWeaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f + prevLookY * yScale, -1.1f + prevLookY * zScale, 10, 5);
-			m_viewModel->pose(surface, m_frame, camera->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
+			m_viewModel->pose(surface, m_frame, m_camera->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
 		}
 	}
 }
