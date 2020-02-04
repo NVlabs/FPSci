@@ -2,13 +2,30 @@
 #include <G3D/G3D.h>
 #include "ConfigFiles.h"
 
-class Projectile {
+class Projectile : Entity {
 public:
 	shared_ptr<VisibleEntity>       entity;
+	bool							collision = false;
 	/** When in hitscan mode */
 	RealTime                        endTime;
 	Projectile() : endTime(0) {}
 	Projectile(const shared_ptr<VisibleEntity>& e, RealTime t = 0) : entity(e), endTime(t) {}
+	Projectile(const shared_ptr<VisibleEntity>& e, Vector3 position, Vector3 velocity, Vector3 gravity = Vector3(0, -10, 0), bool collision = false) {
+		m_frame = position;
+		m_velocity = velocity;
+		m_gravity = gravity;
+	}
+
+	void onSimulation(RealTime rdt) {
+		m_frame.translation += m_velocity * rdt + m_gravity * rdt*rdt;
+		if (collision) {
+			// Implement bullet collision detection here
+		}
+	}
+protected:
+	// Propagation mode
+	Vector3							m_velocity;
+	Vector3							m_gravity;
 };
 
 
@@ -28,7 +45,10 @@ public:
 	void onPose(Array<shared_ptr<Surface> >& surface, const shared_ptr<Camera>& camera);
 
 	void loadModels() {
+		// Create the view model
 		m_viewModel = ArticulatedModel::create(m_config->modelSpec, "viewModel");
+
+		// Create the bullet model
 		const static Any bulletSpec = PARSE_ANY(ArticulatedModel::Specification{
 			filename = "ifs/d10.ifs";
 			preprocess = {
