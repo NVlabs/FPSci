@@ -32,6 +32,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 	float closest = finf();
 	dontHit.append(targets);
 	m_scene->intersect(ray, closest, false, dontHit, hitInfo);
+	if (closest < finf()) { hitDist = closest; }
 
 	// Create the bullet (if we need to draw it or are using non-hitscan behavior)
 	if (m_config->renderBullets || !m_config->hitScan) {
@@ -44,7 +45,6 @@ shared_ptr<TargetEntity> Weapon::fire(
 		// If we hit the scene w/ this ray, angle it towards that collision point
 		if (closest < finf()) {
 			aimPoint = hitInfo.point;
-			hitDist = closest;
 		}
 		bulletStartFrame.lookAt(aimPoint);
 
@@ -92,7 +92,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 		target = nullptr;
 	}
 
-	if (m_config->firePeriod > 0.0f || !m_config->autoFire) {
+	if (!m_config->isLaser()) {
 		m_fireSound->play(m_config->fireSoundVol);
 		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
 	}

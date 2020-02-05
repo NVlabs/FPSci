@@ -663,6 +663,10 @@ public:
 
 	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
 
+	bool isLaser() {
+		return firePeriod == 0 && autoFire;
+	}
+
 	WeaponConfig() {}
 
 	/** Load from Any */

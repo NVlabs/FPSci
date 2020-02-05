@@ -1443,7 +1443,9 @@ void App::hitTarget(shared_ptr<TargetEntity> target) {
 		sess->accumulatePlayerAction(PlayerActionType::Destroy, target->name());
 	}
 	else {
-		target->playHitSound();
+		if (!sessConfig->weapon.isLaser()) {
+			target->playHitSound();
+		}
 		// Target 'hit', but still alive.
 		sess->accumulatePlayerAction(PlayerActionType::Hit, target->name());
 	}
@@ -1536,7 +1538,9 @@ void App::onUserInput(UserInput* ui) {
 							hitTarget(target);					// If we did, we are in hitscan mode, apply the damage and manage the target here
 						}
 						else {
-							m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
+							if(!sessConfig->weapon.isLaser()) { 
+								m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol); 
+							}
 							WeaponConfig& wConfig = sessConfig->weapon;
 							// Draw a decal here if we are in hitscan mode
 							if (wConfig.hitScan && wConfig.renderDecals && wConfig.firePeriod > 0.0f && hitDist < finf()) {
