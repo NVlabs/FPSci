@@ -964,6 +964,7 @@ void App::simulateProjectiles(RealTime dt) {
 				// Check for hit condition based on line segment/sphere intersection (naive approach)
 				if (projectileLine.intersectsSolidSphere(tSphere)) {
 					hitTarget(t);
+					projectile.clearRemainingTime();	// Stop the projectile here
 					hit = true;
 					// For now let's just hit 1 target at a time
 					break;
@@ -984,7 +985,7 @@ void App::simulateProjectiles(RealTime dt) {
 				if (closest < sessConfig->weapon.bulletSpeed * 2.0f * dt) {
 					// If we are within 2 simulation cycles of a wall, create the decal
 					drawDecal(info.point + 0.01*info.normal, info.normal, m_decalModel);
-					projectile.clearRemainingTime();
+					projectile.clearRemainingTime();	// Stop the projectile here
 					sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
 				}
 
