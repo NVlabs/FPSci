@@ -69,10 +69,7 @@ void App::onInit() {
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
-	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), 
-		scene(), 
-		activeCamera(), 
-		&m_projectileArray);
+	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), scene(), activeCamera(), &m_projectileArray);
 
 	// Setup the GUI
 	showRenderingStats = false;
@@ -1585,6 +1582,15 @@ void App::onUserInput(UserInput* ui) {
 			if (notNull(target)) {
 				// If we hit a target, destroy it
 				destroyTarget(hitIdx);
+			}
+			else {
+				// Draw a decal here if we are in hitscan mode
+				if (sessConfig->weapon.hitScan && sessConfig->weapon.renderDecals && hitDist < finf()) {
+					CFrame frame = activeCamera()->frame();
+					// Draw decal at the lookRay/world intersection
+					Point3 position = frame.translation + frame.lookRay().direction() * (hitDist - 0.01f);
+					drawDecal(position, info.normal, m_decalModel);
+				}
 			}
 		}
 	}
