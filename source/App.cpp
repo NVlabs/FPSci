@@ -72,7 +72,7 @@ void App::onInit() {
 	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), 
 		scene(), 
 		activeCamera(), 
-		shared_ptr<Array<Projectile>>(&m_projectileArray));
+		&m_projectileArray);
 
 	// Setup the GUI
 	showRenderingStats = false;
@@ -988,7 +988,6 @@ void App::simulateProjectiles(RealTime dt) {
 					projectile.clearRemainingTime();	// Stop the projectile here
 					sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
 				}
-
 			}
 		}
 	}

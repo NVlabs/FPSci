@@ -48,7 +48,7 @@ protected:
 
 class Weapon : Entity {
 public:
-	static shared_ptr<Weapon> create(shared_ptr<WeaponConfig> config, shared_ptr<Scene> scene, shared_ptr<Camera> cam, shared_ptr<Array<Projectile>> projectiles) {
+	static shared_ptr<Weapon> create(shared_ptr<WeaponConfig> config, shared_ptr<Scene> scene, shared_ptr<Camera> cam, Array<Projectile>* projectiles) {
 		return createShared<Weapon>(config, scene, cam, projectiles);
 	};
 
@@ -101,11 +101,11 @@ public:
 	void setScene(const shared_ptr<Scene>& scene) { m_scene = scene; }
 	void setScoped(bool state = true) { m_scoped = state; }
 
-	void setProjectiles(shared_ptr<Array<Projectile>> projectileArray) { m_projectiles = projectileArray; };
+	void setProjectiles(Array<Projectile>* projectileArray) { m_projectiles = projectileArray; };
 	bool scoped() { return m_scoped;  }
 
 protected:
-	Weapon(shared_ptr<WeaponConfig> config, shared_ptr<Scene>& scene, shared_ptr<Camera>& cam, shared_ptr<Array<Projectile>>& projectiles) : 
+	Weapon(shared_ptr<WeaponConfig> config, shared_ptr<Scene>& scene, shared_ptr<Camera>& cam, Array<Projectile>* projectiles) : 
 		m_config(config), m_scene(scene), m_camera(cam), m_projectiles(projectiles) {};
 
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
@@ -118,5 +118,5 @@ protected:
 
 	shared_ptr<Scene>				m_scene;							///< Scene for weapon
 	shared_ptr<Camera>				m_camera;							///< Camera for weapon
-	shared_ptr<Array<Projectile>>	m_projectiles;						///< Projectile array
+	Array<Projectile>*				m_projectiles;						///< Projectile array
 };
