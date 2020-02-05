@@ -1,18 +1,5 @@
 #include "Weapon.h"
 
-void Weapon::onSimulation(RealTime dt) {
-	for (int p = 0; p < m_projectileArray.size(); ++p) {
-		Projectile& projectile = m_projectileArray[p];
-		projectile.onSimulation(dt);
-		// Remove the projectile for timeout
-		if (projectile.remainingTime() <= 0) {
-			// Expire
-			m_scene->removeEntity(projectile.entity->name());
-			m_projectileArray.fastRemove(p);
-			--p;
-		}
-	}
-}
 
 void Weapon::onPose(Array<shared_ptr<Surface> >& surface) {
 	if (m_config->renderModel || m_config->renderBullets || m_config->renderMuzzleFlash) {
@@ -31,23 +18,20 @@ void Weapon::onPose(Array<shared_ptr<Surface> >& surface) {
 }
 
 shared_ptr<TargetEntity> Weapon::fire(
-	const Array<shared_ptr<TargetEntity>>& targets, 
+	const Array<shared_ptr<TargetEntity>>& targets,
 	int& targetIdx, 
 	float& hitDist, 
-	Model::HitInfo &hitInfo, 
-	Array<shared_ptr<Entity>> dontHit
+	Model::HitInfo& hitInfo, 
+	Array<shared_ptr<Entity>>& dontHit
 ){
 	static RealTime lastTime;
 	shared_ptr<TargetEntity> target = nullptr;
 
 	const Ray& ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
-	// Add to don't hit list here
-	for (auto target : targets) { dontHit.append(target); }
-	for (auto projectile : m_projectileArray) { dontHit.append(projectile.entity); }
 	// Check for closest hit (in scene, otherwise this ray hits the skybox)
 	float closest = finf();
-	Model::HitInfo info;
-	m_scene->intersect(ray, closest, false, dontHit, info);
+	dontHit.append(targets);
+	m_scene->intersect(ray, closest, false, dontHit, hitInfo);
 
 	// Create the bullet (if we need to draw it or are using non-hitscan behavior)
 	if (m_config->renderBullets || !m_config->hitScan) {
@@ -59,7 +43,8 @@ shared_ptr<TargetEntity> Weapon::fire(
 		Point3 aimPoint = m_camera->frame().translation + m_camera->frame().lookVector() * 1000.0f;
 		// If we hit the scene w/ this ray, angle it towards that collision point
 		if (closest < finf()) {
-			aimPoint = info.point;
+			aimPoint = hitInfo.point;
+			hitDist = closest;
 		}
 		bulletStartFrame.lookAt(aimPoint);
 
@@ -77,7 +62,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 			bullet->setTrack(track);
 			*/
 
-			m_projectileArray.push(Projectile(bullet, m_config->bulletSpeed, !m_config->hitScan, m_config->bulletGravity, fmin(closest+1.0f, 100.0f) / m_config->bulletSpeed));
+			m_projectiles->push(Projectile(bullet, m_config->bulletSpeed, !m_config->hitScan, m_config->bulletGravity, fmin((closest+1.0f)/ m_config->bulletSpeed, 10.0f)));
 			m_scene->insert(bullet);
 		}
 		// Laser weapon (very hacky for now...)

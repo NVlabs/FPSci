@@ -101,10 +101,13 @@ protected:
 	shared_ptr<ArticulatedModel>	m_decalModel;						///< Model for the miss decal
 	shared_ptr<VisibleEntity>		m_lastDecal;						///< Model for the last decal we created
 	shared_ptr<VisibleEntity>		m_firstDecal;						///< Model for the first decal we created
-	shared_ptr<VisibleEntity>		m_explosion;						///< Model for target destroyed decal
-	RealTime						m_explosionEndTime;					///< Time for end of explosion
+
+	Array<shared_ptr<VisibleEntity>>m_explosions;						///< Model for target destroyed decal
+	Array<RealTime>					m_explosionEndTimes;				///< Time for end of explosion
+	int								m_explosionIdx = 0;					///< Explosion index
+	const int						m_maxExplosions = 20;				///< Maximum number of simultaneous explosions
 		
-	const int m_MatTableSize = 10;										///< Set this to set # of color "levels"
+	const int						m_MatTableSize = 10;				///< Set this to set # of color "levels"
 	Array<shared_ptr<UniversalMaterial>>	m_materials;				///< This stores the color materials
 
 	GuiDropDownList*				m_sessDropDown;						///< Dropdown menu for session selection
@@ -149,6 +152,8 @@ protected:
     shared_ptr<GuiWindow>           m_userSettingsWindow;
     bool                            m_userSettingsMode = true;
 
+	Array<Projectile>               m_projectileArray;					///< Arrray of drawn projectiles
+
 	/** Called from onInit */
 	void makeGUI();
 	void updateControls();
@@ -157,6 +162,8 @@ protected:
     void updateUserGUI();
 
 	void hitTarget(shared_ptr<TargetEntity>);
+	void simulateProjectiles(RealTime dt);
+	void drawDecal(const Point3& cameraOffset, const Vector3& normal, const shared_ptr<ArticulatedModel>& model);
 
 	void drawHUD(RenderDevice *rd);
 	void drawClickIndicator(RenderDevice *rd, String mode);

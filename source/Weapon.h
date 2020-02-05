@@ -31,6 +31,7 @@ public:
 	}
 
 	double remainingTime() { return m_totalTime; }
+	void clearRemainingTime() { m_totalTime = 0.0f; }
 
 protected:
 	// Timed mode
@@ -47,17 +48,16 @@ protected:
 
 class Weapon : Entity {
 public:
-	static shared_ptr<Weapon> create(shared_ptr<WeaponConfig> config, shared_ptr<Scene> scene, shared_ptr<Camera> cam) {
-		return createShared<Weapon>(config, scene, cam);
+	static shared_ptr<Weapon> create(shared_ptr<WeaponConfig> config, shared_ptr<Scene> scene, shared_ptr<Camera> cam, shared_ptr<Array<Projectile>> projectiles) {
+		return createShared<Weapon>(config, scene, cam, projectiles);
 	};
 
-	shared_ptr<TargetEntity> fire(const Array<shared_ptr<TargetEntity>>& targets, 
+	shared_ptr<TargetEntity> fire(const Array<shared_ptr<TargetEntity>>& targets,
 		int& targetIdx,
 		float& hitDist, 
-		Model::HitInfo &hitInfo, 
-		Array<shared_ptr<Entity>> dontHit = Array<shared_ptr<Entity>>());
+		Model::HitInfo& hitInfo, 
+		Array<shared_ptr<Entity>>& dontHit);
 
-	void onSimulation(RealTime rdt);
 	void onPose(Array<shared_ptr<Surface> >& surface);
 
 	void loadModels() {
@@ -101,12 +101,13 @@ public:
 	void setScene(const shared_ptr<Scene>& scene) { m_scene = scene; }
 	void setScoped(bool state = true) { m_scoped = state; }
 
-	Array<Projectile> projectiles() { return m_projectileArray;  };
+	void setProjectiles(shared_ptr<Array<Projectile>> projectileArray) { m_projectiles = projectileArray; };
 	bool scoped() { return m_scoped;  }
 
 protected:
-	Weapon(shared_ptr<WeaponConfig> config, shared_ptr<Scene> scene, shared_ptr<Camera> cam) : m_config(config), m_scene(scene), m_camera(cam) {};
-	
+	Weapon(shared_ptr<WeaponConfig> config, shared_ptr<Scene>& scene, shared_ptr<Camera>& cam, shared_ptr<Array<Projectile>>& projectiles) : 
+		m_config(config), m_scene(scene), m_camera(cam), m_projectiles(projectiles) {};
+
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
 	shared_ptr<ArticulatedModel>    m_bulletModel;						///< Model for the "bullet"
 	shared_ptr<Sound>               m_fireSound;						///< Sound for weapon firing
@@ -117,6 +118,5 @@ protected:
 
 	shared_ptr<Scene>				m_scene;							///< Scene for weapon
 	shared_ptr<Camera>				m_camera;							///< Camera for weapon
-
-	Array<Projectile>               m_projectileArray;					///< Arrray of drawn projectiles
+	shared_ptr<Array<Projectile>>	m_projectiles;						///< Projectile array
 };

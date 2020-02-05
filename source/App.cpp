@@ -69,7 +69,10 @@ void App::onInit() {
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
-	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), scene(), activeCamera());
+	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), 
+		scene(), 
+		activeCamera(), 
+		shared_ptr<Array<Projectile>>(&m_projectileArray));
 
 	// Setup the GUI
 	showRenderingStats = false;
@@ -901,6 +904,23 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 	}
 }
 
+void App::drawDecal(const Point3& point, const Vector3& normal, const shared_ptr<ArticulatedModel>& model) {
+	CFrame decalFrame = CFrame(point);
+	// Set the decal rotation to match the normal here
+	decalFrame.lookAt(decalFrame.translation - normal);
+
+	// Only allow 1 miss decal at a time (remove last decal if present)
+	if (notNull(m_lastDecal)) {
+		scene()->remove(m_lastDecal);
+	}
+	// Add the new decal to the scene
+	const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastUniqueID), scene().get(), m_decalModel, decalFrame);
+	newDecal->setCastsShadows(false);
+	scene()->insert(newDecal);
+	m_lastDecal = m_firstDecal;
+	m_firstDecal = newDecal;
+}
+
 Point2 App::getViewDirection()
 {   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.
 	Point3 view_cartesian = activeCamera()->frame().lookVector();
@@ -912,6 +932,65 @@ Point2 App::getViewDirection()
 Point3 App::getPlayerLocation()
 {
 	return activeCamera()->frame().translation;
+}
+
+void App::simulateProjectiles(RealTime dt) {
+	// Draw projectiles
+	for (int p = 0; p < m_projectileArray.size(); p++) {
+		Projectile& projectile = m_projectileArray[p];
+		projectile.onSimulation(dt);
+		// Remove the projectile for timeout
+		if (projectile.remainingTime() <= 0) {
+			// Expire
+			scene()->removeEntity(projectile.entity->name());
+			m_projectileArray.fastRemove(p);
+			--p;
+		}
+		else if (!sessConfig->weapon.hitScan) {
+			// Look for collision with the target/scene
+			const LineSegment projectileLine = projectile.getCollisionSegment();
+			const Point3 p0 = projectileLine.point(0);
+			const Point3 p1 = projectileLine.point(1);
+#ifdef DRAW_BULLET_PROXIES
+			const shared_ptr<CylinderShape> lineProxy = std::make_shared<CylinderShape>(Cylinder(p0, p1, 0.01f));
+			debugDraw(lineProxy, 0.01f, Color3::green(), Color4::clear());
+#endif
+			bool hit = false;
+			for (shared_ptr<TargetEntity> t : targetArray) {
+				const Sphere tSphere = Sphere(t->frame().translation, t->size());
+#ifdef DRAW_BULLET_PROXIES
+				debugDraw(tSphere, 0.01f, Color3::yellow(), Color4::clear());
+#endif
+				// Check for hit condition based on line segment/sphere intersection (naive approach)
+				if (projectileLine.intersectsSolidSphere(tSphere)) {
+					hitTarget(t);
+					hit = true;
+					// For now let's just hit 1 target at a time
+					break;
+				}
+			}
+			// Handle decals here
+			if (!hit) {
+				// Cast a ray to see if we hit the scene
+				Ray ray = Ray(p1, (p1 - p0).unit());
+				// Add to don't hit list here
+				Array<shared_ptr<Entity>> dontHit = { m_lastDecal, m_firstDecal };
+				dontHit.append(m_explosions);
+				for (auto proj : m_projectileArray) { dontHit.append(proj.entity); }
+				// Check for closest hit (in scene, otherwise this ray hits the skybox)
+				float closest = finf();
+				Model::HitInfo info;
+				scene()->intersect(ray, closest, false, dontHit, info);
+				if (closest < sessConfig->weapon.bulletSpeed * 2.0f * dt) {
+					// If we are within 2 simulation cycles of a wall, create the decal
+					drawDecal(info.point + 0.01*info.normal, info.normal, m_decalModel);
+					projectile.clearRemainingTime();
+					sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
+				}
+
+			}
+		}
+	}
 }
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
@@ -930,37 +1009,22 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		m_userSettingsWindow->setVisible(m_userSettingsMode);		// Make sure window stays coherent w/ user settings mode
 	}
 
-	m_weapon->onSimulation(sdt);
-
-	// Look for projectile/target intersection (not hitscan)
-	if (!sessConfig->weapon.hitScan) {	
-		for (Projectile p : m_weapon->projectiles()) {
-			const LineSegment projectileLine = p.getCollisionSegment();
-#ifdef DRAW_BULLET_PROXIES
-			const shared_ptr<CylinderShape> lineProxy = std::make_shared<CylinderShape>(Cylinder(projectileLine.point(0), projectileLine.point(1), 0.01f));
-			debugDraw(lineProxy, 0.01f, Color3::green(), Color4::clear());
-#endif
-			for (shared_ptr<TargetEntity> t : targetArray) {
-				const Sphere tSphere = Sphere(t->frame().translation, t->size());
-#ifdef DRAW_BULLET_PROXIES
-				debugDraw(tSphere, 0.01f, Color3::yellow(), Color4::clear());
-#endif
-				// Check for hit condition based on line segment/sphere intersection (naive approach)
-				if(projectileLine.intersectsSolidSphere(tSphere)){
-					hitTarget(t);
-				}
-			}
-		}
-	}	
+	// Simulate the projectiles
+	simulateProjectiles(sdt);
 
 	// explosion animation
 	const RealTime now = System::time();
-	if (notNull(m_explosion) && m_explosionEndTime < now) {
-		scene()->remove(m_explosion);
-		m_explosion = nullptr;
-	}
-	else {
-		// could update animation here...
+	for (int i = 0; i < m_explosions.size(); i++) {
+		shared_ptr<VisibleEntity> explosion = m_explosions[i];
+		if (m_explosionEndTimes[i] < now) {
+			scene()->remove(explosion);
+			m_explosions.fastRemove(i);
+			m_explosionEndTimes.fastRemove(i);
+			i--;
+		}
+		else {
+			// could update animation here...
+		}
 	}
 
 	// Move the player
@@ -1361,11 +1425,14 @@ void App::hitTarget(shared_ptr<TargetEntity> target) {
 		// create explosion animation
 		CFrame explosionFrame = target->frame();
 		explosionFrame.rotation = activeCamera()->frame().rotation;
-		const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModels[target->scaleIndex()], explosionFrame);
+		const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create(format("explosion%d", m_explosionIdx), scene().get(), m_explosionModels[target->scaleIndex()], explosionFrame);
+		m_explosionIdx++;
+		m_explosionIdx %= m_maxExplosions;
 		scene()->insert(newExplosion);
-		m_explosion = newExplosion;
-		m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
+		m_explosions.push(newExplosion);
+		m_explosionEndTimes.push(System::time() + 0.1f); // make explosion end in 0.5 seconds
 		target->playDestroySound();
+
 		sess->countDestroy();
 		respawned = target->respawn();
 		// check for respawn
@@ -1421,12 +1488,12 @@ void App::onUserInput(UserInput* ui) {
 
 	// Handle scope behavior
 	for (GKey scopeButton : keyMap.map["scope"]) {
+		float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
 		// Are we using scope toggling?
 		if (sessConfig->weapon.scopeToggle) {
 			if (ui->keyPressed(scopeButton)) {
 				bool scoped = !m_weapon->scoped();
 				m_weapon->setScoped(scoped);
-				float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
 				float FoV = scoped ? scopeFoV : sessConfig->render.hFoV;
 				FoV *= pif() / 180.0f;
 				activeCamera()->setFieldOfView(FoV, FOVDirection::HORIZONTAL);
@@ -1435,7 +1502,7 @@ void App::onUserInput(UserInput* ui) {
 		// Otherwise just set scope based on the state of the scope button
 		else {
 			if (ui->keyDown(scopeButton)) {
-				activeCamera()->setFieldOfView(sessConfig->weapon.scopeFoV * pif() / 180.0f, FOVDirection::HORIZONTAL);
+				activeCamera()->setFieldOfView(scopeFoV * pif() / 180.0f, FOVDirection::HORIZONTAL);
 			}
 			else {
 				activeCamera()->setFieldOfView(sessConfig->render.hFoV * pif() / 180.0f, FOVDirection::HORIZONTAL);
@@ -1461,36 +1528,25 @@ void App::onUserInput(UserInput* ui) {
 					if (sess->canFire()) {
 						fired = true;
 						sess->countClick();														// Count clicks
-						Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
+						Array<shared_ptr<Entity>> dontHit = { m_lastDecal, m_firstDecal };
+						dontHit.append(m_explosions);
+						for (auto projectile : m_projectileArray) { dontHit.append(projectile.entity); }
 						Model::HitInfo info;
 						float hitDist = finf();
 						int hitIdx = -1;
 						shared_ptr<TargetEntity> target = m_weapon->fire(targetArray, hitIdx, hitDist, info, dontHit);			// Fire the weapon
 						if (notNull(target)) {					// Check if we hit anything
-							hitTarget(target);					// If we did, apply the damage and manage the target here
+							hitTarget(target);					// If we did, we are in hitscan mode, apply the damage and manage the target here
 						}
-						else {	// We didn't hit a target
+						else {
 							m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
-							if (sessConfig->weapon.renderDecals && sessConfig->weapon.firePeriod > 0.0f && hitDist < finf()) {
-								// compute world intersection
-								const Ray& ray = activeCamera()->frame().lookRay();
-								// Find where to put the decal
-								CFrame decalFrame = activeCamera()->frame();
-								decalFrame.translation += ray.direction() * (hitDist - 0.01f);
-								// Set the decal rotation to match the normal here
-								decalFrame.lookAt(decalFrame.translation - info.normal);
-
-								// Only allow 1 miss decal at a time (remove last decal if present)
-								if (notNull(m_lastDecal)) {
-									scene()->remove(m_lastDecal);
-								}
-
-								// Add the new decal to the scene
-								const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastUniqueID), scene().get(), m_decalModel, decalFrame);
-								newDecal->setCastsShadows(false);
-								scene()->insert(newDecal);
-								m_lastDecal = m_firstDecal;
-								m_firstDecal = newDecal;
+							WeaponConfig& wConfig = sessConfig->weapon;
+							// Draw a decal here if we are in hitscan mode
+							if (wConfig.hitScan && wConfig.renderDecals && wConfig.firePeriod > 0.0f && hitDist < finf()) {
+								CFrame frame = activeCamera()->frame();
+								// Draw decal at the lookRay/world intersection
+								Point3 position = frame.translation + frame.lookRay().direction() * (hitDist - 0.01f);
+								drawDecal(position, info.normal, m_decalModel);
 							}
 							// Target still present, must be 'miss'.
 							sess->accumulatePlayerAction(PlayerActionType::Miss);
@@ -1519,9 +1575,11 @@ void App::onUserInput(UserInput* ui) {
 	
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
 		if (ui->keyPressed(dummyShoot) && (sess->presentationState == PresentationState::feedback)) {
-			Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
+			Array<shared_ptr<Entity>> dontHit = { m_lastDecal, m_firstDecal };
+			dontHit.append(m_explosions);
+			for (auto projectile : m_projectileArray) { dontHit.append(projectile.entity); }
 			Model::HitInfo info;
-			float hitDist = fnan();
+			float hitDist = finf();
 			int hitIdx = -1;
 			shared_ptr<TargetEntity> target = m_weapon->fire(targetArray, hitIdx, hitDist, info, dontHit);			// Fire the weapon
 			if (notNull(target)) {
