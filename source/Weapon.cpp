@@ -48,8 +48,8 @@ shared_ptr<TargetEntity> Weapon::fire(
 		}
 		bulletStartFrame.lookAt(aimPoint);
 
-		// Non-laser weapon
-		if (m_config->firePeriod > 0.0f || !m_config->autoFire) {
+		// Non-laser weapon, draw a projectile
+		if (!m_config->isLaser()) {
 			const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastBulletId), m_scene.get(), m_bulletModel, bulletStartFrame);
 			bullet->setShouldBeSaved(false);
 			bullet->setCanCauseCollisions(false);

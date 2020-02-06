@@ -30,6 +30,21 @@ public:
 		return LineSegment::fromTwoPoints(m_lastPos, entity->frame().translation);
 	}
 
+	Ray getCollisionRay() {
+		const Point3 currPos = entity->frame().translation;
+		return Ray::fromOriginAndDirection(currPos, (m_lastPos-currPos).unit());
+	}
+
+	Ray getDecalRay() {
+		const Point3 currPos = entity->frame().translation;
+		return Ray::fromOriginAndDirection(currPos, (currPos - m_lastPos).unit());
+	}
+
+	void getLastTwoPoints(Point3& p_old, Point3& p_new) {
+		p_old = m_lastPos;
+		p_new = entity->frame().translation;
+	}
+
 	double remainingTime() { return m_totalTime; }
 	void clearRemainingTime() { m_totalTime = 0.0f; }
 

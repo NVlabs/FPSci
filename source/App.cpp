@@ -940,49 +940,41 @@ void App::simulateProjectiles(RealTime dt) {
 		if (projectile.remainingTime() <= 0) {
 			// Expire
 			scene()->removeEntity(projectile.entity->name());
-			m_projectileArray.fastRemove(p);
+			m_projectileArray.remove(p);
 			--p;
 		}
 		else if (!sessConfig->weapon.hitScan) {
-			// Look for collision with the target/scene
-			const LineSegment projectileLine = projectile.getCollisionSegment();
-			const Point3 p0 = projectileLine.point(0);
-			const Point3 p1 = projectileLine.point(1);
-#ifdef DRAW_BULLET_PROXIES
-			const shared_ptr<CylinderShape> lineProxy = std::make_shared<CylinderShape>(Cylinder(p0, p1, 0.01f));
-			debugDraw(lineProxy, 0.01f, Color3::green(), Color4::clear());
-#endif
-			bool hit = false;
+			// Distance at which to delcare a hit
+			const float hitThreshold = sessConfig->weapon.bulletSpeed * 2.0f * (float)dt;
+			// Look for collision with the targets
+			const Ray ray = projectile.getCollisionRay();
+			float closest = finf();
+			shared_ptr<TargetEntity> closestTarget;
 			for (shared_ptr<TargetEntity> t : targetArray) {
-				const Sphere tSphere = Sphere(t->frame().translation, t->size());
-#ifdef DRAW_BULLET_PROXIES
-				debugDraw(tSphere, 0.01f, Color3::yellow(), Color4::clear());
-#endif
-				// Check for hit condition based on line segment/sphere intersection (naive approach)
-				if (projectileLine.intersectsSolidSphere(tSphere)) {
-					hitTarget(t);
-					projectile.clearRemainingTime();	// Stop the projectile here
-					hit = true;
-					// For now let's just hit 1 target at a time
-					break;
+				if (t->intersect(ray, closest)) {
+					closestTarget = t;
 				}
 			}
-			// Handle decals here
-			if (!hit) {
-				// Cast a ray to see if we hit the scene
-				Ray ray = Ray(p1, (p1 - p0).unit());
-				// Add to don't hit list here
+			// Check for target hit
+			if (closest < hitThreshold) {
+				hitTarget(closestTarget);
+				projectile.clearRemainingTime();
+			}
+			// Handle (miss) decals here
+			else {
 				Array<shared_ptr<Entity>> dontHit = { m_lastDecal, m_firstDecal };
 				dontHit.append(m_explosions);
+				dontHit.append(targetArray);
 				for (auto proj : m_projectileArray) { dontHit.append(proj.entity); }
 				// Check for closest hit (in scene, otherwise this ray hits the skybox)
-				float closest = finf();
+				//closest = finf();
 				Model::HitInfo info;
+				const Ray ray = projectile.getDecalRay();
 				scene()->intersect(ray, closest, false, dontHit, info);
-				if (closest < sessConfig->weapon.bulletSpeed * 2.0f * dt) {
+				if (closest < hitThreshold) {
 					// If we are within 2 simulation cycles of a wall, create the decal
 					drawDecal(info.point + 0.01*info.normal, info.normal, m_decalModel);
-					projectile.clearRemainingTime();	// Stop the projectile here
+					projectile.clearRemainingTime();							// Stop the projectile here
 					sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
 				}
 			}
@@ -1548,9 +1540,9 @@ void App::onUserInput(UserInput* ui) {
 								// Draw decal at the lookRay/world intersection
 								Point3 position = frame.translation + frame.lookRay().direction() * (hitDist - 0.01f);
 								drawDecal(position, info.normal, m_decalModel);
+								// Target still present and in hitscan, must be 'miss'.
+								sess->accumulatePlayerAction(PlayerActionType::Miss);
 							}
-							// Target still present, must be 'miss'.
-							sess->accumulatePlayerAction(PlayerActionType::Miss);
 						}
 					}
 					// Avoid accumulating invalid clicks during holds...
