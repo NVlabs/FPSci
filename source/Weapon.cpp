@@ -92,6 +92,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 		target = nullptr;
 	}
 
+	// If we're not in laser mode play the sounce (once) here
 	if (!m_config->isLaser()) {
 		m_fireSound->play(m_config->fireSoundVol);
 		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);

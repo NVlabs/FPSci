@@ -1506,14 +1506,18 @@ void App::onUserInput(UserInput* ui) {
 		// Require release between clicks for non-autoFire modes
 		if (ui->keyReleased(shootButton)) {
 			m_buttonUp = true;
+			haveReleased = true;
+			m_weapon->setFiring(false);
 			if (!sessConfig->weapon.autoFire) {
-				haveReleased = true;
 				fired = false;
 			}
 		}
 		// Handle shoot down (fire) event here
 		if (ui->keyDown(shootButton)) {
 			if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
+				if (sessConfig->weapon.isLaser()) {	// Start firing here
+					m_weapon->setFiring(true);
+				}
 				// check for hit, add graphics, update target state
 				if ((sess->presentationState == PresentationState::task) && !m_userSettingsMode) {
 					if (sess->canFire()) {
