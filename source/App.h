@@ -158,6 +158,7 @@ protected:
 	void makeGUI();
 	void updateControls();
 	void loadModels();
+	void loadDecals();
 	void updateUser(void);
     void updateUserGUI();
 

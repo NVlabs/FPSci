@@ -654,6 +654,7 @@ public:
 	float	bulletGravity = 0.0f;										///< Gravity to use for bullets (default is no droop)
 	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
 	//String missDecal = "bullet-decal-256x256.png";					///< The decal to place where the shot misses
+	float	decalScale = 1.0f;											///< Scale to apply to the decal
 	float	fireSpread = 0;												///< The spread of the fire
 	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
 	float	damageRollOffDistance = 0;									///< Damage roll of w/ distance
@@ -699,6 +700,7 @@ public:
 			reader.getIfPresent("bulletSpeed", bulletSpeed);
 			reader.getIfPresent("bulletGravity", bulletGravity);
 			//reader.getIfPresent("missDecal", missDecal);
+			reader.getIfPresent("decalScale", decalScale);
 			reader.getIfPresent("fireSpread", fireSpread);
 			reader.getIfPresent("damageRollOffAim", damageRollOffAim);
 			reader.getIfPresent("damageRollOffDistance", damageRollOffDistance);
@@ -734,6 +736,7 @@ public:
 		if(forceAll || def.scopeFoV != scopeFoV)							a["scopeFoV"] = scopeFoV;
 		if (forceAll || def.scopeToggle != scopeToggle)						a["scopeToggle"] = scopeToggle;
 		if(forceAll || !(def.modelSpec == modelSpec))						a["modelSpec"] = modelSpec;
+		if (forceAll || def.decalScale != decalScale)						a["decalScale"] = decalScale;
 		return a;
 	}
 };

@@ -386,25 +386,28 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	return target;
 }
 
+void App::loadDecals() {
+	Any decalSpec = PARSE_ANY(ArticulatedModel::Specification{
+	filename = "ifs/square.ifs";
+	preprocess = {
+		transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
+		setMaterial(all(), UniversalMaterial::Specification{
+			lambertian = Texture::Specification {
+				filename = "bullet-decal-256x256.png";
+				encoding = Color3(1, 1, 1);
+			};
+		});
+	};
+		});
+	decalSpec.set("scale", sessConfig->weapon.decalScale);
+	m_decalModel = ArticulatedModel::create(decalSpec, "decalModel");
+}
+
 void App::loadModels() {
 	if ((experimentConfig.weapon.renderModel || startupConfig.developerMode) && !experimentConfig.weapon.modelSpec.filename.empty()) {
 		// Load the model if we (might) need it
 		m_weapon->loadModels();
 	}
-
-	const static Any decalSpec = PARSE_ANY(ArticulatedModel::Specification{
-		filename = "ifs/square.ifs";
-		preprocess = {
-			transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
-			setMaterial(all(), UniversalMaterial::Specification{
-				lambertian = Texture::Specification {
-					filename = "bullet-decal-256x256.png";
-					encoding = Color3(1, 1, 1);
-				};
-			});
-		}; });
-
-	m_decalModel = ArticulatedModel::create(decalSpec, "decalModel");
 
 	// Add all the unqiue targets to this list
 	Table<String, Any> toBuild;
@@ -753,6 +756,7 @@ void App::updateSession(const String& id) {
 	m_weapon->setCamera(activeCamera());
 
 	// Update weapon model (if drawn) and sounds
+	loadDecals();
 	m_weapon->loadModels();
 	m_weapon->loadSounds();
 	m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));

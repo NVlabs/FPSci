@@ -34,8 +34,9 @@ This file provides information about the weapon to be used in the experiment. De
 |`bulletSpeed`          |m/s        | The speed of rendered bullets                                                                         |
 |`bulletGravity`        |m/s²       | The gravity to apply to bullets (0 for no droop)                                                      |
 |`renderDecals`         |bool       | Whether or not bullet hole decals are put on misses when `autoFire` is `False` and `firePeriod` > 0 (i.e. not in laser mode) |
-|`renderMuzzleFlash`    |bool       | Whether or not a muzzle flash is rendered for the weapon                                  |
-|`muzzleOffset`         |`Vector3`(m)| The offset of the muzzle within the weapon frame                                         |
+|`decalScale`           |float      | A scale to apply to the decals drawn by this weapon, `1.0` means do not scale                         |
+|`renderMuzzleFlash`    |bool       | Whether or not a muzzle flash is rendered for the weapon                                              |
+|`muzzleOffset`         |`Vector3`(m)| The offset of the muzzle within the weapon frame                                                     |
 |`scopeFoV`             |float      | (Horizontal) field of view for the camera when using a scope (set to `0` for no scope)                |
 |`scopeToggle`          |bool       | Whether or not the scope is active when the keymapped button is held (false) or toggled using this button (true)|
 
