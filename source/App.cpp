@@ -820,6 +820,11 @@ void App::updateSession(const String& id) {
 }
 
 void App::quitRequest() {
+	// End session logging
+	if (sess != nullptr) {
+		sess->endLogging();
+	}
+	// Merge Python log into session log (if logging)
 	if (m_pyLogger != nullptr) {
 		m_pyLogger->mergeLogToDb(true);
 	}

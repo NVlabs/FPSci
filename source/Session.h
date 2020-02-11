@@ -168,6 +168,8 @@ public:
 	bool isComplete() const;
 	void nextCondition();
 
+	void endLogging();
+
 	/** randomly returns either +1 or -1 **/	
 	static float randSign() {
 		if (Random::common().uniform() > 0.5) {

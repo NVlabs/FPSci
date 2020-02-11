@@ -428,7 +428,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 
 void Session::accumulateTrajectories()
 {
-	if (m_config->logger.logTargetTrajectories) {
+	if (notNull(m_logger) && m_config->logger.logTargetTrajectories) {
 		for (shared_ptr<TargetEntity> target : m_app->targetArray) {
 			if (!target->isLogged()) continue;
 			// recording target trajectories
@@ -450,7 +450,7 @@ void Session::accumulateTrajectories()
 
 void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 {
-	if (m_config->logger.logPlayerActions) {
+	if (notNull(m_logger) && m_config->logger.logPlayerActions) {
 		BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 		// recording target trajectories
 		Point2 dir = m_app->getViewDirection();
@@ -462,7 +462,7 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
-	if (m_config->logger.logFrameInfo) {
+	if (notNull(m_logger) && m_config->logger.logFrameInfo) {
 		m_logger->logFrameInfo(FrameInfo(Logger::getFileTime(), sdt));
 	}
 }
@@ -513,4 +513,10 @@ int Session::getScore() {
 
 String Session::getFeedbackMessage() {
 	return m_feedbackMessage;
+}
+
+void Session::endLogging() {
+	if (m_logger != nullptr) {
+		m_logger.reset();
+	}
 }
