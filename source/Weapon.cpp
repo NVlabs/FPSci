@@ -38,7 +38,6 @@ shared_ptr<TargetEntity> Weapon::fire(
 	if (m_config->renderBullets || !m_config->hitScan) {
 		// Create the bullet start frame from the weapon frame plus muzzle offset
 		CFrame bulletStartFrame = m_camera->frame();
-		//bulletStartFrame.translation += m_config->muzzleOffset;
 
 		// Angle the bullet start frame towards the aim point
 		Point3 aimPoint = m_camera->frame().translation + m_camera->frame().lookVector() * 1000.0f;
@@ -48,8 +47,8 @@ shared_ptr<TargetEntity> Weapon::fire(
 		}
 		bulletStartFrame.lookAt(aimPoint);
 
-		// Non-laser weapon
-		if (m_config->firePeriod > 0.0f || !m_config->autoFire) {
+		// Non-laser weapon, draw a projectile
+		if (!m_config->isLaser()) {
 			const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastBulletId), m_scene.get(), m_bulletModel, bulletStartFrame);
 			bullet->setShouldBeSaved(false);
 			bullet->setCanCauseCollisions(false);
@@ -67,8 +66,9 @@ shared_ptr<TargetEntity> Weapon::fire(
 		}
 		// Laser weapon (very hacky for now...)
 		else {
-			shared_ptr<CylinderShape> beam = std::make_shared<CylinderShape>(CylinderShape(Cylinder(bulletStartFrame.translation, aimPoint, 0.02f)));
-			debugDraw(beam, FLT_EPSILON, Color4(0.2f, 0.8f, 0.0f, 1.0f), Color4::clear());
+			// Need to do something better than this, draws for 2 frames and also doesn't work w/ the start frame aligned w/ the camera (see the backfaces)
+			//shared_ptr<CylinderShape> beam = std::make_shared<CylinderShape>(CylinderShape(Cylinder(bulletStartFrame.translation, aimPoint, 0.02f)));
+			//debugDraw(beam, FLT_EPSILON, Color4(0.2f, 0.8f, 0.0f, 1.0f), Color4::clear());
 		}
 	}
 
@@ -92,6 +92,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 		target = nullptr;
 	}
 
+	// If we're not in laser mode play the sounce (once) here
 	if (!m_config->isLaser()) {
 		m_fireSound->play(m_config->fireSoundVol);
 		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);

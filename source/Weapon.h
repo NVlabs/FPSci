@@ -30,6 +30,21 @@ public:
 		return LineSegment::fromTwoPoints(m_lastPos, entity->frame().translation);
 	}
 
+	Ray getCollisionRay() {
+		const Point3 currPos = entity->frame().translation;
+		return Ray::fromOriginAndDirection(currPos, (m_lastPos-currPos).unit());
+	}
+
+	Ray getDecalRay() {
+		const Point3 currPos = entity->frame().translation;
+		return Ray::fromOriginAndDirection(currPos, (currPos - m_lastPos).unit());
+	}
+
+	void getLastTwoPoints(Point3& p_old, Point3& p_new) {
+		p_old = m_lastPos;
+		p_new = entity->frame().translation;
+	}
+
 	double remainingTime() { return m_totalTime; }
 	void clearRemainingTime() { m_totalTime = 0.0f; }
 
@@ -94,15 +109,27 @@ public:
 
 	void loadSounds() {
 		// Check for play mode specific parameters
-		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound));
+		if (notNull(m_fireAudio)) { m_fireAudio->stop(); }
+		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->isLaser());
 	}
 	void setConfig(const WeaponConfig& config) { m_config = std::make_shared<WeaponConfig>(config); }
 	void setCamera(const shared_ptr<Camera>& cam) { m_camera = cam; }
 	void setScene(const shared_ptr<Scene>& scene) { m_scene = scene; }
 	void setScoped(bool state = true) { m_scoped = state; }
 
+	void setFiring(bool firing = true) {
+		if (firing && !m_firing) {
+			m_fireAudio = m_fireSound->play();
+		}
+		else if (m_firing && !firing) {
+			m_fireAudio->stop();
+		}
+		m_firing = firing;
+	}
+
 	void setProjectiles(Array<Projectile>* projectileArray) { m_projectiles = projectileArray; };
 	bool scoped() { return m_scoped;  }
+	bool firing() { return m_firing; }
 
 protected:
 	Weapon(shared_ptr<WeaponConfig> config, shared_ptr<Scene>& scene, shared_ptr<Camera>& cam, Array<Projectile>* projectiles) : 
@@ -111,10 +138,12 @@ protected:
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
 	shared_ptr<ArticulatedModel>    m_bulletModel;						///< Model for the "bullet"
 	shared_ptr<Sound>               m_fireSound;						///< Sound for weapon firing
+	shared_ptr<AudioChannel>		m_fireAudio;						///< Audio channel for fire sound
 
 	shared_ptr<WeaponConfig>		m_config;							///< Weapon configuration
 	int								m_lastBulletId = 0;					///< Bullet ID (auto incremented)
-	bool							m_scoped = false;
+	bool							m_scoped = false;					///< Flag used for scope management
+	bool							m_firing = false;					///< Flag used for auto fire management
 
 	shared_ptr<Scene>				m_scene;							///< Scene for weapon
 	shared_ptr<Camera>				m_camera;							///< Camera for weapon
