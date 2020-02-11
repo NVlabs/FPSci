@@ -222,14 +222,6 @@ void Logger::recordTargetLocations(const Array<TargetLocation>& locations) {
 	insertRowsIntoDB(m_db, "Target_Trajectory", rows);
 }
 
-void Logger::recordToDb(const Array<RowEntry>& rows, String tableName) {
-	for (const auto& row : rows) {
-		insertRowIntoDB(m_db, tableName, row);
-	}
-}
-
-
-
 void Logger::loggerThreadEntry()
 {
 	std::unique_lock<std::mutex> lk(m_queueMutex);
@@ -277,10 +269,10 @@ void Logger::loggerThreadEntry()
 		recordPlayerActions(playerActions);
 		recordTargetLocations(targetLocations);
 
-		recordToDb(questions, "Questions");
-		recordToDb(targets, "Targets");
-		recordToDb(users, "Users");
-		recordToDb(trials, "Trials");
+		insertRowsIntoDB(m_db, "Questions", questions);
+		insertRowsIntoDB(m_db, "Targets", targets);
+		insertRowsIntoDB(m_db, "Users", users);
+		insertRowsIntoDB(m_db, "Trials", trials);
 
 		lk.lock();
 	}

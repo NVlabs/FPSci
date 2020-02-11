@@ -68,9 +68,6 @@ protected:
 	}
 
 	void loggerThreadEntry();
-	
-	/** Generic function for writing Array<String> to db table */
-	void recordToDb(const Array<RowEntry>& rows, String tableName);
 
 	/** Record an array of frame timing info */
 	void recordFrameInfo(const Array<FrameInfo>& info);
