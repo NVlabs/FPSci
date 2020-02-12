@@ -91,68 +91,67 @@ public:
 
 class App : public GApp {
 protected:
-	static const int MAX_HISTORY_TIMING_FRAMES = 360;					///< Length of the history queue for m_frameDurationQueue
-	shared_ptr<Sound>               m_sceneHitSound;					///< Sound for target exploding
+	static const int						MAX_HISTORY_TIMING_FRAMES = 360;	///< Length of the history queue for m_frameDurationQueue
+	shared_ptr<Sound>						m_sceneHitSound;					///< Sound for target exploding
 
-	shared_ptr<GFont>				m_combatFont;						///< Font used for floating combat text
-	Array<shared_ptr<FloatingCombatText>>	m_combatTextList;			///< Array of existing combat text
+	shared_ptr<GFont>						m_combatFont;						///< Font used for floating combat text
+	Array<shared_ptr<FloatingCombatText>>	m_combatTextList;					///< Array of existing combat text
 
-	shared_ptr<Weapon>				m_weapon;
-	shared_ptr<ArticulatedModel>	m_decalModel;						///< Model for the miss decal
-	shared_ptr<VisibleEntity>		m_lastDecal;						///< Model for the last decal we created
-	shared_ptr<VisibleEntity>		m_firstDecal;						///< Model for the first decal we created
+	shared_ptr<Weapon>						m_weapon;							///< Current weapon
+	shared_ptr<ArticulatedModel>			m_decalModel;						///< Model for the miss decal
+	Array<shared_ptr<VisibleEntity>>		m_currentDecals;					///< Storage for miss decals
 
-	Array<shared_ptr<VisibleEntity>>m_explosions;						///< Model for target destroyed decal
-	Array<RealTime>					m_explosionEndTimes;				///< Time for end of explosion
-	int								m_explosionIdx = 0;					///< Explosion index
-	const int						m_maxExplosions = 20;				///< Maximum number of simultaneous explosions
+	Array<shared_ptr<VisibleEntity>>		m_explosions;						///< Model for target destroyed decal
+	Array<RealTime>							m_explosionEndTimes;				///< Time for end of explosion
+	int										m_explosionIdx = 0;					///< Explosion index
+	const int								m_maxExplosions = 20;				///< Maximum number of simultaneous explosions
 		
-	const int						m_MatTableSize = 10;				///< Set this to set # of color "levels"
-	Array<shared_ptr<UniversalMaterial>>	m_materials;				///< This stores the color materials
+	const int								m_MatTableSize = 10;				///< Set this to set # of color "levels"
+	Array<shared_ptr<UniversalMaterial>>	m_materials;						///< This stores the color materials
 
-	GuiDropDownList*				m_sessDropDown;						///< Dropdown menu for session selection
-	GuiDropDownList*				m_userDropDown;						///< Dropdown menu for user selection
-	GuiLabel*						m_mouseDPILabel;					///< Label for mouse DPI field
-	GuiLabel*						m_cm360Label;						///< Label for cm/360 field
+	GuiDropDownList*						m_sessDropDown;						///< Dropdown menu for session selection
+	GuiDropDownList*						m_userDropDown;						///< Dropdown menu for user selection
+	GuiLabel*								m_mouseDPILabel;					///< Label for mouse DPI field
+	GuiLabel*								m_cm360Label;						///< Label for cm/360 field
 
-	shared_ptr<PlayerControls>		m_playerControls;
-	shared_ptr<RenderControls>		m_renderControls;
-	shared_ptr<WeaponControls>		m_weaponControls;
+	shared_ptr<PlayerControls>				m_playerControls;
+	shared_ptr<RenderControls>				m_renderControls;
+	shared_ptr<WeaponControls>				m_weaponControls;
 
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_targetModels;
-	const int m_modelScaleCount = 30;
+	const int								m_modelScaleCount = 30;
 
-	Array<shared_ptr<ArticulatedModel>> m_explosionModels;
+	Array<shared_ptr<ArticulatedModel>>		m_explosionModels;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
-	Queue<float>                    m_frameDurationQueue;				///< Queue for history of frrame times
+	Queue<float>							m_frameDurationQueue;				///< Queue for history of frrame times
 
 	/** Used to detect GUI changes to m_reticleIndex */
-	int                             m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
-	float							m_debugMenuHeight = 0.0f;			///< Height of the debug menu when in developer mode
-    GuiPane*                        m_currentUserPane;					///< Current user information pane
+	int										m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
+	float									m_debugMenuHeight = 0.0f;			///< Height of the debug menu when in developer mode
+    GuiPane*								m_currentUserPane;					///< Current user information pane
 
 	// Drop down selection writebacks
-	int								m_ddCurrentUser = 0;				///< Index of current user
-	int								m_lastSeenUser = -1;				///< Index of last seen user (used for change determination)
-	int								m_ddCurrentSession = 0;				///< Index of current session
+	int										m_ddCurrentUser = 0;				///< Index of current user
+	int										m_lastSeenUser = -1;				///< Index of last seen user (used for change determination)
+	int										m_ddCurrentSession = 0;				///< Index of current session
 
-	RealTime						m_lastJumpTime = 0.0f;				///< Time of last jump
+	RealTime								m_lastJumpTime = 0.0f;				///< Time of last jump
 
-	int                             m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
-	String							m_loadedScene = "";
-	String							m_defaultScene = "FPSci Simple Hallway";	// Default scene to load
+	int										m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
+	String									m_loadedScene = "";
+	String									m_defaultScene = "FPSci Simple Hallway";	// Default scene to load
 
-	shared_ptr<PythonLogger>		m_pyLogger = nullptr;
+	shared_ptr<PythonLogger>				m_pyLogger = nullptr;
 
 	/** When m_displayLagFrames > 0, 3D frames are delayed in this queue */
-	Array<shared_ptr<Framebuffer>>  m_ldrDelayBufferQueue;
-	int                             m_currentDelayBufferIndex = 0;
+	Array<shared_ptr<Framebuffer>>			m_ldrDelayBufferQueue;
+	int										m_currentDelayBufferIndex = 0;
 
-    shared_ptr<GuiWindow>           m_userSettingsWindow;
-    bool                            m_userSettingsMode = true;
+    shared_ptr<GuiWindow>					m_userSettingsWindow;
+    bool									m_userSettingsMode = true;
 
-	Array<Projectile>               m_projectileArray;					///< Arrray of drawn projectiles
+	Array<Projectile>						m_projectileArray;					///< Arrray of drawn projectiles
 
 	/** Called from onInit */
 	void makeGUI();

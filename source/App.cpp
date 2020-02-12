@@ -387,18 +387,20 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 }
 
 void App::loadDecals() {
-	Any decalSpec = PARSE_ANY(ArticulatedModel::Specification{
-	filename = "ifs/square.ifs";
-	preprocess = {
-		transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
-		setMaterial(all(), UniversalMaterial::Specification{
-			lambertian = Texture::Specification {
-				filename = "bullet-decal-256x256.png";
-				encoding = Color3(1, 1, 1);
+	Any decalSpec = PARSE_ANY(
+		ArticulatedModel::Specification{
+			filename = "ifs/square.ifs";
+			preprocess = {
+				transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
+				setMaterial(all(), UniversalMaterial::Specification{
+					lambertian = Texture::Specification {
+						filename = "bullet-decal-256x256.png";
+						encoding = Color3(1, 1, 1);
+					};
+				});
 			};
-		});
-	};
-		});
+		}
+	);
 	decalSpec.set("scale", sessConfig->weapon.decalScale);
 	m_decalModel = ArticulatedModel::create(decalSpec, "decalModel");
 }
@@ -915,16 +917,17 @@ void App::drawDecal(const Point3& point, const Vector3& normal, const shared_ptr
 	// Set the decal rotation to match the normal here
 	decalFrame.lookAt(decalFrame.translation - normal);
 
-	// Only allow 1 miss decal at a time (remove last decal if present)
-	if (notNull(m_lastDecal)) {
-		scene()->remove(m_lastDecal);
+	// If we have the maximum amount of decals remove the oldest one
+	if (m_currentDecals.size() == sessConfig->weapon.missDecalCount) {
+		shared_ptr<VisibleEntity> lastDecal = m_currentDecals.pop();
+		scene()->remove(lastDecal);
 	}
+
 	// Add the new decal to the scene
 	const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastUniqueID), scene().get(), m_decalModel, decalFrame);
 	newDecal->setCastsShadows(false);
 	scene()->insert(newDecal);
-	m_lastDecal = m_firstDecal;
-	m_firstDecal = newDecal;
+	m_currentDecals.insert(0, newDecal);	// Add the new decal to the front of the Array
 }
 
 Point2 App::getViewDirection()
@@ -971,7 +974,8 @@ void App::simulateProjectiles(RealTime dt) {
 			}
 			// Handle (miss) decals here
 			else {
-				Array<shared_ptr<Entity>> dontHit = { m_lastDecal, m_firstDecal };
+				Array<shared_ptr<Entity>> dontHit;
+				dontHit.append(m_currentDecals);
 				dontHit.append(m_explosions);
 				dontHit.append(targetArray);
 				for (auto proj : m_projectileArray) { dontHit.append(proj.entity); }
@@ -1532,7 +1536,8 @@ void App::onUserInput(UserInput* ui) {
 					if (sess->canFire()) {
 						fired = true;
 						sess->countClick();														// Count clicks
-						Array<shared_ptr<Entity>> dontHit = { m_lastDecal, m_firstDecal };
+						Array<shared_ptr<Entity>> dontHit;
+						dontHit.append(m_currentDecals);
 						dontHit.append(m_explosions);
 						for (auto projectile : m_projectileArray) { dontHit.append(projectile.entity); }
 						Model::HitInfo info;
@@ -1581,7 +1586,8 @@ void App::onUserInput(UserInput* ui) {
 	
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
 		if (ui->keyPressed(dummyShoot) && (sess->presentationState == PresentationState::feedback)) {
-			Array<shared_ptr<Entity>> dontHit = { m_lastDecal, m_firstDecal };
+			Array<shared_ptr<Entity>> dontHit;
+			dontHit.append(m_currentDecals);
 			dontHit.append(m_explosions);
 			for (auto projectile : m_projectileArray) { dontHit.append(projectile.entity); }
 			Model::HitInfo info;
