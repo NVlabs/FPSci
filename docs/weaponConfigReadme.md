@@ -26,6 +26,12 @@ This file provides information about the weapon to be used in the experiment. De
 |`autoFire`             |bool       | Whether or not the weapon fires when the left mouse is held, or requires release between fire         |
 |`damagePerSecond`      |damage/s   | The damage done by the weapon per second, when `firePeriod` > 0 the damage per round is set by `damagePerSecond`*`firePeriod`, when `firePeriod` is 0 and `autoFire` is `True` damage is computed based on time hitting the target.        |
 |`hitScan`              |bool       | Whether or not the weapon acts as an instantaneous hitscan (true) vs propagated projectile (false)    |
+
+## Sound and View Model
+Controls specific to the sound/view model for the weapon are provided below:
+
+| Parameter Name        |Units      | Description                                                                                           |
+|-----------------------|-----------|-------------------------------------------------------------------------------------------------------|
 |`fireSound`            |file       | The filename/location of the audio clip to use for the weapon firing                                  |
 |`fireSoundVol`         |ratio      | The volume to play the `fireSound` clip with                                                          |
 |`renderModel`          |bool       | Whether or not a weapon model is rendered in the first-person view                                    |
@@ -74,6 +80,8 @@ The config below provides an example for each of the fields above (along with th
 "firePeriod": 0.5,          // Fire twice a second max
 "autoFire": false,          // Automatic firing if mouse is held
 "damagePerSecond": 2.0,     // 2 damage/s * 0.5 s/shot = 1 damage/shot
+"hitScan": false,
+
 "fireSound": "sound/42108__marcuslee__Laser_Wrath_6.wav",       // The sound to fire
 "fireSoundVol": 0.5f,
 "renderModel": true,        // Default is false,
@@ -85,16 +93,19 @@ The config below provides an example for each of the fields above (along with th
 	};
 	scale = 0.25;
 },
+
 "renderBullets": true,      // Default is false
-"hitScan": false,
 "bulletSpeed": 100.0,       // Bullets move at 100m/s
 "bulletGravity": 10.0,      // Bullets accelerate down at 10m/s²
+
 "renderDecals": true,       // Draw hit decals on walls for misses
 "missDecal": "bullet-decal-256x256.png",           // Default miss decal
 "missDecalCount": 2,        // Draw 2 decals (at most) at a time
 "decalScale": 1.0,          // Don't scale the decal
+
 "renderMuzzleFlash": false, // Draw a muzzle flash
 "muzzleOffset": Vector3(0.0,-0.8,0.0)        // Add an offset here to correct the barrel location (default is [0,0,0])
+
 "scopeFoV": 0.0,            // No scope
 "scopeToggle": false,       // Scope in "on-demand" mode (not toggled)
 ```
