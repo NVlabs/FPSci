@@ -387,21 +387,26 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 }
 
 void App::loadDecals() {
-	String decalSpec = format("\
-	ArticulatedMode::Specification {\
-		filename = \"ifs/square.ifs\";\
-		preprocess = {\
-			transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));\
-			setMaterial(all(), UniversalMaterial::Specification{\
-				lambertian = Texture::Specification {\
-					filename = \"%s\";\
-					encoding = Color3(1, 1, 1);\
+	if (sessConfig->weapon.missDecal == "") {
+		m_decalModel.reset();
+	}
+	else {
+		String decalSpec = format("\
+			ArticulatedMode::Specification {\
+				filename = \"ifs/square.ifs\";\
+				preprocess = {\
+					transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));\
+					setMaterial(all(), UniversalMaterial::Specification{\
+						lambertian = Texture::Specification {\
+							filename = \"%s\";\
+							encoding = Color3(1, 1, 1);\
+						};\
+					});\
 				};\
-			});\
-		};\
-		scale = %f;\
-	};", sessConfig->weapon.missDecal.c_str(), sessConfig->weapon.decalScale);
-	m_decalModel = ArticulatedModel::create(Any::parse(decalSpec), "decalModel");
+				scale = %f;\
+			};", sessConfig->weapon.missDecal.c_str(), sessConfig->weapon.decalScale);
+		m_decalModel = ArticulatedModel::create(Any::parse(decalSpec), "decalModel");
+	}
 }
 
 void App::loadModels() {
@@ -911,7 +916,10 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 	}
 }
 
-void App::drawDecal(const Point3& point, const Vector3& normal, const shared_ptr<ArticulatedModel>& model) {
+void App::drawDecal(const Point3& point, const Vector3& normal) {
+	// Don't draw decals for these cases
+	if (sessConfig->weapon.missDecalCount == 0 || m_decalModel == nullptr) return;
+	
 	CFrame decalFrame = CFrame(point);
 	// Set the decal rotation to match the normal here
 	decalFrame.lookAt(decalFrame.translation - normal);
@@ -985,7 +993,7 @@ void App::simulateProjectiles(RealTime dt) {
 				scene()->intersect(ray, closest, false, dontHit, info);
 				if (closest < hitThreshold) {
 					// If we are within 2 simulation cycles of a wall, create the decal
-					drawDecal(info.point + 0.01*info.normal, info.normal, m_decalModel);
+					drawDecal(info.point + 0.01*info.normal, info.normal);
 					projectile.clearRemainingTime();							// Stop the projectile here
 					sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
 				}
@@ -1552,11 +1560,11 @@ void App::onUserInput(UserInput* ui) {
 							}
 							WeaponConfig& wConfig = sessConfig->weapon;
 							// Draw a decal here if we are in hitscan mode
-							if (wConfig.hitScan && wConfig.renderDecals && wConfig.firePeriod > 0.0f && hitDist < finf()) {
+							if (wConfig.hitScan && wConfig.renderDecals && hitDist < finf()) {
 								CFrame frame = activeCamera()->frame();
 								// Draw decal at the lookRay/world intersection
 								Point3 position = frame.translation + frame.lookRay().direction() * (hitDist - 0.01f);
-								drawDecal(position, info.normal, m_decalModel);
+								drawDecal(position, info.normal);
 								// Target still present and in hitscan, must be 'miss'.
 								sess->accumulatePlayerAction(PlayerActionType::Miss);
 							}
@@ -1603,7 +1611,7 @@ void App::onUserInput(UserInput* ui) {
 					CFrame frame = activeCamera()->frame();
 					// Draw decal at the lookRay/world intersection
 					Point3 position = frame.translation + frame.lookRay().direction() * (hitDist - 0.01f);
-					drawDecal(position, info.normal, m_decalModel);
+					drawDecal(position, info.normal);
 				}
 			}
 		}

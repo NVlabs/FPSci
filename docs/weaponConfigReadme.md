@@ -52,8 +52,8 @@ Controls specific to the miss decals drawn in the scene are included below:
 | Parameter Name        |Units      | Description                                                                                           |
 |-----------------------|-----------|-------------------------------------------------------------------------------------------------------|
 |`renderDecals`         |bool       | Whether or not bullet hole decals are put on misses when `autoFire` is `False` and `firePeriod` > 0 (i.e. not in laser mode) |
-|`missDecal`            |String     | The filename of an image to use for miss decals
-|`missDecalCount`       |int        | The maximum number of miss decals to draw from this weapon (oldest are removed first)                 |
+|`missDecal`            |String     | The filename of an image to use for miss decals. Can be set to `""` for no decals.
+|`missDecalCount`       |int        | The maximum number of miss decals to draw from this weapon (oldest are removed first). Can be set to `0` for no decals.|
 |`decalScale`           |float      | A scale to apply to the decals drawn by this weapon, `1.0` means do not scale                         |
 
 ## Muzzle Flash Control

@@ -163,7 +163,7 @@ protected:
 
 	void hitTarget(shared_ptr<TargetEntity>);
 	void simulateProjectiles(RealTime dt);
-	void drawDecal(const Point3& cameraOffset, const Vector3& normal, const shared_ptr<ArticulatedModel>& model);
+	void drawDecal(const Point3& cameraOffset, const Vector3& normal);
 
 	void drawHUD(RenderDevice *rd);
 	void drawClickIndicator(RenderDevice *rd, String mode);
