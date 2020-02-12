@@ -387,22 +387,21 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 }
 
 void App::loadDecals() {
-	Any decalSpec = PARSE_ANY(
-		ArticulatedModel::Specification{
-			filename = "ifs/square.ifs";
-			preprocess = {
-				transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
-				setMaterial(all(), UniversalMaterial::Specification{
-					lambertian = Texture::Specification {
-						filename = "bullet-decal-256x256.png";
-						encoding = Color3(1, 1, 1);
-					};
-				});
-			};
-		}
-	);
-	decalSpec.set("scale", sessConfig->weapon.decalScale);
-	m_decalModel = ArticulatedModel::create(decalSpec, "decalModel");
+	String decalSpec = format("\
+	ArticulatedMode::Specification {\
+		filename = \"ifs/square.ifs\";\
+		preprocess = {\
+			transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));\
+			setMaterial(all(), UniversalMaterial::Specification{\
+				lambertian = Texture::Specification {\
+					filename = \"%s\";\
+					encoding = Color3(1, 1, 1);\
+				};\
+			});\
+		};\
+		scale = %f;\
+	};", sessConfig->weapon.missDecal.c_str(), sessConfig->weapon.decalScale);
+	m_decalModel = ArticulatedModel::create(Any::parse(decalSpec), "decalModel");
 }
 
 void App::loadModels() {

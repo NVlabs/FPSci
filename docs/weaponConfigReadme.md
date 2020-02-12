@@ -30,18 +30,45 @@ This file provides information about the weapon to be used in the experiment. De
 |`fireSoundVol`         |ratio      | The volume to play the `fireSound` clip with                                                          |
 |`renderModel`          |bool       | Whether or not a weapon model is rendered in the first-person view                                    |
 |`modelSpec`            |`ArticulatedModel::Specification` | Any-based specification for the weapon being used                              |
+
+## Projectiles 
+Controls specific to the projectiles fired by the weapon are included below:
+
+| Parameter Name        |Units      | Description                                                                                           |
+|-----------------------|-----------|-------------------------------------------------------------------------------------------------------|
 |`renderBullets`        |bool       | Whether or not bullets are rendered from the barrel of the weapon when fired                          |
 |`bulletSpeed`          |m/s        | The speed of rendered bullets                                                                         |
 |`bulletGravity`        |m/s²       | The gravity to apply to bullets (0 for no droop)                                                      |
+
+## Decal Control
+Controls specific to the miss decals drawn in the scene are included below:
+
+| Parameter Name        |Units      | Description                                                                                           |
+|-----------------------|-----------|-------------------------------------------------------------------------------------------------------|
 |`renderDecals`         |bool       | Whether or not bullet hole decals are put on misses when `autoFire` is `False` and `firePeriod` > 0 (i.e. not in laser mode) |
+|`missDecal`            |String     | The filename of an image to use for miss decals
 |`missDecalCount`       |int        | The maximum number of miss decals to draw from this weapon (oldest are removed first)                 |
 |`decalScale`           |float      | A scale to apply to the decals drawn by this weapon, `1.0` means do not scale                         |
+
+## Muzzle Flash Control
+Controls specific to muzzle flash are provided below:
+
+| Parameter Name        |Units      | Description                                                                                           |
+|-----------------------|-----------|-------------------------------------------------------------------------------------------------------|
 |`renderMuzzleFlash`    |bool       | Whether or not a muzzle flash is rendered for the weapon                                              |
 |`muzzleOffset`         |`Vector3`(m)| The offset of the muzzle within the weapon frame                                                     |
+
+## Scope Control
+Controls specific to scope behavior are provided below:
+
+| Parameter Name        |Units      | Description                                                                                           |
+|-----------------------|-----------|-------------------------------------------------------------------------------------------------------|
 |`scopeFoV`             |float      | (Horizontal) field of view for the camera when using a scope (set to `0` for no scope)                |
 |`scopeToggle`          |bool       | Whether or not the scope is active when the keymapped button is held (false) or toggled using this button (true)|
 
-**Example**
+# Example Config
+The config below provides an example for each of the fields above (along with their default values):
+
 ```
 "maxAmmo": 10000,           // Maximum ammo for the weapon
 "firePeriod": 0.5,          // Fire twice a second max
@@ -63,6 +90,9 @@ This file provides information about the weapon to be used in the experiment. De
 "bulletSpeed": 100.0,       // Bullets move at 100m/s
 "bulletGravity": 10.0,      // Bullets accelerate down at 10m/s²
 "renderDecals": true,       // Draw hit decals on walls for misses
+"missDecal": "bullet-decal-256x256.png",           // Default miss decal
+"missDecalCount": 2,        // Draw 2 decals (at most) at a time
+"decalScale": 1.0,          // Don't scale the decal
 "renderMuzzleFlash": false, // Draw a muzzle flash
 "muzzleOffset": Vector3(0.0,-0.8,0.0)        // Add an offset here to correct the barrel location (default is [0,0,0])
 "scopeFoV": 0.0,            // No scope
