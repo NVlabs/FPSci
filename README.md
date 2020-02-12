@@ -8,6 +8,9 @@ When you check out G3D, you'll need some data files from the `research` and `gam
 
 If you install G3D using its `.hta` installer, then this will automatically install Visual Studio Community Edition for you.
 
+### G3D with VS2017
+If you are using this repo with VS2017 you will want to use Revision [R6939](https://sourceforge.net/p/g3d/code/6939/) as this is the last version of G3D without any VS2019 updates.
+
 ## Building instructions
 The solution file (`FirstPersonScience.sln`) can build and run using [Visual Studio](https://visualstudio.microsoft.com/vs/). 
 
