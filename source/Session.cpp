@@ -40,7 +40,8 @@ void Session::nextCondition() {
 		}
 	}
 	if (unrunTrialIdxs.size() == 0) return;
-	m_currTrialIdx = unrunTrialIdxs[rand() % unrunTrialIdxs.size()];
+	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
+	m_currTrialIdx = unrunTrialIdxs[idx];
 }
 
 bool Session::isComplete() const{
