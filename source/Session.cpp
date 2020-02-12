@@ -35,7 +35,7 @@
 void Session::nextCondition() {
 	Array<int> unrunTrialIdxs;
 	for (int i = 0; i < m_remainingTrials.size(); i++) {
-		if (m_remainingTrials[i] > 0) {
+		if (m_remainingTrials[i] > 0 || m_remainingTrials[i] == -1) {
 			unrunTrialIdxs.append(i);
 		}
 	}
@@ -245,7 +245,9 @@ void Session::processResponse()
 	}
 	
 	recordTrialResponse(m_destroyedTargets, totalTargets); // NOTE: we need record response first before processing it with PsychHelper.
-	m_remainingTrials[m_currTrialIdx] -= 1;
+	if (m_remainingTrials[m_currTrialIdx] > 0) {
+		m_remainingTrials[m_currTrialIdx] -= 1;
+	}
 
 	// Check for whether all targets have been destroyed
 	if (m_remainingTargets == 0) {
@@ -499,11 +501,12 @@ float Session::getRemainingTrialTime() {
 
 float Session::getProgress() {
 	if (notNull(m_config)) {
-		int completed = 0;
-		for (bool c : m_remainingTrials) {
-			if (c) completed++;
+		float remainingTrials = 0.f;
+		for (int tcount : m_remainingTrials) {
+			if (tcount < 0) return 0.f;				// Infinite trials, never make any progress
+			remainingTrials += (float)tcount;
 		}
-		return completed / (float)m_config->getTotalTrials();
+		return 1.f - (remainingTrials / m_config->getTotalTrials());
 	}
 	return fnan();
 }

@@ -1502,10 +1502,15 @@ public:
 	}
 
 	/** Get the total number of trials in this session */
-	int getTotalTrials(void) {
-		int count = 0;
+	float getTotalTrials(void) {
+		float count = 0.f;
 		for (const TrialCount& tc : trials) {
-			count += tc.count;
+			if (count < 0) {
+				return finf();
+			}
+			else {
+				count += tc.count;
+			}
 		}
 		return count;
 	}

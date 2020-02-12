@@ -1376,7 +1376,7 @@ void App::drawHUD(RenderDevice *rd) {
 		float prog = sess->getProgress();
 		String prog_string = "";
 		if (!isnan(prog)) {
-			prog_string = format("%d", (int)(100.0f*sess->getProgress())) + "%";
+			prog_string = format("%d", (int)(100.0f*prog)) + "%";
 		}
 		String score_string = format("%d", (int)(10 * sess->getScore()));
 
