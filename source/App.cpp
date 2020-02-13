@@ -1010,6 +1010,7 @@ void App::simulateProjectiles(RealTime dt) {
 			// Check for target hit
 			if (closest < hitThreshold) {
 				hitTarget(closestTarget);
+				// Offset position slightly along normal to avoid Z-fighting the target
 				drawDecal(info.point + 0.01 * info.normal, activeCamera()->frame().lookVector(), true);
 				projectile.clearRemainingTime();
 			}
@@ -1024,8 +1025,10 @@ void App::simulateProjectiles(RealTime dt) {
 				//closest = finf();
 				const Ray ray = projectile.getDecalRay();
 				scene()->intersect(ray, closest, false, dontHit, info);
+
+				// If we are within 2 simulation cycles of a wall, create the decal
 				if (closest < hitThreshold) {
-					// If we are within 2 simulation cycles of a wall, create the decal
+					// Offset position slightly along normal to avoid Z-fighting the wall
 					drawDecal(info.point + 0.01*info.normal, info.normal);
 					projectile.clearRemainingTime();							// Stop the projectile here
 					sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
@@ -1598,8 +1601,8 @@ void App::onUserInput(UserInput* ui) {
 						WeaponConfig& wConfig = sessConfig->weapon;
 						if (notNull(target)) {					// Check if we hit anything
 							hitTarget(target);					// If we did, we are in hitscan mode, apply the damage and manage the target here
-
 							const Vector3& camDir = -activeCamera()->frame().lookVector();
+							// Offset position slightly along normal to avoid Z-fighting the target
 							drawDecal(info.point + 0.01f*camDir, camDir, true);
 						}
 						else {
@@ -1608,7 +1611,7 @@ void App::onUserInput(UserInput* ui) {
 							}
 							// Draw a decal here if we are in hitscan mode
 							if (wConfig.hitScan && hitDist < finf()) {
-								// Draw decal at the lookRay/world intersection
+								// Offset position slightly along normal to avoid Z-fighting the wall
 								drawDecal(info.point + 0.01f*info.normal, info.normal);
 								// Target still present and in hitscan, must be 'miss'.
 								sess->accumulatePlayerAction(PlayerActionType::Miss);
