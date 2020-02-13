@@ -54,7 +54,11 @@ Controls specific to the miss decals drawn in the scene are included below:
 |`renderDecals`         |bool       | Whether or not bullet hole decals are put on misses when `autoFire` is `False` and `firePeriod` > 0 (i.e. not in laser mode) |
 |`missDecal`            |String     | The filename of an image to use for miss decals. Can be set to `""` for no decals.
 |`missDecalCount`       |int        | The maximum number of miss decals to draw from this weapon (oldest are removed first). Can be set to `0` for no decals.|
-|`decalScale`           |float      | A scale to apply to the decals drawn by this weapon, `1.0` means do not scale                         |
+|`missDecalScale`       |float      | A scale to apply to the miss decals drawn by this weapon, `1.0` means do not scale                     |
+|`hitDecal`             |String     | The filename of an image to use for hit decals. Can be set to `""` for no decals.                      |
+|`hitDecalScale`        |float      | A scale to apply to the hit decals drawn by this weapon. `1.0` means do not scale.                     |
+|`hitDecalDuration`     |s          | The duration to draw a hit decal for (in seconds).                                                     |
+|`hitDecalColorMult`    |float      | The value used to multiply colors for the hit decal (higher means brighter). Set >1 for "emissive".    |
 
 ## Muzzle Flash Control
 Controls specific to muzzle flash are provided below:
@@ -98,10 +102,14 @@ The config below provides an example for each of the fields above (along with th
 "bulletSpeed": 100.0,       // Bullets move at 100m/s
 "bulletGravity": 10.0,      // Bullets accelerate down at 10m/s²
 
-"renderDecals": true,       // Draw hit decals on walls for misses
+"renderDecals": true,       // Draw decals on walls for misses/target for hit
 "missDecal": "bullet-decal-256x256.png",           // Default miss decal
 "missDecalCount": 2,        // Draw 2 decals (at most) at a time
-"decalScale": 1.0,          // Don't scale the decal
+"missDecalScale": 1.0,      // Don't scale the decal
+"hitDecal" : "",            // No default hit decal
+"hitDecalScale": 1.0,       // Scale to apply to hit decal
+"hitDecalDuration": 0.1,    // Show the hit decal for 0.1s
+"hitDecalColorMult": 2.0,   // Multiply the hit decal color values by 2 (pseudo-emissive)
 
 "renderMuzzleFlash": false, // Draw a muzzle flash
 "muzzleOffset": Vector3(0.0,-0.8,0.0)        // Add an offset here to correct the barrel location (default is [0,0,0])

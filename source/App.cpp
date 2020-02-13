@@ -387,11 +387,11 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 }
 
 void App::loadDecals() {
-	if (sessConfig->weapon.missDecal == "") {
-		m_decalModel.reset();
+	if (sessConfig->weapon.missDecal.empty()) {
+		m_missDecalModel.reset();
 	}
 	else {
-		String decalSpec = format("\
+		String missDecalSpec = format("\
 			ArticulatedMode::Specification {\
 				filename = \"ifs/square.ifs\";\
 				preprocess = {\
@@ -404,8 +404,29 @@ void App::loadDecals() {
 					});\
 				};\
 				scale = %f;\
-			};", sessConfig->weapon.missDecal.c_str(), sessConfig->weapon.decalScale);
-		m_decalModel = ArticulatedModel::create(Any::parse(decalSpec), "decalModel");
+			};", sessConfig->weapon.missDecal.c_str(), sessConfig->weapon.missDecalScale);
+		m_missDecalModel = ArticulatedModel::create(Any::parse(missDecalSpec), "missDecalModel");
+	}
+
+	if (sessConfig->weapon.hitDecal.empty()) {
+		m_hitDecalModel.reset();
+	}
+	else {
+		String hitDecalSpec = format("\
+			ArticulatedMode::Specification {\
+				filename = \"ifs/square.ifs\";\
+				preprocess = {\
+					transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));\
+					setMaterial(all(), UniversalMaterial::Specification{\
+						lambertian = Texture::Specification {\
+							filename = \"%s\";\
+							encoding = Color3(2.0, 2.0, 2.0);\
+						};\
+					});\
+				};\
+				scale = %f;\
+			};", sessConfig->weapon.hitDecal.c_str(), sessConfig->weapon.hitDecalScale);
+		m_hitDecalModel = ArticulatedModel::create(Any::parse(hitDecalSpec), "hitDecalModel");
 	}
 }
 
@@ -916,25 +937,36 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 	}
 }
 
-void App::drawDecal(const Point3& point, const Vector3& normal) {
+void App::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
+	// End here if we're not drawing decals
+	if (!sessConfig->weapon.renderDecals) return;
 	// Don't draw decals for these cases
-	if (sessConfig->weapon.missDecalCount == 0 || m_decalModel == nullptr) return;
-	
-	CFrame decalFrame = CFrame(point);
+	if (!hit && (sessConfig->weapon.missDecalCount == 0 || m_missDecalModel == nullptr)) return;
+	else if (hit && m_hitDecalModel == nullptr) return;
+
 	// Set the decal rotation to match the normal here
+	CFrame decalFrame = CFrame(point);
 	decalFrame.lookAt(decalFrame.translation - normal);
 
 	// If we have the maximum amount of decals remove the oldest one
-	if (m_currentDecals.size() == sessConfig->weapon.missDecalCount) {
-		shared_ptr<VisibleEntity> lastDecal = m_currentDecals.pop();
+	if (!hit && m_currentMissDecals.size() == sessConfig->weapon.missDecalCount) {
+		shared_ptr<VisibleEntity> lastDecal = m_currentMissDecals.pop();
 		scene()->remove(lastDecal);
+	}
+	else if (hit && notNull(m_hitDecal)) {
+		scene()->remove(m_hitDecal);
 	}
 
 	// Add the new decal to the scene
-	const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastUniqueID), scene().get(), m_decalModel, decalFrame);
+	shared_ptr<ArticulatedModel> decalModel = hit ? m_hitDecalModel : m_missDecalModel;
+	const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastUniqueID), scene().get(), decalModel, decalFrame);
 	newDecal->setCastsShadows(false);
 	scene()->insert(newDecal);
-	m_currentDecals.insert(0, newDecal);	// Add the new decal to the front of the Array
+	if (!hit) m_currentMissDecals.insert(0, newDecal);	// Add the new decal to the front of the Array (if a miss)
+	else {
+		m_hitDecal = newDecal;
+		m_hitDecalTimeRemainingS = sessConfig->weapon.hitDecalDurationS;
+	}
 }
 
 Point2 App::getViewDirection()
@@ -968,27 +1000,28 @@ void App::simulateProjectiles(RealTime dt) {
 			// Look for collision with the targets
 			const Ray ray = projectile.getCollisionRay();
 			float closest = finf();
+			Model::HitInfo info;
 			shared_ptr<TargetEntity> closestTarget;
 			for (shared_ptr<TargetEntity> t : targetArray) {
-				if (t->intersect(ray, closest)) {
+				if (t->intersect(ray, closest, info)) {
 					closestTarget = t;
 				}
 			}
 			// Check for target hit
 			if (closest < hitThreshold) {
 				hitTarget(closestTarget);
+				drawDecal(info.point + 0.01 * info.normal, activeCamera()->frame().lookVector(), true);
 				projectile.clearRemainingTime();
 			}
 			// Handle (miss) decals here
 			else {
 				Array<shared_ptr<Entity>> dontHit;
-				dontHit.append(m_currentDecals);
+				dontHit.append(m_currentMissDecals);
 				dontHit.append(m_explosions);
 				dontHit.append(targetArray);
 				for (auto proj : m_projectileArray) { dontHit.append(proj.entity); }
 				// Check for closest hit (in scene, otherwise this ray hits the skybox)
 				//closest = finf();
-				Model::HitInfo info;
 				const Ray ray = projectile.getDecalRay();
 				scene()->intersect(ray, closest, false, dontHit, info);
 				if (closest < hitThreshold) {
@@ -999,6 +1032,15 @@ void App::simulateProjectiles(RealTime dt) {
 				}
 			}
 		}
+	}
+
+	// Handle hit "antimation"
+	if (notNull(m_hitDecal) && m_hitDecalTimeRemainingS <= 0) {
+		scene()->remove(m_hitDecal);
+		m_hitDecal.reset();
+	}
+	else {
+		m_hitDecalTimeRemainingS -= dt;
 	}
 }
 
@@ -1543,28 +1585,31 @@ void App::onUserInput(UserInput* ui) {
 					if (sess->canFire()) {
 						fired = true;
 						sess->countClick();														// Count clicks
-						Array<shared_ptr<Entity>> dontHit;
-						dontHit.append(m_currentDecals);
+						Array<shared_ptr<Entity>> dontHit = { m_hitDecal };
+						dontHit.append(m_currentMissDecals);
 						dontHit.append(m_explosions);
 						for (auto projectile : m_projectileArray) { dontHit.append(projectile.entity); }
 						Model::HitInfo info;
 						float hitDist = finf();
 						int hitIdx = -1;
+
 						shared_ptr<TargetEntity> target = m_weapon->fire(targetArray, hitIdx, hitDist, info, dontHit);			// Fire the weapon
+
+						WeaponConfig& wConfig = sessConfig->weapon;
 						if (notNull(target)) {					// Check if we hit anything
 							hitTarget(target);					// If we did, we are in hitscan mode, apply the damage and manage the target here
+
+							const Vector3& camDir = -activeCamera()->frame().lookVector();
+							drawDecal(info.point + 0.01f*camDir, camDir, true);
 						}
 						else {
 							if(!sessConfig->weapon.isLaser()) { 
 								m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol); 
 							}
-							WeaponConfig& wConfig = sessConfig->weapon;
 							// Draw a decal here if we are in hitscan mode
-							if (wConfig.hitScan && wConfig.renderDecals && hitDist < finf()) {
-								CFrame frame = activeCamera()->frame();
+							if (wConfig.hitScan && hitDist < finf()) {
 								// Draw decal at the lookRay/world intersection
-								Point3 position = frame.translation + frame.lookRay().direction() * (hitDist - 0.01f);
-								drawDecal(position, info.normal);
+								drawDecal(info.point + 0.01f*info.normal, info.normal);
 								// Target still present and in hitscan, must be 'miss'.
 								sess->accumulatePlayerAction(PlayerActionType::Miss);
 							}
@@ -1594,7 +1639,7 @@ void App::onUserInput(UserInput* ui) {
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
 		if (ui->keyPressed(dummyShoot) && (sess->presentationState == PresentationState::feedback)) {
 			Array<shared_ptr<Entity>> dontHit;
-			dontHit.append(m_currentDecals);
+			dontHit.append(m_currentMissDecals);
 			dontHit.append(m_explosions);
 			for (auto projectile : m_projectileArray) { dontHit.append(projectile.entity); }
 			Model::HitInfo info;
@@ -1607,9 +1652,9 @@ void App::onUserInput(UserInput* ui) {
 			}
 			else {
 				// Draw a decal here if we are in hitscan mode
-				if (sessConfig->weapon.hitScan && sessConfig->weapon.renderDecals && hitDist < finf()) {
-					CFrame frame = activeCamera()->frame();
+				if (sessConfig->weapon.hitScan && hitDist < finf()) {
 					// Draw decal at the lookRay/world intersection
+					CFrame frame = activeCamera()->frame();
 					Point3 position = frame.translation + frame.lookRay().direction() * (hitDist - 0.01f);
 					drawDecal(position, info.normal);
 				}
