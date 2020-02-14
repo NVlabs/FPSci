@@ -646,19 +646,28 @@ public:
 	String	fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	///< Sound to play on fire
 	float	fireSoundVol = 0.5f;										///< Volume for fire sound
 	bool	renderModel = false;										///< Render a model for the weapon?
+	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
+
 	Vector3	muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
 	bool	renderMuzzleFlash = false;									///< Render a muzzle flash when the weapon fires?
-	bool	renderDecals = true;										///< Render decals when the shots miss?
+
 	bool	renderBullets = false;										///< Render bullets leaving the weapon
 	float	bulletSpeed = 100.0f;										///< Speed to draw at for rendered rounds (in m/s)
 	float	bulletGravity = 0.0f;										///< Gravity to use for bullets (default is no droop)
-	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
+	
+	bool	renderDecals = true;										///< Render decals when the shots miss?
 	String	missDecal = "bullet-decal-256x256.png";						///< The decal to place where the shot misses
+	String	hitDecal = "";												///< The decal to place where the shot hits
 	int		missDecalCount = 2;											///< Number of miss decals to draw
-	float	decalScale = 1.0f;											///< Scale to apply to the decal
+	float	missDecalScale = 1.0f;										///< Scale to apply to the miss decal
+	float	hitDecalScale = 1.0f;										///< Scale to apply to the hit decal
+	float	hitDecalDurationS = 0.1f;									///< Duration to show the hit decal for (in seconds)
+	float	hitDecalColorMult = 2.0f;									///< "Encoding" field (aka color multiplier) for hit decal
+	
 	float	fireSpread = 0;												///< The spread of the fire
 	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
 	float	damageRollOffDistance = 0;									///< Damage roll of w/ distance
+
 	float	scopeFoV = 0.0f;											///< Field of view when scoped
 	bool	scopeToggle = false;										///< Scope toggle behavior
 	//String reticleImage;												///< Reticle image to show for this weapon
@@ -686,28 +695,39 @@ public:
 			reader.getIfPresent("autoFire", autoFire);
 			reader.getIfPresent("damagePerSecond", damagePerSecond);
 			reader.getIfPresent("fireSound", fireSound);
-			reader.getIfPresent("renderModel", renderModel);
 			reader.getIfPresent("hitScan", hitScan);
+
+			reader.getIfPresent("renderModel", renderModel);			
 			if (renderModel) {
 				reader.get("modelSpec", modelSpec, "If \"renderModel\" is set to true within a weapon config then a \"modelSpec\" must be provided!");
 			}
 			else {
 				reader.getIfPresent("modelSpec", modelSpec);
 			}
+			
 			reader.getIfPresent("muzzleOffset", muzzleOffset);
 			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
-			reader.getIfPresent("renderDecals", renderDecals);
+
 			reader.getIfPresent("renderBullets", renderBullets);
 			reader.getIfPresent("bulletSpeed", bulletSpeed);
 			reader.getIfPresent("bulletGravity", bulletGravity);
+
+			reader.getIfPresent("renderDecals", renderDecals);
 			reader.getIfPresent("missDecal", missDecal);
+			reader.getIfPresent("hitDecal", hitDecal);
 			reader.getIfPresent("missDecalCount", missDecalCount);
-			reader.getIfPresent("decalScale", decalScale);
+			reader.getIfPresent("missDecalScale", missDecalScale);
+			reader.getIfPresent("hitDecalScale", hitDecalScale);
+			reader.getIfPresent("hitDecalDuration", hitDecalDurationS);
+			reader.getIfPresent("hitDecalColorMult", hitDecalColorMult);
+
 			reader.getIfPresent("fireSpread", fireSpread);
 			reader.getIfPresent("damageRollOffAim", damageRollOffAim);
 			reader.getIfPresent("damageRollOffDistance", damageRollOffDistance);
+
 			reader.getIfPresent("scopeFoV", scopeFoV);
 			reader.getIfPresent("scopeToggle", scopeToggle);
+
 			//reader.getIfPresent("recticleImage", reticleImage);
 		default:
 			debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
@@ -719,28 +739,39 @@ public:
 		Any a(Any::TABLE);
 		WeaponConfig def;
 		a["id"] = id;
-		if(forceAll || def.maxAmmo != maxAmmo)								a["maxAmmo"] = maxAmmo;
-		if(forceAll || def.firePeriod != firePeriod)						a["firePeriod"] = firePeriod;
-		if(forceAll || def.autoFire != autoFire)							a["autoFire"] = autoFire;
-		if(forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
-		if(forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
-		if(forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
-		if(forceAll || def.hitScan != hitScan)								a["hitScan"] = hitScan;
-		if(forceAll || def.muzzleOffset != muzzleOffset)					a["muzzleOffset"] = muzzleOffset;
-		if(forceAll || def.renderMuzzleFlash != renderMuzzleFlash)			a["renderMuzzleFlash"] = renderMuzzleFlash;
-		if(forceAll || def.renderDecals != renderDecals)					a["renderDecals"] = renderDecals;
-		if(forceAll || def.renderBullets != renderBullets)					a["renderBullets"] = renderBullets;
-		if(forceAll || def.bulletSpeed != bulletSpeed)						a["bulletSpeed"] = bulletSpeed;
-		if(forceAll || def.bulletGravity != bulletGravity)					a["bulletGravity"] = bulletGravity;
-		if(forceAll || def.fireSpread != fireSpread)						a["fireSpread"] = fireSpread;
-		if(forceAll || def.damageRollOffAim != damageRollOffAim)			a["damageRollOffAim"] = damageRollOffAim;
-		if(forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
-		if(forceAll || def.scopeFoV != scopeFoV)							a["scopeFoV"] = scopeFoV;
-		if(forceAll || def.scopeToggle != scopeToggle)						a["scopeToggle"] = scopeToggle;
-		if(forceAll || !(def.modelSpec == modelSpec))						a["modelSpec"] = modelSpec;
-		if(forceAll || def.missDecal != missDecal)							a["missDecal"] = missDecal;
+		if (forceAll || def.maxAmmo != maxAmmo)								a["maxAmmo"] = maxAmmo;
+		if (forceAll || def.firePeriod != firePeriod)						a["firePeriod"] = firePeriod;
+		if (forceAll || def.autoFire != autoFire)							a["autoFire"] = autoFire;
+		if (forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
+		if (forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
+		if (forceAll || def.hitScan != hitScan)								a["hitScan"] = hitScan;
+
+		if (forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
+		if (forceAll || !(def.modelSpec == modelSpec))						a["modelSpec"] = modelSpec;
+
+		if (forceAll || def.muzzleOffset != muzzleOffset)					a["muzzleOffset"] = muzzleOffset;
+		if (forceAll || def.renderMuzzleFlash != renderMuzzleFlash)			a["renderMuzzleFlash"] = renderMuzzleFlash;
+
+		if (forceAll || def.renderBullets != renderBullets)					a["renderBullets"] = renderBullets;
+		if (forceAll || def.bulletSpeed != bulletSpeed)						a["bulletSpeed"] = bulletSpeed;
+		if (forceAll || def.bulletGravity != bulletGravity)					a["bulletGravity"] = bulletGravity;
+
+		if (forceAll || def.renderDecals != renderDecals)					a["renderDecals"] = renderDecals;
+		if (forceAll || def.missDecal != missDecal)							a["missDecal"] = missDecal;
+		if (forceAll || def.hitDecal != hitDecal)							a["hitDecal"] = hitDecal;
 		if (forceAll || def.missDecalCount != missDecalCount)				a["missDecalCount"] = missDecalCount;
-		if(forceAll || def.decalScale != decalScale)						a["decalScale"] = decalScale;
+		if (forceAll || def.missDecalScale != missDecalScale)				a["missDecalScale"] = missDecalScale;
+		if (forceAll || def.hitDecalScale != hitDecalScale)					a["hitDecalScale"] = hitDecalScale;
+		if (forceAll || def.hitDecalDurationS != hitDecalDurationS)			a["hitDecalDuration"] = hitDecalDurationS;
+		if (forceAll || def.hitDecalColorMult != hitDecalColorMult)			a["hitDecalColorMult"] = hitDecalColorMult;
+
+		if (forceAll || def.fireSpread != fireSpread)						a["fireSpread"] = fireSpread;
+		if (forceAll || def.damageRollOffAim != damageRollOffAim)			a["damageRollOffAim"] = damageRollOffAim;
+		if (forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
+		if (forceAll || def.scopeFoV != scopeFoV)							a["scopeFoV"] = scopeFoV;
+		if (forceAll || def.scopeToggle != scopeToggle)						a["scopeToggle"] = scopeToggle;
+
+
 		return a;
 	}
 };

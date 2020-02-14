@@ -77,7 +77,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 		// Check whether we hit any targets
 		int closestIndex = -1;
 		for (int t = 0; t < targets.size(); ++t) {
-			if (targets[t]->intersect(ray, closest)) {
+			if (targets[t]->intersect(ray, closest, hitInfo)) {
 				closestIndex = t;
 			}
 		}
