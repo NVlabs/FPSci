@@ -412,6 +412,7 @@ void App::loadDecals() {
 		m_hitDecalModel.reset();
 	}
 	else {
+		const float cmul = sessConfig->weapon.hitDecalColorMult;
 		String hitDecalSpec = format("\
 			ArticulatedMode::Specification {\
 				filename = \"ifs/square.ifs\";\
@@ -420,12 +421,12 @@ void App::loadDecals() {
 					setMaterial(all(), UniversalMaterial::Specification{\
 						lambertian = Texture::Specification {\
 							filename = \"%s\";\
-							encoding = Color3(2.0, 2.0, 2.0);\
+							encoding = Color3(%f, %f, %f);\
 						};\
 					});\
 				};\
 				scale = %f;\
-			};", sessConfig->weapon.hitDecal.c_str(), sessConfig->weapon.hitDecalScale);
+			};", sessConfig->weapon.hitDecal.c_str(), cmul, cmul, cmul, sessConfig->weapon.hitDecalScale);
 		m_hitDecalModel = ArticulatedModel::create(Any::parse(hitDecalSpec), "hitDecalModel");
 	}
 }
