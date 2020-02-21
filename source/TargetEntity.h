@@ -1,6 +1,9 @@
 #pragma once
 #include <G3D/G3D.h>
 
+
+class TargetConfig;
+
 //#define DRAW_BOUNDING_SPHERES	1		// Uncomment this to draw bounding spheres (useful for target sizing)
 #define BOUNDING_SPHERE_RADIUS	0.5		///< Use a 0.5m radius for sizing here
 
@@ -243,21 +246,15 @@ public:
 		const shared_ptr<Model>&		model,
 		const CFrame&					position);
 
-	/** For programmatic construction at runtime */
-	static shared_ptr<FlyingEntity> create
-	(const String&						name,
+	static shared_ptr<FlyingEntity> create(
+		shared_ptr<TargetConfig>		config,
+		const String&					name,
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
+		const Point3&					orbitCenter,
 		int								scaleIdx,
-		const CFrame&					position,
-		const Vector2&				    speedRange,
-		const Vector2&					motionChangePeriodRange,
-		bool							upperHemisphereOnly,
-		Point3							orbitCenter,
-		int								paramIdx,
-		Array<bool>						axisLock,
-		int								respawns=0,
-		bool							isLogged=true);
+		int								paramIdx
+	);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
         modify at least the name of the Table returned by the base class, which will be "Entity"
@@ -351,24 +348,16 @@ public:
 	 const Scene::LoadOptions&      loadOptions);
 
 	/** For programmatic construction at runtime */
-	static shared_ptr<JumpingEntity> create
-	(const String&						name,
+	static shared_ptr<JumpingEntity> create(
+		shared_ptr<TargetConfig>		config,
+		const String&					name,
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
 		int								scaleIdx,
-		const CFrame&					position,
-        const Vector2&					speedRange,
-        const Vector2&					motionChangePeriodRange,
-        const Vector2&					jumpPeriodRange,
-		const Vector2&					distanceRange,
-		const Vector2&					jumpSpeedRange,
-        const Vector2&					gravityRange,
-		Point3							orbitCenter,
-		float							orbitRadius,
-		int								paramIdx,
-		Array<bool>						axisLock,
-		int								respawns=0,
-		bool							isLogged=true);
+		const Point3&					orbitCenter,
+		float							targetDistance,
+		int								paramIdx
+	);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
 		modify at least the name of the Table returned by the base class, which will be "Entity"

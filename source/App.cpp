@@ -228,8 +228,8 @@ shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, b
 	target->setFrame(position);
 	target->setColor(color);
 
-	/*
 	// Don't set a track. We'll take care of the positioning after creation
+	/*
 	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
 	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
 	target->setTrack(track);
@@ -250,7 +250,8 @@ shared_ptr<TargetEntity> App::spawnDestTarget(
 	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(config->destinations, 
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(
+		config->destinations, 
 		nameStr, 
 		scene().get(), 
 		m_targetModels[config->id][scaleIndex], 
@@ -309,19 +310,7 @@ shared_ptr<FlyingEntity> App::spawnReferenceTarget(
 	const Color3& color) {
 
 	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(
-		"reference",
-		scene().get(),
-		m_targetModels["reference"][scaleIndex],
-		scaleIndex,
-		CFrame(),
-		{ 0.f, 0.f },
-		{ 10000.f, 10000.f },
-		false,
-		orbitCenter, 
-		0, 
-		Array<bool>(true, true, true)
-	);
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create("reference", scene().get(), m_targetModels["reference"][scaleIndex], CFrame());
 
 	// Setup additional target parameters
 	target->setFrame(position);
@@ -345,23 +334,8 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const bool isWorldSpace = config->destSpace == "world";
 	
-	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(
-		nameStr,
-		scene().get(),
-		m_targetModels[config->id][scaleIndex],
-		scaleIndex,
-		CFrame(),
-		{ config->speed[0], config->speed[1] },
-		{ config->motionChangePeriod[0], config->motionChangePeriod[1] },
-		config->upperHemisphereOnly,
-		orbitCenter,
-		paramIdx,
-		config->axisLock,
-		config->respawnCount,
-		config->logTargetTrajectory
-	);
-
-	// Setup additional target parameters
+	// Setup the target
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(config, nameStr, scene().get(), m_targetModels[config->id][scaleIndex], orbitCenter, scaleIndex, paramIdx);
 	target->setFrame(position);
 	target->setWorldSpace(isWorldSpace);
 	if (isWorldSpace) {
@@ -390,27 +364,8 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const bool isWorldSpace = config->destSpace == "world";
 
-	const shared_ptr<JumpingEntity>& target = JumpingEntity::create(
-		nameStr,
-		scene().get(),
-		m_targetModels[config->id][scaleIndex],
-		scaleIndex,
-		CFrame(),
-		{ config->speed[0], config->speed[1] },
-		{ config->motionChangePeriod[0], config->motionChangePeriod[1] },
-		{ config->jumpPeriod[0], config->jumpPeriod[1] },
-		{ config->distance[0], config->distance[1] },
-		{ config->jumpSpeed[0], config->jumpSpeed[1] },
-		{ config->accelGravity[0], config->accelGravity[1] },
-		orbitCenter,
-		targetDistance,
-		paramIdx,
-		config->axisLock,
-		config->respawnCount,
-		config->logTargetTrajectory
-	);
-
-	// Setup additional target parmameters
+	// Setup the target
+	const shared_ptr<JumpingEntity>& target = JumpingEntity::create(config, nameStr, scene().get(), m_targetModels[config->id][scaleIndex], scaleIndex, orbitCenter, targetDistance, paramIdx);
 	target->setFrame(position);
 	target->setWorldSpace(isWorldSpace);
 	if (isWorldSpace) {
