@@ -278,6 +278,9 @@ public:
 		const String& name = ""
 	);
 
+	/** Insert a target into the target array/scene */
+	inline void insertTarget(shared_ptr<TargetEntity> target);
+
     /** callback for saving user config */
 	void userSaveButtonPress(void);
 

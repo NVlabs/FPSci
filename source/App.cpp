@@ -224,18 +224,10 @@ void App::spawnRandomTarget() {
 /** Spawn a flying entity target */
 shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color, String modelName) {
 	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-
 	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModels[modelName][scaleIndex], CFrame());
-
-	UniversalMaterial::Specification materialSpecification;
-	materialSpecification.setLambertian(Texture::Specification(color));
-	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-
-	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-	target->setPose(amPose);
 	target->setFrame(position);
+	target->setColor(color);
+
 	/*
 	// Don't set a track. We'll take care of the positioning after creation
 	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
@@ -243,9 +235,7 @@ shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, b
 	target->setTrack(track);
 	*/
 
-	target->setShouldBeSaved(false);
-	targetArray.append(target);
-	scene()->insert(target);
+	insertTarget(target);
 	return target;
 }
 
@@ -269,27 +259,14 @@ shared_ptr<TargetEntity> App::spawnDestTarget(
 		config->respawnCount, 
 		config->logTargetTrajectory);
 
+	// Update parameters for the target
 	target->setHitSound(config->hitSound, config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
-
-	// Setup the texture
-	UniversalMaterial::Specification materialSpecification;
-	materialSpecification.setLambertian(Texture::Specification(color));
-	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-
-	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-
-	// Apply texture/position to target
-	target->setPose(amPose);
 	target->setFrame(position);
-	target->setShouldBeSaved(false);
+	target->setColor(color);
 
 	// Add target to array and scene
-	targetArray.append(target);
-	scene()->insert(target);
-
+	insertTarget(target);
 	return target;
 }
 
@@ -316,24 +293,12 @@ shared_ptr<TargetEntity> App::spawnDestTargetPreview(
 		0,
 		false);
 
-	// Setup the texture
-	UniversalMaterial::Specification materialSpecification;
-	materialSpecification.setLambertian(Texture::Specification(color));
-	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-
-	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-
-	// Apply texture/position to target
-	target->setPose(amPose);
+	// Setup (additional) target parameters
 	target->setFrame(dests[0].position);
-	target->setShouldBeSaved(false);
+	target->setColor(color);
 
 	// Add target to array and scene
-	targetArray.append(target);
-	scene()->insert(target);
-
+	insertTarget(target);
 	return target;
 }
 
@@ -358,19 +323,12 @@ shared_ptr<FlyingEntity> App::spawnReferenceTarget(
 		Array<bool>(true, true, true)
 	);
 
-	UniversalMaterial::Specification materialSpecification;
-	materialSpecification.setLambertian(Texture::Specification(color));
-	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-
-	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-	target->setPose(amPose);
+	// Setup additional target parameters
 	target->setFrame(position);
-	target->setShouldBeSaved(false);
+	target->setColor(color);
 
-	targetArray.append(target);
-	scene()->insert(target);
+	// Add target to array and scene
+	insertTarget(target);
 	return target;
 }
 
@@ -403,27 +361,18 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 		config->logTargetTrajectory
 	);
 
+	// Setup additional target parameters
+	target->setFrame(position);
 	target->setWorldSpace(isWorldSpace);
 	if (isWorldSpace) {
 		target->setBounds(config->moveBounds);
 	}
 	target->setHitSound(config->hitSound, config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
+	target->setColor(color);
 
-	UniversalMaterial::Specification materialSpecification;
-	materialSpecification.setLambertian(Texture::Specification(color));
-	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-
-	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-	target->setPose(amPose);
-
-	target->setFrame(position);
-
-	target->setShouldBeSaved(false);
-	targetArray.append(target);
-	scene()->insert(target);
+	// Add the target to the scene/target array
+	insertTarget(target);
 	return target;
 }
 
@@ -461,28 +410,25 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 		config->logTargetTrajectory
 	);
 
+	// Setup additional target parmameters
+	target->setFrame(position);
 	target->setWorldSpace(isWorldSpace);
 	if (isWorldSpace) {
 		target->setMoveBounds(config->moveBounds);
 	}
 	target->setHitSound(config->hitSound, config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
+	target->setColor(color);
 
-	UniversalMaterial::Specification materialSpecification;
-	materialSpecification.setLambertian(Texture::Specification(color));
-	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+	// Add the target to the scene/target array
+	insertTarget(target);
+	return target;
+}
 
-	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-	target->setPose(amPose);
-
-	target->setFrame(position);
-
+void App::insertTarget(shared_ptr<TargetEntity> target) {
 	target->setShouldBeSaved(false);
 	targetArray.append(target);
 	scene()->insert(target);
-	return target;
 }
 
 void App::loadDecals() {

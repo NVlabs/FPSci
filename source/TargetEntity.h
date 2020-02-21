@@ -98,6 +98,17 @@ public:
 		destinationIdx = 0;
 	}
 
+	void setColor(const Color3& color) {
+		UniversalMaterial::Specification materialSpecification;
+		materialSpecification.setLambertian(Texture::Specification(color));
+		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+
+		const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+		amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
+		setPose(amPose);
+	}
+
 	void setWorldSpace(bool worldSpace) { m_worldSpace = worldSpace; }
 
 	void setHitSound(String hitSoundFilename, float hitSoundVol = 1.0f) {
