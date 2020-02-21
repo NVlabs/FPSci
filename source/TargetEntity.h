@@ -85,11 +85,19 @@ public:
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
 		int								scaleIdx,
-		const CFrame&					position,
 		int								paramIdx,
-		Point3							offset=Point3::zero(),
-		int								respawns=0,
-		bool							isLogged=true);
+		bool							isLogged=false
+	);
+
+	static shared_ptr<TargetEntity> create(
+		shared_ptr<TargetConfig>		config,
+		const String&					name,
+		Scene*							scene,
+		const shared_ptr<Model>&		model,
+		const Point3&					offset,
+		int								scaleIdx,
+		int								paramIdx
+	);
 
 	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount=0, int scaleIdx=0, bool isLogged=true) {
 		setDestinations(dests);
@@ -232,19 +240,21 @@ public:
 
 	// TODO: After other implementations are complete.
     /** For deserialization from Any / loading from file */
-    static shared_ptr<Entity> create 
-    (const String&                  name,
+    static shared_ptr<Entity> create (
+	const String&					name,
      Scene*                         scene,
      AnyTableReader&                propertyTable,
      const ModelTable&				modelTable,
-     const Scene::LoadOptions&		loadOptions);
+     const Scene::LoadOptions&		loadOptions
+	);
 
 	/** For programmatic construction at runtime */
-	static shared_ptr<FlyingEntity> create
-	(const String&						name,
+	static shared_ptr<FlyingEntity> create(
+		const String&					name,
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
-		const CFrame&					position);
+		const CFrame&					position
+	);
 
 	static shared_ptr<FlyingEntity> create(
 		shared_ptr<TargetConfig>		config,
@@ -312,9 +322,7 @@ protected:
 	JumpingEntity() {}
 
 	void init(AnyTableReader& propertyTable);
-
 	void init();
-
 	void init(
 		const Vector2& angularSpeedRange,
         const Vector2& motionChangePeriodRange,
@@ -340,12 +348,13 @@ public:
 	void setMoveBounds(AABox bounds) { m_moveBounds = bounds; }
 
 	/** For deserialization from Any / loading from file */
-	static shared_ptr<Entity> create 
-	(const String&                  name,
-	 Scene*                         scene,
-	 AnyTableReader&                propertyTable,
-	 const ModelTable&              modelTable,
-	 const Scene::LoadOptions&      loadOptions);
+	static shared_ptr<Entity> create (
+		const String&					name,
+		Scene*							scene,
+		AnyTableReader&					propertyTable,
+		const ModelTable&				modelTable,
+		const Scene::LoadOptions&		loadOptions
+	);
 
 	/** For programmatic construction at runtime */
 	static shared_ptr<JumpingEntity> create(

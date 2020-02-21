@@ -31,16 +31,29 @@ shared_ptr<TargetEntity> TargetEntity::create(
 	Scene*							scene,
 	const shared_ptr<Model>&		model,
 	int								scaleIdx,
-	const CFrame&					position,
 	int								paramIdx,
-	Point3							offset,
-	int								respawns,
 	bool							isLogged)
 {
 	const shared_ptr<TargetEntity>& target = createShared<TargetEntity>();
 	target->Entity::init(name, scene, CFrame(dests[0].position), shared_ptr<Entity::Track>(), true, true);
 	target->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	target->TargetEntity::init(dests, paramIdx, offset, respawns, scaleIdx, isLogged);
+	target->TargetEntity::init(dests, paramIdx, Point3::zero(), 0, scaleIdx, isLogged);
+	return target;
+}
+
+shared_ptr<TargetEntity> TargetEntity::create(
+	shared_ptr<TargetConfig>		config,
+	const String&					name,
+	Scene*							scene,
+	const shared_ptr<Model>&		model,
+	const Point3&					offset,
+	int								scaleIdx,
+	int								paramIdx) 
+{
+	const shared_ptr<TargetEntity>& target = createShared<TargetEntity>();
+	target->Entity::init(name, scene, CFrame(config->destinations[0].position), shared_ptr<Entity::Track>(), true, true);
+	target->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
+	target->TargetEntity::init(config->destinations, paramIdx, offset, config->respawnCount, scaleIdx, config->logTargetTrajectory);
 	return target;
 }
 

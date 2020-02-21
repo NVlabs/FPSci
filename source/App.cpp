@@ -250,16 +250,9 @@ shared_ptr<TargetEntity> App::spawnDestTarget(
 	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(
-		config->destinations, 
-		nameStr, 
-		scene().get(), 
-		m_targetModels[config->id][scaleIndex], 
-		scaleIndex, 
-		CFrame(), paramIdx, position, 
-		config->respawnCount, 
-		config->logTargetTrajectory);
 
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(config, nameStr, scene().get(), m_targetModels[config->id][scaleIndex], position, scaleIndex, paramIdx);
+	
 	// Update parameters for the target
 	target->setHitSound(config->hitSound, config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
@@ -282,17 +275,7 @@ shared_ptr<TargetEntity> App::spawnDestTargetPreview(
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
 
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(
-		dests,
-		nameStr,
-		scene().get(),
-		m_targetModels[id][scaleIndex],
-		scaleIndex,
-		CFrame(), 
-		0, 
-		Point3::zero(),
-		0,
-		false);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], scaleIndex, 0);
 
 	// Setup (additional) target parameters
 	target->setFrame(dests[0].position);

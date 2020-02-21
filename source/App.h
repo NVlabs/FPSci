@@ -101,7 +101,7 @@ protected:
 	shared_ptr<ArticulatedModel>			m_missDecalModel;					///< Model for the miss decal
 	shared_ptr<ArticulatedModel>			m_hitDecalModel;					///< Model for the hit decal
 	shared_ptr<VisibleEntity>				m_hitDecal;							///< Pointer to hit decal
-	float									m_hitDecalTimeRemainingS = 0.f;		///< Remaining duration to show the decal for
+	RealTime								m_hitDecalTimeRemainingS = 0.f;		///< Remaining duration to show the decal for
 	Array<shared_ptr<VisibleEntity>>		m_currentMissDecals;				///< Pointers to miss decals
 
 	Array<shared_ptr<VisibleEntity>>		m_explosions;						///< Model for target destroyed decal
