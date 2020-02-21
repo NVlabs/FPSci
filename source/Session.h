@@ -122,7 +122,7 @@ protected:
 	int m_currTrialIdx;									///< Current trial
 	int m_currQuestionIdx = -1;							///< Current question index
 	Array<int> m_remainingTrials;								///< Completed flags
-	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;			///< Target configurations by trial
+	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;		///< Target configurations by trial
 
 	// Time-based parameters
 	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial

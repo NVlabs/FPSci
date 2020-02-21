@@ -124,11 +124,14 @@ void Session::initTargetAnimation() {
 	if (presentationState == PresentationState::task) {
 		// Iterate through the targets
 		for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
+			
 			const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, m_targetConfigs[m_currTrialIdx][i]->id, i);
+			const Color3 initColor = m_config->targetView.healthColors[0];
 			shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
-			float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
-			float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
-			float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
+
+			const float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
+			const float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
+			const float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
 			bool isWorldSpace = target->destSpace == "world";
 
 			CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw- (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
@@ -136,90 +139,26 @@ void Session::initTargetAnimation() {
 			// Check for case w/ destination array
 			if (target->destinations.size() > 0) {
 				Point3 offset =isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<TargetEntity> t = m_app->spawnDestTarget(
-					offset,
-					target->destinations,
-					targetSize,
-					m_config->targetView.healthColors[0],
-					target->id,
-					i,
-					target->respawnCount,
-					name,
-					target->logTargetTrajectory
-				);
-				t->setHitSound(target->hitSound, target->hitSoundVol);
-				t->setDestoyedSound(target->destroyedSound, target->destroyedSoundVol);
+				shared_ptr<TargetEntity> t = m_app->spawnDestTarget(target, offset, initColor, i, name);
 			}
 			// Otherwise check if this is a jumping target
 			else if (target->jumpEnabled) {
 				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<JumpingEntity> t = m_app->spawnJumpingTarget(
-					offset,
-					targetSize,
-					m_config->targetView.healthColors[0],
-					{ target->speed[0], target->speed[1] },
-					{ target->motionChangePeriod[0], target->motionChangePeriod[1] },
-					{ target->jumpPeriod[0], target->jumpPeriod[1] },
-					{ target->distance[0], target->distance[1] },
-					{ target->jumpSpeed[0], target->jumpSpeed[1] },
-					{ target->accelGravity[0], target->accelGravity[1] },
-					initialSpawnPos,
-					m_targetDistance,
-					target->id,
-					i,
-					target->axisLock,
-					target->respawnCount,
-					name,
-					target->logTargetTrajectory
-				);
-				t->setWorldSpace(isWorldSpace);
-				if (isWorldSpace) {
-					t->setMoveBounds(target->moveBounds);
-				}
-				t->setHitSound(target->hitSound, target->hitSoundVol);
-				t->setDestoyedSound(target->destroyedSound, target->destroyedSoundVol);
+				shared_ptr<JumpingEntity> t = m_app->spawnJumpingTarget(target, offset, initialSpawnPos, initColor, m_targetDistance, i, name);
 			}
 			else {
 				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<FlyingEntity> t = m_app->spawnFlyingTarget(
-					offset,
-					targetSize,
-					m_config->targetView.healthColors[0],
-					{ target->speed[0], target->speed[1] },
-					{ target->motionChangePeriod[0], target->motionChangePeriod[1] },
-					target->upperHemisphereOnly,
-					initialSpawnPos,
-					target->id,
-					i,
-					target->axisLock,
-					target->respawnCount,
-					name,
-					target->logTargetTrajectory
-				);
-				t->setWorldSpace(isWorldSpace);
-				if (isWorldSpace) {
-					t->setBounds(target->moveBounds);
-				}
-				t->setHitSound(target->hitSound, target->hitSoundVol);
-				t->setDestoyedSound(target->destroyedSound, target->destroyedSoundVol);
+				shared_ptr<FlyingEntity> t = m_app->spawnFlyingTarget(target, offset, initialSpawnPos, initColor, i, name);
 			}
 		}
 	}
 	else {
 		// Make sure we reset the target color here (avoid color bugs)
-		m_app->spawnFlyingTarget(
+		m_app->spawnReferenceTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
-			m_config->targetView.refTargetSize,
-			m_config->targetView.refTargetColor,
-			{ 0.0f, 0.0f },
-			{ 1000.0f, 1000.f },
-			false,
 			initialSpawnPos,
-			"reference",
-			0,
-			Array<bool>(true, true, true),
-			0, 
-			"reference"
+			m_config->targetView.refTargetSize,
+			m_config->targetView.refTargetColor
 		);
 	}
 

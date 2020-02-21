@@ -230,7 +230,21 @@ public:
     @param scale size of target TODO: is this radius or diameter in meters?*/
     void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
 
-	shared_ptr<TargetEntity> spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color, String id, int paramIdx, int respawns = 0, String name="", bool isLogged=true);
+	//shared_ptr<TargetEntity> spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color, String id, int paramIdx, int respawns = 0, String name="", bool isLogged=true);
+	shared_ptr<TargetEntity> spawnDestTarget(
+		shared_ptr<TargetConfig> config,
+		const Point3& position,
+		const Color3& color,
+		const int paramIdx,
+		const String& name = "");
+
+	shared_ptr<TargetEntity> spawnDestTargetPreview(
+		const Array<Destination>& dests,
+		const float size,
+		const Color3& color,
+		const String& id,
+		const String& name = ""
+	);
 
 	/** Creates a random target in front of the player */
 	void spawnRandomTarget();
@@ -238,44 +252,31 @@ public:
 	/** Creates a spinning target */
 	shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red(), String modelName= "model/target/target.obj");
 
-	/** Creates a flying target */
+	shared_ptr<FlyingEntity> spawnReferenceTarget(
+		const Point3& position,
+		const Point3& orbitCenter,
+		const float size,
+		const Color3& color
+	);
+
 	shared_ptr<FlyingEntity> spawnFlyingTarget(
+		shared_ptr<TargetConfig> config,
 		const Point3& position,
-		float scale,
+		const Point3& orbitCenter,
 		const Color3& color,
-		const Vector2& speedRange,
-		const Vector2& motionChangePeriodRange,
-		bool upperHemisphereOnly,
-		Point3 orbitCenter,
-		String modelName,
-		int paramIdx,
-		Array<bool> axisLock,
-		int respawns = 0,
-		String name = "",
-		bool isLogged=true
+		const int paramIdx,
+		const String& name = ""
 	);
 
-	/** Creates a jumping target */
 	shared_ptr<JumpingEntity> spawnJumpingTarget(
+		shared_ptr<TargetConfig> config,
 		const Point3& position,
-		float scale,
+		const Point3& orbitCenter,
 		const Color3& color,
-        const Vector2& speedRange,
-        const Vector2& motionChangePeriodRange,
-        const Vector2& jumpPeriodRange,
-		const Vector2& distanceRange,
-		const Vector2& jumpSpeedRange,
-		const Vector2& gravityRange,
-		Point3 orbitCenter,
-		float targetDistance,
-		String modelName,
-		int paramIdx,
-		Array<bool> axisLock,
-		int respawns = 0,
-		String name = "",
-		bool isLogged=true
+		const float targetDistance,
+		const int paramIdx,
+		const String& name = ""
 	);
-
 
     /** callback for saving user config */
 	void userSaveButtonPress(void);

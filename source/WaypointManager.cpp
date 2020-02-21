@@ -192,7 +192,7 @@ void WaypointManager::previewWaypoints(void) {
 	}
 	if (m_waypoints.size() > 1) {
 		// Create a new target and set its index
-		m_app->spawnDestTarget(Vector3::zero(), m_waypoints, 1.0, Color3::white(), "reference", 0, 0, "preview");
+		m_app->spawnDestTargetPreview(m_waypoints, 1.0, Color3::white(), "reference", "preview");
 		m_previewIdx = m_app->targetArray.size() - 1;
 	}
 }

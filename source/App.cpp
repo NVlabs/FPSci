@@ -235,7 +235,6 @@ shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, b
 	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
 	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
 	target->setPose(amPose);
-
 	target->setFrame(position);
 	/*
 	// Don't set a track. We'll take care of the positioning after creation
@@ -250,19 +249,35 @@ shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, b
 	return target;
 }
 
-shared_ptr<TargetEntity> App::spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color,
-	 String id, int paramIdx, int respawns, String name, bool isLogged) {	
+shared_ptr<TargetEntity> App::spawnDestTarget(
+	shared_ptr<TargetConfig> config,
+	const Point3& position,
+	const Color3& color,
+	const int paramIdx,
+	const String& name) 
+{
 	// Create the target
-	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], scaleIndex, CFrame(), paramIdx, position, respawns, isLogged);
+	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
+	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(config->destinations, 
+		nameStr, 
+		scene().get(), 
+		m_targetModels[config->id][scaleIndex], 
+		scaleIndex, 
+		CFrame(), paramIdx, position, 
+		config->respawnCount, 
+		config->logTargetTrajectory);
+
+	target->setHitSound(config->hitSound, config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
 
 	// Setup the texture
 	UniversalMaterial::Specification materialSpecification;
 	materialSpecification.setLambertian(Texture::Specification(color));
 	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
 	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-	
+
 	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
 	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
 
@@ -278,38 +293,122 @@ shared_ptr<TargetEntity> App::spawnDestTarget(const Point3 position, Array<Desti
 	return target;
 }
 
-shared_ptr<FlyingEntity> App::spawnFlyingTarget(
-	const Point3& position,
-	float scale,
+shared_ptr<TargetEntity> App::spawnDestTargetPreview(
+	const Array<Destination>& dests,
+	const float size,
 	const Color3& color,
-	const Vector2& speedRange,
-	const Vector2& motionChangePeriodRange,
-	bool upperHemisphereOnly,
-	Point3 orbitCenter,
-	String id,
-	int paramIdx,
-	Array<bool> axisLock,
-	int respawns,
-	String name,
-	bool isLogged)
+	const String& id,
+	const String& name)
 {
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
-	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(
+	// Create the target
+	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
+	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(
+		dests,
 		nameStr,
 		scene().get(),
 		m_targetModels[id][scaleIndex],
 		scaleIndex,
+		CFrame(), 
+		0, 
+		Point3::zero(),
+		0,
+		false);
+
+	// Setup the texture
+	UniversalMaterial::Specification materialSpecification;
+	materialSpecification.setLambertian(Texture::Specification(color));
+	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+
+	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
+
+	// Apply texture/position to target
+	target->setPose(amPose);
+	target->setFrame(dests[0].position);
+	target->setShouldBeSaved(false);
+
+	// Add target to array and scene
+	targetArray.append(target);
+	scene()->insert(target);
+
+	return target;
+}
+
+shared_ptr<FlyingEntity> App::spawnReferenceTarget(
+	const Point3& position,
+	const Point3& orbitCenter,
+	const float size,
+	const Color3& color) {
+
+	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(
+		"reference",
+		scene().get(),
+		m_targetModels["reference"][scaleIndex],
+		scaleIndex,
 		CFrame(),
-		speedRange,
-		motionChangePeriodRange,
-		upperHemisphereOnly,
+		{ 0.f, 0.f },
+		{ 10000.f, 10000.f },
+		false,
+		orbitCenter, 
+		0, 
+		Array<bool>(true, true, true)
+	);
+
+	UniversalMaterial::Specification materialSpecification;
+	materialSpecification.setLambertian(Texture::Specification(color));
+	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+
+	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
+	target->setPose(amPose);
+	target->setFrame(position);
+	target->setShouldBeSaved(false);
+
+	targetArray.append(target);
+	scene()->insert(target);
+	return target;
+}
+
+shared_ptr<FlyingEntity> App::spawnFlyingTarget(
+	shared_ptr<TargetConfig> config,
+	const Point3& position,
+	const Point3& orbitCenter,
+	const Color3& color,
+	const int paramIdx,
+	const String& name) 
+{
+	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
+	const bool isWorldSpace = config->destSpace == "world";
+	
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(
+		nameStr,
+		scene().get(),
+		m_targetModels[config->id][scaleIndex],
+		scaleIndex,
+		CFrame(),
+		{ config->speed[0], config->speed[1] },
+		{ config->motionChangePeriod[0], config->motionChangePeriod[1] },
+		config->upperHemisphereOnly,
 		orbitCenter,
 		paramIdx,
-		axisLock,
-		respawns,
-		isLogged
+		config->axisLock,
+		config->respawnCount,
+		config->logTargetTrajectory
 	);
+
+	target->setWorldSpace(isWorldSpace);
+	if (isWorldSpace) {
+		target->setBounds(config->moveBounds);
+	}
+	target->setHitSound(config->hitSound, config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
 
 	UniversalMaterial::Specification materialSpecification;
 	materialSpecification.setLambertian(Texture::Specification(color));
@@ -329,45 +428,45 @@ shared_ptr<FlyingEntity> App::spawnFlyingTarget(
 }
 
 shared_ptr<JumpingEntity> App::spawnJumpingTarget(
+	shared_ptr<TargetConfig> config,
 	const Point3& position,
-	float scale,
+	const Point3& orbitCenter,
 	const Color3& color,
-    const Vector2& speedRange,
-    const Vector2& motionChangePeriodRange,
-    const Vector2& jumpPeriodRange,
-	const Vector2& distanceRange,
-	const Vector2& jumpSpeedRange,
-	const Vector2& gravityRange,
-	Point3 orbitCenter,
-	float targetDistance,
-	String id,
-	int paramIdx,
-	Array<bool> axisLock,
-	int respawns,
-	String name,
-	bool isLogged)
-{
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
+	const float targetDistance,
+	const int paramIdx,
+	const String& name) {
+
+	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
+	const bool isWorldSpace = config->destSpace == "world";
+
 	const shared_ptr<JumpingEntity>& target = JumpingEntity::create(
 		nameStr,
 		scene().get(),
-		m_targetModels[id][scaleIndex],
+		m_targetModels[config->id][scaleIndex],
 		scaleIndex,
 		CFrame(),
-		speedRange,
-		motionChangePeriodRange,
-		jumpPeriodRange,
-		distanceRange,
-		jumpSpeedRange,
-		gravityRange,
+		{ config->speed[0], config->speed[1] },
+		{ config->motionChangePeriod[0], config->motionChangePeriod[1] },
+		{ config->jumpPeriod[0], config->jumpPeriod[1] },
+		{ config->distance[0], config->distance[1] },
+		{ config->jumpSpeed[0], config->jumpSpeed[1] },
+		{ config->accelGravity[0], config->accelGravity[1] },
 		orbitCenter,
 		targetDistance,
 		paramIdx,
-		axisLock,
-		respawns,
-		isLogged
+		config->axisLock,
+		config->respawnCount,
+		config->logTargetTrajectory
 	);
+
+	target->setWorldSpace(isWorldSpace);
+	if (isWorldSpace) {
+		target->setMoveBounds(config->moveBounds);
+	}
+	target->setHitSound(config->hitSound, config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
 
 	UniversalMaterial::Specification materialSpecification;
 	materialSpecification.setLambertian(Texture::Specification(color));
