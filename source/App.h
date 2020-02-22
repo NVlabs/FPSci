@@ -228,9 +228,14 @@ public:
     @param speed world-space velocity (m/s) of target
     @param radius world-space distance to target
     @param scale size of target TODO: is this radius or diameter in meters?*/
-    void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
+    //void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
+	/** Creates a random target in front of the player */
+	//void spawnRandomTarget();
+	/** Creates a spinning target */
+	
+	//shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red(), String modelName = "model/target/target.obj");
 
-	//shared_ptr<TargetEntity> spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color, String id, int paramIdx, int respawns = 0, String name="", bool isLogged=true);
+
 	shared_ptr<TargetEntity> spawnDestTarget(
 		shared_ptr<TargetConfig> config,
 		const Point3& position,
@@ -245,12 +250,6 @@ public:
 		const String& id,
 		const String& name = ""
 	);
-
-	/** Creates a random target in front of the player */
-	void spawnRandomTarget();
-
-	/** Creates a spinning target */
-	shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red(), String modelName= "model/target/target.obj");
 
 	shared_ptr<FlyingEntity> spawnReferenceTarget(
 		const Point3& position,

@@ -8,8 +8,6 @@
 #include "WaypointManager.h"
 #include <chrono>
 
-//#define DRAW_BULLET_PROXIES
-
 // Storage for configuration static vars
 FpsConfig SessionConfig::defaultConfig;
 int TrialCount::defaultCount;
@@ -119,125 +117,126 @@ void App::updateMouseSensitivity() {
 	}
 }
 
+// Comment these since they are unused
 /** Spawn a randomly parametrized target */
-void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
-    Random& rng = Random::threadCommon();
-
-    // Construct a reference frame
-    // Remove the vertical component
-    Vector3 Z = -activeCamera()->frame().lookVector();
-    debugPrintf("lookatZ = [%.4f, %.4f, %.4f]\n", Z.x, Z.y, Z.z);
-    debugPrintf("origin  = [%.4f, %.4f, %.4f]\n", activeCamera()->frame().translation.x, activeCamera()->frame().translation.y, activeCamera()->frame().translation.z);
-    Z.y = 0.0f;
-    Z = Z.direction();
-    Vector3 Y = Vector3::unitY();
-    Vector3 X = Y.cross(Z);
-
-    // Make a random vector in front of the player in a narrow field of view
-    Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.5f, 0.5f)).direction();
-
-    // Ray from user/camera toward intended spawn location
-    Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
-
-    //distance = rng.uniform(2.0f, distance - 1.0f);
-    const shared_ptr<FlyingEntity>& target =
-        spawnTarget(ray.origin() + ray.direction() * radius,
-            scale, false,
-            Color3::wheelRandom());
-
-    // Choose some destination locations based on speed and motionDuration
-    const Point3& center = ray.origin();
-    Array<Point3> destinationArray;
-    // [radians/s] = [m/s] / [m/radians]
-    float angularSpeed = speed / radius;
-    // [rad] = [rad/s] * [s] 
-    float angleChange = angularSpeed * motionDecisionPeriod;
-
-    destinationArray.push(target->frame().translation);
-    int tempInt = 0;
-    for (float motionTime = 0.0f; motionTime < motionDuration; motionTime += motionDecisionPeriod) {
-        // TODO: make angle change randomize correction, should be placed on circle around previous point
-        float pitch = 0.0f;
-        float yaw = tempInt++ % 2 == 0 ? angleChange : -angleChange;
-        //float yaw = rng.uniform(-angleChange, angleChange);
-        //float pitch = rng.uniform(-angleChange, angleChange);
-        const Vector3& dir = CFrame::fromXYZYPRRadians(0.0f, 0.0f, 0.0f, yaw, pitch, 0.0f).rotation * ray.direction();
-        ray.set(ray.origin(), dir);
-        destinationArray.push(center + dir * radius);
-    }
-    target->setSpeed(speed); // m/s
-    // debugging prints
-    for (Point3* p = destinationArray.begin(); p != destinationArray.end(); ++p) {
-        debugPrintf("[%.2f, %.2f, %.2f]\n", p->x, p->y, p->z);
-    }
-    target->setDestinations(destinationArray, center);
-}
-
-/** Spawn a random non-parametrized target */
-void App::spawnRandomTarget() {
-	Random& rng = Random::threadCommon();
-
-	bool done = false;
-	int tries = 0;
-
-	// Construct a reference frame
-	// Remove the vertical component
-	Vector3 Z = -activeCamera()->frame().lookVector();
-	Z.y = 0.0f;
-	Z = Z.direction();
-	Vector3 Y = Vector3::unitY();
-	Vector3 X = Y.cross(Z);
-
-	do {
-		// Make a random vector in front of the player in a narrow field of view
-		Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
-
-		// Make sure the spawn location is visible
-		Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
-		float distance = finf();
-		scene()->intersect(ray, distance);
-
-		if ((distance > 2.0f) && (distance < finf())) {
-            distance = rng.uniform(2.0f, distance - 1.0f);
-			const shared_ptr<FlyingEntity>& target =
-                spawnTarget(ray.origin() + ray.direction() * distance, 
-                    rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
-                    Color3::wheelRandom());
-
-            // Choose some destination locations
-            const Point3& center = ray.origin();
-            Array<Point3> destinationArray;
-            destinationArray.push(target->frame().translation);
-            for (int i = 0; i < 20; ++i) {
-        		const Vector3& dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
-                destinationArray.push(center + dir * distance);
-            }
-            target->setSpeed(2.0f); // m/s
-            target->setDestinations(destinationArray, center);
-
-			done = true;
-		}
-		++tries;
-	} while (!done && tries < 100);
-}
+//void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
+//    Random& rng = Random::threadCommon();
+//
+//    // Construct a reference frame
+//    // Remove the vertical component
+//    Vector3 Z = -activeCamera()->frame().lookVector();
+//    debugPrintf("lookatZ = [%.4f, %.4f, %.4f]\n", Z.x, Z.y, Z.z);
+//    debugPrintf("origin  = [%.4f, %.4f, %.4f]\n", activeCamera()->frame().translation.x, activeCamera()->frame().translation.y, activeCamera()->frame().translation.z);
+//    Z.y = 0.0f;
+//    Z = Z.direction();
+//    Vector3 Y = Vector3::unitY();
+//    Vector3 X = Y.cross(Z);
+//
+//    // Make a random vector in front of the player in a narrow field of view
+//    Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.5f, 0.5f)).direction();
+//
+//    // Ray from user/camera toward intended spawn location
+//    Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
+//
+//    //distance = rng.uniform(2.0f, distance - 1.0f);
+//    const shared_ptr<FlyingEntity>& target =
+//        spawnTarget(ray.origin() + ray.direction() * radius,
+//            scale, false,
+//            Color3::wheelRandom());
+//
+//    // Choose some destination locations based on speed and motionDuration
+//    const Point3& center = ray.origin();
+//    Array<Point3> destinationArray;
+//    // [radians/s] = [m/s] / [m/radians]
+//    float angularSpeed = speed / radius;
+//    // [rad] = [rad/s] * [s] 
+//    float angleChange = angularSpeed * motionDecisionPeriod;
+//
+//    destinationArray.push(target->frame().translation);
+//    int tempInt = 0;
+//    for (float motionTime = 0.0f; motionTime < motionDuration; motionTime += motionDecisionPeriod) {
+//        // TODO: make angle change randomize correction, should be placed on circle around previous point
+//        float pitch = 0.0f;
+//        float yaw = tempInt++ % 2 == 0 ? angleChange : -angleChange;
+//        //float yaw = rng.uniform(-angleChange, angleChange);
+//        //float pitch = rng.uniform(-angleChange, angleChange);
+//        const Vector3& dir = CFrame::fromXYZYPRRadians(0.0f, 0.0f, 0.0f, yaw, pitch, 0.0f).rotation * ray.direction();
+//        ray.set(ray.origin(), dir);
+//        destinationArray.push(center + dir * radius);
+//    }
+//    target->setSpeed(speed); // m/s
+//    // debugging prints
+//    for (Point3* p = destinationArray.begin(); p != destinationArray.end(); ++p) {
+//        debugPrintf("[%.2f, %.2f, %.2f]\n", p->x, p->y, p->z);
+//    }
+//    target->setDestinations(destinationArray, center);
+//}
+//
+///** Spawn a random non-parametrized target */
+//void App::spawnRandomTarget() {
+//	Random& rng = Random::threadCommon();
+//
+//	bool done = false;
+//	int tries = 0;
+//
+//	// Construct a reference frame
+//	// Remove the vertical component
+//	Vector3 Z = -activeCamera()->frame().lookVector();
+//	Z.y = 0.0f;
+//	Z = Z.direction();
+//	Vector3 Y = Vector3::unitY();
+//	Vector3 X = Y.cross(Z);
+//
+//	do {
+//		// Make a random vector in front of the player in a narrow field of view
+//		Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
+//
+//		// Make sure the spawn location is visible
+//		Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
+//		float distance = finf();
+//		scene()->intersect(ray, distance);
+//
+//		if ((distance > 2.0f) && (distance < finf())) {
+//            distance = rng.uniform(2.0f, distance - 1.0f);
+//			const shared_ptr<FlyingEntity>& target =
+//                spawnTarget(ray.origin() + ray.direction() * distance, 
+//                    rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
+//                    Color3::wheelRandom());
+//
+//            // Choose some destination locations
+//            const Point3& center = ray.origin();
+//            Array<Point3> destinationArray;
+//            destinationArray.push(target->frame().translation);
+//            for (int i = 0; i < 20; ++i) {
+//        		const Vector3& dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
+//                destinationArray.push(center + dir * distance);
+//            }
+//            target->setSpeed(2.0f); // m/s
+//            target->setDestinations(destinationArray, center);
+//
+//			done = true;
+//		}
+//		++tries;
+//	} while (!done && tries < 100);
+//}
 
 /** Spawn a flying entity target */
-shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color, String modelName) {
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModels[modelName][scaleIndex], CFrame());
-	target->setFrame(position);
-	target->setColor(color);
-
-	// Don't set a track. We'll take care of the positioning after creation
-	/*
-	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
-	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
-	target->setTrack(track);
-	*/
-
-	insertTarget(target);
-	return target;
-}
+//shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color, String modelName) {
+//	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+//	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModels[modelName][scaleIndex], CFrame());
+//	target->setFrame(position);
+//	target->setColor(color);
+//
+//	// Don't set a track. We'll take care of the positioning after creation
+//	/*
+//	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
+//	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
+//	target->setTrack(track);
+//	*/
+//
+//	insertTarget(target);
+//	return target;
+//}
 
 shared_ptr<TargetEntity> App::spawnDestTarget(
 	shared_ptr<TargetConfig> config,
@@ -290,8 +289,8 @@ shared_ptr<FlyingEntity> App::spawnReferenceTarget(
 	const Point3& position,
 	const Point3& orbitCenter,
 	const float size,
-	const Color3& color) {
-
+	const Color3& color) 
+{
 	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
 	const shared_ptr<FlyingEntity>& target = FlyingEntity::create("reference", scene().get(), m_targetModels["reference"][scaleIndex], CFrame());
 
@@ -340,8 +339,8 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	const Color3& color,
 	const float targetDistance,
 	const int paramIdx,
-	const String& name) {
-
+	const String& name)
+{
 	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
 	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
