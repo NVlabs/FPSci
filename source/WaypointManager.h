@@ -9,6 +9,8 @@ class WaypointDisplay;
 class WaypointManager : ReferenceCountedObject {
 private:
 	App* m_app;
+	Scene* m_scene;
+
 	shared_ptr<WaypointDisplay> m_waypointControls;
 
 	Array<Destination> m_waypoints;			///< Array of waypoints
@@ -17,11 +19,22 @@ private:
 	DebugID m_highlighted;
 	int m_previewIdx = -1;
 
+	shared_ptr<TargetEntity> m_previewTarget;
+
 	const float m_waypointRad = 0.1f;
 	const float m_waypointConnectRad = 0.02f;
 	const Color4 m_waypointColor = Color4(0.0f, 1.0f, 0.0f, 1.0f);
 	const Color4 m_highlightColor = Color4(1.0f, 1.0f, 0.0f, 1.0f);
 
+	shared_ptr<TargetEntity> spawnDestTargetPreview(
+		const Array<Destination>& dests,
+		const float size,
+		const Color3& color,
+		const String& id,
+		const String& name = ""
+	);
+
+	void destroyPreviewTarget();
 
 public:
 	WaypointManager() {}

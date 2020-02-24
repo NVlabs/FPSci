@@ -121,9 +121,6 @@ protected:
 	shared_ptr<RenderControls>				m_renderControls;
 	shared_ptr<WeaponControls>				m_weaponControls;
 
-	Table<String, Array<shared_ptr<ArticulatedModel>>> m_targetModels;
-	const int								m_modelScaleCount = 30;
-
 	Array<shared_ptr<ArticulatedModel>>		m_explosionModels;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
@@ -183,9 +180,6 @@ public:
 
 	App(const GApp::Settings& settings = GApp::Settings());
 
-	/** Array of all targets in the scene */
-	Array<shared_ptr<TargetEntity>> targetArray;					///< Array of drawn targets
-
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
@@ -195,6 +189,9 @@ public:
 	
 	shared_ptr<SessionConfig>		sessConfig = SessionConfig::create();			///< Current session config
 	shared_ptr<G3Dialog>			dialog;							///< Dialog box
+
+	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
+	const int											modelScaleCount = 30;
 
 	shared_ptr<Session> sess;										///< Pointer to the experiment
 
@@ -206,9 +203,7 @@ public:
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
-	/** Destroy a target from the targets array */
-	void destroyTarget(int index);
-	void destroyTarget(shared_ptr<TargetEntity> target);
+
 	/** Show the player controls */
 	void showPlayerControls();
 	/** Show the render controls */
@@ -221,64 +216,6 @@ public:
 	float debugMenuHeight() {
 		return m_debugMenuHeight;
 	}
-
-    /** Creates a random target with motion based on parameters 
-    @param motionDuration time in seconds to produce a motion path for
-    @param motionDecisionPeriod time in seconds when new motion direction is chosen
-    @param speed world-space velocity (m/s) of target
-    @param radius world-space distance to target
-    @param scale size of target TODO: is this radius or diameter in meters?*/
-    //void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
-	/** Creates a random target in front of the player */
-	//void spawnRandomTarget();
-	/** Creates a spinning target */
-	
-	//shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red(), String modelName = "model/target/target.obj");
-
-
-	shared_ptr<TargetEntity> spawnDestTarget(
-		shared_ptr<TargetConfig> config,
-		const Point3& position,
-		const Color3& color,
-		const int paramIdx,
-		const String& name = "");
-
-	shared_ptr<TargetEntity> spawnDestTargetPreview(
-		const Array<Destination>& dests,
-		const float size,
-		const Color3& color,
-		const String& id,
-		const String& name = ""
-	);
-
-	shared_ptr<FlyingEntity> spawnReferenceTarget(
-		const Point3& position,
-		const Point3& orbitCenter,
-		const float size,
-		const Color3& color
-	);
-
-	shared_ptr<FlyingEntity> spawnFlyingTarget(
-		shared_ptr<TargetConfig> config,
-		const Point3& position,
-		const Point3& orbitCenter,
-		const Color3& color,
-		const int paramIdx,
-		const String& name = ""
-	);
-
-	shared_ptr<JumpingEntity> spawnJumpingTarget(
-		shared_ptr<TargetConfig> config,
-		const Point3& position,
-		const Point3& orbitCenter,
-		const Color3& color,
-		const float targetDistance,
-		const int paramIdx,
-		const String& name = ""
-	);
-
-	/** Insert a target into the target array/scene */
-	inline void insertTarget(shared_ptr<TargetEntity> target);
 
     /** callback for saving user config */
 	void userSaveButtonPress(void);
@@ -302,15 +239,7 @@ public:
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
 
-	/** Fire the weapon - hits targets, draws decals, starts explosions */
-	shared_ptr<TargetEntity> fire(bool destroyImmediately=false);
-
-	/** clear all targets (used when clearing remaining targets at the end of a trial) */
-	void clearTargets();
-
-	/** get the current view direction */
 	Point2 getViewDirection();
-
 	Point3 getPlayerLocation();
 	
 	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;

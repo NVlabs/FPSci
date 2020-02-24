@@ -108,6 +108,8 @@ struct PlayerAction {
 class Session : public ReferenceCountedObject {
 protected:
 	App* m_app = nullptr;								///< Pointer to the app
+	Scene* m_scene = nullptr;							///< Pointer to the scene
+	
 	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
 	shared_ptr<Logger> m_logger;						///< Output results logger
 	shared_ptr<PlayerEntity> m_player;					///< Player entity
@@ -118,6 +120,12 @@ protected:
 	int m_clickCount = 0;								///< Count of total clicks in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
 	String m_feedbackMessage;							///< Message to show when trial complete
+
+	// Target management
+	Table<String, Array<shared_ptr<ArticulatedModel>>>* m_targetModels;
+	int m_modelScaleCount;
+	int m_lastUniqueID = 0;								///< Counter for creating unique names for various entities
+	Array<shared_ptr<TargetEntity>> m_targetArray;		///< Array of drawn targets
 
 	int m_currTrialIdx;									///< Current trial
 	int m_currQuestionIdx = -1;							///< Current question index
@@ -138,14 +146,64 @@ protected:
 	// Target parameters
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	
-	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app) {
-		m_config = config;
+	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config)
+	{
 		m_hasSession = notNull(m_config);
 	};
 
-	Session(App* app) : m_app(app){
+	Session(App* app) : m_app(app)
+	{
 		m_hasSession = false;
 	}
+
+	/** Creates a random target with motion based on parameters
+	@param motionDuration time in seconds to produce a motion path for
+	@param motionDecisionPeriod time in seconds when new motion direction is chosen
+	@param speed world-space velocity (m/s) of target
+	@param radius world-space distance to target
+	@param scale size of target TODO: is this radius or diameter in meters?*/
+	//void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
+	/** Creates a random target in front of the player */
+	//void spawnRandomTarget();
+	/** Creates a spinning target */
+
+	//shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red(), String modelName = "model/target/target.obj");
+
+		/** Insert a target into the target array/scene */
+	inline void insertTarget(shared_ptr<TargetEntity> target);
+
+	shared_ptr<TargetEntity> spawnDestTarget(
+		shared_ptr<TargetConfig> config,
+		const Point3& position,
+		const Color3& color,
+		const int paramIdx,
+		const String& name = "");
+
+	shared_ptr<FlyingEntity> spawnReferenceTarget(
+		const Point3& position,
+		const Point3& orbitCenter,
+		const float size,
+		const Color3& color
+	);
+
+	shared_ptr<FlyingEntity> spawnFlyingTarget(
+		shared_ptr<TargetConfig> config,
+		const Point3& position,
+		const Point3& orbitCenter,
+		const Color3& color,
+		const int paramIdx,
+		const String& name = ""
+	);
+
+	shared_ptr<JumpingEntity> spawnJumpingTarget(
+		shared_ptr<TargetConfig> config,
+		const Point3& position,
+		const Point3& orbitCenter,
+		const Color3& color,
+		const float targetDistance,
+		const int paramIdx,
+		const String& name = ""
+	);
 
 public:
 	float initialHeadingRadians = 0.0f;
@@ -191,6 +249,13 @@ public:
 		m_destroyedTargets += 1;
 	}
 
+	/** Destroy a target from the targets array */
+	void destroyTarget(int index);
+	void destroyTarget(shared_ptr<TargetEntity> target);
+
+	/** clear all targets (used when clearing remaining targets at the end of a trial) */
+	void clearTargets();
+
 	float getRemainingTrialTime();
 	float getProgress();
 	int getScore();
@@ -208,4 +273,8 @@ public:
 
 	/** result recording */
 	void countClick() { m_clickCount++; }
+
+	Array<shared_ptr<TargetEntity>> targetArray() {
+		return m_targetArray;
+	}
 };

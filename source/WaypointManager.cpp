@@ -184,24 +184,44 @@ void WaypointManager::setWaypoints(Array<Destination> waypoints) {
 	}
 }
 
+shared_ptr<TargetEntity> WaypointManager::spawnDestTargetPreview(
+	const Array<Destination>& dests,
+	const float size,
+	const Color3& color,
+	const String& id,
+	const String& name)
+{
+	// Create the target
+	const String nameStr = name.empty() ? format("destPreview") : name;
+	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_app->modelScaleCount - 1);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, m_scene, m_app->targetModels[id][scaleIndex], scaleIndex, 0);
+
+	// Setup (additional) target parameters
+	target->setFrame(dests[0].position);
+	target->setColor(color);
+
+	// Add target to array and scene
+	m_scene->insert(target);
+	return target;
+}
+
+void WaypointManager::destroyPreviewTarget() {
+	if (isNull(m_previewTarget)) return;
+	m_scene->removeEntity(m_previewTarget->name());
+	m_previewTarget.reset();
+}
+
 void WaypointManager::previewWaypoints(void) {
 	// Check if a preview target exists, if so remove it
-	if (m_previewIdx >= 0) {
-		m_app->destroyTarget(m_previewIdx);
-		m_previewIdx = -1;
-	}
+	destroyPreviewTarget();
 	if (m_waypoints.size() > 1) {
 		// Create a new target and set its index
-		m_app->spawnDestTargetPreview(m_waypoints, 1.0, Color3::white(), "reference", "preview");
-		m_previewIdx = m_app->targetArray.size() - 1;
+		m_previewTarget = spawnDestTargetPreview(m_waypoints, 1.0, Color3::white(), "reference", "preview");
 	}
 }
 
 void WaypointManager::stopPreview(void) {
-	if (m_previewIdx >= 0) {			// Check if a preview target exists
-		m_app->destroyTarget(m_previewIdx);	// Destory the target
-		m_previewIdx = -1;				// Use -1 value to indicate no preview present
-	}
+	destroyPreviewTarget();
 }
 
 bool WaypointManager::loadWaypoints(String filename) {

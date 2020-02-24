@@ -75,6 +75,10 @@ void Session::onInit(String filename, String description) {
 
 	// Get the player from the app
 	m_player = m_app->scene()->typedEntity<PlayerEntity>("player");
+	m_scene = m_app->scene().get();
+
+	m_targetModels = &(m_app->targetModels);
+	m_modelScaleCount = m_app->modelScaleCount;
 
 	// Check for valid session
 	if (m_hasSession) {
@@ -139,22 +143,22 @@ void Session::initTargetAnimation() {
 			// Check for case w/ destination array
 			if (target->destinations.size() > 0) {
 				Point3 offset =isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<TargetEntity> t = m_app->spawnDestTarget(target, offset, initColor, i, name);
+				shared_ptr<TargetEntity> t = spawnDestTarget(target, offset, initColor, i, name);
 			}
 			// Otherwise check if this is a jumping target
 			else if (target->jumpEnabled) {
 				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<JumpingEntity> t = m_app->spawnJumpingTarget(target, offset, initialSpawnPos, initColor, m_targetDistance, i, name);
+				shared_ptr<JumpingEntity> t = spawnJumpingTarget(target, offset, initialSpawnPos, initColor, m_targetDistance, i, name);
 			}
 			else {
 				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<FlyingEntity> t = m_app->spawnFlyingTarget(target, offset, initialSpawnPos, initColor, i, name);
+				shared_ptr<FlyingEntity> t = spawnFlyingTarget(target, offset, initialSpawnPos, initColor, i, name);
 			}
 		}
 	}
 	else {
 		// Make sure we reset the target color here (avoid color bugs)
-		m_app->spawnReferenceTarget(
+		spawnReferenceTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 			initialSpawnPos,
 			m_config->targetView.refTargetSize,
@@ -207,7 +211,7 @@ void Session::updatePresentationState()
 	// This updates presentation state and also deals with data collection when each trial ends.
 	PresentationState currentState = presentationState;
 	PresentationState newState;
-	int remainingTargets = m_app->targetArray.size();
+	int remainingTargets = m_targetArray.size();
 	float stateElapsedTime = m_timer.getTime();
 	newState = currentState;
 
@@ -238,7 +242,7 @@ void Session::updatePresentationState()
 		{
 			m_taskEndTime = Logger::genUniqueTimestamp();
 			processResponse();
-			m_app->clearTargets(); // clear all remaining targets
+			clearTargets(); // clear all remaining targets
 			newState = PresentationState::feedback;
 			if (m_config->player.stillBetweenTrials) {
 				m_player->setMoveEnable(false);
@@ -371,7 +375,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 void Session::accumulateTrajectories()
 {
 	if (notNull(m_logger) && m_config->logger.logTargetTrajectories) {
-		for (shared_ptr<TargetEntity> target : m_app->targetArray) {
+		for (shared_ptr<TargetEntity> target : m_targetArray) {
 			if (!target->isLogged()) continue;
 			// recording target trajectories
 			Point3 targetAbsolutePosition = target->frame().translation;
@@ -461,5 +465,259 @@ String Session::getFeedbackMessage() {
 void Session::endLogging() {
 	if (m_logger != nullptr) {
 		m_logger.reset();
+	}
+}
+
+// Comment these since they are unused
+/** Spawn a randomly parametrized target */
+//void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
+//    Random& rng = Random::threadCommon();
+//
+//    // Construct a reference frame
+//    // Remove the vertical component
+//    Vector3 Z = -activeCamera()->frame().lookVector();
+//    debugPrintf("lookatZ = [%.4f, %.4f, %.4f]\n", Z.x, Z.y, Z.z);
+//    debugPrintf("origin  = [%.4f, %.4f, %.4f]\n", activeCamera()->frame().translation.x, activeCamera()->frame().translation.y, activeCamera()->frame().translation.z);
+//    Z.y = 0.0f;
+//    Z = Z.direction();
+//    Vector3 Y = Vector3::unitY();
+//    Vector3 X = Y.cross(Z);
+//
+//    // Make a random vector in front of the player in a narrow field of view
+//    Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.5f, 0.5f)).direction();
+//
+//    // Ray from user/camera toward intended spawn location
+//    Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
+//
+//    //distance = rng.uniform(2.0f, distance - 1.0f);
+//    const shared_ptr<FlyingEntity>& target =
+//        spawnTarget(ray.origin() + ray.direction() * radius,
+//            scale, false,
+//            Color3::wheelRandom());
+//
+//    // Choose some destination locations based on speed and motionDuration
+//    const Point3& center = ray.origin();
+//    Array<Point3> destinationArray;
+//    // [radians/s] = [m/s] / [m/radians]
+//    float angularSpeed = speed / radius;
+//    // [rad] = [rad/s] * [s] 
+//    float angleChange = angularSpeed * motionDecisionPeriod;
+//
+//    destinationArray.push(target->frame().translation);
+//    int tempInt = 0;
+//    for (float motionTime = 0.0f; motionTime < motionDuration; motionTime += motionDecisionPeriod) {
+//        // TODO: make angle change randomize correction, should be placed on circle around previous point
+//        float pitch = 0.0f;
+//        float yaw = tempInt++ % 2 == 0 ? angleChange : -angleChange;
+//        //float yaw = rng.uniform(-angleChange, angleChange);
+//        //float pitch = rng.uniform(-angleChange, angleChange);
+//        const Vector3& dir = CFrame::fromXYZYPRRadians(0.0f, 0.0f, 0.0f, yaw, pitch, 0.0f).rotation * ray.direction();
+//        ray.set(ray.origin(), dir);
+//        destinationArray.push(center + dir * radius);
+//    }
+//    target->setSpeed(speed); // m/s
+//    // debugging prints
+//    for (Point3* p = destinationArray.begin(); p != destinationArray.end(); ++p) {
+//        debugPrintf("[%.2f, %.2f, %.2f]\n", p->x, p->y, p->z);
+//    }
+//    target->setDestinations(destinationArray, center);
+//}
+//
+///** Spawn a random non-parametrized target */
+//void Session::spawnRandomTarget() {
+//	Random& rng = Random::threadCommon();
+//
+//	bool done = false;
+//	int tries = 0;
+//
+//	// Construct a reference frame
+//	// Remove the vertical component
+//	Vector3 Z = -activeCamera()->frame().lookVector();
+//	Z.y = 0.0f;
+//	Z = Z.direction();
+//	Vector3 Y = Vector3::unitY();
+//	Vector3 X = Y.cross(Z);
+//
+//	do {
+//		// Make a random vector in front of the player in a narrow field of view
+//		Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
+//
+//		// Make sure the spawn location is visible
+//		Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
+//		float distance = finf();
+//		scene()->intersect(ray, distance);
+//
+//		if ((distance > 2.0f) && (distance < finf())) {
+//            distance = rng.uniform(2.0f, distance - 1.0f);
+//			const shared_ptr<FlyingEntity>& target =
+//                spawnTarget(ray.origin() + ray.direction() * distance, 
+//                    rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
+//                    Color3::wheelRandom());
+//
+//            // Choose some destination locations
+//            const Point3& center = ray.origin();
+//            Array<Point3> destinationArray;
+//            destinationArray.push(target->frame().translation);
+//            for (int i = 0; i < 20; ++i) {
+//        		const Vector3& dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
+//                destinationArray.push(center + dir * distance);
+//            }
+//            target->setSpeed(2.0f); // m/s
+//            target->setDestinations(destinationArray, center);
+//
+//			done = true;
+//		}
+//		++tries;
+//	} while (!done && tries < 100);
+//}
+
+/** Spawn a flying entity target */
+//shared_ptr<FlyingEntity> Session::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color, String modelName) {
+//	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+//	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(format("target%03d", ++m_lastUniqueID), m_scene, m_targetModels[modelName][scaleIndex], CFrame());
+//	target->setFrame(position);
+//	target->setColor(color);
+//
+//	// Don't set a track. We'll take care of the positioning after creation
+//	/*
+//	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
+//	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
+//	target->setTrack(track);
+//	*/
+//
+//	insertTarget(target);
+//	return target;
+//}
+
+shared_ptr<TargetEntity> Session::spawnDestTarget(
+	shared_ptr<TargetConfig> config,
+	const Point3& position,
+	const Color3& color,
+	const int paramIdx,
+	const String& name)
+{
+	// Create the target
+	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
+	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(config, nameStr, m_scene, (*m_targetModels)[config->id][scaleIndex], position, scaleIndex, paramIdx);
+
+	// Update parameters for the target
+	target->setHitSound(config->hitSound, config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
+	target->setFrame(position);
+	target->setColor(color);
+
+	// Add target to array and scene
+	insertTarget(target);
+	return target;
+}
+
+shared_ptr<FlyingEntity> Session::spawnReferenceTarget(
+	const Point3& position,
+	const Point3& orbitCenter,
+	const float size,
+	const Color3& color)
+{
+	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create("reference", m_scene, (*m_targetModels)["reference"][scaleIndex], CFrame());
+
+	// Setup additional target parameters
+	target->setFrame(position);
+	target->setColor(color);
+
+	// Add target to array and scene
+	insertTarget(target);
+	return target;
+}
+
+shared_ptr<FlyingEntity> Session::spawnFlyingTarget(
+	shared_ptr<TargetConfig> config,
+	const Point3& position,
+	const Point3& orbitCenter,
+	const Color3& color,
+	const int paramIdx,
+	const String& name)
+{
+	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
+	const bool isWorldSpace = config->destSpace == "world";
+
+	// Setup the target
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(config, nameStr, m_scene, (*m_targetModels)[config->id][scaleIndex], orbitCenter, scaleIndex, paramIdx);
+	target->setFrame(position);
+	target->setWorldSpace(isWorldSpace);
+	if (isWorldSpace) {
+		target->setBounds(config->moveBounds);
+	}
+	target->setHitSound(config->hitSound, config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
+	target->setColor(color);
+
+	// Add the target to the scene/target array
+	insertTarget(target);
+	return target;
+}
+
+shared_ptr<JumpingEntity> Session::spawnJumpingTarget(
+	shared_ptr<TargetConfig> config,
+	const Point3& position,
+	const Point3& orbitCenter,
+	const Color3& color,
+	const float targetDistance,
+	const int paramIdx,
+	const String& name)
+{
+	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
+	const bool isWorldSpace = config->destSpace == "world";
+
+	// Setup the target
+	const shared_ptr<JumpingEntity>& target = JumpingEntity::create(config, nameStr, m_scene, (*m_targetModels)[config->id][scaleIndex], scaleIndex, orbitCenter, targetDistance, paramIdx);
+	target->setFrame(position);
+	target->setWorldSpace(isWorldSpace);
+	if (isWorldSpace) {
+		target->setMoveBounds(config->moveBounds);
+	}
+	target->setHitSound(config->hitSound, config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
+	target->setColor(color);
+
+	// Add the target to the scene/target array
+	insertTarget(target);
+	return target;
+}
+
+void Session::insertTarget(shared_ptr<TargetEntity> target) {
+	target->setShouldBeSaved(false);
+	m_targetArray.append(target);
+	m_scene->insert(target);
+}
+
+void Session::destroyTarget(int index) {
+	// Not a reference because we're about to manipulate the array
+	const shared_ptr<VisibleEntity> target = m_targetArray[index];
+	// Remove the target from the target array
+	m_targetArray.fastRemove(index);
+	// Remove the target from the scene
+	m_scene->removeEntity(target->name());
+}
+
+void Session::destroyTarget(shared_ptr<TargetEntity> target) {
+	for (int i = 0; i < m_targetArray.size(); i++) {
+		if (m_targetArray[i]->name() == target->name()) {
+			m_targetArray.fastRemove(i);
+		}
+	}
+	m_scene->removeEntity(target->name());
+}
+
+/** Clear all targets one by one */
+void Session::clearTargets() {
+	while (m_targetArray.size() > 0) {
+		destroyTarget(0);
 	}
 }
