@@ -76,6 +76,7 @@ void Session::onInit(String filename, String description) {
 	// Get the player from the app
 	m_player = m_app->scene()->typedEntity<PlayerEntity>("player");
 	m_scene = m_app->scene().get();
+	m_camera = m_app->activeCamera();
 
 	m_targetModels = &(m_app->targetModels);
 	m_modelScaleCount = m_app->modelScaleCount;
@@ -100,7 +101,7 @@ void Session::onInit(String filename, String description) {
 }
 
 void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
-	static const Point3 initialSpawnPos = m_app->activeCamera()->frame().translation;
+	static const Point3 initialSpawnPos = m_camera->frame().translation;
 	shared_ptr<TargetConfig> config = m_targetConfigs[m_currTrialIdx][target->paramIdx()];
 	const bool isWorldSpace = config->destSpace == "world";
 	Point3 loc;
@@ -399,8 +400,8 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 	if (notNull(m_logger) && m_config->logger.logPlayerActions) {
 		BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 		// recording target trajectories
-		Point2 dir = m_app->getViewDirection();
-		Point3 loc = m_app->getPlayerLocation();
+		Point2 dir = getViewDirection();
+		Point3 loc = getPlayerLocation();
 		PlayerAction pa = PlayerAction(Logger::getFileTime(), dir, loc, action, targetName);
 		m_logger->logPlayerAction(pa);
 		END_PROFILER_EVENT();

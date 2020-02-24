@@ -701,19 +701,6 @@ void App::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	}
 }
 
-Point2 App::getViewDirection()
-{   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.
-	Point3 view_cartesian = activeCamera()->frame().lookVector();
-	float az = atan2(-view_cartesian.z, -view_cartesian.x) * 180 / pif();
-	float el = atan2(view_cartesian.y, sqrtf(view_cartesian.x * view_cartesian.x + view_cartesian.z * view_cartesian.z)) * 180 / pif();
-	return Point2(az, el);
-}
-
-Point3 App::getPlayerLocation()
-{
-	return activeCamera()->frame().translation;
-}
-
 void App::simulateProjectiles(RealTime dt) {
 	// Draw projectiles
 	for (int p = 0; p < m_projectileArray.size(); p++) {

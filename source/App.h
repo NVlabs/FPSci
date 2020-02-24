@@ -238,9 +238,6 @@ public:
 
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
-
-	Point2 getViewDirection();
-	Point3 getPlayerLocation();
 	
 	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
 	virtual void onInit() override;

@@ -113,6 +113,7 @@ protected:
 	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
 	shared_ptr<Logger> m_logger;						///< Output results logger
 	shared_ptr<PlayerEntity> m_player;					///< Player entity
+	shared_ptr<Camera> m_camera;						///< Camera entity
 
 	// Experiment management					
 	int m_remainingTargets;								///< Number of remaining targets (calculated at the end of the session)
@@ -149,11 +150,15 @@ protected:
 	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config)
 	{
 		m_hasSession = notNull(m_config);
-	};
+	}
 
 	Session(App* app) : m_app(app)
 	{
 		m_hasSession = false;
+	}
+
+	~Session(){
+		clearTargets();		// Clear the targets when the session is done
 	}
 
 	/** Creates a random target with motion based on parameters
@@ -204,6 +209,20 @@ protected:
 		const int paramIdx,
 		const String& name = ""
 	);
+
+	inline Point2 getViewDirection()
+	{   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.
+		Point3 view_cartesian = m_camera->frame().lookVector();
+		float az = atan2(-view_cartesian.z, -view_cartesian.x) * 180 / pif();
+		float el = atan2(view_cartesian.y, sqrtf(view_cartesian.x * view_cartesian.x + view_cartesian.z * view_cartesian.z)) * 180 / pif();
+		return Point2(az, el);
+	}
+
+	inline Point3 getPlayerLocation()
+	{
+		return m_camera->frame().translation;
+	}
+
 
 public:
 	float initialHeadingRadians = 0.0f;
