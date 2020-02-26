@@ -380,7 +380,7 @@ void Session::accumulateTrajectories()
 			if (!target->isLogged()) continue;
 			// recording target trajectories
 			Point3 targetAbsolutePosition = target->frame().translation;
-			Point3 initialSpawnPos = m_app->activeCamera()->frame().translation;
+			Point3 initialSpawnPos = m_camera->frame().translation;
 			Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
 					   
 			//// below for 2D direction calculation (azimuth and elevation)
