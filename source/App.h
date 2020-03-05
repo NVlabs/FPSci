@@ -12,6 +12,7 @@
 #include <G3D/G3D.h>
 #include "ConfigFiles.h"
 #include "TargetEntity.h"
+#include "PlayerEntity.h"
 #include "GuiElements.h"
 #include "PyLogger.h"
 #include "Weapon.h"
@@ -163,6 +164,22 @@ protected:
 	void loadDecals();
 	void updateUser(void);
     void updateUserGUI();
+
+	Vector2 getUserTurnScale() { return sessConfig->player.turnScale * userTable.getCurrentUser()->turnScale;  }
+	Vector2 fovTurnScale(float FoV) {
+		float ratioFoV = FoV / sessConfig->render.hFoV;
+		return ratioFoV * getUserTurnScale();
+	}
+
+	void setScopeView(bool scoped = true) {
+		// Get player entity and calculate scope FoV
+		const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");	
+		const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
+		m_weapon->setScoped(scoped);														// Update the weapon state		
+		const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
+		activeCamera()->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
+		player->turnScale = fovTurnScale(FoV);												// Scale sensitivity based on the field of view change here
+	}
 
 	void hitTarget(shared_ptr<TargetEntity>);
 	void simulateProjectiles(RealTime dt);
