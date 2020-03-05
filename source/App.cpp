@@ -1430,6 +1430,31 @@ void App::drawHUD(RenderDevice *rd) {
 		hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 	}
 }
+Vector2 App::scopedTurnScale(bool scoped = false, float FoV = 0.f) {
+	Vector2 baseTurnScale = getUserTurnScale();
+	// If we're not scoped just return the normal user turn scale
+	if (!scoped) return baseTurnScale;
+	// Otherwise create scaled turn scale for the scoped state
+	if (userTable.getCurrentUser()->scopeTurnScale.length() > 0) {
+		// User scoped turn scale specified, don't perform default scaling
+		return baseTurnScale * userTable.getCurrentUser()->scopeTurnScale;
+	}
+	else {
+		// Otherwise scale the scope turn scalue using the ratio of FoV
+		return FoV / sessConfig->render.hFoV * baseTurnScale;
+	}
+}
+
+void App::setScopeView(bool scoped = true) {
+	// Get player entity and calculate scope FoV
+	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
+	const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
+	m_weapon->setScoped(scoped);														// Update the weapon state		
+	const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
+	activeCamera()->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
+	player->turnScale = scopedTurnScale(scoped, FoV);									// Scale sensitivity based on the field of view change here
+}
+
 
 /** Clear all targets one by one */
 void App::clearTargets() {

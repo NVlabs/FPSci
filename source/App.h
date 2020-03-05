@@ -165,21 +165,12 @@ protected:
 	void updateUser(void);
     void updateUserGUI();
 
+	/** Get the turn scale of this user */
 	Vector2 getUserTurnScale() { return sessConfig->player.turnScale * userTable.getCurrentUser()->turnScale;  }
-	Vector2 fovTurnScale(float FoV) {
-		float ratioFoV = FoV / sessConfig->render.hFoV;
-		return ratioFoV * getUserTurnScale();
-	}
-
-	void setScopeView(bool scoped = true) {
-		// Get player entity and calculate scope FoV
-		const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");	
-		const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
-		m_weapon->setScoped(scoped);														// Update the weapon state		
-		const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
-		activeCamera()->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
-		player->turnScale = fovTurnScale(FoV);												// Scale sensitivity based on the field of view change here
-	}
+	/** Set the turn scale when scoped */
+	Vector2 scopedTurnScale(bool scoped = false, float FoV = 0.f);
+	/** Set the scoped view (and also adjust the turn scale) */
+	void setScopeView(bool scoped = true);
 
 	void hitTarget(shared_ptr<TargetEntity>);
 	void simulateProjectiles(RealTime dt);

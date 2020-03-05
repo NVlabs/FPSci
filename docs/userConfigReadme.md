@@ -11,14 +11,17 @@ The [`userconfig.Any` file](../data-files/userconfig.Any) is located in the [`da
 # User Table
 Each entry in the user table contains the following fields:
 
-* `id` a quick ID used to identify the user
-* `mouseDPI` the mouse DPI used for the player
-* `cmp360` the mouse sensitivity for the user (measured in cm/360°)
-* `reticleIndex` refers to which reticle this user prefers (if not required for the study)
-* `reticleScale` provides a range of reticle sizes over which to set the scale as an `Array` w/ 2 elements (min, max)
-* `reticleColor` provides a range of colors (as `Color4`) over which to set the reticle color as an `Array` w/ 2 elements (min, max)
-* `reticleShrinkTime` provides the time for the reticle to contract following a shot (in seconds)
-* `turnScale` provides a per-player motion scale, designed to compound with the experiment/session-level `turnScale`. By setting the X/Y of this `Vector2` to `-1` we can produce inversion for the controls on a per-player basis.
+|Field name           |Type     |Description                                                                                          |
+|---------------------|---------|-----------------------------------------------------------------------------------------------------|
+|`id`                 |`String` |A quick ID used to identify the user                                                                 |
+|`mouseDPI`           |`float`  |The mouse DPI used for the player (used for sensitivity adjustment)                                  |
+|`cmp360`             |`float`  |The mouse sensitivity for the user (measured in cm/360°)                                             |
+|`reticleIndex`       |`int`    |Refers to which reticle this user prefers (if not required for the study)                            |
+|`reticleScale`       |`float`  |Provides a range of reticle sizes over which to set the scale as an `Array` w/ 2 elements (min, max) | 
+|`reticleColor`       |`Color4` |Provides a range of colors over which to set the reticle color as an `Array` w/ 2 elements (min, max)|
+|`reticleShrinkTime`  |`float`  |Provides the time (in seconds) for the reticle to contract following a shot                          |
+|`turnScale`          |`Vector2(float)`|Provides a per-player view rotation/mouse sensitivity scale, designed to compound with the experiment/session-level `turnScale`. By setting the X/Y of this `Vector2` to `-1` we can produce inversion for the controls on a per-player basis.|
+|`scopeTurnScale`     |`Vector2(float)`|Provides an (optional) additional turn scale to apply when scoped. If this value is `Vector2(0,0)` (or unspecified) then a "default" scaling of the ratio of FoV (scoped vs unscoped) is used to scale mouse sensitivity |
 
 Refer to the [SAMPLEuserconfig.Any file](SAMPLE%20configs/SAMPLEuserconfig.Any) for an example of these settings.
 
@@ -53,6 +56,7 @@ users = [
         ];
         reticleShrinkTime = 1.0;            // Scale the reticle back to 50% over 1s after fire
         turnScale = Vector2(1.0, 1.0);      // This is the default condition (no turn scale) set to -1 for invert X/Y
+        scopeTurnScale = Vector2(0.0, 0.0); // This is the default condition (scoped turn scale based on ratio of scoped vs unscoped field of view)
     }, 
 ... 
 ```
