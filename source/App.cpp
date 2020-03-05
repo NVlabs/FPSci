@@ -1430,7 +1430,7 @@ void App::drawHUD(RenderDevice *rd) {
 		hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 	}
 }
-Vector2 App::scopedTurnScale(bool scoped = false, float FoV = 0.f) {
+Vector2 App::scopedTurnScale(bool scoped, float FoV) {
 	Vector2 baseTurnScale = getUserTurnScale();
 	// If we're not scoped just return the normal user turn scale
 	if (!scoped) return baseTurnScale;
@@ -1445,7 +1445,7 @@ Vector2 App::scopedTurnScale(bool scoped = false, float FoV = 0.f) {
 	}
 }
 
-void App::setScopeView(bool scoped = true) {
+void App::setScopeView(bool scoped) {
 	// Get player entity and calculate scope FoV
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
 	const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
