@@ -101,7 +101,7 @@ protected:
 	shared_ptr<ArticulatedModel>			m_missDecalModel;					///< Model for the miss decal
 	shared_ptr<ArticulatedModel>			m_hitDecalModel;					///< Model for the hit decal
 	shared_ptr<VisibleEntity>				m_hitDecal;							///< Pointer to hit decal
-	float									m_hitDecalTimeRemainingS = 0.f;		///< Remaining duration to show the decal for
+	RealTime								m_hitDecalTimeRemainingS = 0.f;		///< Remaining duration to show the decal for
 	Array<shared_ptr<VisibleEntity>>		m_currentMissDecals;				///< Pointers to miss decals
 
 	Array<shared_ptr<VisibleEntity>>		m_explosions;						///< Model for target destroyed decal
@@ -120,9 +120,6 @@ protected:
 	shared_ptr<PlayerControls>				m_playerControls;
 	shared_ptr<RenderControls>				m_renderControls;
 	shared_ptr<WeaponControls>				m_weaponControls;
-
-	Table<String, Array<shared_ptr<ArticulatedModel>>> m_targetModels;
-	const int								m_modelScaleCount = 30;
 
 	Array<shared_ptr<ArticulatedModel>>		m_explosionModels;
 
@@ -183,9 +180,6 @@ public:
 
 	App(const GApp::Settings& settings = GApp::Settings());
 
-	/** Array of all targets in the scene */
-	Array<shared_ptr<TargetEntity>> targetArray;					///< Array of drawn targets
-
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
@@ -195,6 +189,9 @@ public:
 	
 	shared_ptr<SessionConfig>		sessConfig = SessionConfig::create();			///< Current session config
 	shared_ptr<G3Dialog>			dialog;							///< Dialog box
+
+	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
+	const int											modelScaleCount = 30;
 
 	shared_ptr<Session> sess;										///< Pointer to the experiment
 
@@ -206,9 +203,7 @@ public:
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
-	/** Destroy a target from the targets array */
-	void destroyTarget(int index);
-	void destroyTarget(shared_ptr<TargetEntity> target);
+
 	/** Show the player controls */
 	void showPlayerControls();
 	/** Show the render controls */
@@ -221,61 +216,6 @@ public:
 	float debugMenuHeight() {
 		return m_debugMenuHeight;
 	}
-
-    /** Creates a random target with motion based on parameters 
-    @param motionDuration time in seconds to produce a motion path for
-    @param motionDecisionPeriod time in seconds when new motion direction is chosen
-    @param speed world-space velocity (m/s) of target
-    @param radius world-space distance to target
-    @param scale size of target TODO: is this radius or diameter in meters?*/
-    void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
-
-	shared_ptr<TargetEntity> spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color, String id, int paramIdx, int respawns = 0, String name="", bool isLogged=true);
-
-	/** Creates a random target in front of the player */
-	void spawnRandomTarget();
-
-	/** Creates a spinning target */
-	shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red(), String modelName= "model/target/target.obj");
-
-	/** Creates a flying target */
-	shared_ptr<FlyingEntity> spawnFlyingTarget(
-		const Point3& position,
-		float scale,
-		const Color3& color,
-		const Vector2& speedRange,
-		const Vector2& motionChangePeriodRange,
-		bool upperHemisphereOnly,
-		Point3 orbitCenter,
-		String modelName,
-		int paramIdx,
-		Array<bool> axisLock,
-		int respawns = 0,
-		String name = "",
-		bool isLogged=true
-	);
-
-	/** Creates a jumping target */
-	shared_ptr<JumpingEntity> spawnJumpingTarget(
-		const Point3& position,
-		float scale,
-		const Color3& color,
-        const Vector2& speedRange,
-        const Vector2& motionChangePeriodRange,
-        const Vector2& jumpPeriodRange,
-		const Vector2& distanceRange,
-		const Vector2& jumpSpeedRange,
-		const Vector2& gravityRange,
-		Point3 orbitCenter,
-		float targetDistance,
-		String modelName,
-		int paramIdx,
-		Array<bool> axisLock,
-		int respawns = 0,
-		String name = "",
-		bool isLogged=true
-	);
-
 
     /** callback for saving user config */
 	void userSaveButtonPress(void);
@@ -298,17 +238,6 @@ public:
 
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
-
-	/** Fire the weapon - hits targets, draws decals, starts explosions */
-	shared_ptr<TargetEntity> fire(bool destroyImmediately=false);
-
-	/** clear all targets (used when clearing remaining targets at the end of a trial) */
-	void clearTargets();
-
-	/** get the current view direction */
-	Point2 getViewDirection();
-
-	Point3 getPlayerLocation();
 	
 	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
 	virtual void onInit() override;

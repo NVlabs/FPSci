@@ -8,8 +8,6 @@
 #include "WaypointManager.h"
 #include <chrono>
 
-//#define DRAW_BULLET_PROXIES
-
 // Storage for configuration static vars
 FpsConfig SessionConfig::defaultConfig;
 int TrialCount::defaultCount;
@@ -119,273 +117,6 @@ void App::updateMouseSensitivity() {
 	}
 }
 
-/** Spawn a randomly parametrized target */
-void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
-    Random& rng = Random::threadCommon();
-
-    // Construct a reference frame
-    // Remove the vertical component
-    Vector3 Z = -activeCamera()->frame().lookVector();
-    debugPrintf("lookatZ = [%.4f, %.4f, %.4f]\n", Z.x, Z.y, Z.z);
-    debugPrintf("origin  = [%.4f, %.4f, %.4f]\n", activeCamera()->frame().translation.x, activeCamera()->frame().translation.y, activeCamera()->frame().translation.z);
-    Z.y = 0.0f;
-    Z = Z.direction();
-    Vector3 Y = Vector3::unitY();
-    Vector3 X = Y.cross(Z);
-
-    // Make a random vector in front of the player in a narrow field of view
-    Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.5f, 0.5f)).direction();
-
-    // Ray from user/camera toward intended spawn location
-    Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
-
-    //distance = rng.uniform(2.0f, distance - 1.0f);
-    const shared_ptr<FlyingEntity>& target =
-        spawnTarget(ray.origin() + ray.direction() * radius,
-            scale, false,
-            Color3::wheelRandom());
-
-    // Choose some destination locations based on speed and motionDuration
-    const Point3& center = ray.origin();
-    Array<Point3> destinationArray;
-    // [radians/s] = [m/s] / [m/radians]
-    float angularSpeed = speed / radius;
-    // [rad] = [rad/s] * [s] 
-    float angleChange = angularSpeed * motionDecisionPeriod;
-
-    destinationArray.push(target->frame().translation);
-    int tempInt = 0;
-    for (float motionTime = 0.0f; motionTime < motionDuration; motionTime += motionDecisionPeriod) {
-        // TODO: make angle change randomize correction, should be placed on circle around previous point
-        float pitch = 0.0f;
-        float yaw = tempInt++ % 2 == 0 ? angleChange : -angleChange;
-        //float yaw = rng.uniform(-angleChange, angleChange);
-        //float pitch = rng.uniform(-angleChange, angleChange);
-        const Vector3& dir = CFrame::fromXYZYPRRadians(0.0f, 0.0f, 0.0f, yaw, pitch, 0.0f).rotation * ray.direction();
-        ray.set(ray.origin(), dir);
-        destinationArray.push(center + dir * radius);
-    }
-    target->setSpeed(speed); // m/s
-    // debugging prints
-    for (Point3* p = destinationArray.begin(); p != destinationArray.end(); ++p) {
-        debugPrintf("[%.2f, %.2f, %.2f]\n", p->x, p->y, p->z);
-    }
-    target->setDestinations(destinationArray, center);
-}
-
-/** Spawn a random non-parametrized target */
-void App::spawnRandomTarget() {
-	Random& rng = Random::threadCommon();
-
-	bool done = false;
-	int tries = 0;
-
-	// Construct a reference frame
-	// Remove the vertical component
-	Vector3 Z = -activeCamera()->frame().lookVector();
-	Z.y = 0.0f;
-	Z = Z.direction();
-	Vector3 Y = Vector3::unitY();
-	Vector3 X = Y.cross(Z);
-
-	do {
-		// Make a random vector in front of the player in a narrow field of view
-		Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
-
-		// Make sure the spawn location is visible
-		Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
-		float distance = finf();
-		scene()->intersect(ray, distance);
-
-		if ((distance > 2.0f) && (distance < finf())) {
-            distance = rng.uniform(2.0f, distance - 1.0f);
-			const shared_ptr<FlyingEntity>& target =
-                spawnTarget(ray.origin() + ray.direction() * distance, 
-                    rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
-                    Color3::wheelRandom());
-
-            // Choose some destination locations
-            const Point3& center = ray.origin();
-            Array<Point3> destinationArray;
-            destinationArray.push(target->frame().translation);
-            for (int i = 0; i < 20; ++i) {
-        		const Vector3& dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
-                destinationArray.push(center + dir * distance);
-            }
-            target->setSpeed(2.0f); // m/s
-            target->setDestinations(destinationArray, center);
-
-			done = true;
-		}
-		++tries;
-	} while (!done && tries < 100);
-}
-
-/** Spawn a flying entity target */
-shared_ptr<FlyingEntity> App::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color, String modelName) {
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-
-	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(format("target%03d", ++m_lastUniqueID), scene().get(), m_targetModels[modelName][scaleIndex], CFrame());
-
-	UniversalMaterial::Specification materialSpecification;
-	materialSpecification.setLambertian(Texture::Specification(color));
-	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-
-	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-	target->setPose(amPose);
-
-	target->setFrame(position);
-	/*
-	// Don't set a track. We'll take care of the positioning after creation
-	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
-	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
-	target->setTrack(track);
-	*/
-
-	target->setShouldBeSaved(false);
-	targetArray.append(target);
-	scene()->insert(target);
-	return target;
-}
-
-shared_ptr<TargetEntity> App::spawnDestTarget(const Point3 position, Array<Destination> dests, float scale, const Color3& color,
-	 String id, int paramIdx, int respawns, String name, bool isLogged) {	
-	// Create the target
-	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, scene().get(), m_targetModels[id][scaleIndex], scaleIndex, CFrame(), paramIdx, position, respawns, isLogged);
-
-	// Setup the texture
-	UniversalMaterial::Specification materialSpecification;
-	materialSpecification.setLambertian(Texture::Specification(color));
-	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-	
-	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-
-	// Apply texture/position to target
-	target->setPose(amPose);
-	target->setFrame(position);
-	target->setShouldBeSaved(false);
-
-	// Add target to array and scene
-	targetArray.append(target);
-	scene()->insert(target);
-
-	return target;
-}
-
-shared_ptr<FlyingEntity> App::spawnFlyingTarget(
-	const Point3& position,
-	float scale,
-	const Color3& color,
-	const Vector2& speedRange,
-	const Vector2& motionChangePeriodRange,
-	bool upperHemisphereOnly,
-	Point3 orbitCenter,
-	String id,
-	int paramIdx,
-	Array<bool> axisLock,
-	int respawns,
-	String name,
-	bool isLogged)
-{
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
-	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(
-		nameStr,
-		scene().get(),
-		m_targetModels[id][scaleIndex],
-		scaleIndex,
-		CFrame(),
-		speedRange,
-		motionChangePeriodRange,
-		upperHemisphereOnly,
-		orbitCenter,
-		paramIdx,
-		axisLock,
-		respawns,
-		isLogged
-	);
-
-	UniversalMaterial::Specification materialSpecification;
-	materialSpecification.setLambertian(Texture::Specification(color));
-	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-
-	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-	target->setPose(amPose);
-
-	target->setFrame(position);
-
-	target->setShouldBeSaved(false);
-	targetArray.append(target);
-	scene()->insert(target);
-	return target;
-}
-
-shared_ptr<JumpingEntity> App::spawnJumpingTarget(
-	const Point3& position,
-	float scale,
-	const Color3& color,
-    const Vector2& speedRange,
-    const Vector2& motionChangePeriodRange,
-    const Vector2& jumpPeriodRange,
-	const Vector2& distanceRange,
-	const Vector2& jumpSpeedRange,
-	const Vector2& gravityRange,
-	Point3 orbitCenter,
-	float targetDistance,
-	String id,
-	int paramIdx,
-	Array<bool> axisLock,
-	int respawns,
-	String name,
-	bool isLogged)
-{
-	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-	String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
-	const shared_ptr<JumpingEntity>& target = JumpingEntity::create(
-		nameStr,
-		scene().get(),
-		m_targetModels[id][scaleIndex],
-		scaleIndex,
-		CFrame(),
-		speedRange,
-		motionChangePeriodRange,
-		jumpPeriodRange,
-		distanceRange,
-		jumpSpeedRange,
-		gravityRange,
-		orbitCenter,
-		targetDistance,
-		paramIdx,
-		axisLock,
-		respawns,
-		isLogged
-	);
-
-	UniversalMaterial::Specification materialSpecification;
-	materialSpecification.setLambertian(Texture::Specification(color));
-	materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-	materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-
-	const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
-	amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
-	target->setPose(amPose);
-
-	target->setFrame(position);
-
-	target->setShouldBeSaved(false);
-	targetArray.append(target);
-	scene()->insert(target);
-	return target;
-}
-
 void App::loadDecals() {
 	if (sessConfig->weapon.missDecal.empty()) {
 		m_missDecalModel.reset();
@@ -471,7 +202,7 @@ void App::loadModels() {
 			});
 		}; 
 	});
-	for (int i = 0; i < m_modelScaleCount; i++) {
+	for (int i = 0; i < modelScaleCount; i++) {
 		const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
 		explosionSpec.set("scale", scale*20.0f);
 		m_explosionModels.push(ArticulatedModel::create(explosionSpec));
@@ -490,12 +221,12 @@ void App::loadModels() {
 		float default_scale = 1.0f / extent[0];					// Setup scale so that default model is 1m across
 
 		Array<shared_ptr<ArticulatedModel>> models;
-		for (int i = 0; i <= m_modelScaleCount; ++i) {
+		for (int i = 0; i <= modelScaleCount; ++i) {
 			const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
 			spec.set("scale", scale*default_scale);
 			models.push(ArticulatedModel::create(spec));
 		}
-		m_targetModels.set(id, models);
+		targetModels.set(id, models);
 	}
 
 	// Create a series of colored materials to choose from for target health
@@ -763,7 +494,7 @@ void App::updateSession(const String& id) {
 	m_combatFont = GFont::fromFile(System::findDataFile(sessConfig->targetView.combatTextFont));
 
 	// Handle clearing the targets here (clear any remaining targets before loading a new scene)
-	if (notNull(scene())) clearTargets();
+	if (notNull(scene())) sess->clearTargets();
 
 	// Load the experiment scene if we haven't already (target only)
 	if (sessConfig->sceneName.empty()) {
@@ -970,19 +701,6 @@ void App::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	}
 }
 
-Point2 App::getViewDirection()
-{   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.
-	Point3 view_cartesian = activeCamera()->frame().lookVector();
-	float az = atan2(-view_cartesian.z, -view_cartesian.x) * 180 / pif();
-	float el = atan2(view_cartesian.y, sqrtf(view_cartesian.x * view_cartesian.x + view_cartesian.z * view_cartesian.z)) * 180 / pif();
-	return Point2(az, el);
-}
-
-Point3 App::getPlayerLocation()
-{
-	return activeCamera()->frame().translation;
-}
-
 void App::simulateProjectiles(RealTime dt) {
 	// Draw projectiles
 	for (int p = 0; p < m_projectileArray.size(); p++) {
@@ -1003,7 +721,7 @@ void App::simulateProjectiles(RealTime dt) {
 			float closest = finf();
 			Model::HitInfo info;
 			shared_ptr<TargetEntity> closestTarget;
-			for (shared_ptr<TargetEntity> t : targetArray) {
+			for (shared_ptr<TargetEntity> t : sess->targetArray()) {
 				if (t->intersect(ray, closest, info)) {
 					closestTarget = t;
 				}
@@ -1020,7 +738,7 @@ void App::simulateProjectiles(RealTime dt) {
 				Array<shared_ptr<Entity>> dontHit;
 				dontHit.append(m_currentMissDecals);
 				dontHit.append(m_explosions);
-				dontHit.append(targetArray);
+				dontHit.append(sess->targetArray());
 				for (auto proj : m_projectileArray) { dontHit.append(proj.entity); }
 				// Check for closest hit (in scene, otherwise this ray hits the skybox)
 				//closest = finf();
@@ -1260,7 +978,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 		// Draw target health bars
 		if (sessConfig->targetView.showHealthBars) {
-			for (auto const& target : targetArray) {
+			for (auto const& target : sess->targetArray()) {
 				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
 					sessConfig->targetView.healthBarSize,
 					sessConfig->targetView.healthBarOffset,
@@ -1432,13 +1150,6 @@ void App::drawHUD(RenderDevice *rd) {
 	}
 }
 
-/** Clear all targets one by one */
-void App::clearTargets() {
-	while (targetArray.size() > 0) {
-		destroyTarget(0);
-	}
-}
-
 void App::hitTarget(shared_ptr<TargetEntity> target) {
 	// Damage the target
 	float damage;
@@ -1471,7 +1182,7 @@ void App::hitTarget(shared_ptr<TargetEntity> target) {
 	bool destroyedTarget = false;
 	if (target->name() == "reference") {
 		// Handle reference target here
-		destroyTarget(target);
+		sess->destroyTarget(target);
 		destroyedTarget = true;
 		sess->accumulatePlayerAction(PlayerActionType::Nontask, target->name());
 
@@ -1494,7 +1205,7 @@ void App::hitTarget(shared_ptr<TargetEntity> target) {
 		if (!respawned) {
 			// This is the final respawn
 			//destroyTarget(hitIdx);
-			destroyTarget(target);
+			sess->destroyTarget(target);
 			destroyedTarget = true;
 		}
 		// Target eliminated, must be 'destroy'.
@@ -1597,7 +1308,7 @@ void App::onUserInput(UserInput* ui) {
 						float hitDist = finf();
 						int hitIdx = -1;
 
-						shared_ptr<TargetEntity> target = m_weapon->fire(targetArray, hitIdx, hitDist, info, dontHit);			// Fire the weapon
+						shared_ptr<TargetEntity> target = m_weapon->fire(sess->targetArray(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
 
 						WeaponConfig& wConfig = sessConfig->weapon;
 						if (notNull(target)) {					// Check if we hit anything
@@ -1649,10 +1360,10 @@ void App::onUserInput(UserInput* ui) {
 			Model::HitInfo info;
 			float hitDist = finf();
 			int hitIdx = -1;
-			shared_ptr<TargetEntity> target = m_weapon->fire(targetArray, hitIdx, hitDist, info, dontHit);			// Fire the weapon
+			shared_ptr<TargetEntity> target = m_weapon->fire(sess->targetArray(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
 			if (notNull(target)) {
 				// If we hit a target, destroy it
-				destroyTarget(hitIdx);
+				sess->destroyTarget(hitIdx);
 			}
 			else {
 				// Draw a decal here if we are in hitscan mode
@@ -1673,24 +1384,6 @@ void App::onUserInput(UserInput* ui) {
 
 	activeCamera()->filmSettings().setSensitivity(sceneBrightness);
     END_PROFILER_EVENT();
-}
-
-void App::destroyTarget(int index) {
-	// Not a reference because we're about to manipulate the array
-	const shared_ptr<VisibleEntity> target = targetArray[index];
-	// Remove the target from the target array
-	targetArray.fastRemove(index);
-	// Remove the target from the scene
-	scene()->removeEntity(target->name());
-}
-
-void App::destroyTarget(shared_ptr<TargetEntity> target) {
-	for (int i = 0; i < targetArray.size(); i++) {
-		if (targetArray[i]->name() == target->name()) {
-			targetArray.fastRemove(i);
-		}
-	}
-	scene()->removeEntity(target->name());
 }
 
 void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {
