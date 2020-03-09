@@ -165,11 +165,9 @@ protected:
 	void updateUser(void);
     void updateUserGUI();
 
-	/** Get the turn scale of this user */
-	Vector2 getUserTurnScale() { return sessConfig->player.turnScale * userTable.getCurrentUser()->turnScale;  }
-	/** Set the turn scale when scoped */
-	Vector2 scopedTurnScale(bool scoped = false, float FoV = 0.f);
-	/** Set the scoped view (and also adjust the turn scale) */
+	/** Get the current turn scale (per user and scope setting) */
+	Vector2 currentTurnScale();
+	/** Set the scoped view (and also adjust the turn scale), use setScopeView(!weapon->scoped()) to toggle scope */
 	void setScopeView(bool scoped = true);
 
 	void hitTarget(shared_ptr<TargetEntity>);

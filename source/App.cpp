@@ -114,7 +114,7 @@ void App::updateMouseSensitivity() {
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	if (notNull(player)) {
 		player->mouseSensitivity = (float)mouseSensitivity;
-		player->turnScale = getUserTurnScale();
+		player->turnScale = currentTurnScale();
 	}
 }
 
@@ -807,7 +807,7 @@ void App::updateSession(const String& id) {
 	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (user->cmp360 * user->mouseDPI);
 	mouseSens *= 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
 	player->mouseSensitivity = (float)mouseSens;
-	player->turnScale		= getUserTurnScale();		// Compound the session turn scale w/ the user turn scale...
+	player->turnScale		= currentTurnScale();					// Compound the session turn scale w/ the user turn scale...
 	player->moveRate		= &sessConfig->player.moveRate;
 	player->moveScale		= &sessConfig->player.moveScale;
 	player->axisLock		= &sessConfig->player.axisLock;
@@ -1430,10 +1430,11 @@ void App::drawHUD(RenderDevice *rd) {
 		hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 	}
 }
-Vector2 App::scopedTurnScale(bool scoped, float FoV) {
-	Vector2 baseTurnScale = getUserTurnScale();
+
+Vector2 App::currentTurnScale() {
+	Vector2 baseTurnScale = sessConfig->player.turnScale * userTable.getCurrentUser()->turnScale;;
 	// If we're not scoped just return the normal user turn scale
-	if (!scoped) return baseTurnScale;
+	if (!m_weapon->scoped()) return baseTurnScale;
 	// Otherwise create scaled turn scale for the scoped state
 	if (userTable.getCurrentUser()->scopeTurnScale.length() > 0) {
 		// User scoped turn scale specified, don't perform default scaling
@@ -1441,7 +1442,7 @@ Vector2 App::scopedTurnScale(bool scoped, float FoV) {
 	}
 	else {
 		// Otherwise scale the scope turn scalue using the ratio of FoV
-		return FoV / sessConfig->render.hFoV * baseTurnScale;
+		return activeCamera()->fieldOfViewAngleDegrees() / sessConfig->render.hFoV * baseTurnScale;
 	}
 }
 
@@ -1452,9 +1453,8 @@ void App::setScopeView(bool scoped) {
 	m_weapon->setScoped(scoped);														// Update the weapon state		
 	const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
 	activeCamera()->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
-	player->turnScale = scopedTurnScale(scoped, FoV);									// Scale sensitivity based on the field of view change here
+	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
-
 
 /** Clear all targets one by one */
 void App::clearTargets() {
