@@ -1,4 +1,5 @@
 #include "TargetEntity.h"
+#include "ConfigFiles.h"
 
 // Find an arbitrary vector perpendicular to and in equal length as inputV.
 // The sampling distribution is uniform along the circular line, the set of possible candidates of a perpendicular vector.,
@@ -30,16 +31,29 @@ shared_ptr<TargetEntity> TargetEntity::create(
 	Scene*							scene,
 	const shared_ptr<Model>&		model,
 	int								scaleIdx,
-	const CFrame&					position,
 	int								paramIdx,
-	Point3							offset,
-	int								respawns,
 	bool							isLogged)
 {
 	const shared_ptr<TargetEntity>& target = createShared<TargetEntity>();
 	target->Entity::init(name, scene, CFrame(dests[0].position), shared_ptr<Entity::Track>(), true, true);
 	target->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	target->TargetEntity::init(dests, paramIdx, offset, respawns, scaleIdx, isLogged);
+	target->TargetEntity::init(dests, paramIdx, Point3::zero(), 0, scaleIdx, isLogged);
+	return target;
+}
+
+shared_ptr<TargetEntity> TargetEntity::create(
+	shared_ptr<TargetConfig>		config,
+	const String&					name,
+	Scene*							scene,
+	const shared_ptr<Model>&		model,
+	const Point3&					offset,
+	int								scaleIdx,
+	int								paramIdx) 
+{
+	const shared_ptr<TargetEntity>& target = createShared<TargetEntity>();
+	target->Entity::init(name, scene, CFrame(config->destinations[0].position), shared_ptr<Entity::Track>(), true, true);
+	target->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
+	target->TargetEntity::init(config->destinations, paramIdx, offset, config->respawnCount, scaleIdx, config->logTargetTrajectory);
 	return target;
 }
 
@@ -139,8 +153,8 @@ shared_ptr<Entity> FlyingEntity::create
 }
 
 
-shared_ptr<FlyingEntity> FlyingEntity::create
-(const String&                           name,
+shared_ptr<FlyingEntity> FlyingEntity::create(
+	const String&                           name,
 	Scene*                                  scene,
 	const shared_ptr<Model>&                model,
 	const CFrame&                           position) {
@@ -156,31 +170,34 @@ shared_ptr<FlyingEntity> FlyingEntity::create
 	return flyingEntity;
 }
 
-
 shared_ptr<FlyingEntity> FlyingEntity::create(
-	const String&							name,
-	Scene*                                  scene,
-	const shared_ptr<Model>&                model,
-	int										scaleIdx,
-	const CFrame&                           position,
-	const Vector2&                          speedRange,
-	const Vector2&                          motionChangePeriodRange,
-	bool									upperHemisphereOnly,
-	Point3                                  orbitCenter,
-	int										paramIdx,
-	Array<bool>								axisLock,
-	int										respawns,
-	bool									isLogged) {
-
+	shared_ptr<TargetConfig>		config,
+	const String& name,
+	Scene* scene,
+	const shared_ptr<Model>& model,
+	const Point3& orbitCenter,
+	int								scaleIdx,
+	int								paramIdx)
+{
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
 	const shared_ptr<FlyingEntity>& flyingEntity = createShared<FlyingEntity>();
 
 	// Initialize each base class, which parses its own fields
-	flyingEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
+	flyingEntity->Entity::init(name, scene, CFrame(), shared_ptr<Entity::Track>(), true, true);
 	flyingEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-	flyingEntity->FlyingEntity::init(speedRange, motionChangePeriodRange, upperHemisphereOnly, orbitCenter, paramIdx, axisLock, respawns, scaleIdx, isLogged);
+	flyingEntity->FlyingEntity::init(
+		{ config->speed[0], config->speed[1] }, 
+		{ config->motionChangePeriod[0], config->motionChangePeriod[1] },
+		config->upperHemisphereOnly, 
+		orbitCenter, 
+		paramIdx, 
+		config->axisLock, 
+		config->respawnCount, 
+		scaleIdx, 
+		config->logTargetTrajectory);
 	return flyingEntity;
 }
+
 
 
 void FlyingEntity::init(AnyTableReader& propertyTable) {
@@ -390,13 +407,13 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 }
 
 
-shared_ptr<Entity> JumpingEntity::create
-(const String&                  name,
+shared_ptr<Entity> JumpingEntity::create(
+	const String&                  name,
 	Scene*                         scene,
 	AnyTableReader&                propertyTable,
 	const ModelTable&              modelTable,
-	const Scene::LoadOptions&      loadOptions) {
-
+	const Scene::LoadOptions&      loadOptions)
+{
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
 	const shared_ptr<JumpingEntity>& jumpingEntity = createShared<JumpingEntity>();
 
@@ -411,46 +428,36 @@ shared_ptr<Entity> JumpingEntity::create
 	return jumpingEntity;
 }
 
-
-shared_ptr<JumpingEntity> JumpingEntity::create
-(const String&                           name,
-	Scene*                                  scene,
-	const shared_ptr<Model>&                model,
-	int										scaleIdx,
-	const CFrame&                           position,
-    const Vector2&                          angularSpeedRange,
-    const Vector2&                          motionChangePeriodRange,
-	const Vector2&                          jumpPeriodRange,
-	const Vector2&                          distanceRange,
-	const Vector2&                          jumpSpeedRange,
-	const Vector2&                          gravityRange,
-	Point3                                  orbitCenter,
-	float                                   orbitRadius,
-	int										paramIdx,
-	Array<bool>								axisLock,
-	int										respawns, 
-	bool									isLogged) {
-
+shared_ptr<JumpingEntity> JumpingEntity::create(
+	shared_ptr<TargetConfig>		config,
+	const String&					name,
+	Scene*							scene,
+	const shared_ptr<Model>&		model,
+	int								scaleIdx,
+	const Point3&					orbitCenter,
+	float							targetDistance,
+	int								paramIdx)
+{
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
 	const shared_ptr<JumpingEntity>& jumpingEntity = createShared<JumpingEntity>();
 
 	// Initialize each base class, which parses its own fields
-	jumpingEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
+	jumpingEntity->Entity::init(name, scene, CFrame(), shared_ptr<Entity::Track>(), true, true);
 	jumpingEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
 	jumpingEntity->JumpingEntity::init(
-		angularSpeedRange,
-		motionChangePeriodRange,
-		jumpPeriodRange,
-		distanceRange,
-		jumpSpeedRange,
-		gravityRange,
+		{ config->speed[0], config->speed[1] },
+		{ config->motionChangePeriod[0], config->motionChangePeriod[1] },
+		{ config->jumpPeriod[0], config->jumpPeriod[1] },
+		{ config->distance[0], config->distance[1] },
+		{ config->jumpSpeed[0], config->jumpSpeed[1] },
+		{ config->accelGravity[0], config->accelGravity[1] },
 		orbitCenter,
-		orbitRadius,
+		targetDistance,
 		paramIdx,
-		axisLock,
-		respawns,
+		config->axisLock,
+		config->respawnCount,
 		scaleIdx,
-		isLogged);
+		config->logTargetTrajectory);
 
 	return jumpingEntity;
 }

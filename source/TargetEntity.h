@@ -1,6 +1,9 @@
 #pragma once
 #include <G3D/G3D.h>
 
+
+class TargetConfig;
+
 //#define DRAW_BOUNDING_SPHERES	1		// Uncomment this to draw bounding spheres (useful for target sizing)
 #define BOUNDING_SPHERE_RADIUS	0.5		///< Use a 0.5m radius for sizing here
 
@@ -82,11 +85,19 @@ public:
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
 		int								scaleIdx,
-		const CFrame&					position,
 		int								paramIdx,
-		Point3							offset=Point3::zero(),
-		int								respawns=0,
-		bool							isLogged=true);
+		bool							isLogged=false
+	);
+
+	static shared_ptr<TargetEntity> create(
+		shared_ptr<TargetConfig>		config,
+		const String&					name,
+		Scene*							scene,
+		const shared_ptr<Model>&		model,
+		const Point3&					offset,
+		int								scaleIdx,
+		int								paramIdx
+	);
 
 	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount=0, int scaleIdx=0, bool isLogged=true) {
 		setDestinations(dests);
@@ -96,6 +107,17 @@ public:
 		m_scaleIdx = scaleIdx;
 		m_isLogged = isLogged;
 		destinationIdx = 0;
+	}
+
+	void setColor(const Color3& color) {
+		UniversalMaterial::Specification materialSpecification;
+		materialSpecification.setLambertian(Texture::Specification(color));
+		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+
+		const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
+		amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
+		setPose(amPose);
 	}
 
 	void setWorldSpace(bool worldSpace) { m_worldSpace = worldSpace; }
@@ -218,35 +240,31 @@ public:
 
 	// TODO: After other implementations are complete.
     /** For deserialization from Any / loading from file */
-    static shared_ptr<Entity> create 
-    (const String&                  name,
+    static shared_ptr<Entity> create (
+	const String&					name,
      Scene*                         scene,
      AnyTableReader&                propertyTable,
      const ModelTable&				modelTable,
-     const Scene::LoadOptions&		loadOptions);
+     const Scene::LoadOptions&		loadOptions
+	);
 
 	/** For programmatic construction at runtime */
-	static shared_ptr<FlyingEntity> create
-	(const String&						name,
+	static shared_ptr<FlyingEntity> create(
+		const String&					name,
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
-		const CFrame&					position);
+		const CFrame&					position
+	);
 
-	/** For programmatic construction at runtime */
-	static shared_ptr<FlyingEntity> create
-	(const String&						name,
+	static shared_ptr<FlyingEntity> create(
+		shared_ptr<TargetConfig>		config,
+		const String&					name,
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
+		const Point3&					orbitCenter,
 		int								scaleIdx,
-		const CFrame&					position,
-		const Vector2&				    speedRange,
-		const Vector2&					motionChangePeriodRange,
-		bool							upperHemisphereOnly,
-		Point3							orbitCenter,
-		int								paramIdx,
-		Array<bool>						axisLock,
-		int								respawns=0,
-		bool							isLogged=true);
+		int								paramIdx
+	);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
         modify at least the name of the Table returned by the base class, which will be "Entity"
@@ -304,9 +322,7 @@ protected:
 	JumpingEntity() {}
 
 	void init(AnyTableReader& propertyTable);
-
 	void init();
-
 	void init(
 		const Vector2& angularSpeedRange,
         const Vector2& motionChangePeriodRange,
@@ -332,32 +348,25 @@ public:
 	void setMoveBounds(AABox bounds) { m_moveBounds = bounds; }
 
 	/** For deserialization from Any / loading from file */
-	static shared_ptr<Entity> create 
-	(const String&                  name,
-	 Scene*                         scene,
-	 AnyTableReader&                propertyTable,
-	 const ModelTable&              modelTable,
-	 const Scene::LoadOptions&      loadOptions);
+	static shared_ptr<Entity> create (
+		const String&					name,
+		Scene*							scene,
+		AnyTableReader&					propertyTable,
+		const ModelTable&				modelTable,
+		const Scene::LoadOptions&		loadOptions
+	);
 
 	/** For programmatic construction at runtime */
-	static shared_ptr<JumpingEntity> create
-	(const String&						name,
+	static shared_ptr<JumpingEntity> create(
+		shared_ptr<TargetConfig>		config,
+		const String&					name,
 		Scene*							scene,
 		const shared_ptr<Model>&		model,
 		int								scaleIdx,
-		const CFrame&					position,
-        const Vector2&					speedRange,
-        const Vector2&					motionChangePeriodRange,
-        const Vector2&					jumpPeriodRange,
-		const Vector2&					distanceRange,
-		const Vector2&					jumpSpeedRange,
-        const Vector2&					gravityRange,
-		Point3							orbitCenter,
-		float							orbitRadius,
-		int								paramIdx,
-		Array<bool>						axisLock,
-		int								respawns=0,
-		bool							isLogged=true);
+		const Point3&					orbitCenter,
+		float							targetDistance,
+		int								paramIdx
+	);
 
 	/** Converts the current VisibleEntity to an Any.  Subclasses should
 		modify at least the name of the Table returned by the base class, which will be "Entity"
