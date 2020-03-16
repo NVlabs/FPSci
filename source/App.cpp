@@ -1174,13 +1174,6 @@ void App::setScopeView(bool scoped) {
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
 
-/** Clear all targets one by one */
-void App::clearTargets() {
-	while (targetArray.size() > 0) {
-		destroyTarget(0);
-	}
-}
-
 void App::hitTarget(shared_ptr<TargetEntity> target) {
 	// Damage the target
 	float damage;
