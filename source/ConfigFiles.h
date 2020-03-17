@@ -1392,6 +1392,9 @@ public:
 	bool logTrialResponse		= true;		///< Log trial response in table?
 	bool logUsers				= true;		///< Log user infomration in table?
 
+	// Session parameter logging
+	Array<String> sessParamsToLog;			///< Parameter names to log to the Sessions table of the DB
+
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
@@ -1401,6 +1404,7 @@ public:
 			reader.getIfPresent("logPlayerActions", logPlayerActions);
 			reader.getIfPresent("logTrialResponse", logTrialResponse);
 			reader.getIfPresent("logUsers", logUsers);
+			reader.getIfPresent("sessParamsToLog", sessParamsToLog);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1416,6 +1420,7 @@ public:
 		if(forceAll || def.logPlayerActions != logPlayerActions)			a["logPlayerActions"] = logPlayerActions;
 		if(forceAll || def.logTrialResponse != logTrialResponse)			a["logTrialResponse"] = logTrialResponse;
 		if(forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
+		if(forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessParamsToLog"] = sessParamsToLog;
 		return a;
 	}
 };

@@ -79,18 +79,64 @@ protected:
 	void recordTargetLocations(const Array<TargetLocation>& locations);
 
 	/** Create a results file */
-	void createResultsFile(String filename, String subjectID, String sessionID, String description);
+	void createResultsFile(const String& filename, 
+		const String& subjectID, 
+		const shared_ptr<SessionConfig>& sessConfig, 
+		const String& description);
 
 	/** Close the results file */
 	void closeResultsFile(void);
 
+	static String stringifyAny(const Any& val) {
+		// Check to see if the simple parser handles this
+		String valStr = anyValToString(val);
+		if (!valStr.empty()) { return valStr; }
+		// Otherwise this is a more complicated type
+		switch (val.type()) {
+		case Any::ARRAY:
+			valStr = "[";
+			for (Any a : val.array()) {
+				String aStr = anyValToString(a);
+				if (aStr.empty()) { throw "Nested arrays not current supported for logging!"; }
+				valStr += aStr + ", ";
+			}
+			valStr = valStr.substr(0, valStr.length() - 2);
+			valStr += "]";
+			break;
+		case Any::TABLE:
+			throw "Any tables are currently not supported for logging!";
+			break;
+		default:
+			throw format("Unrecognized Any type: %s", val.type());
+			break;
+		}
+		return valStr;
+	}
+
+	static String anyValToString(const Any& val) {
+		switch (val.type()) {
+		case Any::BOOLEAN:
+			return val.boolean() ? "true" : "false";
+		case Any::NUMBER:
+			return String(std::to_string(val.number()));
+		case Any::STRING:
+			return val.string();
+		default:
+			return String();
+		}
+	}
+
 public:
 
-	Logger(String filename, String subjectID, String sessionID, String description);
+	Logger(const String& filename, const String& subjectID, const shared_ptr<SessionConfig>& sessConfig, const String& description);
 	virtual ~Logger();
 	
-	static shared_ptr<Logger> create(String filename, String subjectID, String sessionID, String description="None") {
-		return createShared<Logger>(filename, subjectID, sessionID, description);
+	static shared_ptr<Logger> create(const String& filename, 
+		const String& subjectID, 
+		const shared_ptr<SessionConfig>& sessConfig, 
+		const String& description="None") 
+	{
+		return createShared<Logger>(filename, subjectID, sessConfig, description);
 	}
 
 	void logFrameInfo(const FrameInfo& frameInfo) { addToQueue(m_frameInfo, frameInfo); }
