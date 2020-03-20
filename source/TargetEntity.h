@@ -56,6 +56,7 @@ public:
 
 class TargetEntity : public VisibleEntity {
 protected:
+	String	m_id;									///< Target ID
 	float	m_health			= 1.0f;				///< Target health
 	Color3	m_color				= Color3::red();	///< Default color
 	int		destinationIdx		= 0;				///< Current index into the destination array
@@ -99,8 +100,7 @@ public:
 		int								paramIdx
 	);
 
-	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount=0, int scaleIdx=0, bool isLogged=true) {
-		setDestinations(dests);
+	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount = 0, int scaleIdx = 0, bool isLogged = true) {
 		m_offset = staticOffset;
 		m_respawnCount = respawnCount;
 		m_paramIdx = paramIdx;
@@ -154,6 +154,10 @@ public:
 
 	float size() {
 		return pow(1.0f + TARGET_MODEL_ARRAY_SCALING, m_scaleIdx - TARGET_MODEL_ARRAY_OFFSET);
+	}
+
+	String id() {
+		return m_id;
 	}
 
 	/**Simple routine to do damage */

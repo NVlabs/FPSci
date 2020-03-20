@@ -812,6 +812,9 @@ public:
 	AABox			moveBounds;								///< Movemvent bounding box
 	Array<bool>		axisLock = { false, false, false };		///< Array of axis lock values
 
+	String			destroyDecal = "explosion_01.png";		///< Decal to use for destroy event
+	float			destroyDecalScale = 1.0;				///< Scale to apply to destroy (relative to target size)
+
 	String			hitSound = "sound/18397__inferno__smalllas.wav";	///< Sound to play when target is hit (but not destoyed)
 	float			hitSoundVol = 1.0f;						///< Hit sound volume
 	String          destroyedSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
@@ -855,6 +858,10 @@ public:
 			reader.getIfPresent("jumpPeriod", jumpPeriod);
 			reader.getIfPresent("accelGravity", accelGravity);
 			reader.getIfPresent("modelSpec", modelSpec);
+
+			reader.getIfPresent("destroyDecal", destroyDecal);
+			reader.getIfPresent("destroyDecalScale", destroyDecalScale);
+			
 			reader.getIfPresent("destSpace", destSpace);
 			reader.getIfPresent("destinations", destinations);
 			reader.getIfPresent("respawnCount", respawnCount);
@@ -919,10 +926,14 @@ public:
 			if(forceAll || def.accelGravity != accelGravity)					a["accelGravity"] = accelGravity;
 			if(forceAll || def.axisLock != axisLock)							a["axisLocked"] = axisLock;
 		}
+
+		if(forceAll || def.destroyDecal != destroyDecal)						a["destroyDecal"] = destroyDecal;
+		if(forceAll || def.destroyDecalScale != destroyDecalScale)				a["destroyDecalScale"] = destroyDecalScale;
+
 		if(forceAll || def.hitSound != hitSound)								a["hitSound"] = hitSound;
 		if(forceAll || def.hitSoundVol != hitSoundVol)							a["hitSoundVol"] = hitSoundVol;
-		if(forceAll || def.destroyedSound != destroyedSound)					a["explosionSound"] = destroyedSound;
-		if(forceAll || def.destroyedSoundVol != destroyedSoundVol)				a["explosionSoundVol"] = destroyedSoundVol;
+		if(forceAll || def.destroyedSound != destroyedSound)					a["destroyedSound"] = destroyedSound;
+		if(forceAll || def.destroyedSoundVol != destroyedSoundVol)				a["destroyedSoundVol"] = destroyedSoundVol;
 		return a;
 	};
 

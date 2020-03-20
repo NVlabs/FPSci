@@ -91,6 +91,8 @@ An example session configuration snippet is included below:
     * `hitSoundVol` provides the volume (as a float) for the hit sound to be played at (default is `1.0`).
     * `destroyedSound` is a filename for the sound to play when the target is both hit and destroyed.
     * `destroyedSoundVol` provides the volume (as a float) for the destroyed sound to be played at (default is `10.0`).
+    * `destroyDecal` the decal to show when destroyed
+    * `destroyDecalScale` a scale to apply the the destroy decal
 
 #### Target Configuration Example
 An example target configuration snippet is provided below:
@@ -99,31 +101,33 @@ An example target configuration snippet is provided below:
 targets = [
     {
         "id": "simple_target",
-        "destSpace" : "player",             // This is a player-centered-spherical-space target
-        "visualSize" : [0.5, 0.5],          // 0.5m size
-        "respawnCount" : 0,                 // Don't respawn
-        "speed": [1.0, 3.0],                // 1-3m/s speed
-        "eccH" : [5.0, 15.0],               // 5-15° initial spawn location (horizontal)
-        "eccV" : [0.0, 5.0],                // 0-5° intitial spawn location (vertical)
+        "destSpace" : "player",                 // This is a player-centered-spherical-space target
+        "visualSize" : [0.5, 0.5],              // 0.5m size
+        "respawnCount" : 0,                     // Don't respawn
+        "speed": [1.0, 3.0],                    // 1-3m/s speed
+        "eccH" : [5.0, 15.0],                   // 5-15° initial spawn location (horizontal)
+        "eccV" : [0.0, 5.0],                    // 0-5° intitial spawn location (vertical)
         "hitSound" : "sound/18397__inferno__smalllas.wav",      // Sound to play when target hit
-        "hitSoundVol" : 1.0,                // Volume to play the hit sound at
+        "hitSoundVol" : 1.0,                    // Volume to play the hit sound at
         "destroyedSound" : "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav", // Sound to play when target destroyed (explosion)
-        "destroyedSoundVol" : 10.0f,        // Volume to play destroyed sound at
+        "destroyedSoundVol" : 10.0f,            // Volume to play destroyed sound at
+        "destroyDecal" : "explosion_01.png",    // Use default explosion decal
+        "destroyDecalScale" : 1.0,              // Use default sizing
     },
     {
         "id": "world-space paramtetric",
-        "destSpace" : "world",              // This is a world-space target
+        "destSpace" : "world",                  // This is a world-space target
         "bounds" : AABox {
-                Point3(-8.5, 0.5, -11.5),   // It is important these are specified in "increasing order"
-                Point3(-6.5, 1.5, -7.5)     // All x,y,z coordinates must be greater than those above
+                Point3(-8.5, 0.5, -11.5),       // It is important these are specified in "increasing order"
+                Point3(-6.5, 1.5, -7.5)         // All x,y,z coordinates must be greater than those above
         },
         "axisLocked": [true, false, false],
-        "visualSize" : [0.3, 1.0],          // Visual size between 0.3-1m
-        "respawnCount" : -1,                // Respawn forever
+        "visualSize" : [0.3, 1.0],              // Visual size between 0.3-1m
+        "respawnCount" : -1,                    // Respawn forever
     },
     {
         "id" : "destination-based",
-        "destSpace" : "world",              // Important this is specified here
+        "destSpace" : "world",                  // Important this is specified here
         "destinations" : {
             {"t": 0.0, "xyz": Vector3(0.00, 0.00, 0.00)},
             {"t": 0.1, "xyz": Vector3(0.00, 1.00, 0.00)},
@@ -131,7 +135,7 @@ targets = [
             {"t": 10.2, "xyz": Vector3(10.1, 1.01, -100.3)}
         },
     },
-    #include("example_target.Any"),         // Example of including an external .Any file
+    #include("example_target.Any"),             // Example of including an external .Any file
 ],
 ```
 
