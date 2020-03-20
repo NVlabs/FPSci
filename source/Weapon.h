@@ -93,17 +93,21 @@ public:
 		}
 
 		// Create the bullet model
-		const static Any bulletSpec = PARSE_ANY(ArticulatedModel::Specification{
-			filename = "ifs/d10.ifs";
-			preprocess = {
-				transformGeometry(all(), Matrix4::pitchDegrees(90));
-				transformGeometry(all(), Matrix4::scale(0.05,0.05,2));
-				setMaterial(all(), UniversalMaterial::Specification {
-					lambertian = Color3(0);
-					emissive = Power3(5,4,0);
-				});
-			}; 
-		});
+		const Vector3& scale = m_config->bulletScale;
+		const Color3& color = m_config->bulletColor;
+		const static Any bulletSpec = Any::parse(format(
+			"ArticulatedModel::Specification{\
+				filename = \"ifs/d10.ifs\";\
+				preprocess = {\
+					transformGeometry(all(), Matrix4::pitchDegrees(90));\
+					transformGeometry(all(), Matrix4::scale(%f,%f,%f));\
+					setMaterial(all(), UniversalMaterial::Specification {\
+						lambertian = Color3(0);\
+						emissive = Power3(%f,%f,%f);\
+					});\
+				};\
+			}", 
+			scale.x, scale.y, scale.z, color.r, color.g, color.b));
 		m_bulletModel = ArticulatedModel::create(bulletSpec, "bulletModel");
 	}
 

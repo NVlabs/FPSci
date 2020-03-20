@@ -38,6 +38,9 @@ shared_ptr<TargetEntity> Weapon::fire(
 	if (m_config->renderBullets || !m_config->hitScan) {
 		// Create the bullet start frame from the weapon frame plus muzzle offset
 		CFrame bulletStartFrame = m_camera->frame();
+		
+		// Apply bullet offset w/ camera rotation here
+		bulletStartFrame.translation += m_camera->frame().rotation * m_config->bulletOffset;
 
 		// Angle the bullet start frame towards the aim point
 		Point3 aimPoint = m_camera->frame().translation + m_camera->frame().lookVector() * 1000.0f;

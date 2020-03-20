@@ -657,6 +657,9 @@ public:
 	bool	renderBullets = false;										///< Render bullets leaving the weapon
 	float	bulletSpeed = 100.0f;										///< Speed to draw at for rendered rounds (in m/s)
 	float	bulletGravity = 0.0f;										///< Gravity to use for bullets (default is no droop)
+	Vector3 bulletScale = Vector3(0.05f, 0.05f, 2.f);					///< Scale to use on bullet object
+	Color3  bulletColor = Color3(5, 4, 0);								///< Color/power for bullet emissive texture
+	Vector3 bulletOffset = Vector3(0,0,0);								///< Offset to start the bullet from (along the look direction)
 	
 	bool	renderDecals = true;										///< Render decals when the shots miss?
 	String	missDecal = "bullet-decal-256x256.png";						///< The decal to place where the shot misses
@@ -714,6 +717,9 @@ public:
 			reader.getIfPresent("renderBullets", renderBullets);
 			reader.getIfPresent("bulletSpeed", bulletSpeed);
 			reader.getIfPresent("bulletGravity", bulletGravity);
+			reader.getIfPresent("bulletScale", bulletScale);
+			reader.getIfPresent("bulletColor", bulletColor);
+			reader.getIfPresent("bulletOffset", bulletOffset);
 
 			reader.getIfPresent("renderDecals", renderDecals);
 			reader.getIfPresent("missDecal", missDecal);
@@ -758,6 +764,9 @@ public:
 		if (forceAll || def.renderBullets != renderBullets)					a["renderBullets"] = renderBullets;
 		if (forceAll || def.bulletSpeed != bulletSpeed)						a["bulletSpeed"] = bulletSpeed;
 		if (forceAll || def.bulletGravity != bulletGravity)					a["bulletGravity"] = bulletGravity;
+		if (forceAll || def.bulletScale != bulletScale)						a["bulletScale"] = bulletScale;
+		if (forceAll || def.bulletColor != bulletColor)						a["bulletColor"] = bulletColor;
+		if (forceAll || def.bulletOffset != bulletOffset)					a["bulletOffset"] = bulletOffset;
 
 		if (forceAll || def.renderDecals != renderDecals)					a["renderDecals"] = renderDecals;
 		if (forceAll || def.missDecal != missDecal)							a["missDecal"] = missDecal;
