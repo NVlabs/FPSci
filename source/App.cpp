@@ -1,7 +1,6 @@
 /** \file App.cpp */
 #include "App.h"
 #include "Dialogs.h"
-#include "PlayerEntity.h"
 #include "Logger.h"
 #include "Session.h"
 #include "PhysicsScene.h"
@@ -113,7 +112,7 @@ void App::updateMouseSensitivity() {
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	if (notNull(player)) {
 		player->mouseSensitivity = (float)mouseSensitivity;
-		player->turnScale = sessConfig->player.turnScale * userTable.getCurrentUser()->turnScale;
+		player->turnScale = currentTurnScale();
 	}
 }
 
@@ -539,15 +538,15 @@ void App::updateSession(const String& id) {
 	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (user->cmp360 * user->mouseDPI);
 	mouseSens *= 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
 	player->mouseSensitivity = (float)mouseSens;
-	player->turnScale = sessConfig->player.turnScale * user->turnScale;		// Compound the session turn scale w/ the user turn scale...
-	player->moveRate =		&sessConfig->player.moveRate;
-	player->moveScale =		&sessConfig->player.moveScale;
-	player->axisLock =		&sessConfig->player.axisLock;
-	player->jumpVelocity =	&sessConfig->player.jumpVelocity;
-	player->jumpInterval =	&sessConfig->player.jumpInterval;
-	player->jumpTouch =		&sessConfig->player.jumpTouch;
-	player->height =		&sessConfig->player.height;
-	player->crouchHeight =	&sessConfig->player.crouchHeight;
+	player->turnScale		= currentTurnScale();					// Compound the session turn scale w/ the user turn scale...
+	player->moveRate		= &sessConfig->player.moveRate;
+	player->moveScale		= &sessConfig->player.moveScale;
+	player->axisLock		= &sessConfig->player.axisLock;
+	player->jumpVelocity	= &sessConfig->player.jumpVelocity;
+	player->jumpInterval	= &sessConfig->player.jumpInterval;
+	player->jumpTouch		= &sessConfig->player.jumpTouch;
+	player->height			= &sessConfig->player.height;
+	player->crouchHeight	= &sessConfig->player.crouchHeight;
 
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::load();
@@ -1150,6 +1149,31 @@ void App::drawHUD(RenderDevice *rd) {
 	}
 }
 
+Vector2 App::currentTurnScale() {
+	Vector2 baseTurnScale = sessConfig->player.turnScale * userTable.getCurrentUser()->turnScale;;
+	// If we're not scoped just return the normal user turn scale
+	if (!m_weapon->scoped()) return baseTurnScale;
+	// Otherwise create scaled turn scale for the scoped state
+	if (userTable.getCurrentUser()->scopeTurnScale.length() > 0) {
+		// User scoped turn scale specified, don't perform default scaling
+		return baseTurnScale * userTable.getCurrentUser()->scopeTurnScale;
+	}
+	else {
+		// Otherwise scale the scope turn scalue using the ratio of FoV
+		return activeCamera()->fieldOfViewAngleDegrees() / sessConfig->render.hFoV * baseTurnScale;
+	}
+}
+
+void App::setScopeView(bool scoped) {
+	// Get player entity and calculate scope FoV
+	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
+	const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
+	m_weapon->setScoped(scoped);														// Update the weapon state		
+	const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
+	activeCamera()->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
+	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
+}
+
 void App::hitTarget(shared_ptr<TargetEntity> target) {
 	// Damage the target
 	float damage;
@@ -1256,25 +1280,18 @@ void App::onUserInput(UserInput* ui) {
 
 	// Handle scope behavior
 	for (GKey scopeButton : keyMap.map["scope"]) {
-		float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
-		// Are we using scope toggling?
-		if (sessConfig->weapon.scopeToggle) {
-			if (ui->keyPressed(scopeButton)) {
-				bool scoped = !m_weapon->scoped();
-				m_weapon->setScoped(scoped);
-				float FoV = scoped ? scopeFoV : sessConfig->render.hFoV;
-				FoV *= pif() / 180.0f;
-				activeCamera()->setFieldOfView(FoV, FOVDirection::HORIZONTAL);
+		if (ui->keyPressed(scopeButton)) {
+			// Are we using scope toggling?
+			if (sessConfig->weapon.scopeToggle) {
+				setScopeView(!m_weapon->scoped());
+			}
+			// Otherwise just set scope based on the state of the scope button
+			else {
+				setScopeView(true);
 			}
 		}
-		// Otherwise just set scope based on the state of the scope button
-		else {
-			if (ui->keyDown(scopeButton)) {
-				activeCamera()->setFieldOfView(scopeFoV * pif() / 180.0f, FOVDirection::HORIZONTAL);
-			}
-			else {
-				activeCamera()->setFieldOfView(sessConfig->render.hFoV * pif() / 180.0f, FOVDirection::HORIZONTAL);
-			}
+		if (ui->keyReleased(scopeButton) && !sessConfig->weapon.scopeToggle) {
+			setScopeView(false);
 		}
 	}
 

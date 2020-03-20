@@ -12,6 +12,7 @@
 #include <G3D/G3D.h>
 #include "ConfigFiles.h"
 #include "TargetEntity.h"
+#include "PlayerEntity.h"
 #include "GuiElements.h"
 #include "PyLogger.h"
 #include "Weapon.h"
@@ -160,6 +161,11 @@ protected:
 	void loadDecals();
 	void updateUser(void);
     void updateUserGUI();
+
+	/** Get the current turn scale (per user and scope setting) */
+	Vector2 currentTurnScale();
+	/** Set the scoped view (and also adjust the turn scale), use setScopeView(!weapon->scoped()) to toggle scope */
+	void setScopeView(bool scoped = true);
 
 	void hitTarget(shared_ptr<TargetEntity>);
 	void simulateProjectiles(RealTime dt);

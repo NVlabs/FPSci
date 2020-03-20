@@ -297,6 +297,7 @@ public:
     double			mouseDPI			= 800.0;						///< Mouse DPI setting
     double			cmp360				= 12.75;						///< Mouse sensitivity, reported as centimeters per 360�
 	Vector2			turnScale			= Vector2(1.0f, 1.0f);			///< Turn scale for player, can be used to invert controls in either direction
+	Vector2			scopeTurnScale		= Vector2(0.0f, 0.0f);			///< Scoped turn scale (0's imply default scaling)
 
 	int				currentSession		= 0;							///< Currently selected session
 		
@@ -324,6 +325,7 @@ public:
 			reader.getIfPresent("reticleColor", reticleColor);
 			reader.getIfPresent("reticleShrinkTime", reticleShrinkTimeS);
 			reader.getIfPresent("turnScale", turnScale);
+			reader.getIfPresent("scopeTurnScale", scopeTurnScale);
 			break;
         default:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
@@ -343,6 +345,7 @@ public:
 		if (forceAll || def.reticleColor != reticleColor)				a["reticleColor"] = reticleColor;
 		if (forceAll || def.reticleShrinkTimeS != reticleShrinkTimeS)	a["reticleShrinkTime"] = reticleShrinkTimeS;
 		if (forceAll || def.turnScale != turnScale)						a["turnScale"] = turnScale;
+		if (forceAll || def.scopeTurnScale != scopeTurnScale)			a["scopeTurnScale"] = scopeTurnScale;
 		return a;
 	}
 };
