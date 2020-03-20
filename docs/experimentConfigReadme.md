@@ -65,34 +65,48 @@ An example session configuration snippet is included below:
 ```
 
 ### Target Configuration
-* `targets` this target config table contains more detailed constraints for path generation for targets:
-    * `id` a short string to refer to this target information
-    * `respawnCount` is an integer providing the number of respawns to occur. For non-respawning items use `0` or leave unspecified.
-    * `visualSize` is a vector indicating the minimum ([0]) and maximum ([1]) visual size for the target (in deg)
-    * `speed` is a vector indictating the minimum ([0]) and maximum ([1]) speeds in angular velocity (in deg/s)
-    * `distance` is the distance to this target (in meters)
-    * `eccH/V` are controls for min ([0])/max([1]) horizontal/vertical eccentricity for target initial position (in deg)
-    * `motionChangePeriod` is a vector indicating the minimum ([0]) and maximum ([1]) motion change period allowed (in s)
-    * `upperHemisphereOnly` is a boolean flag indicating whether target flies only on the upper hemisphere of player-centric sphere. Only applicable to `FlyingEntity` defined in the "player" space.
-    * `logTargetTrajectory` is a boolean flag indicating whether or not this (individual) target's position should be logged for trials it is displayed for
-    * `jumpEnabled` determines whether the target can "jump" or not
-    * `jumpPeriod` is a vector indicating the minimum ([0]) and maximum ([1]) period to wait between jumps (in seconds)
-    * `jumpSpeed` is a vector indicating the minimum ([0]) and maximum([1]) angular speed with which to jump (in deg/s)
-    * `accelGravity` is the min ([0])/max ([1]) acceleration due to gravity during the jump (in m/s^2)
-    * `modelSpec` is an `Any` that constructs an `ArticulatedModel` similar to that used in the [the weapon config readme](weaponConfigReadme.md). For now this spec needs to point to an `obj` file with a model named `core/icosahedron_default`.
-    * `destinations` is an array of `Destination` types each of which contains:
-      * `t` the time (in seconds) for this point in the path
-      * `xyz` the position for this point in the path
-    * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
-    * `spawnBounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for the target's spawn location in cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
-    * `moveBounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for target motion in cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
-    * `axisLocked` is a boolean array specifying which (if any) axes of motion are "locked" (i.e. disallowed) for this target's motion in [X,Y,Z] order. This only applies for world-space, parametric targets.
-    * `hitSound` is a filename for the sound to play when the target is hit but not destroyed.
-    * `hitSoundVol` provides the volume (as a float) for the hit sound to be played at (default is `1.0`).
-    * `destroyedSound` is a filename for the sound to play when the target is both hit and destroyed.
-    * `destroyedSoundVol` provides the volume (as a float) for the destroyed sound to be played at (default is `10.0`).
-    * `destroyDecal` the decal to show when destroyed
-    * `destroyDecalScale` a scale to apply the the destroy decal
+The `targets` array specifies a list of targets each of which can contain any/all of the following parameters. The following sections provide a more detailed breakdown of target parameters by group.
+
+#### Basic Configuration 
+The following configuration is universal to all target types.
+
+* `id` a short string to refer to this target information
+* `respawnCount` is an integer providing the number of respawns to occur. For non-respawning items use `0` or leave unspecified.
+* `visualSize` is a vector indicating the minimum ([0]) and maximum ([1]) visual size for the target (in deg)
+* `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
+* `hitSound` is a filename for the sound to play when the target is hit but not destroyed.
+* `hitSoundVol` provides the volume (as a float) for the hit sound to be played at (default is `1.0`).
+* `destroyedSound` is a filename for the sound to play when the target is both hit and destroyed.
+* `destroyedSoundVol` provides the volume (as a float) for the destroyed sound to be played at (default is `10.0`).
+* `destroyDecal` the decal to show when destroyed
+* `destroyDecalScale` a scale to apply the the destroy decal (may be decal dependent)
+* `destroyDecalDuration` is the duration to
+* `modelSpec` is an `Any` that constructs an `ArticulatedModel` similar to that used in the [the weapon config readme](weaponConfigReadme.md). For now this spec needs to point to an `obj` file with a model named `core/icosahedron_default`.
+
+#### Player-space (Parametric) Targets
+The following configuration only applies to player-bound parametric targets.
+
+* `speed` is a vector indictating the minimum ([0]) and maximum ([1]) speeds in angular velocity (in deg/s)
+* `distance` is the distance to this target (in meters)
+* `eccH/V` are controls for min ([0])/max([1]) horizontal/vertical eccentricity for target initial position (in deg)
+* `motionChangePeriod` is a vector indicating the minimum ([0]) and maximum ([1]) motion change period allowed (in s)
+* `upperHemisphereOnly` is a boolean flag indicating whether target flies only on the upper hemisphere of player-centric sphere. Only applicable to `FlyingEntity` defined in the "player" space.
+* `logTargetTrajectory` is a boolean flag indicating whether or not this (individual) target's position should be logged for trials it is displayed for
+* `jumpEnabled` determines whether the target can "jump" or not
+* `jumpPeriod` is a vector indicating the minimum ([0]) and maximum ([1]) period to wait between jumps (in seconds)
+* `jumpSpeed` is a vector indicating the minimum ([0]) and maximum([1]) angular speed with which to jump (in deg/s)
+* `accelGravity` is the min ([0])/max ([1]) acceleration due to gravity during the jump (in m/s^2)
+
+#### World-space Target Specific Configuration
+The following configuration parameters are specific to world-space targets:
+
+* `destinations` is an array of `Destination` types each of which contains:
+    * `t` the time (in seconds) for this point in the path
+    * `xyz` the position for this point in the path
+* `spawnBounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for the target's spawn location in cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
+* `moveBounds` specifies an axis-aligned bounding box (`G3D::AABox`) to specify the bounds for target motion in cases where `destSpace="world"` and the target is not destination-based. For more information see the [section below on serializing bounding boxes](##-Bounding-Boxes-(`G3D::AABox`-Serialization)).
+* `axisLocked` is a boolean array specifying which (if any) axes of motion are "locked" (i.e. disallowed) for this target's motion in [X,Y,Z] order. This only applies for world-space, parametric targets.
+
 
 #### Target Configuration Example
 An example target configuration snippet is provided below:
@@ -113,6 +127,7 @@ targets = [
         "destroyedSoundVol" : 10.0f,            // Volume to play destroyed sound at
         "destroyDecal" : "explosion_01.png",    // Use default explosion decal
         "destroyDecalScale" : 1.0,              // Use default sizing
+        "destroyDecalDuration" : 0.1,           // Show the decal for 0.1s (default)
     },
     {
         "id": "world-space paramtetric",

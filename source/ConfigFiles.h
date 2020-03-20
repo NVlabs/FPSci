@@ -814,6 +814,7 @@ public:
 
 	String			destroyDecal = "explosion_01.png";		///< Decal to use for destroy event
 	float			destroyDecalScale = 1.0;				///< Scale to apply to destroy (relative to target size)
+	RealTime		destroyDecalDuration = 0.1;				///< Destroy decal display duration
 
 	String			hitSound = "sound/18397__inferno__smalllas.wav";	///< Sound to play when target is hit (but not destoyed)
 	float			hitSoundVol = 1.0f;						///< Hit sound volume
@@ -861,6 +862,7 @@ public:
 
 			reader.getIfPresent("destroyDecal", destroyDecal);
 			reader.getIfPresent("destroyDecalScale", destroyDecalScale);
+			reader.getIfPresent("destroyDecalDuration", destroyDecalDuration);
 			
 			reader.getIfPresent("destSpace", destSpace);
 			reader.getIfPresent("destinations", destinations);
@@ -929,6 +931,7 @@ public:
 
 		if(forceAll || def.destroyDecal != destroyDecal)						a["destroyDecal"] = destroyDecal;
 		if(forceAll || def.destroyDecalScale != destroyDecalScale)				a["destroyDecalScale"] = destroyDecalScale;
+		if (forceAll || def.destroyDecalDuration != destroyDecalDuration)		a["destroyDecalDuration"] = destroyDecalDuration;
 
 		if(forceAll || def.hitSound != hitSound)								a["hitSound"] = hitSound;
 		if(forceAll || def.hitSoundVol != hitSoundVol)							a["hitSoundVol"] = hitSoundVol;

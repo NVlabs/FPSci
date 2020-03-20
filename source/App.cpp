@@ -788,13 +788,13 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	simulateProjectiles(sdt);
 
 	// explosion animation
-	const RealTime now = System::time();
 	for (int i = 0; i < m_explosions.size(); i++) {
 		shared_ptr<VisibleEntity> explosion = m_explosions[i];
-		if (m_explosionEndTimes[i] < now) {
+		m_explosionRemainingTimes[i] -= sdt;
+		if (m_explosionRemainingTimes[i] <= 0) {
 			scene()->remove(explosion);
 			m_explosions.fastRemove(i);
-			m_explosionEndTimes.fastRemove(i);
+			m_explosionRemainingTimes.fastRemove(i);
 			i--;
 		}
 		else {
@@ -1229,7 +1229,7 @@ void App::hitTarget(shared_ptr<TargetEntity> target) {
 		m_explosionIdx %= m_maxExplosions;
 		scene()->insert(newExplosion);
 		m_explosions.push(newExplosion);
-		m_explosionEndTimes.push(System::time() + 0.1f); // make explosion end in 0.5 seconds
+		m_explosionRemainingTimes.push(experimentConfig.getTargetConfigById(target->id())->destroyDecalDuration); // Schedule end of explosion
 		target->playDestroySound();
 
 		sess->countDestroy();
