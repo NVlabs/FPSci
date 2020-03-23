@@ -97,7 +97,7 @@ Controls specific to the miss decals drawn in the scene are included below:
     "hitDecalColorMult" = 2.0;                      // Slightly emissive hit decal
 ```
 
-## Muzzle Flash Control
+<!-- ## Muzzle Flash Control
 Controls specific to muzzle flash are provided below:
 
 | Parameter Name        |Units      | Description                                                                                           |
@@ -108,7 +108,7 @@ Controls specific to muzzle flash are provided below:
 ```
     "renderMuzzleFlash" : false;                // Don't render a muzzle flash
     "muzzleOffset" : Vector3(0,0,0);            // No muzzle offset
-```
+``` -->
 
 ## Scope Control
 Controls specific to scope behavior are provided below:

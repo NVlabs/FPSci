@@ -651,8 +651,8 @@ public:
 	bool	renderModel = false;										///< Render a model for the weapon?
 	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
 
-	Vector3	muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
-	bool	renderMuzzleFlash = false;									///< Render a muzzle flash when the weapon fires?
+	//Vector3	muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
+	//bool	renderMuzzleFlash = false;									///< Render a muzzle flash when the weapon fires?
 
 	bool	renderBullets = false;										///< Render bullets leaving the weapon
 	float	bulletSpeed = 100.0f;										///< Speed to draw at for rendered rounds (in m/s)
@@ -711,8 +711,8 @@ public:
 				reader.getIfPresent("modelSpec", modelSpec);
 			}
 			
-			reader.getIfPresent("muzzleOffset", muzzleOffset);
-			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
+			//reader.getIfPresent("muzzleOffset", muzzleOffset);
+			//reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
 
 			reader.getIfPresent("renderBullets", renderBullets);
 			reader.getIfPresent("bulletSpeed", bulletSpeed);
@@ -758,8 +758,8 @@ public:
 		if (forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
 		if (forceAll || !(def.modelSpec == modelSpec))						a["modelSpec"] = modelSpec;
 
-		if (forceAll || def.muzzleOffset != muzzleOffset)					a["muzzleOffset"] = muzzleOffset;
-		if (forceAll || def.renderMuzzleFlash != renderMuzzleFlash)			a["renderMuzzleFlash"] = renderMuzzleFlash;
+		//if (forceAll || def.muzzleOffset != muzzleOffset)					a["muzzleOffset"] = muzzleOffset;
+		//if (forceAll || def.renderMuzzleFlash != renderMuzzleFlash)			a["renderMuzzleFlash"] = renderMuzzleFlash;
 
 		if (forceAll || def.renderBullets != renderBullets)					a["renderBullets"] = renderBullets;
 		if (forceAll || def.bulletSpeed != bulletSpeed)						a["bulletSpeed"] = bulletSpeed;
@@ -782,7 +782,6 @@ public:
 		if (forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
 		if (forceAll || def.scopeFoV != scopeFoV)							a["scopeFoV"] = scopeFoV;
 		if (forceAll || def.scopeToggle != scopeToggle)						a["scopeToggle"] = scopeToggle;
-
 
 		return a;
 	}
