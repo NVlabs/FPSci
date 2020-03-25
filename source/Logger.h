@@ -87,45 +87,6 @@ protected:
 	/** Close the results file */
 	void closeResultsFile(void);
 
-	static String stringifyAny(const Any& val) {
-		// Check to see if the simple parser handles this
-		String valStr = anyValToString(val);
-		if (!valStr.empty()) { return valStr; }
-		// Otherwise this is a more complicated type
-		switch (val.type()) {
-		case Any::ARRAY:
-			valStr = "[";
-			for (Any a : val.array()) {
-				String aStr = anyValToString(a);
-				if (aStr.empty()) { throw "Nested arrays not current supported for logging!"; }
-				valStr += aStr + ", ";
-			}
-			valStr = valStr.substr(0, valStr.length() - 2);
-			valStr += "]";
-			break;
-		case Any::TABLE:
-			throw "Any tables are currently not supported for logging!";
-			break;
-		default:
-			throw format("Unrecognized Any type: %s", val.type());
-			break;
-		}
-		return valStr;
-	}
-
-	static String anyValToString(const Any& val) {
-		switch (val.type()) {
-		case Any::BOOLEAN:
-			return val.boolean() ? "true" : "false";
-		case Any::NUMBER:
-			return String(std::to_string(val.number()));
-		case Any::STRING:
-			return val.string();
-		default:
-			return String();
-		}
-	}
-
 public:
 
 	Logger(const String& filename, const String& subjectID, const shared_ptr<SessionConfig>& sessConfig, const String& description);

@@ -79,7 +79,7 @@ void Logger::createResultsFile(const String& filename,
 	// Create any table to do lookup here
 	Any a = sessConfig->toAny(true);
 	// Add the looked up values
-	for (String name : sessConfig->logger.sessParamsToLog) { sessValues.append("'" + stringifyAny(a[name]) + "'"); }
+	for (String name : sessConfig->logger.sessParamsToLog) { sessValues.append("'" + a[name].unparse() + "'"); }
 	// add header row
 	insertRowIntoDB(m_db, "Sessions", sessValues);
 
