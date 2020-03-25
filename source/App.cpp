@@ -732,7 +732,8 @@ void App::simulateProjectiles(RealTime dt) {
 			if (closest < hitThreshold) {
 				hitTarget(closestTarget);
 				// Offset position slightly along normal to avoid Z-fighting the target
-				drawDecal(info.point + 0.01 * info.normal, activeCamera()->frame().lookVector(), true);
+				const Vector3& camDir = -activeCamera()->frame().lookVector();
+				drawDecal(info.point + 0.01 * camDir, camDir, true);
 				projectile.clearRemainingTime();
 			}
 			// Handle (miss) decals here
