@@ -67,28 +67,27 @@ void App::onInit() {
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
 	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), scene(), activeCamera(), &m_projectileArray);
-
-	// Setup the GUI
-	showRenderingStats = false;
-	makeGUI();
-	   
-	// Load fonts and images
-	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
-	hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
-
+	
 	// Load models and set the reticle
 	loadModels();
 	setReticle(userTable.getCurrentUser()->reticleIndex);
 
-	updateMouseSensitivity();			// Update (apply) mouse sensitivity
-	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
-	updateSessionPress();				// Update session to create results file/start collection
+	// Load fonts and images
+	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
+	hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
+
+	// Setup the GUI
+	showRenderingStats = false;
+	makeGUI();
+
+	updateMouseSensitivity();									// Update (apply) mouse sensitivity
+	m_userSettingsWindow->updateSessionDropDown();				// Update the session drop down to remove already completed sessions
+	updateSession(m_userSettingsWindow->selectedSession());		// Update session to create results file/start collection
 }
 
 /** Handle then user settings window visibility */
 void App::openUserSettingsWindow() {
-    m_userSettingsMode = true;
-    m_userSettingsWindow->setVisible(m_userSettingsMode);
+    m_userSettingsWindow->setVisible(true);
 }
 
 /** Update the mouse mode/sensitivity */
@@ -99,21 +98,17 @@ void App::updateMouseSensitivity() {
     double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
     // additional correction factor based on few samples - TODO: need more careful setup to study this
     mouseSensitivity = mouseSensitivity * 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
-    const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-    if (m_userSettingsMode) {
-        // set to 3rd person
-        fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
-    }
-    else {
-        // Force into FPS mode
-        fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
-    }
 	// Control player motion using the experiment config parameter
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	if (notNull(player)) {
 		player->mouseSensitivity = (float)mouseSensitivity;
 		player->turnScale = currentTurnScale();
 	}
+}
+
+void App::setDirectMode(bool enable) {
+	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+	fpm->setMouseMode(enable ? FirstPersonManipulator::MOUSE_DIRECT : FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
 }
 
 void App::loadDecals() {
@@ -241,6 +236,9 @@ void App::loadModels() {
 }
 
 void App::updateControls() {
+	// Update the user settings window
+	m_userSettingsWindow->setConfig(sessConfig->menu);
+	
 	// Update the waypoint manager
 	waypointManager->updateControls();
 
@@ -269,10 +267,7 @@ void App::makeGUI() {
 
 	theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
 
-	// Add the control panes here
-	updateControls();
-
-	// Open sub-window panes here...
+	// Open sub-window buttons here (menu-style)
 	debugPane->beginRow(); {
 		debugPane->addButton("Render Controls [1]", this, &App::showRenderControls);
 		debugPane->addButton("Player Controls [2]", this, &App::showPlayerControls);
@@ -280,52 +275,19 @@ void App::makeGUI() {
 		if(startupConfig.waypointEditorMode) debugPane->addButton("Waypoint Manager [4]", waypointManager, &WaypointManager::showWaypointWindow);
 	}debugPane->endRow();
 
-    // set up user settings window (as a menu)
-    m_userSettingsWindow = GuiWindow::create("User Settings", theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f), GuiTheme::MENU_WINDOW_STYLE);
-    GuiPane* p = m_userSettingsWindow->pane();
-
-	// Add logo
-	auto logo = Texture::fromFile("material/FPSciLogo.png");
-	auto logoTb = p->addTextureBox(this, "", logo, true);
-	logoTb->setSize({ 300, 100 });
-	logoTb->zoomToFit();
-	logoTb->setEnabled(false);
-
-	// Add experiment/user control
-    m_ddCurrentUser = userTable.getCurrentUserIndex();
-	const Vector2 btnSize = { 100.f, 30.f };
-    p = p->addPane("Experiment Settings");
-	p->setCaptionHeight(40);
-    p->beginRow();
-        m_userDropDown = p->addDropDownList("User", userTable.getIds(), &m_ddCurrentUser);
-	    p->addButton("Select User", this, &App::updateUser);
-    p->endRow();
-    p->beginRow();
-        m_sessDropDown = p->addDropDownList("Session", Array<String>({}), &m_ddCurrentSession);
-        updateSessionDropDown();
-	    p->addButton("Select Session", this, &App::updateSessionPress);
-    p->endRow();
-	
-	// Add user settings
-	m_currentUserPane = p->addPane("Current User Settings");
-	updateUserGUI();
-
-	p = p->addPane("Resume and Quit");
-	p->beginRow(); {
-		p->addButton("Resume", this, &App::toggleUserSettingsMenu)->setSize(btnSize);
-		auto quitBtn = p->addButton("Quit", this, &App::quitRequest);
-		quitBtn->setSize(btnSize);
-		//quitBtn->moveBy({ m_userSettingsWindow->bounds().width() - btnSize.x, 0.f });
-	} p->endRow();
-	
-	m_userSettingsWindow->pack();
+	// Create the user settings window
+	m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, sessConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
 	moveToCenter(m_userSettingsWindow);
-	m_userSettingsWindow->setVisible(m_userSettingsMode);
+	m_userSettingsWindow->setVisible(true);
 	addWidget(m_userSettingsWindow);
 
+	// Setup the debug window
 	debugWindow->pack();
 	debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->renderDevice()->viewport().width(), debugWindow->rect().height()));
 	m_debugMenuHeight = startupConfig.developerMode ? debugWindow->rect().height() : 0.0f;
+
+	// Add the control panes here
+	updateControls();
 }
 
 void App::exportScene() {
@@ -353,102 +315,6 @@ void App::userSaveButtonPress(void) {
 	a.save(startupConfig.userConfig());
 	logPrintf("User table saved.\n");			// Print message to log
 }	
-
-void App::updateUser(void){
-	// Update the user if needed
-	if (m_lastSeenUser != m_ddCurrentUser) {
-		// This creates a new results file...
-		if(m_sessDropDown->numElements() > 0) updateSession(updateSessionDropDown()[0]);
-		String id = getDropDownUserId();
-		m_lastSeenUser = m_ddCurrentUser;
-
-        userTable.currentUser = id;
-        updateUserGUI();
-	}
-	// Get new session list for (new) user
-	updateSessionDropDown();
-}
-
-void App::updateUserGUI() {
-	const Vector2 btnSize = { 100.f, 30.f };
-	m_currentUserPane->removeAllChildren();
-	UserConfig* user = userTable.getCurrentUser();
-	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addLabel(format("Current User: %s", userTable.currentUser))->setHeight(30.0);
-	} m_currentUserPane->endRow();
-	m_currentUserPane->beginRow(); {
-		m_mouseDPILabel = m_currentUserPane->addLabel(format("Mouse DPI: %f", user->mouseDPI));
-	} m_currentUserPane->endRow();
-	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addNumberBox("Mouse 360", &(user->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2)->setWidth(300.0);
-	} m_currentUserPane->endRow();
-	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addNumberBox("Turn Scale X", &(user->turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(300.0);
-	} m_currentUserPane->endRow();
-	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addNumberBox("Turn Scale Y", &(user->turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(300.0);
-	} m_currentUserPane->endRow();
-	m_userSettingsWindow->pack();
-	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addButton("Save settings", this, &App::userSaveButtonPress)->setSize(btnSize);
-	} m_currentUserPane->endRow();
-	m_currentUserPane->pack();
-	m_userSettingsWindow->pack();
-}
-
-Array<String> App::updateSessionDropDown(void) {
-	// Create updated session list
-    String userId = userTable.getCurrentUser()->id;
-	shared_ptr<UserSessionStatus> userStatus = userStatusTable.getUserStatus(userId);
-	// If we have a user that doesn't have specified sessions
-	if (userStatus == nullptr) {
-		// Create a new user session status w/ no progress and default order
-		logPrintf("User %s not found. Creating a new user w/ default session ordering.\n", userId);
-		UserSessionStatus newStatus = UserSessionStatus();
-		newStatus.id = userId;
-		experimentConfig.getSessionIds(newStatus.sessionOrder);
-		userStatusTable.userInfo.append(newStatus);
-		userStatus = userStatusTable.getUserStatus(userId);
-		userStatusTable.toAny().save("userstatus.Any");
-	}
-
-	Array<String> remainingSess = {};
-	if (userStatusTable.allowRepeat) {
-		remainingSess = userStatus->sessionOrder;
-		for (int i = 0; i < userStatus->completedSessions.size(); i++) {
-			if (remainingSess.contains(userStatus->completedSessions[i])) {
-				int idx = remainingSess.findIndex(userStatus->completedSessions[i]);
-				remainingSess.remove(idx, 1);
-			}
-		}
-	}
-	else{
-		for (int i = 0; i < userStatus->sessionOrder.size(); i++) {
-			if(!userStatus->completedSessions.contains(userStatus->sessionOrder[i])) {
-				// user hasn't (ever) completed this session
-				remainingSess.append(userStatus->sessionOrder[i]);
-			}
-		}
-	}
-	m_sessDropDown->setList(remainingSess);
-
-	// Print message to log
-	logPrintf("Updated %s's session drop down to:\n", userId);
-	for (String id : remainingSess) {
-		logPrintf("\t%s\n", id);
-	}
-
-	return remainingSess;
-}
-
-String App::getDropDownSessId(void) {
-	if (m_sessDropDown->numElements() == 0) return "";
-	return m_sessDropDown->get(m_ddCurrentSession);
-}
-
-String App::getDropDownUserId(void) {
-	return m_userDropDown->get(m_ddCurrentUser);
-}
 
 void App::presentQuestion(Question question) {
 	switch (question.type) {
@@ -478,14 +344,9 @@ void App::markSessComplete(String sessId) {
 	// Save the file to any
 	userStatusTable.toAny().save("userstatus.Any");
 	logPrintf("Marked session: %s complete for user %s.\n", sessId, userTable.currentUser);
-}
 
-shared_ptr<UserConfig> App::getCurrUser(void) {
-	return userTable.getUserById(getDropDownUserId());
-}
-
-void App::updateSessionPress(void) {
-	updateSession(getDropDownSessId());
+	// Update the session drop-down to remove this session
+	m_userSettingsWindow->updateSessionDropDown();
 }
 
 void App::updateParameters(int frameDelay, float frameRate) {
@@ -506,7 +367,7 @@ void App::updateSession(const String& id) {
 	if (!id.empty() && ids.contains(id)) {
 		sessConfig = experimentConfig.getSessionConfigById(id);						// Get the new session config
 		logPrintf("User selected session: %s. Updating now...\n", id);				// Print message to log
-		m_sessDropDown->setSelectedValue(id);										// Update session drop-down selection
+		m_userSettingsWindow->setSelectedSession(id);								// Update session drop-down selection
 		sess = Session::create(this, sessConfig);									// Create the session
 	}
 	else {
@@ -601,7 +462,7 @@ void App::updateSession(const String& id) {
 	// Initialize the experiment (this creates the results file)
 	sess->onInit(logName+".db", experimentConfig.description + "/" + sessConfig->description);
 	// Don't create a results file for a user w/ no sessions left
-	if (m_sessDropDown->numElements() == 0) {
+	if (m_userSettingsWindow->sessionsForSelectedUser() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
 	}
 	else {
@@ -622,14 +483,13 @@ void App::quitRequest() {
 }
 
 void App::toggleUserSettingsMenu() {
-	m_userSettingsMode = !m_userSettingsMode;
-	m_userSettingsWindow->setVisible(m_userSettingsMode);
-	if (m_userSettingsMode) {
+	m_userSettingsWindow->toggleVisibliity();
+	if (m_userSettingsWindow->visible()) {
 		// set focus so buttons properly highlight
 		moveToCenter(m_userSettingsWindow);
 		m_widgetManager->setFocusedWidget(m_userSettingsWindow);
 	}
-	// switch to first or 3rd person mode
+	// Make sure any change to sensitivity are applied
 	updateMouseSensitivity();
 }
 
@@ -820,9 +680,9 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	if (scene()) { scene()->onSimulation(sdt); }
 
 	// make sure mouse sensitivity is set right
-	if (m_userSettingsMode) {
+	if (m_userSettingsWindow->visible()) {
 		updateMouseSensitivity();
-		m_userSettingsWindow->setVisible(m_userSettingsMode);		// Make sure window stays coherent w/ user settings mode
+		//m_userSettingsWindow->setVisible(m_userSettingsMode);		// Make sure window stays coherent w/ user settings mode
 	}
 
 	// Simulate the projectiles
@@ -1312,7 +1172,7 @@ void App::onUserInput(UserInput* ui) {
 	(void)ui;
 
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
-	if (!m_userSettingsMode && notNull(player)) {
+	if (!m_userSettingsWindow->visible() && notNull(player)) {
 		player->updateFromInput(ui);
 	}
 	else {	// Zero the player velocity and rotation when in the setting menu
@@ -1355,7 +1215,7 @@ void App::onUserInput(UserInput* ui) {
 					m_weapon->setFiring(true);
 				}
 				// check for hit, add graphics, update target state
-				if ((sess->presentationState == PresentationState::task) && !m_userSettingsMode) {
+				if ((sess->presentationState == PresentationState::task) && !m_userSettingsWindow->visible()) {
 					if (sess->canFire()) {
 						fired = true;
 						sess->countClick();														// Count clicks
@@ -1436,9 +1296,10 @@ void App::onUserInput(UserInput* ui) {
 		}
 	}
 
-	if (m_lastReticleLoaded != userTable.getCurrentUser()->reticleIndex) {
+	if (m_lastReticleLoaded != userTable.getCurrentUser()->reticleIndex || m_userSettingsWindow->visible()) {
 		// Slider was used to change the reticle
 		setReticle(userTable.getCurrentUser()->reticleIndex);
+		m_userSettingsWindow->updateReticlePreview();
 	}
 
 	activeCamera()->filmSettings().setSensitivity(sceneBrightness);

@@ -102,3 +102,81 @@ public:
 		return createShared<WeaponControls>(config, theme, width, height);
 	}
 };
+
+class UserMenu : public GuiWindow {
+protected:
+	App* m_app;												///< Store the app here
+	UserTable& m_users;										///< User table
+	UserStatusTable& m_userStatus;							///< User status table
+	MenuConfig& m_config;									///< Menu configuration
+
+	GuiPane* m_parent;										///< Parent pane
+	GuiPane* m_expPane;										///< Pane for session/user selection
+	GuiPane* m_currentUserPane;								///< Pane for current user controls
+	GuiPane* m_reticlePreviewPane;							///< Reticle preview pane
+	GuiPane* m_resumeQuitPane;								///< Pane for resume/quit buttons
+
+	GuiDropDownList* m_userDropDown;						///< Dropdown menu for user selection
+	GuiDropDownList* m_sessDropDown;						///< Dropdown menu for session selection
+
+	shared_ptr<Texture> m_reticlePreviewTexture;			///< Reticle preview texture
+	shared_ptr<Framebuffer> m_reticleBuffer;				///< Reticle preview framebuffer
+
+	int m_ddCurrUserIdx = 0;								///< Current user index
+	int m_ddCurrSessIdx = 0;								///< Current session index
+	int m_lastUserIdx = -1;									///< Previously selected user in the drop-down
+
+	const Vector2 m_logoSize = { 300.f, 100.f };			///< Logo size
+	const Vector2 m_btnSize = { 100.f, 30.f };				///< Default button size
+	const Vector2 m_reticlePreviewSize = { 150.f, 150.f };	///< Reticle texture preview size
+	const float m_sliderWidth = 300.f;						///< Default width for (non-RGB) sliders
+	const float m_rgbSliderWidth = 80.f;					///< Default width for RGB sliders
+
+	UserMenu(App* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect);
+
+	void updateMenu(const MenuConfig& config);
+	void updateUserPane(const MenuConfig& config);
+
+	void updateUserPress();
+	void updateSessionPress();
+
+public:
+	static shared_ptr<UserMenu> create(App* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) {
+		return createShared<UserMenu>(app, users, userStatus, config, theme, rect);
+	}
+
+	void setVisible(bool visibile);
+	Array<String> updateSessionDropDown();
+	void updateReticlePreview();
+
+	void toggleVisibliity() {
+		setVisible(!visible());
+	}
+
+	void setSelectedSession(const String& id) {
+		m_sessDropDown->setSelectedValue(id);
+	}
+
+	String selectedSession() const {
+		return m_sessDropDown->get(m_ddCurrSessIdx);
+	}
+
+	int sessionsForSelectedUser() const {
+		return m_sessDropDown->numElements();
+	}
+
+	String selectedUserID() const {
+		return m_userDropDown->get(m_ddCurrSessIdx);
+	}
+
+	shared_ptr<UserConfig> getCurrUser() {
+		return m_users.getUserById(selectedUserID());
+	}
+
+	void setConfig(MenuConfig& config) { 
+		m_config = config; 
+		updateMenu(config);		// Redraw the menu w/ the new config
+	}
+
+
+};

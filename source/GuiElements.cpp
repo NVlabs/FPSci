@@ -338,3 +338,279 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 	pack();
 	moveTo(Vector2(0, 720));
 }
+
+////////////////////////
+/// USER MENU
+///////////////////////
+UserMenu::UserMenu(App* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) :
+	GuiWindow("", theme, rect, GuiTheme::MENU_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_app(app), m_users(users), m_userStatus(userStatus), m_config(config)
+{
+	m_reticlePreviewTexture = Texture::createEmpty("ReticleTexture", m_app->reticleTexture->width(), m_app->reticleTexture->height());
+	m_reticleBuffer = Framebuffer::create(m_reticlePreviewTexture);
+
+	m_parent = pane();
+	updateMenu(config);
+	pack();
+}
+
+void UserMenu::updateMenu(const MenuConfig& config) 
+{	
+	// Clear the menu
+	m_parent->removeAllChildren();
+
+	// Add logo
+	if (config.showMenuLogo) {
+		auto logo = Texture::fromFile("material/FPSciLogo.png");
+		auto logoTb = m_parent->addTextureBox(m_app, "", logo, true);
+		logoTb->setSize(m_logoSize);
+		logoTb->zoomToFit();
+		logoTb->setEnabled(false);
+	}
+
+	// Experiment Settings Pane
+	m_ddCurrUserIdx = m_users.getCurrentUserIndex();
+	if (config.showExperimentSettings) {
+		m_expPane = m_parent->addPane("Experiment Settings");
+		m_expPane->setCaptionHeight(40);
+		m_expPane->beginRow(); {
+			m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
+			m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
+		} m_expPane->endRow();
+		m_expPane->beginRow(); {
+			m_sessDropDown = m_expPane->addDropDownList("Session", Array<String>({}), &m_ddCurrSessIdx);
+			updateSessionDropDown();
+			m_expPane->addButton("Select Session", this, &UserMenu::updateSessionPress);
+		} m_expPane->endRow();
+	}
+
+	// User Settings Pane
+	if (config.showUserSettings) {
+		m_currentUserPane = m_parent->addPane("Current User Settings");
+		updateUserPane(config);
+	}
+
+	// Resume/Quite Pane
+	m_resumeQuitPane = m_parent->addPane("Resume and Quit");
+	m_resumeQuitPane->beginRow(); {
+		m_resumeQuitPane->addButton("Resume", this, &UserMenu::toggleVisibliity)->setSize(m_btnSize);
+		auto quitBtn = m_resumeQuitPane->addButton("Quit", m_app, &App::quitRequest);
+		quitBtn->setSize(m_btnSize);
+		//quitBtn->moveBy({ bounds().width() - m_btnSize.x, 0.f });
+	} m_resumeQuitPane->endRow();
+
+	pack();
+}
+
+void UserMenu::updateUserPane(const MenuConfig& config) 
+{
+	// Clear the pane
+	m_currentUserPane->removeAllChildren();
+
+	// Basic user info
+	UserConfig* user = m_users.getCurrentUser();
+	m_currentUserPane->beginRow(); {
+		m_currentUserPane->addLabel(format("Current User: %s", m_users.currentUser))->setHeight(30.0);
+	} m_currentUserPane->endRow();
+	m_currentUserPane->beginRow(); {
+		m_currentUserPane->addLabel(format("Mouse DPI: %f", user->mouseDPI));
+	} m_currentUserPane->endRow();
+	m_currentUserPane->beginRow(); {
+		auto sensitivityNb = m_currentUserPane->addNumberBox("Mouse 360", &(user->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
+		sensitivityNb->setWidth(300.0);
+		sensitivityNb->setEnabled(config.allowSensitivityChange);
+	} m_currentUserPane->endRow();
+	if (config.allowTurnScaleChange) {
+		m_currentUserPane->beginRow(); {
+			m_currentUserPane->addNumberBox("Turn Scale X", &(user->turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
+		} m_currentUserPane->endRow();
+		m_currentUserPane->beginRow(); {
+			m_currentUserPane->addNumberBox("Turn Scale Y", &(user->turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
+		} m_currentUserPane->endRow();
+	}
+
+	// Reticle configuration
+	if (config.allowReticleChange) {
+		auto reticlePane = m_currentUserPane->addPane("Reticle");
+		auto reticleControlPane = reticlePane->addPane("Reticle Control");
+
+		// Reticle index selection
+		if (config.allowReticleIdxChange) {
+			reticleControlPane->beginRow(); {
+				auto c = reticleControlPane->addNumberBox("Reticle", &(user->reticleIndex), "", GuiTheme::LINEAR_SLIDER, 0, m_app->numReticles, 1);
+				c->setWidth(m_sliderWidth);
+			} reticleControlPane->endRow();
+		}
+
+		// Reticle size selection
+		if (config.allowReticleSizeChange) {
+			reticleControlPane->beginRow(); {
+				auto c = reticleControlPane->addNumberBox("Reticle Scale Min", &(user->reticleScale[0]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
+				c->setCaptionWidth(120.0f);
+				c->setWidth(m_sliderWidth);
+			} reticleControlPane->endRow();
+
+			reticleControlPane->beginRow(); {
+				auto c = reticleControlPane->addNumberBox("Reticle Scale Max", &(user->reticleScale[1]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
+				c->setCaptionWidth(120.0f);
+				c->setWidth(m_sliderWidth);
+			} reticleControlPane->endRow();
+		}
+
+		// Reticle color selection
+		if (config.allowReticleColorChange) {
+			reticleControlPane->beginRow(); {
+				auto l = reticleControlPane->addLabel("Reticle Color Min");
+				l->setWidth(100.0f);
+				auto c = reticleControlPane->addSlider("R", &(user->reticleColor[0].r), 0.0f, 1.0f);
+				c->setCaptionWidth(10.0f);
+				c->setWidth(m_rgbSliderWidth);
+				c = reticleControlPane->addSlider("G", &(user->reticleColor[0].g), 0.0f, 1.0f);
+				c->setCaptionWidth(10.0f);
+				c->setWidth(80.0f);
+				c = reticleControlPane->addSlider("B", &(user->reticleColor[0].b), 0.0f, 1.0f);
+				c->setCaptionWidth(10.0f);
+				c->setWidth(m_rgbSliderWidth);
+				c = reticleControlPane->addSlider("A", &(user->reticleColor[0].a), 0.0f, 1.0f);
+				c->setCaptionWidth(10.0f);
+				c->setWidth(m_rgbSliderWidth);
+			} reticleControlPane->endRow();
+			reticleControlPane->beginRow(); {
+				auto l = reticleControlPane->addLabel("Reticle Color Max");
+				l->setWidth(100.0f);
+				auto c = reticleControlPane->addSlider("R", &(user->reticleColor[1].r), 0.0f, 1.0f);
+				c->setCaptionWidth(10.0f);
+				c->setWidth(80.0f);
+				c = reticleControlPane->addSlider("G", &(user->reticleColor[1].g), 0.0f, 1.0f);
+				c->setCaptionWidth(10.0f);
+				c->setWidth(m_rgbSliderWidth);
+				c = reticleControlPane->addSlider("B", &(user->reticleColor[1].b), 0.0f, 1.0f);
+				c->setCaptionWidth(10.0f);
+				c->setWidth(m_rgbSliderWidth);
+				c = reticleControlPane->addSlider("A", &(user->reticleColor[1].a), 0.0f, 1.0f);
+				c->setCaptionWidth(10.0f);
+				c->setWidth(m_rgbSliderWidth);
+			} reticleControlPane->endRow();
+			if (config.allowReticleTimeChange) {
+				reticlePane->beginRow(); {
+					auto c = reticlePane->addNumberBox("Reticle Shrink Time", &(user->reticleShrinkTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
+					c->setCaptionWidth(150.0f);
+					c->setWidth(m_sliderWidth);
+				} reticlePane->endRow();
+			}
+		}
+
+		// Allow the user to save their settings?
+		if (config.allowUserSettingsSave) {
+			m_currentUserPane->beginRow(); {
+				m_currentUserPane->addButton("Save settings", m_app, &App::userSaveButtonPress)->setSize(m_btnSize);
+			} m_currentUserPane->endRow();
+		}
+
+
+		// Draw a preview of the reticle here
+		if (config.allowReticleChange && config.showReticlePreview) {
+			m_reticlePreviewPane = reticlePane->addPane("Reticle Preview");
+			updateReticlePreview();
+			m_reticlePreviewPane->moveRightOf(reticleControlPane);
+		}
+
+	}
+	m_currentUserPane->pack();
+	pack();
+}
+
+Array<String> UserMenu::updateSessionDropDown() {
+	// Create updated session list
+	String userId = m_users.getCurrentUser()->id;
+	shared_ptr<UserSessionStatus> userStatus = m_userStatus.getUserStatus(userId);
+	// If we have a user that doesn't have specified sessions
+	if (userStatus == nullptr) {
+		// Create a new user session status w/ no progress and default order
+		logPrintf("User %s not found. Creating a new user w/ default session ordering.\n", userId);
+		UserSessionStatus newStatus = UserSessionStatus();
+		newStatus.id = userId;
+		m_app->experimentConfig.getSessionIds(newStatus.sessionOrder);
+		m_userStatus.userInfo.append(newStatus);
+		userStatus = m_userStatus.getUserStatus(userId);
+		m_userStatus.toAny().save("userstatus.Any");
+	}
+
+	Array<String> remainingSess = {};
+	if (m_userStatus.allowRepeat) {
+		remainingSess = userStatus->sessionOrder;
+		for (int i = 0; i < userStatus->completedSessions.size(); i++) {
+			if (remainingSess.contains(userStatus->completedSessions[i])) {
+				int idx = remainingSess.findIndex(userStatus->completedSessions[i]);
+				remainingSess.remove(idx, 1);
+			}
+		}
+	}
+	else {
+		for (int i = 0; i < userStatus->sessionOrder.size(); i++) {
+			if (!userStatus->completedSessions.contains(userStatus->sessionOrder[i])) {
+				// user hasn't (ever) completed this session
+				remainingSess.append(userStatus->sessionOrder[i]);
+			}
+		}
+	}
+	m_sessDropDown->setList(remainingSess);
+
+	// Print message to log
+	logPrintf("Updated %s's session drop down to:\n", userId);
+	for (String id : remainingSess) {
+		logPrintf("\t%s\n", id);
+	}
+
+	return remainingSess;
+}
+
+void UserMenu::updateUserPress() {
+	if (m_lastUserIdx != m_ddCurrUserIdx) {
+		// Update user ID
+		String userId = m_userDropDown->get(m_ddCurrUserIdx);
+		m_users.currentUser = userId;
+		m_lastUserIdx = m_ddCurrUserIdx;
+		updateUserPane(m_config);
+		
+		// Update (selected) sessions
+		String sessId = updateSessionDropDown()[0];
+		if (m_sessDropDown->numElements() > 0) m_app->updateSession(sessId);
+	}
+	//updateSessionDropDown();
+}
+
+void UserMenu::updateReticlePreview() {
+	// Clear the pane
+	m_reticlePreviewPane->removeAllChildren();
+	// Redraw the preview
+	shared_ptr<Texture> reticleTex = m_app->reticleTexture;
+	Color4 rColor = m_users.getCurrentUser()->reticleColor[0];
+
+	RenderDevice* rd = m_app->renderDevice;
+	rd->push2D(m_reticleBuffer); {
+		Args args;
+		args.setMacro("HAS_TEXTURE", 1);
+		args.setUniform("textureMap", reticleTex, Sampler::video());
+		args.setUniform("color", rColor);
+		debugAssertGLOk();
+
+		args.setUniform("gammaAdjust", 1.0f);
+		args.setRect(reticleTex->rect2DBounds(), 0);
+		LAUNCH_SHADER_WITH_HINT("unlit.*", args, "ReticlePreview");
+	} rd->pop2D();
+
+	auto preview = m_reticlePreviewPane->addTextureBox(m_app, m_reticleBuffer->texture(Framebuffer::AttachmentPoint::COLOR0), true);
+	preview->setSize(m_reticlePreviewSize);
+	preview->zoomToFit();
+	preview->setEnabled(false);
+	m_reticlePreviewPane->pack();
+}
+
+void UserMenu::updateSessionPress() {
+	m_app->updateSession(selectedSession());
+}
+
+void UserMenu::setVisible(bool enable) {
+	GuiWindow::setVisible(enable);
+	m_app->setDirectMode(!enable);				// Set view control (direct) vs pointer (indirect) based on window visibility
+}

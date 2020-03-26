@@ -1423,6 +1423,61 @@ public:
 	}
 };
 
+class MenuConfig {
+public: 
+	// Menu controls
+	bool showMenuLogo				= true;							///< Show the FPSci logo in the user menu
+	bool showExperimentSettings		= true;							///< Show the experiment settings options (session/user selection)
+	bool showUserSettings			= true;							///< Show the user settings options (master switch)
+	bool allowUserSettingsSave		= true;							///< Allow the user to save settings changes
+	bool allowSensitivityChange		= true;							///< Allow in-game sensitivity change		
+	bool allowTurnScaleChange		= true;							///< Allow the user to apply X/Y turn scaling
+	bool allowReticleChange			= false;						///< Allow the user to adjust their crosshair
+	bool allowReticleIdxChange		= true;							///< If reticle change is allowed, allow index change
+	bool allowReticleSizeChange		= true;							///< If reticle change is allowed, allow size change
+	bool allowReticleColorChange	= true;							///< If reticle change is allowed, allow color change
+	bool allowReticleTimeChange		= false;						///< Allow the user to change the reticle shrink time
+	bool showReticlePreview			= true;							///< Show a preview of the reticle
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("showMenuLogo", showMenuLogo);
+			reader.getIfPresent("showExperimentSettings", showExperimentSettings);
+			reader.getIfPresent("showUserSettings", showUserSettings);
+			reader.getIfPresent("allowSensitivityChange", allowSensitivityChange);
+			reader.getIfPresent("allowTurnScaleChange", allowTurnScaleChange);
+			reader.getIfPresent("allowReticleChange", allowReticleChange);
+			reader.getIfPresent("allowReticleIdxChange", allowReticleIdxChange);
+			reader.getIfPresent("allowReticleSizeChange", allowReticleSizeChange);
+			reader.getIfPresent("allowReticleColorChange", allowReticleColorChange);
+			reader.getIfPresent("allowReticleShrinkTimeChange", allowReticleTimeChange);
+			reader.getIfPresent("showReticlePreview", showReticlePreview);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+
+	}
+
+	Any addToAny(Any a, const bool forceAll = false) const {
+		MenuConfig def;
+		if (forceAll || def.showMenuLogo != showMenuLogo)							a["showMenuLogo"] = showMenuLogo;
+		if (forceAll || def.showExperimentSettings != showExperimentSettings)		a["showExperimentSettings"] = showExperimentSettings;
+		if (forceAll || def.showUserSettings != showUserSettings)					a["showUserSettings"] = showUserSettings;
+		if (forceAll || def.allowSensitivityChange != allowSensitivityChange)		a["allowSensitivityChange"] = allowSensitivityChange;
+		if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)			a["allowTurnScaleChange"] = allowTurnScaleChange;
+		if (forceAll || def.allowReticleChange != allowReticleChange)				a["allowReticleChange"] = allowReticleChange;
+		if (forceAll || def.allowReticleIdxChange != allowReticleIdxChange)			a["allowReticleIdxChange"] = allowReticleIdxChange;
+		if (forceAll || def.allowReticleSizeChange != allowReticleSizeChange)		a["allowReticleSizeChange"] = allowReticleSizeChange;
+		if (forceAll || def.allowReticleColorChange != allowReticleColorChange)		a["allowReticleColorChange"] = allowReticleColorChange;
+		if (forceAll || def.allowReticleTimeChange != allowReticleTimeChange)		a["allowReticleTimeChange"] = allowReticleTimeChange;
+		if (forceAll || def.showReticlePreview != showReticlePreview)				a["showReticlePreview"] = showReticlePreview;
+		return a;
+	}
+};
+
 class FpsConfig : public ReferenceCountedObject {
 public:
 	int	            settingsVersion = 1;						///< Settings version
@@ -1438,7 +1493,8 @@ public:
 	ClickToPhotonConfig clickToPhoton;							///< Click to photon config parameters
 	LoggerConfig		logger;									///< Logging configuration
 	WeaponConfig		weapon;			                        ///< Weapon to be used
-	Array<Question> questionArray;								///< Array of questions for this experiment/trial
+	MenuConfig			menu;									///< User settings window configuration
+	Array<Question>		questionArray;							///< Array of questions for this experiment/trial
 
 	// Constructors
 	FpsConfig(const Any& any) {
@@ -1463,6 +1519,7 @@ public:
 		audio.load(reader, settingsVersion);
 		timing.load(reader, settingsVersion);
 		logger.load(reader, settingsVersion);
+		menu.load(reader, settingsVersion);
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("sceneName", sceneName);
@@ -1488,6 +1545,7 @@ public:
 		a = audio.addToAny(a, forceAll);
 		a = timing.addToAny(a, forceAll);
 		a = logger.addToAny(a, forceAll);
+		a = menu.addToAny(a, forceAll);
 		a["weapon"] =  weapon.toAny(forceAll);
 		return a;
 	}
