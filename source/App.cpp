@@ -280,14 +280,22 @@ void App::makeGUI() {
 		if(startupConfig.waypointEditorMode) debugPane->addButton("Waypoint Manager [4]", waypointManager, &WaypointManager::showWaypointWindow);
 	}debugPane->endRow();
 
-    // set up user settings window
-    m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
+    // set up user settings window (as a menu)
+    m_userSettingsWindow = GuiWindow::create("User Settings", theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f), GuiTheme::MENU_WINDOW_STYLE);
     GuiPane* p = m_userSettingsWindow->pane();
-    m_currentUserPane = p->addPane("Current User Settings");
-    updateUserGUI();
 
+	// Add logo
+	auto logo = Texture::fromFile("material/FPSciLogo.png");
+	auto logoTb = p->addTextureBox(this, "", logo, true);
+	logoTb->setSize({ 300, 100 });
+	logoTb->zoomToFit();
+	logoTb->setEnabled(false);
+
+	// Add experiment/user control
     m_ddCurrentUser = userTable.getCurrentUserIndex();
+	const Vector2 btnSize = { 100.f, 30.f };
     p = p->addPane("Experiment Settings");
+	p->setCaptionHeight(40);
     p->beginRow();
         m_userDropDown = p->addDropDownList("User", userTable.getIds(), &m_ddCurrentUser);
 	    p->addButton("Select User", this, &App::updateUser);
@@ -297,13 +305,21 @@ void App::makeGUI() {
         updateSessionDropDown();
 	    p->addButton("Select Session", this, &App::updateSessionPress);
     p->endRow();
-    p->addButton("Quit", this, &App::quitRequest);
+	
+	// Add user settings
+	m_currentUserPane = p->addPane("Current User Settings");
+	updateUserGUI();
 
+	p = p->addPane("Resume and Quit");
+	p->beginRow(); {
+		p->addButton("Resume", this, &App::toggleUserSettingsMenu)->setSize(btnSize);
+		auto quitBtn = p->addButton("Quit", this, &App::quitRequest);
+		quitBtn->setSize(btnSize);
+		//quitBtn->moveBy({ m_userSettingsWindow->bounds().width() - btnSize.x, 0.f });
+	} p->endRow();
+	
 	m_userSettingsWindow->pack();
-	float scale = 0.5f / m_userSettingsWindow->pixelScale();
-	Vector2 pos = Vector2(renderDevice->viewport().width()*scale - m_userSettingsWindow->bounds().width() / 2.0f,
-		renderDevice->viewport().height()*scale - m_userSettingsWindow->bounds().height() / 2.0f);
-	m_userSettingsWindow->moveTo(pos);
+	moveToCenter(m_userSettingsWindow);
 	m_userSettingsWindow->setVisible(m_userSettingsMode);
 	addWidget(m_userSettingsWindow);
 
@@ -354,14 +370,30 @@ void App::updateUser(void){
 }
 
 void App::updateUserGUI() {
-    m_currentUserPane->removeAllChildren();
-	UserConfig *user = userTable.getCurrentUser();
-    m_currentUserPane->addLabel(format("Current User: %s", userTable.currentUser));
-    m_mouseDPILabel = m_currentUserPane->addLabel(format("Mouse DPI: %f", user->mouseDPI));
-    m_currentUserPane->addNumberBox("Mouse 360", &(user->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
-	m_currentUserPane->addNumberBox("Turn Scale X", &(user->turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f);
-	m_currentUserPane->addNumberBox("Turn Scale Y", &(user->turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f);
-    m_currentUserPane->addButton("Save settings", this, &App::userSaveButtonPress);
+	const Vector2 btnSize = { 100.f, 30.f };
+	m_currentUserPane->removeAllChildren();
+	UserConfig* user = userTable.getCurrentUser();
+	m_currentUserPane->beginRow(); {
+		m_currentUserPane->addLabel(format("Current User: %s", userTable.currentUser))->setHeight(30.0);
+	} m_currentUserPane->endRow();
+	m_currentUserPane->beginRow(); {
+		m_mouseDPILabel = m_currentUserPane->addLabel(format("Mouse DPI: %f", user->mouseDPI));
+	} m_currentUserPane->endRow();
+	m_currentUserPane->beginRow(); {
+		m_currentUserPane->addNumberBox("Mouse 360", &(user->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2)->setWidth(300.0);
+	} m_currentUserPane->endRow();
+	m_currentUserPane->beginRow(); {
+		m_currentUserPane->addNumberBox("Turn Scale X", &(user->turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(300.0);
+	} m_currentUserPane->endRow();
+	m_currentUserPane->beginRow(); {
+		m_currentUserPane->addNumberBox("Turn Scale Y", &(user->turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(300.0);
+	} m_currentUserPane->endRow();
+	m_userSettingsWindow->pack();
+	m_currentUserPane->beginRow(); {
+		m_currentUserPane->addButton("Save settings", this, &App::userSaveButtonPress)->setSize(btnSize);
+	} m_currentUserPane->endRow();
+	m_currentUserPane->pack();
+	m_userSettingsWindow->pack();
 }
 
 Array<String> App::updateSessionDropDown(void) {
@@ -587,6 +619,18 @@ void App::quitRequest() {
 		m_pyLogger->mergeLogToDb(true);
 	}
     setExitCode(0);
+}
+
+void App::toggleUserSettingsMenu() {
+	m_userSettingsMode = !m_userSettingsMode;
+	m_userSettingsWindow->setVisible(m_userSettingsMode);
+	if (m_userSettingsMode) {
+		// set focus so buttons properly highlight
+		moveToCenter(m_userSettingsWindow);
+		m_widgetManager->setFocusedWidget(m_userSettingsWindow);
+	}
+	// switch to first or 3rd person mode
+	updateMouseSensitivity();
 }
 
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
@@ -920,14 +964,7 @@ bool App::onEvent(const GEvent& event) {
 	// Handle normal keypresses
 	if (event.type == GEventType::KEY_DOWN) {
 		if (keyMap.map["openMenu"].contains(ksym)) {
-			m_userSettingsMode = !m_userSettingsMode;
-			m_userSettingsWindow->setVisible(m_userSettingsMode);
-			if (m_userSettingsMode) {
-				// set focus so buttons properly highlight
-				m_widgetManager->setFocusedWidget(m_userSettingsWindow);
-			}
-			// switch to first or 3rd person mode
-			updateMouseSensitivity();
+			toggleUserSettingsMenu();
 			foundKey = true;
 		}
 
@@ -957,6 +994,11 @@ bool App::onEvent(const GEvent& event) {
 	}
 	if (foundKey) {
 		return true;
+	}
+
+	// Handle window resize here
+	if (event.type == GEventType::VIDEO_RESIZE) {
+		moveToCenter(m_userSettingsWindow);
 	}
 
 	// Handle window-based close ("X" button)

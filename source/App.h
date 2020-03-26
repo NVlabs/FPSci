@@ -162,6 +162,13 @@ protected:
 	void updateUser(void);
     void updateUserGUI();
 
+	/** Move a window to the center of the display */
+	void moveToCenter(shared_ptr<GuiWindow> window) {
+		const float scale = 0.5f / m_userSettingsWindow->pixelScale();
+		const Vector2 pos = (scale * renderDevice->viewport().wh()) - (window->bounds().wh() / 2.0f);
+		window->moveTo(pos);
+	}
+
 	/** Get the current turn scale (per user and scope setting) */
 	Vector2 currentTurnScale();
 	/** Set the scoped view (and also adjust the turn scale), use setScopeView(!weapon->scoped()) to toggle scope */
@@ -238,6 +245,7 @@ public:
 	shared_ptr<UserConfig> getCurrUser(void);
 
     void quitRequest();
+	void toggleUserSettingsMenu();
 	   
 	/** opens the user settings window */
     void openUserSettingsWindow();
