@@ -106,7 +106,7 @@ protected:
 	Array<shared_ptr<VisibleEntity>>		m_currentMissDecals;				///< Pointers to miss decals
 
 	Array<shared_ptr<VisibleEntity>>		m_explosions;						///< Model for target destroyed decal
-	Array<RealTime>							m_explosionEndTimes;				///< Time for end of explosion
+	Array<RealTime>							m_explosionRemainingTimes;			///< Time for end of explosion
 	int										m_explosionIdx = 0;					///< Explosion index
 	const int								m_maxExplosions = 20;				///< Maximum number of simultaneous explosions
 		
@@ -122,7 +122,7 @@ protected:
 	shared_ptr<RenderControls>				m_renderControls;
 	shared_ptr<WeaponControls>				m_weaponControls;
 
-	Array<shared_ptr<ArticulatedModel>>		m_explosionModels;
+	Table<String, Array<shared_ptr<ArticulatedModel>>> m_explosionModels;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
 	Queue<float>							m_frameDurationQueue;				///< Queue for history of frrame times

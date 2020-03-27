@@ -54,6 +54,7 @@ shared_ptr<TargetEntity> TargetEntity::create(
 	target->Entity::init(name, scene, CFrame(config->destinations[0].position), shared_ptr<Entity::Track>(), true, true);
 	target->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
 	target->TargetEntity::init(config->destinations, paramIdx, offset, config->respawnCount, scaleIdx, config->logTargetTrajectory);
+	target->m_id = config->id;
 	return target;
 }
 
@@ -131,13 +132,13 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 #endif
 }
 
-shared_ptr<Entity> FlyingEntity::create
-(const String&                  name,
+shared_ptr<Entity> FlyingEntity::create(
+	const String&                  name,
 	Scene*                         scene,
 	AnyTableReader&                propertyTable,
 	const ModelTable&              modelTable,
-	const Scene::LoadOptions&      loadOptions) {
-
+	const Scene::LoadOptions&      loadOptions) 
+{
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
 	const shared_ptr<FlyingEntity>& flyingEntity = createShared<FlyingEntity>();
 
@@ -172,10 +173,10 @@ shared_ptr<FlyingEntity> FlyingEntity::create(
 
 shared_ptr<FlyingEntity> FlyingEntity::create(
 	shared_ptr<TargetConfig>		config,
-	const String& name,
-	Scene* scene,
-	const shared_ptr<Model>& model,
-	const Point3& orbitCenter,
+	const String&					name,
+	Scene*							scene,
+	const shared_ptr<Model>&		model,
+	const Point3&					orbitCenter,
 	int								scaleIdx,
 	int								paramIdx)
 {
@@ -195,6 +196,7 @@ shared_ptr<FlyingEntity> FlyingEntity::create(
 		config->respawnCount, 
 		scaleIdx, 
 		config->logTargetTrajectory);
+	flyingEntity->m_id = config->id;
 	return flyingEntity;
 }
 
@@ -458,6 +460,7 @@ shared_ptr<JumpingEntity> JumpingEntity::create(
 		config->respawnCount,
 		scaleIdx,
 		config->logTargetTrajectory);
+	jumpingEntity->m_id = config->id;
 
 	return jumpingEntity;
 }

@@ -56,6 +56,7 @@ public:
 
 class TargetEntity : public VisibleEntity {
 protected:
+	String	m_id;									///< Target ID
 	float	m_health			= 1.0f;				///< Target health
 	Color3	m_color				= Color3::red();	///< Default color
 	int		destinationIdx		= 0;				///< Current index into the destination array
@@ -68,9 +69,9 @@ protected:
 	Point3	m_offset;								///< Offset for initial spawn
 	Array<Destination> m_destinations;				///< Array of destinations to visit
 	shared_ptr<Sound> m_hitSound;					///< Sound to play when hit
-	float m_hitSoundVol;
+	float m_hitSoundVol;							///< Volume to play hit sound at
 	shared_ptr<Sound> m_destroyedSound;				///< Sound to play when destroyed
-	float m_destroyedSoundVol;
+	float m_destroyedSoundVol;						///< Volume to play destroyed sound at
 
 	// Only used for flying/jumping entities
 	SimTime m_nextChangeTime = 0;
@@ -99,8 +100,7 @@ public:
 		int								paramIdx
 	);
 
-	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount=0, int scaleIdx=0, bool isLogged=true) {
-		setDestinations(dests);
+	void init(Array<Destination> dests, int paramIdx, Point3 staticOffset = Point3(0.0, 0.0, 0.0), int respawnCount = 0, int scaleIdx = 0, bool isLogged = true) {
 		m_offset = staticOffset;
 		m_respawnCount = respawnCount;
 		m_paramIdx = paramIdx;
@@ -122,7 +122,7 @@ public:
 
 	void setWorldSpace(bool worldSpace) { m_worldSpace = worldSpace; }
 
-	void setHitSound(String hitSoundFilename, float hitSoundVol = 1.0f) {
+	void setHitSound(const String& hitSoundFilename, float hitSoundVol = 1.0f) {
 		if (hitSoundFilename == "") { m_hitSound = nullptr; }
 		else { 
 			m_hitSound = Sound::create(System::findDataFile(hitSoundFilename)); 
@@ -130,7 +130,7 @@ public:
 		}
 	}
 
-	void setDestoyedSound(String destroyedSoundFilename, float destroyedSoundVol = 1.0f){
+	void setDestoyedSound(const String& destroyedSoundFilename, float destroyedSoundVol = 1.0f){
 		if (destroyedSoundFilename == "") { m_destroyedSound = nullptr;  }
 		else {
 			m_destroyedSound = Sound::create(System::findDataFile(destroyedSoundFilename));
@@ -150,10 +150,6 @@ public:
 			if (volume > 0.0f) { m_destroyedSound->play(volume);  }
 			else { m_destroyedSound->play(m_destroyedSoundVol); }
 		}
-	}
-
-	float size() {
-		return pow(1.0f + TARGET_MODEL_ARRAY_SCALING, m_scaleIdx - TARGET_MODEL_ARRAY_OFFSET);
 	}
 
 	/**Simple routine to do damage */
@@ -177,22 +173,25 @@ public:
 	void resetMotionParams() {
 		m_nextChangeTime = 0;
 	}
-
-	int scaleIndex() {
-		return m_scaleIdx;
-	}
-
-	bool isLogged() {
-		return m_isLogged;
-	}
-
+	
+	/** Get the target ID */
+	const String& id() const { return m_id; }
+	/** Getter for scale index */
+	int scaleIndex() const { return m_scaleIdx; }
+	/** Getter for logging */
+	bool isLogged() const { return m_isLogged; }
 	/** Getter for health */
-	float health() { return m_health; }
-	/**Get the total time for a path*/
-	float getPathTime() { return m_destinations.last().time; }
-	Array<Destination> destinations() { return m_destinations; }
-	int respawnsRemaining() { return m_respawnCount; }
-	int paramIdx() { return m_paramIdx; }
+	float health() const { return m_health; }
+	/** Getter for the total time for a path*/
+	float getPathTime() const { return m_destinations.last().time; }
+	/** Get the target size */
+	float size() const { return pow(1.0f + TARGET_MODEL_ARRAY_SCALING, m_scaleIdx - TARGET_MODEL_ARRAY_OFFSET); }
+	/** Getter for the target destinations */
+	Array<Destination> destinations() const { return m_destinations; }
+	/** Getter for remaining respawn count */
+	int respawnsRemaining() const { return m_respawnCount; }
+	/** Getter for parmaeter index */
+	int paramIdx() const { return m_paramIdx; }
 
 	void drawHealthBar(RenderDevice* rd, const Camera& camera, const Framebuffer& framebuffer, Point2 size, Point3 offset, Point2 border, Array<Color4> colors, Color4 borderColor) const;
 	virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;

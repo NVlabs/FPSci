@@ -318,22 +318,22 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 		n->setWidth(300.0f);
 		n->setUnitsSize(50.0f);
 	} pane->endRow();
-	pane->beginRow(); {
-		auto c = pane->addLabel("Muzzle offset");
-		c->setWidth(100.0f);
-		auto n = pane->addNumberBox("X", &(config.muzzleOffset.x), "m", GuiTheme::LINEAR_SLIDER, -1.0f, 1.0f, 0.01f);
-		n->setCaptionWidth(10.0f);
-		n->setWidth(150.0f);
-		n = pane->addNumberBox("Y", &(config.muzzleOffset.y), "m", GuiTheme::LINEAR_SLIDER, -1.0f, 1.0f, 0.01f);
-		n->setCaptionWidth(10.0f);
-		n->setWidth(150.0f);
-		n = pane->addNumberBox("Z", &(config.muzzleOffset.z), "m", GuiTheme::LINEAR_SLIDER, -1.0f, 1.0f, 0.01f);
-		n->setCaptionWidth(10.0f);
-		n->setWidth(150.0f);
-	} pane->endRow();
-	pane->beginRow(); {
-		pane->addCheckBox("Muzzle flash", &(config.renderMuzzleFlash));
-	} pane->endRow();
+	//pane->beginRow(); {
+	//	auto c = pane->addLabel("Muzzle offset");
+	//	c->setWidth(100.0f);
+	//	auto n = pane->addNumberBox("X", &(config.muzzleOffset.x), "m", GuiTheme::LINEAR_SLIDER, -1.0f, 1.0f, 0.01f);
+	//	n->setCaptionWidth(10.0f);
+	//	n->setWidth(150.0f);
+	//	n = pane->addNumberBox("Y", &(config.muzzleOffset.y), "m", GuiTheme::LINEAR_SLIDER, -1.0f, 1.0f, 0.01f);
+	//	n->setCaptionWidth(10.0f);
+	//	n->setWidth(150.0f);
+	//	n = pane->addNumberBox("Z", &(config.muzzleOffset.z), "m", GuiTheme::LINEAR_SLIDER, -1.0f, 1.0f, 0.01f);
+	//	n->setCaptionWidth(10.0f);
+	//	n->setWidth(150.0f);
+	//} pane->endRow();
+	//pane->beginRow(); {
+	//	pane->addCheckBox("Muzzle flash", &(config.renderMuzzleFlash));
+	//} pane->endRow();
 
 	pack();
 	moveTo(Vector2(0, 720));
