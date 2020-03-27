@@ -36,7 +36,10 @@ String Logger::genFileTimestamp() {
 	return String(timeStr);
 }
 
-void Logger::createResultsFile(String filename, String subjectID, String sessionID, String description)
+void Logger::createResultsFile(const String& filename, 
+	const String& subjectID, 
+	const shared_ptr<SessionConfig>& sessConfig, 
+	const String& description)
 {
 	// generate folder result_data if it does not exist.
 	if (!FileSystem::isDirectory(String("../results"))) {
@@ -62,15 +65,22 @@ void Logger::createResultsFile(String filename, String subjectID, String session
 			{ "subjectID", "text", "NOT NULL" },
 			{ "appendingDescription", "text"}
 	};
+	// add any user-specified parameters as headers
+	for (String name : sessConfig->logger.sessParamsToLog) { sessColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
 	createTableInDB(m_db, "Sessions", sessColumns); // no need of Primary Key for this table.
 
 	// populate table
 	RowEntry sessValues = {
-		"'" + sessionID + "'",
+		"'" + sessConfig->id + "'",
 		"'" + timeStr + "'",
 		"'" + subjectID + "'",
 		"'" + description + "'"
 	};
+	// Create any table to do lookup here
+	Any a = sessConfig->toAny(true);
+	// Add the looked up values
+	for (String name : sessConfig->logger.sessParamsToLog) { sessValues.append("'" + a[name].unparse() + "'"); }
+	// add header row
 	insertRowIntoDB(m_db, "Sessions", sessValues);
 
 	// 2. Targets
@@ -278,13 +288,20 @@ void Logger::loggerThreadEntry()
 	}
 }
 
-Logger::Logger(String filename, String subjectID, String sessionID, String description) : m_db(nullptr) {
-	// secure vector capacity large enough so as to avoid memory allocation time.
+Logger::Logger(const String& filename, 
+	const String& subjectID, 
+	const shared_ptr<SessionConfig>& sessConfig, 
+	const String& description 
+	) : m_db(nullptr) 
+{
+	// Reserve some space in these arrays here
 	m_playerActions.reserve(5000);
 	m_targetLocations.reserve(5000);
 	
-	createResultsFile(filename, subjectID,  sessionID, description);
+	// Create the results file
+	createResultsFile(filename, subjectID,  sessConfig, description);
 
+	// Thread management
 	m_running = true;
 	m_thread = std::thread(&Logger::loggerThreadEntry, this);
 }
