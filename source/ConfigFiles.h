@@ -1642,6 +1642,18 @@ public:
 			
 			targets.append(tJump);
 		}
+		else {
+			// Targets are present (make sure no 2 have the same ID)
+			Array<String> ids;
+			for (TargetConfig target : targets) { 
+				if (!ids.contains(target.id)) { ids.append(target.id); }
+				else {
+					// This is a repeat entry, throw an exception
+					throw format("Found duplicate target configuration for target: \"%s\"", target.id);
+				}
+			}
+			
+		}
 
 		if(sessions.size() == 0 && addedTargets){
 			SessionConfig sess60;
