@@ -358,10 +358,12 @@ void UserMenu::updateMenu(const MenuConfig& config)
 	// Clear the menu
 	m_parent->removeAllChildren();
 
+	GuiTextureBox* logoTb = nullptr;
+
 	// Add logo
 	if (config.showMenuLogo) {
 		auto logo = Texture::fromFile("material/FPSciLogo.png");
-		auto logoTb = m_parent->addTextureBox(m_app, "", logo, true);
+		logoTb = m_parent->addTextureBox(m_app, "", logo, true);
 		logoTb->setSize(m_logoSize);
 		logoTb->zoomToFit();
 		logoTb->setEnabled(false);
@@ -399,6 +401,10 @@ void UserMenu::updateMenu(const MenuConfig& config)
 	} m_resumeQuitPane->endRow();
 
 	pack();
+
+	// Centering for (non-updated) menu elements
+	if(logoTb) logoTb->moveBy({ bounds().width() / 2.f - logoTb->rect().width() / 2.f , 0.f });
+	if (m_resumeQuitPane) m_resumeQuitPane->moveBy({ bounds().width() / 2.f - m_resumeQuitPane->rect().width() / 2.f, 0.f });
 }
 
 void UserMenu::updateUserPane(const MenuConfig& config) 
