@@ -19,7 +19,7 @@
 #include "CombatText.h"
 
 class Session;
-class G3Dialog;
+class DialogBase;
 class WaypointManager;
 
 // An enum that tracks presentation state within a trial. Duration defined in Session.h
@@ -132,7 +132,7 @@ public:
 	shared_ptr<WaypointManager>		waypointManager;				///< Waypoint mananger pointer
 	
 	shared_ptr<SessionConfig>		sessConfig = SessionConfig::create();			///< Current session config
-	shared_ptr<G3Dialog>			dialog;							///< Dialog box
+	shared_ptr<DialogBase>			dialog;							///< Dialog box
 
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
 	const int											modelScaleCount = 30;
