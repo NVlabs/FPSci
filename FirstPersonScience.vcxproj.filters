@@ -60,6 +60,9 @@
     <ClInclude Include="source\Weapon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="source\CombatText.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp">
