@@ -437,11 +437,13 @@ void UserMenu::updateUserPane(const MenuConfig& config)
 	// Reticle configuration
 	if (config.allowReticleChange) {
 		auto reticleControlPane = m_currentUserPane->addPane("Reticle Control");
+		const float reticleCaptionWidth = 120.f;
 
 		// Reticle index selection
 		if (config.allowReticleIdxChange) {
 			reticleControlPane->beginRow(); {
 				auto c = reticleControlPane->addNumberBox("Reticle", &(user->reticleIndex), "", GuiTheme::LINEAR_SLIDER, 0, m_app->numReticles, 1);
+				c->setCaptionWidth(reticleCaptionWidth);
 				c->setWidth(m_sliderWidth);
 			} reticleControlPane->endRow();
 		}
@@ -450,50 +452,55 @@ void UserMenu::updateUserPane(const MenuConfig& config)
 		if (config.allowReticleSizeChange) {
 			reticleControlPane->beginRow(); {
 				auto c = reticleControlPane->addNumberBox("Reticle Scale Min", &(user->reticleScale[0]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
-				c->setCaptionWidth(120.0f);
+				c->setCaptionWidth(reticleCaptionWidth);
 				c->setWidth(m_sliderWidth);
 			} reticleControlPane->endRow();
 
 			reticleControlPane->beginRow(); {
 				auto c = reticleControlPane->addNumberBox("Reticle Scale Max", &(user->reticleScale[1]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
-				c->setCaptionWidth(120.0f);
+				c->setCaptionWidth(reticleCaptionWidth);
 				c->setWidth(m_sliderWidth);
 			} reticleControlPane->endRow();
 		}
 
 		// Reticle color selection
 		if (config.allowReticleColorChange) {
+			const float rgbCaptionWidth = 10.f;
 			reticleControlPane->beginRow(); {
-				auto l = reticleControlPane->addLabel("Reticle Color Min");
-				l->setWidth(100.0f);
-				auto c = reticleControlPane->addSlider("R", &(user->reticleColor[0].r), 0.0f, 1.0f);
-				c->setCaptionWidth(10.0f);
-				c->setWidth(m_rgbSliderWidth);
-				c = reticleControlPane->addSlider("G", &(user->reticleColor[0].g), 0.0f, 1.0f);
-				c->setCaptionWidth(10.0f);
-				c->setWidth(80.0f);
-				c = reticleControlPane->addSlider("B", &(user->reticleColor[0].b), 0.0f, 1.0f);
-				c->setCaptionWidth(10.0f);
-				c->setWidth(m_rgbSliderWidth);
-				c = reticleControlPane->addSlider("A", &(user->reticleColor[0].a), 0.0f, 1.0f);
-				c->setCaptionWidth(10.0f);
-				c->setWidth(m_rgbSliderWidth);
+				reticleControlPane->addLabel("Reticle Color Min")->setWidth(120.f);
+				auto r = reticleControlPane->addSlider("R", &(user->reticleColor[0].r), 0.0f, 1.0f);
+				r->setCaptionWidth(rgbCaptionWidth);
+				r->setWidth(m_rgbSliderWidth);
+				auto g = reticleControlPane->addSlider("G", &(user->reticleColor[0].g), 0.0f, 1.0f);
+				g->setCaptionWidth(rgbCaptionWidth);
+				g->setWidth(m_rgbSliderWidth);
+				g->moveRightOf(r, rgbCaptionWidth);
+				auto b = reticleControlPane->addSlider("B", &(user->reticleColor[0].b), 0.0f, 1.0f);
+				b->setCaptionWidth(rgbCaptionWidth);
+				b->setWidth(m_rgbSliderWidth);
+				b->moveRightOf(g, rgbCaptionWidth);
+				auto a = reticleControlPane->addSlider("A", &(user->reticleColor[0].a), 0.0f, 1.0f);
+				a->setCaptionWidth(rgbCaptionWidth);
+				a->setWidth(m_rgbSliderWidth);
+				a->moveRightOf(b, rgbCaptionWidth);
 			} reticleControlPane->endRow();
 			reticleControlPane->beginRow(); {
-				auto l = reticleControlPane->addLabel("Reticle Color Max");
-				l->setWidth(100.0f);
-				auto c = reticleControlPane->addSlider("R", &(user->reticleColor[1].r), 0.0f, 1.0f);
-				c->setCaptionWidth(10.0f);
-				c->setWidth(80.0f);
-				c = reticleControlPane->addSlider("G", &(user->reticleColor[1].g), 0.0f, 1.0f);
-				c->setCaptionWidth(10.0f);
-				c->setWidth(m_rgbSliderWidth);
-				c = reticleControlPane->addSlider("B", &(user->reticleColor[1].b), 0.0f, 1.0f);
-				c->setCaptionWidth(10.0f);
-				c->setWidth(m_rgbSliderWidth);
-				c = reticleControlPane->addSlider("A", &(user->reticleColor[1].a), 0.0f, 1.0f);
-				c->setCaptionWidth(10.0f);
-				c->setWidth(m_rgbSliderWidth);
+				reticleControlPane->addLabel("Reticle Color Max")->setWidth(120.f);
+				auto r = reticleControlPane->addSlider("R", &(user->reticleColor[1].r), 0.0f, 1.0f);
+				r->setCaptionWidth(rgbCaptionWidth);
+				r->setWidth(m_rgbSliderWidth);
+				auto g = reticleControlPane->addSlider("G", &(user->reticleColor[1].g), 0.0f, 1.0f);
+				g->setCaptionWidth(rgbCaptionWidth);
+				g->setWidth(m_rgbSliderWidth);
+				g->moveRightOf(r, rgbCaptionWidth);
+				auto b = reticleControlPane->addSlider("B", &(user->reticleColor[1].b), 0.0f, 1.0f);
+				b->setCaptionWidth(rgbCaptionWidth);
+				b->setWidth(m_rgbSliderWidth);
+				b->moveRightOf(g, rgbCaptionWidth);
+				auto a = reticleControlPane->addSlider("A", &(user->reticleColor[1].a), 0.0f, 1.0f);
+				a->setCaptionWidth(rgbCaptionWidth);
+				a->setWidth(m_rgbSliderWidth);
+				a->moveRightOf(b, rgbCaptionWidth);
 			} reticleControlPane->endRow();
 			if (config.allowReticleTimeChange) {
 				reticleControlPane->beginRow(); {
@@ -607,7 +614,6 @@ void UserMenu::updateReticlePreview() {
 	auto preview = m_reticlePreviewPane->addTextureBox(m_app, m_reticleBuffer->texture(Framebuffer::AttachmentPoint::COLOR0), true);
 	preview->setSize(m_reticlePreviewSize);
 	preview->zoomToFit();
-	preview->setEnabled(false);
 	m_reticlePreviewPane->pack();
 }
 
