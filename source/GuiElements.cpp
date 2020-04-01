@@ -397,9 +397,9 @@ void UserMenu::updateMenu(const MenuConfig& config)
 		m_resumeQuitPane->addButton("Resume", this, &UserMenu::toggleVisibliity)->setSize(m_btnSize);
 		auto quitBtn = m_resumeQuitPane->addButton("Quit", m_app, &App::quitRequest);
 		quitBtn->setSize(m_btnSize);
-		//quitBtn->moveBy({ bounds().width() - m_btnSize.x, 0.f });
 	} m_resumeQuitPane->endRow();
 
+	// Pack the window here (size for elements)
 	pack();
 
 	// Centering for (non-updated) menu elements
@@ -436,8 +436,7 @@ void UserMenu::updateUserPane(const MenuConfig& config)
 
 	// Reticle configuration
 	if (config.allowReticleChange) {
-		auto reticlePane = m_currentUserPane->addPane("Reticle");
-		auto reticleControlPane = reticlePane->addPane("Reticle Control");
+		auto reticleControlPane = m_currentUserPane->addPane("Reticle Control");
 
 		// Reticle index selection
 		if (config.allowReticleIdxChange) {
@@ -497,11 +496,11 @@ void UserMenu::updateUserPane(const MenuConfig& config)
 				c->setWidth(m_rgbSliderWidth);
 			} reticleControlPane->endRow();
 			if (config.allowReticleTimeChange) {
-				reticlePane->beginRow(); {
-					auto c = reticlePane->addNumberBox("Reticle Shrink Time", &(user->reticleShrinkTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
+				reticleControlPane->beginRow(); {
+					auto c = reticleControlPane->addNumberBox("Reticle Shrink Time", &(user->reticleShrinkTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
 					c->setCaptionWidth(150.0f);
 					c->setWidth(m_sliderWidth);
-				} reticlePane->endRow();
+				} reticleControlPane->endRow();
 			}
 		}
 
@@ -515,7 +514,7 @@ void UserMenu::updateUserPane(const MenuConfig& config)
 
 		// Draw a preview of the reticle here
 		if (config.allowReticleChange && config.showReticlePreview) {
-			m_reticlePreviewPane = reticlePane->addPane("Reticle Preview");
+			m_reticlePreviewPane = m_currentUserPane->addPane("Reticle Preview");
 			updateReticlePreview();
 			m_reticlePreviewPane->moveRightOf(reticleControlPane);
 		}
