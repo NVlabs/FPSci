@@ -205,6 +205,7 @@ protected:
 	Point3			m_orbitCenter;									///< World space point at center of orbit
 	Vector2			m_angularSpeedRange = Vector2{ 0.0f, 4.0f };	///< Angular Speed Range(deg / s) x = min y = max
     Vector2			m_motionChangePeriodRange = Vector2{ 10000.0f, 10000.0f };	  ///< Motion Change period in seconds (x=min y=max)
+
     /** The target will move through these points along arcs around
         m_orbitCenter at m_speed. As each point is hit, it is
         removed from the queue.*/
