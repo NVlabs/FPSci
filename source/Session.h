@@ -34,7 +34,7 @@
 class App;
 class PlayerEntity;
 class TargetEntity;
-class Logger;
+class FPSciLogger;
 
 // Simple timer for measuring time offsets
 class Timer
@@ -111,7 +111,7 @@ protected:
 	Scene* m_scene = nullptr;							///< Pointer to the scene
 	
 	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
-	shared_ptr<Logger> m_logger;						///< Output results logger
+	shared_ptr<FPSciLogger> m_logger;						///< Output results logger
 	shared_ptr<PlayerEntity> m_player;					///< Player entity
 	shared_ptr<Camera> m_camera;						///< Camera entity
 

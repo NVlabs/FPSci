@@ -2,10 +2,10 @@
 #include <G3D/G3D.h>
 
 // Internal class for ease of use
-class G3Dialog : public GuiWindow {
+class DialogBase : public GuiWindow {
 protected:
 	String m_prompt;
-	G3Dialog(const shared_ptr<GuiTheme> theme, String title = "Dialog", Point2 pos = Point2(200.f, 200.0f), Point2 size = Point2(400.0f, 200.0f)) :
+	DialogBase(const shared_ptr<GuiTheme> theme, String title = "Dialog", Point2 pos = Point2(200.f, 200.0f), Point2 size = Point2(400.0f, 200.0f)) :
 		GuiWindow(title, theme, Rect2D::xywh(pos, size), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE) {};
 public:
 	String result = "";
@@ -19,7 +19,7 @@ public:
 };
 
 // N-way selection dialog
-class SelectionDialog : public G3Dialog {
+class SelectionDialog : public DialogBase {
 protected:
 	Array<String> m_options;
 	Array<std::function<void()>> m_callbacks;
@@ -32,7 +32,7 @@ protected:
 
 	SelectionDialog(String prompt, Array<String> options, const shared_ptr<GuiTheme>& theme,
 		String title = "Selection", Point2 size = Point2(400.0f, 400.0f), Point2 pos = Point2(200.0f, 200.0f),	int itemsPerRow = 3, GFont::XAlign promptAlign = GFont::XALIGN_CENTER) :
-		G3Dialog(theme, title, pos, size)
+		DialogBase(theme, title, pos, size)
 	{
 		m_prompt = prompt;
 		m_options = options;
@@ -86,7 +86,7 @@ public:
 	}
 };
 
-class TextEntryDialog : public G3Dialog {
+class TextEntryDialog : public DialogBase {
 protected:	
 	void submitCallback() {
 		complete = true;
@@ -95,7 +95,7 @@ protected:
 
 	TextEntryDialog(String prompt, const shared_ptr<GuiTheme> theme, 
 		String title = "Dialog", Point2 position = Point2(200.0f, 200.0f), Point2 size = Point2(400.0f, 200.0f)) :
-		G3Dialog(theme, title, position, size) 
+		DialogBase(theme, title, position, size) 
 	{
 		m_prompt = prompt;
 		GuiPane *pane = GuiWindow::pane();
