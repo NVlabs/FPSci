@@ -2,6 +2,7 @@
 
 #include <G3D/G3D.h>
 
+/** Interface for handling logging through a python script if a hardware latency tool is attached. */
 class PythonLogger : ReferenceCountedObject {
 protected:
 	bool							m_loggerRunning = false;			///< Flag to indicate whether a python logger (for HW logger) is running (i.e. needs to be closed)

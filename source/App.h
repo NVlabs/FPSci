@@ -14,7 +14,7 @@
 #include "TargetEntity.h"
 #include "PlayerEntity.h"
 #include "GuiElements.h"
-#include "PyLogger.h"
+#include "PythonLogger.h"
 #include "Weapon.h"
 #include "CombatText.h"
 
