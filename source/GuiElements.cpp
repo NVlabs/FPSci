@@ -392,11 +392,16 @@ void UserMenu::updateMenu(const MenuConfig& config)
 	}
 
 	// Resume/Quite Pane
-	m_resumeQuitPane = m_parent->addPane("Resume and Quit");
+	GuiButton* resumeBtn = nullptr;
+	GuiButton* quitBtn = nullptr;
+	m_resumeQuitPane = m_parent->addPane();
 	m_resumeQuitPane->beginRow(); {
-		m_resumeQuitPane->addButton("Resume", this, &UserMenu::toggleVisibliity)->setSize(m_btnSize);
-		auto quitBtn = m_resumeQuitPane->addButton("Quit", m_app, &App::quitRequest);
-		quitBtn->setSize(m_btnSize);
+		const Vector2 resumeQuitBtnSize = { 200.f, 50.f };
+		// Create resume and quit buttons
+		resumeBtn = m_resumeQuitPane->addButton("Resume", this, &UserMenu::toggleVisibliity, GuiTheme::TOOL_BUTTON_STYLE);
+		resumeBtn->setSize(resumeQuitBtnSize);
+		quitBtn = m_resumeQuitPane->addButton("Quit", m_app, &App::quitRequest, GuiTheme::TOOL_BUTTON_STYLE);
+		quitBtn->setSize(resumeQuitBtnSize);
 	} m_resumeQuitPane->endRow();
 
 	// Pack the window here (size for elements)
@@ -404,7 +409,11 @@ void UserMenu::updateMenu(const MenuConfig& config)
 
 	// Centering for (non-updated) menu elements
 	if(logoTb) logoTb->moveBy({ bounds().width() / 2.f - logoTb->rect().width() / 2.f , 0.f });
-	if (m_resumeQuitPane) m_resumeQuitPane->moveBy({ bounds().width() / 2.f - m_resumeQuitPane->rect().width() / 2.f, 0.f });
+	
+	resumeBtn->moveBy({ 0.f, 10.f });
+	quitBtn->moveBy({ bounds().width()-2.f*quitBtn->rect().width() , 10.f });
+	m_resumeQuitPane->pack();
+	m_resumeQuitPane->moveBy({ bounds().width() / 2.f - m_resumeQuitPane->rect().width() / 2.f, 0.f });
 }
 
 void UserMenu::updateUserPane(const MenuConfig& config) 
@@ -517,7 +526,6 @@ void UserMenu::updateUserPane(const MenuConfig& config)
 				m_currentUserPane->addButton("Save settings", m_app, &App::userSaveButtonPress)->setSize(m_btnSize);
 			} m_currentUserPane->endRow();
 		}
-
 
 		// Draw a preview of the reticle here
 		if (config.allowReticleChange && config.showReticlePreview) {
