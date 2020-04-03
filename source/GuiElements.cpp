@@ -600,6 +600,7 @@ void UserMenu::updateUserPress() {
 }
 
 void UserMenu::updateReticlePreview() {
+	if (!m_reticlePreviewPane) return;
 	// Clear the pane
 	m_reticlePreviewPane->removeAllChildren();
 	// Redraw the preview

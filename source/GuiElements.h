@@ -105,19 +105,19 @@ public:
 
 class UserMenu : public GuiWindow {
 protected:
-	App* m_app;												///< Store the app here
+	App* m_app = nullptr;									///< Store the app here
 	UserTable& m_users;										///< User table
 	UserStatusTable& m_userStatus;							///< User status table
 	MenuConfig& m_config;									///< Menu configuration
 
-	GuiPane* m_parent;										///< Parent pane
-	GuiPane* m_expPane;										///< Pane for session/user selection
-	GuiPane* m_currentUserPane;								///< Pane for current user controls
-	GuiPane* m_reticlePreviewPane;							///< Reticle preview pane
-	GuiPane* m_resumeQuitPane;								///< Pane for resume/quit buttons
+	GuiPane* m_parent				= nullptr;				///< Parent pane
+	GuiPane* m_expPane				= nullptr;				///< Pane for session/user selection
+	GuiPane* m_currentUserPane		= nullptr;				///< Pane for current user controls
+	GuiPane* m_reticlePreviewPane	= nullptr;				///< Reticle preview pane
+	GuiPane* m_resumeQuitPane		= nullptr;				///< Pane for resume/quit buttons
 
-	GuiDropDownList* m_userDropDown;						///< Dropdown menu for user selection
-	GuiDropDownList* m_sessDropDown;						///< Dropdown menu for session selection
+	GuiDropDownList* m_userDropDown = nullptr;				///< Dropdown menu for user selection
+	GuiDropDownList* m_sessDropDown = nullptr;				///< Dropdown menu for session selection
 
 	shared_ptr<Texture> m_reticlePreviewTexture;			///< Reticle preview texture
 	shared_ptr<Framebuffer> m_reticleBuffer;				///< Reticle preview framebuffer
