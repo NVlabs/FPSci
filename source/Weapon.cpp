@@ -130,9 +130,10 @@ void Weapon::simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntit
 			}
 			// Handle (miss) decals here
 			else {
+				// Build a list of entities not to hit in the scene
 				Array<shared_ptr<Entity>> dontHitItems = dontHit;
 				dontHitItems.append(m_currentMissDecals);
-				dontHitItems.append(targets);
+				dontHitItems.append(targets);					// This is a miss, don't plan to hit targets here
 				dontHitItems.append(m_projectiles);
 				// Check for closest hit (in scene, otherwise this ray hits the skybox)
 				//closest = finf();
@@ -145,7 +146,6 @@ void Weapon::simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntit
 					drawDecal(info.point + 0.01 * info.normal, info.normal);
 					projectile->clearRemainingTime();							// Stop the projectile here
 					m_missCallback();
-					//sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
 				}
 			}
 		}

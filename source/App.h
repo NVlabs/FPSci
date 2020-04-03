@@ -85,8 +85,6 @@ protected:
     shared_ptr<GuiWindow>					m_userSettingsWindow;
     bool									m_userSettingsMode = true;
 
-	Array<Projectile>						m_projectileArray;					///< Arrray of drawn projectiles
-
 	/** Called from onInit */
 	void makeGUI();
 	void updateControls();

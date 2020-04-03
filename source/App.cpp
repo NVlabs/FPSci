@@ -1238,17 +1238,11 @@ void App::onUserInput(UserInput* ui) {
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
 		if (ui->keyPressed(dummyShoot) && (sess->presentationState == PresentationState::feedback)) {
 			Array<shared_ptr<Entity>> dontHit;
-			//dontHit.append(m_currentMissDecals);
 			dontHit.append(m_explosions);
-			//for (auto projectile : m_projectileArray) { dontHit.append(projectile.entity); }
 			Model::HitInfo info;
 			float hitDist = finf();
 			int hitIdx = -1;
 			shared_ptr<TargetEntity> target = m_weapon->fire(sess->targetArray(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
-			//if (notNull(target)) {
-			//	// If we hit a target, destroy it
-			//	sess->destroyTarget(hitIdx);
-			//}
 		}
 	}
 

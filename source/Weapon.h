@@ -14,6 +14,7 @@ protected:
 	float							m_maxVel = 100.0f;
 	Point3							m_lastPos = Point3::zero();
 
+	Projectile() : m_totalTime(0) {}
 	Projectile(const shared_ptr<VisibleEntity>& e, float velocity, bool collision = true, float gravity = 0.0f, SimTime t = 5.0) :
 		VisibleEntity(*e),
 		m_totalTime(t),
@@ -22,8 +23,6 @@ protected:
 		m_gravity(gravity) {}
 
 public:
-	Projectile() : m_totalTime(0) {}
-
 	static shared_ptr<Projectile> create() { return createShared<Projectile>(); }
 	static shared_ptr<Projectile> create(const shared_ptr<VisibleEntity>& e, SimTime t = 0) {
 		return createShared<Projectile>(e, t);
@@ -134,8 +133,6 @@ public:
 		}
 		m_firing = firing;
 	}
-
-	//void setProjectiles(Array<Projectile>* projectileArray) { m_projectiles = projectileArray; };
 
 	void simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntity>>& targets, const Array<shared_ptr<Entity>>& dontHit = {});
 	void drawDecal(const Point3& point, const Vector3& normal, bool hit = false);
