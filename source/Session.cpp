@@ -86,7 +86,7 @@ void Session::onInit(String filename, String description) {
 		if (m_config->logger.enable) {
 			UserConfig user = *m_app->getCurrUser();
 			// Setup the logger and create results file
-			m_logger = Logger::create(filename, user.id, m_config->id, description);
+			m_logger = FPSciLogger::create(filename, user.id, m_config, description);
 			if (m_config->logger.logUsers) {
 				m_logger->logUserConfig(user, m_config->id, "start");
 			}
@@ -241,7 +241,7 @@ void Session::updatePresentationState()
 	{
 		if ((stateElapsedTime > m_config->timing.taskDuration) || (remainingTargets <= 0) || (m_clickCount == m_config->weapon.maxAmmo))
 		{
-			m_taskEndTime = Logger::genUniqueTimestamp();
+			m_taskEndTime = FPSciLogger::genUniqueTimestamp();
 			processResponse();
 			clearTargets(); // clear all remaining targets
 			newState = PresentationState::feedback;
@@ -330,7 +330,7 @@ void Session::updatePresentationState()
 	{ // handle state transition.
 		m_timer.startTimer();
 		if (newState == PresentationState::task) {
-			m_taskStartTime = Logger::genUniqueTimestamp();
+			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
 		}
 		presentationState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
@@ -358,7 +358,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 	if (!m_config->logger.enable) return;		// Skip this if the logger is disabled
 	if (m_config->logger.logTrialResponse) {
 		// Trials table. Record trial start time, end time, and task completion time.
-		Logger::TrialValues trialValues = {
+		FPSciLogger::TrialValues trialValues = {
 			String(std::to_string(m_currTrialIdx)),
 			"'" + m_config->id + "'",
 			"'" + m_config->description + "'",
@@ -386,7 +386,7 @@ void Session::accumulateTrajectories()
 			//Point3 t = targetPosition.direction();
 			//float az = atan2(-t.z, -t.x) * 180 / pif();
 			//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
-			TargetLocation location = TargetLocation(Logger::getFileTime(), target->name(), targetPosition);
+			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), target->name(), targetPosition);
 			m_logger->logTargetLocation(location);
 		}
 	}
@@ -401,7 +401,7 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 		// recording target trajectories
 		Point2 dir = getViewDirection();
 		Point3 loc = getPlayerLocation();
-		PlayerAction pa = PlayerAction(Logger::getFileTime(), dir, loc, action, targetName);
+		PlayerAction pa = PlayerAction(FPSciLogger::getFileTime(), dir, loc, action, targetName);
 		m_logger->logPlayerAction(pa);
 		END_PROFILER_EVENT();
 	}
@@ -409,7 +409,7 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 	if (notNull(m_logger) && m_config->logger.logFrameInfo) {
-		m_logger->logFrameInfo(FrameInfo(Logger::getFileTime(), sdt));
+		m_logger->logFrameInfo(FrameInfo(FPSciLogger::getFileTime(), sdt));
 	}
 }
 

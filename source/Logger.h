@@ -16,7 +16,7 @@ template<typename ItemType> static size_t queueBytes(Array<ItemType>& queue)
 }
 
 /** Simple class to log data from trials */
-class Logger : public ReferenceCountedObject {
+class FPSciLogger : public ReferenceCountedObject {
 public:
 	using TargetInfo = RowEntry;
 	using QuestionResult = RowEntry;
@@ -79,18 +79,25 @@ protected:
 	void recordTargetLocations(const Array<TargetLocation>& locations);
 
 	/** Create a results file */
-	void createResultsFile(String filename, String subjectID, String sessionID, String description);
+	void createResultsFile(const String& filename, 
+		const String& subjectID, 
+		const shared_ptr<SessionConfig>& sessConfig, 
+		const String& description);
 
 	/** Close the results file */
 	void closeResultsFile(void);
 
 public:
 
-	Logger(String filename, String subjectID, String sessionID, String description);
-	virtual ~Logger();
+	FPSciLogger(const String& filename, const String& subjectID, const shared_ptr<SessionConfig>& sessConfig, const String& description);
+	virtual ~FPSciLogger();
 	
-	static shared_ptr<Logger> create(String filename, String subjectID, String sessionID, String description="None") {
-		return createShared<Logger>(filename, subjectID, sessionID, description);
+	static shared_ptr<FPSciLogger> create(const String& filename, 
+		const String& subjectID, 
+		const shared_ptr<SessionConfig>& sessConfig, 
+		const String& description="None") 
+	{
+		return createShared<FPSciLogger>(filename, subjectID, sessConfig, description);
 	}
 
 	void logFrameInfo(const FrameInfo& frameInfo) { addToQueue(m_frameInfo, frameInfo); }

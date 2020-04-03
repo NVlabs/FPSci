@@ -3,17 +3,17 @@
 
 // TODO: Replace with the G3D timestamp uses.
 // utility function for generating a unique timestamp.
-String Logger::genUniqueTimestamp() {
+String FPSciLogger::genUniqueTimestamp() {
 	return formatFileTime(getFileTime());
 }
 
-FILETIME Logger::getFileTime() {
+FILETIME FPSciLogger::getFileTime() {
 	FILETIME ft;
 	GetSystemTimePreciseAsFileTime(&ft);
 	return ft;
 }
 
-String Logger::formatFileTime(FILETIME ft) {
+String FPSciLogger::formatFileTime(FILETIME ft) {
 	unsigned long long usecsinceepoch = (static_cast<unsigned long long>(ft.dwHighDateTime) << 32 | ft.dwLowDateTime) / 10;		// Get time since epoch in usec
 	int usec = usecsinceepoch % 1000000;
 
@@ -27,7 +27,7 @@ String Logger::formatFileTime(FILETIME ft) {
 }
 
 
-String Logger::genFileTimestamp() {
+String FPSciLogger::genFileTimestamp() {
 	_SYSTEMTIME t;
 	GetLocalTime(&t);
 	char tmCharArray[30] = { 0 };
@@ -36,7 +36,10 @@ String Logger::genFileTimestamp() {
 	return String(timeStr);
 }
 
-void Logger::createResultsFile(String filename, String subjectID, String sessionID, String description)
+void FPSciLogger::createResultsFile(const String& filename, 
+	const String& subjectID, 
+	const shared_ptr<SessionConfig>& sessConfig, 
+	const String& description)
 {
 	// generate folder result_data if it does not exist.
 	if (!FileSystem::isDirectory(String("../results"))) {
@@ -62,15 +65,22 @@ void Logger::createResultsFile(String filename, String subjectID, String session
 			{ "subjectID", "text", "NOT NULL" },
 			{ "appendingDescription", "text"}
 	};
+	// add any user-specified parameters as headers
+	for (String name : sessConfig->logger.sessParamsToLog) { sessColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
 	createTableInDB(m_db, "Sessions", sessColumns); // no need of Primary Key for this table.
 
 	// populate table
 	RowEntry sessValues = {
-		"'" + sessionID + "'",
+		"'" + sessConfig->id + "'",
 		"'" + timeStr + "'",
 		"'" + subjectID + "'",
 		"'" + description + "'"
 	};
+	// Create any table to do lookup here
+	Any a = sessConfig->toAny(true);
+	// Add the looked up values
+	for (String name : sessConfig->logger.sessParamsToLog) { sessValues.append("'" + a[name].unparse() + "'"); }
+	// add header row
 	insertRowIntoDB(m_db, "Sessions", sessValues);
 
 	// 2. Targets
@@ -167,11 +177,11 @@ void Logger::createResultsFile(String filename, String subjectID, String session
 	createTableInDB(m_db, "Users", userColumns);
 }
 
-void Logger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
+void FPSciLogger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
 	Array<RowEntry> rows;
 	for (FrameInfo info : frameInfo) {
 		Array<String> frameValues = {
-			"'" + Logger::formatFileTime(info.time) + "'",
+			"'" + FPSciLogger::formatFileTime(info.time) + "'",
 			//String(std::to_string(info.idt)),
 			String(std::to_string(info.sdt))
 		};
@@ -180,7 +190,7 @@ void Logger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
 	insertRowsIntoDB(m_db, "Frame_Info", rows);
 }
 
-void Logger::recordPlayerActions(const Array<PlayerAction>& actions) {
+void FPSciLogger::recordPlayerActions(const Array<PlayerAction>& actions) {
 	Array<RowEntry> rows;
 	for (PlayerAction action : actions) {
 		String actionStr = "";
@@ -193,7 +203,7 @@ void Logger::recordPlayerActions(const Array<PlayerAction>& actions) {
 		case Destroy: actionStr = "destroy"; break;
 		}
 		Array<String> playerActionValues = {
-		"'" + Logger::formatFileTime(action.time) + "'",
+		"'" + FPSciLogger::formatFileTime(action.time) + "'",
 		String(std::to_string(action.viewDirection.x)),
 		String(std::to_string(action.viewDirection.y)),
 		String(std::to_string(action.position.x)),
@@ -207,11 +217,11 @@ void Logger::recordPlayerActions(const Array<PlayerAction>& actions) {
 	insertRowsIntoDB(m_db, "Player_Action", rows);
 }
 
-void Logger::recordTargetLocations(const Array<TargetLocation>& locations) {
+void FPSciLogger::recordTargetLocations(const Array<TargetLocation>& locations) {
 	Array<RowEntry> rows;
 	for (const auto& loc : locations) {
 		Array<String> targetTrajectoryValues = {
-			"'" + Logger::formatFileTime(loc.time) + "'",
+			"'" + FPSciLogger::formatFileTime(loc.time) + "'",
 			"'" + loc.name + "'",
 			String(std::to_string(loc.position.x)),
 			String(std::to_string(loc.position.y)),
@@ -222,7 +232,7 @@ void Logger::recordTargetLocations(const Array<TargetLocation>& locations) {
 	insertRowsIntoDB(m_db, "Target_Trajectory", rows);
 }
 
-void Logger::loggerThreadEntry()
+void FPSciLogger::loggerThreadEntry()
 {
 	std::unique_lock<std::mutex> lk(m_queueMutex);
 	while (m_running) {
@@ -278,18 +288,25 @@ void Logger::loggerThreadEntry()
 	}
 }
 
-Logger::Logger(String filename, String subjectID, String sessionID, String description) : m_db(nullptr) {
-	// secure vector capacity large enough so as to avoid memory allocation time.
+FPSciLogger::FPSciLogger(const String& filename, 
+	const String& subjectID, 
+	const shared_ptr<SessionConfig>& sessConfig, 
+	const String& description 
+	) : m_db(nullptr) 
+{
+	// Reserve some space in these arrays here
 	m_playerActions.reserve(5000);
 	m_targetLocations.reserve(5000);
 	
-	createResultsFile(filename, subjectID,  sessionID, description);
+	// Create the results file
+	createResultsFile(filename, subjectID,  sessConfig, description);
 
+	// Thread management
 	m_running = true;
-	m_thread = std::thread(&Logger::loggerThreadEntry, this);
+	m_thread = std::thread(&FPSciLogger::loggerThreadEntry, this);
 }
 
-Logger::~Logger()
+FPSciLogger::~FPSciLogger()
 {
 	{
 		std::lock_guard<std::mutex> lk(m_queueMutex);
@@ -301,7 +318,7 @@ Logger::~Logger()
 	closeResultsFile();
 }
 
-void Logger::flush(bool blockUntilDone)
+void FPSciLogger::flush(bool blockUntilDone)
 {
 	// Not implemented. Make another condition variable if this is needed.
 	assert(!blockUntilDone);
@@ -313,7 +330,7 @@ void Logger::flush(bool blockUntilDone)
 	m_queueCV.notify_one();
 }
 
-void Logger::addTarget(String name, shared_ptr<TargetConfig> config, float refreshRate, int addedFrameLag) {
+void FPSciLogger::addTarget(String name, shared_ptr<TargetConfig> config, float refreshRate, int addedFrameLag) {
 	const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
 	const String jumpEnabled = config->jumpEnabled ? "True" : "False";
 	const String modelName = config->modelSpec["filename"];
@@ -340,7 +357,7 @@ void Logger::addTarget(String name, shared_ptr<TargetConfig> config, float refre
 	logTargetInfo(targetValues);
 }
 
-void Logger::addQuestion(Question q, String session) {
+void FPSciLogger::addQuestion(Question q, String session) {
 	RowEntry rowContents = {
 		"'" + session + "'",
 		"'" + q.prompt + "'",
@@ -349,7 +366,7 @@ void Logger::addQuestion(Question q, String session) {
 	logQuestionResult(rowContents);
 }
 
-void Logger::logUserConfig(const UserConfig& user, const String session_ref, const String position) {
+void FPSciLogger::logUserConfig(const UserConfig& user, const String session_ref, const String position) {
 	RowEntry row = {
 		"'" + user.id + "'",
 		"'" + session_ref + "'",
@@ -367,6 +384,6 @@ void Logger::logUserConfig(const UserConfig& user, const String session_ref, con
 	m_users.append(row);
 }
 
-void Logger::closeResultsFile() {
+void FPSciLogger::closeResultsFile() {
 	sqlite3_close(m_db);
 }

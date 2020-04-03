@@ -8,8 +8,8 @@ class WaypointDisplay;
 
 class WaypointManager : ReferenceCountedObject {
 private:
-	App* m_app;
-	Scene* m_scene;
+	App* m_app = nullptr;
+	Scene* m_scene = nullptr;
 
 	shared_ptr<WaypointDisplay> m_waypointControls;
 

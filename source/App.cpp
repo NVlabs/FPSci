@@ -163,12 +163,16 @@ void App::loadModels() {
 	}
 
 	// Add all the unqiue targets to this list
-	Table<String, Any> toBuild;
+	Table<String, Any> targetsToBuild;
+	Table<String, String> explosionsToBuild;
+	Table<String, float> explosionScales;
 	for (TargetConfig target : experimentConfig.targets) {
-		toBuild.set(target.id, target.modelSpec);
+		targetsToBuild.set(target.id, target.modelSpec);
+		explosionsToBuild.set(target.id, target.destroyDecal);
+		explosionScales.set(target.id, target.destroyDecalScale);
 	}
 	// Append the basic model automatically (used for reference targets for now)
-	toBuild.set("reference", PARSE_ANY(ArticulatedModel::Specification{
+	targetsToBuild.set("reference", PARSE_ANY(ArticulatedModel::Specification{
 		filename = "model/target/target.obj";
 		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
 					allowVertexMerging = true;
@@ -180,47 +184,46 @@ void App::loadModels() {
 					maxSmoothAngleDegrees = 0;
 		};
 	}));
-
-	// Setup the explosion specification
-	Any explosionSpec = PARSE_ANY(ArticulatedModel::Specification{
-		filename = "ifs/square.ifs";
-		preprocess = {
-			transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
-			//scaleAndOffsetTexCoord0(all(), 0.0769, 0);
-			setMaterial(all(), UniversalMaterial::Specification{
-				lambertian = Texture::Specification {
-					//filename = "explosion_01_strip13.png";
-					filename = "explosion_01.png";
-					encoding = Color3(1, 1, 1);
-				};
-			});
-		}; 
-	});
-	for (int i = 0; i < modelScaleCount; i++) {
-		const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
-		explosionSpec.set("scale", scale*20.0f);
-		m_explosionModels.push(ArticulatedModel::create(explosionSpec));
-	}
+	explosionsToBuild.set("reference", "explosion_01.png");
+	explosionScales.set("reference", 1.0);
 
 	// Scale the models into the m_targetModel table
-	for (String id : toBuild.getKeys()) {
-		// Get the any spec
-		Any spec = toBuild.get(id);
+	for (String id : targetsToBuild.getKeys()) {
+		// Get the any specs
+		Any tSpec = targetsToBuild.get(id);
+		Any explosionSpec = Any::parse(format(
+			"ArticulatedModel::Specification {\
+				filename = \"ifs/square.ifs\";\
+				preprocess = {\
+					transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));\
+					setMaterial(all(), UniversalMaterial::Specification{\
+						lambertian = Texture::Specification {\
+							filename = \"%s\";\
+							encoding = Color3(1, 1, 1);\
+						};\
+					});\
+				};\
+			}", explosionsToBuild.get(id).c_str()));
+
 		// Get the bounding box to scale to size rather than arbitrary factor
-		shared_ptr<ArticulatedModel> size_model = ArticulatedModel::create(ArticulatedModel::Specification(spec));
+		shared_ptr<ArticulatedModel> size_model = ArticulatedModel::create(ArticulatedModel::Specification(tSpec));
 		AABox bbox;
 		size_model->getBoundingBox(bbox);
 		Vector3 extent = bbox.extent();
 		logPrintf("%20s bounding box: [%2.2f, %2.2f, %2.2f]\n", id.c_str(), extent[0], extent[1], extent[2]);
-		float default_scale = 1.0f / extent[0];					// Setup scale so that default model is 1m across
+		const float default_scale = 1.0f / extent[0];					// Setup scale so that default model is 1m across
 
-		Array<shared_ptr<ArticulatedModel>> models;
+		// Create the target/explosion models for this target
+		Array<shared_ptr<ArticulatedModel>> tModels, expModels;
 		for (int i = 0; i <= modelScaleCount; ++i) {
 			const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
-			spec.set("scale", scale*default_scale);
-			models.push(ArticulatedModel::create(spec));
+			tSpec.set("scale", scale*default_scale);
+			explosionSpec.set("scale", (20.0 * scale * explosionScales.get(id)));
+			tModels.push(ArticulatedModel::create(tSpec));
+			expModels.push(ArticulatedModel::create(explosionSpec));
 		}
-		targetModels.set(id, models);
+		targetModels.set(id, tModels);
+		m_explosionModels.set(id, expModels);
 	}
 
 	// Create a series of colored materials to choose from for target health
@@ -443,7 +446,7 @@ void App::updateSession(const String& id) {
 
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::load();
-	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(Logger::genFileTimestamp());
+	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
 	if (sysConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
@@ -633,7 +636,8 @@ void App::simulateProjectiles(RealTime dt) {
 			if (closest < hitThreshold) {
 				hitTarget(closestTarget);
 				// Offset position slightly along normal to avoid Z-fighting the target
-				drawDecal(info.point + 0.01 * info.normal, activeCamera()->frame().lookVector(), true);
+				const Vector3& camDir = -activeCamera()->frame().lookVector();
+				drawDecal(info.point + 0.01 * camDir, camDir, true);
 				projectile.clearRemainingTime();
 			}
 			// Handle (miss) decals here
@@ -689,13 +693,13 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	simulateProjectiles(sdt);
 
 	// explosion animation
-	const RealTime now = System::time();
 	for (int i = 0; i < m_explosions.size(); i++) {
 		shared_ptr<VisibleEntity> explosion = m_explosions[i];
-		if (m_explosionEndTimes[i] < now) {
+		m_explosionRemainingTimes[i] -= sdt;
+		if (m_explosionRemainingTimes[i] <= 0) {
 			scene()->remove(explosion);
 			m_explosions.fastRemove(i);
-			m_explosionEndTimes.fastRemove(i);
+			m_explosionRemainingTimes.fastRemove(i);
 			i--;
 		}
 		else {
@@ -1114,15 +1118,21 @@ void App::hitTarget(shared_ptr<TargetEntity> target) {
 
 	}
 	else if (target->health() <= 0) {
-		// create explosion animation
+		// Position explosion
 		CFrame explosionFrame = target->frame();
 		explosionFrame.rotation = activeCamera()->frame().rotation;
-		const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create(format("explosion%d", m_explosionIdx), scene().get(), m_explosionModels[target->scaleIndex()], explosionFrame);
+		// Create the explosion
+		const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create(
+			format("explosion%d", m_explosionIdx), 
+			scene().get(), 
+			m_explosionModels.get(target->id())[target->scaleIndex()], 
+			explosionFrame
+		);
 		m_explosionIdx++;
 		m_explosionIdx %= m_maxExplosions;
 		scene()->insert(newExplosion);
 		m_explosions.push(newExplosion);
-		m_explosionEndTimes.push(System::time() + 0.1f); // make explosion end in 0.5 seconds
+		m_explosionRemainingTimes.push(experimentConfig.getTargetConfigById(target->id())->destroyDecalDuration); // Schedule end of explosion
 		target->playDestroySound();
 
 		sess->countDestroy();

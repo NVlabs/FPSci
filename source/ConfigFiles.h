@@ -651,12 +651,15 @@ public:
 	bool	renderModel = false;										///< Render a model for the weapon?
 	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
 
-	Vector3	muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
-	bool	renderMuzzleFlash = false;									///< Render a muzzle flash when the weapon fires?
+	//Vector3	muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
+	//bool	renderMuzzleFlash = false;									///< Render a muzzle flash when the weapon fires?
 
 	bool	renderBullets = false;										///< Render bullets leaving the weapon
 	float	bulletSpeed = 100.0f;										///< Speed to draw at for rendered rounds (in m/s)
 	float	bulletGravity = 0.0f;										///< Gravity to use for bullets (default is no droop)
+	Vector3 bulletScale = Vector3(0.05f, 0.05f, 2.f);					///< Scale to use on bullet object
+	Color3  bulletColor = Color3(5, 4, 0);								///< Color/power for bullet emissive texture
+	Vector3 bulletOffset = Vector3(0,0,0);								///< Offset to start the bullet from (along the look direction)
 	
 	bool	renderDecals = true;										///< Render decals when the shots miss?
 	String	missDecal = "bullet-decal-256x256.png";						///< The decal to place where the shot misses
@@ -708,12 +711,15 @@ public:
 				reader.getIfPresent("modelSpec", modelSpec);
 			}
 			
-			reader.getIfPresent("muzzleOffset", muzzleOffset);
-			reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
+			//reader.getIfPresent("muzzleOffset", muzzleOffset);
+			//reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
 
 			reader.getIfPresent("renderBullets", renderBullets);
 			reader.getIfPresent("bulletSpeed", bulletSpeed);
 			reader.getIfPresent("bulletGravity", bulletGravity);
+			reader.getIfPresent("bulletScale", bulletScale);
+			reader.getIfPresent("bulletColor", bulletColor);
+			reader.getIfPresent("bulletOffset", bulletOffset);
 
 			reader.getIfPresent("renderDecals", renderDecals);
 			reader.getIfPresent("missDecal", missDecal);
@@ -752,12 +758,15 @@ public:
 		if (forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
 		if (forceAll || !(def.modelSpec == modelSpec))						a["modelSpec"] = modelSpec;
 
-		if (forceAll || def.muzzleOffset != muzzleOffset)					a["muzzleOffset"] = muzzleOffset;
-		if (forceAll || def.renderMuzzleFlash != renderMuzzleFlash)			a["renderMuzzleFlash"] = renderMuzzleFlash;
+		//if (forceAll || def.muzzleOffset != muzzleOffset)					a["muzzleOffset"] = muzzleOffset;
+		//if (forceAll || def.renderMuzzleFlash != renderMuzzleFlash)			a["renderMuzzleFlash"] = renderMuzzleFlash;
 
 		if (forceAll || def.renderBullets != renderBullets)					a["renderBullets"] = renderBullets;
 		if (forceAll || def.bulletSpeed != bulletSpeed)						a["bulletSpeed"] = bulletSpeed;
 		if (forceAll || def.bulletGravity != bulletGravity)					a["bulletGravity"] = bulletGravity;
+		if (forceAll || def.bulletScale != bulletScale)						a["bulletScale"] = bulletScale;
+		if (forceAll || def.bulletColor != bulletColor)						a["bulletColor"] = bulletColor;
+		if (forceAll || def.bulletOffset != bulletOffset)					a["bulletOffset"] = bulletOffset;
 
 		if (forceAll || def.renderDecals != renderDecals)					a["renderDecals"] = renderDecals;
 		if (forceAll || def.missDecal != missDecal)							a["missDecal"] = missDecal;
@@ -773,7 +782,6 @@ public:
 		if (forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
 		if (forceAll || def.scopeFoV != scopeFoV)							a["scopeFoV"] = scopeFoV;
 		if (forceAll || def.scopeToggle != scopeToggle)						a["scopeToggle"] = scopeToggle;
-
 
 		return a;
 	}
@@ -802,6 +810,10 @@ public:
 	AABox			spawnBounds;							///< Spawn position bounding box
 	AABox			moveBounds;								///< Movemvent bounding box
 	Array<bool>		axisLock = { false, false, false };		///< Array of axis lock values
+
+	String			destroyDecal = "explosion_01.png";		///< Decal to use for destroy event
+	float			destroyDecalScale = 1.0;				///< Scale to apply to destroy (relative to target size)
+	RealTime		destroyDecalDuration = 0.1;				///< Destroy decal display duration
 
 	String			hitSound = "sound/18397__inferno__smalllas.wav";	///< Sound to play when target is hit (but not destoyed)
 	float			hitSoundVol = 1.0f;						///< Hit sound volume
@@ -846,6 +858,11 @@ public:
 			reader.getIfPresent("jumpPeriod", jumpPeriod);
 			reader.getIfPresent("accelGravity", accelGravity);
 			reader.getIfPresent("modelSpec", modelSpec);
+
+			reader.getIfPresent("destroyDecal", destroyDecal);
+			reader.getIfPresent("destroyDecalScale", destroyDecalScale);
+			reader.getIfPresent("destroyDecalDuration", destroyDecalDuration);
+			
 			reader.getIfPresent("destSpace", destSpace);
 			reader.getIfPresent("destinations", destinations);
 			reader.getIfPresent("respawnCount", respawnCount);
@@ -910,10 +927,15 @@ public:
 			if(forceAll || def.accelGravity != accelGravity)					a["accelGravity"] = accelGravity;
 			if(forceAll || def.axisLock != axisLock)							a["axisLocked"] = axisLock;
 		}
+
+		if(forceAll || def.destroyDecal != destroyDecal)						a["destroyDecal"] = destroyDecal;
+		if(forceAll || def.destroyDecalScale != destroyDecalScale)				a["destroyDecalScale"] = destroyDecalScale;
+		if (forceAll || def.destroyDecalDuration != destroyDecalDuration)		a["destroyDecalDuration"] = destroyDecalDuration;
+
 		if(forceAll || def.hitSound != hitSound)								a["hitSound"] = hitSound;
 		if(forceAll || def.hitSoundVol != hitSoundVol)							a["hitSoundVol"] = hitSoundVol;
-		if(forceAll || def.destroyedSound != destroyedSound)					a["explosionSound"] = destroyedSound;
-		if(forceAll || def.destroyedSoundVol != destroyedSoundVol)				a["explosionSoundVol"] = destroyedSoundVol;
+		if(forceAll || def.destroyedSound != destroyedSound)					a["destroyedSound"] = destroyedSound;
+		if(forceAll || def.destroyedSoundVol != destroyedSoundVol)				a["destroyedSoundVol"] = destroyedSoundVol;
 		return a;
 	};
 
@@ -1395,6 +1417,9 @@ public:
 	bool logTrialResponse		= true;		///< Log trial response in table?
 	bool logUsers				= true;		///< Log user infomration in table?
 
+	// Session parameter logging
+	Array<String> sessParamsToLog;			///< Parameter names to log to the Sessions table of the DB
+
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
@@ -1404,6 +1429,7 @@ public:
 			reader.getIfPresent("logPlayerActions", logPlayerActions);
 			reader.getIfPresent("logTrialResponse", logTrialResponse);
 			reader.getIfPresent("logUsers", logUsers);
+			reader.getIfPresent("sessParamsToLog", sessParamsToLog);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1419,6 +1445,7 @@ public:
 		if(forceAll || def.logPlayerActions != logPlayerActions)			a["logPlayerActions"] = logPlayerActions;
 		if(forceAll || def.logTrialResponse != logTrialResponse)			a["logTrialResponse"] = logTrialResponse;
 		if(forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
+		if(forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessParamsToLog"] = sessParamsToLog;
 		return a;
 	}
 };
@@ -1672,6 +1699,18 @@ public:
 			tMove.axisLock = Array<bool>({ false, false, true });
 			
 			targets.append(tJump);
+		}
+		else {
+			// Targets are present (make sure no 2 have the same ID)
+			Array<String> ids;
+			for (TargetConfig target : targets) { 
+				if (!ids.contains(target.id)) { ids.append(target.id); }
+				else {
+					// This is a repeat entry, throw an exception
+					throw format("Found duplicate target configuration for target: \"%s\"", target.id);
+				}
+			}
+			
 		}
 
 		if(sessions.size() == 0 && addedTargets){
