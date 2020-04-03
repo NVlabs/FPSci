@@ -67,8 +67,7 @@ void App::onInit() {
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
 	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), scene(), activeCamera());
-	using namespace std::placeholders;
-	m_weapon->setHitCallback(std::bind(&App::hitTarget, this, _1));
+	m_weapon->setHitCallback(std::bind(&App::hitTarget, this, std::placeholders::_1));
 	m_weapon->setMissCallback(std::bind(&App::missEvent, this));
 
 	// Load models and set the reticle
