@@ -201,8 +201,6 @@ shared_ptr<TargetEntity> Weapon::fire(
 	Array<shared_ptr<Entity>>& dontHit)
 {
 	static RealTime lastTime;
-	shared_ptr<TargetEntity> target = nullptr;
-
 	const Ray& ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
 	// Check for closest hit (in scene, otherwise this ray hits the skybox)
 	float closest = finf();
@@ -249,7 +247,8 @@ shared_ptr<TargetEntity> Weapon::fire(
 		}
 	}
 
-	// Hit scan specific logic here
+	// Hit scan specific logic here (immediately do hit/miss determination)
+	shared_ptr<TargetEntity> target = nullptr;
 	if(m_config->hitScan){
 		// Check whether we hit any targets
 		int closestIndex = -1;
@@ -262,12 +261,17 @@ shared_ptr<TargetEntity> Weapon::fire(
 			// Hit logic
 			target = targets[closestIndex];			// Assign the target pointer here (not null indicates the hit)
 			targetIdx = closestIndex;				// Write back the index of the target
+
+			m_hitCallback(target);				// If we did, we are in hitscan mode, apply the damage and manage the target here
+			const Vector3& camDir = -m_camera->frame().lookVector();
+			// Offset position slightly along normal to avoid Z-fighting the target
+			drawDecal(hitInfo.point + 0.01f * camDir, camDir, true);
 		}
-		else { m_missCallback(); }
-	}
-	else {
-		// Moving projectile specific code here
-		target = nullptr;
+		else { 
+			m_missCallback(); 
+			// Offset position slightly along normal to avoid Z-fighting the wall
+			drawDecal(hitInfo.point + 0.01f * hitInfo.normal, hitInfo.normal);
+		}
 	}
 
 	// If we're not in laser mode play the sounce (once) here
@@ -277,20 +281,6 @@ shared_ptr<TargetEntity> Weapon::fire(
 	}
 
 	END_PROFILER_EVENT();
-
-	if (notNull(target)) {					// Check if we hit anything
-		m_hitCallback(target);				// If we did, we are in hitscan mode, apply the damage and manage the target here
-		const Vector3& camDir = -m_camera->frame().lookVector();
-		// Offset position slightly along normal to avoid Z-fighting the target
-		drawDecal(hitInfo.point + 0.01f * camDir, camDir, true);
-	}
-	else {
-		// Draw a decal here if we are in hitscan mode
-		if (m_config->hitScan && hitDist < finf()) {
-			// Offset position slightly along normal to avoid Z-fighting the wall
-			drawDecal(hitInfo.point + 0.01f * hitInfo.normal, hitInfo.normal);
-		}
-	}
 
 	return target;
 }
