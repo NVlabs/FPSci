@@ -1014,11 +1014,11 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 
 	if (sessConfig->render.shader != "") {
 		// Copy the post-VFX HDR (input) framebuffer
-		static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci/3D Shader Pass/iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
+		static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
 		m_framebuffer->blitTo(rd, input, false, false, false, false, true);
 
 		// Output buffer
-		static shared_ptr<Framebuffer> output = Framebuffer::create(Texture::createEmpty("FPSci/3D Shader Pass/Output", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
+		static shared_ptr<Framebuffer> output = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
 		static int frameNumber = 0;
 		static RealTime startTime = System::time();
 		static RealTime lastTime = startTime;
