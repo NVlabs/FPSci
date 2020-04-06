@@ -1010,26 +1010,26 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		if (sessConfig->hud.enable) {
 			drawHUD(rd);
 		}
-
-		if (sessConfig->render.shader != "") {
-			// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
-			// latency queue copy
-
-			// Think about whether or not this is the right place to run the shader...
-
-			// Copy the post-VFX HDR framebuffer
-			static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("temp distortion source", 256, 256, m_framebuffer->texture(0)->format()));
-			temp->resize(m_framebuffer->width(), m_framebuffer->height());
-			m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
-
-			rd->push2D(m_framebuffer); {
-				Args args;
-				args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
-				args.setRect(rd->viewport());
-				LAUNCH_SHADER(sessConfig->render.shader, args);
-			} rd->pop2D();
-		}
 	}rd->pop2D();
+
+	if (sessConfig->render.shader != "") {
+		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
+		// latency queue copy
+
+		// Think about whether or not this is the right place to run the shader...
+
+		// Copy the post-VFX HDR framebuffer
+		static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("Pre-distortion buffer", 256, 256, m_framebuffer->texture(0)->format()));
+		temp->resize(m_framebuffer->width(), m_framebuffer->height());
+		m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
+
+		rd->push2D(m_framebuffer); {
+			Args args;
+			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
+			args.setRect(rd->viewport());
+			LAUNCH_SHADER(sessConfig->render.shader, args);
+		} rd->pop2D();
+	}
 
 	GApp::onPostProcessHDR3DEffects(rd);
 }
