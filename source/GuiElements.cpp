@@ -345,7 +345,7 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 UserMenu::UserMenu(App* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) :
 	GuiWindow("", theme, rect, GuiTheme::MENU_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_app(app), m_users(users), m_userStatus(userStatus), m_config(config)
 {
-	m_reticlePreviewTexture = Texture::createEmpty("ReticleTexture", m_app->reticleTexture->width(), m_app->reticleTexture->height());
+	m_reticlePreviewTexture = Texture::createEmpty("FPSci::ReticlePreview", m_app->reticleTexture->width(), m_app->reticleTexture->height());
 	m_reticleBuffer = Framebuffer::create(m_reticlePreviewTexture);
 
 	m_parent = pane();
