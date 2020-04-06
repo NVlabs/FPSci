@@ -2,7 +2,11 @@
 
 #include <g3dmath.glsl>
 
-uniform sampler2D sourceTexture;
+uniform sampler2D iChannel0;
+uniform int iFrame;
+uniform float iTime;
+uniform float iTimeDelta;
+uniform vec2 iMouse;
 
 out vec3 result;
 
@@ -16,5 +20,5 @@ void main() {
 		relativePos.x = ((1.0 - deadZone) * pow((abs(relativePos.x) - deadZone) / (1.0 - deadZone), stretch + 1) + deadZone) * sign(relativePos.x);
 	}
 
-	result = texture(sourceTexture, relativePos * 0.5 + 0.5).rgb;
+	result = texture(iChannel0, relativePos * 0.5 + 0.5).rgb;
 }

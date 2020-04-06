@@ -1013,22 +1013,37 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 	}rd->pop2D();
 
 	if (sessConfig->render.shader != "") {
-		// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
-		// latency queue copy
+		// Copy the post-VFX HDR (input) framebuffer
+		static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci/3D Shader Pass/iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
+		m_framebuffer->blitTo(rd, input, false, false, false, false, true);
 
-		// Think about whether or not this is the right place to run the shader...
+		// Output buffer
+		static shared_ptr<Framebuffer> output = Framebuffer::create(Texture::createEmpty("FPSci/3D Shader Pass/Output", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
+		static int frameNumber = 0;
+		static RealTime startTime = System::time();
+		static RealTime lastTime = startTime;
 
-		// Copy the post-VFX HDR framebuffer
-		static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("Pre-distortion buffer", 256, 256, m_framebuffer->texture(0)->format()));
-		temp->resize(m_framebuffer->width(), m_framebuffer->height());
-		m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
+		rd->push2D(output); {
 
-		rd->push2D(m_framebuffer); {
+			// Setup shadertoy-style args
 			Args args;
-			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
+			args.setUniform("iChannel0", input->texture(0), Sampler::video());
+            const float iTime = float(System::time() - startTime);
+            args.setUniform("iTime", iTime);
+            args.setUniform("iTimeDelta", iTime - lastTime);
+            args.setUniform("iMouse", userInput->mouseXY());
+            args.setUniform("iFrame", frameNumber);
 			args.setRect(rd->viewport());
 			LAUNCH_SHADER(sessConfig->render.shader, args);
+			lastTime = iTime;
 		} rd->pop2D();
+
+        ++frameNumber;
+		
+		// Copy the shader output buffer into the framebuffer
+		rd->push2D(m_framebuffer); {
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), output->texture(0), Sampler::buffer());   
+		} rd->pop2D();  
 	}
 
 	GApp::onPostProcessHDR3DEffects(rd);
