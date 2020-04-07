@@ -470,6 +470,22 @@ void App::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, GApp::REAL_TIME);
 }
 
+void App::updateShaderBuffers() {
+	// This updates/resizes the buffers
+	if (sessConfig->render.split2DBuffer) {
+		m_buffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", m_framebuffer->width() , m_framebuffer->height()));
+	}
+	if (sessConfig->render.shader2D != "") {
+		m_shader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", m_framebuffer->width(), m_framebuffer->height()));
+	}
+	if (sessConfig->render.shader3D != "") {
+		m_shader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
+	}
+	if (sessConfig->render.shaderComposite != "") {
+		m_shaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
+	}
+}
+
 void App::updateSession(const String& id) {
 	// Check for a valid ID (non-emtpy and 
 	Array<String> ids;
@@ -490,6 +506,16 @@ void App::updateSession(const String& id) {
 
 	// Update the frame rate/delay
 	updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
+
+	// Handle buffer setup here
+	updateShaderBuffers();
+
+	// Update shader parameters
+	m_startTime = System::time();
+	m_last2DTime = m_startTime;
+	m_last3DTime = m_startTime;
+	m_lastCompositeTime = m_startTime;
+	m_frameNumber = 0;
 
 	// Load (session dependent) fonts
 	hudFont = GFont::fromFile(System::findDataFile(sessConfig->hud.hudFont));
@@ -969,15 +995,30 @@ bool App::onEvent(const GEvent& event) {
 		return true;
 	}
 
+	// Handle resize event here
+	if (event.type == GEventType::VIDEO_RESIZE) {
+		// Resize the shader buffers here
+		updateShaderBuffers();
+	}
+
 	// Handle super-class events
 	return GApp::onEvent(event);
 }
 
-void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
+void App::onPostProcessHDR3DEffects(RenderDevice* rd) {
 	// Put elements that should be delayed along w/ 3D here
-	rd->push2D(); {
-		const float scale = rd->viewport().width() / 1920.0f;
+	if (sessConfig->render.split2DBuffer) {
+		// If rendering into a split (offscreen) 2D buffer, then clear it/render to it here
+		m_buffer2D->texture(0)->clear();
+		rd->push2D(m_buffer2D);
+	}
+	else {
+		// Otherwise render to the framebuffer
+		rd->push2D();
+	}
+	{
 		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+		const float scale = rd->viewport().width() / 1920.0f;
 
 		// Draw target health bars
 		if (sessConfig->targetView.showHealthBars) {
@@ -1012,38 +1053,31 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		}
 	}rd->pop2D();
 
-	if (sessConfig->render.shader != "") {
+	if (sessConfig->render.shader3D != "") {
+		BEGIN_PROFILER_EVENT_WITH_HINT("3D Shader Pass", "Time to run the post-3D shader pass");
 		// Copy the post-VFX HDR (input) framebuffer
-		static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
-		m_framebuffer->blitTo(rd, input, false, false, false, false, true);
+		//static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
+		//m_framebuffer->blitTo(rd, input, false, false, false, false, true);
 
-		// Output buffer
-		static shared_ptr<Framebuffer> output = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
-		static int frameNumber = 0;
-		static RealTime startTime = System::time();
-		static RealTime lastTime = startTime;
-
-		rd->push2D(output); {
-
+		rd->push2D(m_shader3DOutput); {
 			// Setup shadertoy-style args
 			Args args;
-			args.setUniform("iChannel0", input->texture(0), Sampler::video());
-            const float iTime = float(System::time() - startTime);
+			args.setUniform("iChannel0", m_framebuffer->texture(0), Sampler::video());
+            const float iTime = float(System::time() - m_startTime);
             args.setUniform("iTime", iTime);
-            args.setUniform("iTimeDelta", iTime - lastTime);
+            args.setUniform("iTimeDelta", iTime - m_lastTime);
             args.setUniform("iMouse", userInput->mouseXY());
-            args.setUniform("iFrame", frameNumber);
+            args.setUniform("iFrame", m_frameNumber);
 			args.setRect(rd->viewport());
-			LAUNCH_SHADER(sessConfig->render.shader, args);
-			lastTime = iTime;
+			LAUNCH_SHADER(sessConfig->render.shader3D, args);
+			m_lastTime = iTime;
 		} rd->pop2D();
-
-        ++frameNumber;
 		
 		// Copy the shader output buffer into the framebuffer
 		rd->push2D(m_framebuffer); {
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), output->texture(0), Sampler::buffer());   
-		} rd->pop2D();  
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader3DOutput->texture(0), Sampler::buffer());   
+		} rd->pop2D();
+		END_PROFILER_EVENT();
 	}
 
 	GApp::onPostProcessHDR3DEffects(rd);
@@ -1456,9 +1490,10 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 		recentMax = max(recentMax, t);
 	}
 
-	rd->push2D(); {
-		const float scale = rd->viewport().width() / 1920.0f;
+	// Set render buffer depending on whether we are rendering to a sperate 2D buffer
+	sessConfig->render.split2DBuffer ? rd->push2D(m_buffer2D) : rd->push2D(); {
 		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+		const float scale = rd->viewport().width() / 1920.0f;
 
 		// FPS display (faster than the full stats widget)
 		if (renderFPS) {
@@ -1483,6 +1518,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f , m_debugMenuHeight*scale), 20.0f, Color3::red());
 		}
 
+		// Click-to-photon mouse event indicator
 		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode != "total") {
 			drawClickIndicator(rd, sessConfig->clickToPhoton.mode);
 		}
@@ -1502,6 +1538,78 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 		}
 
 	} rd->pop2D();
+
+	// Handle 2D-only shader here (requires split 2D framebuffer)
+	if (sessConfig->render.shader2D != "") {
+		if (!sessConfig->render.split2DBuffer) {
+			throw "Cannot warp non-split 2D buffer, use \"shaderComposite\" to warp combined buffer instead!";
+		}
+		BEGIN_PROFILER_EVENT_WITH_HINT("2D Shader Pass", "Time to run the post-2D shader pass");
+		// Copy the post-VFX HDR (input) framebuffer
+		//static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::iChannel0", buffer2D->width(), buffer2D->height(), buffer2D->texture(0)->format()));
+		//buffer2D->blitTo(rd, input, false, false, false, false, true);
+
+		rd->push2D(m_shader2DOutput); {
+			// Setup shadertoy-style args
+			Args args;
+			args.setUniform("iChannel0", m_buffer2D->texture(0), Sampler::video());
+			const float iTime = float(System::time() - m_startTime);
+			args.setUniform("iTime", iTime);
+			args.setUniform("iTimeDelta", iTime - m_last2DTime);
+			args.setUniform("iMouse", userInput->mouseXY());
+			args.setUniform("iFrame", m_frameNumber);
+			args.setRect(rd->viewport());
+			LAUNCH_SHADER(sessConfig->render.shader2D, args);
+			m_last2DTime = iTime;
+		} rd->pop2D();
+
+		// Direct shader output to the display
+		rd->push2D(); {
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader2DOutput->texture(0), Sampler::buffer());
+		} rd->pop2D();
+
+		END_PROFILER_EVENT();
+	}
+
+	// Composite the 2D buffer here (if not given a 2D shader)
+	else if (sessConfig->render.split2DBuffer) {
+		// Copy the 2D (split) output buffer into the framebuffer
+		rd->push2D(); {
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_buffer2D->texture(0), Sampler::buffer());
+		} rd->pop2D();
+	}
+
+	//  Handle post-2D composite shader here
+	if (sessConfig->render.shaderComposite != "") {
+		BEGIN_PROFILER_EVENT_WITH_HINT("Composite Shader Pass", "Time to run the composite shader pass");
+		// Copy the post-VFX HDR (input) framebuffer
+		//static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
+		//m_framebuffer->blitTo(rd, input, false, false, false, false, true);
+
+		rd->push2D(m_shaderCompositeOutput); {
+			// Setup shadertoy-style args
+			Args args;
+			args.setUniform("iChannel0", m_framebuffer->texture(0), Sampler::video());
+			const float iTime = float(System::time() - m_startTime);
+			args.setUniform("iTime", iTime);
+			args.setUniform("iTimeDelta", iTime - m_lastCompositeTime);
+			args.setUniform("iMouse", userInput->mouseXY());
+			args.setUniform("iFrame", m_frameNumber);
+			args.setRect(rd->viewport());
+			LAUNCH_SHADER(sessConfig->render.shaderComposite, args);
+			m_lastCompositeTime = iTime;
+		} rd->pop2D();
+
+		// Copy the shader output buffer into the framebuffer
+		rd->push2D(); {
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shaderCompositeOutput->texture(0), Sampler::buffer());
+		} rd->pop2D();
+
+		END_PROFILER_EVENT();
+	}
 
 	// Might not need this on the reaction trial
 	// This is rendering the GUI. Can remove if desired.
@@ -1529,6 +1637,8 @@ void App::onCleanup() {
 
 /** Overridden (optimized) oneFrame() function to improve latency */
 void App::oneFrame() {
+	// Count this frame (for shaders)
+	m_frameNumber++;
 
     // Wait
     // Note: we might end up spending all of our time inside of

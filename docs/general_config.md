@@ -50,16 +50,23 @@ The following settings allow the user to control various timings/durations aroun
 ## Rendering Settings
 | Parameter Name            |Units  | Description                                                        |
 |---------------------------|-------|--------------------------------------------------------------------|
-|`horizontalFieldOfView`    |°      |The (horizontal) field of view for the user's display, to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)|
+|`horizontalFieldOfView`    |°      | The (horizontal) field of view for the user's display, to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)|
 |`frameDelay`               |frames | An (integer) count of frames to delay to control latency           |
 |`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#Frame-Rate-Modes) below.|
-|`shader`                   |file    | The (relative) path/filename of an (optional) shader to run (as a `.pix`) |
+|`split2DBuffer`            |`bool` | Split the 2D element rendering from the 3D
+|`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`), only valid if `split2DBuffer` = `true`! |
+|`shader3D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 3D content (as a `.pix`) |
+|`shdaerComposite`          |file   | The (relative) path/filename of an (optional) shader to run on the composited 2D/3D content (as a `.pix`) |
 
 ```
 "horizontalFieldOfView":  103.0,            // Field of view (horizontal) for the user in degrees
 "frameDelay" : 3,                           // Frame delay (in frames)
 "frameRate" : 60,                           // Frame/update rate (in Hz)
-"shader": "[your shader].pix",              // Default is "" or no shader
+"split2DBuffer" : false,                    // Don't split the 2D/3D rendering
+"shader2D": "[your shader].pix",            // Default is "" or no shader
+"shader3D": "[your shader].pix",            // Default is "" or no shader
+"shaderComposite": "[your shader].pix",     // Default is "" or no shader
+
 ```
 
 ## Audio Settings

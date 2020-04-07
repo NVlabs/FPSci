@@ -1045,7 +1045,10 @@ public:
 	// Rendering parameters
 	float           frameRate = 1000.0f;						///< Target (goal) frame rate (in Hz)
 	int             frameDelay = 0;								///< Integer frame delay (in frames)
-	String          shader = "";								///< Option for a custom shader name
+	bool			split2DBuffer = false;						///< Option to split rendering of 2D elements into their own buffer
+	String			shader2D = "";								///< Option for the filename of a custom shader to run on 2D content only
+	String          shader3D = "";								///< Option for the filename of a custom shader to run on 3D content only
+	String			shaderComposite = "";						///< Option for the filename of a custom shader to run on the (final) composited 2D/3D content
 	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
 
 	void load(AnyTableReader reader, int settingsVersion=1) {
@@ -1053,7 +1056,10 @@ public:
 		case 1:
 			reader.getIfPresent("frameRate", frameRate);
 			reader.getIfPresent("frameDelay", frameDelay);
-			reader.getIfPresent("shader", shader);
+			reader.getIfPresent("split2DBuffer", split2DBuffer);
+			reader.getIfPresent("shader2D", shader2D);
+			reader.getIfPresent("shader3D", shader3D);
+			reader.getIfPresent("shaderComposite", shaderComposite);
 			reader.getIfPresent("horizontalFieldOfView", hFoV);
 			break;
 		default:
@@ -1064,10 +1070,12 @@ public:
 
 	Any addToAny(Any a, bool forceAll = false) const {
 		RenderConfig def;
-		if(forceAll || def.frameRate != frameRate)		a["frameRate"] = frameRate;
-		if(forceAll || def.frameDelay != frameDelay)	a["frameDelay"] = frameDelay;
-		if(forceAll || def.hFoV != hFoV)				a["horizontalFieldOfView"] = hFoV;
-		if(forceAll || def.shader != shader)			a["shader"] = shader;
+		if (forceAll || def.frameRate != frameRate)					a["frameRate"] = frameRate;
+		if (forceAll || def.frameDelay != frameDelay)				a["frameDelay"] = frameDelay;
+		if (forceAll || def.hFoV != hFoV)							a["horizontalFieldOfView"] = hFoV;
+		if (forceAll || def.shader2D != shader2D)					a["shader2D"] = shader2D;
+		if (forceAll || def.shader3D != shader3D)					a["shader3D"] = shader3D;
+		if (forceAll || def.shaderComposite != shaderComposite)		a["shaderComposite"] = shaderComposite;
 		return a;
 	}
 
