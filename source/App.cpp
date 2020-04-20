@@ -64,9 +64,11 @@ void App::onInit() {
 	// Setup the scene
 	setScene(PhysicsScene::create(m_ambientOcclusion));
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
-	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
-	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), scene(), activeCamera(), &m_projectileArray);
+	// Re-create the developer window
+	developerWindow->close();
+	developerWindow.reset();
+	createDeveloperHUD();
 
 	// Setup the GUI
 	showRenderingStats = false;
@@ -162,10 +164,6 @@ void App::loadDecals() {
 }
 
 void App::loadModels() {
-	if ((experimentConfig.weapon.renderModel || startupConfig.developerMode) && !experimentConfig.weapon.modelSpec.filename.empty()) {
-		// Load the model if we (might) need it
-		m_weapon->loadModels();
-	}
 
 	// Add all the unqiue targets to this list
 	Table<String, Any> targetsToBuild;
@@ -470,6 +468,48 @@ void App::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, GApp::REAL_TIME);
 }
 
+shared_ptr<PlayerEntity> App::updatePlayer() {
+	// Pick between experiment and session settings
+	Vector3 grav = experimentConfig.player.gravity;
+	float FoV = experimentConfig.render.hFoV;
+	if (sessConfig != nullptr) {
+		grav = sessConfig->player.gravity;
+		FoV = sessConfig->render.hFoV;
+	}
+
+	// Get the reset height
+	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
+	pscene->setGravity(grav);
+	float resetHeight = pscene->resetHeight();
+	if (isnan(resetHeight)) {
+		resetHeight = -1e6;
+	}
+
+	// For now make the player invisible (prevent issues w/ seeing model from inside)
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+	player->setVisible(false);
+	player->setRespawnHeight(resetHeight);
+	player->setRespawnPosition(player->frame().translation);
+
+	UserConfig* user = userTable.getCurrentUser();
+	// Copied from old FPM code
+	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (user->cmp360 * user->mouseDPI);
+	mouseSens *= 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
+	player->mouseSensitivity = (float)mouseSens;
+	player->turnScale = currentTurnScale();					// Compound the session turn scale w/ the user turn scale...
+	player->moveRate = &sessConfig->player.moveRate;
+	player->moveScale = &sessConfig->player.moveScale;
+	player->axisLock = &sessConfig->player.axisLock;
+	player->jumpVelocity = &sessConfig->player.jumpVelocity;
+	player->jumpInterval = &sessConfig->player.jumpInterval;
+	player->jumpTouch = &sessConfig->player.jumpTouch;
+	player->height = &sessConfig->player.height;
+	player->crouchHeight = &sessConfig->player.crouchHeight;
+
+	playerCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
+	return player;
+}
+
 void App::updateSession(const String& id) {
 	// Check for a valid ID (non-emtpy and 
 	Array<String> ids;
@@ -511,10 +551,8 @@ void App::updateSession(const String& id) {
 		m_loadedScene = sessConfig->sceneName;
 	}
 
-	// Check for play mode specific parameters
-	m_weapon->setConfig(sessConfig->weapon);
-	m_weapon->setScene(scene());
-	m_weapon->setCamera(activeCamera());
+	// Update weapon
+	m_weapon = Weapon::create(sessConfig->weapon, scene(), playerCamera(), &m_projectileArray);
 
 	// Update weapon model (if drawn) and sounds
 	loadDecals();
@@ -534,22 +572,8 @@ void App::updateSession(const String& id) {
 	}
 
 	// Player parameters
-	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+	shared_ptr<PlayerEntity> player = updatePlayer();
 	sess->initialHeadingRadians = player->heading();
-	UserConfig *user = userTable.getCurrentUser();
-	// Copied from old FPM code
-	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (user->cmp360 * user->mouseDPI);
-	mouseSens *= 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
-	player->mouseSensitivity = (float)mouseSens;
-	player->turnScale		= currentTurnScale();					// Compound the session turn scale w/ the user turn scale...
-	player->moveRate		= &sessConfig->player.moveRate;
-	player->moveScale		= &sessConfig->player.moveScale;
-	player->axisLock		= &sessConfig->player.axisLock;
-	player->jumpVelocity	= &sessConfig->player.jumpVelocity;
-	player->jumpInterval	= &sessConfig->player.jumpInterval;
-	player->jumpTouch		= &sessConfig->player.jumpTouch;
-	player->height			= &sessConfig->player.height;
-	player->crouchHeight	= &sessConfig->player.crouchHeight;
 
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::load();
@@ -593,35 +617,36 @@ void App::quitRequest() {
 }
 
 void App::onAfterLoadScene(const Any& any, const String& sceneName) {
-	// Pick between experiment and session settings
-	Vector3 grav = experimentConfig.player.gravity;
-	float FoV = experimentConfig.render.hFoV;
-	if (sessConfig != nullptr) {
-		grav = sessConfig->player.gravity;
-		FoV = sessConfig->render.hFoV;
-	}
-	// Set the active camera to the player
-	setActiveCamera(scene()->typedEntity<Camera>("camera"));
-    // make sure the scene has a "player" entity
-    if (isNull(scene()->typedEntity<PlayerEntity>("player"))) {
-        shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
-        scene()->insert(newPlayer);
-    }
-
-	// Get the reset height
-	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
-	pscene->setGravity(grav);
-	float resetHeight = pscene->resetHeight();
-	if (isnan(resetHeight)) {
-		resetHeight = -1e6;
-	}
-
-	// For now make the player invisible (prevent issues w/ seeing model from inside)
+	
+	// make sure the scene has a "player" entity
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-	player->setVisible(false);
-	player->setRespawnHeight(resetHeight);
-	player->setRespawnPosition(player->frame().translation);
-	activeCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
+	alwaysAssertM(player, "All FPSci scene files must provide a \"PlayerEntity\"!");
+	if (isNull(player)) {
+		// Decide if we want to insert a player here... if so make sure to add a "playerCamera" as well...
+		//shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
+		//scene()->insert(newPlayer);
+	}
+
+	// Set the active camera to the player
+	shared_ptr<Camera> playerCam = playerCamera();
+	// Check for no player cam, but a player, if so make the camera from the player
+	if (isNull(playerCam) && notNull(player)) {
+		playerCam = Camera::create("playerCamera");
+		scene()->insert((shared_ptr<Entity>)playerCam);
+	}
+	setActiveCamera(playerCam);
+
+
+	// Update the player entity
+	updatePlayer();
+
+	if (m_weapon) {
+		m_weapon->setScene(scene());
+		m_weapon->setCamera(playerCamera());
+	}
+
+	// Clear decals (if any remain)
+	m_currentMissDecals.clear();
 }
 
 void App::onAI() {
@@ -655,8 +680,8 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 	}
 
 	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !emergencyTurbo;
-	activeCamera()->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
-	activeCamera()->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
+	playerCamera()->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
+	playerCamera()->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
 
 	GApp::onGraphics3D(rd, surface);
 
@@ -732,7 +757,7 @@ void App::simulateProjectiles(RealTime dt) {
 			if (closest < hitThreshold) {
 				hitTarget(closestTarget);
 				// Offset position slightly along normal to avoid Z-fighting the target
-				const Vector3& camDir = -activeCamera()->frame().lookVector();
+				const Vector3& camDir = -playerCamera()->frame().lookVector();
 				drawDecal(info.point + 0.01 * camDir, camDir, true);
 				projectile.clearRemainingTime();
 			}
@@ -805,7 +830,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// Move the player
 	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
-	activeCamera()->setFrame(p->getCameraFrame());
+	playerCamera()->setFrame(p->getCameraFrame());
 	
 	// Handle developer mode features here
 	if (startupConfig.developerMode) {
@@ -982,7 +1007,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		// Draw target health bars
 		if (sessConfig->targetView.showHealthBars) {
 			for (auto const& target : sess->targetArray()) {
-				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
+				target->drawHealthBar(rd, *playerCamera(), *m_framebuffer,
 					sessConfig->targetView.healthBarSize,
 					sessConfig->targetView.healthBarOffset,
 					sessConfig->targetView.healthBarBorderSize,
@@ -995,7 +1020,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 		if (sessConfig->targetView.showCombatText) {
 			Array<int> toRemove;
 			for (int i = 0; i < m_combatTextList.size(); i++) {
-				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
+				bool remove = !m_combatTextList[i]->draw(rd, *playerCamera(), *m_framebuffer);
 				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
 			}
 			// Remove the expired elements here
@@ -1171,7 +1196,7 @@ void App::drawHUD(RenderDevice *rd) {
 Vector2 App::currentTurnScale() {
 	Vector2 baseTurnScale = sessConfig->player.turnScale * userTable.getCurrentUser()->turnScale;;
 	// If we're not scoped just return the normal user turn scale
-	if (!m_weapon->scoped()) return baseTurnScale;
+	if (!m_weapon || !m_weapon->scoped()) return baseTurnScale;
 	// Otherwise create scaled turn scale for the scoped state
 	if (userTable.getCurrentUser()->scopeTurnScale.length() > 0) {
 		// User scoped turn scale specified, don't perform default scaling
@@ -1179,7 +1204,7 @@ Vector2 App::currentTurnScale() {
 	}
 	else {
 		// Otherwise scale the scope turn scalue using the ratio of FoV
-		return activeCamera()->fieldOfViewAngleDegrees() / sessConfig->render.hFoV * baseTurnScale;
+		return playerCamera()->fieldOfViewAngleDegrees() / sessConfig->render.hFoV * baseTurnScale;
 	}
 }
 
@@ -1189,7 +1214,7 @@ void App::setScopeView(bool scoped) {
 	const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
 	m_weapon->setScoped(scoped);														// Update the weapon state		
 	const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
-	activeCamera()->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
+	playerCamera()->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
 
@@ -1233,7 +1258,7 @@ void App::hitTarget(shared_ptr<TargetEntity> target) {
 	else if (target->health() <= 0) {
 		// Position explosion
 		CFrame explosionFrame = target->frame();
-		explosionFrame.rotation = activeCamera()->frame().rotation;
+		explosionFrame.rotation = playerCamera()->frame().rotation;
 		// Create the explosion
 		const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create(
 			format("explosion%d", m_explosionIdx), 
@@ -1355,7 +1380,7 @@ void App::onUserInput(UserInput* ui) {
 						WeaponConfig& wConfig = sessConfig->weapon;
 						if (notNull(target)) {					// Check if we hit anything
 							hitTarget(target);					// If we did, we are in hitscan mode, apply the damage and manage the target here
-							const Vector3& camDir = -activeCamera()->frame().lookVector();
+							const Vector3& camDir = -playerCamera()->frame().lookVector();
 							// Offset position slightly along normal to avoid Z-fighting the target
 							drawDecal(info.point + 0.01f*camDir, camDir, true);
 						}
@@ -1411,7 +1436,7 @@ void App::onUserInput(UserInput* ui) {
 				// Draw a decal here if we are in hitscan mode
 				if (sessConfig->weapon.hitScan && hitDist < finf()) {
 					// Draw decal at the lookRay/world intersection
-					CFrame frame = activeCamera()->frame();
+					CFrame frame = playerCamera()->frame();
 					Point3 position = frame.translation + frame.lookRay().direction() * (hitDist - 0.01f);
 					drawDecal(position, info.normal);
 				}
@@ -1424,7 +1449,7 @@ void App::onUserInput(UserInput* ui) {
 		setReticle(userTable.getCurrentUser()->reticleIndex);
 	}
 
-	activeCamera()->filmSettings().setSensitivity(sceneBrightness);
+	playerCamera()->filmSettings().setSensitivity(sceneBrightness);
     END_PROFILER_EVENT();
 }
 
@@ -1433,7 +1458,7 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 
 	typedScene<PhysicsScene>()->poseExceptExcluded(surface, "player");
 
-	m_weapon->onPose(surface);
+	if (m_weapon) { m_weapon->onPose(surface); }
 }
 
 void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
@@ -1641,7 +1666,7 @@ void App::oneFrame() {
         // The debug camera is not in the scene, so we have
         // to explicitly pose it. This actually does nothing, but
         // it allows us to trigger the TAA code.
-		activeCamera()->onPose(m_posed3D);
+		playerCamera()->onPose(m_posed3D);
     } m_poseWatch.tock();
     END_PROFILER_EVENT();
 

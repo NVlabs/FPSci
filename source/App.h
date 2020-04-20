@@ -99,6 +99,10 @@ protected:
 	void loadDecals();
 	void updateUser(void);
     void updateUserGUI();
+	shared_ptr<PlayerEntity> updatePlayer();
+
+	/** Get the player camera */
+	shared_ptr<Camera> playerCamera() {  return scene()->typedEntity<Camera>("playerCamera"); }
 
 	/** Get the current turn scale (per user and scope setting) */
 	Vector2 currentTurnScale();

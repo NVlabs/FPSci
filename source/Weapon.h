@@ -63,7 +63,7 @@ protected:
 
 class Weapon : Entity {
 public:
-	static shared_ptr<Weapon> create(shared_ptr<WeaponConfig> config, shared_ptr<Scene> scene, shared_ptr<Camera> cam, Array<Projectile>* projectiles) {
+	static shared_ptr<Weapon> create(WeaponConfig& config, shared_ptr<Scene> scene, shared_ptr<Camera> cam, Array<Projectile>* projectiles) {
 		return createShared<Weapon>(config, scene, cam, projectiles);
 	};
 
@@ -77,8 +77,8 @@ public:
 
 	void loadModels() {
 		// Create the view model
-		if (m_config->modelSpec.filename != "") {
-			m_viewModel = ArticulatedModel::create(m_config->modelSpec, "viewModel");
+		if (m_config.modelSpec.filename != "") {
+			m_viewModel = ArticulatedModel::create(m_config.modelSpec, "viewModel");
 		}
 		else {
 			const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
@@ -93,8 +93,8 @@ public:
 		}
 
 		// Create the bullet model
-		const Vector3& scale = m_config->bulletScale;
-		const Color3& color = m_config->bulletColor;
+		const Vector3& scale = m_config.bulletScale;
+		const Color3& color = m_config.bulletColor;
 		const static Any bulletSpec = Any::parse(format(
 			"ArticulatedModel::Specification{\
 				filename = \"ifs/d10.ifs\";\
@@ -114,9 +114,9 @@ public:
 	void loadSounds() {
 		// Check for play mode specific parameters
 		if (notNull(m_fireAudio)) { m_fireAudio->stop(); }
-		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->isLaser());
+		m_fireSound = Sound::create(System::findDataFile(m_config.fireSound), m_config.isLaser());
 	}
-	void setConfig(const WeaponConfig& config) { m_config = std::make_shared<WeaponConfig>(config); }
+	void setConfig(const WeaponConfig& config) { m_config = config; }
 	void setCamera(const shared_ptr<Camera>& cam) { m_camera = cam; }
 	void setScene(const shared_ptr<Scene>& scene) { m_scene = scene; }
 	void setScoped(bool state = true) { m_scoped = state; }
@@ -136,7 +136,7 @@ public:
 	bool firing() { return m_firing; }
 
 protected:
-	Weapon(shared_ptr<WeaponConfig> config, shared_ptr<Scene>& scene, shared_ptr<Camera>& cam, Array<Projectile>* projectiles) : 
+	Weapon(WeaponConfig& config, shared_ptr<Scene>& scene, shared_ptr<Camera>& cam, Array<Projectile>* projectiles) : 
 		m_config(config), m_scene(scene), m_camera(cam), m_projectiles(projectiles) {};
 
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
@@ -144,7 +144,7 @@ protected:
 	shared_ptr<Sound>               m_fireSound;						///< Sound for weapon firing
 	shared_ptr<AudioChannel>		m_fireAudio;						///< Audio channel for fire sound
 
-	shared_ptr<WeaponConfig>		m_config;							///< Weapon configuration
+	WeaponConfig&					m_config;							///< Weapon configuration
 	int								m_lastBulletId = 0;					///< Bullet ID (auto incremented)
 	bool							m_scoped = false;					///< Flag used for scope management
 	bool							m_firing = false;					///< Flag used for auto fire management

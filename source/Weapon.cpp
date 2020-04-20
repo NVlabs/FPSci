@@ -2,14 +2,14 @@
 
 
 void Weapon::onPose(Array<shared_ptr<Surface> >& surface) {
-	if (m_config->renderModel || m_config->renderBullets) { // || m_config->renderMuzzleFlash) {
+	if (m_camera && (m_config.renderModel || m_config.renderBullets)) { // || m_config->renderMuzzleFlash) {
 		// Update the weapon frame for all of these cases
 		const float yScale = -0.12f;
 		const float zScale = -yScale * 0.5f;
 		const float lookY = m_camera->frame().lookVector().y;
 		m_frame = m_camera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
 		// Pose the view model (weapon) for render here
-		if (m_config->renderModel) {
+		if (m_config.renderModel) {
 			const float prevLookY = m_camera->previousFrame().lookVector().y;
 			const CFrame prevWeaponPos = CFrame::fromXYZYPRDegrees(0.3f, -0.4f + prevLookY * yScale, -1.1f + prevLookY * zScale, 10, 5);
 			m_viewModel->pose(surface, m_frame, m_camera->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
@@ -35,12 +35,12 @@ shared_ptr<TargetEntity> Weapon::fire(
 	if (closest < finf()) { hitDist = closest; }
 
 	// Create the bullet (if we need to draw it or are using non-hitscan behavior)
-	if (m_config->renderBullets || !m_config->hitScan) {
+	if (m_config.renderBullets || !m_config.hitScan) {
 		// Create the bullet start frame from the weapon frame plus muzzle offset
 		CFrame bulletStartFrame = m_camera->frame();
 		
 		// Apply bullet offset w/ camera rotation here
-		bulletStartFrame.translation += m_camera->frame().rotation * m_config->bulletOffset;
+		bulletStartFrame.translation += m_camera->frame().rotation * m_config.bulletOffset;
 
 		// Angle the bullet start frame towards the aim point
 		Point3 aimPoint = m_camera->frame().translation + m_camera->frame().lookVector() * 1000.0f;
@@ -51,12 +51,12 @@ shared_ptr<TargetEntity> Weapon::fire(
 		bulletStartFrame.lookAt(aimPoint);
 
 		// Non-laser weapon, draw a projectile
-		if (!m_config->isLaser()) {
+		if (!m_config.isLaser()) {
 			const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastBulletId), m_scene.get(), m_bulletModel, bulletStartFrame);
 			bullet->setShouldBeSaved(false);
 			bullet->setCanCauseCollisions(false);
 			bullet->setCastsShadows(false);
-			bullet->setVisible(m_config->renderBullets);
+			bullet->setVisible(m_config.renderBullets);
 
 			/*	
 			const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
@@ -64,7 +64,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 			bullet->setTrack(track);
 			*/
 
-			m_projectiles->push(Projectile(bullet, m_config->bulletSpeed, !m_config->hitScan, m_config->bulletGravity, fmin((closest+1.0f)/ m_config->bulletSpeed, 10.0f)));
+			m_projectiles->push(Projectile(bullet, m_config.bulletSpeed, !m_config.hitScan, m_config.bulletGravity, fmin((closest+1.0f)/ m_config.bulletSpeed, 10.0f)));
 			m_scene->insert(bullet);
 		}
 		// Laser weapon (very hacky for now...)
@@ -76,7 +76,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 	}
 
 	// Hit scan specific logic here
-	if(m_config->hitScan){
+	if(m_config.hitScan){
 		// Check whether we hit any targets
 		int closestIndex = -1;
 		for (int t = 0; t < targets.size(); ++t) {
@@ -96,8 +96,8 @@ shared_ptr<TargetEntity> Weapon::fire(
 	}
 
 	// If we're not in laser mode play the sounce (once) here
-	if (!m_config->isLaser()) {
-		m_fireSound->play(m_config->fireSoundVol);
+	if (!m_config.isLaser()) {
+		m_fireSound->play(m_config.fireSoundVol);
 		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
 	}
 

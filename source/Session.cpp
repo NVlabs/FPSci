@@ -701,6 +701,7 @@ void Session::insertTarget(shared_ptr<TargetEntity> target) {
 void Session::destroyTarget(int index) {
 	// Not a reference because we're about to manipulate the array
 	const shared_ptr<VisibleEntity> target = m_targetArray[index];
+	if (!target) return;
 	// Remove the target from the target array
 	m_targetArray.fastRemove(index);
 	// Remove the target from the scene
