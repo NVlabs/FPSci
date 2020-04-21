@@ -1623,7 +1623,7 @@ public:
 			tMove.id = "moving";
 			tMove.destSpace = "player";
 			tMove.size = Array<float>({ 0.05f, 0.05f });
-			tMove.speed = Array<float>({ 3.5f, 5.f });
+			tMove.speed = Array<float>({ 7.f, 10.f });
 			tMove.motionChangePeriod = Array<float>({ 0.8f, 1.5f });
 			tMove.axisLock = Array<bool>({ false, false, true });
 			
@@ -1633,7 +1633,7 @@ public:
 			tJump.id = "jumping";
 			tJump.destSpace = "player";
 			tJump.size = Array<float>({ 0.05f, 0.05f });
-			tJump.speed = Array<float>({ 5.f, 5.f });
+			tJump.speed = Array<float>({ 10.f, 10.f });
 			tJump.motionChangePeriod = Array<float>({ 0.8f, 1.5f });
 			tJump.jumpEnabled = true;
 			tJump.jumpSpeed = Array<float>({ 10.f, 10.f });
