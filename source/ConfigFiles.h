@@ -83,8 +83,8 @@ public:
 		map.set("strafeLeft", Array<GKey>{ (GKey)'a', GKey::LEFT });
 		map.set("moveBackward", Array<GKey>{ (GKey)'s', GKey::DOWN });
 		map.set("strafeRight", Array<GKey>{ (GKey)'d', GKey::RIGHT });
-		map.set("openMenu", Array<GKey>{ GKey::ESCAPE, GKey::TAB });
-		map.set("quit", Array<GKey>{ GKey::KP_MINUS });
+		map.set("openMenu", Array<GKey>{ GKey::ESCAPE });
+		map.set("quit", Array<GKey>{ GKey::KP_MINUS, GKey::PAUSE });
 		map.set("crouch", Array<GKey>{ GKey::LCTRL });
 		map.set("jump", Array<GKey>{ GKey::SPACE });
 		map.set("shoot", Array<GKey>{ GKey::LEFT_MOUSE });
