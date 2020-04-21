@@ -98,9 +98,7 @@ void App::updateMouseSensitivity() {
     // G3D expects mouse sensitivity in radians
     // we're converting from mouseDPI and centimeters/360 which explains
     // the screen resolution (dots), cm->in factor (2.54) and 2PI
-    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
-    // additional correction factor based on few samples - TODO: need more careful setup to study this
-    mouseSensitivity = mouseSensitivity * 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
+    double mouseSensitivity = 2.0 * pi() * 2.54 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
     const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
     if (m_userSettingsMode) {
         // set to 3rd person
