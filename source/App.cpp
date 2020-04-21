@@ -777,7 +777,6 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// These are all we need from GApp::onSimulation() for walk mode
 	m_widgetManager->onSimulation(rdt, sdt, idt);
 	if (scene()) { scene()->onSimulation(sdt); }
-	if (scene()) { scene()->onSimulation(sdt); }
 
 	// make sure mouse sensitivity is set right
 	if (m_userSettingsMode) {
