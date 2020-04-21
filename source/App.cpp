@@ -959,34 +959,37 @@ bool App::onEvent(const GEvent& event) {
 			updateMouseSensitivity();
 			foundKey = true;
 		}
-
-		// Override 'q', 'z', 'c', and 'e' keys (unused)
-		const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
-		if (unused.contains(ksym)) {
-			foundKey = true;
+		else if (activeCamera() == playerCamera()) {
+			// Override 'q', 'z', 'c', and 'e' keys (unused) 
+			// THIS IS A PROBLEM IF THESE ARE KEY MAPPED!!!
+			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
+			if (unused.contains(ksym)) {
+				foundKey = true;
+			}
+			else if (keyMap.map["crouch"].contains(ksym)) {
+				scene()->typedEntity<PlayerEntity>("player")->setCrouched(true);
+				foundKey = true;
+			}
+			else if (keyMap.map["jump"].contains(ksym)) {
+				scene()->typedEntity<PlayerEntity>("player")->setJumpPressed(true);
+				foundKey = true;
+			}
+			else if (keyMap.map["quit"].contains(ksym)) {
+				quitRequest();
+				return true;
+			}
 		}
-		else if (keyMap.map["crouch"].contains(ksym)) {
-			scene()->typedEntity<PlayerEntity>("player")->setCrouched(true);
-			foundKey = true;
-		}
-		else if (keyMap.map["jump"].contains(ksym)) {
-			scene()->typedEntity<PlayerEntity>("player")->setJumpPressed(true);
-			foundKey = true;
-		}
-		else if (keyMap.map["quit"].contains(ksym)) {
-			quitRequest();
-			return true;
-		}
-	}
-	else if ((event.type == GEventType::KEY_UP)){
-		if (keyMap.map["crouch"].contains(ksym)) {
-			scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
-			foundKey = true;
+		else if ((event.type == GEventType::KEY_UP)) {
+			if (keyMap.map["crouch"].contains(ksym)) {
+				scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
+				foundKey = true;
+			}
 		}
 	}
 	if (foundKey) {
 		return true;
 	}
+
 
 	// Handle window-based close ("X" button)
 	if (event.type == GEventType::QUIT) {
@@ -999,44 +1002,45 @@ bool App::onEvent(const GEvent& event) {
 }
 
 void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
-	// Put elements that should be delayed along w/ 3D here
-	rd->push2D(); {
-		const float scale = rd->viewport().width() / 1920.0f;
-		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+	if (activeCamera() == playerCamera()) {
+		// Put elements that should be delayed along w/ 3D here
+		rd->push2D(); {
+			const float scale = rd->viewport().width() / 1920.0f;
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
-		// Draw target health bars
-		if (sessConfig->targetView.showHealthBars) {
-			for (auto const& target : sess->targetArray()) {
-				target->drawHealthBar(rd, *playerCamera(), *m_framebuffer,
-					sessConfig->targetView.healthBarSize,
-					sessConfig->targetView.healthBarOffset,
-					sessConfig->targetView.healthBarBorderSize,
-					sessConfig->targetView.healthBarColors,
-					sessConfig->targetView.healthBarBorderColor);
+			// Draw target health bars
+			if (sessConfig->targetView.showHealthBars) {
+				for (auto const& target : sess->targetArray()) {
+					target->drawHealthBar(rd, *playerCamera(), *m_framebuffer,
+						sessConfig->targetView.healthBarSize,
+						sessConfig->targetView.healthBarOffset,
+						sessConfig->targetView.healthBarBorderSize,
+						sessConfig->targetView.healthBarColors,
+						sessConfig->targetView.healthBarBorderColor);
+				}
 			}
-		}
 
-		// Draw the combat text
-		if (sessConfig->targetView.showCombatText) {
-			Array<int> toRemove;
-			for (int i = 0; i < m_combatTextList.size(); i++) {
-				bool remove = !m_combatTextList[i]->draw(rd, *playerCamera(), *m_framebuffer);
-				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
+			// Draw the combat text
+			if (sessConfig->targetView.showCombatText) {
+				Array<int> toRemove;
+				for (int i = 0; i < m_combatTextList.size(); i++) {
+					bool remove = !m_combatTextList[i]->draw(rd, *playerCamera(), *m_framebuffer);
+					if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
+				}
+				// Remove the expired elements here
+				m_combatTextList.removeNulls();
 			}
-			// Remove the expired elements here
-			m_combatTextList.removeNulls();
-		}
 
-		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode == "total") {
-			drawClickIndicator(rd, "total");
-		}
+			if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode == "total") {
+				drawClickIndicator(rd, "total");
+			}
 
-		// Draw the HUD here
-		if (sessConfig->hud.enable) {
-			drawHUD(rd);
-		}
-	}rd->pop2D();
-
+			// Draw the HUD here
+			if (sessConfig->hud.enable) {
+				drawHUD(rd);
+			}
+		}rd->pop2D();
+	}
 	if (sessConfig->render.shader != "") {
 		// Copy the post-VFX HDR (input) framebuffer
 		static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
@@ -1320,7 +1324,7 @@ void App::onUserInput(UserInput* ui) {
 	(void)ui;
 
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
-	if (!m_userSettingsMode && notNull(player)) {
+	if (!m_userSettingsMode && activeCamera() == playerCamera() && notNull(player)) {
 		player->updateFromInput(ui);
 	}
 	else {	// Zero the player velocity and rotation when in the setting menu
@@ -1512,18 +1516,21 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			drawClickIndicator(rd, sessConfig->clickToPhoton.mode);
 		}
 
-		// Reticle
-		UserConfig* user = userTable.getCurrentUser();
-		float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleShrinkTimeS), 1.0f), 0.0f);
-		float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
-		Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
-		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
+		// Player camera only indicators
+		if (activeCamera() == playerCamera()) {
+			// Reticle
+			UserConfig* user = userTable.getCurrentUser();
+			float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleShrinkTimeS), 1.0f), 0.0f);
+			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale) * user->reticleScale[1];
+			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
+			Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f)) * rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
 
-		// Handle the feedback message
-		String message = sess->getFeedbackMessage();
-		if (!message.empty()) {
-			outputFont->draw2D(rd, message.c_str(),
-				(Point2(rd->viewport().width()*0.5f, rd->viewport().height()*0.4f)).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+			// Handle the feedback message
+			String message = sess->getFeedbackMessage();
+			if (!message.empty()) {
+				outputFont->draw2D(rd, message.c_str(),
+					(Point2(rd->viewport().width() * 0.5f, rd->viewport().height() * 0.4f)).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+			}
 		}
 
 	} rd->pop2D();
