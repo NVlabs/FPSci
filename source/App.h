@@ -37,13 +37,6 @@ protected:
 	Array<shared_ptr<FloatingCombatText>>	m_combatTextList;					///< Array of existing combat text
 
 	shared_ptr<Weapon>						m_weapon;							///< Current weapon
-	Array<Projectile>						m_projectileArray;					///< Arrray of drawn projectiles
-
-	shared_ptr<ArticulatedModel>			m_missDecalModel;					///< Model for the miss decal
-	shared_ptr<ArticulatedModel>			m_hitDecalModel;					///< Model for the hit decal
-	shared_ptr<VisibleEntity>				m_hitDecal;							///< Pointer to hit decal
-	RealTime								m_hitDecalTimeRemainingS = 0.f;		///< Remaining duration to show the decal for
-	Array<shared_ptr<VisibleEntity>>		m_currentMissDecals;				///< Pointers to miss decals
 
 	Array<shared_ptr<VisibleEntity>>		m_explosions;						///< Model for target destroyed decal
 	Array<RealTime>							m_explosionRemainingTimes;			///< Time for end of explosion
@@ -83,7 +76,6 @@ protected:
 	void makeGUI();
 	void updateControls();
 	void loadModels();
-	void loadDecals();
 
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {
@@ -98,8 +90,7 @@ protected:
 	void setScopeView(bool scoped = true);
 
 	void hitTarget(shared_ptr<TargetEntity>);
-	void simulateProjectiles(RealTime dt);
-	void drawDecal(const Point3& cameraOffset, const Vector3& normal, bool hit = false);
+	void missEvent();
 
 	void drawHUD(RenderDevice *rd);
 	void drawClickIndicator(RenderDevice *rd, String mode);

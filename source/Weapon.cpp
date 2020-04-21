@@ -1,5 +1,84 @@
 #include "Weapon.h"
 
+void Weapon::loadDecals() {
+	if (m_config->missDecal.empty()) {
+		m_missDecalModel.reset();
+	}
+	else {
+		String missDecalSpec = format("\
+			ArticulatedMode::Specification {\
+				filename = \"ifs/square.ifs\";\
+				preprocess = {\
+					transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));\
+					setMaterial(all(), UniversalMaterial::Specification{\
+						lambertian = Texture::Specification {\
+							filename = \"%s\";\
+							encoding = Color3(1, 1, 1);\
+						};\
+					});\
+				};\
+				scale = %f;\
+			};", m_config->missDecal.c_str(), m_config->missDecalScale);
+		m_missDecalModel = ArticulatedModel::create(Any::parse(missDecalSpec), "missDecalModel");
+	}
+
+	if (m_config->hitDecal.empty()) {
+		m_hitDecalModel.reset();
+	}
+	else {
+		const float cmul = m_config->hitDecalColorMult;
+		String hitDecalSpec = format("\
+			ArticulatedMode::Specification {\
+				filename = \"ifs/square.ifs\";\
+				preprocess = {\
+					transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));\
+					setMaterial(all(), UniversalMaterial::Specification{\
+						lambertian = Texture::Specification {\
+							filename = \"%s\";\
+							encoding = Color3(%f, %f, %f);\
+						};\
+					});\
+				};\
+				scale = %f;\
+			};", m_config->hitDecal.c_str(), cmul, cmul, cmul, m_config->hitDecalScale);
+		m_hitDecalModel = ArticulatedModel::create(Any::parse(hitDecalSpec), "hitDecalModel");
+	}
+}
+
+void Weapon::loadModels() {
+	// Load decals
+	loadDecals();
+
+	// Create the view model
+	if (m_config->modelSpec.filename != "") {
+		m_viewModel = ArticulatedModel::create(m_config->modelSpec, "viewModel");
+	}
+	else {
+		const static Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{
+			filename = "model/sniper/sniper.obj";
+			preprocess = {
+				transformGeometry(all(), Matrix4::yawDegrees(90));
+				transformGeometry(all(), Matrix4::scale(1.2,1,0.4));
+			};
+			scale = 0.25;
+			});
+		m_viewModel = ArticulatedModel::create(modelSpec, "viewModel");
+	}
+
+	// Create the bullet model
+	const static Any bulletSpec = PARSE_ANY(ArticulatedModel::Specification{
+		filename = "ifs/d10.ifs";
+		preprocess = {
+			transformGeometry(all(), Matrix4::pitchDegrees(90));
+			transformGeometry(all(), Matrix4::scale(0.05,0.05,2));
+			setMaterial(all(), UniversalMaterial::Specification {
+				lambertian = Color3(0);
+				emissive = Power3(5,4,0);
+			});
+		};
+		});
+	m_bulletModel = ArticulatedModel::create(bulletSpec, "bulletModel");
+}
 
 void Weapon::onPose(Array<shared_ptr<Surface> >& surface) {
 	if (m_config->renderModel || m_config->renderBullets) { // || m_config->renderMuzzleFlash) {
@@ -17,21 +96,119 @@ void Weapon::onPose(Array<shared_ptr<Surface> >& surface) {
 	}
 }
 
+void Weapon::simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntity>>& targets, const Array<shared_ptr<Entity>>& dontHit) {
+	// Iterate through projectiles for hit/miss detection here
+	for (int p = 0; p < m_projectiles.size(); p++) {
+		shared_ptr<Projectile> projectile = m_projectiles[p];
+		projectile->onSimulation(sdt);
+		// Remove the projectile for timeout
+		if (projectile->remainingTime() <= 0) {
+			// Expire
+			m_scene->removeEntity(projectile->name());
+			m_projectiles.remove(p);
+			--p;
+		}
+		else if (!m_config->hitScan) {
+			// Distance at which to delcare a hit
+			const float hitThreshold = m_config->bulletSpeed * 2.0f * (float)sdt;
+			// Look for collision with the targets
+			const Ray ray = projectile->getCollisionRay();
+			float closest = finf();
+			Model::HitInfo info;
+			shared_ptr<TargetEntity> closestTarget;
+			for (shared_ptr<TargetEntity> t : targets) {
+				if (t->intersect(ray, closest, info)) {
+					closestTarget = t;
+				}
+			}
+			// Check for target hit
+			if (closest < hitThreshold) {
+				m_hitCallback(closestTarget);
+				// Offset position slightly along normal to avoid Z-fighting the target
+				drawDecal(info.point + 0.01 * info.normal, m_camera->frame().lookVector(), true);
+				projectile->clearRemainingTime();
+			}
+			// Handle (miss) decals here
+			else {
+				// Build a list of entities not to hit in the scene
+				Array<shared_ptr<Entity>> dontHitItems = dontHit;
+				dontHitItems.append(m_currentMissDecals);
+				dontHitItems.append(targets);					// This is a miss, don't plan to hit targets here
+				dontHitItems.append(m_projectiles);
+				// Check for closest hit (in scene, otherwise this ray hits the skybox)
+				//closest = finf();
+				const Ray ray = projectile->getDecalRay();
+				m_scene->intersect(ray, closest, false, dontHitItems, info);
+
+				// If we are within 2 simulation cycles of a wall, create the decal
+				if (closest < hitThreshold) {
+					// Offset position slightly along normal to avoid Z-fighting the wall
+					drawDecal(info.point + 0.01 * info.normal, info.normal);
+					projectile->clearRemainingTime();							// Stop the projectile here
+					m_missCallback();
+				}
+			}
+		}
+	}
+
+	// Handle hit "animation" (i.e. remove when done)
+	if (notNull(m_hitDecal) && m_hitDecalTimeRemainingS <= 0) {
+		m_scene->remove(m_hitDecal);
+		m_hitDecal.reset();
+	}
+	else {
+		m_hitDecalTimeRemainingS -= sdt;
+	}
+}
+
+void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
+	// End here if we're not drawing decals
+	if (!m_config->renderDecals) return;
+	// Don't draw decals for these cases
+	if (!hit && (m_config->missDecalCount == 0 || m_missDecalModel == nullptr)) return;
+	else if (hit && m_hitDecalModel == nullptr) return;
+
+	// Set the decal rotation to match the normal here
+	CFrame decalFrame = CFrame(point);
+	decalFrame.lookAt(decalFrame.translation - normal);
+
+	// If we have the maximum amount of decals remove the oldest one
+	if (!hit && m_currentMissDecals.size() == m_config->missDecalCount) {
+		shared_ptr<VisibleEntity> lastDecal = m_currentMissDecals.pop();
+		m_scene->remove(lastDecal);
+	}
+	else if (hit && notNull(m_hitDecal)) {
+		m_scene->remove(m_hitDecal);
+	}
+
+	// Add the new decal to the scene
+	shared_ptr<ArticulatedModel> decalModel = hit ? m_hitDecalModel : m_missDecalModel;
+	const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastDecalID), &(*m_scene), decalModel, decalFrame);
+	newDecal->setCastsShadows(false);
+	m_scene->insert(newDecal);
+	if (!hit) m_currentMissDecals.insert(0, newDecal);	// Add the new decal to the front of the Array (if a miss)
+	else {
+		m_hitDecal = newDecal;
+		m_hitDecalTimeRemainingS = m_config->hitDecalDurationS;
+	}
+}
+
 shared_ptr<TargetEntity> Weapon::fire(
 	const Array<shared_ptr<TargetEntity>>& targets,
 	int& targetIdx, 
 	float& hitDist, 
 	Model::HitInfo& hitInfo, 
-	Array<shared_ptr<Entity>>& dontHit
-){
+	Array<shared_ptr<Entity>>& dontHit)
+{
 	static RealTime lastTime;
-	shared_ptr<TargetEntity> target = nullptr;
-
 	const Ray& ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
 	// Check for closest hit (in scene, otherwise this ray hits the skybox)
 	float closest = finf();
-	dontHit.append(targets);
-	m_scene->intersect(ray, closest, false, dontHit, hitInfo);
+	Array<shared_ptr<Entity>> dontHitItems = dontHit;
+	dontHitItems.append(m_currentMissDecals);
+	dontHitItems.append(targets);
+	dontHitItems.append(m_projectiles);
+	m_scene->intersect(ray, closest, false, dontHitItems, hitInfo);
 	if (closest < finf()) { hitDist = closest; }
 
 	// Create the bullet (if we need to draw it or are using non-hitscan behavior)
@@ -58,14 +235,9 @@ shared_ptr<TargetEntity> Weapon::fire(
 			bullet->setCastsShadows(false);
 			bullet->setVisible(m_config->renderBullets);
 
-			/*	
-			const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
-				Any::parse(format("%s", bulletStartFrame.toXYZYPRDegreesString().c_str())));
-			bullet->setTrack(track);
-			*/
-
-			m_projectiles->push(Projectile(bullet, m_config->bulletSpeed, !m_config->hitScan, m_config->bulletGravity, fmin((closest+1.0f)/ m_config->bulletSpeed, 10.0f)));
-			m_scene->insert(bullet);
+			const shared_ptr<Projectile> projectile = Projectile::create(bullet, m_config->bulletSpeed, !m_config->hitScan, m_config->bulletGravity, fmin((closest + 1.0f) / m_config->bulletSpeed, 10.0f));
+			m_projectiles.push(projectile);
+			m_scene->insert(projectile);
 		}
 		// Laser weapon (very hacky for now...)
 		else {
@@ -75,7 +247,8 @@ shared_ptr<TargetEntity> Weapon::fire(
 		}
 	}
 
-	// Hit scan specific logic here
+	// Hit scan specific logic here (immediately do hit/miss determination)
+	shared_ptr<TargetEntity> target = nullptr;
 	if(m_config->hitScan){
 		// Check whether we hit any targets
 		int closestIndex = -1;
@@ -88,11 +261,17 @@ shared_ptr<TargetEntity> Weapon::fire(
 			// Hit logic
 			target = targets[closestIndex];			// Assign the target pointer here (not null indicates the hit)
 			targetIdx = closestIndex;				// Write back the index of the target
+
+			m_hitCallback(target);				// If we did, we are in hitscan mode, apply the damage and manage the target here
+			const Vector3& camDir = -m_camera->frame().lookVector();
+			// Offset position slightly along normal to avoid Z-fighting the target
+			drawDecal(hitInfo.point + 0.01f * camDir, camDir, true);
 		}
-	}
-	else {
-		// Moving projectile specific code here
-		target = nullptr;
+		else { 
+			m_missCallback(); 
+			// Offset position slightly along normal to avoid Z-fighting the wall
+			drawDecal(hitInfo.point + 0.01f * hitInfo.normal, hitInfo.normal);
+		}
 	}
 
 	// If we're not in laser mode play the sounce (once) here
@@ -102,5 +281,6 @@ shared_ptr<TargetEntity> Weapon::fire(
 	}
 
 	END_PROFILER_EVENT();
+
 	return target;
 }
