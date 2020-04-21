@@ -1079,7 +1079,7 @@ public:
 	float           moveRate = 0.0f;							///< Player move rate (defaults to no motion)
 	float           height = 1.5f;								///< Height for the player view (in walk mode)
 	float           crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
-	float           jumpVelocity = 7.0f;						///< Jump velocity for the player
+	float           jumpVelocity = 3.5f;						///< Jump velocity for the player
 	float           jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
 	bool            jumpTouch = true;							///< Require the player to be touch a surface to jump?
 	Vector3         gravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
