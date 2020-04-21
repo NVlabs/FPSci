@@ -82,10 +82,6 @@ void App::onInit() {
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
 	hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
 
-	// Load models and set the reticle
-	loadModels();
-	setReticle(userTable.getCurrentUser()->reticleIndex);
-
 	updateMouseSensitivity();			// Update (apply) mouse sensitivity
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
 	updateSessionPress();				// Update session to create results file/start collection
