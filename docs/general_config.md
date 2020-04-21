@@ -91,12 +91,15 @@ The following settings allow the user to control various timings/durations aroun
 
 ```
 "moveRate": 0.0,                            // Player move rate (0 for no motion)
-"jumpVelocity": 40.0,                       // Jump velocity
-"jumpInterval": 0.5,                        // Minimum jump interval
-"jumpTouch": true,                          // Require touch for jump
+"moveScale" : Vector2(1.0, 1.0),            // Movement scaling
+"playerAxisLock": [false, false, false],    // Don't lock player motion in any axis
+"turnScale": Vector2(1.0, 1.0),             // Turn rate scaling
 "playerHeight":  1.5,                       // Normal player height
 "crouchHeight": 0.8,                        // Crouch height
-"playerGravity": Vector3(0.0, -5.0, 0.0),   // Player gravity
+"jumpVelocity": 3.5,                        // Jump velocity
+"jumpInterval": 0.5,                        // Minimum jump interval
+"jumpTouch": true,                          // Require touch for jump
+"playerGravity": Vector3(0.0, -10.0, 0.0),  // Player gravity
 "disablePlayerMotionBetweenTrials": false,  // Don't allow the player to move in between trials
 "resetPlayerPositionBetweenTrials": false,  // Respawn the player in the starting location between trials
 ```
