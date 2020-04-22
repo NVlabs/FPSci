@@ -46,10 +46,10 @@ protected:
 	const int								m_MatTableSize = 10;				///< Set this to set # of color "levels"
 	Array<shared_ptr<UniversalMaterial>>	m_materials;						///< This stores the color materials
 
-	GuiDropDownList*						m_sessDropDown;						///< Dropdown menu for session selection
-	GuiDropDownList*						m_userDropDown;						///< Dropdown menu for user selection
-	GuiLabel*								m_mouseDPILabel;					///< Label for mouse DPI field
-	GuiLabel*								m_cm360Label;						///< Label for cm/360 field
+	GuiDropDownList*						m_sessDropDown = nullptr;			///< Dropdown menu for session selection
+	GuiDropDownList*						m_userDropDown = nullptr;			///< Dropdown menu for user selection
+	GuiLabel*								m_mouseDPILabel = nullptr;			///< Label for mouse DPI field
+	GuiLabel*								m_cm360Label = nullptr;				///< Label for cm/360 field
 
 	shared_ptr<PlayerControls>				m_playerControls;
 	shared_ptr<RenderControls>				m_renderControls;
@@ -63,7 +63,7 @@ protected:
 	/** Used to detect GUI changes to m_reticleIndex */
 	int										m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
 	float									m_debugMenuHeight = 0.0f;			///< Height of the debug menu when in developer mode
-    GuiPane*								m_currentUserPane;					///< Current user information pane
+    GuiPane*								m_currentUserPane = nullptr;		///< Current user information pane
 
 	// Drop down selection writebacks
 	int										m_ddCurrentUser = 0;				///< Index of current user
