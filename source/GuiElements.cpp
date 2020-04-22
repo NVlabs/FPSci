@@ -434,13 +434,26 @@ void UserMenu::updateUserPane(const MenuConfig& config)
 		sensitivityNb->setWidth(300.0);
 		sensitivityNb->setEnabled(config.allowSensitivityChange);
 	} m_currentUserPane->endRow();
+
 	if (config.allowTurnScaleChange) {
-		m_currentUserPane->beginRow(); {
-			m_currentUserPane->addNumberBox("Turn Scale X", &(user->turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
-		} m_currentUserPane->endRow();
-		m_currentUserPane->beginRow(); {
-			m_currentUserPane->addNumberBox("Turn Scale Y", &(user->turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
-		} m_currentUserPane->endRow();
+		// X turn scale
+		if (config.xTurnScaleAdjustMode != "None") {
+			m_currentUserPane->beginRow(); {
+				m_currentUserPane->addNumberBox("Turn Scale X", &(user->turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
+			} m_currentUserPane->endRow();
+		}
+		// Y turn scale
+		if (config.yTurnScaleAdjustMode != "None") {
+			m_currentUserPane->beginRow(); {
+				if (config.yTurnScaleAdjustMode == "Slider") {
+					m_currentUserPane->addNumberBox("Turn Scale Y", &(user->turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
+				}
+				else if (config.yTurnScaleAdjustMode == "Invert") {
+					m_currentUserPane->addCheckBox("Invert Y", &(user->invertY));
+
+				}
+			} m_currentUserPane->endRow();
+		}
 	}
 
 	// Reticle configuration

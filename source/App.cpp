@@ -928,13 +928,16 @@ void App::drawHUD(RenderDevice *rd) {
 }
 
 Vector2 App::currentTurnScale() {
-	Vector2 baseTurnScale = sessConfig->player.turnScale * userTable.getCurrentUser()->turnScale;;
+	const UserConfig* user = userTable.getCurrentUser();
+	Vector2 baseTurnScale = sessConfig->player.turnScale * user->turnScale;
+	// Apply y-invert here
+	if (user->invertY) baseTurnScale.y = -baseTurnScale.y;
 	// If we're not scoped just return the normal user turn scale
 	if (!m_weapon->scoped()) return baseTurnScale;
 	// Otherwise create scaled turn scale for the scoped state
-	if (userTable.getCurrentUser()->scopeTurnScale.length() > 0) {
+	if (user->scopeTurnScale.length() > 0) {
 		// User scoped turn scale specified, don't perform default scaling
-		return baseTurnScale * userTable.getCurrentUser()->scopeTurnScale;
+		return baseTurnScale * user->scopeTurnScale;
 	}
 	else {
 		// Otherwise scale the scope turn scalue using the ratio of FoV

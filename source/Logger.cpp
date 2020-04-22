@@ -367,6 +367,8 @@ void FPSciLogger::addQuestion(Question q, String session) {
 }
 
 void FPSciLogger::logUserConfig(const UserConfig& user, const String session_ref, const String position) {
+	// Collapse Y-inversion into per-user turn scale (no need to complicate the log)
+	float yTurnScale = user.invertY ? -user.turnScale.y : user.turnScale.y;
 	RowEntry row = {
 		"'" + user.id + "'",
 		"'" + session_ref + "'",
@@ -379,7 +381,7 @@ void FPSciLogger::logUserConfig(const UserConfig& user, const String session_ref
 		"'" + user.reticleColor[0].toString() + "'",
 		"'" + user.reticleColor[1].toString() + "'",
 		String(std::to_string(user.turnScale.x)),
-		String(std::to_string(user.turnScale.y))
+		String(std::to_string(yTurnScale))
 	};
 	m_users.append(row);
 }
