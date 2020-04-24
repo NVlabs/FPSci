@@ -645,5 +645,6 @@ void UserMenu::updateSessionPress() {
 
 void UserMenu::setVisible(bool enable) {
 	GuiWindow::setVisible(enable);
-	m_app->setDirectMode(!enable);				// Set view control (direct) vs pointer (indirect) based on window visibility
+	// Set view control (direct) vs pointer (indirect) based on window visibility
+	m_app->setDirectMode(!enable);
 }
