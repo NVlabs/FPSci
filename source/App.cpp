@@ -95,20 +95,18 @@ void App::openUserSettingsWindow() {
 
 /** Update the mouse mode/sensitivity */
 void App::updateMouseSensitivity() {
-    // G3D expects mouse sensitivity in radians
-    // we're converting from mouseDPI and centimeters/360 which explains
-    // the screen resolution (dots), cm->in factor (2.54) and 2PI
-    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
-    // additional correction factor based on few samples - TODO: need more careful setup to study this
-    mouseSensitivity = mouseSensitivity * 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
+    const UserConfig* user = userTable.getCurrentUser();
+    // Converting from mouseDPI (dots/in) and sensitivity (cm/turn) into rad/dot which explains cm->in (2.54) and turn->rad (2*PI) factors
+    // rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
+    const double mouseSensitivity = 2.0 * pi() * 2.54 / (user->cmp360 * user->mouseDPI);
     const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
     if (m_userSettingsMode) {
-        // set to 3rd person
-        fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
+        // Set to 3rd person (i.e. show the mouse cursor)
+        fpm->setMouseMode(FirstPersonManipulator::MouseMode::MOUSE_DIRECT_RIGHT_BUTTON);
     }
     else {
-        // Force into FPS mode
-        fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
+        // Set to first-person mode (i.e. hide the mouse cursor)
+        fpm->setMouseMode(FirstPersonManipulator::MouseMode::MOUSE_DIRECT);
     }
 	// Control player motion using the experiment config parameter
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");

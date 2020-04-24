@@ -44,19 +44,19 @@ protected:
 #endif
 
 public:
-	float			mouseSensitivity;		///< Player mouse sensitivity
-	Vector2			turnScale;				///< Player mouse turn rate scaler
+	float			mouseSensitivity;		    ///< Player mouse sensitivity
+	Vector2			turnScale;				    ///< Player mouse turn rate scaler
 
-	float*			moveRate;				///< Player movement rate (m/s)
-	Vector2*		moveScale;				///< Player X/Y movement scale vector (interpreted as unit vector)
-	Array<bool>*	axisLock;				///< World-space axis lock
+	float*			moveRate = nullptr;	        ///< Player movement rate (m/s)
+	Vector2*		moveScale = nullptr;	    ///< Player X/Y movement scale vector (interpreted as unit vector)
+	Array<bool>*	axisLock = nullptr;		    ///< World-space axis lock
 	
-	float*			jumpVelocity;			///< Player vertical (+Y) jump velocity
-	float*			jumpInterval;			///< Player minimum jump interval limit
-	bool*			jumpTouch;				///< Require contact for jump?
+	float*			jumpVelocity = nullptr;		///< Player vertical (+Y) jump velocity
+	float*			jumpInterval = nullptr;		///< Player minimum jump interval limit
+	bool*			jumpTouch = nullptr;	    ///< Require contact for jump?
 
-	float*			height;					///< Player height when standing
-	float*			crouchHeight;			///< Player height when crouched
+	float*			height = nullptr;			///< Player height when standing
+	float*			crouchHeight = nullptr;		///< Player height when crouched
 
     /** \brief Computes all triangles that could be hit during a
         slideMove with the current \a velocity, allowing that the
