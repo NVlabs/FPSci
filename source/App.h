@@ -119,6 +119,7 @@ public:
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
+	SystemConfig					sysConfig;						///< Configuration for the system/hardware
 	KeyMapping						keyMap;
 	shared_ptr<WaypointManager>		waypointManager;				///< Waypoint mananger pointer
 	
@@ -187,16 +188,6 @@ public:
 	virtual void onUserInput(UserInput* ui) override;
 	virtual void onCleanup() override;
     virtual void oneFrame() override;
-	
-	// hardware setting
-	struct ScreenSetting
-	{
-		float viewingDistance = 0.5f; // in m
-		float screenDiagonal = 25.0f * 0.0254f; // in m (diagonal)
-		Vector2 resolution = Vector2(1920, 1080);
-		float pixelSize = screenDiagonal / sqrt(resolution.x * resolution.x + resolution.y * resolution.y);
-		Vector2 screenSize = resolution * pixelSize;
-	} m_screenSetting;
 
 	bool							m_buttonUp = true;
 	bool							m_frameToggle = false;		///< Simple toggle flag used for frame rate click-to-photon monitoring
