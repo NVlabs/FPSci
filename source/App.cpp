@@ -95,17 +95,17 @@ void App::openUserSettingsWindow() {
 
 /** Update the mouse mode/sensitivity */
 void App::updateMouseSensitivity() {
+    const UserConfig* user = userTable.getCurrentUser();
     // Converting from mouseDPI (dots/in) and sensitivity (cm/turn) into rad/dot which explains cm->in (2.54) and turn->rad (2*PI) factors
-	// rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
-	const UserConfig* user = userTable.getCurrentUser();
+    // rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
     const double mouseSensitivity = 2.0 * pi() * 2.54 / (user->cmp360 * user->mouseDPI);
     const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
     if (m_userSettingsMode) {
-        // set to 3rd person (i.e. show the mouse)
+        // Set to 3rd person (i.e. show the mouse cursor)
         fpm->setMouseMode(FirstPersonManipulator::MouseMode::MOUSE_DIRECT_RIGHT_BUTTON);
     }
     else {
-        // Force into first-person mode
+        // Set to first-person mode (i.e. hide the mouse cursor)
         fpm->setMouseMode(FirstPersonManipulator::MouseMode::MOUSE_DIRECT);
     }
 	// Control player motion using the experiment config parameter
