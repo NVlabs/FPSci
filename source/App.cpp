@@ -429,13 +429,17 @@ void App::updateSession(const String& id) {
 	Array<String> ids;
 	experimentConfig.getSessionIds(ids);
 	if (!id.empty() && ids.contains(id)) {
-		sessConfig = experimentConfig.getSessionConfigById(id);						// Get the new session config
-		logPrintf("User selected session: %s. Updating now...\n", id);				// Print message to log
-		m_sessDropDown->setSelectedValue(id);										// Update session drop-down selection
-		sess = Session::create(this, sessConfig);									// Create the session
+		// Load the session config specified by the id
+		sessConfig = experimentConfig.getSessionConfigById(id);
+		logPrintf("User selected session: %s. Updating now...\n", id);
+		m_sessDropDown->setSelectedValue(id);
+
+		// Create the session based on the loaded config
+		sess = Session::create(this, sessConfig);
 	}
 	else {
-		sessConfig = SessionConfig::create();										// Create an empty session
+		// Create an empty session
+		sessConfig = SessionConfig::create();
 		sess = Session::create(this);
 	}
 
@@ -454,11 +458,12 @@ void App::updateSession(const String& id) {
 
 	// Load the experiment scene if we haven't already (target only)
 	if (sessConfig->sceneName.empty()) {
-		if (m_loadedScene.empty()) {		// No scene specified
-			loadScene(m_defaultScene);		// Use this as the default
+		// No scene specified, load default scene
+		if (m_loadedScene.empty()) {
+			loadScene(m_defaultScene);
 			m_loadedScene = m_defaultScene;
 		}
-		// Otherwise just let the loaded scene persist
+		// Otherwise let the loaded scene persist
 	}
 	else if (sessConfig->sceneName != m_loadedScene) {
 		loadScene(sessConfig->sceneName);
@@ -489,12 +494,11 @@ void App::updateSession(const String& id) {
 	// Player parameters
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	sess->initialHeadingRadians = player->heading();
-	UserConfig *user = userTable.getCurrentUser();
-	// Copied from old FPM code
-	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (user->cmp360 * user->mouseDPI);
-	mouseSens *= 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
-	player->mouseSensitivity = (float)mouseSens;
-	player->turnScale		= currentTurnScale();					// Compound the session turn scale w/ the user turn scale...
+
+	// Update player mouse sensitivity and turn scale
+	updateMouseSensitivity();
+
+	// Copy session player settings into the player
 	player->moveRate		= &sessConfig->player.moveRate;
 	player->moveScale		= &sessConfig->player.moveScale;
 	player->axisLock		= &sessConfig->player.axisLock;
@@ -523,6 +527,7 @@ void App::updateSession(const String& id) {
 
 	// Initialize the experiment (this creates the results file)
 	sess->onInit(logName+".db", experimentConfig.description + "/" + sessConfig->description);
+
 	// Don't create a results file for a user w/ no sessions left
 	if (m_sessDropDown->numElements() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
