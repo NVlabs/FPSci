@@ -43,8 +43,8 @@ void App::onInit() {
 	userStatusTable.validate(sessionIds);
 	
 	// Get and save system configuration
-	sysConfig.printToLog();											// Print system info to log.txt
-	sysConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
+	systemConfig.printToLog();											// Print system info to log.txt
+	systemConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
 
 	// Load the key binds
 	keyMap = KeyMapping::load();
@@ -510,12 +510,12 @@ void App::updateSession(const String& id) {
 
 	// Check for need to start latency logging and if so run the logger now
 	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
-	if (sysConfig.hasLogger) {
+	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
 		}
 		if (m_pyLogger == nullptr) {
-			m_pyLogger = PythonLogger::create(sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
+			m_pyLogger = PythonLogger::create(systemConfig.loggerComPort, systemConfig.hasSync, systemConfig.syncComPort);
 		}
 		else {
 			// Handle running logger if we need to (terminate then merge results)
@@ -935,8 +935,8 @@ void App::drawClickIndicator(RenderDevice *rd, String mode) {
 }
 
 void App::drawHUD(RenderDevice *rd) {
-	// Draw the HUD elements
-	const Vector2 scale = Vector2(rd->viewport().width()/sysConfig.displayXRes, rd->viewport().height()/sysConfig.displayYRes);
+	// Scale is used to position/resize the "score banner" when the window changes size in "windowed" mode (always 1 in fullscreen mode).
+	const Vector2 scale = Vector2(rd->viewport().width()/systemConfig.displayXRes, rd->viewport().height()/systemConfig.displayYRes);
 
 	// Weapon ready status (cooldown indicator)
 	if (sessConfig->hud.renderWeaponStatus) {
@@ -1294,7 +1294,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 	}
 
 	rd->push2D(); {
-		const float scale = rd->viewport().width() / sysConfig.displayXRes;
+		const float scale = rd->viewport().width() / systemConfig.displayXRes;
 		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 		// FPS display (faster than the full stats widget)
