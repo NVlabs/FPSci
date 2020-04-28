@@ -140,7 +140,8 @@ public:
 	}
 };
 
-/** System configuration control and logging */
+/** System configuration control and logging 
+	The current implementation is heavily Windows-specific */
 class SystemConfig {
 public:
 	// Output/runtime read parameters
