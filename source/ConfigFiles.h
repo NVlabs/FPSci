@@ -1129,10 +1129,39 @@ public:
 
 };
 
+/** Storage for static (never changing) HUD elements */
+struct StaticHudElement {
+	String			filename;												///< Filename of the image
+	Vector2			position;												///< Position to place the element (fractional window-space)
+	Vector2			scale = Vector2(1.0, 1.0);								///< Scale to apply to the image
+
+	StaticHudElement() {};
+	StaticHudElement(const Any& any) {
+		AnyTableReader reader(any);
+		reader.get("filename", filename, "Must provide filename for all Static HUD elements!");
+		reader.get("position", position, "Must provide position for all static HUD elements");
+		reader.getIfPresent("scale", scale);
+	}
+
+	Any toAny(const bool forceAll = false) const {
+		Any a(Any::TABLE);
+		a["filename"] = filename;
+		a["position"] = position;
+		if (forceAll || scale != Vector2(1.0, 1.0))  a["scale"] = scale;
+		return a;
+	}
+
+	bool operator!=(StaticHudElement other) const {
+		return filename != other.filename ||
+			position != other.position ||
+			scale != other.scale;
+	}
+};
+
 class HudConfig {
 public:
 	// HUD parameters
-	bool            enable = false;							            ///< Master control for all HUD elements
+	bool            enable = false;											///< Master control for all HUD elements
 	bool            showBanner = false;						                ///< Show the banner display
 	float           bannerVertVisible = 0.41f;				                ///< Vertical banner visibility
 	float           bannerLargeFontSize = 30.0f;				            ///< Banner percent complete font size
@@ -1164,6 +1193,8 @@ public:
 	int             cooldownSubdivisions = 64;									///< Number of polygon divisions in the "ring"
 	Color4          cooldownColor = Color4(1.0f, 1.0f, 1.0f, 0.75f);			///< Cooldown ring color when active (transparent when inactive)
 
+	Array<StaticHudElement> staticElements;										///< A set of static HUD elements to draw
+
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
@@ -1188,6 +1219,7 @@ public:
 			reader.getIfPresent("cooldownThickness", cooldownThickness);
 			reader.getIfPresent("cooldownSubdivisions", cooldownSubdivisions);
 			reader.getIfPresent("cooldownColor", cooldownColor);
+			reader.getIfPresent("staticHUDElements", staticElements);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1218,6 +1250,7 @@ public:
 		if(forceAll || def.cooldownThickness != cooldownThickness)						a["cooldownThickness"] = cooldownThickness;
 		if(forceAll || def.cooldownSubdivisions != cooldownSubdivisions)				a["cooldownSubdivisions"] = cooldownSubdivisions;
 		if(forceAll || def.cooldownColor != cooldownColor)								a["cooldownColor"] = cooldownColor;
+		if (forceAll || def.staticElements != staticElements)							a["staticHUDElements"] = staticElements;
 		return a;
 	}
 };

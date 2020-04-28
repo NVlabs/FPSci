@@ -80,7 +80,7 @@ void App::onInit() {
 	   
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
-	hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
+	hudTextures.set("scoreBannerBackdrop", Texture::fromFile(System::findDataFile("gui/scoreBannerBackdrop.png")));
 
 	updateMouseSensitivity();			// Update (apply) mouse sensitivity
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
@@ -480,6 +480,11 @@ void App::updateSession(const String& id) {
 	m_weapon->loadModels();
 	m_weapon->loadSounds();
 	m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
+
+	// Load static HUD textures
+	for (StaticHudElement element : sessConfig->hud.staticElements) {
+		hudTextures.set(element.filename, Texture::fromFile(System::findDataFile(element.filename)));
+	}
 
 	// Create a series of colored materials to choose from for target health
 	for (int i = 0; i < m_MatTableSize; i++) {
@@ -1008,8 +1013,9 @@ void App::drawHUD(RenderDevice *rd) {
 	}
 
 	if (sessConfig->hud.showBanner && !emergencyTurbo) {
-		const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->hud.bannerVertVisible*hudTexture->height() * scale.y + debugMenuHeight());
-		Draw::rect2D((hudTexture->rect2DBounds() * scale - hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), hudTexture);
+		const shared_ptr<Texture> scoreBannerTexture = hudTextures["scoreBannerBackdrop"];
+		const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->hud.bannerVertVisible*scoreBannerTexture->height() * scale.y + debugMenuHeight());
+		Draw::rect2D((scoreBannerTexture->rect2DBounds() * scale - scoreBannerTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), scoreBannerTexture);
 
 		// Create strings for time remaining, progress in sessions, and score
 		float remainingTime = sess->getRemainingTrialTime();
@@ -1025,6 +1031,15 @@ void App::drawHUD(RenderDevice *rd) {
 		hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale.x, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 		hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale.x * sessConfig->hud.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
 		hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+	}
+
+	// Draw any static HUD elements
+	for (StaticHudElement element : sessConfig->hud.staticElements) {
+		if (!hudTextures.containsKey(element.filename)) continue;						// Skip any items we haven't loaded
+		const shared_ptr<Texture> texture = hudTextures[element.filename];				// Get the loaded texture for this element
+		const Vector2 size = element.scale * scale * texture->vector2Bounds();			// Get the final size of the image
+		const Vector2 pos = (element.position * rd->viewport().wh()) - size/2.0;		// Compute position (center image on provided position)
+		Draw::rect2D(Rect2D::xywh(pos, size), rd, Color3::white(), texture);			// Draw the rect
 	}
 }
 

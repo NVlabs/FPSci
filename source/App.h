@@ -109,7 +109,7 @@ public:
 	shared_ptr<GFont>               hudFont;						///< Font used in HUD
 	Array<shared_ptr<GFont>>		floatingCombatText;				///< Floating combat text array
 	shared_ptr<Texture>             reticleTexture;					///< Texture used for reticle
-	shared_ptr<Texture>             hudTexture;						///< Texture used for HUD
+	Table<String, shared_ptr<Texture>> hudTextures;					///< Textures used for the HUD
 	shared_ptr<GuiTheme>			theme;	
 	bool                            emergencyTurbo = false;			///< Lower rendering quality to improve performance
 
