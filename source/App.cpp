@@ -43,6 +43,7 @@ void App::onInit() {
 	userStatusTable.validate(sessionIds);
 	
 	// Get and save system configuration
+	systemConfig = SystemConfig::load();
 	systemConfig.printToLog();											// Print system info to log.txt
 	systemConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
 
