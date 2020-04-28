@@ -46,6 +46,8 @@ void App::onInit() {
 	systemConfig.printToLog();											// Print system info to log.txt
 	systemConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
 
+	displayRes = OSWindow::primaryDisplaySize();						
+
 	// Load the key binds
 	keyMap = KeyMapping::load();
 	userInput->setKeyMapping(&keyMap.uiMap);
@@ -936,7 +938,7 @@ void App::drawClickIndicator(RenderDevice *rd, String mode) {
 
 void App::drawHUD(RenderDevice *rd) {
 	// Scale is used to position/resize the "score banner" when the window changes size in "windowed" mode (always 1 in fullscreen mode).
-	const Vector2 scale = Vector2(rd->viewport().width()/systemConfig.displayXRes, rd->viewport().height()/systemConfig.displayYRes);
+	const Vector2 scale = rd->viewport().wh() / displayRes;
 
 	// Weapon ready status (cooldown indicator)
 	if (sessConfig->hud.renderWeaponStatus) {
@@ -1294,7 +1296,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 	}
 
 	rd->push2D(); {
-		const float scale = rd->viewport().width() / systemConfig.displayXRes;
+		const float scale = rd->viewport().width() / displayRes.x;
 		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 		// FPS display (faster than the full stats widget)

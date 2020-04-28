@@ -119,7 +119,7 @@ public:
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
-	SystemConfig					systemConfig;						///< Configuration for the system/hardware
+	SystemConfig					systemConfig;					///< Configuration for the system/hardware
 	KeyMapping						keyMap;
 	shared_ptr<WaypointManager>		waypointManager;				///< Waypoint mananger pointer
 	
@@ -136,6 +136,8 @@ public:
 	float lastSetFrameRate = 0.0f;		///< Last set frame rate
 	const int numReticles = 55;			///< Total count of reticles available to choose from
 	float sceneBrightness = 1.0f;		///< Scene brightness scale factor
+
+	Vector2 displayRes;
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
