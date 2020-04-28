@@ -1601,10 +1601,9 @@ int main(int argc, const char* argv[]) {
 	GApp::Settings settings(argc, argv);
 
 	if (startupConfig.fullscreen) {
-		// Load the system configuration (used for full-screen sizing)
-		const SystemConfig sysConfig = SystemConfig::load();
-		settings.window.width = sysConfig.displayXRes;
-		settings.window.height = sysConfig.displayYRes;
+		// Use the primary 
+		settings.window.width = OSWindow::primaryDisplaySize().x;
+		settings.window.height = OSWindow::primaryDisplaySize().y;
 	}
 	else {
 		settings.window.width = (int)startupConfig.windowSize.x; 
