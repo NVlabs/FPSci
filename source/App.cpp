@@ -1605,8 +1605,8 @@ int main(int argc, const char* argv[]) {
 
 	if (startupConfig.fullscreen) {
 		// Use the primary 
-		settings.window.width = OSWindow::primaryDisplaySize().x;
-		settings.window.height = OSWindow::primaryDisplaySize().y;
+		settings.window.width = (int)OSWindow::primaryDisplaySize().x;
+		settings.window.height = (int)OSWindow::primaryDisplaySize().y;
 	}
 	else {
 		settings.window.width = (int)startupConfig.windowSize.x; 
