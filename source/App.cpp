@@ -43,9 +43,11 @@ void App::onInit() {
 	userStatusTable.validate(sessionIds);
 	
 	// Get and save system configuration
-	SystemConfig sysConfig = SystemConfig::load();
-	sysConfig.printToLog();											// Print system info to log.txt
-	sysConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
+	systemConfig = SystemConfig::load();
+	systemConfig.printToLog();											// Print system info to log.txt
+	systemConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
+
+	displayRes = OSWindow::primaryDisplaySize();						
 
 	// Load the key binds
 	keyMap = KeyMapping::load();
@@ -510,14 +512,13 @@ void App::updateSession(const String& id) {
 	player->crouchHeight	= &sessConfig->player.crouchHeight;
 
 	// Check for need to start latency logging and if so run the logger now
-	SystemConfig sysConfig = SystemConfig::load();
 	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
-	if (sysConfig.hasLogger) {
+	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
 		}
 		if (m_pyLogger == nullptr) {
-			m_pyLogger = PythonLogger::create(sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
+			m_pyLogger = PythonLogger::create(systemConfig.loggerComPort, systemConfig.hasSync, systemConfig.syncComPort);
 		}
 		else {
 			// Handle running logger if we need to (terminate then merge results)
@@ -836,7 +837,6 @@ bool App::onEvent(const GEvent& event) {
 void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 	// Put elements that should be delayed along w/ 3D here
 	rd->push2D(); {
-		const float scale = rd->viewport().width() / 1920.0f;
 		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 		// Draw target health bars
@@ -938,8 +938,8 @@ void App::drawClickIndicator(RenderDevice *rd, String mode) {
 }
 
 void App::drawHUD(RenderDevice *rd) {
-	// Draw the HUD elements
-	const Vector2 scale = Vector2(rd->viewport().width()/1920.0f, rd->viewport().height()/1080.0f);
+	// Scale is used to position/resize the "score banner" when the window changes size in "windowed" mode (always 1 in fullscreen mode).
+	const Vector2 scale = rd->viewport().wh() / displayRes;
 
 	// Weapon ready status (cooldown indicator)
 	if (sessConfig->hud.renderWeaponStatus) {
@@ -1297,7 +1297,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 	}
 
 	rd->push2D(); {
-		const float scale = rd->viewport().width() / 1920.0f;
+		const float scale = rd->viewport().width() / displayRes.x;
 		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 		// FPS display (faster than the full stats widget)
@@ -1593,6 +1593,7 @@ int main(int argc, const char* argv[]) {
         startupConfig.toAny(true).save("startupconfig.Any");
     }
 
+
 	{
 		G3DSpecification spec;
         spec.audio = startupConfig.audioEnable;
@@ -1603,8 +1604,9 @@ int main(int argc, const char* argv[]) {
 	GApp::Settings settings(argc, argv);
 
 	if (startupConfig.fullscreen) {
-		settings.window.width = 1920;
-		settings.window.height = 1080;
+		// Use the primary 
+		settings.window.width = (int)OSWindow::primaryDisplaySize().x;
+		settings.window.height = (int)OSWindow::primaryDisplaySize().y;
 	}
 	else {
 		settings.window.width = (int)startupConfig.windowSize.x; 
