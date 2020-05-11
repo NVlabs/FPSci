@@ -247,19 +247,19 @@ public:
 	}
 };
 
-/** System hardware setup/logging configuration */
-class SystemConfig {
+/** Latency logging configuration */
+class LatencyLoggerConfig {
 public:
 	// Input parameters
-	bool	hasLogger = false;			///< Indicates that a hardware logger is present in the system
+	bool	hasLogger = false;		///< Indicates that a hardware logger is present in the system
 	String	loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
-	bool	hasSync = false;			///< Indicates that a hardware sync will occur via serial card DTR signal
+	bool	hasSync = false;		///< Indicates that a hardware sync will occur via serial card DTR signal
 	String	syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
 
-	SystemConfig() {};
+	LatencyLoggerConfig() {};
 
 	/** Construct from Any */
-	SystemConfig(const Any& any) {
+	LatencyLoggerConfig(const Any& any) {
 		int settingsVersion = 1;
 		AnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
@@ -287,19 +287,19 @@ public:
 		return a;
 	}
 
-	/** Load a system config from file */
-	static SystemConfig load() {
-		// if file not found, create a default system config
+	/** Load a latency logger config from file */
+	static LatencyLoggerConfig load() {
+		// if file not found, create a default latency logger config
 		if (!FileSystem::exists("systemconfig.Any")) { 
-			return SystemConfig();		// Create the default
+			return LatencyLoggerConfig();		// Create the default
 		}
 		return Any::fromFile(System::findDataFile("systemconfig.Any"));
 	}
 
 
-	/** Print the system info to log.txt */
+	/** Print the latency logger config to log.txt */
 	void printToLog() {
-		logPrintf("\n-------------------\nSystem Config:\n-------------------\n\tLogger Present: %s\n\tLogger COM Port: %s\n\tSync Card Present: %s\n\tSync COM Port: %s\n",
+		logPrintf("\n-------------------\LDAT-R Config:\n-------------------\n\tLogger Present: %s\n\tLogger COM Port: %s\n\tSync Card Present: %s\n\tSync COM Port: %s\n",
 			hasLogger ? "True" : "False", 
 			hasLogger ? loggerComPort : "None", 
 			hasSync ? "True" : "False", 

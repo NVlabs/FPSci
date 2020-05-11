@@ -47,9 +47,10 @@ void App::onInit() {
 	info.printToLog();										// Print system info to log.txt
 
 	// Get and save system configuration
-	systemConfig = SystemConfig::load();
-	systemConfig.printToLog();								// Print the system config to log.txt								
+	latencyLoggerConfig = LatencyLoggerConfig::load();
+	latencyLoggerConfig.printToLog();						// Print the latency logger config to log.txt								
 
+	// Get the size of the primary display
 	displayRes = OSWindow::primaryDisplaySize();						
 
 	// Load the key binds
@@ -516,12 +517,12 @@ void App::updateSession(const String& id) {
 
 	// Check for need to start latency logging and if so run the logger now
 	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
-	if (systemConfig.hasLogger) {
+	if (latencyLoggerConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
 		}
 		if (m_pyLogger == nullptr) {
-			m_pyLogger = PythonLogger::create(systemConfig.loggerComPort, systemConfig.hasSync, systemConfig.syncComPort);
+			m_pyLogger = PythonLogger::create(latencyLoggerConfig.loggerComPort, latencyLoggerConfig.hasSync, latencyLoggerConfig.syncComPort);
 		}
 		else {
 			// Handle running logger if we need to (terminate then merge results)
