@@ -1073,6 +1073,7 @@ public:
 		if (forceAll || def.frameRate != frameRate)					a["frameRate"] = frameRate;
 		if (forceAll || def.frameDelay != frameDelay)				a["frameDelay"] = frameDelay;
 		if (forceAll || def.hFoV != hFoV)							a["horizontalFieldOfView"] = hFoV;
+		if (forceAll || def.split2DBuffer != split2DBuffer)			a["split2DBuffer"] = split2DBuffer;
 		if (forceAll || def.shader2D != shader2D)					a["shader2D"] = shader2D;
 		if (forceAll || def.shader3D != shader3D)					a["shader3D"] = shader3D;
 		if (forceAll || def.shaderComposite != shaderComposite)		a["shaderComposite"] = shaderComposite;
