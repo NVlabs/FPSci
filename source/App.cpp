@@ -471,18 +471,23 @@ void App::updateParameters(int frameDelay, float frameRate) {
 }
 
 void App::updateShaderBuffers() {
+	// Parameters for update
+	const float width = renderDevice->width();
+	const float height = renderDevice->height();
+	const ImageFormat* format = m_framebuffer->texture(0)->format();
+
 	// This updates/resizes the buffers
 	if (sessConfig->render.split2DBuffer) {
-		m_buffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", m_framebuffer->width() , m_framebuffer->height()));
+		m_buffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", width, height));
 	}
 	if (sessConfig->render.shader2D != "") {
-		m_shader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", m_framebuffer->width(), m_framebuffer->height()));
+		m_shader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height));
 	}
 	if (sessConfig->render.shader3D != "") {
-		m_shader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
+		m_shader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", width, height, format));
 	}
 	if (sessConfig->render.shaderComposite != "") {
-		m_shaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
+		m_shaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", width, height, format));
 	}
 }
 
