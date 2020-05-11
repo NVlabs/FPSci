@@ -140,10 +140,10 @@ public:
 	}
 };
 
-/** System configuration control and logging 
-	The current implementation is heavily Windows-specific */
-class SystemConfig {
-public:
+/** Information about the system being used
+The current implementation is heavily Windows - specific */
+class SystemInfo {
+public: 
 	// Output/runtime read parameters
 	String	cpuName;			///< The vendor name of the CPU being used
 	int		coreCount;			///< Core count for the CPU being used
@@ -155,6 +155,101 @@ public:
 	int		displayXSize;		///< The horizontal size of the display in mm
 	int		displayYSize;		///< The vertical size of the display in mm
 
+	/** Get the system info using (windows) calls */
+	static SystemInfo get(void) {
+		SystemInfo info;
+		// Get CPU name string
+		int cpuInfo[4] = { -1 };
+		unsigned nExIds, i = 0;
+		char cpuBrandString[0x40];
+		__cpuid(cpuInfo, 0x80000000);
+		nExIds = cpuInfo[0];
+		for (unsigned int i = 0x80000000; i <= nExIds; i++) {
+			__cpuid(cpuInfo, i);
+			// Interpret CPU brand string
+			switch (i) {
+			case 0x80000002:
+				memcpy(cpuBrandString, cpuInfo, sizeof(cpuInfo));
+				break;
+			case 0x80000003:
+				memcpy(cpuBrandString + 16, cpuInfo, sizeof(cpuInfo));
+				break;
+			case 0x80000004:
+				memcpy(cpuBrandString + 32, cpuInfo, sizeof(cpuInfo));
+				break;
+			default:
+				// Removed these are they are unnecessary prints...
+				//logPrintf("Couldn't get system info...\n");
+				break;
+			}
+		}
+		info.cpuName = cpuBrandString;
+
+		// Get CPU core count
+		SYSTEM_INFO sysInfo;
+		GetSystemInfo(&sysInfo);
+		info.coreCount = sysInfo.dwNumberOfProcessors;
+
+		// Get memory size
+		MEMORYSTATUSEX statex;
+		statex.dwLength = sizeof(statex);
+		GlobalMemoryStatusEx(&statex);
+		info.memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
+
+		// Get GPU name string
+		String gpuVendor = String((char*)glGetString(GL_VENDOR)).append(" ");
+		String gpuRenderer = String((char*)glGetString(GL_RENDERER));
+		info.gpuName = gpuVendor.append(gpuRenderer);
+
+		// Get display information (monitor name)
+		// This seems to break on many systems/provide less than descriptive names!!!
+		/*DISPLAY_DEVICE dd;
+		int deviceIndex = 0;
+		int monitorIndex = 0;
+		EnumDisplayDevices(0, deviceIndex, &dd, 0);
+		std::string deviceName = dd.DeviceName;
+		EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
+		displayName = String(dd.DeviceString);*/
+		info.displayName = String("TODO");
+
+		// Get screen resolution
+		info.displayXRes = GetSystemMetrics(SM_CXSCREEN);
+		info.displayYRes = GetSystemMetrics(SM_CYSCREEN);
+
+		// Get display size
+		HWND const hwnd = 0;
+		HDC const hdc = GetDC(hwnd);
+		assert(hdc);
+		info.displayXSize = GetDeviceCaps(hdc, HORZSIZE);
+		info.displayYSize = GetDeviceCaps(hdc, VERTSIZE);
+		
+		return info;
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["CPU"] = cpuName;
+		a["GPU"] = gpuName;
+		a["CoreCount"] = coreCount;
+		a["MemoryCapacityMB"] = memCapacityMB;
+		a["DisplayName"] = displayName;
+		a["DisplayResXpx"] = displayXRes;
+		a["DisplayResYpx"] = displayYRes;
+		a["DisplaySizeXmm"] = displayXSize;
+		a["DisplaySizeYmm"] = displayYSize;
+		return a;
+	}
+
+	void printToLog() {
+		// Print system info to log
+		logPrintf("\n-------------------\nSystem Info:\n-------------------\n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n",
+			cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
+	}
+};
+
+/** System hardware setup/logging configuration */
+class SystemConfig {
+public:
 	// Input parameters
 	bool	hasLogger = false;			///< Indicates that a hardware logger is present in the system
 	String	loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
@@ -179,23 +274,12 @@ public:
 		default:
 			debugPrintf("Settings version '%d' not recognized in SystemConfig.\n", settingsVersion);
 			break;
-		}
-		// Get the system info
-		getSystemInfo();		
+		}	
 	}
 
 	/** Serialize to Any */
 	Any toAny(const bool forceAll = true) const{
 		Any a(Any::TABLE);
-		a["CPU"] = cpuName;
-		a["GPU"] = gpuName;
-		a["CoreCount"] = coreCount;
-		a["MemoryCapacityMB"] = memCapacityMB;
-		a["DisplayName"] = displayName;
-		a["DisplayResXpx"] = displayXRes;
-		a["DisplayResYpx"] = displayYRes;
-		a["DisplaySizeXmm"] = displayXSize;
-		a["DisplaySizeYmm"] = displayYSize;
 		a["HasLogger"] = hasLogger;
 		a["LoggerComPort"] = loggerComPort;
 		a["HasSync"] = hasSync;
@@ -207,87 +291,20 @@ public:
 	static SystemConfig load() {
 		// if file not found, create a default system config
 		if (!FileSystem::exists("systemconfig.Any")) { 
-			SystemConfig config = SystemConfig();		// Create the default
-			config.getSystemInfo();						// Get system info
-			config.toAny().save("systemconfig.Any");	// Save a file
-			return config;
+			return SystemConfig();		// Create the default
 		}
 		return Any::fromFile(System::findDataFile("systemconfig.Any"));
 	}
 
-	/** Get the system info using (windows) calls */
-	void getSystemInfo(void) {
-		// Get CPU name string
-		int cpuInfo[4] = { -1 };
-		unsigned nExIds, i = 0;
-		char cpuBrandString[0x40];
-		__cpuid(cpuInfo, 0x80000000);
-		nExIds = cpuInfo[0];
-		for (unsigned int i = 0x80000000; i <= nExIds; i++) {
-			__cpuid(cpuInfo, i);
-			// Interpret CPU brand string
-			switch (i) {
-			case 0x80000002:
-				memcpy(cpuBrandString, cpuInfo, sizeof(cpuInfo));
-				break;
-			case 0x80000003:
-				memcpy(cpuBrandString + 16, cpuInfo, sizeof(cpuInfo));
-				break;
-			case 0x80000004:
-				memcpy(cpuBrandString + 32, cpuInfo, sizeof(cpuInfo));
-				break;
-			default:
-				logPrintf("Couldn't get system info...\n");
-			}
-		}
-		cpuName = cpuBrandString;
-
-		// Get CPU core count
-		SYSTEM_INFO sysInfo;
-		GetSystemInfo(&sysInfo);
-		coreCount = sysInfo.dwNumberOfProcessors;
-
-		// Get memory size
-		MEMORYSTATUSEX statex;
-		statex.dwLength = sizeof(statex);
-		GlobalMemoryStatusEx(&statex);
-		memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
-
-		// Get GPU name string
-		String gpuVendor = String((char*)glGetString(GL_VENDOR)).append(" ");
-		String gpuRenderer = String((char*)glGetString(GL_RENDERER));
-		gpuName = gpuVendor.append(gpuRenderer);
-
-		// Get display information (monitor name)
-		// This seems to break on many systems/provide less than descriptive names!!!
-		/*DISPLAY_DEVICE dd;
-		int deviceIndex = 0;
-		int monitorIndex = 0;
-		EnumDisplayDevices(0, deviceIndex, &dd, 0);
-		std::string deviceName = dd.DeviceName;
-		EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
-		displayName = String(dd.DeviceString);*/
-		displayName = String("TODO");
-
-		// Get screen resolution
-		displayXRes = GetSystemMetrics(SM_CXSCREEN);
-		displayYRes = GetSystemMetrics(SM_CYSCREEN);
-
-		// Get display size
-		HWND const hwnd = 0;
-		HDC const hdc = GetDC(hwnd);
-		assert(hdc);
-		displayXSize = GetDeviceCaps(hdc, HORZSIZE);
-		displayYSize = GetDeviceCaps(hdc, VERTSIZE);
-	}
 
 	/** Print the system info to log.txt */
 	void printToLog() {
-		// Print system info to log
-		logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n",
-			cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
-		logPrintf("Logger Present: %s\nLogger COM Port: %s\nSync Card Present: %s\nSync COM Port: %s\n",
-			hasLogger ? "True" : "False", loggerComPort, hasSync ? "True" : "False", syncComPort);
+		logPrintf("\n-------------------\nSystem Config:\n-------------------\n\tLogger Present: %s\n\tLogger COM Port: %s\n\tSync Card Present: %s\n\tSync COM Port: %s\n",
+			hasLogger ? "True" : "False", 
+			hasLogger ? loggerComPort : "None", 
+			hasSync ? "True" : "False", 
+			hasSync ? syncComPort : "None"
+		);
 	}
 };
 
@@ -1755,7 +1772,7 @@ public:
 
 	/** Print the experiment config to the log */
 	void printToLog() {
-		logPrintf("-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
+		logPrintf("\n-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
 			description, sceneName, timing.feedbackDuration, timing.readyDuration, timing.taskDuration, weapon.maxAmmo);
 		// Iterate through sessions and print them
 		for (int i = 0; i < sessions.size(); i++) {

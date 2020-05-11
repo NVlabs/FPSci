@@ -42,10 +42,13 @@ void App::onInit() {
 	userStatusTable.printToLog();
 	userStatusTable.validate(sessionIds);
 	
+	// Get info about the system
+	SystemInfo info = SystemInfo::get();
+	info.printToLog();										// Print system info to log.txt
+
 	// Get and save system configuration
 	systemConfig = SystemConfig::load();
-	systemConfig.printToLog();											// Print system info to log.txt
-	systemConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
+	systemConfig.printToLog();								// Print the system config to log.txt								
 
 	displayRes = OSWindow::primaryDisplaySize();						
 
