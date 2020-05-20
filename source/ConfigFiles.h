@@ -250,7 +250,7 @@ public:
 
 	void printToLog() {
 		// Print system info to log
-		logPrintf("\n-------------------\nSystem Info:\n-------------------\n\tHostname: %s\n\tUsername: %s\n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n",
+		logPrintf("\n-------------------\nSystem Info:\n-------------------\n\tHostname: %s\n\tUsername: %s\n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n\n",
 			hostName, userName, cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
 	}
 };
@@ -304,14 +304,15 @@ public:
 		return Any::fromFile(System::findDataFile("systemconfig.Any"));
 	}
 
-
 	/** Print the latency logger config to log.txt */
 	void printToLog() {
-		logPrintf("\n-------------------\LDAT-R Config:\n-------------------\n\tLogger Present: %s\n\tLogger COM Port: %s\n\tSync Card Present: %s\n\tSync COM Port: %s\n",
-			hasLogger ? "True" : "False", 
-			hasLogger ? loggerComPort : "None", 
-			hasSync ? "True" : "False", 
-			hasSync ? syncComPort : "None"
+		const String loggerComStr = hasLogger ? loggerComPort : "None";
+		const String syncComStr = hasSync ? syncComPort : "None";
+		logPrintf("-------------------\nLDAT-R Config:\n-------------------\n\tLogger Present: %s\n\tLogger COM Port: %s\n\tSync Card Present: %s\n\tSync COM Port: %s\n\n",
+			hasLogger ? "True" : "False",
+			loggerComStr.c_str(),
+			hasSync ? "True" : "False",
+			syncComStr.c_str()
 		);
 	}
 };
