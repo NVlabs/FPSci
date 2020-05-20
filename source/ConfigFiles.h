@@ -145,6 +145,8 @@ The current implementation is heavily Windows - specific */
 class SystemInfo {
 public: 
 	// Output/runtime read parameters
+	String	hostName;			///< System host (PC) name
+	String  userName;			///< System username
 	String	cpuName;			///< The vendor name of the CPU being used
 	int		coreCount;			///< Core count for the CPU being used
 	String	gpuName;			///< The vendor name of the GPU being used
@@ -158,6 +160,10 @@ public:
 	/** Get the system info using (windows) calls */
 	static SystemInfo get(void) {
 		SystemInfo info;
+
+		info.hostName = getenv("COMPUTERNAME");		// Get the host (computer) name
+		info.userName = getenv("USERNAME");			// Get the current logged in username
+
 		// Get CPU name string
 		int cpuInfo[4] = { -1 };
 		unsigned nExIds, i = 0;
@@ -228,6 +234,8 @@ public:
 
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
+		a["hostname"] = hostName;
+		a["username"] = userName;
 		a["CPU"] = cpuName;
 		a["GPU"] = gpuName;
 		a["CoreCount"] = coreCount;
@@ -242,8 +250,8 @@ public:
 
 	void printToLog() {
 		// Print system info to log
-		logPrintf("\n-------------------\nSystem Info:\n-------------------\n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n",
-			cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
+		logPrintf("\n-------------------\nSystem Info:\n-------------------\n\tHostname: %s\n\tUsername: %s\n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n",
+			hostName, userName, cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
 	}
 };
 
