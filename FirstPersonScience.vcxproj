@@ -148,6 +148,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp" />
+    <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\Session.cpp" />
     <ClCompile Include="source\Logger.cpp" />
     <ClCompile Include="source\PhysicsScene.cpp" />

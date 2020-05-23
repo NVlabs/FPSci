@@ -293,7 +293,7 @@ public:
 	/** result recording */
 	void countClick() { m_clickCount++; }
 
-	Array<shared_ptr<TargetEntity>> targetArray() {
+	const Array<shared_ptr<TargetEntity>>& targetArray() const {
 		return m_targetArray;
 	}
 };

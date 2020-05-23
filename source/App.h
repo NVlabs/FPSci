@@ -77,7 +77,7 @@ protected:
 	/** Called from onInit */
 	void makeGUI();
 	void updateControls();
-	void loadModels();
+	virtual void loadModels();
 
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {
@@ -94,10 +94,19 @@ protected:
 	void hitTarget(shared_ptr<TargetEntity>);
 	void missEvent();
 
-	void drawHUD(RenderDevice *rd);
+	virtual void drawHUD(RenderDevice *rd);
 	void drawClickIndicator(RenderDevice *rd, String mode);
 
 public:
+
+	class Settings : public GApp::Settings {
+	public:
+		Settings(const StartupConfig& startupConfig, int argc, const char* argv[]);
+	};
+
+	/** global startup config - sets developer flags and experiment/user paths */
+	static StartupConfig startupConfig;
+
 	/* Moving from proctected so that Experiment classes can use it. */
 	shared_ptr<GFont>               outputFont;						///< Font used for output
 	shared_ptr<GFont>               hudFont;						///< Font used in HUD
@@ -156,7 +165,7 @@ public:
 	shared_ptr<UserConfig> getCurrUser(void) { return m_userSettingsWindow->getCurrUser(); }
 
 	void markSessComplete(String id);
-	void updateSession(const String& id);
+	virtual void updateSession(const String& id);
 	void updateParameters(int frameDelay, float frameRate);
 	void presentQuestion(Question question);
 
@@ -165,6 +174,8 @@ public:
 	   
 	/** opens the user settings window */
     void openUserSettingsWindow();
+
+	void closeUserSettingsWindow();
 
 	/** changes the mouse interaction (camera direct vs pointer) */
 	void setDirectMode(bool enable = true);

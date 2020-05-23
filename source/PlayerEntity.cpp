@@ -114,7 +114,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	m_jumpPressed = false;
 
 	// Get the mouse rotation here
-	Vector2 mouseRotate = ui->mouseDXY() * turnScale * (float)mouseSensitivity;
+	Vector2 mouseRotate = ui->mouseDXY() * turnScale * (float)m_pixelsToRadians;
 	float yaw = mouseRotate.x;
 	float pitch = mouseRotate.y;
 
@@ -132,19 +132,19 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     simulatePose(absoluteTime, deltaTime);
 
 	if (!isNaN(deltaTime)) {
-		// Translation update
-		if (m_motionEnable) {
-			m_inContact = slideMove(deltaTime);
-		}
-
-		// Rotation update
+		// Apply rotation first
 		m_headingRadians += m_desiredYawVelocity;												// Integrate the yaw change into heading
 		m_headingRadians = mod1((m_headingRadians) / (2 * pif())) * 2 * pif();					// Keep the user's heading value in the [0,2pi) range		
 		m_headTilt -= m_desiredPitchVelocity;													// Integrate the pitch change into head tilt
-		m_headTilt = clamp(m_headTilt, -89.9f * units::degrees(), 89.9f * units::degrees());	// Keep the user's head tilt to <90°
+		m_headTilt = clamp(m_headTilt, -89.9f * units::degrees(), 89.9f * units::degrees());	// Keep the user's head tilt to <90Â°
 		// Set player frame rotation based on the heading and tilt
 		m_frame.rotation = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians) * Matrix3::fromAxisAngle(Vector3::unitX(), m_headTilt);
-
+		
+		// Translation update - in direction after rotating
+		if (m_motionEnable) {
+			m_inContact = slideMove(deltaTime);
+		}
+		
 		// Check for "off map" condition and reset position here...
 		if (!isNaN(m_respawnHeight) && m_frame.translation.y < m_respawnHeight) {
 			respawn();

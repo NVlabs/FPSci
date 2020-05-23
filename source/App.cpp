@@ -13,8 +13,7 @@ int TrialCount::defaultCount;
 Array<String> UserSessionStatus::defaultSessionOrder;
 bool UserSessionStatus::randomizeDefaults;
 
-/** global startup config - sets developer flags and experiment/user paths */
-StartupConfig startupConfig;
+StartupConfig App::startupConfig;
 
 App::App(const GApp::Settings& settings) : GApp(settings) {}
 
@@ -38,7 +37,7 @@ void App::onInit() {
 	userTable.printToLog();
 
 	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load();
+	userStatusTable = UserStatusTable::load(startupConfig.userStatusConfig());
 	userStatusTable.printToLog();
 	userStatusTable.validate(sessionIds);
 	
@@ -91,6 +90,8 @@ void App::onInit() {
 	updateMouseSensitivity();									// Update (apply) mouse sensitivity
 	m_userSettingsWindow->updateSessionDropDown();				// Update the session drop down to remove already completed sessions
 	updateSession(m_userSettingsWindow->selectedSession());		// Update session to create results file/start collection
+
+	setFrameDuration(m_wallClockTargetDuration, REAL_TIME);
 }
 
 /** Handle then user settings window visibility */
@@ -98,18 +99,24 @@ void App::openUserSettingsWindow() {
     m_userSettingsWindow->setVisible(true);
 }
 
+/** Handle then user settings window visibility */
+void App::closeUserSettingsWindow() {
+
+	m_userSettingsWindow->setVisible(false);
+}
+
 /** Update the mouse mode/sensitivity */
 void App::updateMouseSensitivity() {
-    const UserConfig* user = userTable.getCurrentUser();
-    // Converting from mouseDPI (dots/in) and sensitivity (cm/turn) into rad/dot which explains cm->in (2.54) and turn->rad (2*PI) factors
-    // rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
-    const double mouseSensitivity = 2.0 * pi() * 2.54 / (user->cmp360 * user->mouseDPI);
-    const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+	const UserConfig* user = userTable.getCurrentUser();
+	// Converting from mouseDPI (dots/in) and sensitivity (cm/turn) into rad/dot which explains cm->in (2.54) and turn->rad (2*PI) factors
+	// rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
+	const double pixelsToRadians = 2.0 * pi() * 2.54 / (user->cmp360 * user->mouseDPI);
+	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 
 	// Control player motion using the experiment config parameter
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	if (notNull(player)) {
-		player->mouseSensitivity = (float)mouseSensitivity;
+		player->m_pixelsToRadians = (float)pixelsToRadians;
 		player->turnScale = currentTurnScale();
 	}
 }
@@ -323,7 +330,7 @@ void App::updateParameters(int frameDelay, float frameRate) {
 	float dt = 0;
 	if (frameRate > 0) dt = 1.0f / frameRate;
 	else dt = 1.0f / float(window()->settings().refreshRate);
-	setFrameDuration(dt, GApp::REAL_TIME);
+	setFrameDuration(dt, m_simTimeStep);
 }
 
 void App::updateSession(const String& id) {
@@ -1057,7 +1064,7 @@ void App::hitTarget(shared_ptr<TargetEntity> target) {
 		target->playDestroySound();
 
 		sess->countDestroy();
-		respawned = target->respawn();
+		respawned = target->tryRespawn();
 		// check for respawn
 		if (!respawned) {
 			// This is the final respawn
@@ -1528,59 +1535,34 @@ void App::oneFrame() {
     }
 }
 
-
-// Tells C++ to invoke command-line main() function even on OS X and Win32.
-G3D_START_AT_MAIN();
-
-int main(int argc, const char* argv[]) {
-
-    if (FileSystem::exists("startupconfig.Any")) {
-        startupConfig = Any::fromFile("startupconfig.Any");
-    }
-    else {
-        // autogenerate if it wasn't there (force all fields into this any file)
-        startupConfig.toAny(true).save("startupconfig.Any");
-    }
-
-
-	{
-		G3DSpecification spec;
-        spec.audio = startupConfig.audioEnable;
-		initGLG3D(spec);
-	}
-
-	(void)argc; (void)argv;
-	GApp::Settings settings(argc, argv);
-
+App::Settings::Settings(const StartupConfig& startupConfig, int argc, const char* argv[])
+{
 	if (startupConfig.fullscreen) {
 		// Use the primary 
-		settings.window.width = (int)OSWindow::primaryDisplaySize().x;
-		settings.window.height = (int)OSWindow::primaryDisplaySize().y;
+		window.width = (int)OSWindow::primaryDisplaySize().x;
+		window.height = (int)OSWindow::primaryDisplaySize().y;
 	}
 	else {
-		settings.window.width = (int)startupConfig.windowSize.x; 
-		settings.window.height = (int)startupConfig.windowSize.y;
+		window.width = (int)startupConfig.windowSize.x;
+		window.height = (int)startupConfig.windowSize.y;
 	}
-	settings.window.fullScreen = startupConfig.fullscreen;
-	settings.window.resizable = !settings.window.fullScreen;
+	window.fullScreen = startupConfig.fullscreen;
+	window.resizable = !window.fullScreen;
 
-    // V-sync off always
-	settings.window.asynchronous = true;
-	settings.window.caption = "First Person Science";
-	settings.window.refreshRate = -1;
-	settings.window.defaultIconFilename = "icon.png";
+	// V-sync off always
+	window.asynchronous = true;
+	window.caption = "First Person Science";
+	window.refreshRate = -1;
+	window.defaultIconFilename = "icon.png";
 
-	settings.hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
-	settings.hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
-	settings.dataDir = FileSystem::currentDirectory();
-	settings.screenCapture.includeAppRevision = false;
-	settings.screenCapture.includeG3DRevision = false;
-	settings.screenCapture.outputDirectory = ""; // "../journal/"
-	settings.screenCapture.filenamePrefix = "_";
+	hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
+	hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
+	dataDir = FileSystem::currentDirectory();
+	screenCapture.includeAppRevision = false;
+	screenCapture.includeG3DRevision = false;
+	screenCapture.outputDirectory = ""; // "../journal/"
+	screenCapture.filenamePrefix = "_";
 
-	settings.renderer.deferredShading = true;
-	settings.renderer.orderIndependentTransparency = false;
-
-	return App(settings).run();
+	renderer.deferredShading = true;
+	renderer.orderIndependentTransparency = false;
 }
-

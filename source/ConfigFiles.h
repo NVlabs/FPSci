@@ -69,6 +69,11 @@ public:
     String userConfig() {
         return userConfigPath + "userconfig.Any";
     }
+	
+    /** filename with given path to user status file */
+	String userStatusConfig() {
+		return userConfigPath + "userstatus.Any";
+	}
 };
 
 /** Key mapping */
@@ -564,16 +569,16 @@ public:
 	}
 
 	/** Get the user status table from file */
-	static UserStatusTable load(void) {
-		if (!FileSystem::exists("userstatus.Any")) { // if file not found, create a default userstatus.Any
+	static UserStatusTable load(String filename) {
+		if (!FileSystem::exists(filename)) { // if file not found, create a default userstatus.Any
 			UserStatusTable defStatus = UserStatusTable();			// Create empty status
 			UserSessionStatus user;
 			user.sessionOrder = Array<String> ({ "60Hz", "30Hz" });	// Add "default" sessions we add to
 			defStatus.userInfo.append(user);						// Add single "default" user
-			defStatus.toAny().save("userstatus.Any");				// Save .any file
+			defStatus.toAny().save(filename);				// Save .any file
 			return defStatus;
 		}
-		return Any::fromFile(System::findDataFile("userstatus.Any"));
+		return Any::fromFile(System::findDataFile(filename));
 	}
 
 	/** Get a given user's status from the table by ID */

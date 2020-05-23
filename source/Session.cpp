@@ -259,6 +259,7 @@ void Session::updatePresentationState()
 		{
 			if (isComplete()) {
 				if (m_config->questionArray.size() > 0 && m_currQuestionIdx < m_config->questionArray.size()) {			// Pop up question dialog(s) here if we need to
+
 					if (m_currQuestionIdx == -1){
 						m_currQuestionIdx = 0;
 						m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
