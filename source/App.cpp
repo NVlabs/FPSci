@@ -1119,7 +1119,7 @@ void App::onUserInput(UserInput* ui) {
 	if (!m_userSettingsWindow->visible() && notNull(player)) {
 		player->updateFromInput(ui);
 	}
-	else {	// Zero the player velocity and rotation when in the setting menu
+	else if (notNull(player)) {	// Zero the player velocity and rotation when in the setting menu
 		player->setDesiredOSVelocity(Vector3::zero());
 		player->setDesiredAngularVelocity(0.0, 0.0);
 	}
