@@ -141,7 +141,7 @@ public:
 };
 
 /** Information about the system being used
-The current implementation is heavily Windows - specific */
+The current implementation is heavily Windows-specific */
 class SystemInfo {
 public: 
 	// Output/runtime read parameters
