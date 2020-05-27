@@ -396,7 +396,7 @@ void UserMenu::updateMenu(const MenuConfig& config)
 	GuiButton* quitBtn = nullptr;
 	m_resumeQuitPane = m_parent->addPane();
 	m_resumeQuitPane->beginRow(); {
-		const Vector2 resumeQuitBtnSize = { 200.f, 50.f };
+		const Vector2 resumeQuitBtnSize = { 100.f, 40.f };
 		// Create resume and quit buttons
 		resumeBtn = m_resumeQuitPane->addButton("Resume", this, &UserMenu::toggleVisibliity, GuiTheme::TOOL_BUTTON_STYLE);
 		resumeBtn->setSize(resumeQuitBtnSize);
@@ -408,12 +408,11 @@ void UserMenu::updateMenu(const MenuConfig& config)
 	pack();
 
 	// Centering for (non-updated) menu elements
-	if(logoTb) logoTb->moveBy({ bounds().width() / 2.f - logoTb->rect().width() / 2.f , 0.f });
+	if(logoTb) logoTb->moveBy({ bounds().width() / 2.f - logoTb->rect().width() / 2.f - 5.f, 0.f });
 	
-	resumeBtn->moveBy({ 0.f, 10.f });
-	quitBtn->moveBy({ bounds().width()-2.f*quitBtn->rect().width() , 10.f });
+	// Position quit button on the right
+	quitBtn->moveBy({ bounds().width() - 2.f * quitBtn->rect().width() - 15.f, 0.f });
 	m_resumeQuitPane->pack();
-	m_resumeQuitPane->moveBy({ bounds().width() / 2.f - m_resumeQuitPane->rect().width() / 2.f, 0.f });
 }
 
 void UserMenu::updateUserPane(const MenuConfig& config) 
