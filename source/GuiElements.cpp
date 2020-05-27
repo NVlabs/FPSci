@@ -287,7 +287,7 @@ RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& dr
 		c->setWidth(80.0f);
 	} reticlePane->endRow();
 	reticlePane->beginRow(); {
-		auto c = reticlePane->addNumberBox("Reticle Shrink Time", &(user.reticleShrinkTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
+		auto c = reticlePane->addNumberBox("Reticle Change Time", &(user.reticleChangeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
 		c->setCaptionWidth(150.0f);
 		c->setWidth(width*0.95f);
 	} reticlePane->endRow();
@@ -523,20 +523,13 @@ void UserMenu::updateUserPane(const MenuConfig& config)
 				a->setWidth(m_rgbSliderWidth);
 				a->moveRightOf(b, rgbCaptionWidth);
 			} reticleControlPane->endRow();
-			if (config.allowReticleTimeChange) {
+			if (config.allowReticleChangeTimeChange) {
 				reticleControlPane->beginRow(); {
-					auto c = reticleControlPane->addNumberBox("Reticle Shrink Time", &(user->reticleShrinkTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
+					auto c = reticleControlPane->addNumberBox("Reticle Change Time", &(user->reticleChangeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
 					c->setCaptionWidth(150.0f);
 					c->setWidth(m_sliderWidth);
 				} reticleControlPane->endRow();
 			}
-		}
-
-		// Allow the user to save their settings?
-		if (config.allowUserSettingsSave) {
-			m_currentUserPane->beginRow(); {
-				m_currentUserPane->addButton("Save settings", m_app, &App::userSaveButtonPress)->setSize(m_btnSize);
-			} m_currentUserPane->endRow();
 		}
 
 		// Draw a preview of the reticle here
@@ -545,8 +538,15 @@ void UserMenu::updateUserPane(const MenuConfig& config)
 			updateReticlePreview();
 			m_reticlePreviewPane->moveRightOf(reticleControlPane);
 		}
-
 	}
+
+	// Allow the user to save their settings?
+	if (config.allowUserSettingsSave) {
+		m_currentUserPane->beginRow(); {
+			m_currentUserPane->addButton("Save settings", m_app, &App::userSaveButtonPress)->setSize(m_btnSize);
+		} m_currentUserPane->endRow();
+	}
+
 	m_currentUserPane->pack();
 	pack();
 }
