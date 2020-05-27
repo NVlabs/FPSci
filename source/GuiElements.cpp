@@ -287,7 +287,7 @@ RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& dr
 		c->setWidth(80.0f);
 	} reticlePane->endRow();
 	reticlePane->beginRow(); {
-		auto c = reticlePane->addNumberBox("Reticle Shrink Time", &(user.reticleShrinkTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
+		auto c = reticlePane->addNumberBox("Reticle Change Time", &(user.reticleChangeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
 		c->setCaptionWidth(150.0f);
 		c->setWidth(width*0.95f);
 	} reticlePane->endRow();
@@ -523,9 +523,9 @@ void UserMenu::updateUserPane(const MenuConfig& config)
 				a->setWidth(m_rgbSliderWidth);
 				a->moveRightOf(b, rgbCaptionWidth);
 			} reticleControlPane->endRow();
-			if (config.allowReticleTimeChange) {
+			if (config.allowReticleChangeTimeChange) {
 				reticleControlPane->beginRow(); {
-					auto c = reticleControlPane->addNumberBox("Reticle Shrink Time", &(user->reticleShrinkTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
+					auto c = reticleControlPane->addNumberBox("Reticle Change Time", &(user->reticleChangeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
 					c->setCaptionWidth(150.0f);
 					c->setWidth(m_sliderWidth);
 				} reticleControlPane->endRow();

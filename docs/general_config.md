@@ -375,7 +375,7 @@ These flags control the display of the in-game user menu:
 |`allowReticleIdxChange`            |`bool`     |Allow the user to change the "index" of their reticle (i.e. reticle style) |
 |`allowReticleSizeChange`           |`bool`     |Allow the user to change the size of their reticle (pre/post shot)     |
 |`allowReticleColorChange`          |`bool`     |Allow the user to change the color of their reticle (pre/post shot)    |
-|`allowReticleTimeChange`           |`bool`     |Allow the suer to change the time it takes to color change/shrink the reticle following a shot |
+|`allowReticleChangeTimeChange`     |`bool`     |Allow the user to change the time it takes to change the color and size of the reticle following a shot |
 |`showReticlePreview`               |`bool`     |Show the user a preview of their (pre-shot) reticle (size is not applied) | 
 
 ```

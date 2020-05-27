@@ -333,7 +333,7 @@ public:
 	Array<float>	reticleScale		= { 1.0f, 1.0f };				///< Scale for the user's reticle
 	Array<Color4>	reticleColor		= {Color4(1.0, 0.0, 0.0, 1.0),	///< Color for the user's reticle
 										Color4(1.0, 0.0, 0.0, 1.0)};	
-	float			reticleShrinkTimeS	= 0.3f;							///< Time for reticle to contract after expand on shot (in seconds)
+	float			reticleChangeTimeS	= 0.3f;							///< Time for reticle to contract after expand on shot (in seconds)
 
 
 	UserConfig() {};
@@ -351,7 +351,7 @@ public:
 			reader.getIfPresent("reticleIndex", reticleIndex);
 			reader.getIfPresent("reticleScale", reticleScale);
 			reader.getIfPresent("reticleColor", reticleColor);
-			reader.getIfPresent("reticleShrinkTime", reticleShrinkTimeS);
+			reader.getIfPresent("reticleChangeTime", reticleChangeTimeS);
 			reader.getIfPresent("turnScale", turnScale);
 			reader.getIfPresent("invertY", invertY);
 			reader.getIfPresent("scopeTurnScale", scopeTurnScale);
@@ -372,7 +372,7 @@ public:
 		if (forceAll || def.reticleIndex != reticleIndex)				a["reticleIndex"] = reticleIndex;
 		if (forceAll || def.reticleScale != reticleScale)				a["reticleScale"] = reticleScale;
 		if (forceAll || def.reticleColor != reticleColor)				a["reticleColor"] = reticleColor;
-		if (forceAll || def.reticleShrinkTimeS != reticleShrinkTimeS)	a["reticleShrinkTime"] = reticleShrinkTimeS;
+		if (forceAll || def.reticleChangeTimeS != reticleChangeTimeS)	a["reticleChangeTime"] = reticleChangeTimeS;
 		if (forceAll || def.turnScale != turnScale)						a["turnScale"] = turnScale;
 		if (forceAll || def.invertY != invertY)							a["invertY"] = invertY;
 		if (forceAll || def.scopeTurnScale != scopeTurnScale)			a["scopeTurnScale"] = scopeTurnScale;
@@ -1516,22 +1516,22 @@ public:
 class MenuConfig {
 public: 
 	// Menu controls
-	bool showMenuLogo				= true;							///< Show the FPSci logo in the user menu
-	bool showExperimentSettings		= true;							///< Show the experiment settings options (session/user selection)
-	bool showUserSettings			= true;							///< Show the user settings options (master switch)
-	bool allowUserSettingsSave		= true;							///< Allow the user to save settings changes
-	bool allowSensitivityChange		= true;							///< Allow in-game sensitivity change		
+	bool showMenuLogo					= true;							///< Show the FPSci logo in the user menu
+	bool showExperimentSettings			= true;							///< Show the experiment settings options (session/user selection)
+	bool showUserSettings				= true;							///< Show the user settings options (master switch)
+	bool allowUserSettingsSave			= true;							///< Allow the user to save settings changes
+	bool allowSensitivityChange			= true;							///< Allow in-game sensitivity change		
 	
-	bool allowTurnScaleChange		= true;							///< Allow the user to apply X/Y turn scaling
-	String xTurnScaleAdjustMode		= "None";						///< X turn scale adjustment mode (can be "None" or "Slider")
-	String yTurnScaleAdjustMode		= "Invert";						///< Y turn scale adjustment mode (can be "None", "Invert", or "Slider")
+	bool allowTurnScaleChange			= true;							///< Allow the user to apply X/Y turn scaling
+	String xTurnScaleAdjustMode			= "None";						///< X turn scale adjustment mode (can be "None" or "Slider")
+	String yTurnScaleAdjustMode			= "Invert";						///< Y turn scale adjustment mode (can be "None", "Invert", or "Slider")
 
-	bool allowReticleChange			= false;						///< Allow the user to adjust their crosshair
-	bool allowReticleIdxChange		= true;							///< If reticle change is allowed, allow index change
-	bool allowReticleSizeChange		= true;							///< If reticle change is allowed, allow size change
-	bool allowReticleColorChange	= true;							///< If reticle change is allowed, allow color change
-	bool allowReticleTimeChange		= false;						///< Allow the user to change the reticle shrink time
-	bool showReticlePreview			= true;							///< Show a preview of the reticle
+	bool allowReticleChange				= false;						///< Allow the user to adjust their crosshair
+	bool allowReticleIdxChange			= true;							///< If reticle change is allowed, allow index change
+	bool allowReticleSizeChange			= true;							///< If reticle change is allowed, allow size change
+	bool allowReticleColorChange		= true;							///< If reticle change is allowed, allow color change
+	bool allowReticleChangeTimeChange	= false;						///< Allow the user to change the reticle change time
+	bool showReticlePreview				= true;							///< Show a preview of the reticle
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
@@ -1548,7 +1548,7 @@ public:
 			reader.getIfPresent("allowReticleIdxChange", allowReticleIdxChange);
 			reader.getIfPresent("allowReticleSizeChange", allowReticleSizeChange);
 			reader.getIfPresent("allowReticleColorChange", allowReticleColorChange);
-			reader.getIfPresent("allowReticleShrinkTimeChange", allowReticleTimeChange);
+			reader.getIfPresent("allowReticleChangeTimeChange", allowReticleChangeTimeChange);
 			reader.getIfPresent("showReticlePreview", showReticlePreview);
 			break;
 		default:
@@ -1560,20 +1560,20 @@ public:
 
 	Any addToAny(Any a, const bool forceAll = false) const {
 		MenuConfig def;
-		if (forceAll || def.showMenuLogo != showMenuLogo)							a["showMenuLogo"] = showMenuLogo;
-		if (forceAll || def.showExperimentSettings != showExperimentSettings)		a["showExperimentSettings"] = showExperimentSettings;
-		if (forceAll || def.showUserSettings != showUserSettings)					a["showUserSettings"] = showUserSettings;
-		if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)			a["allowUserSettingsSave"] = allowUserSettingsSave;
-		if (forceAll || def.allowSensitivityChange != allowSensitivityChange)		a["allowSensitivityChange"] = allowSensitivityChange;
-		if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)			a["allowTurnScaleChange"] = allowTurnScaleChange;
-		if (forceAll || def.xTurnScaleAdjustMode != xTurnScaleAdjustMode)			a["xTurnScaleAdjustMode"] = xTurnScaleAdjustMode;
-		if (forceAll || def.yTurnScaleAdjustMode != yTurnScaleAdjustMode)			a["yTurnScaleAdjustMode"] = yTurnScaleAdjustMode;
-		if (forceAll || def.allowReticleChange != allowReticleChange)				a["allowReticleChange"] = allowReticleChange;
-		if (forceAll || def.allowReticleIdxChange != allowReticleIdxChange)			a["allowReticleIdxChange"] = allowReticleIdxChange;
-		if (forceAll || def.allowReticleSizeChange != allowReticleSizeChange)		a["allowReticleSizeChange"] = allowReticleSizeChange;
-		if (forceAll || def.allowReticleColorChange != allowReticleColorChange)		a["allowReticleColorChange"] = allowReticleColorChange;
-		if (forceAll || def.allowReticleTimeChange != allowReticleTimeChange)		a["allowReticleTimeChange"] = allowReticleTimeChange;
-		if (forceAll || def.showReticlePreview != showReticlePreview)				a["showReticlePreview"] = showReticlePreview;
+		if (forceAll || def.showMenuLogo != showMenuLogo)									a["showMenuLogo"] = showMenuLogo;
+		if (forceAll || def.showExperimentSettings != showExperimentSettings)				a["showExperimentSettings"] = showExperimentSettings;
+		if (forceAll || def.showUserSettings != showUserSettings)							a["showUserSettings"] = showUserSettings;
+		if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)					a["allowUserSettingsSave"] = allowUserSettingsSave;
+		if (forceAll || def.allowSensitivityChange != allowSensitivityChange)				a["allowSensitivityChange"] = allowSensitivityChange;
+		if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)					a["allowTurnScaleChange"] = allowTurnScaleChange;
+		if (forceAll || def.xTurnScaleAdjustMode != xTurnScaleAdjustMode)					a["xTurnScaleAdjustMode"] = xTurnScaleAdjustMode;
+		if (forceAll || def.yTurnScaleAdjustMode != yTurnScaleAdjustMode)					a["yTurnScaleAdjustMode"] = yTurnScaleAdjustMode;
+		if (forceAll || def.allowReticleChange != allowReticleChange)						a["allowReticleChange"] = allowReticleChange;
+		if (forceAll || def.allowReticleIdxChange != allowReticleIdxChange)					a["allowReticleIdxChange"] = allowReticleIdxChange;
+		if (forceAll || def.allowReticleSizeChange != allowReticleSizeChange)				a["allowReticleSizeChange"] = allowReticleSizeChange;
+		if (forceAll || def.allowReticleColorChange != allowReticleColorChange)				a["allowReticleColorChange"] = allowReticleColorChange;
+		if (forceAll || def.allowReticleChangeTimeChange != allowReticleChangeTimeChange)	a["allowReticleChangeTimeChange"] = allowReticleChangeTimeChange;
+		if (forceAll || def.showReticlePreview != showReticlePreview)						a["showReticlePreview"] = showReticlePreview;
 		return a;
 	}
 };
