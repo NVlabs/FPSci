@@ -532,21 +532,21 @@ void UserMenu::updateUserPane(const MenuConfig& config)
 			}
 		}
 
-		// Allow the user to save their settings?
-		if (config.allowUserSettingsSave) {
-			m_currentUserPane->beginRow(); {
-				m_currentUserPane->addButton("Save settings", m_app, &App::userSaveButtonPress)->setSize(m_btnSize);
-			} m_currentUserPane->endRow();
-		}
-
 		// Draw a preview of the reticle here
 		if (config.allowReticleChange && config.showReticlePreview) {
 			m_reticlePreviewPane = m_currentUserPane->addPane("Reticle Preview");
 			updateReticlePreview();
 			m_reticlePreviewPane->moveRightOf(reticleControlPane);
 		}
-
 	}
+
+	// Allow the user to save their settings?
+	if (config.allowUserSettingsSave) {
+		m_currentUserPane->beginRow(); {
+			m_currentUserPane->addButton("Save settings", m_app, &App::userSaveButtonPress)->setSize(m_btnSize);
+		} m_currentUserPane->endRow();
+	}
+
 	m_currentUserPane->pack();
 	pack();
 }
