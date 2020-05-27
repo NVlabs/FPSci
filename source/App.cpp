@@ -43,9 +43,11 @@ void App::onInit() {
 	userStatusTable.validate(sessionIds);
 	
 	// Get and save system configuration
-	SystemConfig sysConfig = SystemConfig::load();
-	sysConfig.printToLog();											// Print system info to log.txt
-	sysConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
+	systemConfig = SystemConfig::load();
+	systemConfig.printToLog();											// Print system info to log.txt
+	systemConfig.toAny().save("systemconfig.Any");						// Update the any file here (new system info to write)
+
+	displayRes = OSWindow::primaryDisplaySize();						
 
 	// Load the key binds
 	keyMap = KeyMapping::load();
@@ -76,7 +78,7 @@ void App::onInit() {
 
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
-	hudTexture = Texture::fromFile(System::findDataFile("gui/hud.png"));
+	hudTextures.set("scoreBannerBackdrop", Texture::fromFile(System::findDataFile("gui/scoreBannerBackdrop.png")));
 
 	// Setup the GUI
 	showRenderingStats = false;
@@ -325,13 +327,18 @@ void App::updateSession(const String& id) {
 	Array<String> ids;
 	experimentConfig.getSessionIds(ids);
 	if (!id.empty() && ids.contains(id)) {
-		sessConfig = experimentConfig.getSessionConfigById(id);						// Get the new session config
-		logPrintf("User selected session: %s. Updating now...\n", id);				// Print message to log
-		m_userSettingsWindow->setSelectedSession(id);								// Update session drop-down selection
-		sess = Session::create(this, sessConfig);									// Create the session
+
+		// Load the session config specified by the id
+		sessConfig = experimentConfig.getSessionConfigById(id);
+		logPrintf("User selected session: %s. Updating now...\n", id);
+		m_userSettingsWindow->setSelectedSession(id);
+
+		// Create the session based on the loaded config
+		sess = Session::create(this, sessConfig);
 	}
 	else {
-		sessConfig = SessionConfig::create();										// Create an empty session
+		// Create an empty session
+		sessConfig = SessionConfig::create();
 		sess = Session::create(this);
 	}
 
@@ -350,11 +357,12 @@ void App::updateSession(const String& id) {
 
 	// Load the experiment scene if we haven't already (target only)
 	if (sessConfig->sceneName.empty()) {
-		if (m_loadedScene.empty()) {		// No scene specified
-			loadScene(m_defaultScene);		// Use this as the default
+		// No scene specified, load default scene
+		if (m_loadedScene.empty()) {
+			loadScene(m_defaultScene);
 			m_loadedScene = m_defaultScene;
 		}
-		// Otherwise just let the loaded scene persist
+		// Otherwise let the loaded scene persist
 	}
 	else if (sessConfig->sceneName != m_loadedScene) {
 		loadScene(sessConfig->sceneName);
@@ -371,6 +379,11 @@ void App::updateSession(const String& id) {
 	m_weapon->loadSounds();
 	m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
 
+	// Load static HUD textures
+	for (StaticHudElement element : sessConfig->hud.staticElements) {
+		hudTextures.set(element.filename, Texture::fromFile(System::findDataFile(element.filename)));
+	}
+
 	// Create a series of colored materials to choose from for target health
 	for (int i = 0; i < m_MatTableSize; i++) {
 		float complete = (float)i / m_MatTableSize;
@@ -385,12 +398,11 @@ void App::updateSession(const String& id) {
 	// Player parameters
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	sess->initialHeadingRadians = player->heading();
-	UserConfig *user = userTable.getCurrentUser();
-	// Copied from old FPM code
-	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (user->cmp360 * user->mouseDPI);
-	mouseSens *= 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
-	player->mouseSensitivity = (float)mouseSens;
-	player->turnScale		= currentTurnScale();					// Compound the session turn scale w/ the user turn scale...
+
+	// Update player mouse sensitivity and turn scale
+	updateMouseSensitivity();
+
+	// Copy session player settings into the player
 	player->moveRate		= &sessConfig->player.moveRate;
 	player->moveScale		= &sessConfig->player.moveScale;
 	player->axisLock		= &sessConfig->player.axisLock;
@@ -401,14 +413,13 @@ void App::updateSession(const String& id) {
 	player->crouchHeight	= &sessConfig->player.crouchHeight;
 
 	// Check for need to start latency logging and if so run the logger now
-	SystemConfig sysConfig = SystemConfig::load();
 	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
-	if (sysConfig.hasLogger) {
+	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
 		}
 		if (m_pyLogger == nullptr) {
-			m_pyLogger = PythonLogger::create(sysConfig.loggerComPort, sysConfig.hasSync, sysConfig.syncComPort);
+			m_pyLogger = PythonLogger::create(systemConfig.loggerComPort, systemConfig.hasSync, systemConfig.syncComPort);
 		}
 		else {
 			// Handle running logger if we need to (terminate then merge results)
@@ -420,6 +431,7 @@ void App::updateSession(const String& id) {
 
 	// Initialize the experiment (this creates the results file)
 	sess->onInit(logName+".db", experimentConfig.description + "/" + sessConfig->description);
+
 	// Don't create a results file for a user w/ no sessions left
 	if (m_userSettingsWindow->sessionsForSelectedUser() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
@@ -735,7 +747,6 @@ bool App::onEvent(const GEvent& event) {
 void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 	// Put elements that should be delayed along w/ 3D here
 	rd->push2D(); {
-		const float scale = rd->viewport().width() / 1920.0f;
 		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 		// Draw target health bars
@@ -837,8 +848,8 @@ void App::drawClickIndicator(RenderDevice *rd, String mode) {
 }
 
 void App::drawHUD(RenderDevice *rd) {
-	// Draw the HUD elements
-	const Vector2 scale = Vector2(rd->viewport().width()/1920.0f, rd->viewport().height()/1080.0f);
+	// Scale is used to position/resize the "score banner" when the window changes size in "windowed" mode (always 1 in fullscreen mode).
+	const Vector2 scale = rd->viewport().wh() / displayRes;
 
 	// Weapon ready status (cooldown indicator)
 	if (sessConfig->hud.renderWeaponStatus) {
@@ -907,8 +918,9 @@ void App::drawHUD(RenderDevice *rd) {
 	}
 
 	if (sessConfig->hud.showBanner && !emergencyTurbo) {
-		const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->hud.bannerVertVisible*hudTexture->height() * scale.y + debugMenuHeight());
-		Draw::rect2D((hudTexture->rect2DBounds() * scale - hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), hudTexture);
+		const shared_ptr<Texture> scoreBannerTexture = hudTextures["scoreBannerBackdrop"];
+		const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->hud.bannerVertVisible*scoreBannerTexture->height() * scale.y + debugMenuHeight());
+		Draw::rect2D((scoreBannerTexture->rect2DBounds() * scale - scoreBannerTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), scoreBannerTexture);
 
 		// Create strings for time remaining, progress in sessions, and score
 		float remainingTime = sess->getRemainingTrialTime();
@@ -924,6 +936,15 @@ void App::drawHUD(RenderDevice *rd) {
 		hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale.x, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 		hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale.x * sessConfig->hud.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
 		hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+	}
+
+	// Draw any static HUD elements
+	for (StaticHudElement element : sessConfig->hud.staticElements) {
+		if (!hudTextures.containsKey(element.filename)) continue;						// Skip any items we haven't loaded
+		const shared_ptr<Texture> texture = hudTextures[element.filename];				// Get the loaded texture for this element
+		const Vector2 size = element.scale * scale * texture->vector2Bounds();			// Get the final size of the image
+		const Vector2 pos = (element.position * rd->viewport().wh()) - size/2.0;		// Compute position (center image on provided position)
+		Draw::rect2D(Rect2D::xywh(pos, size), rd, Color3::white(), texture);			// Draw the rect
 	}
 }
 
@@ -1200,7 +1221,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 	}
 
 	rd->push2D(); {
-		const float scale = rd->viewport().width() / 1920.0f;
+		const float scale = rd->viewport().width() / displayRes.x;
 		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 		// FPS display (faster than the full stats widget)
@@ -1496,6 +1517,7 @@ int main(int argc, const char* argv[]) {
         startupConfig.toAny(true).save("startupconfig.Any");
     }
 
+
 	{
 		G3DSpecification spec;
         spec.audio = startupConfig.audioEnable;
@@ -1506,8 +1528,9 @@ int main(int argc, const char* argv[]) {
 	GApp::Settings settings(argc, argv);
 
 	if (startupConfig.fullscreen) {
-		settings.window.width = 1920;
-		settings.window.height = 1080;
+		// Use the primary 
+		settings.window.width = (int)OSWindow::primaryDisplaySize().x;
+		settings.window.height = (int)OSWindow::primaryDisplaySize().y;
 	}
 	else {
 		settings.window.width = (int)startupConfig.windowSize.x; 
