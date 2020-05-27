@@ -1539,6 +1539,7 @@ public:
 			reader.getIfPresent("showMenuLogo", showMenuLogo);
 			reader.getIfPresent("showExperimentSettings", showExperimentSettings);
 			reader.getIfPresent("showUserSettings", showUserSettings);
+			reader.getIfPresent("allowUserSettingsSave", allowUserSettingsSave);
 			reader.getIfPresent("allowSensitivityChange", allowSensitivityChange);
 			reader.getIfPresent("allowTurnScaleChange", allowTurnScaleChange);
 			reader.getIfPresent("xTurnScaleAdjustMode", xTurnScaleAdjustMode);
@@ -1562,6 +1563,7 @@ public:
 		if (forceAll || def.showMenuLogo != showMenuLogo)							a["showMenuLogo"] = showMenuLogo;
 		if (forceAll || def.showExperimentSettings != showExperimentSettings)		a["showExperimentSettings"] = showExperimentSettings;
 		if (forceAll || def.showUserSettings != showUserSettings)					a["showUserSettings"] = showUserSettings;
+		if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)			a["allowUserSettingsSave"] = allowUserSettingsSave;
 		if (forceAll || def.allowSensitivityChange != allowSensitivityChange)		a["allowSensitivityChange"] = allowSensitivityChange;
 		if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)			a["allowTurnScaleChange"] = allowTurnScaleChange;
 		if (forceAll || def.xTurnScaleAdjustMode != xTurnScaleAdjustMode)			a["xTurnScaleAdjustMode"] = xTurnScaleAdjustMode;
