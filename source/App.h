@@ -46,15 +46,6 @@ protected:
 	const int								m_MatTableSize = 10;				///< Set this to set # of color "levels"
 	Array<shared_ptr<UniversalMaterial>>	m_materials;						///< This stores the color materials
 
-	GuiDropDownList*						m_sessDropDown = nullptr;			///< Dropdown menu for session selection
-	GuiDropDownList*						m_userDropDown = nullptr;			///< Dropdown menu for user selection
-	GuiLabel*								m_mouseDPILabel = nullptr;			///< Label for mouse DPI field
-	GuiLabel*								m_cm360Label = nullptr;				///< Label for cm/360 field
-
-	shared_ptr<PlayerControls>				m_playerControls;
-	shared_ptr<RenderControls>				m_renderControls;
-	shared_ptr<WeaponControls>				m_weaponControls;
-
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_explosionModels;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
@@ -63,12 +54,6 @@ protected:
 	/** Used to detect GUI changes to m_reticleIndex */
 	int										m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
 	float									m_debugMenuHeight = 0.0f;			///< Height of the debug menu when in developer mode
-    GuiPane*								m_currentUserPane = nullptr;		///< Current user information pane
-
-	// Drop down selection writebacks
-	int										m_ddCurrentUser = 0;				///< Index of current user
-	int										m_lastSeenUser = -1;				///< Index of last seen user (used for change determination)
-	int										m_ddCurrentSession = 0;				///< Index of current session
 
 	RealTime								m_lastJumpTime = 0.0f;				///< Time of last jump
 
@@ -82,15 +67,22 @@ protected:
 	Array<shared_ptr<Framebuffer>>			m_ldrDelayBufferQueue;
 	int										m_currentDelayBufferIndex = 0;
 
-    shared_ptr<GuiWindow>					m_userSettingsWindow;
-    bool									m_userSettingsMode = true;
+    shared_ptr<UserMenu>					m_userSettingsWindow;				///< User settings window
+	shared_ptr<PlayerControls>				m_playerControls;					///< Player controls window (developer mode)
+	shared_ptr<RenderControls>				m_renderControls;					///< Render controls window (developer mode)
+	shared_ptr<WeaponControls>				m_weaponControls;					///< Weapon controls window (developer mode)
 
 	/** Called from onInit */
 	void makeGUI();
 	void updateControls();
-	void updateUserGUI();
-	void updateUser();
 	void loadModels();
+
+	/** Move a window to the center of the display */
+	void moveToCenter(shared_ptr<GuiWindow> window) {
+		const float scale = 0.5f / m_userSettingsWindow->pixelScale();
+		const Vector2 pos = (scale * renderDevice->viewport().wh()) - (window->bounds().wh() / 2.0f);
+		window->moveTo(pos);
+	}
 
 	/** Get the current turn scale (per user and scope setting) */
 	Vector2 currentTurnScale();
@@ -141,7 +133,6 @@ public:
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
-
 	/** Show the player controls */
 	void showPlayerControls();
 	/** Show the render controls */
@@ -158,22 +149,23 @@ public:
     /** callback for saving user config */
 	void userSaveButtonPress(void);
 
-	Array<String> updateSessionDropDown(void);
-	String getDropDownSessId(void);
+	// Pass throughts to user settings window (for now)
+	Array<String> updateSessionDropDown(void) { return m_userSettingsWindow->updateSessionDropDown(); }
+	shared_ptr<UserConfig> getCurrUser(void) { return m_userSettingsWindow->getCurrUser(); }
+
 	void markSessComplete(String id);
-	void updateSessionPress(void);
 	void updateSession(const String& id);
 	void updateParameters(int frameDelay, float frameRate);
 	void presentQuestion(Question question);
 
-	String getDropDownUserId(void);
-	shared_ptr<UserConfig> getCurrUser(void);
-
     void quitRequest();
+	void toggleUserSettingsMenu();
 	   
 	/** opens the user settings window */
     void openUserSettingsWindow();
 
+	/** changes the mouse interaction (camera direct vs pointer) */
+	void setDirectMode(bool enable = true);
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
 	

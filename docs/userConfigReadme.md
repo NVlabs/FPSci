@@ -20,7 +20,8 @@ Each entry in the user table contains the following fields:
 |`reticleScale`       |`float`  |Provides a range of reticle sizes over which to set the scale as an `Array` w/ 2 elements (min, max) | 
 |`reticleColor`       |`Color4` |Provides a range of colors over which to set the reticle color as an `Array` w/ 2 elements (min, max)|
 |`reticleShrinkTime`  |`float`  |Provides the time (in seconds) for the reticle to contract following a shot                          |
-|`turnScale`          |`Vector2(float)`|Provides a per-player view rotation/mouse sensitivity scale, designed to compound with the experiment/session-level `turnScale`. By setting the X/Y of this `Vector2` to `-1` we can produce inversion for the controls on a per-player basis.|
+|`invertY`            |`bool`   |A quick flag for inverting the Y view (as opposed to setting the y-value for `turnScale` to -1)      |
+|`turnScale`          |`Vector2(float)`|Provides a per-player view rotation/mouse sensitivity scale, designed to compound with the experiment/session-level `turnScale`.|
 |`scopeTurnScale`     |`Vector2(float)`|Provides an (optional) additional turn scale to apply when scoped. If this value is `Vector2(0,0)` (or unspecified) then a "default" scaling of the ratio of FoV (scoped vs unscoped) is used to scale mouse sensitivity |
 
 Refer to the [SAMPLEuserconfig.Any file](SAMPLE%20configs/SAMPLEuserconfig.Any) for an example of these settings.

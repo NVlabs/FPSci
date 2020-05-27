@@ -358,6 +358,42 @@ No static HUD elements are drawn by default. An example snippet including 2 (non
 ]
 ```
 
+## Menu Config
+These flags control the display of the in-game user menu:
+
+| Parameter Name                    | Type      | Description                                                           |
+|-----------------------------------|-----------|-----------------------------------------------------------------------|
+|`showMenuLogo`                     |`bool`     |Show a logo at the top of the menu (currently `materials/FPSciLogo.png`) |
+|`showExperimentSettings`           |`bool`     |Show the options to select user/session                                |
+|`showUserSettings`                 |`bool`     |Show the per-user customization (sensitivity, reticle, etc) options    |
+|`allowUserSettingsSave`            |`bool`     |Allow the user to save their settings from the menu                    |
+|`allowSensitivityChange`           |`bool`     |Allow the user to change their (cm/360) sensitivity value from the menu|
+|`allowTurnScaleChange`             |`bool`     |Allow the user to change their turn scale from the menu                |
+|`xTurnScaleAdjustMode`             |`String`   |Mode for adjusting the X turn scale (when allowed), can be `"None"` (i.e. do not allow) or `"Slider"` |
+|`yTurnScaleAdjustMode`             |`String`   |Mode for adjusting the Y turn scale (when allowed), can be `"None"` (i.e. do not allow), `"Slider"`, or `"Invert"` (i.e. an "Invert Y" checkbox)|
+|`allowReticleChange`               |`bool`     |Allow the user to edit their reticle from the user menu                |
+|`allowReticleIdxChange`            |`bool`     |Allow the user to change the "index" of their reticle (i.e. reticle style) |
+|`allowReticleSizeChange`           |`bool`     |Allow the user to change the size of their reticle (pre/post shot)     |
+|`allowReticleColorChange`          |`bool`     |Allow the user to change the color of their reticle (pre/post shot)    |
+|`allowReticleTimeChange`           |`bool`     |Allow the suer to change the time it takes to color change/shrink the reticle following a shot |
+|`showReticlePreview`               |`bool`     |Show the user a preview of their (pre-shot) reticle (size is not applied) | 
+
+```
+"showMenuLogo": true,                   // Show the logo
+"showExperimentSettings" : true,        // Allow user/session seleciton
+"showUserSettings": true,               // Show the user settings
+"allowUserSettingsSave": true,          // Allow the user to save their settings changes
+"allowSensitivityChange": true,         // Allow the user to change the cm/360 sensitivity
+"allowTurnScaleChange": true,           // Allow the user to change their turn scale (see below)
+"xTurnScaleAdjustMode": "None",         // Don't allow X-turn scale adjustment (use sensitivity)
+"yTurnScaleAdjustMode": "Invert",       // Only allow simple "invert" behavior for Y turn scale
+"allowReticleChange": false,            // Don't allow the user to change the reticle (ignore below)
+"allowReticleIdxChange": true,          // If reticle changes are enabled, allow index (reticle style) changes
+"allowReticleSizeChange": true,         // If reticle changes are enabled, allow size changes
+"allowReticleColorChange": true,        // If reticle changes are enabled, allow color changes
+"allowReticleTimeChange": false,        // Even if reticle change is enabled, don't allow "shrink time" to change
+"showReticlePreview": true              // If reticle changes are enabled show the preview
+
 ## Logger Config
 These flags control whether various information is written to the output database file:
 

@@ -286,7 +286,6 @@ void Session::updatePresentationState()
 						m_logger.reset();
 					}
 					m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
-					m_app->updateSessionDropDown();
 
 					int score = int(m_totalRemainingTime);
 					m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
