@@ -140,11 +140,13 @@ public:
 	}
 };
 
-/** System configuration control and logging 
-	The current implementation is heavily Windows-specific */
-class SystemConfig {
-public:
+/** Information about the system being used
+The current implementation is heavily Windows-specific */
+class SystemInfo {
+public: 
 	// Output/runtime read parameters
+	String	hostName;			///< System host (PC) name
+	String  userName;			///< System username
 	String	cpuName;			///< The vendor name of the CPU being used
 	int		coreCount;			///< Core count for the CPU being used
 	String	gpuName;			///< The vendor name of the GPU being used
@@ -155,68 +157,13 @@ public:
 	int		displayXSize;		///< The horizontal size of the display in mm
 	int		displayYSize;		///< The vertical size of the display in mm
 
-	// Input parameters
-	bool	hasLogger = false;			///< Indicates that a hardware logger is present in the system
-	String	loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
-	bool	hasSync = false;			///< Indicates that a hardware sync will occur via serial card DTR signal
-	String	syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
-
-	SystemConfig() {};
-
-	/** Construct from Any */
-	SystemConfig(const Any& any) {
-		int settingsVersion = 1;
-		AnyTableReader reader(any);
-		reader.getIfPresent("settingsVersion", settingsVersion);
-
-		switch (settingsVersion) {
-		case 1:
-			reader.get("HasLogger", hasLogger, "System config must specify the \"HasLogger\" flag!");
-			reader.get("HasSync", hasSync, "System config must specify the \"HasSync\" flag!");
-			reader.getIfPresent("LoggerComPort", loggerComPort);
-			reader.getIfPresent("SyncComPort", syncComPort);
-			break;
-		default:
-			debugPrintf("Settings version '%d' not recognized in SystemConfig.\n", settingsVersion);
-			break;
-		}
-		// Get the system info
-		getSystemInfo();		
-	}
-
-	/** Serialize to Any */
-	Any toAny(const bool forceAll = true) const{
-		Any a(Any::TABLE);
-		a["CPU"] = cpuName;
-		a["GPU"] = gpuName;
-		a["CoreCount"] = coreCount;
-		a["MemoryCapacityMB"] = memCapacityMB;
-		a["DisplayName"] = displayName;
-		a["DisplayResXpx"] = displayXRes;
-		a["DisplayResYpx"] = displayYRes;
-		a["DisplaySizeXmm"] = displayXSize;
-		a["DisplaySizeYmm"] = displayYSize;
-		a["HasLogger"] = hasLogger;
-		a["LoggerComPort"] = loggerComPort;
-		a["HasSync"] = hasSync;
-		a["SyncComPort"] = syncComPort;
-		return a;
-	}
-
-	/** Load a system config from file */
-	static SystemConfig load() {
-		// if file not found, create a default system config
-		if (!FileSystem::exists("systemconfig.Any")) { 
-			SystemConfig config = SystemConfig();		// Create the default
-			config.getSystemInfo();						// Get system info
-			config.toAny().save("systemconfig.Any");	// Save a file
-			return config;
-		}
-		return Any::fromFile(System::findDataFile("systemconfig.Any"));
-	}
-
 	/** Get the system info using (windows) calls */
-	void getSystemInfo(void) {
+	static SystemInfo get(void) {
+		SystemInfo info;
+
+		info.hostName = getenv("COMPUTERNAME");		// Get the host (computer) name
+		info.userName = getenv("USERNAME");			// Get the current logged in username
+
 		// Get CPU name string
 		int cpuInfo[4] = { -1 };
 		unsigned nExIds, i = 0;
@@ -237,26 +184,28 @@ public:
 				memcpy(cpuBrandString + 32, cpuInfo, sizeof(cpuInfo));
 				break;
 			default:
-				logPrintf("Couldn't get system info...\n");
+				// Removed these are they are unnecessary prints...
+				//logPrintf("Couldn't get system info...\n");
+				break;
 			}
 		}
-		cpuName = cpuBrandString;
+		info.cpuName = cpuBrandString;
 
 		// Get CPU core count
 		SYSTEM_INFO sysInfo;
 		GetSystemInfo(&sysInfo);
-		coreCount = sysInfo.dwNumberOfProcessors;
+		info.coreCount = sysInfo.dwNumberOfProcessors;
 
 		// Get memory size
 		MEMORYSTATUSEX statex;
 		statex.dwLength = sizeof(statex);
 		GlobalMemoryStatusEx(&statex);
-		memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
+		info.memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
 
 		// Get GPU name string
 		String gpuVendor = String((char*)glGetString(GL_VENDOR)).append(" ");
 		String gpuRenderer = String((char*)glGetString(GL_RENDERER));
-		gpuName = gpuVendor.append(gpuRenderer);
+		info.gpuName = gpuVendor.append(gpuRenderer);
 
 		// Get display information (monitor name)
 		// This seems to break on many systems/provide less than descriptive names!!!
@@ -267,27 +216,104 @@ public:
 		std::string deviceName = dd.DeviceName;
 		EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
 		displayName = String(dd.DeviceString);*/
-		displayName = String("TODO");
+		info.displayName = String("TODO");
 
 		// Get screen resolution
-		displayXRes = GetSystemMetrics(SM_CXSCREEN);
-		displayYRes = GetSystemMetrics(SM_CYSCREEN);
+		info.displayXRes = GetSystemMetrics(SM_CXSCREEN);
+		info.displayYRes = GetSystemMetrics(SM_CYSCREEN);
 
 		// Get display size
 		HWND const hwnd = 0;
 		HDC const hdc = GetDC(hwnd);
 		assert(hdc);
-		displayXSize = GetDeviceCaps(hdc, HORZSIZE);
-		displayYSize = GetDeviceCaps(hdc, VERTSIZE);
+		info.displayXSize = GetDeviceCaps(hdc, HORZSIZE);
+		info.displayYSize = GetDeviceCaps(hdc, VERTSIZE);
+		
+		return info;
 	}
 
-	/** Print the system info to log.txt */
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["hostname"] = hostName;
+		a["username"] = userName;
+		a["CPU"] = cpuName;
+		a["GPU"] = gpuName;
+		a["CoreCount"] = coreCount;
+		a["MemoryCapacityMB"] = memCapacityMB;
+		a["DisplayName"] = displayName;
+		a["DisplayResXpx"] = displayXRes;
+		a["DisplayResYpx"] = displayYRes;
+		a["DisplaySizeXmm"] = displayXSize;
+		a["DisplaySizeYmm"] = displayYSize;
+		return a;
+	}
+
 	void printToLog() {
 		// Print system info to log
-		logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n",
-			cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
-		logPrintf("Logger Present: %s\nLogger COM Port: %s\nSync Card Present: %s\nSync COM Port: %s\n",
-			hasLogger ? "True" : "False", loggerComPort, hasSync ? "True" : "False", syncComPort);
+		logPrintf("\n-------------------\nSystem Info:\n-------------------\n\tHostname: %s\n\tUsername: %s\n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n\n",
+			hostName, userName, cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
+	}
+};
+
+/** Latency logging configuration */
+class LatencyLoggerConfig {
+public:
+	// Input parameters
+	bool	hasLogger = false;		///< Indicates that a hardware logger is present in the system
+	String	loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
+	bool	hasSync = false;		///< Indicates that a hardware sync will occur via serial card DTR signal
+	String	syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
+
+	LatencyLoggerConfig() {};
+
+	/** Construct from Any */
+	LatencyLoggerConfig(const Any& any) {
+		int settingsVersion = 1;
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.get("HasLogger", hasLogger, "System config must specify the \"HasLogger\" flag!");
+			reader.get("HasSync", hasSync, "System config must specify the \"HasSync\" flag!");
+			reader.getIfPresent("LoggerComPort", loggerComPort);
+			reader.getIfPresent("SyncComPort", syncComPort);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in SystemConfig.\n", settingsVersion);
+			break;
+		}	
+	}
+
+	/** Serialize to Any */
+	Any toAny(const bool forceAll = true) const{
+		Any a(Any::TABLE);
+		a["HasLogger"] = hasLogger;
+		a["LoggerComPort"] = loggerComPort;
+		a["HasSync"] = hasSync;
+		a["SyncComPort"] = syncComPort;
+		return a;
+	}
+
+	/** Load a latency logger config from file */
+	static LatencyLoggerConfig load() {
+		// if file not found, create a default latency logger config
+		if (!FileSystem::exists("systemconfig.Any")) { 
+			return LatencyLoggerConfig();		// Create the default
+		}
+		return Any::fromFile(System::findDataFile("systemconfig.Any"));
+	}
+
+	/** Print the latency logger config to log.txt */
+	void printToLog() {
+		const String loggerComStr = hasLogger ? loggerComPort : "None";
+		const String syncComStr = hasSync ? syncComPort : "None";
+		logPrintf("-------------------\nLDAT-R Config:\n-------------------\n\tLogger Present: %s\n\tLogger COM Port: %s\n\tSync Card Present: %s\n\tSync COM Port: %s\n\n",
+			hasLogger ? "True" : "False",
+			loggerComStr.c_str(),
+			hasSync ? "True" : "False",
+			syncComStr.c_str()
+		);
 	}
 };
 
@@ -1857,7 +1883,7 @@ public:
 
 	/** Print the experiment config to the log */
 	void printToLog() {
-		logPrintf("-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
+		logPrintf("\n-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
 			description, sceneName, timing.feedbackDuration, timing.readyDuration, timing.taskDuration, weapon.maxAmmo);
 		// Iterate through sessions and print them
 		for (int i = 0; i < sessions.size(); i++) {
