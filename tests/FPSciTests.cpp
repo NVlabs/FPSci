@@ -1,7 +1,7 @@
 
 #include "FPSciTests.h"
 #include "TestFakeInput.h"
-#include <App.h>
+#include <FPSciApp.h>
 #include <PlayerEntity.h>
 #include <Session.h>
 #include <gtest/gtest.h>
@@ -21,7 +21,7 @@ TEST(DefaultConfigTests, DISABLED_RenderTenFrames)
 		return;
 	}
 
-	App app(*g_defaultSettings);
+	FPSciApp app(*g_defaultSettings);
 	app.onInit();
 
 	// Render 10 frames and check the player object was loaded
@@ -54,13 +54,13 @@ protected:
 	static void getTargets(shared_ptr<TargetEntity>& front, shared_ptr<TargetEntity>& right);
 	static void checkTargets(bool& aliveFront, bool& aliveRight);
 
-	static std::shared_ptr<App>				s_app;
+	static std::shared_ptr<FPSciApp>				s_app;
 	static CFrame							s_cameraSpawnFrame;
 	static std::shared_ptr<TestFakeInput>	s_fakeInput;
 	static float							s_targetSpawnDistance;
 };
 
-std::shared_ptr<App>			FPSciTests::s_app;
+std::shared_ptr<FPSciApp>			FPSciTests::s_app;
 CFrame							FPSciTests::s_cameraSpawnFrame;
 std::shared_ptr<TestFakeInput>	FPSciTests::s_fakeInput;
 float							FPSciTests::s_targetSpawnDistance = 3.0f;
@@ -94,14 +94,14 @@ void FPSciTests::SetUpTestSuite() {
 }
 void FPSciTests::SetUpTestSuiteSafe() {
 	// Load a testing specific config file
-	App::startupConfig = Any::fromFile("test/startupconfig.Any");
+	FPSciApp::startupConfig = Any::fromFile("test/startupconfig.Any");
 
-	g_settings->window.width = (int)App::startupConfig.windowSize.x;
-	g_settings->window.height = (int)App::startupConfig.windowSize.y;
-	g_settings->window.fullScreen = App::startupConfig.fullscreen;
+	g_settings->window.width = (int)FPSciApp::startupConfig.windowSize.x;
+	g_settings->window.height = (int)FPSciApp::startupConfig.windowSize.y;
+	g_settings->window.fullScreen = FPSciApp::startupConfig.fullscreen;
 	g_settings->window.resizable = !g_settings->window.fullScreen;
 
-	s_app = std::make_shared<App>(*g_settings);
+	s_app = std::make_shared<FPSciApp>(*g_settings);
 
 	s_app->onInit();
 	s_app->closeUserSettingsWindow();

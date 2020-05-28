@@ -1,5 +1,5 @@
 /**
-  \file maxPerf/App.h
+  \file maxPerf/FPSciApp.h
 
   Sample application showing how to render simple graphics with maximum throughput and 
   minimum latency by stripping away most high level VFX and convenience features for
@@ -28,7 +28,7 @@ class WaypointManager;
 // feedback: feedback showing whether task performance was successful or not.
 enum PresentationState { initial, ready, task, feedback, scoreboard, complete };
 
-class App : public GApp {
+class FPSciApp : public GApp {
 protected:
 	static const int						MAX_HISTORY_TIMING_FRAMES = 360;	///< Length of the history queue for m_frameDurationQueue
 	shared_ptr<Sound>						m_sceneHitSound;					///< Sound for target exploding
@@ -116,7 +116,7 @@ public:
 	shared_ptr<GuiTheme>			theme;	
 	bool                            emergencyTurbo = false;			///< Lower rendering quality to improve performance
 
-	App(const GApp::Settings& settings = GApp::Settings());
+	FPSciApp(const GApp::Settings& settings = GApp::Settings());
 
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment

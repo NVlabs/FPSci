@@ -31,7 +31,7 @@
 #include "ConfigFiles.h"
 #include <ctime>
 
-class App;
+class FPSciApp;
 class PlayerEntity;
 class TargetEntity;
 class FPSciLogger;
@@ -107,7 +107,7 @@ struct PlayerAction {
 
 class Session : public ReferenceCountedObject {
 protected:
-	App* m_app = nullptr;								///< Pointer to the app
+	FPSciApp* m_app = nullptr;								///< Pointer to the app
 	Scene* m_scene = nullptr;							///< Pointer to the scene
 	
 	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
@@ -147,12 +147,12 @@ protected:
 	// Target parameters
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	
-	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config)
+	Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config)
 	{
 		m_hasSession = notNull(m_config);
 	}
 
-	Session(App* app) : m_app(app)
+	Session(FPSciApp* app) : m_app(app)
 	{
 		m_hasSession = false;
 	}
@@ -227,10 +227,10 @@ protected:
 public:
 	float initialHeadingRadians = 0.0f;
 
-	static shared_ptr<Session> create(App* app) {
+	static shared_ptr<Session> create(FPSciApp* app) {
 		return createShared<Session>(app);
 	}
-	static shared_ptr<Session> create(App* app, shared_ptr<SessionConfig> config) {
+	static shared_ptr<Session> create(FPSciApp* app, shared_ptr<SessionConfig> config) {
 		return createShared<Session>(app, config);
 	}
 

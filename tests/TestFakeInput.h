@@ -83,6 +83,7 @@ protected:
 	Queue<FakeInputEvent> m_frameInputs;
 	std::shared_ptr<FakeWindow> m_fakeWindow;
 	std::shared_ptr<GApp> m_app;
+	std::shared_ptr<UserInput> m_originalUserInput;
 public:
 	// Replaces the given app's userInput with a fake one
 	TestFakeInput(std::shared_ptr<GApp> app, double mouseDPI);

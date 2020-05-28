@@ -3,6 +3,8 @@
 .vs
 # Don't check in any compiled results
 x64
+Build
+packages
 # Avoid .pyc files (everywhere)
 *.pyc
 # Don't check-in any of these data-files

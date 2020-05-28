@@ -1,5 +1,5 @@
 #include "WaypointManager.h"
-#include "App.h"
+#include "FPSciApp.h"
 
 void WaypointManager::dropWaypoint(Destination dest, Point3 offset) {
 	// Apply the offset

@@ -3,7 +3,7 @@
 #include "ConfigFiles.h"
 #include "TargetEntity.h"
 
-class App;
+class FPSciApp;
 
 struct WaypointDisplayConfig {
 	// Formatting parameters
@@ -51,9 +51,9 @@ protected:
 
 	GuiScrollPane*	m_scrollPane;
 	TreeDisplay*	m_treeDisplay;
-	App* m_app;
+	FPSciApp* m_app;
 
-	WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints);
+	WaypointDisplay(FPSciApp* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints);
 public:
 
 	int getSelected() {
@@ -65,7 +65,7 @@ public:
 	}
 
 	virtual void setManager(WidgetManager* manager);
-	static shared_ptr<WaypointDisplay> create(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) {
+	static shared_ptr<WaypointDisplay> create(FPSciApp* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) {
 		return createShared<WaypointDisplay>(app, theme, config, waypoints);
 
 	}
@@ -105,7 +105,7 @@ public:
 
 class UserMenu : public GuiWindow {
 protected:
-	App* m_app = nullptr;									///< Store the app here
+	FPSciApp* m_app = nullptr;									///< Store the app here
 	UserTable& m_users;										///< User table
 	UserStatusTable& m_userStatus;							///< User status table
 	MenuConfig m_config;									///< Menu configuration
@@ -132,7 +132,7 @@ protected:
 	const float m_sliderWidth = 300.f;						///< Default width for (non-RGB) sliders
 	const float m_rgbSliderWidth = 80.f;					///< Default width for RGB sliders
 
-	UserMenu(App* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect);
+	UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect);
 
 	void drawUserPane(const MenuConfig& config);
 
@@ -140,7 +140,7 @@ protected:
 	void updateSessionPress();
 
 public:
-	static shared_ptr<UserMenu> create(App* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) {
+	static shared_ptr<UserMenu> create(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) {
 		return createShared<UserMenu>(app, users, userStatus, config, theme, rect);
 	}
 

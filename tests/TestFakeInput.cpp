@@ -223,9 +223,9 @@ TestFakeInput::TestFakeInput(std::shared_ptr<GApp> app, double mouseDPI) : m_app
 	m_fakeWindow = std::make_shared<FakeWindow>(mouseDPI);
 
 	// Surprisingly userInput is public, but since it is it can be replaced
-	if (m_app->userInput) {
-		delete m_app->userInput;
-	}
+	// Keep the oringal alive since other objects such as FirstPersonManipulator take raw pointer references to it.
+	// This is dangerous as the lifetime of TestFakeInput is not guaranteed.
+	m_originalUserInput.reset(m_app->userInput);
 
 	// Replace the app's UserInput with the fake one
 	m_app->userInput = new FakeUserInput(m_fakeWindow);

@@ -54,7 +54,7 @@ shared_ptr<Entity> PlayerEntity::create
 void PlayerEntity::init(AnyTableReader& propertyTable) {
    // Get values from Any
     Vector3 v;
-	float heading = m_headingRadians;
+	float heading = 0.0f;
     propertyTable.getIfPresent("heading", heading);
     Sphere s(1.5f);
     propertyTable.getIfPresent("collisionSphere", s);
@@ -71,7 +71,8 @@ void PlayerEntity::init(const Vector3& velocity, const Sphere& collisionProxy, f
     m_desiredOSVelocity     = Vector3::zero();
     m_desiredYawVelocity    = 0;
     m_desiredPitchVelocity  = 0;
-    m_headingRadians               = heading;
+	m_spawnHeadingRadians   = heading;
+    m_headingRadians        = heading;
     m_headTilt              = 0;
 }
 
@@ -114,7 +115,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	m_jumpPressed = false;
 
 	// Get the mouse rotation here
-	Vector2 mouseRotate = ui->mouseDXY() * turnScale * (float)m_pixelsToRadians;
+	Vector2 mouseRotate = ui->mouseDXY() * turnScale * (float)m_cameraRadiansPerMouseDot;
 	float yaw = mouseRotate.x;
 	float pitch = mouseRotate.y;
 

@@ -2,7 +2,7 @@
 #include "FPSciTests.h"
 
 #include <gtest/gtest.h>
-#include <App.h>
+#include <FPSciApp.h>
 #include <crtdbg.h>
 
 int AbortReportHook(int reportType, char* message, int* returnValue)
@@ -32,17 +32,17 @@ int main(int argc, const char** argv)
 	G3D::_internal::_debugHook = nullptr;
 	G3D::_internal::_failureHook = nullptr;
 
-	::testing::InitGoogleTest(&argc, const_cast<char**>(argv));
+	testing::InitGoogleTest(&argc, const_cast<char**>(argv));
 
 	// Do the same thing main.cpp does in FPSci to load its settings for the default config smoke test
 	if (FileSystem::exists("startupconfig.Any")) {
-		App::startupConfig = Any::fromFile("startupconfig.Any");
+		FPSciApp::startupConfig = Any::fromFile("startupconfig.Any");
 		{
 			G3DSpecification spec;
-			spec.audio = App::startupConfig.audioEnable;
+			spec.audio = FPSciApp::startupConfig.audioEnable;
 			initGLG3D(spec);
 		}
-		g_defaultSettings = std::make_unique<App::Settings>(App::startupConfig, 1, argv);
+		g_defaultSettings = std::make_unique<FPSciApp::Settings>(FPSciApp::startupConfig, 1, argv);
 	}
 
 	// Create clean settings for the main test environment

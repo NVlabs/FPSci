@@ -26,7 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 #include "Session.h"
-#include "App.h"
+#include "FPSciApp.h"
 #include "Logger.h"
 #include "TargetEntity.h"
 #include "PlayerEntity.h"
@@ -471,7 +471,7 @@ void Session::endLogging() {
 
 // Comment these since they are unused
 /** Spawn a randomly parametrized target */
-//void App::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
+//void FPSciApp::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
 //    Random& rng = Random::threadCommon();
 //
 //    // Construct a reference frame

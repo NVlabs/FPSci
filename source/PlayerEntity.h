@@ -12,7 +12,8 @@ protected:
     float           m_desiredPitchVelocity;
 
     // Radians
-    float           m_headingRadians = 0.0f;
+	float           m_spawnHeadingRadians = 0.0f;
+	float           m_headingRadians = 0.0f;
     /** Unused for rendering, for use by a fps cam. */
     float           m_headTilt;
 
@@ -44,7 +45,7 @@ protected:
 #endif
 
 public:
-	float			m_pixelsToRadians;		///< Player mouse sensitivity
+	float			m_cameraRadiansPerMouseDot;		///< Player mouse sensitivity
 	Vector2			turnScale;				///< Player asymmetric mouse scaler - typically near 1:1
 
 	float*			moveRate = nullptr;	        ///< Player movement rate (m/s)
@@ -126,7 +127,7 @@ public:
 
 	void respawn() {
 		m_frame.translation = m_respawnPosition;
-		m_headingRadians = 0.0f;
+		m_headingRadians = m_spawnHeadingRadians;
 		m_headTilt = 0.0f;
 		setDesiredOSVelocity(Vector3::zero());
 		setDesiredAngularVelocity(0.0f, 0.0f);
