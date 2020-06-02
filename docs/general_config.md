@@ -28,7 +28,7 @@ If a scene name is specified at the experiment level it will be applied to all s
 ```
 
 ## Weapon Configuration
-* `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](../data-files/weapon/weaponConfigReadme.md))
+* `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](weaponConfigReadme.md))
 
 The `weapon` config should be thought of as an atomic type (just like an `int` or `float`). Even though it is a (more complex) data structure, it does not use the experiment-->session level inheritance appraoch offered elsewhere in the configuration format (i.e. any `weapon` specification should be complete). For this reason we recommend storing weapon configurations in independent `.weapon.Any` files and including them using the `.Any` `#include()` directive.
 
