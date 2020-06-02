@@ -240,6 +240,36 @@ Each question in the array is then asked of the user (via an independent time-se
 "cooldownColor": Color4(1.0,1.0,1.0,0.75),  // White w/ 75% alpha
 ```
 
+### Static HUD Elements
+In addition to the (dynamic) HUD elements listed above, arbitrary lists of static HUD elements can be provided to draw in the UI using the `staticHUDElements` parameter in a general config. The `staticHUDElements` parameter value is an array of elements, each of which specifies the following sub-parameters:
+
+| Parameter Name    | Type      | Description                                                                               |
+|-------------------|-----------|-------------------------------------------------------------------------------------------|
+|`filename`         |`String`   | A filename to find for the image to draw (`.png` files are suggested)                     |
+|`position`         |`Vector2`  | The position to draw the element centered at, as a ratio of screen space (i.e. `Vector2(0.5, 0.5) for an element in the middle of the screen)  |
+|`scale`            |`Vector2`  | An additional scale to apply to the drawn element (as a fraction of it's original size)   | 
+
+The `position` parameter specifies the offset to the center of the image with `Vector2(0,0)` indicating the top-left corner and `Vector2(1,1)` indicating the bottom-right corner of the window).
+
+No static HUD elements are drawn by default. An example snippet including 2 (non-existant) HUD elements is provided below for reference:
+
+```
+"staticHUDElements" : [
+    // Element 1 (centered and scaled)
+    {
+        "filename": "centerImage.png",              // Use this file to draw an image (should be within data-files directory)
+        "position": Vector2(0.5, 0.5),              // Center the image (draw it's center at 1/2 the screen size horizontal/vertical)
+        "scale": Vector2(0.25, 0.25)                // Scale the image by 1/4 it's original resolution
+    },
+    // Element 2 (unscaled)
+    {
+        "filename" : "hud/unscaled.png",            // Use this filename (can add relative paths to directories that won't be searched implicitly)
+        "position": Vector2(0,0)                    // Draw this element at the top-left of the screen
+        // No scale specification implies Vector2(1,1) scaling
+    }
+]
+```
+
 ## Click to Photon Monitoring
 These flags help control the behavior of click-to-photon monitoring in application:
 
@@ -328,35 +358,6 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 "floatingCombatTextTimeout": 0.5,                           // Fade out the combat text in 0.5s
 ```
 
-### Static HUD Elements
-In addition to the (dynamic) HUD elements listed above, arbitrary lists of static HUD elements can be provided to draw in the UI using the `staticHUDElements` parameter in a general config. The `staticHUDElements` parameter value is an array of elements, each of which specifies the following sub-parameters:
-
-| Parameter Name    | Type      | Description                                                                               |
-|-------------------|-----------|-------------------------------------------------------------------------------------------|
-|`filename`         |`String`   | A filename to find for the image to draw (`.png` files are suggested)                     |
-|`position`         |`Vector2`  | The position to draw the element centered at, as a ratio of screen space (i.e. `Vector2(0.5, 0.5) for an element in the middle of the screen)  |
-|`scale`            |`Vector2`  | An additional scale to apply to the drawn element (as a fraction of it's original size)   | 
-
-The `position` parameter specifies the offset to the center of the image with `Vector2(0,0)` indicating the top-left corner and `Vector2(1,1)` indicating the bottom-right corner of the window).
-
-No static HUD elements are drawn by default. An example snippet including 2 (non-existant) HUD elements is provided below for reference:
-
-```
-"staticHUDElements" : [
-    // Element 1 (centered and scaled)
-    {
-        "filename": "centerImage.png",              // Use this file to draw an image (should be within data-files directory)
-        "position": Vector2(0.5, 0.5),              // Center the image (draw it's center at 1/2 the screen size horizontal/vertical)
-        "scale": Vector2(0.25, 0.25)                // Scale the image by 1/4 it's original resolution
-    },
-    // Element 2 (unscaled)
-    {
-        "filename" : "hud/unscaled.png",            // Use this filename (can add relative paths to directories that won't be searched implicitly)
-        "position": Vector2(0,0)                    // Draw this element at the top-left of the screen
-        // No scale specification implies Vector2(1,1) scaling
-    }
-]
-```
 
 ## Menu Config
 These flags control the display of the in-game user menu:
