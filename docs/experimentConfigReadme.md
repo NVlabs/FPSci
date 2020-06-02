@@ -11,7 +11,7 @@ Broad areas of control included in this config file include:
 For a full description of fields see the descriptions below. Along with each subsection an example configuration is provided. In many cases the example values below are the defaults provided in these field values. Where this is not the case the default will be indicated in the comments.
 
 ## File Location
-The [`experimentconfig.Any` file](../data-files/experimentconfig.Any) is located in the [`data-files`](../data-files/) directory at the root of the project. If no `experimentconfig.Any` file is present at startup, [`SAMPLEexperimentconfig.Any`](../data-files/SAMPLEexperimentconfig.Any) is copied to `experimentconfig.Any`.
+The `experimentconfig.Any` file is located in the [`data-files`](../data-files/) directory at the root of the project. If no `experimentconfig.Any` file is present at startup, a default experiment configuration is written to `experimentconfig.Any`.
 
 # Experiment Config Field Descriptions
 
@@ -155,7 +155,7 @@ targets = [
 ```
 
 ## Target Paths (Using Destinations)
-The `destinations` array within the target object overrides much of the default motion behavior in the target motion controls. Once a destinations array (including more than 2 destiantions) is specified all other motion parameters are considered unused. Once a `destinations` array is specified only the following fields from the [target configuration](###-Target-Configuration) apply:
+The `destinations` array within the target object overrides much of the default motion behavior in the target motion controls. Once a destinations array (including more than 2 destiantions) is specified all other motion parameters are considered unused. Once a `destinations` array is specified only the following fields from the [target configuration](#target-configuration) apply:
 
 * `id`
 * `visualSize`

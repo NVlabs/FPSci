@@ -52,7 +52,7 @@ The following settings allow the user to control various timings/durations aroun
 |---------------------------|-------|--------------------------------------------------------------------|
 |`horizontalFieldOfView`    |°      |The (horizontal) field of view for the user's display, to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)|
 |`frameDelay`               |frames | An (integer) count of frames to delay to control latency           |
-|`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#Frame-Rate-Modes) below.|
+|`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#frame-rate-modes) below.|
 |`shader`                   |file    | The (relative) path/filename of an (optional) shader to run (as a `.pix`) |
 
 ```
@@ -394,6 +394,7 @@ These flags control the display of the in-game user menu:
 "allowReticleColorChange": true,        // If reticle changes are enabled, allow color changes
 "allowReticleTimeChange": false,        // Even if reticle change is enabled, don't allow "shrink time" to change
 "showReticlePreview": true              // If reticle changes are enabled show the preview
+```
 
 ## Logger Config
 These flags control whether various information is written to the output database file:
