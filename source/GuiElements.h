@@ -108,7 +108,7 @@ protected:
 	App* m_app = nullptr;									///< Store the app here
 	UserTable& m_users;										///< User table
 	UserStatusTable& m_userStatus;							///< User status table
-	MenuConfig& m_config;									///< Menu configuration
+	MenuConfig m_config;									///< Menu configuration
 
 	GuiPane* m_parent				= nullptr;				///< Parent pane
 	GuiPane* m_expPane				= nullptr;				///< Pane for session/user selection
@@ -173,7 +173,7 @@ public:
 		return m_users.getUserById(selectedUserID());
 	}
 
-	void setConfig(MenuConfig& config) { 
+	void setConfig(const MenuConfig& config) { 
 		m_config = config; 
 		updateMenu(config);		// Redraw the menu w/ the new config
 	}
