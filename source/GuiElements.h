@@ -165,7 +165,7 @@ public:
 	}
 
 	String selectedUserID() const {
-		return m_userDropDown->get(m_ddCurrSessIdx);
+		return m_userDropDown->get(m_ddCurrUserIdx);
 	}
 
 	shared_ptr<UserConfig> getCurrUser() {
