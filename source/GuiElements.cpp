@@ -348,15 +348,7 @@ UserMenu::UserMenu(App* app, UserTable& users, UserStatusTable& userStatus, Menu
 	m_reticlePreviewTexture = Texture::createEmpty("FPSci::ReticlePreview", m_app->reticleTexture->width(), m_app->reticleTexture->height());
 	m_reticleBuffer = Framebuffer::create(m_reticlePreviewTexture);
 
-	m_parent = pane();
-	updateMenu(config);
-	pack();
-}
-
-void UserMenu::updateMenu(const MenuConfig& config) 
-{	
-	// Clear the menu
-	m_parent->removeAllChildren();
+	m_parent = pane();	
 
 	GuiTextureBox* logoTb = nullptr;
 
@@ -388,7 +380,7 @@ void UserMenu::updateMenu(const MenuConfig& config)
 	// User Settings Pane
 	if (config.showUserSettings) {
 		m_currentUserPane = m_parent->addPane("Current User Settings");
-		updateUserPane(config);
+		drawUserPane(config);
 	}
 
 	// Resume/Quite Pane
@@ -415,11 +407,8 @@ void UserMenu::updateMenu(const MenuConfig& config)
 	m_resumeQuitPane->pack();
 }
 
-void UserMenu::updateUserPane(const MenuConfig& config) 
+void UserMenu::drawUserPane(const MenuConfig& config) 
 {
-	// Clear the pane
-	m_currentUserPane->removeAllChildren();
-
 	// Basic user info
 	UserConfig* user = m_users.getCurrentUser();
 	m_currentUserPane->beginRow(); {
@@ -602,7 +591,6 @@ void UserMenu::updateUserPress() {
 		String userId = m_userDropDown->get(m_ddCurrUserIdx);
 		m_users.currentUser = userId;
 		m_lastUserIdx = m_ddCurrUserIdx;
-		updateUserPane(m_config);
 		
 		// Update (selected) sessions
 		String sessId = updateSessionDropDown()[0];

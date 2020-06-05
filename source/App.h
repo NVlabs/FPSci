@@ -68,6 +68,8 @@ protected:
 	int										m_currentDelayBufferIndex = 0;
 
     shared_ptr<UserMenu>					m_userSettingsWindow;				///< User settings window
+	bool									m_updateUserMenu = false;			///< Semaphore to indicate user settings needs update
+
 	shared_ptr<PlayerControls>				m_playerControls;					///< Player controls window (developer mode)
 	shared_ptr<RenderControls>				m_renderControls;					///< Render controls window (developer mode)
 	shared_ptr<WeaponControls>				m_weaponControls;					///< Weapon controls window (developer mode)
@@ -179,6 +181,7 @@ public:
 	virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& surface2D) override;
 	virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) override;
 	virtual bool onEvent(const GEvent& e) override;
+	virtual void onAfterEvents() override;
 	virtual void onUserInput(UserInput* ui) override;
 	virtual void onCleanup() override;
     virtual void oneFrame() override;
