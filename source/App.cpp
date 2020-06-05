@@ -203,8 +203,10 @@ void App::loadModels() {
 
 void App::updateControls() {
 	// Update the user settings window
+	removeWidget(m_userSettingsWindow);
 	m_userSettingsWindow->setConfig(sessConfig->menu);
-	
+	addWidget(m_userSettingsWindow);
+
 	// Update the waypoint manager
 	waypointManager->updateControls();
 
