@@ -134,8 +134,7 @@ protected:
 
 	UserMenu(App* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect);
 
-	void updateMenu(const MenuConfig& config);
-	void updateUserPane(const MenuConfig& config);
+	void drawUserPane(const MenuConfig& config);
 
 	void updateUserPress();
 	void updateSessionPress();
@@ -166,17 +165,10 @@ public:
 	}
 
 	String selectedUserID() const {
-		return m_userDropDown->get(m_ddCurrSessIdx);
+		return m_userDropDown->get(m_ddCurrUserIdx);
 	}
 
 	shared_ptr<UserConfig> getCurrUser() {
 		return m_users.getUserById(selectedUserID());
 	}
-
-	void setConfig(const MenuConfig& config) { 
-		m_config = config; 
-		updateMenu(config);		// Redraw the menu w/ the new config
-	}
-
-
 };

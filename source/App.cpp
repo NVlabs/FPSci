@@ -203,8 +203,8 @@ void App::loadModels() {
 
 void App::updateControls() {
 	// Update the user settings window
-	m_userSettingsWindow->setConfig(sessConfig->menu);
-	
+	m_updateUserMenu = true;
+
 	// Update the waypoint manager
 	waypointManager->updateControls();
 
@@ -556,6 +556,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	m_widgetManager->onSimulation(rdt, sdt, idt);
 	if (scene()) { scene()->onSimulation(sdt); }
 
+
 	// make sure mouse sensitivity is set right
 	if (m_userSettingsWindow->visible()) {
 		updateMouseSensitivity();
@@ -746,6 +747,26 @@ bool App::onEvent(const GEvent& event) {
 
 	// Handle super-class events
 	return GApp::onEvent(event);
+}
+
+void App::onAfterEvents() {
+	if (m_updateUserMenu) {
+		// Remove the old settings window
+		removeWidget(m_userSettingsWindow);
+
+		// Re-create the settings window
+		String selSess = m_userSettingsWindow->selectedSession();
+		m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, sessConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
+		m_userSettingsWindow->setSelectedSession(selSess);
+		moveToCenter(m_userSettingsWindow);
+		m_userSettingsWindow->setVisible(true);
+
+		// Add the new settings window and clear the semaphore
+		addWidget(m_userSettingsWindow);
+		m_updateUserMenu = false;
+	}
+
+	GApp::onAfterEvents();
 }
 
 void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
