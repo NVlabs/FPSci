@@ -242,7 +242,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
 		m_inAir = true;
 		// Jump occurring, need to track this
 		m_lastJumpVelocity = m_desiredOSVelocity.y;
-		}
+	}
 	else if (m_inAir) {
 		// Already in a jump, apply gravity and enforce terminal velocity
 		m_lastJumpVelocity += ygrav * deltaTime;
@@ -264,7 +264,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
     // Trivial implementation that ignores collisions:
 #   if NO_COLLISIONS
 		loc = m_frame.translation + velocity  * timeLeft;
-		setFrame(loc);
+		m_frame.translation = loc;
         return;
 #   endif
 
@@ -275,7 +275,12 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
         debugPrintf("Initial velocity = %s; position = %s\n", velocity.toString().c_str(),  m_frame.translation.toString().c_str());
 #   endif
     int iterations = 0;
-	if (velocity.length() <= epsilon) return m_inContact;		// Handle case where there is no motion here (return last collision state)
+
+    // Handle case where there is no motion here (return last collision state)
+    if (velocity.length() <= epsilon) {
+        return m_inContact;
+    }
+
 	bool collided = false;
     while ((deltaTime > epsilon) && (velocity.length() > epsilon)) {
         float stepTime = float(deltaTime);
@@ -292,7 +297,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
         // Advance to just before the collision
         stepTime = max(0.0f, stepTime - epsilon * 0.5f);
 		loc = m_frame.translation + velocity * stepTime;
-		setFrame(loc);
+		m_frame.translation = loc;
 
         // Early out of loop when debugging
         //if (! runSimulation) { return; }
@@ -312,7 +317,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
                 // adjacent to the triangle and eliminate all velocity
                 // towards the triangle.
                loc = collisionPoint + collisionNormal * (m_collisionProxySphere.radius + epsilon * 2.0f);
-			   setFrame(loc);
+               m_frame.translation = loc;
                 
 #               ifdef TRACE_COLLISIONS
                     debugPrintf("  Interpenetration detected.  Position after = %s\n",
