@@ -1,0 +1,8 @@
+{
+	audioEnable = true;
+	experimentConfigPath = "test/"; 
+	playMode = true;
+	userConfigPath = "test/";
+	windowSize = Vector2(300, 200);
+	fullscreen = false;
+}

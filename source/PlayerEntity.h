@@ -7,12 +7,13 @@ protected:
     /** In object-space */
     Sphere          m_collisionProxySphere;
 
-    // Radians/s
+    // Radians per frame
     float           m_desiredYawVelocity;
     float           m_desiredPitchVelocity;
 
     // Radians
-    float           m_headingRadians = 0.0f;
+	float           m_spawnHeadingRadians = 0.0f;
+	float           m_headingRadians = 0.0f;
     /** Unused for rendering, for use by a fps cam. */
     float           m_headTilt;
 
@@ -44,8 +45,8 @@ protected:
 #endif
 
 public:
-	float			mouseSensitivity;		    ///< Player mouse sensitivity
-	Vector2			turnScale;				    ///< Player mouse turn rate scaler
+	float			m_cameraRadiansPerMouseDot;		///< Player mouse sensitivity
+	Vector2			turnScale;				///< Player asymmetric mouse scaler - typically near 1:1
 
 	float*			moveRate = nullptr;	        ///< Player movement rate (m/s)
 	Vector2*		moveScale = nullptr;	    ///< Player X/Y movement scale vector (interpreted as unit vector)
@@ -126,6 +127,10 @@ public:
 
 	void respawn() {
 		m_frame.translation = m_respawnPosition;
+		m_headingRadians = m_spawnHeadingRadians;
+		m_headTilt = 0.0f;
+		setDesiredOSVelocity(Vector3::zero());
+		setDesiredAngularVelocity(0.0f, 0.0f);
 	}
 
 	float health(void) {

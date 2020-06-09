@@ -1,6 +1,6 @@
 #include "GuiElements.h"
 #include "WaypointManager.h"
-#include "App.h"
+#include "FPSciApp.h"
 
 bool WaypointDisplay::TreeDisplay::onEvent(const GEvent & event) {
 	if (!m_visible) {
@@ -54,7 +54,7 @@ void WaypointDisplay::TreeDisplay::render(RenderDevice* rd, const shared_ptr<Gui
 	const_cast<GuiContainer*>(m_parent)->setHeight(y);
 }
 
-WaypointDisplay::WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) :
+WaypointDisplay::WaypointDisplay(FPSciApp* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) :
 	GuiWindow("Waypoint Manager",
 		theme,
 		Rect2D::xywh(0, 0, (float)config.tree_display_width_px + 10, (float)config.tree_display_height_px+10),
@@ -342,7 +342,7 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 ////////////////////////
 /// USER MENU
 ///////////////////////
-UserMenu::UserMenu(App* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) :
+UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) :
 	GuiWindow("", theme, rect, GuiTheme::TOOL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_app(app), m_users(users), m_userStatus(userStatus), m_config(config)
 {
 	m_reticlePreviewTexture = Texture::createEmpty("FPSci::ReticlePreview", m_app->reticleTexture->width(), m_app->reticleTexture->height());
@@ -392,7 +392,7 @@ UserMenu::UserMenu(App* app, UserTable& users, UserStatusTable& userStatus, Menu
 		// Create resume and quit buttons
 		resumeBtn = m_resumeQuitPane->addButton("Resume", this, &UserMenu::toggleVisibliity, GuiTheme::TOOL_BUTTON_STYLE);
 		resumeBtn->setSize(resumeQuitBtnSize);
-		quitBtn = m_resumeQuitPane->addButton("Quit", m_app, &App::quitRequest, GuiTheme::TOOL_BUTTON_STYLE);
+		quitBtn = m_resumeQuitPane->addButton("Quit", m_app, &FPSciApp::quitRequest, GuiTheme::TOOL_BUTTON_STYLE);
 		quitBtn->setSize(resumeQuitBtnSize);
 	} m_resumeQuitPane->endRow();
 
@@ -532,7 +532,7 @@ void UserMenu::drawUserPane(const MenuConfig& config)
 	// Allow the user to save their settings?
 	if (config.allowUserSettingsSave) {
 		m_currentUserPane->beginRow(); {
-			m_currentUserPane->addButton("Save settings", m_app, &App::userSaveButtonPress)->setSize(m_btnSize);
+			m_currentUserPane->addButton("Save settings", m_app, &FPSciApp::userSaveButtonPress)->setSize(m_btnSize);
 		} m_currentUserPane->endRow();
 	}
 

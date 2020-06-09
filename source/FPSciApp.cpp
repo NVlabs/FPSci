@@ -1,5 +1,5 @@
-/** \file App.cpp */
-#include "App.h"
+/** \file FPSciApp.cpp */
+#include "FPSciApp.h"
 #include "Dialogs.h"
 #include "Logger.h"
 #include "Session.h"
@@ -13,13 +13,12 @@ int TrialCount::defaultCount;
 Array<String> UserSessionStatus::defaultSessionOrder;
 bool UserSessionStatus::randomizeDefaults;
 
-/** global startup config - sets developer flags and experiment/user paths */
-StartupConfig startupConfig;
+StartupConfig FPSciApp::startupConfig;
 
-App::App(const GApp::Settings& settings) : GApp(settings) {}
+FPSciApp::FPSciApp(const GApp::Settings& settings) : GApp(settings) {}
 
 /** Initialize the app */
-void App::onInit() {
+void FPSciApp::onInit() {
 	// Seed random based on the time
 	Random::common().reset(uint32(time(0)));
 
@@ -38,7 +37,7 @@ void App::onInit() {
 	userTable.printToLog();
 
 	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load();
+	userStatusTable = UserStatusTable::load(startupConfig.userStatusConfig());
 	userStatusTable.printToLog();
 	userStatusTable.validate(sessionIds);
 	
@@ -73,8 +72,8 @@ void App::onInit() {
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
 	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), scene(), activeCamera());
-	m_weapon->setHitCallback(std::bind(&App::hitTarget, this, std::placeholders::_1));
-	m_weapon->setMissCallback(std::bind(&App::missEvent, this));
+	m_weapon->setHitCallback(std::bind(&FPSciApp::hitTarget, this, std::placeholders::_1));
+	m_weapon->setMissCallback(std::bind(&FPSciApp::missEvent, this));
 
 	// Load models and set the reticle
 	loadModels();
@@ -91,35 +90,44 @@ void App::onInit() {
 	updateMouseSensitivity();									// Update (apply) mouse sensitivity
 	m_userSettingsWindow->updateSessionDropDown();				// Update the session drop down to remove already completed sessions
 	updateSession(m_userSettingsWindow->selectedSession());		// Update session to create results file/start collection
+
+	// Set the initial simulation timestep to REAL_TIME. The desired timestep is set later.
+	setFrameDuration(frameDuration(), REAL_TIME);
 }
 
-/** Handle then user settings window visibility */
-void App::openUserSettingsWindow() {
+/** Handle the user settings window visibility */
+void FPSciApp::openUserSettingsWindow() {
     m_userSettingsWindow->setVisible(true);
 }
 
+/** Handle the user settings window visibility */
+void FPSciApp::closeUserSettingsWindow() {
+
+	m_userSettingsWindow->setVisible(false);
+}
+
 /** Update the mouse mode/sensitivity */
-void App::updateMouseSensitivity() {
-    const UserConfig* user = userTable.getCurrentUser();
-    // Converting from mouseDPI (dots/in) and sensitivity (cm/turn) into rad/dot which explains cm->in (2.54) and turn->rad (2*PI) factors
-    // rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
-    const double mouseSensitivity = 2.0 * pi() * 2.54 / (user->cmp360 * user->mouseDPI);
-    const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+void FPSciApp::updateMouseSensitivity() {
+	const UserConfig* user = userTable.getCurrentUser();
+	// Converting from mouseDPI (dots/in) and sensitivity (cm/turn) into rad/dot which explains cm->in (2.54) and turn->rad (2*PI) factors
+	// rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
+	const double radiansPerDot = 2.0 * pi() * 2.54 / (user->cmp360 * user->mouseDPI);
+	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 
 	// Control player motion using the experiment config parameter
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	if (notNull(player)) {
-		player->mouseSensitivity = (float)mouseSensitivity;
+		player->m_cameraRadiansPerMouseDot = (float)radiansPerDot;
 		player->turnScale = currentTurnScale();
 	}
 }
 
-void App::setDirectMode(bool enable) {
+void FPSciApp::setDirectMode(bool enable) {
 	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 	fpm->setMouseMode(enable ? FirstPersonManipulator::MOUSE_DIRECT : FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
 }
 
-void App::loadModels() {
+void FPSciApp::loadModels() {
 	if ((experimentConfig.weapon.renderModel || startupConfig.developerMode) && !experimentConfig.weapon.modelSpec.filename.empty()) {
 		// Load the model if we (might) need it
 		m_weapon->loadModels();
@@ -201,7 +209,7 @@ void App::loadModels() {
 	}
 }
 
-void App::updateControls() {
+void FPSciApp::updateControls() {
 	// Update the user settings window
 	m_updateUserMenu = true;
 
@@ -209,7 +217,7 @@ void App::updateControls() {
 	waypointManager->updateControls();
 
 	// Setup the player control
-	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&App::exportScene, this), theme);
+	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&FPSciApp::exportScene, this), theme);
 	m_playerControls->setVisible(false);
 	this->addWidget(m_playerControls);
 
@@ -223,7 +231,7 @@ void App::updateControls() {
 	this->addWidget(m_weaponControls);
 }
 
-void App::makeGUI() {
+void FPSciApp::makeGUI() {
 	debugWindow->setVisible(startupConfig.developerMode);
 	developerWindow->setVisible(startupConfig.developerMode);
 	developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
@@ -235,9 +243,9 @@ void App::makeGUI() {
 
 	// Open sub-window buttons here (menu-style)
 	debugPane->beginRow(); {
-		debugPane->addButton("Render Controls [1]", this, &App::showRenderControls);
-		debugPane->addButton("Player Controls [2]", this, &App::showPlayerControls);
-		debugPane->addButton("Weapon Controls [3]", this, &App::showWeaponControls);
+		debugPane->addButton("Render Controls [1]", this, &FPSciApp::showRenderControls);
+		debugPane->addButton("Player Controls [2]", this, &FPSciApp::showPlayerControls);
+		debugPane->addButton("Weapon Controls [3]", this, &FPSciApp::showWeaponControls);
 		if(startupConfig.waypointEditorMode) debugPane->addButton("Waypoint Manager [4]", waypointManager, &WaypointManager::showWaypointWindow);
 	}debugPane->endRow();
 
@@ -256,33 +264,33 @@ void App::makeGUI() {
 	updateControls();
 }
 
-void App::exportScene() {
+void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
 	String filename = Scene::sceneNameToFilename(sessConfig->sceneName);
 	scene()->toAny().save(filename);
 }
 
-void App::showPlayerControls() {
+void FPSciApp::showPlayerControls() {
 	m_playerControls->setVisible(true);
 }
 
-void App::showRenderControls() {
+void FPSciApp::showRenderControls() {
 	m_renderControls->setVisible(true);
 }
 
-void App::showWeaponControls() {
+void FPSciApp::showWeaponControls() {
 	m_weaponControls->setVisible(true);
 }
 
-void App::userSaveButtonPress(void) {
+void FPSciApp::userSaveButtonPress(void) {
 	// Save the any file
 	Any a = Any(userTable);
 	a.save(startupConfig.userConfig());
 	logPrintf("User table saved.\n");			// Print message to log
 }	
 
-void App::presentQuestion(Question question) {
+void FPSciApp::presentQuestion(Question question) {
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
 		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title);
@@ -301,7 +309,7 @@ void App::presentQuestion(Question question) {
 	openUserSettingsWindow();
 }
 
-void App::markSessComplete(String sessId) {
+void FPSciApp::markSessComplete(String sessId) {
 	if (m_pyLogger != nullptr) {
 		m_pyLogger->mergeLogToDb();
 	}
@@ -315,7 +323,7 @@ void App::markSessComplete(String sessId) {
 	m_userSettingsWindow->updateSessionDropDown();
 }
 
-void App::updateParameters(int frameDelay, float frameRate) {
+void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 	// Apply frame lag
 	displayLagFrames = frameDelay;
 	lastSetFrameRate = frameRate;
@@ -323,10 +331,11 @@ void App::updateParameters(int frameDelay, float frameRate) {
 	float dt = 0;
 	if (frameRate > 0) dt = 1.0f / frameRate;
 	else dt = 1.0f / float(window()->settings().refreshRate);
-	setFrameDuration(dt, GApp::REAL_TIME);
+	// Update the desired realtime framerate, leaving the simulation timestep as it were (likely REAL_TIME)
+	setFrameDuration(dt, simStepDuration());
 }
 
-void App::updateSession(const String& id) {
+void FPSciApp::updateSession(const String& id) {
 	// Check for a valid ID (non-emtpy and 
 	Array<String> ids;
 	experimentConfig.getSessionIds(ids);
@@ -445,7 +454,7 @@ void App::updateSession(const String& id) {
 	}
 }
 
-void App::quitRequest() {
+void FPSciApp::quitRequest() {
 	// End session logging
 	if (sess != nullptr) {
 		sess->endLogging();
@@ -457,7 +466,7 @@ void App::quitRequest() {
     setExitCode(0);
 }
 
-void App::toggleUserSettingsMenu() {
+void FPSciApp::toggleUserSettingsMenu() {
 	m_userSettingsWindow->toggleVisibliity();
 	if (m_userSettingsWindow->visible()) {
 		// set focus so buttons properly highlight
@@ -468,7 +477,7 @@ void App::toggleUserSettingsMenu() {
 	updateMouseSensitivity();
 }
 
-void App::onAfterLoadScene(const Any& any, const String& sceneName) {
+void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 	// Pick between experiment and session settings
 	Vector3 grav = experimentConfig.player.gravity;
 	float FoV = experimentConfig.render.hFoV;
@@ -500,19 +509,19 @@ void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	activeCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
 }
 
-void App::onAI() {
+void FPSciApp::onAI() {
 	GApp::onAI();
 	// Add non-simulation game logic and AI code here
 }
 
 
-void App::onNetwork() {
+void FPSciApp::onNetwork() {
 	GApp::onNetwork();
 	// Poll net messages here
 }
 
 
-void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
+void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
     if (displayLagFrames > 0) {
 		// Need one more frame in the queue than we have frames of delay, to hold the current frame
@@ -547,7 +556,7 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 	}
 }
 
-void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
+void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
 	sess->onSimulation(rdt, sdt, idt);
@@ -611,7 +620,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 }
 
-bool App::onEvent(const GEvent& event) {
+bool FPSciApp::onEvent(const GEvent& event) {
 	GKey ksym = event.key.keysym.sym;
 	bool foundKey = false;
 
@@ -749,7 +758,7 @@ bool App::onEvent(const GEvent& event) {
 	return GApp::onEvent(event);
 }
 
-void App::onAfterEvents() {
+void FPSciApp::onAfterEvents() {
 	if (m_updateUserMenu) {
 		// Remove the old settings window
 		removeWidget(m_userSettingsWindow);
@@ -769,7 +778,7 @@ void App::onAfterEvents() {
 	GApp::onAfterEvents();
 }
 
-void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
+void FPSciApp::onPostProcessHDR3DEffects(RenderDevice *rd) {
 	// Put elements that should be delayed along w/ 3D here
 	rd->push2D(); {
 		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
@@ -844,7 +853,7 @@ void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
 	GApp::onPostProcessHDR3DEffects(rd);
 }
 
-void App::drawClickIndicator(RenderDevice *rd, String mode) {
+void FPSciApp::drawClickIndicator(RenderDevice *rd, String mode) {
 	// Click to photon latency measuring corner box
 	if (sessConfig->clickToPhoton.enabled) {
 		float boxLeft = 0.0f;
@@ -872,7 +881,7 @@ void App::drawClickIndicator(RenderDevice *rd, String mode) {
 	}
 }
 
-void App::drawHUD(RenderDevice *rd) {
+void FPSciApp::drawHUD(RenderDevice *rd) {
 	// Scale is used to position/resize the "score banner" when the window changes size in "windowed" mode (always 1 in fullscreen mode).
 	const Vector2 scale = rd->viewport().wh() / displayRes;
 
@@ -973,7 +982,7 @@ void App::drawHUD(RenderDevice *rd) {
 	}
 }
 
-Vector2 App::currentTurnScale() {
+Vector2 FPSciApp::currentTurnScale() {
 	const UserConfig* user = userTable.getCurrentUser();
 	Vector2 baseTurnScale = sessConfig->player.turnScale * user->turnScale;
 	// Apply y-invert here
@@ -991,7 +1000,7 @@ Vector2 App::currentTurnScale() {
 	}
 }
 
-void App::setScopeView(bool scoped) {
+void FPSciApp::setScopeView(bool scoped) {
 	// Get player entity and calculate scope FoV
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
 	const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
@@ -1001,7 +1010,7 @@ void App::setScopeView(bool scoped) {
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
 
-void App::hitTarget(shared_ptr<TargetEntity> target) {
+void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	// Damage the target
 	float damage;
 	if (sessConfig->weapon.firePeriod == 0.0f) {						// Check if we are in "laser" mode hit the target last time
@@ -1057,7 +1066,7 @@ void App::hitTarget(shared_ptr<TargetEntity> target) {
 		target->playDestroySound();
 
 		sess->countDestroy();
-		respawned = target->respawn();
+		respawned = target->tryRespawn();
 		// check for respawn
 		if (!respawned) {
 			// This is the final respawn
@@ -1094,14 +1103,14 @@ void App::hitTarget(shared_ptr<TargetEntity> target) {
 	}
 }
 
-void App::missEvent() {
+void FPSciApp::missEvent() {
 	if (sess) {
 		sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
 	}
 }
 
 /** Handle user input here */
-void App::onUserInput(UserInput* ui) {
+void FPSciApp::onUserInput(UserInput* ui) {
 	BEGIN_PROFILER_EVENT("onUserInput");
 	static bool haveReleased = false;
 	static bool fired = false;
@@ -1112,7 +1121,7 @@ void App::onUserInput(UserInput* ui) {
 	if (!m_userSettingsWindow->visible() && notNull(player)) {
 		player->updateFromInput(ui);
 	}
-	else {	// Zero the player velocity and rotation when in the setting menu
+	else if (notNull(player)) {	// Zero the player velocity and rotation when in the setting menu
 		player->setDesiredOSVelocity(Vector3::zero());
 		player->setDesiredAngularVelocity(0.0, 0.0);
 	}
@@ -1217,7 +1226,7 @@ void App::onUserInput(UserInput* ui) {
     END_PROFILER_EVENT();
 }
 
-void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {
+void FPSciApp::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2D> >& surface2D) {
 	GApp::onPose(surface, surface2D);
 
 	typedScene<PhysicsScene>()->poseExceptExcluded(surface, "player");
@@ -1225,7 +1234,7 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 	m_weapon->onPose(surface);
 }
 
-void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
+void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
     // Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
 	// Track the instantaneous frame duration (no smoothing) in a circular queue
 	if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
@@ -1298,7 +1307,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 }
 
 /** Set the currently reticle by index */
-void App::setReticle(const int r) {
+void FPSciApp::setReticle(const int r) {
 	int idx = clamp(0, r, numReticles);
 	if(idx == m_lastReticleLoaded) return;	// Nothing to do here, setting current reticle
 	if (r < numReticles) {
@@ -1311,13 +1320,13 @@ void App::setReticle(const int r) {
 	m_lastReticleLoaded = idx;
 }
 
-void App::onCleanup() {
+void FPSciApp::onCleanup() {
 	// Called after the application loop ends.  Place a majority of cleanup code
 	// here instead of in the constructor so that exceptions can be caught.
 }
 
 /** Overridden (optimized) oneFrame() function to improve latency */
-void App::oneFrame() {
+void FPSciApp::oneFrame() {
 
     // Wait
     // Note: we might end up spending all of our time inside of
@@ -1528,59 +1537,34 @@ void App::oneFrame() {
     }
 }
 
-
-// Tells C++ to invoke command-line main() function even on OS X and Win32.
-G3D_START_AT_MAIN();
-
-int main(int argc, const char* argv[]) {
-
-    if (FileSystem::exists("startupconfig.Any")) {
-        startupConfig = Any::fromFile("startupconfig.Any");
-    }
-    else {
-        // autogenerate if it wasn't there (force all fields into this any file)
-        startupConfig.toAny(true).save("startupconfig.Any");
-    }
-
-
-	{
-		G3DSpecification spec;
-        spec.audio = startupConfig.audioEnable;
-		initGLG3D(spec);
-	}
-
-	(void)argc; (void)argv;
-	GApp::Settings settings(argc, argv);
-
+FPSciApp::Settings::Settings(const StartupConfig& startupConfig, int argc, const char* argv[])
+{
 	if (startupConfig.fullscreen) {
 		// Use the primary 
-		settings.window.width = (int)OSWindow::primaryDisplaySize().x;
-		settings.window.height = (int)OSWindow::primaryDisplaySize().y;
+		window.width = (int)OSWindow::primaryDisplaySize().x;
+		window.height = (int)OSWindow::primaryDisplaySize().y;
 	}
 	else {
-		settings.window.width = (int)startupConfig.windowSize.x; 
-		settings.window.height = (int)startupConfig.windowSize.y;
+		window.width = (int)startupConfig.windowSize.x;
+		window.height = (int)startupConfig.windowSize.y;
 	}
-	settings.window.fullScreen = startupConfig.fullscreen;
-	settings.window.resizable = !settings.window.fullScreen;
+	window.fullScreen = startupConfig.fullscreen;
+	window.resizable = !window.fullScreen;
 
-    // V-sync off always
-	settings.window.asynchronous = true;
-	settings.window.caption = "First Person Science";
-	settings.window.refreshRate = -1;
-	settings.window.defaultIconFilename = "icon.png";
+	// V-sync off always
+	window.asynchronous = true;
+	window.caption = "First Person Science";
+	window.refreshRate = -1;
+	window.defaultIconFilename = "icon.png";
 
-	settings.hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
-	settings.hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
-	settings.dataDir = FileSystem::currentDirectory();
-	settings.screenCapture.includeAppRevision = false;
-	settings.screenCapture.includeG3DRevision = false;
-	settings.screenCapture.outputDirectory = ""; // "../journal/"
-	settings.screenCapture.filenamePrefix = "_";
+	hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
+	hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
+	dataDir = FileSystem::currentDirectory();
+	screenCapture.includeAppRevision = false;
+	screenCapture.includeG3DRevision = false;
+	screenCapture.outputDirectory = ""; // "../journal/"
+	screenCapture.filenamePrefix = "_";
 
-	settings.renderer.deferredShading = true;
-	settings.renderer.orderIndependentTransparency = false;
-
-	return App(settings).run();
+	renderer.deferredShading = true;
+	renderer.orderIndependentTransparency = false;
 }
-
