@@ -126,7 +126,6 @@ protected:
 	int m_ddCurrSessIdx = 0;								///< Current session index
 	int m_lastUserIdx = -1;									///< Previously selected user in the drop-down
 
-	const Vector2 m_logoSize = { 300.f, 100.f };			///< Logo size
 	const Vector2 m_btnSize = { 100.f, 30.f };				///< Default button size
 	const Vector2 m_reticlePreviewSize = { 150.f, 150.f };	///< Reticle texture preview size
 	const float m_sliderWidth = 300.f;						///< Default width for (non-RGB) sliders
