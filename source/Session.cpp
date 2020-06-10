@@ -44,7 +44,7 @@ void Session::nextCondition() {
 	m_currTrialIdx = unrunTrialIdxs[idx];
 }
 
-bool Session::isComplete() const{
+bool Session::blockComplete() const{
 	bool allTrialsComplete = true;
 	for (int remaining : m_remainingTrials) {
 		allTrialsComplete = allTrialsComplete && (remaining == 0);
@@ -52,14 +52,14 @@ bool Session::isComplete() const{
 	return allTrialsComplete;
 }
 
-bool Session::setupTrialParams(Array<Array<shared_ptr<TargetConfig>>> trials) {
-	for (int i = 0; i < trials.size(); i++) {
-		Array<shared_ptr<TargetConfig>> targets = trials[i];
-		for (int j = 0; j < targets.size(); j++) {
-			const String name = format("%s_%d_%s_%d", m_config->id, i, targets[j]->id, j);
-			if (m_config->logger.enable) {
+bool Session::updateBlock(bool updateTargets) {
+	for (int i = 0; i < m_trials.size(); i++) {
+		Array<shared_ptr<TargetConfig>> targets = m_trials[i];
+		if (m_config->logger.enable && updateTargets) {
+			for (int j = 0; j < targets.size(); j++) {
+				const String name = format("%s_%d_%s_%d", m_config->id, i, targets[j]->id, j);
 				m_logger->addTarget(name, targets[j], m_config->render.frameRate, m_config->render.frameDelay);
-			}			
+			}
 		}
 		m_remainingTrials.append(m_config->trials[i].count);
 		m_targetConfigs.append(targets);
@@ -91,9 +91,10 @@ void Session::onInit(String filename, String description) {
 				m_logger->logUserConfig(user, m_config->id, "start");
 			}
 		}
+
 		// Iterate over the sessions here and add a config for each
-		Array<Array<shared_ptr<TargetConfig>>> trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
-		setupTrialParams(trials);
+		m_trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
+		updateBlock(true);
 	}
 	else {	// Invalid session, move to displaying message
 		presentationState = PresentationState::scoreboard;
@@ -223,7 +224,6 @@ void Session::updatePresentationState()
 		}
 		if (!m_app->m_buttonUp)
 		{
-			//m_feedbackMessage = "";
 			newState = PresentationState::feedback;
 		}
 	}
@@ -257,41 +257,50 @@ void Session::updatePresentationState()
 	{
 		if ((stateElapsedTime > m_config->timing.feedbackDuration) && (remainingTargets <= 0))
 		{
-			if (isComplete()) {
-				if (m_config->questionArray.size() > 0 && m_currQuestionIdx < m_config->questionArray.size()) {			// Pop up question dialog(s) here if we need to
-
-					if (m_currQuestionIdx == -1){
-						m_currQuestionIdx = 0;
-						m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
-					}
-					else if (!m_app->dialog->visible()) {														// Check for whether dialog is closed (otherwise we are waiting for input)
-						if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
-							m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
-							if (m_config->logger.enable) {
-								m_logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
+			if (blockComplete()) {
+				m_currBlockIdx++;		// Increment the block index
+				if (m_currBlockIdx == m_config->blocks.length()) {
+					// Check for end of session (all blocks complete)
+					if (m_config->questionArray.size() > 0 && m_currQuestionIdx < m_config->questionArray.size()) {
+						// Pop up question dialog(s) here if we need to
+						if (m_currQuestionIdx == -1) {
+							m_currQuestionIdx = 0;
+							m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
+						}
+						else if (!m_app->dialog->visible()) {														// Check for whether dialog is closed (otherwise we are waiting for input)
+							if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
+								m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
+								if (m_config->logger.enable) {
+									m_logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
+								}
+								m_currQuestionIdx++;																// Present the next question (if there is one)
+								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
+									m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
+								}
 							}
-							m_currQuestionIdx++;																// Present the next question (if there is one)
-							if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
-								m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
+							else {
+								m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);					// Relaunch the same dialog (this wasn't completed)
 							}
 						}
-						else {
-							m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);					// Relaunch the same dialog (this wasn't completed)
-						}	
-					}	
-				}
-				else {
-					if (m_config->logger.enable) {
-						m_logger->logUserConfig(*m_app->getCurrUser(), m_config->id, "end");
-						m_logger->flush(false);
-						m_logger.reset();
 					}
-					m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
+					else {
+						if (m_config->logger.enable) {
+							m_logger->logUserConfig(*m_app->getCurrUser(), m_config->id, "end");
+							m_logger->flush(false);
+							m_logger.reset();
+						}
+						m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
 
-					int score = int(m_totalRemainingTime);
-					m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
-					m_currQuestionIdx = -1;
-					newState = PresentationState::scoreboard;
+						int score = int(m_totalRemainingTime);
+						m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
+						m_currQuestionIdx = -1;
+						newState = PresentationState::scoreboard;
+					}
+				}
+				else {					// Block is complete but session isn't
+					m_feedbackMessage = format("Block \"%s\" complete! Starting block \"%s\".", m_config->blocks[m_currBlockIdx - 1], m_config->blocks[m_currBlockIdx]);
+					updateBlock();
+					newState = PresentationState::initial;
 				}
 			}
 			else {
@@ -450,7 +459,7 @@ float Session::getProgress() {
 			if (tcount < 0) return 0.f;				// Infinite trials, never make any progress
 			remainingTrials += (float)tcount;
 		}
-		return 1.f - (remainingTrials / m_config->getTotalTrials());
+		return 1.f - (remainingTrials / m_config->getTrialsPerBlock());
 	}
 	return fnan();
 }
