@@ -372,6 +372,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 			String(std::to_string(m_currTrialIdx)),
 			"'" + m_config->id + "'",
 			"'" + m_config->description + "'",
+			"'" + m_config->blocks[m_currBlockIdx] + "'",
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
 			String(std::to_string(m_taskExecutionTime)),
