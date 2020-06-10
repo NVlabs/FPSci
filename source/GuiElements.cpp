@@ -354,7 +354,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 
 	// Add logo
 	if (config.showMenuLogo) {
-		auto logo = Texture::fromFile("material/FPSciLogo.png", Texture::Encoding(), Texture::DIM_2D, false, Texture::Preprocess::defaults(), true);
+		auto logo = Texture::fromFile("material/FPSciBanner.png", Texture::Encoding(), Texture::DIM_2D, false, Texture::Preprocess::defaults(), true);
 		logoTb = m_parent->addTextureBox(m_app, "", logo, true);
 		logoTb->setSize(Vector2(logo->width()+4.f, logo->height()+5.f));
 		// It doesn't make sense, but this specific zoom value appears to do better than 1.0f
