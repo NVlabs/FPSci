@@ -1518,6 +1518,36 @@ public:
 	}
 };
 
+class CommandConfig {
+public: 
+	String sessionStartCmd;						///< Command to run on start of a session
+	String sessionEndCmd;						///< Command to run on end of a session
+	String trialStartCmd;						///< Command to run on start of a trial
+	String trialEndCmd;							///< Command to run on end of a trial
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("runOnSessionStart", sessionStartCmd);
+			reader.getIfPresent("runOnSessionEnd", sessionEndCmd);
+			reader.getIfPresent("runOnTrialStart", trialStartCmd);
+			reader.getIfPresent("runOnTrialEnd", trialEndCmd);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a, const bool forceAll = false) const {
+		if (forceAll || !sessionStartCmd.empty())		a["runOnSessionStart"] = sessionStartCmd;
+		if (forceAll || !sessionEndCmd.empty())			a["runOnSessionEnd"] = sessionEndCmd;
+		if (forceAll || !trialStartCmd.empty())			a["runOnTrialStart"] = trialStartCmd;
+		if (forceAll || !trialEndCmd.empty())			a["runOnTrialEnd"] = trialEndCmd;
+		return a;
+	}
+};
+
 class MenuConfig {
 public: 
 	// Menu controls
@@ -1599,6 +1629,7 @@ public:
 	LoggerConfig		logger;									///< Logging configuration
 	WeaponConfig		weapon;			                        ///< Weapon to be used
 	MenuConfig			menu;									///< User settings window configuration
+	CommandConfig		commands;								///< Commands to run during execution
 	Array<Question>		questionArray;							///< Array of questions for this experiment/trial
 
 	// Constructors
@@ -1625,6 +1656,7 @@ public:
 		timing.load(reader, settingsVersion);
 		logger.load(reader, settingsVersion);
 		menu.load(reader, settingsVersion);
+		commands.load(reader, settingsVersion);
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("sceneName", sceneName);
@@ -1651,6 +1683,7 @@ public:
 		a = timing.addToAny(a, forceAll);
 		a = logger.addToAny(a, forceAll);
 		a = menu.addToAny(a, forceAll);
+		a = commands.addToAny(a, forceAll);
 		a["weapon"] =  weapon.toAny(forceAll);
 		return a;
 	}
