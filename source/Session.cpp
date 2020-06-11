@@ -241,6 +241,14 @@ void Session::updatePresentationState()
 			if (m_config->player.stillBetweenTrials) {
 				m_player->setMoveEnable(true);
 			}
+			// End previous process (if running)
+			if (m_trialProcess) {
+				TerminateProcess(m_trialProcess, 0);
+			}
+			// Run the start of trial command (if desired)
+			if (!m_config->commands.trialStartCmd.empty()) {
+				m_trialProcess = runCommand(m_config->commands.trialStartCmd);
+			}
 		}
 	}
 	else if (currentState == PresentationState::task)
@@ -302,6 +310,12 @@ void Session::updatePresentationState()
 			}
 			else {
 				m_feedbackMessage = "";
+				if (m_trialProcess) {
+					TerminateProcess(m_trialProcess, 0);
+				}
+				if (!m_config->commands.trialEndCmd.empty()) {
+					m_trialProcess = runCommand(m_config->commands.trialEndCmd);
+				}
 				nextCondition();
 				newState = PresentationState::ready;
 			}
@@ -313,6 +327,13 @@ void Session::updatePresentationState()
 			m_app->openUserSettingsWindow();
 			if (m_hasSession) {
 				m_app->userSaveButtonPress();												// Press the save button for the user...
+				if (m_sessProcess) {
+					// Close the process we started at session start (if there is one)
+					TerminateProcess(m_sessProcess, 0);
+				}
+				if (!m_config->commands.sessionEndCmd.empty()) {
+					m_sessProcess = runCommand(m_config->commands.sessionEndCmd);
+				}
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
 					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
