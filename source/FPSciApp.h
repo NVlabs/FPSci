@@ -69,6 +69,9 @@ protected:
 
     shared_ptr<UserMenu>					m_userSettingsWindow;				///< User settings window
 	bool									m_updateUserMenu = false;			///< Semaphore to indicate user settings needs update
+	bool									m_showUserMenu = true;				///< Show the user menu after update?
+
+	bool									m_firstSession = true;
 
 	shared_ptr<PlayerControls>				m_playerControls;					///< Player controls window (developer mode)
 	shared_ptr<RenderControls>				m_renderControls;					///< Render controls window (developer mode)
@@ -76,7 +79,7 @@ protected:
 
 	/** Called from onInit */
 	void makeGUI();
-	void updateControls();
+	void updateControls(bool firstSession = false);
 	virtual void loadModels();
 
 	/** Move a window to the center of the display */

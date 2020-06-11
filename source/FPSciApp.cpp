@@ -209,9 +209,10 @@ void FPSciApp::loadModels() {
 	}
 }
 
-void FPSciApp::updateControls() {
+void FPSciApp::updateControls(bool firstSession) {
 	// Update the user settings window
 	m_updateUserMenu = true;
+	if(!firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
 
 	// Update the waypoint manager
 	waypointManager->updateControls();
@@ -262,6 +263,7 @@ void FPSciApp::makeGUI() {
 
 	// Add the control panes here
 	updateControls();
+	m_showUserMenu = experimentConfig.menu.showMenuOnStartup;
 }
 
 void FPSciApp::exportScene() {
@@ -356,7 +358,7 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Update the controls for this session
-	updateControls();
+	updateControls(m_firstSession);				// If first session consider showing the menu
 
 	// Update the frame rate/delay
 	updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
@@ -451,6 +453,10 @@ void FPSciApp::updateSession(const String& id) {
 	}
 	else {
 		logPrintf("Created results file: %s.db\n", logName.c_str());
+	}
+
+	if (m_firstSession) {
+		m_firstSession = false;
 	}
 }
 
@@ -768,7 +774,7 @@ void FPSciApp::onAfterEvents() {
 		m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, sessConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
 		m_userSettingsWindow->setSelectedSession(selSess);
 		moveToCenter(m_userSettingsWindow);
-		m_userSettingsWindow->setVisible(true);
+		m_userSettingsWindow->setVisible(m_showUserMenu);
 
 		// Add the new settings window and clear the semaphore
 		addWidget(m_userSettingsWindow);
