@@ -417,6 +417,17 @@ These flags control whether various information is written to the output databas
 "logUsers" = true,
 ```
 
+## Command Config
+In addition to the programmable behavior above the general config also supports running of arbitrary commands around the FPSci runtime. These include:
+
+| Parameter Name                    | Type      | Description                                                           |
+|-----------------------------------|-----------|-----------------------------------------------------------------------|
+|`commandOnSessionStart`            |`String`   | Command to run at the start of a new session                          |
+|`commandOnSessionEnd`              |`String`   | Command to run at the end of a new session                            |
+|`commandOnTrialStart`              |`String`   | Command to run at the start of a new trial within a session           |
+|`commandOnTrialEnd`                |`String`   | Command to run at the end of a new trial within a session             |
+
+
 # Frame Rate Modes
 The `frameRate` parameter in any given session config can be used in 3 different modes:
 

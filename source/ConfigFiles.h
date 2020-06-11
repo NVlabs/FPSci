@@ -1528,10 +1528,10 @@ public:
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("runOnSessionStart", sessionStartCmd);
-			reader.getIfPresent("runOnSessionEnd", sessionEndCmd);
-			reader.getIfPresent("runOnTrialStart", trialStartCmd);
-			reader.getIfPresent("runOnTrialEnd", trialEndCmd);
+			reader.getIfPresent("commandOnSessionStart", sessionStartCmd);
+			reader.getIfPresent("commandOnSessionEnd", sessionEndCmd);
+			reader.getIfPresent("commandOnTrialStart", trialStartCmd);
+			reader.getIfPresent("commandOnTrialEnd", trialEndCmd);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1540,10 +1540,10 @@ public:
 	}
 
 	Any addToAny(Any a, const bool forceAll = false) const {
-		if (forceAll || !sessionStartCmd.empty())		a["runOnSessionStart"] = sessionStartCmd;
-		if (forceAll || !sessionEndCmd.empty())			a["runOnSessionEnd"] = sessionEndCmd;
-		if (forceAll || !trialStartCmd.empty())			a["runOnTrialStart"] = trialStartCmd;
-		if (forceAll || !trialEndCmd.empty())			a["runOnTrialEnd"] = trialEndCmd;
+		if (forceAll || !sessionStartCmd.empty())		a["commandOnSessionStart"] = sessionStartCmd;
+		if (forceAll || !sessionEndCmd.empty())			a["commandOnSessionEnd"] = sessionEndCmd;
+		if (forceAll || !trialStartCmd.empty())			a["commandOnTrialStart"] = trialStartCmd;
+		if (forceAll || !trialEndCmd.empty())			a["commandOnTrialEnd"] = trialEndCmd;
 		return a;
 	}
 };
