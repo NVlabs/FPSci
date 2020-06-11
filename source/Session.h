@@ -144,6 +144,9 @@ protected:
 	// Could move timer above to stopwatch in future
 	//Stopwatch stopwatch;			
 
+	HANDLE m_sessProcess = nullptr;
+	HANDLE m_trialProcess = nullptr;
+
 	// Target parameters
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	
@@ -223,6 +226,35 @@ protected:
 		return m_camera->frame().translation;
 	}
 
+	HANDLE runCommand(String cmd) {
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+		ZeroMemory(&si, sizeof(si));
+		si.cb = sizeof(si);
+		ZeroMemory(&pi, sizeof(pi));
+
+		LPSTR command = LPSTR(cmd.c_str());
+		if (!CreateProcess(NULL, command, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+			logPrintf("Failed to run start of session command: %s\n", GetLastErrorString());
+		}
+
+		return pi.hProcess;
+	}
+
+	String GetLastErrorString() {
+		DWORD error = GetLastError();
+		if (error) {
+			LPVOID lpMsgBuf;
+			DWORD bufLen = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL);
+			if (bufLen) {
+				LPCSTR lpMsgStr = (LPCSTR)lpMsgBuf;
+				std::string result(lpMsgStr, lpMsgStr + bufLen);
+				LocalFree(lpMsgBuf);
+				return String(result);
+			}
+		}
+		return String();
+	}
 
 public:
 	float initialHeadingRadians = 0.0f;

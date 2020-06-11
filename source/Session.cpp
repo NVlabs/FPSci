@@ -91,6 +91,12 @@ void Session::onInit(String filename, String description) {
 				m_logger->logUserConfig(user, m_config->id, "start");
 			}
 		}
+
+		// Check for start of session command to run
+		if (!m_config->commands.sessionStartCmd.empty()) {
+			m_sessProcess = runCommand(m_config->commands.sessionStartCmd);
+		}
+
 		// Iterate over the sessions here and add a config for each
 		Array<Array<shared_ptr<TargetConfig>>> trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
 		setupTrialParams(trials);
