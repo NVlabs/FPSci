@@ -28,7 +28,7 @@ Each session can specify any of the [general configuration parameters](general_c
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
     * `description` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
-    * `blocks` is an array of names for (repeated) groups of trials within a session, each name will be printed to the screen between "blocks" (or a single "default" block if not provided).
+    * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided).
     * `trials` is a list of trials referencing the `trials` table above:
         * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
         * `count` provides the number of trials in this session
@@ -42,7 +42,7 @@ An example session configuration snippet is included below:
         "id" : "test-session",          // This is a short name for our session
         "description" : "test",         // This is an arbitrary string tag (for now)
         "frameRate" : 120,              // Example of a generic parameter modified for this session
-        "blocks" : ["default"],         // Single block design
+        "blockCount" : 1,         // Single block design
         "trials" : [
             {
                 // Single target example

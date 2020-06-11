@@ -258,8 +258,8 @@ void Session::updatePresentationState()
 		if ((stateElapsedTime > m_config->timing.feedbackDuration) && (remainingTargets <= 0))
 		{
 			if (blockComplete()) {
-				m_currBlockIdx++;		// Increment the block index
-				if (m_currBlockIdx == m_config->blocks.length()) {
+				m_currBlock++;		// Increment the block index
+				if (m_currBlock > m_config->blockCount) {
 					// Check for end of session (all blocks complete)
 					if (m_config->questionArray.size() > 0 && m_currQuestionIdx < m_config->questionArray.size()) {
 						// Pop up question dialog(s) here if we need to
@@ -298,7 +298,7 @@ void Session::updatePresentationState()
 					}
 				}
 				else {					// Block is complete but session isn't
-					m_feedbackMessage = format("Block \"%s\" complete! Starting block \"%s\".", m_config->blocks[m_currBlockIdx - 1], m_config->blocks[m_currBlockIdx]);
+					m_feedbackMessage = format("Block %d complete! Starting block %d.", m_currBlock - 1, m_currBlock);
 					updateBlock();
 					newState = PresentationState::initial;
 				}
@@ -372,7 +372,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 			String(std::to_string(m_currTrialIdx)),
 			"'" + m_config->id + "'",
 			"'" + m_config->description + "'",
-			"'" + m_config->blocks[m_currBlockIdx] + "'",
+			format("'Block %d'", m_currBlock),
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
 			String(std::to_string(m_taskExecutionTime)),
