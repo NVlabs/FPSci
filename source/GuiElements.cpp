@@ -413,7 +413,7 @@ void UserMenu::drawUserPane(const MenuConfig& config)
 	// Basic user info
 	UserConfig* user = m_users.getCurrentUser();
 	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addLabel(format("Current User: %s", m_users.currentUser))->setHeight(30.0);
+		m_currentUserPane->addLabel(format("Current User: %s", m_users.currentUser.c_str()))->setHeight(30.0);
 	} m_currentUserPane->endRow();
 	m_currentUserPane->beginRow(); {
 		m_currentUserPane->addLabel(format("Mouse DPI: %f", user->mouseDPI));

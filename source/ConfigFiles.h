@@ -471,9 +471,9 @@ public:
 
 	/** Print the user table to the log */
 	void printToLog() {
-		logPrintf("Current User: %s\n", currentUser);
+		logPrintf("Current User: %s\n", currentUser.c_str());
 		for (UserConfig user : users) {
-			logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id, user.cmp360, user.mouseDPI);
+			logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id.c_str(), user.cmp360, user.mouseDPI);
 		}
 	}
 };
@@ -668,7 +668,7 @@ public:
 			}
 			completedSess = completedSess.substr(0, completedSess.length() - 2);
 
-			logPrintf("Subject ID: %s\nSession Order: [%s]\nCompleted Sessions: [%s]\n", status.id, sessOrder, completedSess);
+			logPrintf("Subject ID: %s\nSession Order: [%s]\nCompleted Sessions: [%s]\n", status.id.c_str(), sessOrder.c_str(), completedSess.c_str());
 		}
 	}
 };
@@ -1891,23 +1891,26 @@ public:
 	/** Print the experiment config to the log */
 	void printToLog() {
 		logPrintf("\n-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-			description, sceneName, timing.feedbackDuration, timing.readyDuration, timing.taskDuration, weapon.maxAmmo);
+			description.c_str(), sceneName.c_str(), timing.feedbackDuration, timing.readyDuration, timing.taskDuration, weapon.maxAmmo);
 		// Iterate through sessions and print them
 		for (int i = 0; i < sessions.size(); i++) {
 			SessionConfig sess = sessions[i];
 			logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n",
-				sess.id, sess.render.frameRate, sess.render.frameDelay);
+				sess.id.c_str(), sess.render.frameRate, sess.render.frameDelay);
 			// Now iterate through each run
 			for (int j = 0; j < sess.trials.size(); j++) {
-				logPrintf("\t\tTrial Run Config: IDs = %s, Count = %d\n",
-					sess.trials[j].ids, sess.trials[j].count);
+				String ids;
+				for (String id : sess.trials[j].ids) { ids += format("%s, ", id.c_str()); }
+				if(ids.length() > 2) ids = ids.substr(0, ids.length() - 2);
+				logPrintf("\t\tTrial Run Config: IDs = [%s], Count = %d\n",
+					ids.c_str(), sess.trials[j].count);
 			}
 		}
 		// Iterate through trials and print them
 		for (int i = 0; i < targets.size(); i++) {
 			TargetConfig target = targets[i];
 			logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tUpper Hemisphere Only = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n\tAxis Lock = [%s, %s, %s]\n",
-				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.size[0], target.size[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1],
+				target.id.c_str(), target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.size[0], target.size[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1],
 				target.axisLock[0]?"true":"false", target.axisLock[1] ? "true" : "false", target.axisLock[2] ? "true" : "false");
 		}
 	}
