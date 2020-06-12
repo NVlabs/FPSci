@@ -1668,6 +1668,7 @@ class SessionConfig : public FpsConfig {
 public:
 	String				id;								///< Session ID
 	String				description = "Session";		///< String indicating whether session is training or real
+	int					blockCount = 1;					///< Default to just 1 block per session
 	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
 	static FpsConfig	defaultConfig;
 
@@ -1686,6 +1687,7 @@ public:
 			// Unique session info
 			reader.get("id", id, "An \"id\" field must be provided for each session!");
 			reader.getIfPresent("description", description);
+			reader.getIfPresent("blockCount", blockCount);
 			reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
 			break;
 		default:
@@ -1701,12 +1703,13 @@ public:
 		// Update w/ the session-specific fields
 		a["id"] = id;
 		a["description"] = description;
+		a["blockCount"] = blockCount;
 		a["trials"] = trials;
 		return a;
 	}
 
 	/** Get the total number of trials in this session */
-	float getTotalTrials(void) {
+	float getTrialsPerBlock(void) {
 		float count = 0.f;
 		for (const TrialCount& tc : trials) {
 			if (count < 0) {

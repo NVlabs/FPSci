@@ -120,6 +120,8 @@ protected:
 	int m_destroyedTargets = 0;							///< Number of destroyed target
 	int m_clickCount = 0;								///< Count of total clicks in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
+	int	m_currBlock = 1;								///< Index to the current block of trials
+	Array<Array<shared_ptr<TargetConfig>>> m_trials;	///< Storage for trials (to repeat over blocks)
 	String m_feedbackMessage;							///< Message to show when trial complete
 
 	// Target management
@@ -242,7 +244,8 @@ public:
 	}
 	int remainingAmmo() const;
 
-	bool isComplete() const;
+	bool blockComplete() const;
+	bool complete() const;
 	void nextCondition();
 
 	void endLogging();
@@ -285,7 +288,7 @@ public:
 	void accumulatePlayerAction(PlayerActionType action, String target="");
 	bool canFire();
 
-	bool setupTrialParams(Array<Array<shared_ptr<TargetConfig>>> trials);
+	bool updateBlock(bool updateTargets = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState presentationState;			///< Current presentation state
