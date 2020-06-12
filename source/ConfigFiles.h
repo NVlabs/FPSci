@@ -1538,6 +1538,9 @@ public:
 	bool allowReticleChangeTimeChange	= false;						///< Allow the user to change the reticle change time
 	bool showReticlePreview				= true;							///< Show a preview of the reticle
 
+	bool showMenuOnStartup				= true;							///< Show the user menu on startup?
+	bool showMenuBetweenSessions		= true;							///< Show the user menu between session?
+
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
@@ -1555,6 +1558,8 @@ public:
 			reader.getIfPresent("allowReticleColorChange", allowReticleColorChange);
 			reader.getIfPresent("allowReticleChangeTimeChange", allowReticleChangeTimeChange);
 			reader.getIfPresent("showReticlePreview", showReticlePreview);
+			reader.getIfPresent("showMenuOnStartup", showMenuOnStartup);
+			reader.getIfPresent("showMenuBetweenSessions", showMenuBetweenSessions);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1579,6 +1584,8 @@ public:
 		if (forceAll || def.allowReticleColorChange != allowReticleColorChange)				a["allowReticleColorChange"] = allowReticleColorChange;
 		if (forceAll || def.allowReticleChangeTimeChange != allowReticleChangeTimeChange)	a["allowReticleChangeTimeChange"] = allowReticleChangeTimeChange;
 		if (forceAll || def.showReticlePreview != showReticlePreview)						a["showReticlePreview"] = showReticlePreview;
+		if (forceAll || def.showMenuOnStartup != showMenuOnStartup)							a["showMenuOnStartup"] = showMenuOnStartup;
+		if (forceAll || def.showMenuBetweenSessions != showMenuBetweenSessions)				a["showMenuBetweenSessions"] = showMenuBetweenSessions;
 		return a;
 	}
 };

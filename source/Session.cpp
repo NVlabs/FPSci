@@ -304,7 +304,6 @@ void Session::updatePresentationState()
 	else if (currentState == PresentationState::scoreboard) {
 		//if (stateElapsedTime > m_scoreboardDuration) {
 			newState = PresentationState::complete;
-			m_app->openUserSettingsWindow();
 			if (m_hasSession) {
 				m_app->userSaveButtonPress();												// Press the save button for the user...
 				Array<String> remaining = m_app->updateSessionDropDown();
