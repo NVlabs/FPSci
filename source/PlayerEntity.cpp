@@ -54,7 +54,7 @@ shared_ptr<Entity> PlayerEntity::create
 void PlayerEntity::init(AnyTableReader& propertyTable) {
    // Get values from Any
     Vector3 v;
-	float heading = m_headingRadians;
+	float heading = 0.0f;
     propertyTable.getIfPresent("heading", heading);
     Sphere s(1.5f);
     propertyTable.getIfPresent("collisionSphere", s);
@@ -71,7 +71,8 @@ void PlayerEntity::init(const Vector3& velocity, const Sphere& collisionProxy, f
     m_desiredOSVelocity     = Vector3::zero();
     m_desiredYawVelocity    = 0;
     m_desiredPitchVelocity  = 0;
-    m_headingRadians               = heading;
+	m_spawnHeadingRadians   = heading;
+    m_headingRadians        = heading;
     m_headTilt              = 0;
 }
 
@@ -114,7 +115,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	m_jumpPressed = false;
 
 	// Get the mouse rotation here
-	Vector2 mouseRotate = ui->mouseDXY() * turnScale * (float)mouseSensitivity / 2000.0f;
+	Vector2 mouseRotate = ui->mouseDXY() * turnScale * (float)m_cameraRadiansPerMouseDot;
 	float yaw = mouseRotate.x;
 	float pitch = mouseRotate.y;
 
@@ -132,12 +133,19 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     simulatePose(absoluteTime, deltaTime);
 
 	if (!isNaN(deltaTime)) {
-		if(m_motionEnable) m_inContact = slideMove(deltaTime);
-		m_headingRadians += m_desiredYawVelocity;	// *(float)deltaTime;		// Don't scale by time here
-		m_headingRadians = mod1(m_headingRadians / (2 * pif())) * 2 * pif();
-		m_headTilt = clamp(m_headTilt - m_desiredPitchVelocity, -89.9f * units::degrees(), 89.9f * units::degrees());
+		// Apply rotation first
+		m_headingRadians += m_desiredYawVelocity;												// Integrate the yaw change into heading
+		m_headingRadians = mod1((m_headingRadians) / (2 * pif())) * 2 * pif();					// Keep the user's heading value in the [0,2pi) range		
+		m_headTilt -= m_desiredPitchVelocity;													// Integrate the pitch change into head tilt
+		m_headTilt = clamp(m_headTilt, -89.9f * units::degrees(), 89.9f * units::degrees());	// Keep the user's head tilt to <90°
+		// Set player frame rotation based on the heading and tilt
 		m_frame.rotation = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians) * Matrix3::fromAxisAngle(Vector3::unitX(), m_headTilt);
-
+		
+		// Translation update - in direction after rotating
+		if (m_motionEnable) {
+			m_inContact = slideMove(deltaTime);
+		}
+		
 		// Check for "off map" condition and reset position here...
 		if (!isNaN(m_respawnHeight) && m_frame.translation.y < m_respawnHeight) {
 			respawn();
@@ -234,7 +242,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
 		m_inAir = true;
 		// Jump occurring, need to track this
 		m_lastJumpVelocity = m_desiredOSVelocity.y;
-		}
+	}
 	else if (m_inAir) {
 		// Already in a jump, apply gravity and enforce terminal velocity
 		m_lastJumpVelocity += ygrav * deltaTime;
@@ -256,7 +264,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
     // Trivial implementation that ignores collisions:
 #   if NO_COLLISIONS
 		loc = m_frame.translation + velocity  * timeLeft;
-		setFrame(loc);
+		m_frame.translation = loc;
         return;
 #   endif
 
@@ -267,7 +275,12 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
         debugPrintf("Initial velocity = %s; position = %s\n", velocity.toString().c_str(),  m_frame.translation.toString().c_str());
 #   endif
     int iterations = 0;
-	if (velocity.length() <= epsilon) return m_inContact;		// Handle case where there is no motion here (return last collision state)
+
+    // Handle case where there is no motion here (return last collision state)
+    if (velocity.length() <= epsilon) {
+        return m_inContact;
+    }
+
 	bool collided = false;
     while ((deltaTime > epsilon) && (velocity.length() > epsilon)) {
         float stepTime = float(deltaTime);
@@ -284,7 +297,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
         // Advance to just before the collision
         stepTime = max(0.0f, stepTime - epsilon * 0.5f);
 		loc = m_frame.translation + velocity * stepTime;
-		setFrame(loc);
+		m_frame.translation = loc;
 
         // Early out of loop when debugging
         //if (! runSimulation) { return; }
@@ -304,7 +317,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
                 // adjacent to the triangle and eliminate all velocity
                 // towards the triangle.
                loc = collisionPoint + collisionNormal * (m_collisionProxySphere.radius + epsilon * 2.0f);
-			   setFrame(loc);
+               m_frame.translation = loc;
                 
 #               ifdef TRACE_COLLISIONS
                     debugPrintf("  Interpenetration detected.  Position after = %s\n",

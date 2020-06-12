@@ -28,7 +28,7 @@ If a scene name is specified at the experiment level it will be applied to all s
 ```
 
 ## Weapon Configuration
-* `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](../data-files/weapon/weaponConfigReadme.md))
+* `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](weaponConfigReadme.md))
 
 The `weapon` config should be thought of as an atomic type (just like an `int` or `float`). Even though it is a (more complex) data structure, it does not use the experiment-->session level inheritance appraoch offered elsewhere in the configuration format (i.e. any `weapon` specification should be complete). For this reason we recommend storing weapon configurations in independent `.weapon.Any` files and including them using the `.Any` `#include()` directive.
 
@@ -52,7 +52,7 @@ The following settings allow the user to control various timings/durations aroun
 |---------------------------|-------|--------------------------------------------------------------------|
 |`horizontalFieldOfView`    |°      |The (horizontal) field of view for the user's display, to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)|
 |`frameDelay`               |frames | An (integer) count of frames to delay to control latency           |
-|`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#Frame-Rate-Modes) below.|
+|`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#frame-rate-modes) below.|
 |`shader`                   |file    | The (relative) path/filename of an (optional) shader to run (as a `.pix`) |
 
 ```
@@ -91,12 +91,15 @@ The following settings allow the user to control various timings/durations aroun
 
 ```
 "moveRate": 0.0,                            // Player move rate (0 for no motion)
-"jumpVelocity": 40.0,                       // Jump velocity
-"jumpInterval": 0.5,                        // Minimum jump interval
-"jumpTouch": true,                          // Require touch for jump
+"moveScale" : Vector2(1.0, 1.0),            // Movement scaling
+"playerAxisLock": [false, false, false],    // Don't lock player motion in any axis
+"turnScale": Vector2(1.0, 1.0),             // Turn rate scaling
 "playerHeight":  1.5,                       // Normal player height
 "crouchHeight": 0.8,                        // Crouch height
-"playerGravity": Vector3(0.0, -5.0, 0.0),   // Player gravity
+"jumpVelocity": 3.5,                        // Jump velocity
+"jumpInterval": 0.5,                        // Minimum jump interval
+"jumpTouch": true,                          // Require touch for jump
+"playerGravity": Vector3(0.0, -10.0, 0.0),  // Player gravity
 "disablePlayerMotionBetweenTrials": false,  // Don't allow the player to move in between trials
 "resetPlayerPositionBetweenTrials": false,  // Respawn the player in the starting location between trials
 ```
@@ -237,6 +240,36 @@ Each question in the array is then asked of the user (via an independent time-se
 "cooldownColor": Color4(1.0,1.0,1.0,0.75),  // White w/ 75% alpha
 ```
 
+### Static HUD Elements
+In addition to the (dynamic) HUD elements listed above, arbitrary lists of static HUD elements can be provided to draw in the UI using the `staticHUDElements` parameter in a general config. The `staticHUDElements` parameter value is an array of elements, each of which specifies the following sub-parameters:
+
+| Parameter Name    | Type      | Description                                                                               |
+|-------------------|-----------|-------------------------------------------------------------------------------------------|
+|`filename`         |`String`   | A filename to find for the image to draw (`.png` files are suggested)                     |
+|`position`         |`Vector2`  | The position to draw the element centered at, as a ratio of screen space (i.e. `Vector2(0.5, 0.5) for an element in the middle of the screen)  |
+|`scale`            |`Vector2`  | An additional scale to apply to the drawn element (as a fraction of it's original size)   | 
+
+The `position` parameter specifies the offset to the center of the image with `Vector2(0,0)` indicating the top-left corner and `Vector2(1,1)` indicating the bottom-right corner of the window).
+
+No static HUD elements are drawn by default. An example snippet including 2 (non-existant) HUD elements is provided below for reference:
+
+```
+"staticHUDElements" : [
+    // Element 1 (centered and scaled)
+    {
+        "filename": "centerImage.png",              // Use this file to draw an image (should be within data-files directory)
+        "position": Vector2(0.5, 0.5),              // Center the image (draw it's center at 1/2 the screen size horizontal/vertical)
+        "scale": Vector2(0.25, 0.25)                // Scale the image by 1/4 it's original resolution
+    },
+    // Element 2 (unscaled)
+    {
+        "filename" : "hud/unscaled.png",            // Use this filename (can add relative paths to directories that won't be searched implicitly)
+        "position": Vector2(0,0)                    // Draw this element at the top-left of the screen
+        // No scale specification implies Vector2(1,1) scaling
+    }
+]
+```
+
 ## Click to Photon Monitoring
 These flags help control the behavior of click-to-photon monitoring in application:
 
@@ -323,6 +356,48 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 "floatingCombatTextVelocity": Point3(0.0,-100.0,0.0),       // Move the combat text up at 100px/s                    
 "floatingCombatTextFade": 0.98,                             // Fade rate for the combat text
 "floatingCombatTextTimeout": 0.5,                           // Fade out the combat text in 0.5s
+```
+
+
+## Menu Config
+These flags control the display of the in-game user menu:
+
+| Parameter Name                    | Type      | Description                                                           |
+|-----------------------------------|-----------|-----------------------------------------------------------------------|
+|`showMenuLogo`                     |`bool`     |Show a logo at the top of the menu (currently `materials/FPSciLogo.png`) |
+|`showExperimentSettings`           |`bool`     |Show the options to select user/session                                |
+|`showUserSettings`                 |`bool`     |Show the per-user customization (sensitivity, reticle, etc) options    |
+|`allowUserSettingsSave`            |`bool`     |Allow the user to save their settings from the menu                    |
+|`allowSensitivityChange`           |`bool`     |Allow the user to change their (cm/360) sensitivity value from the menu|
+|`allowTurnScaleChange`             |`bool`     |Allow the user to change their turn scale from the menu                |
+|`xTurnScaleAdjustMode`             |`String`   |Mode for adjusting the X turn scale (when allowed), can be `"None"` (i.e. do not allow) or `"Slider"` |
+|`yTurnScaleAdjustMode`             |`String`   |Mode for adjusting the Y turn scale (when allowed), can be `"None"` (i.e. do not allow), `"Slider"`, or `"Invert"` (i.e. an "Invert Y" checkbox)|
+|`allowReticleChange`               |`bool`     |Allow the user to edit their reticle from the user menu                |
+|`allowReticleIdxChange`            |`bool`     |Allow the user to change the "index" of their reticle (i.e. reticle style) |
+|`allowReticleSizeChange`           |`bool`     |Allow the user to change the size of their reticle (pre/post shot)     |
+|`allowReticleColorChange`          |`bool`     |Allow the user to change the color of their reticle (pre/post shot)    |
+|`allowReticleChangeTimeChange`     |`bool`     |Allow the user to change the time it takes to change the color and size of the reticle following a shot |
+|`showReticlePreview`               |`bool`     |Show the user a preview of their (pre-shot) reticle (size is not applied) | 
+|`showMenuOnStartup`                |`bool`     |Controls whether the user menu is shown at startup (should only be set at the experiment level)|
+|`showMenuBetweenSessions`          |`bool`     |Controls whether the user menu is shown between sessions (can be controlled on a per-session basis)|
+
+```
+"showMenuLogo": true,                   // Show the logo
+"showExperimentSettings" : true,        // Allow user/session seleciton
+"showUserSettings": true,               // Show the user settings
+"allowUserSettingsSave": true,          // Allow the user to save their settings changes
+"allowSensitivityChange": true,         // Allow the user to change the cm/360 sensitivity
+"allowTurnScaleChange": true,           // Allow the user to change their turn scale (see below)
+"xTurnScaleAdjustMode": "None",         // Don't allow X-turn scale adjustment (use sensitivity)
+"yTurnScaleAdjustMode": "Invert",       // Only allow simple "invert" behavior for Y turn scale
+"allowReticleChange": false,            // Don't allow the user to change the reticle (ignore below)
+"allowReticleIdxChange": true,          // If reticle changes are enabled, allow index (reticle style) changes
+"allowReticleSizeChange": true,         // If reticle changes are enabled, allow size changes
+"allowReticleColorChange": true,        // If reticle changes are enabled, allow color changes
+"allowReticleTimeChange": false,        // Even if reticle change is enabled, don't allow "shrink time" to change
+"showReticlePreview": true,             // If reticle changes are enabled show the preview
+"showMenuOnStartup" : true,             // Show the user menu when the application starts
+"showMenuBetweenSessions": true         // Show the user menu between each session
 ```
 
 ## Logger Config

@@ -3,12 +3,12 @@
 #include "TargetEntity.h"
 #include "GuiElements.h"
 
-class App;
+class FPSciApp;
 class WaypointDisplay;
 
 class WaypointManager : ReferenceCountedObject {
 private:
-	App* m_app = nullptr;
+	FPSciApp* m_app = nullptr;
 	Scene* m_scene = nullptr;
 
 	shared_ptr<WaypointDisplay> m_waypointControls;
@@ -39,11 +39,11 @@ private:
 public:
 	WaypointManager() {}
 
-	WaypointManager(App* app) {
+	WaypointManager(FPSciApp* app) {
 		m_app = app;
 	}
 
-	static shared_ptr<WaypointManager> create(App* app) {
+	static shared_ptr<WaypointManager> create(FPSciApp* app) {
 		return createShared<WaypointManager>(app);
 	}
 

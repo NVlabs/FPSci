@@ -31,7 +31,7 @@
 #include "ConfigFiles.h"
 #include <ctime>
 
-class App;
+class FPSciApp;
 class PlayerEntity;
 class TargetEntity;
 class FPSciLogger;
@@ -107,7 +107,7 @@ struct PlayerAction {
 
 class Session : public ReferenceCountedObject {
 protected:
-	App* m_app = nullptr;								///< Pointer to the app
+	FPSciApp* m_app = nullptr;								///< Pointer to the app
 	Scene* m_scene = nullptr;							///< Pointer to the scene
 	
 	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
@@ -120,6 +120,8 @@ protected:
 	int m_destroyedTargets = 0;							///< Number of destroyed target
 	int m_clickCount = 0;								///< Count of total clicks in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
+	int	m_currBlock = 1;								///< Index to the current block of trials
+	Array<Array<shared_ptr<TargetConfig>>> m_trials;	///< Storage for trials (to repeat over blocks)
 	String m_feedbackMessage;							///< Message to show when trial complete
 
 	// Target management
@@ -147,12 +149,12 @@ protected:
 	// Target parameters
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	
-	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config)
+	Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config)
 	{
 		m_hasSession = notNull(m_config);
 	}
 
-	Session(App* app) : m_app(app)
+	Session(FPSciApp* app) : m_app(app)
 	{
 		m_hasSession = false;
 	}
@@ -227,10 +229,10 @@ protected:
 public:
 	float initialHeadingRadians = 0.0f;
 
-	static shared_ptr<Session> create(App* app) {
+	static shared_ptr<Session> create(FPSciApp* app) {
 		return createShared<Session>(app);
 	}
-	static shared_ptr<Session> create(App* app, shared_ptr<SessionConfig> config) {
+	static shared_ptr<Session> create(FPSciApp* app, shared_ptr<SessionConfig> config) {
 		return createShared<Session>(app, config);
 	}
 
@@ -242,7 +244,8 @@ public:
 	}
 	int remainingAmmo() const;
 
-	bool isComplete() const;
+	bool blockComplete() const;
+	bool complete() const;
 	void nextCondition();
 
 	void endLogging();
@@ -285,7 +288,7 @@ public:
 	void accumulatePlayerAction(PlayerActionType action, String target="");
 	bool canFire();
 
-	bool setupTrialParams(Array<Array<shared_ptr<TargetConfig>>> trials);
+	bool updateBlock(bool updateTargets = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState presentationState;			///< Current presentation state
@@ -293,7 +296,7 @@ public:
 	/** result recording */
 	void countClick() { m_clickCount++; }
 
-	Array<shared_ptr<TargetEntity>> targetArray() {
+	const Array<shared_ptr<TargetEntity>>& targetArray() const {
 		return m_targetArray;
 	}
 };

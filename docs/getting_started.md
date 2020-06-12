@@ -32,7 +32,7 @@ When authoring an initial experiment config we can rely on many of the deafult v
 #### Setting Up a Target
 There are a few fields we will need to populate manually to provide an interesting experiment. One of the first non-generic things to specify in an experiment config is the `targets` array. This array provides (named) targets that can be used to setup trials within sessions later in the configuration.
 
-To start with we will setup a simple target that uses the apps default target model and avoids world-space coordinates since these would be specific to a particular scene. For more information on setting up targets refer to [the `experimenyconfig.Any` readme](experimentConfigReadme.md).
+To start with we will setup a simple target that uses the apps default target model and avoids world-space coordinates since these would be specific to a particular scene. For more information on setting up targets refer to [the `experimenyconfig.Any` readme](experimentConfigReadme.md#target-configuration).
 
 ```
     targets = [
@@ -94,7 +94,7 @@ Let's create a single user for our new experiment. To do this we will start in t
 In the file above we create a new user (user name is "user") and set them as the `currentUser` for the application. Note that the user id set as the `currentUser` should always appear in the `users` array within the `userconfig.Any` file.
 
 #### User Status
-Now that we have a configuration for our new user, we can update the [`userstatus.Any` file](userStatusReadme.md) to link our new session (created [above](####-Adding-Sessions)) to this user. This is done as shown below:
+Now that we have a configuration for our new user, we can update the [`userstatus.Any` file](userStatusReadme.md) to link our new session (created [above](#adding-sessions)) to this user. This is done as shown below:
 
 ```
 {

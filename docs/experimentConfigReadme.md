@@ -11,7 +11,7 @@ Broad areas of control included in this config file include:
 For a full description of fields see the descriptions below. Along with each subsection an example configuration is provided. In many cases the example values below are the defaults provided in these field values. Where this is not the case the default will be indicated in the comments.
 
 ## File Location
-The [`experimentconfig.Any` file](../data-files/experimentconfig.Any) is located in the [`data-files`](../data-files/) directory at the root of the project. If no `experimentconfig.Any` file is present at startup, [`SAMPLEexperimentconfig.Any`](../data-files/SAMPLEexperimentconfig.Any) is copied to `experimentconfig.Any`.
+The `experimentconfig.Any` file is located in the [`data-files`](../data-files/) directory at the root of the project. If no `experimentconfig.Any` file is present at startup, a default experiment configuration is written to `experimentconfig.Any`.
 
 # Experiment Config Field Descriptions
 
@@ -28,6 +28,7 @@ Each session can specify any of the [general configuration parameters](general_c
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
     * `description` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
+    * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided).
     * `trials` is a list of trials referencing the `trials` table above:
         * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
         * `count` provides the number of trials in this session
@@ -41,6 +42,7 @@ An example session configuration snippet is included below:
         "id" : "test-session",          // This is a short name for our session
         "description" : "test",         // This is an arbitrary string tag (for now)
         "frameRate" : 120,              // Example of a generic parameter modified for this session
+        "blockCount" : 1,         // Single block design
         "trials" : [
             {
                 // Single target example
@@ -155,7 +157,7 @@ targets = [
 ```
 
 ## Target Paths (Using Destinations)
-The `destinations` array within the target object overrides much of the default motion behavior in the target motion controls. Once a destinations array (including more than 2 destiantions) is specified all other motion parameters are considered unused. Once a `destinations` array is specified only the following fields from the [target configuration](###-Target-Configuration) apply:
+The `destinations` array within the target object overrides much of the default motion behavior in the target motion controls. Once a destinations array (including more than 2 destiantions) is specified all other motion parameters are considered unused. Once a `destinations` array is specified only the following fields from the [target configuration](#target-configuration) apply:
 
 * `id`
 * `visualSize`

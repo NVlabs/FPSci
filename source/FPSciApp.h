@@ -1,5 +1,5 @@
 /**
-  \file maxPerf/App.h
+  \file maxPerf/FPSciApp.h
 
   Sample application showing how to render simple graphics with maximum throughput and 
   minimum latency by stripping away most high level VFX and convenience features for
@@ -28,7 +28,7 @@ class WaypointManager;
 // feedback: feedback showing whether task performance was successful or not.
 enum PresentationState { initial, ready, task, feedback, scoreboard, complete };
 
-class App : public GApp {
+class FPSciApp : public GApp {
 protected:
 	static const int						MAX_HISTORY_TIMING_FRAMES = 360;	///< Length of the history queue for m_frameDurationQueue
 	shared_ptr<Sound>						m_sceneHitSound;					///< Sound for target exploding
@@ -37,11 +37,6 @@ protected:
 	Array<shared_ptr<FloatingCombatText>>	m_combatTextList;					///< Array of existing combat text
 
 	shared_ptr<Weapon>						m_weapon;							///< Current weapon
-	shared_ptr<ArticulatedModel>			m_missDecalModel;					///< Model for the miss decal
-	shared_ptr<ArticulatedModel>			m_hitDecalModel;					///< Model for the hit decal
-	shared_ptr<VisibleEntity>				m_hitDecal;							///< Pointer to hit decal
-	RealTime								m_hitDecalTimeRemainingS = 0.f;		///< Remaining duration to show the decal for
-	Array<shared_ptr<VisibleEntity>>		m_currentMissDecals;				///< Pointers to miss decals
 
 	Array<shared_ptr<VisibleEntity>>		m_explosions;						///< Model for target destroyed decal
 	Array<RealTime>							m_explosionRemainingTimes;			///< Time for end of explosion
@@ -51,15 +46,6 @@ protected:
 	const int								m_MatTableSize = 10;				///< Set this to set # of color "levels"
 	Array<shared_ptr<UniversalMaterial>>	m_materials;						///< This stores the color materials
 
-	GuiDropDownList*						m_sessDropDown;						///< Dropdown menu for session selection
-	GuiDropDownList*						m_userDropDown;						///< Dropdown menu for user selection
-	GuiLabel*								m_mouseDPILabel;					///< Label for mouse DPI field
-	GuiLabel*								m_cm360Label;						///< Label for cm/360 field
-
-	shared_ptr<PlayerControls>				m_playerControls;
-	shared_ptr<RenderControls>				m_renderControls;
-	shared_ptr<WeaponControls>				m_weaponControls;
-
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_explosionModels;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
@@ -68,12 +54,6 @@ protected:
 	/** Used to detect GUI changes to m_reticleIndex */
 	int										m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
 	float									m_debugMenuHeight = 0.0f;			///< Height of the debug menu when in developer mode
-    GuiPane*								m_currentUserPane;					///< Current user information pane
-
-	// Drop down selection writebacks
-	int										m_ddCurrentUser = 0;				///< Index of current user
-	int										m_lastSeenUser = -1;				///< Index of last seen user (used for change determination)
-	int										m_ddCurrentSession = 0;				///< Index of current session
 
 	RealTime								m_lastJumpTime = 0.0f;				///< Time of last jump
 
@@ -87,22 +67,31 @@ protected:
 	Array<shared_ptr<Framebuffer>>			m_ldrDelayBufferQueue;
 	int										m_currentDelayBufferIndex = 0;
 
-    shared_ptr<GuiWindow>					m_userSettingsWindow;
-    bool									m_userSettingsMode = true;
+    shared_ptr<UserMenu>					m_userSettingsWindow;				///< User settings window
+	bool									m_updateUserMenu = false;			///< Semaphore to indicate user settings needs update
+	bool									m_showUserMenu = true;				///< Show the user menu after update?
 
-	Array<Projectile>						m_projectileArray;					///< Arrray of drawn projectiles
+	bool									m_firstSession = true;
+
+	shared_ptr<PlayerControls>				m_playerControls;					///< Player controls window (developer mode)
+	shared_ptr<RenderControls>				m_renderControls;					///< Render controls window (developer mode)
+	shared_ptr<WeaponControls>				m_weaponControls;					///< Weapon controls window (developer mode)
 
 	/** Called from onInit */
 	void makeGUI();
-	void updateControls();
-	void loadModels();
-	void loadDecals();
-	void updateUser(void);
-    void updateUserGUI();
+	void updateControls(bool firstSession = false);
+	virtual void loadModels();
 	shared_ptr<PlayerEntity> updatePlayer();
 
 	/** Get the player camera */
 	shared_ptr<Camera> playerCamera() {  return scene()->typedEntity<Camera>("playerCamera"); }
+
+	/** Move a window to the center of the display */
+	void moveToCenter(shared_ptr<GuiWindow> window) {
+		const float scale = 0.5f / m_userSettingsWindow->pixelScale();
+		const Vector2 pos = (scale * renderDevice->viewport().wh()) - (window->bounds().wh() / 2.0f);
+		window->moveTo(pos);
+	}
 
 	/** Get the current turn scale (per user and scope setting) */
 	Vector2 currentTurnScale();
@@ -110,28 +99,37 @@ protected:
 	void setScopeView(bool scoped = true);
 
 	void hitTarget(shared_ptr<TargetEntity>);
-	void simulateProjectiles(RealTime dt);
-	void drawDecal(const Point3& cameraOffset, const Vector3& normal, bool hit = false);
+	void missEvent();
 
-	void drawHUD(RenderDevice *rd);
+	virtual void drawHUD(RenderDevice *rd);
 	void drawClickIndicator(RenderDevice *rd, String mode);
 
 public:
+
+	class Settings : public GApp::Settings {
+	public:
+		Settings(const StartupConfig& startupConfig, int argc, const char* argv[]);
+	};
+
+	/** global startup config - sets developer flags and experiment/user paths */
+	static StartupConfig startupConfig;
+
 	/* Moving from proctected so that Experiment classes can use it. */
 	shared_ptr<GFont>               outputFont;						///< Font used for output
 	shared_ptr<GFont>               hudFont;						///< Font used in HUD
 	Array<shared_ptr<GFont>>		floatingCombatText;				///< Floating combat text array
 	shared_ptr<Texture>             reticleTexture;					///< Texture used for reticle
-	shared_ptr<Texture>             hudTexture;						///< Texture used for HUD
+	Table<String, shared_ptr<Texture>> hudTextures;					///< Textures used for the HUD
 	shared_ptr<GuiTheme>			theme;	
 	bool                            emergencyTurbo = false;			///< Lower rendering quality to improve performance
 
-	App(const GApp::Settings& settings = GApp::Settings());
+	FPSciApp(const GApp::Settings& settings = GApp::Settings());
 
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
+	LatencyLoggerConfig				latencyLoggerConfig;			///< Configuration for the system/hardware
 	KeyMapping						keyMap;
 	shared_ptr<WaypointManager>		waypointManager;				///< Waypoint mananger pointer
 	
@@ -149,9 +147,10 @@ public:
 	const int numReticles = 55;			///< Total count of reticles available to choose from
 	float sceneBrightness = 1.0f;		///< Scene brightness scale factor
 
+	Vector2 displayRes;
+
 	/** Call to change the reticle. */
 	void setReticle(int r);
-
 	/** Show the player controls */
 	void showPlayerControls();
 	/** Show the render controls */
@@ -168,22 +167,25 @@ public:
     /** callback for saving user config */
 	void userSaveButtonPress(void);
 
-	Array<String> updateSessionDropDown(void);
-	String getDropDownSessId(void);
+	// Pass throughts to user settings window (for now)
+	Array<String> updateSessionDropDown(void) { return m_userSettingsWindow->updateSessionDropDown(); }
+	shared_ptr<UserConfig> getCurrUser(void) { return m_userSettingsWindow->getCurrUser(); }
+
 	void markSessComplete(String id);
-	void updateSessionPress(void);
-	void updateSession(const String& id);
+	virtual void updateSession(const String& id);
 	void updateParameters(int frameDelay, float frameRate);
 	void presentQuestion(Question question);
 
-	String getDropDownUserId(void);
-	shared_ptr<UserConfig> getCurrUser(void);
-
     void quitRequest();
+	void toggleUserSettingsMenu();
 	   
 	/** opens the user settings window */
     void openUserSettingsWindow();
 
+	void closeUserSettingsWindow();
+
+	/** changes the mouse interaction (camera direct vs pointer) */
+	void setDirectMode(bool enable = true);
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
 	
@@ -197,19 +199,10 @@ public:
 	virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& surface2D) override;
 	virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) override;
 	virtual bool onEvent(const GEvent& e) override;
+	virtual void onAfterEvents() override;
 	virtual void onUserInput(UserInput* ui) override;
 	virtual void onCleanup() override;
     virtual void oneFrame() override;
-	
-	// hardware setting
-	struct ScreenSetting
-	{
-		float viewingDistance = 0.5f; // in m
-		float screenDiagonal = 25.0f * 0.0254f; // in m (diagonal)
-		Vector2 resolution = Vector2(1920, 1080);
-		float pixelSize = screenDiagonal / sqrt(resolution.x * resolution.x + resolution.y * resolution.y);
-		Vector2 screenSize = resolution * pixelSize;
-	} m_screenSetting;
 
 	bool							m_buttonUp = true;
 	bool							m_frameToggle = false;		///< Simple toggle flag used for frame rate click-to-photon monitoring

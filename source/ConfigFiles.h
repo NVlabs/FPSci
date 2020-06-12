@@ -69,6 +69,11 @@ public:
     String userConfig() {
         return userConfigPath + "userconfig.Any";
     }
+	
+    /** filename with given path to user status file */
+	String userStatusConfig() {
+		return userConfigPath + "userstatus.Any";
+	}
 };
 
 /** Key mapping */
@@ -83,8 +88,8 @@ public:
 		map.set("strafeLeft", Array<GKey>{ (GKey)'a', GKey::LEFT });
 		map.set("moveBackward", Array<GKey>{ (GKey)'s', GKey::DOWN });
 		map.set("strafeRight", Array<GKey>{ (GKey)'d', GKey::RIGHT });
-		map.set("openMenu", Array<GKey>{ GKey::ESCAPE, GKey::TAB });
-		map.set("quit", Array<GKey>{ GKey::MINUS });
+		map.set("openMenu", Array<GKey>{ GKey::ESCAPE });
+		map.set("quit", Array<GKey>{ GKey::KP_MINUS, GKey::PAUSE });
 		map.set("crouch", Array<GKey>{ GKey::LCTRL });
 		map.set("jump", Array<GKey>{ GKey::SPACE });
 		map.set("shoot", Array<GKey>{ GKey::LEFT_MOUSE });
@@ -140,10 +145,13 @@ public:
 	}
 };
 
-/** System configuration control and logging */
-class SystemConfig {
-public:
+/** Information about the system being used
+The current implementation is heavily Windows-specific */
+class SystemInfo {
+public: 
 	// Output/runtime read parameters
+	String	hostName;			///< System host (PC) name
+	String  userName;			///< System username
 	String	cpuName;			///< The vendor name of the CPU being used
 	int		coreCount;			///< Core count for the CPU being used
 	String	gpuName;			///< The vendor name of the GPU being used
@@ -154,68 +162,13 @@ public:
 	int		displayXSize;		///< The horizontal size of the display in mm
 	int		displayYSize;		///< The vertical size of the display in mm
 
-	// Input parameters
-	bool	hasLogger = false;			///< Indicates that a hardware logger is present in the system
-	String	loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
-	bool	hasSync = false;			///< Indicates that a hardware sync will occur via serial card DTR signal
-	String	syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
-
-	SystemConfig() {};
-
-	/** Construct from Any */
-	SystemConfig(const Any& any) {
-		int settingsVersion = 1;
-		AnyTableReader reader(any);
-		reader.getIfPresent("settingsVersion", settingsVersion);
-
-		switch (settingsVersion) {
-		case 1:
-			reader.get("HasLogger", hasLogger, "System config must specify the \"HasLogger\" flag!");
-			reader.get("HasSync", hasSync, "System config must specify the \"HasSync\" flag!");
-			reader.getIfPresent("LoggerComPort", loggerComPort);
-			reader.getIfPresent("SyncComPort", syncComPort);
-			break;
-		default:
-			debugPrintf("Settings version '%d' not recognized in SystemConfig.\n", settingsVersion);
-			break;
-		}
-		// Get the system info
-		getSystemInfo();		
-	}
-
-	/** Serialize to Any */
-	Any toAny(const bool forceAll = true) const{
-		Any a(Any::TABLE);
-		a["CPU"] = cpuName;
-		a["GPU"] = gpuName;
-		a["CoreCount"] = coreCount;
-		a["MemoryCapacityMB"] = memCapacityMB;
-		a["DisplayName"] = displayName;
-		a["DisplayResXpx"] = displayXRes;
-		a["DisplayResYpx"] = displayYRes;
-		a["DisplaySizeXmm"] = displayXSize;
-		a["DisplaySizeYmm"] = displayYSize;
-		a["HasLogger"] = hasLogger;
-		a["LoggerComPort"] = loggerComPort;
-		a["HasSync"] = hasSync;
-		a["SyncComPort"] = syncComPort;
-		return a;
-	}
-
-	/** Load a system config from file */
-	static SystemConfig load() {
-		// if file not found, create a default system config
-		if (!FileSystem::exists("systemconfig.Any")) { 
-			SystemConfig config = SystemConfig();		// Create the default
-			config.getSystemInfo();						// Get system info
-			config.toAny().save("systemconfig.Any");	// Save a file
-			return config;
-		}
-		return Any::fromFile(System::findDataFile("systemconfig.Any"));
-	}
-
 	/** Get the system info using (windows) calls */
-	void getSystemInfo(void) {
+	static SystemInfo get(void) {
+		SystemInfo info;
+
+		info.hostName = getenv("COMPUTERNAME");		// Get the host (computer) name
+		info.userName = getenv("USERNAME");			// Get the current logged in username
+
 		// Get CPU name string
 		int cpuInfo[4] = { -1 };
 		unsigned nExIds, i = 0;
@@ -236,26 +189,28 @@ public:
 				memcpy(cpuBrandString + 32, cpuInfo, sizeof(cpuInfo));
 				break;
 			default:
-				logPrintf("Couldn't get system info...\n");
+				// Removed these are they are unnecessary prints...
+				//logPrintf("Couldn't get system info...\n");
+				break;
 			}
 		}
-		cpuName = cpuBrandString;
+		info.cpuName = cpuBrandString;
 
 		// Get CPU core count
 		SYSTEM_INFO sysInfo;
 		GetSystemInfo(&sysInfo);
-		coreCount = sysInfo.dwNumberOfProcessors;
+		info.coreCount = sysInfo.dwNumberOfProcessors;
 
 		// Get memory size
 		MEMORYSTATUSEX statex;
 		statex.dwLength = sizeof(statex);
 		GlobalMemoryStatusEx(&statex);
-		memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
+		info.memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
 
 		// Get GPU name string
 		String gpuVendor = String((char*)glGetString(GL_VENDOR)).append(" ");
 		String gpuRenderer = String((char*)glGetString(GL_RENDERER));
-		gpuName = gpuVendor.append(gpuRenderer);
+		info.gpuName = gpuVendor.append(gpuRenderer);
 
 		// Get display information (monitor name)
 		// This seems to break on many systems/provide less than descriptive names!!!
@@ -266,27 +221,104 @@ public:
 		std::string deviceName = dd.DeviceName;
 		EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
 		displayName = String(dd.DeviceString);*/
-		displayName = String("TODO");
+		info.displayName = String("TODO");
 
 		// Get screen resolution
-		displayXRes = GetSystemMetrics(SM_CXSCREEN);
-		displayYRes = GetSystemMetrics(SM_CYSCREEN);
+		info.displayXRes = GetSystemMetrics(SM_CXSCREEN);
+		info.displayYRes = GetSystemMetrics(SM_CYSCREEN);
 
 		// Get display size
 		HWND const hwnd = 0;
 		HDC const hdc = GetDC(hwnd);
 		assert(hdc);
-		displayXSize = GetDeviceCaps(hdc, HORZSIZE);
-		displayYSize = GetDeviceCaps(hdc, VERTSIZE);
+		info.displayXSize = GetDeviceCaps(hdc, HORZSIZE);
+		info.displayYSize = GetDeviceCaps(hdc, VERTSIZE);
+		
+		return info;
 	}
 
-	/** Print the system info to log.txt */
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["hostname"] = hostName;
+		a["username"] = userName;
+		a["CPU"] = cpuName;
+		a["GPU"] = gpuName;
+		a["CoreCount"] = coreCount;
+		a["MemoryCapacityMB"] = memCapacityMB;
+		a["DisplayName"] = displayName;
+		a["DisplayResXpx"] = displayXRes;
+		a["DisplayResYpx"] = displayYRes;
+		a["DisplaySizeXmm"] = displayXSize;
+		a["DisplaySizeYmm"] = displayYSize;
+		return a;
+	}
+
 	void printToLog() {
 		// Print system info to log
-		logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n",
-			cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
-		logPrintf("Logger Present: %s\nLogger COM Port: %s\nSync Card Present: %s\nSync COM Port: %s\n",
-			hasLogger ? "True" : "False", loggerComPort, hasSync ? "True" : "False", syncComPort);
+		logPrintf("\n-------------------\nSystem Info:\n-------------------\n\tHostname: %s\n\tUsername: %s\n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n\n",
+			hostName, userName, cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
+	}
+};
+
+/** Latency logging configuration */
+class LatencyLoggerConfig {
+public:
+	// Input parameters
+	bool	hasLogger = false;		///< Indicates that a hardware logger is present in the system
+	String	loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
+	bool	hasSync = false;		///< Indicates that a hardware sync will occur via serial card DTR signal
+	String	syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
+
+	LatencyLoggerConfig() {};
+
+	/** Construct from Any */
+	LatencyLoggerConfig(const Any& any) {
+		int settingsVersion = 1;
+		AnyTableReader reader(any);
+		reader.getIfPresent("settingsVersion", settingsVersion);
+
+		switch (settingsVersion) {
+		case 1:
+			reader.get("HasLogger", hasLogger, "System config must specify the \"HasLogger\" flag!");
+			reader.get("HasSync", hasSync, "System config must specify the \"HasSync\" flag!");
+			reader.getIfPresent("LoggerComPort", loggerComPort);
+			reader.getIfPresent("SyncComPort", syncComPort);
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in SystemConfig.\n", settingsVersion);
+			break;
+		}	
+	}
+
+	/** Serialize to Any */
+	Any toAny(const bool forceAll = true) const{
+		Any a(Any::TABLE);
+		a["HasLogger"] = hasLogger;
+		a["LoggerComPort"] = loggerComPort;
+		a["HasSync"] = hasSync;
+		a["SyncComPort"] = syncComPort;
+		return a;
+	}
+
+	/** Load a latency logger config from file */
+	static LatencyLoggerConfig load() {
+		// if file not found, create a default latency logger config
+		if (!FileSystem::exists("systemconfig.Any")) { 
+			return LatencyLoggerConfig();		// Create the default
+		}
+		return Any::fromFile(System::findDataFile("systemconfig.Any"));
+	}
+
+	/** Print the latency logger config to log.txt */
+	void printToLog() {
+		const String loggerComStr = hasLogger ? loggerComPort : "None";
+		const String syncComStr = hasSync ? syncComPort : "None";
+		logPrintf("-------------------\nLDAT-R Config:\n-------------------\n\tLogger Present: %s\n\tLogger COM Port: %s\n\tSync Card Present: %s\n\tSync COM Port: %s\n\n",
+			hasLogger ? "True" : "False",
+			loggerComStr.c_str(),
+			hasSync ? "True" : "False",
+			syncComStr.c_str()
+		);
 	}
 };
 
@@ -297,6 +329,7 @@ public:
     double			mouseDPI			= 800.0;						///< Mouse DPI setting
     double			cmp360				= 12.75;						///< Mouse sensitivity, reported as centimeters per 360�
 	Vector2			turnScale			= Vector2(1.0f, 1.0f);			///< Turn scale for player, can be used to invert controls in either direction
+	bool			invertY				= false;						///< Extra flag for Y-invert (duplicates turn scale, but very common)
 	Vector2			scopeTurnScale		= Vector2(0.0f, 0.0f);			///< Scoped turn scale (0's imply default scaling)
 
 	int				currentSession		= 0;							///< Currently selected session
@@ -305,7 +338,7 @@ public:
 	Array<float>	reticleScale		= { 1.0f, 1.0f };				///< Scale for the user's reticle
 	Array<Color4>	reticleColor		= {Color4(1.0, 0.0, 0.0, 1.0),	///< Color for the user's reticle
 										Color4(1.0, 0.0, 0.0, 1.0)};	
-	float			reticleShrinkTimeS	= 0.3f;							///< Time for reticle to contract after expand on shot (in seconds)
+	float			reticleChangeTimeS	= 0.3f;							///< Time for reticle to contract after expand on shot (in seconds)
 
 
 	UserConfig() {};
@@ -323,8 +356,9 @@ public:
 			reader.getIfPresent("reticleIndex", reticleIndex);
 			reader.getIfPresent("reticleScale", reticleScale);
 			reader.getIfPresent("reticleColor", reticleColor);
-			reader.getIfPresent("reticleShrinkTime", reticleShrinkTimeS);
+			reader.getIfPresent("reticleChangeTime", reticleChangeTimeS);
 			reader.getIfPresent("turnScale", turnScale);
+			reader.getIfPresent("invertY", invertY);
 			reader.getIfPresent("scopeTurnScale", scopeTurnScale);
 			break;
         default:
@@ -343,8 +377,9 @@ public:
 		if (forceAll || def.reticleIndex != reticleIndex)				a["reticleIndex"] = reticleIndex;
 		if (forceAll || def.reticleScale != reticleScale)				a["reticleScale"] = reticleScale;
 		if (forceAll || def.reticleColor != reticleColor)				a["reticleColor"] = reticleColor;
-		if (forceAll || def.reticleShrinkTimeS != reticleShrinkTimeS)	a["reticleShrinkTime"] = reticleShrinkTimeS;
+		if (forceAll || def.reticleChangeTimeS != reticleChangeTimeS)	a["reticleChangeTime"] = reticleChangeTimeS;
 		if (forceAll || def.turnScale != turnScale)						a["turnScale"] = turnScale;
+		if (forceAll || def.invertY != invertY)							a["invertY"] = invertY;
 		if (forceAll || def.scopeTurnScale != scopeTurnScale)			a["scopeTurnScale"] = scopeTurnScale;
 		return a;
 	}
@@ -436,9 +471,9 @@ public:
 
 	/** Print the user table to the log */
 	void printToLog() {
-		logPrintf("Current User: %s\n", currentUser);
+		logPrintf("Current User: %s\n", currentUser.c_str());
 		for (UserConfig user : users) {
-			logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id, user.cmp360, user.mouseDPI);
+			logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id.c_str(), user.cmp360, user.mouseDPI);
 		}
 	}
 };
@@ -534,16 +569,16 @@ public:
 	}
 
 	/** Get the user status table from file */
-	static UserStatusTable load(void) {
-		if (!FileSystem::exists("userstatus.Any")) { // if file not found, create a default userstatus.Any
+	static UserStatusTable load(String filename) {
+		if (!FileSystem::exists(filename)) { // if file not found, create a default userstatus.Any
 			UserStatusTable defStatus = UserStatusTable();			// Create empty status
 			UserSessionStatus user;
 			user.sessionOrder = Array<String> ({ "60Hz", "30Hz" });	// Add "default" sessions we add to
 			defStatus.userInfo.append(user);						// Add single "default" user
-			defStatus.toAny().save("userstatus.Any");				// Save .any file
+			defStatus.toAny().save(filename);				// Save .any file
 			return defStatus;
 		}
-		return Any::fromFile(System::findDataFile("userstatus.Any"));
+		return Any::fromFile(System::findDataFile(filename));
 	}
 
 	/** Get a given user's status from the table by ID */
@@ -633,7 +668,7 @@ public:
 			}
 			completedSess = completedSess.substr(0, completedSess.length() - 2);
 
-			logPrintf("Subject ID: %s\nSession Order: [%s]\nCompleted Sessions: [%s]\n", status.id, sessOrder, completedSess);
+			logPrintf("Subject ID: %s\nSession Order: [%s]\nCompleted Sessions: [%s]\n", status.id.c_str(), sessOrder.c_str(), completedSess.c_str());
 		}
 	}
 };
@@ -1079,7 +1114,7 @@ public:
 	float           moveRate = 0.0f;							///< Player move rate (defaults to no motion)
 	float           height = 1.5f;								///< Height for the player view (in walk mode)
 	float           crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
-	float           jumpVelocity = 7.0f;						///< Jump velocity for the player
+	float           jumpVelocity = 3.5f;						///< Jump velocity for the player
 	float           jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
 	bool            jumpTouch = true;							///< Require the player to be touch a surface to jump?
 	Vector3         gravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
@@ -1129,10 +1164,39 @@ public:
 
 };
 
+/** Storage for static (never changing) HUD elements */
+struct StaticHudElement {
+	String			filename;												///< Filename of the image
+	Vector2			position;												///< Position to place the element (fractional window-space)
+	Vector2			scale = Vector2(1.0, 1.0);								///< Scale to apply to the image
+
+	StaticHudElement() {};
+	StaticHudElement(const Any& any) {
+		AnyTableReader reader(any);
+		reader.get("filename", filename, "Must provide filename for all Static HUD elements!");
+		reader.get("position", position, "Must provide position for all static HUD elements");
+		reader.getIfPresent("scale", scale);
+	}
+
+	Any toAny(const bool forceAll = false) const {
+		Any a(Any::TABLE);
+		a["filename"] = filename;
+		a["position"] = position;
+		if (forceAll || scale != Vector2(1.0, 1.0))  a["scale"] = scale;
+		return a;
+	}
+
+	bool operator!=(StaticHudElement other) const {
+		return filename != other.filename ||
+			position != other.position ||
+			scale != other.scale;
+	}
+};
+
 class HudConfig {
 public:
 	// HUD parameters
-	bool            enable = false;							            ///< Master control for all HUD elements
+	bool            enable = false;											///< Master control for all HUD elements
 	bool            showBanner = false;						                ///< Show the banner display
 	float           bannerVertVisible = 0.41f;				                ///< Vertical banner visibility
 	float           bannerLargeFontSize = 30.0f;				            ///< Banner percent complete font size
@@ -1164,6 +1228,8 @@ public:
 	int             cooldownSubdivisions = 64;									///< Number of polygon divisions in the "ring"
 	Color4          cooldownColor = Color4(1.0f, 1.0f, 1.0f, 0.75f);			///< Cooldown ring color when active (transparent when inactive)
 
+	Array<StaticHudElement> staticElements;										///< A set of static HUD elements to draw
+
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
@@ -1188,6 +1254,7 @@ public:
 			reader.getIfPresent("cooldownThickness", cooldownThickness);
 			reader.getIfPresent("cooldownSubdivisions", cooldownSubdivisions);
 			reader.getIfPresent("cooldownColor", cooldownColor);
+			reader.getIfPresent("staticHUDElements", staticElements);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1218,6 +1285,7 @@ public:
 		if(forceAll || def.cooldownThickness != cooldownThickness)						a["cooldownThickness"] = cooldownThickness;
 		if(forceAll || def.cooldownSubdivisions != cooldownSubdivisions)				a["cooldownSubdivisions"] = cooldownSubdivisions;
 		if(forceAll || def.cooldownColor != cooldownColor)								a["cooldownColor"] = cooldownColor;
+		if (forceAll || def.staticElements != staticElements)							a["staticHUDElements"] = staticElements;
 		return a;
 	}
 };
@@ -1450,6 +1518,78 @@ public:
 	}
 };
 
+class MenuConfig {
+public: 
+	// Menu controls
+	bool showMenuLogo					= true;							///< Show the FPSci logo in the user menu
+	bool showExperimentSettings			= true;							///< Show the experiment settings options (session/user selection)
+	bool showUserSettings				= true;							///< Show the user settings options (master switch)
+	bool allowUserSettingsSave			= true;							///< Allow the user to save settings changes
+	bool allowSensitivityChange			= true;							///< Allow in-game sensitivity change		
+	
+	bool allowTurnScaleChange			= true;							///< Allow the user to apply X/Y turn scaling
+	String xTurnScaleAdjustMode			= "None";						///< X turn scale adjustment mode (can be "None" or "Slider")
+	String yTurnScaleAdjustMode			= "Invert";						///< Y turn scale adjustment mode (can be "None", "Invert", or "Slider")
+
+	bool allowReticleChange				= false;						///< Allow the user to adjust their crosshair
+	bool allowReticleIdxChange			= true;							///< If reticle change is allowed, allow index change
+	bool allowReticleSizeChange			= true;							///< If reticle change is allowed, allow size change
+	bool allowReticleColorChange		= true;							///< If reticle change is allowed, allow color change
+	bool allowReticleChangeTimeChange	= false;						///< Allow the user to change the reticle change time
+	bool showReticlePreview				= true;							///< Show a preview of the reticle
+
+	bool showMenuOnStartup				= true;							///< Show the user menu on startup?
+	bool showMenuBetweenSessions		= true;							///< Show the user menu between session?
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("showMenuLogo", showMenuLogo);
+			reader.getIfPresent("showExperimentSettings", showExperimentSettings);
+			reader.getIfPresent("showUserSettings", showUserSettings);
+			reader.getIfPresent("allowUserSettingsSave", allowUserSettingsSave);
+			reader.getIfPresent("allowSensitivityChange", allowSensitivityChange);
+			reader.getIfPresent("allowTurnScaleChange", allowTurnScaleChange);
+			reader.getIfPresent("xTurnScaleAdjustMode", xTurnScaleAdjustMode);
+			reader.getIfPresent("yTurnScaleAdjustMode", yTurnScaleAdjustMode);
+			reader.getIfPresent("allowReticleChange", allowReticleChange);
+			reader.getIfPresent("allowReticleIdxChange", allowReticleIdxChange);
+			reader.getIfPresent("allowReticleSizeChange", allowReticleSizeChange);
+			reader.getIfPresent("allowReticleColorChange", allowReticleColorChange);
+			reader.getIfPresent("allowReticleChangeTimeChange", allowReticleChangeTimeChange);
+			reader.getIfPresent("showReticlePreview", showReticlePreview);
+			reader.getIfPresent("showMenuOnStartup", showMenuOnStartup);
+			reader.getIfPresent("showMenuBetweenSessions", showMenuBetweenSessions);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+
+	}
+
+	Any addToAny(Any a, const bool forceAll = false) const {
+		MenuConfig def;
+		if (forceAll || def.showMenuLogo != showMenuLogo)									a["showMenuLogo"] = showMenuLogo;
+		if (forceAll || def.showExperimentSettings != showExperimentSettings)				a["showExperimentSettings"] = showExperimentSettings;
+		if (forceAll || def.showUserSettings != showUserSettings)							a["showUserSettings"] = showUserSettings;
+		if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)					a["allowUserSettingsSave"] = allowUserSettingsSave;
+		if (forceAll || def.allowSensitivityChange != allowSensitivityChange)				a["allowSensitivityChange"] = allowSensitivityChange;
+		if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)					a["allowTurnScaleChange"] = allowTurnScaleChange;
+		if (forceAll || def.xTurnScaleAdjustMode != xTurnScaleAdjustMode)					a["xTurnScaleAdjustMode"] = xTurnScaleAdjustMode;
+		if (forceAll || def.yTurnScaleAdjustMode != yTurnScaleAdjustMode)					a["yTurnScaleAdjustMode"] = yTurnScaleAdjustMode;
+		if (forceAll || def.allowReticleChange != allowReticleChange)						a["allowReticleChange"] = allowReticleChange;
+		if (forceAll || def.allowReticleIdxChange != allowReticleIdxChange)					a["allowReticleIdxChange"] = allowReticleIdxChange;
+		if (forceAll || def.allowReticleSizeChange != allowReticleSizeChange)				a["allowReticleSizeChange"] = allowReticleSizeChange;
+		if (forceAll || def.allowReticleColorChange != allowReticleColorChange)				a["allowReticleColorChange"] = allowReticleColorChange;
+		if (forceAll || def.allowReticleChangeTimeChange != allowReticleChangeTimeChange)	a["allowReticleChangeTimeChange"] = allowReticleChangeTimeChange;
+		if (forceAll || def.showReticlePreview != showReticlePreview)						a["showReticlePreview"] = showReticlePreview;
+		if (forceAll || def.showMenuOnStartup != showMenuOnStartup)							a["showMenuOnStartup"] = showMenuOnStartup;
+		if (forceAll || def.showMenuBetweenSessions != showMenuBetweenSessions)				a["showMenuBetweenSessions"] = showMenuBetweenSessions;
+		return a;
+	}
+};
+
 class FpsConfig : public ReferenceCountedObject {
 public:
 	int	            settingsVersion = 1;						///< Settings version
@@ -1465,7 +1605,8 @@ public:
 	ClickToPhotonConfig clickToPhoton;							///< Click to photon config parameters
 	LoggerConfig		logger;									///< Logging configuration
 	WeaponConfig		weapon;			                        ///< Weapon to be used
-	Array<Question> questionArray;								///< Array of questions for this experiment/trial
+	MenuConfig			menu;									///< User settings window configuration
+	Array<Question>		questionArray;							///< Array of questions for this experiment/trial
 
 	// Constructors
 	FpsConfig(const Any& any) {
@@ -1490,6 +1631,7 @@ public:
 		audio.load(reader, settingsVersion);
 		timing.load(reader, settingsVersion);
 		logger.load(reader, settingsVersion);
+		menu.load(reader, settingsVersion);
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("sceneName", sceneName);
@@ -1515,6 +1657,7 @@ public:
 		a = audio.addToAny(a, forceAll);
 		a = timing.addToAny(a, forceAll);
 		a = logger.addToAny(a, forceAll);
+		a = menu.addToAny(a, forceAll);
 		a["weapon"] =  weapon.toAny(forceAll);
 		return a;
 	}
@@ -1525,6 +1668,7 @@ class SessionConfig : public FpsConfig {
 public:
 	String				id;								///< Session ID
 	String				description = "Session";		///< String indicating whether session is training or real
+	int					blockCount = 1;					///< Default to just 1 block per session
 	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
 	static FpsConfig	defaultConfig;
 
@@ -1543,6 +1687,7 @@ public:
 			// Unique session info
 			reader.get("id", id, "An \"id\" field must be provided for each session!");
 			reader.getIfPresent("description", description);
+			reader.getIfPresent("blockCount", blockCount);
 			reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
 			break;
 		default:
@@ -1558,12 +1703,13 @@ public:
 		// Update w/ the session-specific fields
 		a["id"] = id;
 		a["description"] = description;
+		a["blockCount"] = blockCount;
 		a["trials"] = trials;
 		return a;
 	}
 
 	/** Get the total number of trials in this session */
-	float getTotalTrials(void) {
+	float getTrialsPerBlock(void) {
 		float count = 0.f;
 		for (const TrialCount& tc : trials) {
 			if (count < 0) {
@@ -1623,7 +1769,7 @@ public:
 			tMove.id = "moving";
 			tMove.destSpace = "player";
 			tMove.size = Array<float>({ 0.05f, 0.05f });
-			tMove.speed = Array<float>({ 3.5f, 5.f });
+			tMove.speed = Array<float>({ 7.f, 10.f });
 			tMove.motionChangePeriod = Array<float>({ 0.8f, 1.5f });
 			tMove.axisLock = Array<bool>({ false, false, true });
 			
@@ -1633,7 +1779,7 @@ public:
 			tJump.id = "jumping";
 			tJump.destSpace = "player";
 			tJump.size = Array<float>({ 0.05f, 0.05f });
-			tJump.speed = Array<float>({ 5.f, 5.f });
+			tJump.speed = Array<float>({ 10.f, 10.f });
 			tJump.motionChangePeriod = Array<float>({ 0.8f, 1.5f });
 			tJump.jumpEnabled = true;
 			tJump.jumpSpeed = Array<float>({ 10.f, 10.f });
@@ -1754,24 +1900,27 @@ public:
 
 	/** Print the experiment config to the log */
 	void printToLog() {
-		logPrintf("-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-			description, sceneName, timing.feedbackDuration, timing.readyDuration, timing.taskDuration, weapon.maxAmmo);
+		logPrintf("\n-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
+			description.c_str(), sceneName.c_str(), timing.feedbackDuration, timing.readyDuration, timing.taskDuration, weapon.maxAmmo);
 		// Iterate through sessions and print them
 		for (int i = 0; i < sessions.size(); i++) {
 			SessionConfig sess = sessions[i];
 			logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n",
-				sess.id, sess.render.frameRate, sess.render.frameDelay);
+				sess.id.c_str(), sess.render.frameRate, sess.render.frameDelay);
 			// Now iterate through each run
 			for (int j = 0; j < sess.trials.size(); j++) {
-				logPrintf("\t\tTrial Run Config: IDs = %s, Count = %d\n",
-					sess.trials[j].ids, sess.trials[j].count);
+				String ids;
+				for (String id : sess.trials[j].ids) { ids += format("%s, ", id.c_str()); }
+				if(ids.length() > 2) ids = ids.substr(0, ids.length() - 2);
+				logPrintf("\t\tTrial Run Config: IDs = [%s], Count = %d\n",
+					ids.c_str(), sess.trials[j].count);
 			}
 		}
 		// Iterate through trials and print them
 		for (int i = 0; i < targets.size(); i++) {
 			TargetConfig target = targets[i];
 			logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tUpper Hemisphere Only = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n\tAxis Lock = [%s, %s, %s]\n",
-				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.size[0], target.size[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1],
+				target.id.c_str(), target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.size[0], target.size[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1],
 				target.axisLock[0]?"true":"false", target.axisLock[1] ? "true" : "false", target.axisLock[2] ? "true" : "false");
 		}
 	}

@@ -158,16 +158,20 @@ public:
 		return m_health <= 0;
 	}
 	
-	bool respawn() {
+	bool tryRespawn() {
 		if (m_respawnCount == 0) {		// Target does not respawn
 			return false;
 		} else if(m_respawnCount > 0){	// Target respawns 
 			m_respawnCount -= 1;
 		}
+		respawn();
+		return true;					// Also returns true for any target w/ negative m_respawnCount
+	}
+
+	void respawn() {
 		// Reset target parameters
 		m_spawnTime = 0;
 		m_health = 1.0f;
-		return true;					// Also returns true for any target w/ negative m_respawnCount
 	}
 
 	void resetMotionParams() {
@@ -227,6 +231,11 @@ protected:
 	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, Array<bool> axisLock, int respawns = 0, int scaleIdx=0, bool isLogged=true);
 
 public:
+	bool tryRespawn() {
+		TargetEntity::tryRespawn();
+		// clear all destination points
+		m_destinationPoints.fastClear();
+	}
 
     /** Destinations must be no more than 170 degrees apart to avoid ambiguity in movement direction */
     void setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter);
@@ -340,8 +349,8 @@ protected:
 	);
 
 public:
-	bool respawn() {
-		TargetEntity::respawn();
+	bool tryRespawn() {
+		TargetEntity::tryRespawn();
 		m_isFirstFrame = true;
 	}
 
