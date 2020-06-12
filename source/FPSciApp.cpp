@@ -293,6 +293,8 @@ void FPSciApp::userSaveButtonPress(void) {
 }	
 
 void FPSciApp::presentQuestion(Question question) {
+	openUserSettingsWindow();
+
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
 		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title);
@@ -307,8 +309,9 @@ void FPSciApp::presentQuestion(Question question) {
 		throw "Unknown question type!";
 		break;
 	}
+
+	moveToCenter(dialog);
 	this->addWidget(dialog);
-	openUserSettingsWindow();
 }
 
 void FPSciApp::markSessComplete(String sessId) {
