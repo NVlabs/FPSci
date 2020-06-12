@@ -11,8 +11,8 @@ inputLog = 'data-files/log.txt'
 excludeList = ['log.txt', 'keymap.Any', 'systemconfig.Any']
 # The list of files that should be excluded for release builds, but may want to be included for specific experiment distributions
 # Use the empty list if you want to distribute an experiment
-genericExcludeList = ['experimentconfig.Any', 'startupconfig.Any', 'userconfig.Any', 'userstatus.Any']
-# genericExcludeList = []
+secondaryExcludeList = ['experimentconfig.Any', 'startupconfig.Any', 'userconfig.Any', 'userstatus.Any']
+# secondaryExcludeList = []
 
 # List of paths to search for to merge into the same distribution directory
 basePath = ['data-files', 'game', 'common']
@@ -53,11 +53,11 @@ if __name__ == '__main__':
             basename = filename.split('/')[-1]
 
             # Exclude the lists of files we don't want to package
-            if basename in excludeList or basename in genericExcludeList:
+            if basename in excludeList or basename in secondaryExcludeList:
                 continue
             
             # Absolute path given
-            if filename.startswith('C:/') or filename.startswith('c:/'):
+            if filename[1:].startswith(':/'):
                 for path in basePath:
                     dest = filename.find(path)
                     if dest > 0:
