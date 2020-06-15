@@ -107,11 +107,11 @@ struct PlayerAction {
 
 class Session : public ReferenceCountedObject {
 protected:
-	FPSciApp* m_app = nullptr;								///< Pointer to the app
+	FPSciApp* m_app = nullptr;							///< Pointer to the app
 	Scene* m_scene = nullptr;							///< Pointer to the scene
 	
 	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
-	shared_ptr<FPSciLogger> m_logger;						///< Output results logger
+	shared_ptr<FPSciLogger> m_logger;					///< Output results logger
 	shared_ptr<PlayerEntity> m_player;					///< Player entity
 	shared_ptr<Camera> m_camera;						///< Camera entity
 
@@ -130,10 +130,10 @@ protected:
 	int m_lastUniqueID = 0;								///< Counter for creating unique names for various entities
 	Array<shared_ptr<TargetEntity>> m_targetArray;		///< Array of drawn targets
 
-	int m_currTrialIdx;									///< Current trial
-	int m_currQuestionIdx = -1;							///< Current question index
-	Array<int> m_remainingTrials;								///< Completed flags
-	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;		///< Target configurations by trial
+	int m_currTrialIdx;										///< Current trial
+	int m_currQuestionIdx = -1;								///< Current question index
+	Array<int> m_remainingTrials;							///< Completed flags
+	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
 	// Time-based parameters
 	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial
@@ -160,23 +160,11 @@ protected:
 	}
 
 	~Session(){
-		clearTargets();		// Clear the targets when the session is done
+		// Clear the targets when the session is done
+		clearTargets();
 	}
 
-	/** Creates a random target with motion based on parameters
-	@param motionDuration time in seconds to produce a motion path for
-	@param motionDecisionPeriod time in seconds when new motion direction is chosen
-	@param speed world-space velocity (m/s) of target
-	@param radius world-space distance to target
-	@param scale size of target TODO: is this radius or diameter in meters?*/
-	//void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
-	/** Creates a random target in front of the player */
-	//void spawnRandomTarget();
-	/** Creates a spinning target */
-
-	//shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red(), String modelName = "model/target/target.obj");
-
-		/** Insert a target into the target array/scene */
+	/** Insert a target into the target array/scene */
 	inline void insertTarget(shared_ptr<TargetEntity> target);
 
 	shared_ptr<TargetEntity> spawnDestTarget(
