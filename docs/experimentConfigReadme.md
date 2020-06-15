@@ -18,8 +18,10 @@ The `experimentconfig.Any` file is located in the [`data-files`](../data-files/)
 The experment config supports inclusion of any of the configuration parameters documented in the [general configuration parameter guide](general_config.md). In addition to these common parameters, there are a number of unique inputs to experiment config. The following is a description of what each one means, and how it is meant to be used.
 
 * `description` allows the user to annotate this experiment's results with a custom string
+* `closeOnComplete` closes the application once all sessions from the sessions array (defined below) are complete 
 ```
 "description": "your description here",    // Description of this file (default = "default")
+"closeOnComplete": false,                  // Don't close automatically when all sessions are complete
 ```
 
 ### Session Configuration
@@ -28,6 +30,7 @@ Each session can specify any of the [general configuration parameters](general_c
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
     * `description` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
+    * `closeOnComplete` signals to close the application whenever this session (in particular) is completed
     * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided).
     * `trials` is a list of trials referencing the `trials` table above:
         * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
@@ -41,6 +44,7 @@ An example session configuration snippet is included below:
     {
         "id" : "test-session",          // This is a short name for our session
         "description" : "test",         // This is an arbitrary string tag (for now)
+        "closeOnComplete": false,       // Don't automatically close the application when the session completes
         "frameRate" : 120,              // Example of a generic parameter modified for this session
         "blockCount" : 1,         // Single block design
         "trials" : [
