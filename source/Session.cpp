@@ -71,9 +71,11 @@ bool Session::updateBlock(bool updateTargets) {
 void Session::onInit(String filename, String description) {
 	// Initialize presentation states
 	presentationState = PresentationState::initial;
-	m_feedbackMessage = m_config->targetView.showRefTarget ? 
-		"Click to spawn a target, then use shift on red target to begin." : 
-		"Click to start the session!";
+	if (m_config) {
+		m_feedbackMessage = m_config->targetView.showRefTarget ?
+			"Click to spawn a target, then use shift on red target to begin." :
+			"Click to start the session!";
+	}
 
 	// Get the player from the app
 	m_player = m_app->scene()->typedEntity<PlayerEntity>("player");
