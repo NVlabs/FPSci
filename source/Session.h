@@ -233,7 +233,6 @@ public:
 	int remainingAmmo() const;
 
 	bool blockComplete() const;
-	bool complete() const;
 	void nextCondition();
 
 	void endLogging();
