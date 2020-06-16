@@ -1346,7 +1346,7 @@ public:
 			reader.getIfPresent("floatingCombatTextVelocity", combatTextVelocity);
 			reader.getIfPresent("floatingCombatTextFade", combatTextFade);
 			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
-			reader.getIfPresent("showRefTarget", showRefTarget);
+			reader.getIfPresent("showReferenceTarget", showRefTarget);
 			reader.getIfPresent("referenceTargetSize", refTargetSize);
 			reader.getIfPresent("referenceTargetColor", refTargetColor);
 			break;
