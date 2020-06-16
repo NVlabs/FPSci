@@ -319,15 +319,24 @@ void Session::updatePresentationState()
 				if (remaining.size() == 0) {
 					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
 					moveOn = false;
+					if (m_app->experimentConfig.closeOnComplete || m_config->closeOnComplete) {
+						m_app->quitRequest();
+					}
 				}
 				else {
 					m_feedbackMessage = "Session Complete!"; // Update the feedback message
+					if (m_config->closeOnComplete) {
+						m_app->quitRequest();
+					}
 					moveOn = true;														// Check for session complete (signal start of next session)
 				}
 			}
 			else {
 				m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
 				moveOn = false;
+				if (m_app->experimentConfig.closeOnComplete) {
+					m_app->quitRequest();
+				}
 		}
 	}
 
