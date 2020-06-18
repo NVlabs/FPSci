@@ -84,7 +84,7 @@ void Session::onInit(String filename, String description) {
 	// Check for valid session
 	if (m_hasSession) {
 		if (m_config->logger.enable) {
-			UserConfig user = *m_app->getCurrUser();
+			UserConfig user = *m_app->currentUser();
 			// Setup the logger and create results file
 			m_logger = FPSciLogger::create(filename, user.id, m_config, description);
 			if (m_config->logger.logUsers) {
@@ -285,7 +285,7 @@ void Session::updatePresentationState()
 					}
 					else {
 						if (m_config->logger.enable) {
-							m_logger->logUserConfig(*m_app->getCurrUser(), m_config->id, "end");
+							m_logger->logUserConfig(*m_app->currentUser(), m_config->id, "end");
 							m_logger->flush(false);
 							m_logger.reset();
 						}
@@ -314,7 +314,9 @@ void Session::updatePresentationState()
 		//if (stateElapsedTime > m_scoreboardDuration) {
 			newState = PresentationState::complete;
 			if (m_hasSession) {
-				m_app->userSaveButtonPress();												// Press the save button for the user...
+				// Save current user config and status
+				m_app->saveUserConfig();											
+				m_app->saveUserStatus();
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
 					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
