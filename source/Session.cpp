@@ -92,10 +92,7 @@ void Session::onInit(String filename, String description) {
 			}
 		}
 
-		// Check for start of session command to run
-		if (!m_config->commands.sessionStartCmd.empty()) {
-			m_sessProcess = runCommand(m_config->commands.sessionStartCmd);
-		}
+		runSessionCommands("start");				// Run start of session commands
 
 		// Iterate over the sessions here and add a config for each
 		Array<Array<shared_ptr<TargetConfig>>> trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
@@ -241,14 +238,10 @@ void Session::updatePresentationState()
 			if (m_config->player.stillBetweenTrials) {
 				m_player->setMoveEnable(true);
 			}
-			// End previous process (if running)
-			if (m_trialProcess) {
-				TerminateProcess(m_trialProcess, 0);
-			}
-			// Run the start of trial command (if desired)
-			if (!m_config->commands.trialStartCmd.empty()) {
-				m_trialProcess = runCommand(m_config->commands.trialStartCmd);
-			}
+
+			closeTrialProcesses();						// End previous process (if running)
+			runTrialCommands("start");					// Run start of trial commands
+
 		}
 	}
 	else if (currentState == PresentationState::task)
@@ -309,13 +302,9 @@ void Session::updatePresentationState()
 				}
 			}
 			else {
-				m_feedbackMessage = "";
-				if (m_trialProcess) {
-					TerminateProcess(m_trialProcess, 0);
-				}
-				if (!m_config->commands.trialEndCmd.empty()) {
-					m_trialProcess = runCommand(m_config->commands.trialEndCmd);
-				}
+				m_feedbackMessage = "";				// Clear the feedback message
+				closeTrialProcesses();				// Stop start of trial processes
+				runTrialCommands("end");			// Run the end of trial processes
 				nextCondition();
 				newState = PresentationState::ready;
 			}
@@ -326,14 +315,11 @@ void Session::updatePresentationState()
 			newState = PresentationState::complete;
 			m_app->openUserSettingsWindow();
 			if (m_hasSession) {
-				m_app->userSaveButtonPress();												// Press the save button for the user...
-				if (m_sessProcess) {
-					// Close the process we started at session start (if there is one)
-					TerminateProcess(m_sessProcess, 0);
-				}
-				if (!m_config->commands.sessionEndCmd.empty()) {
-					m_sessProcess = runCommand(m_config->commands.sessionEndCmd);
-				}
+				m_app->userSaveButtonPress();				// Press the save button for the user...
+				
+				closeSessionProcesses();					// Close the process we started at session start (if there is one)
+				runSessionCommands("end");					// Launch processes for the end of the session
+				
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
 					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message

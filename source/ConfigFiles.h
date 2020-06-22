@@ -1520,18 +1520,18 @@ public:
 
 class CommandConfig {
 public: 
-	String sessionStartCmd;						///< Command to run on start of a session
-	String sessionEndCmd;						///< Command to run on end of a session
-	String trialStartCmd;						///< Command to run on start of a trial
-	String trialEndCmd;							///< Command to run on end of a trial
+	Array<String> sessionStartCmds;						///< Command to run on start of a session
+	Array<String> sessionEndCmds;						///< Command to run on end of a session
+	Array<String> trialStartCmds;						///< Command to run on start of a trial
+	Array<String> trialEndCmds;							///< Command to run on end of a trial
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("commandOnSessionStart", sessionStartCmd);
-			reader.getIfPresent("commandOnSessionEnd", sessionEndCmd);
-			reader.getIfPresent("commandOnTrialStart", trialStartCmd);
-			reader.getIfPresent("commandOnTrialEnd", trialEndCmd);
+			reader.getIfPresent("commandsOnSessionStart", sessionStartCmds);
+			reader.getIfPresent("commandsOnSessionEnd", sessionEndCmds);
+			reader.getIfPresent("commandsOnTrialStart", trialStartCmds);
+			reader.getIfPresent("commandsOnTrialEnd", trialEndCmds);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1540,10 +1540,10 @@ public:
 	}
 
 	Any addToAny(Any a, const bool forceAll = false) const {
-		if (forceAll || !sessionStartCmd.empty())		a["commandOnSessionStart"] = sessionStartCmd;
-		if (forceAll || !sessionEndCmd.empty())			a["commandOnSessionEnd"] = sessionEndCmd;
-		if (forceAll || !trialStartCmd.empty())			a["commandOnTrialStart"] = trialStartCmd;
-		if (forceAll || !trialEndCmd.empty())			a["commandOnTrialEnd"] = trialEndCmd;
+		if (forceAll || sessionStartCmds.size() > 0)		a["commandsOnSessionStart"] = sessionStartCmds;
+		if (forceAll || sessionEndCmds.size() > 0)			a["commandsOnSessionEnd"] = sessionEndCmds;
+		if (forceAll || trialStartCmds.size() > 0)			a["commandsOnTrialStart"] = trialStartCmds;
+		if (forceAll || trialEndCmds.size() > 0)			a["commandsOnTrialEnd"] = trialEndCmds;
 		return a;
 	}
 };

@@ -144,8 +144,8 @@ protected:
 	// Could move timer above to stopwatch in future
 	//Stopwatch stopwatch;			
 
-	HANDLE m_sessProcess = nullptr;
-	HANDLE m_trialProcess = nullptr;
+	Array<HANDLE> m_sessProcesses;						///< Handles for session-level processes
+	Array<HANDLE> m_trialProcesses;						///< Handles for trial-level processes
 
 	// Target parameters
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
@@ -161,7 +161,38 @@ protected:
 	}
 
 	~Session(){
-		clearTargets();		// Clear the targets when the session is done
+		clearTargets();					// Clear the targets when the session is done
+		closeSessionProcesses();		// Close any processes affiliated with this session
+	}
+
+	inline void runTrialCommands(String evt) {
+		evt = toLower(evt);
+		auto cmds = (evt == "start") ? m_config->commands.trialStartCmds : m_config->commands.trialEndCmds;
+		for (auto cmd : cmds) { 
+			m_trialProcesses.append(runCommand(cmd, evt + " of trial")); 
+		}
+	}
+
+	inline void closeTrialProcesses() {
+		for (auto handle : m_trialProcesses) { 
+			TerminateProcess(handle, 0); 
+		}
+		m_trialProcesses.clear();
+	}
+
+	inline void runSessionCommands(String evt) {
+		evt = toLower(evt);
+		auto cmds = (evt == "start") ? m_config->commands.sessionStartCmds : m_config->commands.sessionEndCmds;
+		for (auto cmd : cmds) { 
+			m_sessProcesses.append(runCommand(cmd, evt + " of session")); 
+		}
+	}
+
+	inline void closeSessionProcesses() {
+		for (auto handle : m_sessProcesses) { 
+			TerminateProcess(handle, 0); 
+		}
+		m_sessProcesses.clear();
 	}
 
 	/** Creates a random target with motion based on parameters
@@ -226,7 +257,7 @@ protected:
 		return m_camera->frame().translation;
 	}
 
-	HANDLE runCommand(String cmd) {
+	HANDLE runCommand(String cmd, String evt) {
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
 		ZeroMemory(&si, sizeof(si));
@@ -235,7 +266,7 @@ protected:
 
 		LPSTR command = LPSTR(cmd.c_str());
 		if (!CreateProcess(NULL, command, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
-			logPrintf("Failed to run start of session command: %s\n", GetLastErrorString());
+			logPrintf("Failed to run %s command: \"%s\". %s\n", evt, cmd, GetLastErrorString());
 		}
 
 		return pi.hProcess;
