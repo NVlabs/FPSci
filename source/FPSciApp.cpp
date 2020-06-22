@@ -519,19 +519,25 @@ void FPSciApp::toggleUserSettingsMenu() {
 
 void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 	
-	// make sure the scene has a "player" entity
+	// Make sure the scene has a "player" entity
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-	alwaysAssertM(player, "All FPSci scene files must provide a \"PlayerEntity\"!");
+	//alwaysAssertM(player, "All FPSci scene files must provide a \"PlayerEntity\"!");
+
+	// Add a player if one isn't present in the scene
+	if (isNull(player)) {
+		logPrintf("WARNING: Didn't find a \"player\" specified in \"%s\"! Adding one at the origin.", sceneName);
+		shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
+		scene()->insert(newPlayer);
+	}
 
 	// Set the active camera to the player
 	shared_ptr<Camera> playerCam = playerCamera();
 	// Check for no player cam, but a player, if so make the camera from the player
-	if (isNull(playerCam) && notNull(player)) {
+	if (isNull(playerCam)) {
 		playerCam = Camera::create("playerCamera");
 		scene()->insert((shared_ptr<Entity>)playerCam);
 	}
 	setActiveCamera(playerCam);
-
 
 	// Update the player entity
 	updatePlayer();
