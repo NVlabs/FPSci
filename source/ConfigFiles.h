@@ -463,11 +463,13 @@ public:
 			UserTable defTable = UserTable();
 			defTable.users.append(UserConfig());			// Append one default user
 			defTable.currentUser = defTable.users[0].id;	// Set this as the current user
-			defTable.toAny().save("userconfig.Any");		// Save the .any file
+			defTable.save(filename);						// Save the .any file
 			return defTable;
 		}
 		return Any::fromFile(System::findDataFile(filename));
 	}
+
+	inline void save(String filename) { toAny().save(filename); }
 
 	/** Print the user table to the log */
 	void printToLog() {

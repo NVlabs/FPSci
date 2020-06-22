@@ -123,6 +123,7 @@ void FPSciApp::updateMouseSensitivity() {
 }
 
 void FPSciApp::setDirectMode(bool enable) {
+	m_mouseDirectMode = enable;
 	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 	fpm->setMouseMode(enable ? FirstPersonManipulator::MOUSE_DIRECT : FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
 }
@@ -312,8 +313,10 @@ void FPSciApp::presentQuestion(Question question) {
 		throw "Unknown question type!";
 		break;
 	}
+
+	moveToCenter(dialog);
 	this->addWidget(dialog);
-	openUserSettingsWindow();
+	setDirectMode(false);
 }
 
 void FPSciApp::markSessComplete(String sessId) {
@@ -598,7 +601,6 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// make sure mouse sensitivity is set right
 	if (m_userSettingsWindow->visible()) {
 		updateMouseSensitivity();
-		//m_userSettingsWindow->setVisible(m_userSettingsMode);		// Make sure window stays coherent w/ user settings mode
 	}
 
 	// Simulate the projectiles
@@ -1155,7 +1157,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	(void)ui;
 
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
-	if (!m_userSettingsWindow->visible() && activeCamera() == playerCamera() && notNull(player)) {
+	if (m_mouseDirectMode && activeCamera() == playerCamera() && notNull(player)) {
 		player->updateFromInput(ui);
 	}
 	else if (notNull(player)) {	// Zero the player velocity and rotation when in the setting menu
