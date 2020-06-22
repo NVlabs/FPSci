@@ -595,7 +595,6 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	m_widgetManager->onSimulation(rdt, sdt, idt);
 	if (scene()) { scene()->onSimulation(sdt); }
 
-
 	// make sure mouse sensitivity is set right
 	if (m_userSettingsWindow->visible()) {
 		updateMouseSensitivity();
@@ -626,6 +625,11 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	
 	// Handle developer mode features here
 	if (startupConfig.developerMode) {
+		// If the debug camera is selected, update it's position from the FPM
+		if (activeCamera() == m_debugCamera) {
+			m_debugCamera->setFrame(m_cameraManipulator->frame());
+		}
+
 		// Handle frame rate/delay updates here
 		if (sessConfig->render.frameRate != lastSetFrameRate || displayLagFrames != sessConfig->render.frameDelay) {
 			updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
