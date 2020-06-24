@@ -89,6 +89,8 @@ public:
 
 	float heightOffset(float height) const;
 
+    bool doDamage(float damage);
+
     /** In world space */
     Sphere collisionProxy() const {
         return Sphere(m_frame.pointToWorldSpace(m_collisionProxySphere.center), m_collisionProxySphere.radius);
@@ -100,30 +102,15 @@ public:
 		return f;
 	}
 
-    /** In radians... not used for rendering, use for first-person cameras */
-    float headTilt() const {
-        return m_headTilt;
-    }
-	   
-	void setCrouched(bool crouched) {
-		m_crouched = crouched;
-	};
+    void resetHeading() { m_headingRadians = m_spawnHeadingRadians; }
 
-	void setJumpPressed(bool pressed=true) {
-		m_jumpPressed = pressed;
-	}
+	void setCrouched(bool crouched) { m_crouched = crouched; };
+	void setJumpPressed(bool pressed=true) { m_jumpPressed = pressed; }
+	void setMoveEnable(bool enabled) { m_motionEnable = enabled; }
 
-	void setMoveEnable(bool enabled) {
-		m_motionEnable = enabled;
-	}
-
-	void setRespawnPosition(Point3 pos) {
-			m_respawnPosition = pos;
-	}
-
-	void setRespawnHeight(float height) {
-		m_respawnHeight = height;
-	}
+	void setRespawnPosition(Point3 pos) { m_respawnPosition = pos; }
+    void setRespawnHeading(float heading) { m_spawnHeadingRadians = heading; }
+	void setRespawnHeight(float height) { m_respawnHeight = height; }
 
 	void respawn() {
 		m_frame.translation = m_respawnPosition;
@@ -133,15 +120,11 @@ public:
 		setDesiredAngularVelocity(0.0f, 0.0f);
 	}
 
-	float health(void) {
-		return m_health;
-	}
-
-	bool doDamage(float damage);
-
-	float heading() {
-		return m_headingRadians;
-	}
+	float health(void) { return m_health; }
+    /** In radians... not used for rendering, use for first-person cameras */
+    float headTilt() const { return m_headTilt; }
+    float heading() const { return m_headingRadians;  }
+    float respawnHeading() const { return m_spawnHeadingRadians; }
 
     /** For deserialization from Any / loading from file */
     static shared_ptr<Entity> create 
@@ -158,13 +141,8 @@ public:
      const CFrame&                           position,
      const shared_ptr<Model>&                model);
 
-    void setDesiredOSVelocity(const Vector3& objectSpaceVelocity) {
-        m_desiredOSVelocity = objectSpaceVelocity;
-    }
-
-    const Vector3& desiredOSVelocity() {
-        return m_desiredOSVelocity;
-    }
+    void setDesiredOSVelocity(const Vector3& objectSpaceVelocity) {  m_desiredOSVelocity = objectSpaceVelocity; }
+    const Vector3& desiredOSVelocity() { return m_desiredOSVelocity; }
 
     void setDesiredAngularVelocity(const float y, const float p) {
         m_desiredYawVelocity    = y;

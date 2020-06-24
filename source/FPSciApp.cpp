@@ -270,7 +270,7 @@ void FPSciApp::makeGUI() {
 void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
-	String filename = Scene::sceneNameToFilename(sessConfig->sceneName);
+	String filename = Scene::sceneNameToFilename(sessConfig->scene.name);
 	scene()->toAny().save(filename);
 }
 
@@ -374,7 +374,7 @@ void FPSciApp::updateSession(const String& id) {
 	if (notNull(scene())) sess->clearTargets();
 
 	// Load the experiment scene if we haven't already (target only)
-	if (sessConfig->sceneName.empty()) {
+	if (sessConfig->scene.name.empty()) {
 		// No scene specified, load default scene
 		if (m_loadedScene.empty()) {
 			loadScene(m_defaultScene);
@@ -382,9 +382,9 @@ void FPSciApp::updateSession(const String& id) {
 		}
 		// Otherwise let the loaded scene persist
 	}
-	else if (sessConfig->sceneName != m_loadedScene) {
-		loadScene(sessConfig->sceneName);
-		m_loadedScene = sessConfig->sceneName;
+	else if (sessConfig->scene.name != m_loadedScene) {
+		loadScene(sessConfig->scene.name);
+		m_loadedScene = sessConfig->scene.name;
 	}
 
 	// Check for play mode specific parameters
@@ -415,7 +415,8 @@ void FPSciApp::updateSession(const String& id) {
 
 	// Player parameters
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-	sess->initialHeadingRadians = player->heading();
+	updateFromSceneConfig(player);
+	sess->initialHeadingRadians = sessConfig->scene.spawnHeading;
 
 	// Update player mouse sensitivity and turn scale
 	updateMouseSensitivity();
@@ -429,6 +430,7 @@ void FPSciApp::updateSession(const String& id) {
 	player->jumpTouch		= &sessConfig->player.jumpTouch;
 	player->height			= &sessConfig->player.height;
 	player->crouchHeight	= &sessConfig->player.crouchHeight;
+	player->resetHeading();
 
 	// Check for need to start latency logging and if so run the logger now
 	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
@@ -494,28 +496,54 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 		grav = sessConfig->player.gravity;
 		FoV = sessConfig->render.hFoV;
 	}
-	// Set the active camera to the player
-	setActiveCamera(scene()->typedEntity<Camera>("camera"));
-    // make sure the scene has a "player" entity
-    if (isNull(scene()->typedEntity<PlayerEntity>("player"))) {
-        shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
-        scene()->insert(newPlayer);
-    }
-
-	// Get the reset height
+	// Get the physics scene and set the gravity
 	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
 	pscene->setGravity(grav);
-	float resetHeight = pscene->resetHeight();
-	if (isnan(resetHeight)) {
-		resetHeight = -1e6;
+
+	// Set the active camera to the player
+	setActiveCamera(pscene->typedEntity<Camera>(sessConfig->scene.playerCamera));
+	activeCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
+
+	// Make sure the scene has a "player" entity
+	shared_ptr<PlayerEntity> player = pscene->typedEntity<PlayerEntity>("player");
+	if (isNull(player)) {
+		player = dynamic_pointer_cast<PlayerEntity>(PlayerEntity::create("player", scene().get(), CFrame(), nullptr));
+		pscene->insert(player);
 	}
 
 	// For now make the player invisible (prevent issues w/ seeing model from inside)
-	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	player->setVisible(false);
+}
+
+void FPSciApp::updateFromSceneConfig(shared_ptr<PlayerEntity> player) {
+	const shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
+
+	// Take the reset height from the scene conifg
+	float resetHeight = sessConfig->scene.resetHeight;
+	if (isnan(resetHeight)) {
+		// If no reset height is specified in the scene config, look in the scene file
+		float resetHeight = pscene->resetHeight();
+		if (isnan(resetHeight)) {
+			// If no reset height is specified in either the scene config or file, use default
+			resetHeight = -1e6;
+		}
+	}
 	player->setRespawnHeight(resetHeight);
-	player->setRespawnPosition(player->frame().translation);
-	activeCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
+
+	// Set respawn location
+	Point3 respawnPosition = sessConfig->scene.spawnPosition;
+	if (isnan(respawnPosition.x)) {
+		// If respawn position is not provided by the scene config, use the player position
+		respawnPosition = player->frame().translation;
+	}
+	player->setRespawnPosition(respawnPosition);
+
+	float respawnHeading = sessConfig->scene.spawnHeading;
+	if (isnan(respawnHeading)) {
+		// If respawn ehading is not provided by the scene config, use the physics scene parameter
+		respawnHeading = player->heading();
+	}
+	player->setRespawnHeading(respawnHeading);
 }
 
 void FPSciApp::onAI() {
