@@ -420,13 +420,28 @@ These flags control whether various information is written to the output databas
 ## Command Config
 In addition to the programmable behavior above the general config also supports running of arbitrary commands around the FPSci runtime. These include:
 
-| Parameter Name                    | Type              | Description                                                           |
-|-----------------------------------|-------------------|-----------------------------------------------------------------------|
-|`commandsOnSessionStart`           |`Array<String>`    | Command(s) to run at the start of a new session                       |
-|`commandsOnSessionEnd`             |`Array<String>`    | Command(s) to run at the end of a new session                         |
-|`commandsOnTrialStart`             |`Array<String>`    | Command(s) to run at the start of a new trial within a session        |
-|`commandsOnTrialEnd`               |`Array<String>`    | Command(s) to run at the end of a new trial within a session          |
+| Parameter Name                    | Type              | Description                                                                                  |
+|-----------------------------------|-------------------|----------------------------------------------------------------------------------------------|
+|`commandsOnSessionStart`           |`Array<String>`    | Command(s) to run at the start of a new session. Command(s) quit on session end              |
+|`commandsOnSessionEnd`             |`Array<String>`    | Command(s) to run at the end of a new session. Command(s) quit on session start              |
+|`commandsOnTrialStart`             |`Array<String>`    | Command(s) to run at the start of a new trial within a session. Command(s) quit on trial end |
+|`commandsOnTrialEnd`               |`Array<String>`    | Command(s) to run at the end of a new trial within a session. Command(s) quit on trial start |
 
+For example, the following will cause session start, session end, trial start and trial end strings to be written to a `commandLog.txt` file.
+
+```
+commandsOnSessionStart = ( "cmd /c echo Session start>> commandLog.txt", "cmd /c echo Session start second command>> commandLog.txt" );
+commandsOnSessionEnd = ( "cmd /c echo Session end>> commandLog.txt", "cmd /c echo Session end second command>> commandLog.txt" );
+commandsOnTrialStart = ( "cmd /c echo Trial start>> commandLog.txt" );
+commandsOnTrialEnd = ( "cmd /c echo Trial end>> commandLog.txt" );
+```
+
+Another common use would be to run a python script at the start or end of a session. For example:
+
+```
+commandsOnSessionStart = ( "python scripts/event logger/event_logger.py" );
+commandsOnSessionEnd = ( "python scripts/" );
+```
 
 # Frame Rate Modes
 The `frameRate` parameter in any given session config can be used in 3 different modes:
