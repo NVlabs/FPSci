@@ -164,6 +164,7 @@ protected:
 
 	~Session(){
 		clearTargets();					// Clear the targets when the session is done
+		closeTrialProcesses();			// Close any trial processes affiliated with this session
 		closeSessionProcesses();		// Close any processes affiliated with this session
 	}
 
