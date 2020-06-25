@@ -35,16 +35,18 @@ The `weapon` config should be thought of as an atomic type (just like an `int` o
 ## Duration Settings
 The following settings allow the user to control various timings/durations around the per trial state machine.
 
-| Parameter Name     |Units| Description                                                        |
-|--------------------|-----|--------------------------------------------------------------------|
-|`feedbackDuration`  |s    |The duration of the feedback window between experiments             |
-|`readyDuration`     |s    |The time before the start of each trial                             |
-|`taskDuration`      |s    |The maximum time over which the task can occur                      |
+| Parameter Name      |Units| Description                                                        |
+|---------------------|-----|--------------------------------------------------------------------|
+|`readyDuration`      |s    |The time before the start of each trial                             |
+|`taskDuration`       |s    |The maximum time over which the task can occur                      |
+|`feedbackDuration`   |s    |The duration of the feedback window between trials                  |
+|`scoreboardDuration` |s    |The duration of the feedback window between sessions                |
 
 ```
-"feedbackDuration": 1.0,    // Time allocated for providing user feedback
-"readyDuration": 0.5,       // Time allocated for preparing for trial
-"taskDuration": 100000.0,   // Maximum duration allowed for completion of the task
+"readyDuration": 0.5,         // Time allocated for preparing for trial
+"taskDuration": 100000.0,     // Maximum duration allowed for completion of the task
+"feedbackDuration": 1.0,      // Time for user feedback between trials
+"scoreboardDuration": 5.0,    // Time for user feedback between sessions
 ```
 
 ## Rendering Settings
@@ -298,6 +300,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 | Parameter Name        |Units                  | Description                                                                        |
 |-----------------------|-----------------------|------------------------------------------------------------------------------------|
 |`targetHealthColors`   |[`Color3`, `Color3`]   | The max/min health colors for the target as an array of [`max color`, `min color`], if you do not want the target to change color as its health drops, set these values both to the same color                                              |
+|`showReferencTarget`   |`bool`                 | Show a reference target to re-center the view between trials/sessions?             |
 |`referenceTargetColor` |`Color3`               | The color of the "reference" targets spawned between trials                        |
 |`referenceTargetSize`  |m                      | The size of the "reference" targets spawned between trials                         |
 
@@ -307,6 +310,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
     Color3(0.0, 1.0, 0.0),
     Color3(1.0, 0.0, 0.0)
 ],
+"showReferenceTarget": true,                    // Show a reference target between trials
 "referenceTargetColor": Color3(1.0,1.0,1.0),    // Reference target color (return to "0" view direction)
 "referenceTargetSize": 0.01,                    // This is a size in meters
 ```

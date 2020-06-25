@@ -1323,6 +1323,7 @@ public:
 	float           combatTextTimeout = 0.5f;							///< Time for combat text to disappear (in seconds)
 
 	// Reference/dummy target
+	bool			showRefTarget = true;								///< Show the reference target?
 	float           refTargetSize = 0.05f;								///< Size of the reference target
 	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
 
@@ -1345,6 +1346,7 @@ public:
 			reader.getIfPresent("floatingCombatTextVelocity", combatTextVelocity);
 			reader.getIfPresent("floatingCombatTextFade", combatTextFade);
 			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
+			reader.getIfPresent("showReferenceTarget", showRefTarget);
 			reader.getIfPresent("referenceTargetSize", refTargetSize);
 			reader.getIfPresent("referenceTargetColor", refTargetColor);
 			break;
@@ -1372,6 +1374,7 @@ public:
 		if(forceAll || def.combatTextVelocity != combatTextVelocity)		a["floatingCombatTextVelocity"] = combatTextVelocity;
 		if(forceAll || def.combatTextFade != combatTextFade)				a["floatingCombatTextFade"] = combatTextFade;
 		if(forceAll || def.combatTextTimeout != combatTextTimeout)			a["floatingCombatTextTimeout"] = combatTextTimeout;
+		if (forceAll || def.showRefTarget != showRefTarget)					a["showRefTarget"] = showRefTarget;
 		if(forceAll || def.refTargetSize != refTargetSize)					a["referenceTargetSize"] = refTargetSize;
 		if(forceAll || def.refTargetColor != refTargetColor)				a["referenceTargetColor"] = refTargetColor;
 		return a;
@@ -1450,6 +1453,7 @@ public:
 	float           readyDuration = 0.5f;						///< Time in ready state in seconds
 	float           taskDuration = 100000.0f;					///< Maximum time spent in any one task
 	float           feedbackDuration = 1.0f;					///< Time in feedback state in seconds
+	float			scoreboardDuration = 5.0f;					///< Time in scoreboard state in seconds
 	// Trial count
 	int             defaultTrialCount = 5;						///< Default trial count
 
@@ -1459,6 +1463,7 @@ public:
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
+			reader.getIfPresent("scoreboardDuration", scoreboardDuration);
 			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
 			break;
 		default:
