@@ -163,6 +163,7 @@ inline const shared_ptr<PlayerEntity> FPSciTests::getPlayer()
 void FPSciTests::zeroCameraRotation()
 {
 	auto player = getPlayer();
+	EXPECT_TRUE(notNull(player));
 	if (player) {
 		player->respawn();
 	}
@@ -229,7 +230,8 @@ TEST_F(FPSciTests, InitialTestConditions) {
 	ASSERT_TRUE(notNull(s_app->sess));
 
 	// Make sure a player exists
-	(void)getPlayer();
+	auto player = getPlayer();
+	ASSERT_TRUE(notNull(player));
 
 	// Default config properties
 	EXPECT_FALSE(s_app->sessConfig->weapon.autoFire);
@@ -256,8 +258,7 @@ TEST_F(FPSciTests, TestTargetPositions) {
 	}
 
 	auto player = getPlayer();
-	if (!player)
-		return;
+	ASSERT_TRUE(notNull(player));
 
 	auto camPos = s_app->activeCamera()->frame().translation;
 
@@ -342,8 +343,7 @@ TEST_F(FPSciTests, KillTargetRightTranslate) {
 
 	zeroCameraRotation();
 	auto player = getPlayer();
-	if (!player)
-		return;
+	ASSERT_TRUE(notNull(player));
 
 	// Kill the right target by moving to line it up
 	const float moveX = 2.5f;
@@ -422,8 +422,7 @@ TEST_F(FPSciTests, MoveCamera) {
 	Vector3 startPos = s_app->activeCamera()->frame().translation;
 
 	auto player = getPlayer();
-	if (!player)
-		return;
+	ASSERT_TRUE(notNull(player));
 	*player->moveRate = (float)(1.0 / fixedTestDeltaTime());
 	*player->moveScale = Vector2::one();
 

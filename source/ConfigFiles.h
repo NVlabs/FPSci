@@ -1677,6 +1677,7 @@ public:
 	String				description = "Session";		///< String indicating whether session is training or real
 	int					blockCount = 1;					///< Default to just 1 block per session
 	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
+	bool				closeOnComplete = false;		///< Close application on session completed?
 	static FpsConfig	defaultConfig;
 
 	SessionConfig() : FpsConfig(defaultConfig) {}
@@ -1694,6 +1695,7 @@ public:
 			// Unique session info
 			reader.get("id", id, "An \"id\" field must be provided for each session!");
 			reader.getIfPresent("description", description);
+			reader.getIfPresent("closeOnComplete", closeOnComplete);
 			reader.getIfPresent("blockCount", blockCount);
 			reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
 			break;
@@ -1710,6 +1712,7 @@ public:
 		// Update w/ the session-specific fields
 		a["id"] = id;
 		a["description"] = description;
+		a["closeOnComplete"] = closeOnComplete;
 		a["blockCount"] = blockCount;
 		a["trials"] = trials;
 		return a;
@@ -1736,6 +1739,7 @@ public:
 	String description = "Experiment";					///< Experiment description
 	Array<SessionConfig> sessions;						///< Array of sessions
 	Array<TargetConfig> targets;						///< Array of trial configs   
+	bool closeOnComplete = false;						///< Close application on all sessions complete
 
 	ExperimentConfig() { init(); }
 	
@@ -1748,6 +1752,7 @@ public:
 			SessionConfig::defaultConfig = (FpsConfig)(*this);												// Setup the default configuration here
 			// Experiment-specific info
 			reader.getIfPresent("description", description);
+			reader.getIfPresent("closeOnComplete", closeOnComplete);
 			reader.get("targets", targets, "Issue in the (required) \"targets\" array for the experiment!");	// Targets must be specified for the experiment
 			reader.get("sessions", sessions, "Issue in the (required) \"sessions\" array for the experiment config!");
 			break;
@@ -1888,6 +1893,7 @@ public:
 		SessionConfig def;
 		// Write the experiment configuration-specific 
 		if(forceAll || def.description != description) a["description"] = description;
+		if (forceAll || def.closeOnComplete != closeOnComplete) a["closeOnComplete"] = closeOnComplete;
 		a["targets"] = targets;
 		a["sessions"] = sessions;
 		return a;

@@ -321,15 +321,24 @@ void Session::updatePresentationState()
 				if (remaining.size() == 0) {
 					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
 					moveOn = false;
+					if (m_app->experimentConfig.closeOnComplete || m_config->closeOnComplete) {
+						m_app->quitRequest();
+					}
 				}
 				else {
 					m_feedbackMessage = "Session Complete!"; // Update the feedback message
+					if (m_config->closeOnComplete) {
+						m_app->quitRequest();
+					}
 					moveOn = true;														// Check for session complete (signal start of next session)
 				}
 			}
 			else {
 				m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
 				moveOn = false;
+			}
+			if (m_app->experimentConfig.closeOnComplete) {
+				m_app->quitRequest();
 			}
 		}
 	}
@@ -594,6 +603,7 @@ void Session::insertTarget(shared_ptr<TargetEntity> target) {
 void Session::destroyTarget(int index) {
 	// Not a reference because we're about to manipulate the array
 	const shared_ptr<VisibleEntity> target = m_targetArray[index];
+	if (!target) return;
 	// Remove the target from the target array
 	m_targetArray.fastRemove(index);
 	// Remove the target from the scene
