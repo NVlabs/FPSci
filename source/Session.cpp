@@ -257,6 +257,9 @@ void Session::updatePresentationState()
 			if (m_config->player.resetPositionPerTrial) {
 				m_player->respawn();
 			}
+
+			closeTrialProcesses();				// Stop start of trial processes
+			runTrialCommands("end");			// Run the end of trial processes
 		}
 	}
 	else if (currentState == PresentationState::feedback)
@@ -311,8 +314,6 @@ void Session::updatePresentationState()
 			}
 			else {
 				m_feedbackMessage = "";				// Clear the feedback message
-				closeTrialProcesses();				// Stop start of trial processes
-				runTrialCommands("end");			// Run the end of trial processes
 				nextCondition();
 				newState = PresentationState::ready;
 			}
