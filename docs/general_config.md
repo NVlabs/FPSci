@@ -431,6 +431,8 @@ In addition to the programmable behavior above the general config also supports 
 |`commandsOnTrialStart`             |`Array<String>`    | Command(s) to run at the start of a new trial within a session. Command(s) quit on trial end |
 |`commandsOnTrialEnd`               |`Array<String>`    | Command(s) to run at the end of a new trial within a session. Command(s) not forced to quit  |
 
+Note that the `Array` of commands provided for each of the parameters above is ordered, but the commands are launched (nearly) simultaneously in a non-blocking manner. This means that run order within a set of commands cannot be strictly guaranteed. If you have serial dependencies within a list of commands consider using a script to sequence them.
+
 For example, the following will cause session start, session end, trial start and trial end strings to be written to a `commandLog.txt` file.
 
 ```
@@ -440,11 +442,11 @@ commandsOnTrialStart = ( "cmd /c echo Trial start>> commandLog.txt" );
 commandsOnTrialEnd = ( "cmd /c echo Trial end>> commandLog.txt" );
 ```
 
-Another common use would be to run a python script at the start or end of a session. For example:
+Another common use would be to run a python script/code at the start or end of a session. For example:
 
 ```
-commandsOnSessionStart = ( "python scripts/event logger/event_logger.py" );
-commandsOnSessionEnd = ( "python scripts/" );
+commandsOnSessionStart = ( "python \"../scripts/event logger/event_logger.py\"" );
+commandsOnSessionEnd = ("python -c \"f = open('texttest.txt', 'w'); f.write('Hello world!'); f.close()\"");
 ```
 
 # Frame Rate Modes
