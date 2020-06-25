@@ -1525,6 +1525,36 @@ public:
 	}
 };
 
+class CommandConfig {
+public: 
+	Array<String> sessionStartCmds;						///< Command to run on start of a session
+	Array<String> sessionEndCmds;						///< Command to run on end of a session
+	Array<String> trialStartCmds;						///< Command to run on start of a trial
+	Array<String> trialEndCmds;							///< Command to run on end of a trial
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("commandsOnSessionStart", sessionStartCmds);
+			reader.getIfPresent("commandsOnSessionEnd", sessionEndCmds);
+			reader.getIfPresent("commandsOnTrialStart", trialStartCmds);
+			reader.getIfPresent("commandsOnTrialEnd", trialEndCmds);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a, const bool forceAll = false) const {
+		if (forceAll || sessionStartCmds.size() > 0)		a["commandsOnSessionStart"] = sessionStartCmds;
+		if (forceAll || sessionEndCmds.size() > 0)			a["commandsOnSessionEnd"] = sessionEndCmds;
+		if (forceAll || trialStartCmds.size() > 0)			a["commandsOnTrialStart"] = trialStartCmds;
+		if (forceAll || trialEndCmds.size() > 0)			a["commandsOnTrialEnd"] = trialEndCmds;
+		return a;
+	}
+};
+
 class MenuConfig {
 public: 
 	// Menu controls
@@ -1613,6 +1643,7 @@ public:
 	LoggerConfig		logger;									///< Logging configuration
 	WeaponConfig		weapon;			                        ///< Weapon to be used
 	MenuConfig			menu;									///< User settings window configuration
+	CommandConfig		commands;								///< Commands to run during execution
 	Array<Question>		questionArray;							///< Array of questions for this experiment/trial
 
 	// Constructors
@@ -1639,6 +1670,7 @@ public:
 		timing.load(reader, settingsVersion);
 		logger.load(reader, settingsVersion);
 		menu.load(reader, settingsVersion);
+		commands.load(reader, settingsVersion);
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("sceneName", sceneName);
@@ -1665,6 +1697,7 @@ public:
 		a = timing.addToAny(a, forceAll);
 		a = logger.addToAny(a, forceAll);
 		a = menu.addToAny(a, forceAll);
+		a = commands.addToAny(a, forceAll);
 		a["weapon"] =  weapon.toAny(forceAll);
 		return a;
 	}

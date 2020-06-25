@@ -96,6 +96,8 @@ void Session::onInit(String filename, String description) {
 			}
 		}
 
+		runSessionCommands("start");				// Run start of session commands
+
 		// Iterate over the sessions here and add a config for each
 		m_trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
 		updateBlock(true);
@@ -239,6 +241,10 @@ void Session::updatePresentationState()
 			if (m_config->player.stillBetweenTrials) {
 				m_player->setMoveEnable(true);
 			}
+
+			closeTrialProcesses();						// End previous process (if running)
+			runTrialCommands("start");					// Run start of trial commands
+
 		}
 	}
 	else if (currentState == PresentationState::task)
@@ -255,6 +261,9 @@ void Session::updatePresentationState()
 			if (m_config->player.resetPositionPerTrial) {
 				m_player->respawn();
 			}
+
+			closeTrialProcesses();				// Stop start of trial processes
+			runTrialCommands("end");			// Run the end of trial processes
 		}
 	}
 	else if (currentState == PresentationState::feedback)
@@ -306,7 +315,7 @@ void Session::updatePresentationState()
 				}
 			}
 			else {
-				m_feedbackMessage = "";
+				m_feedbackMessage = "";				// Clear the feedback message
 				nextCondition();
 				newState = PresentationState::ready;
 			}
@@ -316,7 +325,11 @@ void Session::updatePresentationState()
 		if (stateElapsedTime > m_config->timing.scoreboardDuration) {
 			newState = PresentationState::complete;
 			if (m_hasSession) {
-				m_app->userSaveButtonPress();												// Press the save button for the user...
+				m_app->userSaveButtonPress();				// Press the save button for the user...
+				
+				closeSessionProcesses();					// Close the process we started at session start (if there is one)
+				runSessionCommands("end");					// Launch processes for the end of the session
+				
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
 					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
