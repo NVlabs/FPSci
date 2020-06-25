@@ -446,7 +446,7 @@ Another common use would be to run a python script/code at the start or end of a
 
 ```
 commandsOnSessionStart = ( "python \"../scripts/event logger/event_logger.py\"" );
-commandsOnSessionEnd = ("python -c \"f = open('texttest.txt', 'w'); f.write('Hello world!'); f.close()\"");
+commandsOnSessionEnd = ( "python -c \"f = open('texttest.txt', 'w'); f.write('Hello world!'); f.close()\"" );
 ```
 
 # Frame Rate Modes
