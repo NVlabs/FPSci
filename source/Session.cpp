@@ -44,7 +44,7 @@ void Session::nextCondition() {
 	m_currTrialIdx = unrunTrialIdxs[idx];
 }
 
-bool Session::isComplete() const{
+bool Session::blockComplete() const{
 	bool allTrialsComplete = true;
 	for (int remaining : m_remainingTrials) {
 		allTrialsComplete = allTrialsComplete && (remaining == 0);
@@ -52,14 +52,14 @@ bool Session::isComplete() const{
 	return allTrialsComplete;
 }
 
-bool Session::setupTrialParams(Array<Array<shared_ptr<TargetConfig>>> trials) {
-	for (int i = 0; i < trials.size(); i++) {
-		Array<shared_ptr<TargetConfig>> targets = trials[i];
-		for (int j = 0; j < targets.size(); j++) {
-			const String name = format("%s_%d_%s_%d", m_config->id, i, targets[j]->id, j);
-			if (m_config->logger.enable) {
+bool Session::updateBlock(bool updateTargets) {
+	for (int i = 0; i < m_trials.size(); i++) {
+		Array<shared_ptr<TargetConfig>> targets = m_trials[i];
+		if (m_config->logger.enable && updateTargets) {
+			for (int j = 0; j < targets.size(); j++) {
+				const String name = format("%s_%d_%s_%d", m_config->id, i, targets[j]->id, j);
 				m_logger->addTarget(name, targets[j], m_config->render.frameRate, m_config->render.frameDelay);
-			}			
+			}
 		}
 		m_remainingTrials.append(m_config->trials[i].count);
 		m_targetConfigs.append(targets);
@@ -95,8 +95,8 @@ void Session::onInit(String filename, String description) {
 		runSessionCommands("start");				// Run start of session commands
 
 		// Iterate over the sessions here and add a config for each
-		Array<Array<shared_ptr<TargetConfig>>> trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
-		setupTrialParams(trials);
+		m_trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
+		updateBlock(true);
 	}
 	else {	// Invalid session, move to displaying message
 		presentationState = PresentationState::scoreboard;
@@ -226,7 +226,6 @@ void Session::updatePresentationState()
 		}
 		if (!m_app->m_buttonUp)
 		{
-			//m_feedbackMessage = "";
 			newState = PresentationState::feedback;
 		}
 	}
@@ -264,41 +263,50 @@ void Session::updatePresentationState()
 	{
 		if ((stateElapsedTime > m_config->timing.feedbackDuration) && (remainingTargets <= 0))
 		{
-			if (isComplete()) {
-				if (m_config->questionArray.size() > 0 && m_currQuestionIdx < m_config->questionArray.size()) {			// Pop up question dialog(s) here if we need to
-
-					if (m_currQuestionIdx == -1){
-						m_currQuestionIdx = 0;
-						m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
-					}
-					else if (!m_app->dialog->visible()) {														// Check for whether dialog is closed (otherwise we are waiting for input)
-						if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
-							m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
-							if (m_config->logger.enable) {
-								m_logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
+			if (blockComplete()) {
+				m_currBlock++;		// Increment the block index
+				if (m_currBlock > m_config->blockCount) {
+					// Check for end of session (all blocks complete)
+					if (m_config->questionArray.size() > 0 && m_currQuestionIdx < m_config->questionArray.size()) {
+						// Pop up question dialog(s) here if we need to
+						if (m_currQuestionIdx == -1) {
+							m_currQuestionIdx = 0;
+							m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
+						}
+						else if (!m_app->dialog->visible()) {														// Check for whether dialog is closed (otherwise we are waiting for input)
+							if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
+								m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
+								if (m_config->logger.enable) {
+									m_logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
+								}
+								m_currQuestionIdx++;																// Present the next question (if there is one)
+								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
+									m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
+								}
 							}
-							m_currQuestionIdx++;																// Present the next question (if there is one)
-							if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
-								m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
+							else {
+								m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);					// Relaunch the same dialog (this wasn't completed)
 							}
 						}
-						else {
-							m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);					// Relaunch the same dialog (this wasn't completed)
-						}	
-					}	
-				}
-				else {
-					if (m_config->logger.enable) {
-						m_logger->logUserConfig(*m_app->getCurrUser(), m_config->id, "end");
-						m_logger->flush(false);
-						m_logger.reset();
 					}
-					m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
+					else {
+						if (m_config->logger.enable) {
+							m_logger->logUserConfig(*m_app->getCurrUser(), m_config->id, "end");
+							m_logger->flush(false);
+							m_logger.reset();
+						}
+						m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
 
-					int score = int(m_totalRemainingTime);
-					m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
-					m_currQuestionIdx = -1;
-					newState = PresentationState::scoreboard;
+						int score = int(m_totalRemainingTime);
+						m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
+						m_currQuestionIdx = -1;
+						newState = PresentationState::scoreboard;
+					}
+				}
+				else {					// Block is complete but session isn't
+					m_feedbackMessage = format("Block %d complete! Starting block %d.", m_currBlock - 1, m_currBlock);
+					updateBlock();
+					newState = PresentationState::initial;
 				}
 			}
 			else {
@@ -313,7 +321,6 @@ void Session::updatePresentationState()
 	else if (currentState == PresentationState::scoreboard) {
 		//if (stateElapsedTime > m_scoreboardDuration) {
 			newState = PresentationState::complete;
-			m_app->openUserSettingsWindow();
 			if (m_hasSession) {
 				m_app->userSaveButtonPress();				// Press the save button for the user...
 				
@@ -324,15 +331,24 @@ void Session::updatePresentationState()
 				if (remaining.size() == 0) {
 					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
 					moveOn = false;
+					if (m_app->experimentConfig.closeOnComplete || m_config->closeOnComplete) {
+						m_app->quitRequest();
+					}
 				}
 				else {
 					m_feedbackMessage = "Session Complete!"; // Update the feedback message
+					if (m_config->closeOnComplete) {
+						m_app->quitRequest();
+					}
 					moveOn = true;														// Check for session complete (signal start of next session)
 				}
 			}
 			else {
 				m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
 				moveOn = false;
+				if (m_app->experimentConfig.closeOnComplete) {
+					m_app->quitRequest();
+				}
 		}
 	}
 
@@ -376,6 +392,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 			String(std::to_string(m_currTrialIdx)),
 			"'" + m_config->id + "'",
 			"'" + m_config->description + "'",
+			format("'Block %d'", m_currBlock),
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
 			String(std::to_string(m_taskExecutionTime)),
@@ -463,7 +480,7 @@ float Session::getProgress() {
 			if (tcount < 0) return 0.f;				// Infinite trials, never make any progress
 			remainingTrials += (float)tcount;
 		}
-		return 1.f - (remainingTrials / m_config->getTotalTrials());
+		return 1.f - (remainingTrials / m_config->getTrialsPerBlock());
 	}
 	return fnan();
 }
@@ -481,127 +498,6 @@ void Session::endLogging() {
 		m_logger.reset();
 	}
 }
-
-// Comment these since they are unused
-/** Spawn a randomly parametrized target */
-//void FPSciApp::spawnParameterizedRandomTarget(float motionDuration=4.0f, float motionDecisionPeriod=0.5f, float speed=2.0f, float radius=10.0f, float scale=2.0f) {
-//    Random& rng = Random::threadCommon();
-//
-//    // Construct a reference frame
-//    // Remove the vertical component
-//    Vector3 Z = -activeCamera()->frame().lookVector();
-//    debugPrintf("lookatZ = [%.4f, %.4f, %.4f]\n", Z.x, Z.y, Z.z);
-//    debugPrintf("origin  = [%.4f, %.4f, %.4f]\n", activeCamera()->frame().translation.x, activeCamera()->frame().translation.y, activeCamera()->frame().translation.z);
-//    Z.y = 0.0f;
-//    Z = Z.direction();
-//    Vector3 Y = Vector3::unitY();
-//    Vector3 X = Y.cross(Z);
-//
-//    // Make a random vector in front of the player in a narrow field of view
-//    Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.5f, 0.5f)).direction();
-//
-//    // Ray from user/camera toward intended spawn location
-//    Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
-//
-//    //distance = rng.uniform(2.0f, distance - 1.0f);
-//    const shared_ptr<FlyingEntity>& target =
-//        spawnTarget(ray.origin() + ray.direction() * radius,
-//            scale, false,
-//            Color3::wheelRandom());
-//
-//    // Choose some destination locations based on speed and motionDuration
-//    const Point3& center = ray.origin();
-//    Array<Point3> destinationArray;
-//    // [radians/s] = [m/s] / [m/radians]
-//    float angularSpeed = speed / radius;
-//    // [rad] = [rad/s] * [s] 
-//    float angleChange = angularSpeed * motionDecisionPeriod;
-//
-//    destinationArray.push(target->frame().translation);
-//    int tempInt = 0;
-//    for (float motionTime = 0.0f; motionTime < motionDuration; motionTime += motionDecisionPeriod) {
-//        // TODO: make angle change randomize correction, should be placed on circle around previous point
-//        float pitch = 0.0f;
-//        float yaw = tempInt++ % 2 == 0 ? angleChange : -angleChange;
-//        //float yaw = rng.uniform(-angleChange, angleChange);
-//        //float pitch = rng.uniform(-angleChange, angleChange);
-//        const Vector3& dir = CFrame::fromXYZYPRRadians(0.0f, 0.0f, 0.0f, yaw, pitch, 0.0f).rotation * ray.direction();
-//        ray.set(ray.origin(), dir);
-//        destinationArray.push(center + dir * radius);
-//    }
-//    target->setSpeed(speed); // m/s
-//    // debugging prints
-//    for (Point3* p = destinationArray.begin(); p != destinationArray.end(); ++p) {
-//        debugPrintf("[%.2f, %.2f, %.2f]\n", p->x, p->y, p->z);
-//    }
-//    target->setDestinations(destinationArray, center);
-//}
-//
-///** Spawn a random non-parametrized target */
-//void Session::spawnRandomTarget() {
-//	Random& rng = Random::threadCommon();
-//
-//	bool done = false;
-//	int tries = 0;
-//
-//	// Construct a reference frame
-//	// Remove the vertical component
-//	Vector3 Z = -activeCamera()->frame().lookVector();
-//	Z.y = 0.0f;
-//	Z = Z.direction();
-//	Vector3 Y = Vector3::unitY();
-//	Vector3 X = Y.cross(Z);
-//
-//	do {
-//		// Make a random vector in front of the player in a narrow field of view
-//		Vector3 dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
-//
-//		// Make sure the spawn location is visible
-//		Ray ray = Ray::fromOriginAndDirection(activeCamera()->frame().translation, dir);
-//		float distance = finf();
-//		scene()->intersect(ray, distance);
-//
-//		if ((distance > 2.0f) && (distance < finf())) {
-//            distance = rng.uniform(2.0f, distance - 1.0f);
-//			const shared_ptr<FlyingEntity>& target =
-//                spawnTarget(ray.origin() + ray.direction() * distance, 
-//                    rng.uniform(0.1f, 1.5f), rng.uniform() > 0.5f,
-//                    Color3::wheelRandom());
-//
-//            // Choose some destination locations
-//            const Point3& center = ray.origin();
-//            Array<Point3> destinationArray;
-//            destinationArray.push(target->frame().translation);
-//            for (int i = 0; i < 20; ++i) {
-//        		const Vector3& dir = (-Z + X * rng.uniform(-1, 1) + Y * rng.uniform(-0.3f, 0.5f)).direction();
-//                destinationArray.push(center + dir * distance);
-//            }
-//            target->setSpeed(2.0f); // m/s
-//            target->setDestinations(destinationArray, center);
-//
-//			done = true;
-//		}
-//		++tries;
-//	} while (!done && tries < 100);
-//}
-
-/** Spawn a flying entity target */
-//shared_ptr<FlyingEntity> Session::spawnTarget(const Point3& position, float scale, bool spinLeft, const Color3& color, String modelName) {
-//	const int scaleIndex = clamp(iRound(log(scale) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
-//	const shared_ptr<FlyingEntity>& target = FlyingEntity::create(format("target%03d", ++m_lastUniqueID), m_scene, m_targetModels[modelName][scaleIndex], CFrame());
-//	target->setFrame(position);
-//	target->setColor(color);
-//
-//	// Don't set a track. We'll take care of the positioning after creation
-//	/*
-//	String animation = format("combine(orbit(0, %d), CFrame::fromXYZYPRDegrees(%f, %f, %f))", spinLeft ? 1 : -1, position.x, position.y, position.z);
-//	const shared_ptr<Entity::Track>& track = Entity::Track::create(target.get(), scene().get(), Any::parse(animation));
-//	target->setTrack(track);
-//	*/
-//
-//	insertTarget(target);
-//	return target;
-//}
 
 shared_ptr<TargetEntity> Session::spawnDestTarget(
 	shared_ptr<TargetConfig> config,

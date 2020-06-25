@@ -162,6 +162,14 @@
   <ItemGroup>
     <ClCompile Include="source\main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="data-files\experimentconfig.Any" />
+    <None Include="data-files\keymap.Any" />
+    <None Include="data-files\startupconfig.Any" />
+    <None Include="data-files\systemconfig.Any" />
+    <None Include="data-files\userconfig.Any" />
+    <None Include="data-files\userstatus.Any" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

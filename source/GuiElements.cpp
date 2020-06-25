@@ -413,7 +413,7 @@ void UserMenu::drawUserPane(const MenuConfig& config)
 	// Basic user info
 	UserConfig* user = m_users.getCurrentUser();
 	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addLabel(format("Current User: %s", m_users.currentUser))->setHeight(30.0);
+		m_currentUserPane->addLabel(format("Current User: %s", m_users.currentUser.c_str()))->setHeight(30.0);
 	} m_currentUserPane->endRow();
 	m_currentUserPane->beginRow(); {
 		m_currentUserPane->addLabel(format("Mouse DPI: %f", user->mouseDPI));
@@ -590,14 +590,17 @@ void UserMenu::updateUserPress() {
 	if (m_lastUserIdx != m_ddCurrUserIdx) {
 		// Update user ID
 		String userId = m_userDropDown->get(m_ddCurrUserIdx);
+
+		// Update the current user and save to the user config file
 		m_users.currentUser = userId;
+		m_users.save(m_app->startupConfig.userConfig());
+
 		m_lastUserIdx = m_ddCurrUserIdx;
 		
 		// Update (selected) sessions
 		String sessId = updateSessionDropDown()[0];
 		if (m_sessDropDown->numElements() > 0) m_app->updateSession(sessId);
 	}
-	//updateSessionDropDown();
 }
 
 void UserMenu::updateReticlePreview() {

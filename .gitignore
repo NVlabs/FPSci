@@ -27,6 +27,8 @@ data-files/sound
 data-files/scene
 data-files/model
 # This stuff ignores any packaged outputs
-packaged
 *.zip
 *.tar
+# Output of the fpsci_packager.py if run from the root
+dist
+package.sh

@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28010.2050
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FirstPersonScience", "FirstPersonScience.vcxproj", "{D5556654-E7D3-482D-924C-300871E6E08A}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FPSci.lib", "FPSci.lib.vcxproj", "{D0B15FD1-8D51-4033-B19F-477FAAF59787}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FPSci.test", "FPSci.test.vcxproj", "{971E434B-37FD-4029-AB29-61CD6E84F629}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FirstPersonScience", "FirstPersonScience.vcxproj", "{D5556654-E7D3-482D-924C-300871E6E08A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
