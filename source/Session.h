@@ -140,7 +140,6 @@ protected:
 	String m_taskStartTime;								///< Recorded task start timestamp							
 	String m_taskEndTime;								///< Recorded task end timestamp
 	RealTime m_totalRemainingTime = 0;					///< Time remaining in the trial
-	RealTime m_scoreboardDuration = 10.0;				///< Show the score for at least this amount of seconds.
 	RealTime m_lastFireAt = 0.f;						///< Time of the last shot
 	Timer m_timer;										///< Timer used for timing tasks	
 	// Could move timer above to stopwatch in future

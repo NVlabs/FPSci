@@ -313,7 +313,7 @@ void Session::updatePresentationState()
 		}
 	}
 	else if (currentState == PresentationState::scoreboard) {
-		//if (stateElapsedTime > m_scoreboardDuration) {
+		if (stateElapsedTime > m_config->timing.scoreboardDuration) {
 			newState = PresentationState::complete;
 			if (m_hasSession) {
 				m_app->userSaveButtonPress();												// Press the save button for the user...
@@ -330,6 +330,7 @@ void Session::updatePresentationState()
 			else {
 				m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
 				moveOn = false;
+			}
 		}
 	}
 

@@ -35,16 +35,18 @@ The `weapon` config should be thought of as an atomic type (just like an `int` o
 ## Duration Settings
 The following settings allow the user to control various timings/durations around the per trial state machine.
 
-| Parameter Name     |Units| Description                                                        |
-|--------------------|-----|--------------------------------------------------------------------|
-|`feedbackDuration`  |s    |The duration of the feedback window between experiments             |
-|`readyDuration`     |s    |The time before the start of each trial                             |
-|`taskDuration`      |s    |The maximum time over which the task can occur                      |
+| Parameter Name      |Units| Description                                                        |
+|---------------------|-----|--------------------------------------------------------------------|
+|`readyDuration`      |s    |The time before the start of each trial                             |
+|`taskDuration`       |s    |The maximum time over which the task can occur                      |
+|`feedbackDuration`   |s    |The duration of the feedback window between trials                  |
+|`scoreboardDuration` |s    |The duration of the feedback window between sessions                |
 
 ```
-"feedbackDuration": 1.0,    // Time allocated for providing user feedback
-"readyDuration": 0.5,       // Time allocated for preparing for trial
-"taskDuration": 100000.0,   // Maximum duration allowed for completion of the task
+"readyDuration": 0.5,         // Time allocated for preparing for trial
+"taskDuration": 100000.0,     // Maximum duration allowed for completion of the task
+"feedbackDuration": 1.0,      // Time for user feedback between trials
+"scoreboardDuration": 5.0,    // Time for user feedback between sessions
 ```
 
 ## Rendering Settings

@@ -1453,6 +1453,7 @@ public:
 	float           readyDuration = 0.5f;						///< Time in ready state in seconds
 	float           taskDuration = 100000.0f;					///< Maximum time spent in any one task
 	float           feedbackDuration = 1.0f;					///< Time in feedback state in seconds
+	float			scoreboardDuration = 5.0f;					///< Time in scoreboard state in seconds
 	// Trial count
 	int             defaultTrialCount = 5;						///< Default trial count
 
@@ -1462,6 +1463,7 @@ public:
 			reader.getIfPresent("feedbackDuration", feedbackDuration);
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
+			reader.getIfPresent("scoreboardDuration", scoreboardDuration);
 			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
 			break;
 		default:
