@@ -243,6 +243,11 @@ void FPSciApp::makeGUI() {
 
 	theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
 
+	// Update the scene editor (for new PhysicsScene pointer, initially loaded in GApp)
+	removeWidget(developerWindow->sceneEditorWindow);
+	developerWindow->sceneEditorWindow = SceneEditorWindow::create(this, scene(), theme);
+	developerWindow->sceneEditorWindow->moveTo(developerWindow->cameraControlWindow->rect().x0y1() + Vector2(0, 15));
+
 	// Open sub-window buttons here (menu-style)
 	debugPane->beginRow(); {
 		debugPane->addButton("Render Controls [1]", this, &FPSciApp::showRenderControls);
@@ -332,6 +337,43 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, simStepDuration());
 }
 
+shared_ptr<PlayerEntity> FPSciApp::updatePlayer() {
+	// Pick between experiment and session settings
+	Vector3 grav = experimentConfig.player.gravity;
+	float FoV = experimentConfig.render.hFoV;
+	if (sessConfig != nullptr) {
+		grav = sessConfig->player.gravity;
+		FoV = sessConfig->render.hFoV;
+	}
+
+	// Get the reset height
+	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
+	pscene->setGravity(grav);
+	float resetHeight = pscene->resetHeight();
+	if (isnan(resetHeight)) {
+		resetHeight = -1e6;
+	}
+
+	// For now make the player invisible (prevent issues w/ seeing model from inside)
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+	player->setVisible(false);
+	player->setRespawnHeight(resetHeight);
+	player->setRespawnPosition(player->frame().translation);
+
+	updateMouseSensitivity();
+	player->moveRate = &sessConfig->player.moveRate;
+	player->moveScale = &sessConfig->player.moveScale;
+	player->axisLock = &sessConfig->player.axisLock;
+	player->jumpVelocity = &sessConfig->player.jumpVelocity;
+	player->jumpInterval = &sessConfig->player.jumpInterval;
+	player->jumpTouch = &sessConfig->player.jumpTouch;
+	player->height = &sessConfig->player.height;
+	player->crouchHeight = &sessConfig->player.crouchHeight;
+
+	playerCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
+	return player;
+}
+
 void FPSciApp::updateSession(const String& id) {
 	// Check for a valid ID (non-emtpy and 
 	Array<String> ids;
@@ -406,21 +448,8 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Player parameters
-	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+	shared_ptr<PlayerEntity> player = updatePlayer();
 	sess->initialHeadingRadians = player->heading();
-
-	// Update player mouse sensitivity and turn scale
-	updateMouseSensitivity();
-
-	// Copy session player settings into the player
-	player->moveRate		= &sessConfig->player.moveRate;
-	player->moveScale		= &sessConfig->player.moveScale;
-	player->axisLock		= &sessConfig->player.axisLock;
-	player->jumpVelocity	= &sessConfig->player.jumpVelocity;
-	player->jumpInterval	= &sessConfig->player.jumpInterval;
-	player->jumpTouch		= &sessConfig->player.jumpTouch;
-	player->height			= &sessConfig->player.height;
-	player->crouchHeight	= &sessConfig->player.crouchHeight;
 
 	// Check for need to start latency logging and if so run the logger now
 	String logName = "../results/" + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
@@ -479,35 +508,34 @@ void FPSciApp::toggleUserSettingsMenu() {
 }
 
 void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
-	// Pick between experiment and session settings
-	Vector3 grav = experimentConfig.player.gravity;
-	float FoV = experimentConfig.render.hFoV;
-	if (sessConfig != nullptr) {
-		grav = sessConfig->player.gravity;
-		FoV = sessConfig->render.hFoV;
-	}
-	// Set the active camera to the player
-	setActiveCamera(scene()->typedEntity<Camera>("camera"));
-    // make sure the scene has a "player" entity
-    if (isNull(scene()->typedEntity<PlayerEntity>("player"))) {
-        shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
-        scene()->insert(newPlayer);
-    }
-
-	// Get the reset height
-	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
-	pscene->setGravity(grav);
-	float resetHeight = pscene->resetHeight();
-	if (isnan(resetHeight)) {
-		resetHeight = -1e6;
-	}
-
-	// For now make the player invisible (prevent issues w/ seeing model from inside)
+	
+	// Make sure the scene has a "player" entity
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-	player->setVisible(false);
-	player->setRespawnHeight(resetHeight);
-	player->setRespawnPosition(player->frame().translation);
-	activeCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
+	//alwaysAssertM(player, "All FPSci scene files must provide a \"PlayerEntity\"!");
+
+	// Add a player if one isn't present in the scene
+	if (isNull(player)) {
+		logPrintf("WARNING: Didn't find a \"player\" specified in \"%s\"! Adding one at the origin.", sceneName);
+		shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
+		scene()->insert(newPlayer);
+	}
+
+	// Set the active camera to the player
+	shared_ptr<Camera> playerCam = playerCamera();
+	// Check for no player cam, but a player, if so make the camera from the player
+	if (isNull(playerCam)) {
+		playerCam = Camera::create("playerCamera");
+		scene()->insert((shared_ptr<Entity>)playerCam);
+	}
+	setActiveCamera(playerCam);
+
+	// Update the player entity
+	updatePlayer();
+
+	if (m_weapon) {
+		m_weapon->setScene(scene());
+		m_weapon->setCamera(playerCamera());
+	}
 }
 
 void FPSciApp::onAI() {
@@ -541,8 +569,8 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 	}
 
 	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !emergencyTurbo;
-	activeCamera()->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
-	activeCamera()->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
+	playerCamera()->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
+	playerCamera()->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
 
 	GApp::onGraphics3D(rd, surface);
 
@@ -565,7 +593,6 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// These are all we need from GApp::onSimulation() for walk mode
 	m_widgetManager->onSimulation(rdt, sdt, idt);
 	if (scene()) { scene()->onSimulation(sdt); }
-
 
 	// make sure mouse sensitivity is set right
 	if (m_userSettingsWindow->visible()) {
@@ -592,10 +619,15 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// Move the player
 	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
-	activeCamera()->setFrame(p->getCameraFrame());
+	playerCamera()->setFrame(p->getCameraFrame());
 	
 	// Handle developer mode features here
 	if (startupConfig.developerMode) {
+		// If the debug camera is selected, update it's position from the FPM
+		if (activeCamera() == m_debugCamera) {
+			m_debugCamera->setFrame(m_cameraManipulator->frame());
+		}
+
 		// Handle frame rate/delay updates here
 		if (sessConfig->render.frameRate != lastSetFrameRate || displayLagFrames != sessConfig->render.frameDelay) {
 			updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
@@ -714,29 +746,31 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			toggleUserSettingsMenu();
 			foundKey = true;
 		}
-
-		// Override 'q', 'z', 'c', and 'e' keys (unused)
-		const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
-		if (unused.contains(ksym)) {
-			foundKey = true;
+		else if (activeCamera() == playerCamera()) {
+			// Override 'q', 'z', 'c', and 'e' keys (unused) 
+			// THIS IS A PROBLEM IF THESE ARE KEY MAPPED!!!
+			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
+			if (unused.contains(ksym)) {
+				foundKey = true;
+			}
+			else if (keyMap.map["crouch"].contains(ksym)) {
+				scene()->typedEntity<PlayerEntity>("player")->setCrouched(true);
+				foundKey = true;
+			}
+			else if (keyMap.map["jump"].contains(ksym)) {
+				scene()->typedEntity<PlayerEntity>("player")->setJumpPressed(true);
+				foundKey = true;
+			}
+			else if (keyMap.map["quit"].contains(ksym)) {
+				quitRequest();
+				return true;
+			}
 		}
-		else if (keyMap.map["crouch"].contains(ksym)) {
-			scene()->typedEntity<PlayerEntity>("player")->setCrouched(true);
-			foundKey = true;
-		}
-		else if (keyMap.map["jump"].contains(ksym)) {
-			scene()->typedEntity<PlayerEntity>("player")->setJumpPressed(true);
-			foundKey = true;
-		}
-		else if (keyMap.map["quit"].contains(ksym)) {
-			quitRequest();
-			return true;
-		}
-	}
-	else if ((event.type == GEventType::KEY_UP)){
-		if (keyMap.map["crouch"].contains(ksym)) {
-			scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
-			foundKey = true;
+		else if ((event.type == GEventType::KEY_UP)) {
+			if (keyMap.map["crouch"].contains(ksym)) {
+				scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
+				foundKey = true;
+			}
 		}
 	}
 	if (foundKey) {
@@ -779,43 +813,44 @@ void FPSciApp::onAfterEvents() {
 }
 
 void FPSciApp::onPostProcessHDR3DEffects(RenderDevice *rd) {
-	// Put elements that should be delayed along w/ 3D here
-	rd->push2D(); {
-		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+	if (activeCamera() == playerCamera()) {
+		// Put elements that should be delayed along w/ 3D here
+		rd->push2D(); {
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
-		// Draw target health bars
-		if (sessConfig->targetView.showHealthBars) {
-			for (auto const& target : sess->targetArray()) {
-				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
-					sessConfig->targetView.healthBarSize,
-					sessConfig->targetView.healthBarOffset,
-					sessConfig->targetView.healthBarBorderSize,
-					sessConfig->targetView.healthBarColors,
-					sessConfig->targetView.healthBarBorderColor);
+			// Draw target health bars
+			if (sessConfig->targetView.showHealthBars) {
+				for (auto const& target : sess->targetArray()) {
+					target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
+						sessConfig->targetView.healthBarSize,
+						sessConfig->targetView.healthBarOffset,
+						sessConfig->targetView.healthBarBorderSize,
+						sessConfig->targetView.healthBarColors,
+						sessConfig->targetView.healthBarBorderColor);
+				}
 			}
-		}
 
-		// Draw the combat text
-		if (sessConfig->targetView.showCombatText) {
-			Array<int> toRemove;
-			for (int i = 0; i < m_combatTextList.size(); i++) {
-				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
-				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
+			// Draw the combat text
+			if (sessConfig->targetView.showCombatText) {
+				Array<int> toRemove;
+				for (int i = 0; i < m_combatTextList.size(); i++) {
+					bool remove = !m_combatTextList[i]->draw(rd, *playerCamera(), *m_framebuffer);
+					if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
+				}
+				// Remove the expired elements here
+				m_combatTextList.removeNulls();
 			}
-			// Remove the expired elements here
-			m_combatTextList.removeNulls();
-		}
 
-		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode == "total") {
-			drawClickIndicator(rd, "total");
-		}
+			if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode == "total") {
+				drawClickIndicator(rd, "total");
+			}
 
-		// Draw the HUD here
-		if (sessConfig->hud.enable) {
-			drawHUD(rd);
-		}
-	}rd->pop2D();
-
+			// Draw the HUD here
+			if (sessConfig->hud.enable) {
+				drawHUD(rd);
+			}
+		}rd->pop2D();
+	}
 	if (sessConfig->render.shader != "") {
 		// Copy the post-VFX HDR (input) framebuffer
 		static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
@@ -988,7 +1023,7 @@ Vector2 FPSciApp::currentTurnScale() {
 	// Apply y-invert here
 	if (user->invertY) baseTurnScale.y = -baseTurnScale.y;
 	// If we're not scoped just return the normal user turn scale
-	if (!m_weapon->scoped()) return baseTurnScale;
+	if (!m_weapon || !m_weapon->scoped()) return baseTurnScale;
 	// Otherwise create scaled turn scale for the scoped state
 	if (user->scopeTurnScale.length() > 0) {
 		// User scoped turn scale specified, don't perform default scaling
@@ -996,7 +1031,7 @@ Vector2 FPSciApp::currentTurnScale() {
 	}
 	else {
 		// Otherwise scale the scope turn scalue using the ratio of FoV
-		return activeCamera()->fieldOfViewAngleDegrees() / sessConfig->render.hFoV * baseTurnScale;
+		return playerCamera()->fieldOfViewAngleDegrees() / sessConfig->render.hFoV * baseTurnScale;
 	}
 }
 
@@ -1006,7 +1041,7 @@ void FPSciApp::setScopeView(bool scoped) {
 	const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
 	m_weapon->setScoped(scoped);														// Update the weapon state		
 	const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
-	activeCamera()->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
+	playerCamera()->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
 
@@ -1050,7 +1085,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	else if (target->health() <= 0) {
 		// Position explosion
 		CFrame explosionFrame = target->frame();
-		explosionFrame.rotation = activeCamera()->frame().rotation;
+		explosionFrame.rotation = playerCamera()->frame().rotation;
 		// Create the explosion
 		const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create(
 			format("explosion%d", m_explosionIdx), 
@@ -1118,7 +1153,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	(void)ui;
 
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
-	if (m_mouseDirectMode && notNull(player)) {
+	if (m_mouseDirectMode && activeCamera() == playerCamera() && notNull(player)) {
 		player->updateFromInput(ui);
 	}
 	else if (notNull(player)) {	// Zero the player velocity and rotation when in the setting menu
@@ -1222,7 +1257,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		m_userSettingsWindow->updateReticlePreview();
 	}
 
-	activeCamera()->filmSettings().setSensitivity(sceneBrightness);
+	playerCamera()->filmSettings().setSensitivity(sceneBrightness);
     END_PROFILER_EVENT();
 }
 
@@ -1231,7 +1266,7 @@ void FPSciApp::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Sur
 
 	typedScene<PhysicsScene>()->poseExceptExcluded(surface, "player");
 
-	m_weapon->onPose(surface);
+	if (m_weapon) { m_weapon->onPose(surface); }
 }
 
 void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
@@ -1285,18 +1320,21 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			drawClickIndicator(rd, sessConfig->clickToPhoton.mode);
 		}
 
-		// Reticle
-		const shared_ptr<UserConfig> user = currentUser();
-		float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleChangeTimeS), 1.0f), 0.0f);
-		float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
-		Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
-		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
+		// Player camera only indicators
+		if (activeCamera() == playerCamera()) {
+			// Reticle
+			const shared_ptr<UserConfig> user = currentUser();
+			float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleChangeTimeS), 1.0f), 0.0f);
+			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
+			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
+			Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
 
-		// Handle the feedback message
-		String message = sess->getFeedbackMessage();
-		if (!message.empty()) {
-			outputFont->draw2D(rd, message.c_str(),
-				(Point2(rd->viewport().width()*0.5f, rd->viewport().height()*0.4f)).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+			// Handle the feedback message
+			String message = sess->getFeedbackMessage();
+			if (!message.empty()) {
+				outputFont->draw2D(rd, message.c_str(),
+					(Point2(rd->viewport().width()*0.5f, rd->viewport().height()*0.4f)).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+			}
 		}
 
 	} rd->pop2D();
@@ -1439,7 +1477,7 @@ void FPSciApp::oneFrame() {
         // The debug camera is not in the scene, so we have
         // to explicitly pose it. This actually does nothing, but
         // it allows us to trigger the TAA code.
-		activeCamera()->onPose(m_posed3D);
+		playerCamera()->onPose(m_posed3D);
     } m_poseWatch.tock();
     END_PROFILER_EVENT();
 

@@ -18,6 +18,8 @@ data-files/result_data
 data-files/*.Any
 data-files/*.jpg
 *.mp4
+# Test generated files
+data-files/test/userconfig.Any
 # Don't check in any results
 "scripts/event logger/software/Logs"
 scripts/configs/*.Any
