@@ -35,6 +35,7 @@ if __name__ == '__main__':
 
     # Hard coded files to copy
     packageScript.write('cp data-files/g3d-license.txt '  + distPath + '\n')
+    packageScript.write('cp LICENSE.txt '  + distPath + '\n')
     # For some reason these files aren't captured by G3D as used
     packageScript.write('mkdir -p dist/shader/DefaultRenderer/\n')
     packageScript.write('cp c:/g3d/G3D10/data-files/shader/DefaultRenderer/DefaultRenderer_OIT_writePixel.glsl dist/shader/DefaultRenderer/\n')
