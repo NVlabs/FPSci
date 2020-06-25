@@ -422,14 +422,14 @@ These flags control whether various information is written to the output databas
 ```
 
 ## Command Config
-In addition to the programmable behavior above the general config also supports running of arbitrary commands around the FPSci runtime. These include:
+In addition to the programmable behavior above the general config also supports running of arbitrary commands around the FPSci runtime. Note that the "end" commands keep running and there's the potential for orphaned processes if you specify commands that are long running or infinite. The command options include:
 
 | Parameter Name                    | Type              | Description                                                                                  |
 |-----------------------------------|-------------------|----------------------------------------------------------------------------------------------|
 |`commandsOnSessionStart`           |`Array<String>`    | Command(s) to run at the start of a new session. Command(s) quit on session end              |
-|`commandsOnSessionEnd`             |`Array<String>`    | Command(s) to run at the end of a new session. Command(s) quit on session start              |
+|`commandsOnSessionEnd`             |`Array<String>`    | Command(s) to run at the end of a new session. Command(s) not forced to quit                 |
 |`commandsOnTrialStart`             |`Array<String>`    | Command(s) to run at the start of a new trial within a session. Command(s) quit on trial end |
-|`commandsOnTrialEnd`               |`Array<String>`    | Command(s) to run at the end of a new trial within a session. Command(s) quit on trial start |
+|`commandsOnTrialEnd`               |`Array<String>`    | Command(s) to run at the end of a new trial within a session. Command(s) not forced to quit  |
 
 For example, the following will cause session start, session end, trial start and trial end strings to be written to a `commandLog.txt` file.
 
