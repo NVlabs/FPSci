@@ -378,6 +378,8 @@ These flags control the display of the in-game user menu:
 |`allowReticleColorChange`          |`bool`     |Allow the user to change the color of their reticle (pre/post shot)    |
 |`allowReticleChangeTimeChange`     |`bool`     |Allow the user to change the time it takes to change the color and size of the reticle following a shot |
 |`showReticlePreview`               |`bool`     |Show the user a preview of their (pre-shot) reticle (size is not applied) | 
+|`showMenuOnStartup`                |`bool`     |Controls whether the user menu is shown at startup (should only be set at the experiment level)|
+|`showMenuBetweenSessions`          |`bool`     |Controls whether the user menu is shown between sessions (can be controlled on a per-session basis)|
 
 ```
 "showMenuLogo": true,                   // Show the logo
@@ -393,7 +395,9 @@ These flags control the display of the in-game user menu:
 "allowReticleSizeChange": true,         // If reticle changes are enabled, allow size changes
 "allowReticleColorChange": true,        // If reticle changes are enabled, allow color changes
 "allowReticleTimeChange": false,        // Even if reticle change is enabled, don't allow "shrink time" to change
-"showReticlePreview": true              // If reticle changes are enabled show the preview
+"showReticlePreview": true,             // If reticle changes are enabled show the preview
+"showMenuOnStartup" : true,             // Show the user menu when the application starts
+"showMenuBetweenSessions": true         // Show the user menu between each session
 ```
 
 ## Logger Config

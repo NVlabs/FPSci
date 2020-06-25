@@ -156,6 +156,7 @@ public:
 	}
 
 	String selectedSession() const {
+		if (m_ddCurrSessIdx == -1) return "";
 		return m_sessDropDown->get(m_ddCurrSessIdx);
 	}
 
