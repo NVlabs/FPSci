@@ -1741,12 +1741,13 @@ public:
 	Any toAny(const bool forceAll = false) const {
 		// Get the base any config
 		Any a = FpsConfig::toAny(forceAll);
+		SessionConfig def;
 
 		// Update w/ the session-specific fields
 		a["id"] = id;
 		a["description"] = description;
-		a["closeOnComplete"] = closeOnComplete;
-		a["blockCount"] = blockCount;
+		if( forceAll || def.closeOnComplete != closeOnComplete )	a["closeOnComplete"] = closeOnComplete;
+		if( forceAll || def.blockCount != blockCount )				a["blockCount"] = blockCount;
 		a["trials"] = trials;
 		return a;
 	}
@@ -1925,7 +1926,7 @@ public:
 		Any a = FpsConfig::toAny(forceAll);
 		SessionConfig def;
 		// Write the experiment configuration-specific 
-		if(forceAll || def.description != description) a["description"] = description;
+		if(forceAll || def.description != description)			a["description"] = description;
 		if (forceAll || def.closeOnComplete != closeOnComplete) a["closeOnComplete"] = closeOnComplete;
 		a["targets"] = targets;
 		a["sessions"] = sessions;
