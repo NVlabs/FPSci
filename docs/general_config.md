@@ -35,16 +35,18 @@ The `weapon` config should be thought of as an atomic type (just like an `int` o
 ## Duration Settings
 The following settings allow the user to control various timings/durations around the per trial state machine.
 
-| Parameter Name     |Units| Description                                                        |
-|--------------------|-----|--------------------------------------------------------------------|
-|`feedbackDuration`  |s    |The duration of the feedback window between experiments             |
-|`readyDuration`     |s    |The time before the start of each trial                             |
-|`taskDuration`      |s    |The maximum time over which the task can occur                      |
+| Parameter Name      |Units| Description                                                        |
+|---------------------|-----|--------------------------------------------------------------------|
+|`readyDuration`      |s    |The time before the start of each trial                             |
+|`taskDuration`       |s    |The maximum time over which the task can occur                      |
+|`feedbackDuration`   |s    |The duration of the feedback window between trials                  |
+|`scoreboardDuration` |s    |The duration of the feedback window between sessions                |
 
 ```
-"feedbackDuration": 1.0,    // Time allocated for providing user feedback
-"readyDuration": 0.5,       // Time allocated for preparing for trial
-"taskDuration": 100000.0,   // Maximum duration allowed for completion of the task
+"readyDuration": 0.5,         // Time allocated for preparing for trial
+"taskDuration": 100000.0,     // Maximum duration allowed for completion of the task
+"feedbackDuration": 1.0,      // Time for user feedback between trials
+"scoreboardDuration": 5.0,    // Time for user feedback between sessions
 ```
 
 ## Rendering Settings
@@ -298,6 +300,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 | Parameter Name        |Units                  | Description                                                                        |
 |-----------------------|-----------------------|------------------------------------------------------------------------------------|
 |`targetHealthColors`   |[`Color3`, `Color3`]   | The max/min health colors for the target as an array of [`max color`, `min color`], if you do not want the target to change color as its health drops, set these values both to the same color                                              |
+|`showReferencTarget`   |`bool`                 | Show a reference target to re-center the view between trials/sessions?             |
 |`referenceTargetColor` |`Color3`               | The color of the "reference" targets spawned between trials                        |
 |`referenceTargetSize`  |m                      | The size of the "reference" targets spawned between trials                         |
 
@@ -307,6 +310,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
     Color3(0.0, 1.0, 0.0),
     Color3(1.0, 0.0, 0.0)
 ],
+"showReferenceTarget": true,                    // Show a reference target between trials
 "referenceTargetColor": Color3(1.0,1.0,1.0),    // Reference target color (return to "0" view direction)
 "referenceTargetSize": 0.01,                    // This is a size in meters
 ```
@@ -419,6 +423,34 @@ These flags control whether various information is written to the output databas
 "logPlayerActions" = true,
 "logTrialResponse" = true,
 "logUsers" = true,
+```
+
+## Command Config
+In addition to the programmable behavior above the general config also supports running of arbitrary commands around the FPSci runtime. Note that the "end" commands keep running and there's the potential for orphaned processes if you specify commands that are long running or infinite. The command options include:
+
+| Parameter Name                    | Type              | Description                                                                                  |
+|-----------------------------------|-------------------|----------------------------------------------------------------------------------------------|
+|`commandsOnSessionStart`           |`Array<String>`    | Command(s) to run at the start of a new session. Command(s) quit on session end              |
+|`commandsOnSessionEnd`             |`Array<String>`    | Command(s) to run at the end of a new session. Command(s) not forced to quit                 |
+|`commandsOnTrialStart`             |`Array<String>`    | Command(s) to run at the start of a new trial within a session. Command(s) quit on trial end |
+|`commandsOnTrialEnd`               |`Array<String>`    | Command(s) to run at the end of a new trial within a session. Command(s) not forced to quit  |
+
+Note that the `Array` of commands provided for each of the parameters above is ordered, but the commands are launched (nearly) simultaneously in a non-blocking manner. This means that run order within a set of commands cannot be strictly guaranteed. If you have serial dependencies within a list of commands consider using a script to sequence them.
+
+For example, the following will cause session start, session end, trial start and trial end strings to be written to a `commandLog.txt` file.
+
+```
+commandsOnSessionStart = ( "cmd /c echo Session start>> commandLog.txt", "cmd /c echo Session start second command>> commandLog.txt" );
+commandsOnSessionEnd = ( "cmd /c echo Session end>> commandLog.txt", "cmd /c echo Session end second command>> commandLog.txt" );
+commandsOnTrialStart = ( "cmd /c echo Trial start>> commandLog.txt" );
+commandsOnTrialEnd = ( "cmd /c echo Trial end>> commandLog.txt" );
+```
+
+Another common use would be to run a python script/code at the start or end of a session. For example:
+
+```
+commandsOnSessionStart = ( "python \"../scripts/event logger/event_logger.py\"" );
+commandsOnSessionEnd = ( "python -c \"f = open('texttest.txt', 'w'); f.write('Hello world!'); f.close()\"" );
 ```
 
 # Frame Rate Modes

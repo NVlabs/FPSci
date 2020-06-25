@@ -71,7 +71,11 @@ bool Session::updateBlock(bool updateTargets) {
 void Session::onInit(String filename, String description) {
 	// Initialize presentation states
 	presentationState = PresentationState::initial;
-	m_feedbackMessage = "Click to spawn a target, then use shift on red target to begin.";
+	if (m_config) {
+		m_feedbackMessage = m_config->targetView.showRefTarget ?
+			"Click to spawn a target, then use shift on red target to begin." :
+			"Click to start the session!";
+	}
 
 	// Get the player from the app
 	m_player = m_app->scene()->typedEntity<PlayerEntity>("player");
@@ -91,6 +95,8 @@ void Session::onInit(String filename, String description) {
 				m_logger->logUserConfig(user, m_config->id, "start");
 			}
 		}
+
+		runSessionCommands("start");				// Run start of session commands
 
 		// Iterate over the sessions here and add a config for each
 		m_trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
@@ -235,6 +241,10 @@ void Session::updatePresentationState()
 			if (m_config->player.stillBetweenTrials) {
 				m_player->setMoveEnable(true);
 			}
+
+			closeTrialProcesses();						// End previous process (if running)
+			runTrialCommands("start");					// Run start of trial commands
+
 		}
 	}
 	else if (currentState == PresentationState::task)
@@ -251,6 +261,9 @@ void Session::updatePresentationState()
 			if (m_config->player.resetPositionPerTrial) {
 				m_player->respawn();
 			}
+
+			closeTrialProcesses();				// Stop start of trial processes
+			runTrialCommands("end");			// Run the end of trial processes
 		}
 	}
 	else if (currentState == PresentationState::feedback)
@@ -285,9 +298,7 @@ void Session::updatePresentationState()
 					}
 					else {
 						if (m_config->logger.enable) {
-							m_logger->logUserConfig(*m_app->getCurrUser(), m_config->id, "end");
-							m_logger->flush(false);
-							m_logger.reset();
+							endLogging();
 						}
 						m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
 
@@ -304,17 +315,21 @@ void Session::updatePresentationState()
 				}
 			}
 			else {
-				m_feedbackMessage = "";
+				m_feedbackMessage = "";				// Clear the feedback message
 				nextCondition();
 				newState = PresentationState::ready;
 			}
 		}
 	}
 	else if (currentState == PresentationState::scoreboard) {
-		//if (stateElapsedTime > m_scoreboardDuration) {
-			newState = PresentationState::complete;
-			if (m_hasSession) {
-				m_app->userSaveButtonPress();												// Press the save button for the user...
+		if (m_hasSession) {
+			if (stateElapsedTime > m_config->timing.scoreboardDuration) {
+				newState = PresentationState::complete;
+				m_app->userSaveButtonPress();				// Press the save button for the user...
+
+				closeSessionProcesses();					// Close the process we started at session start (if there is one)
+				runSessionCommands("end");					// Launch processes for the end of the session
+
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
 					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
@@ -330,13 +345,17 @@ void Session::updatePresentationState()
 					}
 					moveOn = true;														// Check for session complete (signal start of next session)
 				}
-			}
-			else {
-				m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
-				moveOn = false;
+
 				if (m_app->experimentConfig.closeOnComplete) {
 					m_app->quitRequest();
 				}
+			}
+		}
+		else {
+			// Go ahead and move to the complete state since there aren't any valid sessions
+			newState = PresentationState::complete;
+			m_feedbackMessage = "All Sessions Complete!";
+			moveOn = false;
 		}
 	}
 
@@ -352,7 +371,7 @@ void Session::updatePresentationState()
 		}
 		presentationState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
-		if ((newState == PresentationState::task) || (newState == PresentationState::feedback)) {
+		if ((newState == PresentationState::task) || (newState == PresentationState::feedback && m_config->targetView.showRefTarget)) {
 			initTargetAnimation();
 		}
 	}
@@ -483,6 +502,8 @@ String Session::getFeedbackMessage() {
 
 void Session::endLogging() {
 	if (m_logger != nullptr) {
+		m_logger->logUserConfig(*m_app->getCurrUser(), m_config->id, "end");
+		m_logger->flush(false);
 		m_logger.reset();
 	}
 }
@@ -598,6 +619,7 @@ void Session::insertTarget(shared_ptr<TargetEntity> target) {
 void Session::destroyTarget(int index) {
 	// Not a reference because we're about to manipulate the array
 	const shared_ptr<VisibleEntity> target = m_targetArray[index];
+	if (!target) return;
 	// Remove the target from the target array
 	m_targetArray.fastRemove(index);
 	// Remove the target from the scene

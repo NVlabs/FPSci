@@ -82,6 +82,10 @@ protected:
 	void makeGUI();
 	void updateControls(bool firstSession = false);
 	virtual void loadModels();
+	shared_ptr<PlayerEntity> updatePlayer();
+
+	/** Get the player camera */
+	shared_ptr<Camera> playerCamera() {  return scene()->typedEntity<Camera>("playerCamera"); }
 
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {
