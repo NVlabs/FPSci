@@ -164,8 +164,9 @@ protected:
 
 	~Session(){
 		clearTargets();					// Clear the targets when the session is done
-		closeTrialProcesses();			// Close any trial processes affiliated with this session
-		closeSessionProcesses();		// Close any processes affiliated with this session
+		// For now leave "orphaned" processes to allow (session) end commands to run until completion
+		//closeTrialProcesses();		// Close any trial processes affiliated with this session
+		//closeSessionProcesses();		// Close any processes affiliated with this session
 	}
 
 	inline void runTrialCommands(String evt) {
