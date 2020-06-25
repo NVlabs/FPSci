@@ -352,7 +352,9 @@ void Session::updatePresentationState()
 			}
 		}
 		else {
-			m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
+			// Go ahead and move to the complete state since there aren't any valid sessions
+			newState = PresentationState::complete;
+			m_feedbackMessage = "All Sessions Complete!";
 			moveOn = false;
 		}
 	}
