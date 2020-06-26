@@ -1,8 +1,17 @@
 # This script generates a packaging script based on the files used by the last successful run of the program.
-# You need to run the generated script to create the distribution directory, then zip that up to send to people.
+#
+# This script should be run from the root directory of a checkout out FPSci repository. 
+# Normally this means that you'd envoke it with `python scripts/package/fpsci_packager_generator.py`.
+# This script outputs a new version of `scripts/package/fpsci_packager.sh` based on the latest `data-files/log.txt`.
+# Both of those can be changed in the parameters below
+#
+# Once generated, `scripts/package/fpsci_packager.sh` should be run using bash from the root of the repository.
+# It will create a `dist/` directory and copy all of the needed files into it.
+#
+# The intention is that the contents of the `dist/` directory can then be zipped up for distribution.
 
 # Name of the packaging script to generate
-outputScript = 'package.sh'
+outputScript = 'scripts/package/fpsci_packager.sh'
 
 # Path of the log.txt file to use
 inputLog = 'data-files/log.txt'
@@ -19,6 +28,11 @@ basePath = ['data-files', 'game', 'common']
 
 # Distribution path - where the output script will generate the distribution
 distPath = 'dist/'
+
+# Automatic configuation
+import os
+g3dPath = os.environ.get('g3d').replace('\\','/')
+runPath = os.getcwd().replace('\\','/')
 
 ########## End script configuration ############
 
@@ -67,6 +81,11 @@ if __name__ == '__main__':
                         # if this file is inside a compressed structure, skip copying it
                         if additionalPath.find('.pk3') > 0 or additionalPath.find('.zip') > 0:
                             break
+
+                        # Make paths generic
+                        filename = filename.replace(g3dPath, "$g3d").replace(runPath, ".")
+
+                        # Write commands to file
                         packageScript.write('mkdir -p ' + distPath + additionalPath + '\n')
                         packageScript.write('cp ' + filename + ' ' + distPath + additionalPath + '\n')
 
@@ -77,5 +96,7 @@ if __name__ == '__main__':
         # Find where the filenames start
         if line.startswith('    ###    Files Used    ###'):
             beforeFiles = False
+    log.close()
+    packageScript.close()
 
 
