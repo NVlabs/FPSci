@@ -69,6 +69,11 @@ public:
     String userConfig() {
         return userConfigPath + "userconfig.Any";
     }
+	
+    /** filename with given path to user status file */
+	String userStatusConfig() {
+		return userConfigPath + "userstatus.Any";
+	}
 };
 
 /** Key mapping */
@@ -530,16 +535,16 @@ public:
 	}
 
 	/** Get the user status table from file */
-	static UserStatusTable load(void) {
-		if (!FileSystem::exists("userstatus.Any")) { // if file not found, create a default userstatus.Any
+	static UserStatusTable load(String filename) {
+		if (!FileSystem::exists(filename)) { // if file not found, create a default userstatus.Any
 			UserStatusTable defStatus = UserStatusTable();			// Create empty status
 			UserSessionStatus user;
 			user.sessionOrder = Array<String> ({ "60Hz", "30Hz" });	// Add "default" sessions we add to
 			defStatus.userInfo.append(user);						// Add single "default" user
-			defStatus.toAny().save("userstatus.Any");				// Save .any file
+			defStatus.toAny().save(filename);				// Save .any file
 			return defStatus;
 		}
-		return Any::fromFile(System::findDataFile("userstatus.Any"));
+		return Any::fromFile(System::findDataFile(filename));
 	}
 
 	/** Get a given user's status from the table by ID */
@@ -641,6 +646,7 @@ public:
 	int		maxAmmo = 10000;											///< Max ammo (clicks) allowed per trial (set large for laser mode)
 	float	firePeriod = 0.5;											///< Minimum fire period (set to 0 for laser mode)
 	bool	autoFire = false;											///< Fire repeatedly when mouse is held? (set true for laser mode)
+	bool	instantKill = false;										///< Instantly kills any damaged target regardless of damage over time.
 	float	damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
 	String	fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	///< Sound to play on fire
 	float	fireSoundVol = 0.5f;										///< Volume for fire sound
@@ -651,6 +657,7 @@ public:
 	bool	renderBullets = false;										///< Render bullets leaving the weapon
 	float	bulletSpeed = 1.0f;											///< Speed to draw at for rendered rounds (in m/s)
 	//String missDecal = "bullet-decal-256x256.png";					///< The decal to place where the shot misses
+	float	decalScale = 1.0f;											///< Scale to apply to the decal
 	float	fireSpread = 0;												///< The spread of the fire
 	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
 	float	damageRollOffDistance = 0;									///< Damage roll of w/ distance
@@ -682,6 +689,7 @@ public:
 			reader.getIfPresent("maxAmmo", maxAmmo);
 			reader.getIfPresent("firePeriod", firePeriod);
 			reader.getIfPresent("autoFire", autoFire);
+			reader.getIfPresent("instantKill", instantKill);
 			reader.getIfPresent("damagePerSecond", damagePerSecond);
 			reader.getIfPresent("fireSound", fireSound);
 			reader.getIfPresent("renderModel", renderModel);
@@ -697,6 +705,7 @@ public:
 			reader.getIfPresent("renderBullets", renderBullets);
 			reader.getIfPresent("bulletSpeed", bulletSpeed);
 			//reader.getIfPresent("missDecal", missDecal);
+			reader.getIfPresent("decalScale", decalScale);
 			reader.getIfPresent("fireSpread", fireSpread);
 			reader.getIfPresent("damageRollOffAim", damageRollOffAim);
 			reader.getIfPresent("damageRollOffDistance", damageRollOffDistance);
@@ -726,6 +735,7 @@ public:
 		if(forceAll || def.damageRollOffAim != damageRollOffAim)			a["damageRollOffAim"] = damageRollOffAim;
 		if(forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
 		if(forceAll || !(def.modelSpec == modelSpec))						a["modelSpec"] = modelSpec;
+		if (forceAll || def.decalScale != decalScale)						a["decalScale"] = decalScale;
 		return a;
 	}
 };
@@ -974,6 +984,7 @@ public:
 	// Rendering parameters
 	float           frameRate = 1000.0f;						///< Target (goal) frame rate (in Hz)
 	int             frameDelay = 0;								///< Integer frame delay (in frames)
+	String          warpMethod = "none";                        ///< Latewarp method. "none", "RIW", "RCW", and "FCW"
 	String          shader = "";								///< Option for a custom shader name
 	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
 
@@ -983,6 +994,7 @@ public:
 			reader.getIfPresent("frameRate", frameRate);
 			reader.getIfPresent("frameDelay", frameDelay);
 			reader.getIfPresent("shader", shader);
+			reader.getIfPresent("warpMethod", warpMethod);
 			reader.getIfPresent("horizontalFieldOfView", hFoV);
 			break;
 		default:
@@ -995,6 +1007,7 @@ public:
 		RenderConfig def;
 		if(forceAll || def.frameRate != frameRate)		a["frameRate"] = frameRate;
 		if(forceAll || def.frameDelay != frameDelay)	a["frameDelay"] = frameDelay;
+		if(forceAll || def.warpMethod != warpMethod)	a["warpMethod"] = warpMethod;
 		if(forceAll || def.hFoV != hFoV)				a["horizontalFieldOfView"] = hFoV;
 		if(forceAll || def.shader != shader)			a["shader"] = shader;
 		return a;
@@ -1015,8 +1028,8 @@ public:
 	Vector2			moveScale = Vector2(1.0f, 1.0f);			///< Player (X/Y) motion scaler
 	Vector2			turnScale = Vector2(1.0f, 1.0f);			///< Player (horizontal/vertical) turn rate scaler
 	Array<bool>		axisLock = { false, false, false };			///< World-space player motion axis lock
-	bool			stillBetweenTrials = false;					///< Disable player motion between trials?
-	bool			resetPositionPerTrial = false;				///< Reset the player's position on a per trial basis (to scene default)
+	bool			stillBetweenTrials = true;					///< Disable player motion between trials?
+	bool			resetPositionPerTrial = true;				///< Reset the player's position on a per trial basis (to scene default)
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
@@ -1478,7 +1491,6 @@ public:
 	Any toAny(const bool forceAll = false) const {
 		// Get the base any config
 		Any a = FpsConfig::toAny(forceAll);
-
 		// Update w/ the session-specific fields
 		a["id"] = id;
 		a["description"] = description;
@@ -1487,10 +1499,15 @@ public:
 	}
 
 	/** Get the total number of trials in this session */
-	int getTotalTrials(void) {
-		int count = 0;
+    float getTotalTrials(void) {
+        float count = 0.f;
 		for (const TrialCount& tc : trials) {
-			count += tc.count;
+            if (count < 0) {
+                return finf();
+            }
+            else {
+                count += tc.count;
+            }
 		}
 		return count;
 	}
@@ -1517,6 +1534,7 @@ public:
 			reader.get("targets", targets, "Issue in the (required) \"targets\" array for the experiment!");	// Targets must be specified for the experiment
 			reader.get("sessions", sessions, "Issue in the (required) \"sessions\" array for the experiment config!");
 			break;
+
 		default:
 			debugPrintf("Settings version '%d' not recognized in ExperimentConfig.\n", settingsVersion);
 			break;
@@ -1586,6 +1604,13 @@ public:
         ids.fastClear();
 		for (const SessionConfig& session : sessions) { ids.append(session.id); }
 	}
+
+	bool sessionIdsContain(const String& target) const {
+		for (const SessionConfig& session : sessions) { 
+            if (session.id == target) { return true; }
+        }
+        return false;
+    }
 
 	/** Get a session config based on its ID */
 	shared_ptr<SessionConfig> getSessionConfigById(const String& id) const {
@@ -1666,8 +1691,8 @@ public:
 		// Iterate through sessions and print them
 		for (int i = 0; i < sessions.size(); i++) {
 			SessionConfig sess = sessions[i];
-			logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n",
-				sess.id, sess.render.frameRate, sess.render.frameDelay);
+			logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n\tWarp Method = %s\n",
+				sess.id, sess.render.frameRate, sess.render.frameDelay, sess.render.warpMethod);
 			// Now iterate through each run
 			for (int j = 0; j < sess.trials.size(); j++) {
 				logPrintf("\t\tTrial Run Config: IDs = %s, Count = %d\n",

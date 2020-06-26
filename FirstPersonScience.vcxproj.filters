@@ -114,5 +114,11 @@
     <None Include="data-files\keymap.Any">
       <Filter>Config Files</Filter>
     </None>
+    <None Include="data-files\shader\warp-3dof.pix">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="data-files\shader\warp-3dof.vrt">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

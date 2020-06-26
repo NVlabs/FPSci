@@ -35,12 +35,13 @@
 void Session::nextCondition() {
 	Array<int> unrunTrialIdxs;
 	for (int i = 0; i < m_remainingTrials.size(); i++) {
-		if (m_remainingTrials[i] > 0) {
+        if (m_remainingTrials[i] > 0 || m_remainingTrials[i] == -1) {
 			unrunTrialIdxs.append(i);
 		}
 	}
 	if (unrunTrialIdxs.size() == 0) return;
-	m_currTrialIdx = unrunTrialIdxs[rand() % unrunTrialIdxs.size()];
+    int idx = Random::common().integer(0, unrunTrialIdxs.size() - 1);
+    m_currTrialIdx = unrunTrialIdxs[idx];
 }
 
 bool Session::isComplete() const{
@@ -142,7 +143,7 @@ void Session::initTargetAnimation() {
 					m_config->targetView.healthColors[0],
 					target->id,
 					i,
-					target->respawnCount,
+					(int)target->respawnCount,
 					name,
 					target->logTargetTrajectory
 				);
@@ -167,7 +168,7 @@ void Session::initTargetAnimation() {
 					target->id,
 					i,
 					target->axisLock,
-					target->respawnCount,
+					(int)target->respawnCount,
 					name,
 					target->logTargetTrajectory
 				);
@@ -191,7 +192,7 @@ void Session::initTargetAnimation() {
 					target->id,
 					i,
 					target->axisLock,
-					target->respawnCount,
+					(int)target->respawnCount,
 					name,
 					target->logTargetTrajectory
 				);
@@ -207,8 +208,8 @@ void Session::initTargetAnimation() {
 	else {
 		// Make sure we reset the target color here (avoid color bugs)
 		m_app->spawnFlyingTarget(
-			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
-			m_config->targetView.refTargetSize,
+			Point3(0.0f, 1.5f, -15.0f),
+			0.1f,
 			m_config->targetView.refTargetColor,
 			{ 0.0f, 0.0f },
 			{ 1000.0f, 1000.f },
@@ -237,12 +238,14 @@ void Session::processResponse()
 			break;
 		}
 		else {
-			totalTargets += (target->respawnCount+1);
+			totalTargets += ((int)target->respawnCount+1);
 		}
 	}
 	
 	recordTrialResponse(m_destroyedTargets, totalTargets); // NOTE: we need record response first before processing it with PsychHelper.
-	m_remainingTrials[m_currTrialIdx] -= 1;
+    if (m_remainingTrials[m_currTrialIdx] > 0) {
+        m_remainingTrials[m_currTrialIdx] -= 1;
+    }
 
 	// Check for whether all targets have been destroyed
 	if (m_remainingTargets == 0) {
@@ -263,7 +266,7 @@ void Session::updatePresentationState()
 	// This updates presentation state and also deals with data collection when each trial ends.
 	PresentationState currentState = presentationState;
 	PresentationState newState;
-	int remainingTargets = m_app->targetArray.size();
+	m_remainingTargets = m_app->targetArray.size();
 	float stateElapsedTime = m_timer.getTime();
 	newState = currentState;
 
@@ -290,7 +293,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_config->timing.taskDuration) || (remainingTargets <= 0) || (m_clickCount == m_config->weapon.maxAmmo))
+		if ((stateElapsedTime > m_config->timing.taskDuration) || (m_remainingTargets <= 0) || (m_clickCount == m_config->weapon.maxAmmo))
 		{
 			m_taskEndTime = Logger::genUniqueTimestamp();
 			processResponse();
@@ -306,10 +309,11 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::feedback)
 	{
-		if ((stateElapsedTime > m_config->timing.feedbackDuration) && (remainingTargets <= 0))
+		if ((stateElapsedTime > m_config->timing.feedbackDuration) && (m_remainingTargets <= 0))
 		{
 			if (isComplete()) {
 				if (m_config->questionArray.size() > 0 && m_currQuestionIdx < m_config->questionArray.size()) {			// Pop up question dialog(s) here if we need to
+
 					if (m_currQuestionIdx == -1){
 						m_currQuestionIdx = 0;
 						m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
@@ -339,8 +343,8 @@ void Session::updatePresentationState()
 					m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
 					m_app->updateSessionDropDown();
 
-					int score = int(m_totalRemainingTime);
-					m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
+					float score = getScore();
+					m_feedbackMessage = format("Session complete! You scored %0.1f!", score);						// Update the feedback message
 					m_currQuestionIdx = -1;
 					newState = PresentationState::scoreboard;
 				}
@@ -353,7 +357,7 @@ void Session::updatePresentationState()
 		}
 	}
 	else if (currentState == PresentationState::scoreboard) {
-		//if (stateElapsedTime > m_scoreboardDuration) {
+		if (stateElapsedTime > m_scoreboardDuration) {
 			newState = PresentationState::complete;
 			m_app->openUserSettingsWindow();
 			if (m_hasSession) {
@@ -368,9 +372,10 @@ void Session::updatePresentationState()
 					moveOn = true;														// Check for session complete (signal start of next session)
 				}
 			}
-			else {
-				m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
-				moveOn = false;
+            else {
+                m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
+                moveOn = false;
+            }
 		}
 	}
 
@@ -426,7 +431,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 
 void Session::accumulateTrajectories()
 {
-	if (m_config->logger.logTargetTrajectories) {
+	if (notNull(m_logger) && m_config->logger.logTargetTrajectories) {
 		for (shared_ptr<TargetEntity> target : m_app->targetArray) {
 			if (!target->isLogged()) continue;
 			// recording target trajectories
@@ -448,7 +453,7 @@ void Session::accumulateTrajectories()
 
 void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 {
-	if (m_config->logger.logPlayerActions) {
+	if (notNull(m_logger) && m_config->logger.logPlayerActions) {
 		BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 		// recording target trajectories
 		Point2 dir = m_app->getViewDirection();
@@ -460,7 +465,7 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
-	if (m_config->logger.logFrameInfo) {
+	if (notNull(m_logger) && m_config->logger.logFrameInfo) {
 		m_logger->logFrameInfo(FrameInfo(Logger::getFileTime(), sdt));
 	}
 }
@@ -496,19 +501,26 @@ float Session::getRemainingTrialTime() {
 
 float Session::getProgress() {
 	if (notNull(m_config)) {
-		int completed = 0;
-		for (bool c : m_remainingTrials) {
-			if (c) completed++;
-		}
-		return completed / (float)m_config->getTotalTrials();
+        float remainingTrials = 0.f;
+        for (int tcount : m_remainingTrials) {
+            if (tcount < 0) return 0.f;				// Infinite trials, never make any progress
+            remainingTrials += (float)tcount;
+        }
+        return 1.f - (remainingTrials / m_config->getTotalTrials());
 	}
 	return fnan();
 }
 
-int Session::getScore() {
-	return (int)(10.0 * m_totalRemainingTime);
+float Session::getScore() {
+	return (float)(m_totalRemainingTime / 5.f);
 }
 
 String Session::getFeedbackMessage() {
 	return m_feedbackMessage;
+}
+
+void Session::endLogging() {
+	if (m_logger != nullptr) {
+		m_logger.reset();
+	}
 }

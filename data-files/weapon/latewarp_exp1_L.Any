@@ -1,0 +1,9 @@
+{
+	"id": "tracking weapon",
+	"renderModel": false,
+	"autoFire": true,
+	"damagePerSecond": 1,
+	"firePeriod": 0.1,
+	//"fireSound" : "sound/42108__marcuslee__Laser_Wrath_6.wav",
+	"maxAmmo": 1000000;
+}

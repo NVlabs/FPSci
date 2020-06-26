@@ -1,0 +1,95 @@
+
+{
+
+    allowRepeat = false; 
+    randomizeSessionOrder = false; 
+    sessions = ( ); 
+    settingsVersion = 1; 
+
+    users = (
+        {
+            completedSessions = ( );
+            id = "DM";
+            sessions = (
+"C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm","C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm","C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm","C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm","C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm",
+            );
+        },
+        {
+            completedSessions = ( );
+            id = "EP";
+            sessions = (
+"C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm","C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm","C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm","C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm","C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm",
+            );
+        },
+        {
+            completedSessions = ( );
+            id = "CM";
+            sessions = (
+"C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm","C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm","C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm","C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm","C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm",
+            );
+        },
+        {
+            completedSessions = ( );
+            id = "LN";
+            sessions = (
+"C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm","C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm","C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm","C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm","C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm",
+            );
+        },
+        {
+            completedSessions = ( );
+            id = "MC";
+            sessions = (
+"C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm","C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm","C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm","C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm","C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm",
+            );
+        },
+        {
+            completedSessions = ( );
+            id = "JC";
+            sessions = (
+"C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm","C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm","C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm","C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm","C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm",
+            );
+        },
+        {
+            completedSessions = ( );
+            id = "MiB";
+            sessions = (
+"C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm","C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm","C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm","C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm","C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm",
+            );
+        },
+        {
+            completedSessions = ( );
+            id = "JA";
+            sessions = (
+"C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm","C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm","C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm","C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm","C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm",
+            );
+        },
+        {
+            completedSessions = ( );
+            id = "AE";
+            sessions = (
+"C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm","C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm","C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm","C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm","C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm",
+            );
+        },
+        {
+            completedSessions = ( );
+            id = "MaB";
+            sessions = (
+"C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm","C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm","C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm","C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm","C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm",
+            );
+        },
+        {
+            completedSessions = ( );
+            id = "SS";
+            sessions = (
+"C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm","C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm","C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm","C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm","C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm",
+            );
+        },
+        {
+            completedSessions = ( );
+            id = "JK";
+            sessions = (
+"C1LT10m","C1LT1m","C1LT50cm","C1LR10m","C1LR1m","C1LR50cm","C1HT10m","C1HT1m","C1HT50cm","C1HR10m","C1HR1m","C1HR50cm","C2LT10m","C2LT1m","C2LT50cm","C2LR10m","C2LR1m","C2LR50cm","C2HT10m","C2HT1m","C2HT50cm","C2HR10m","C2HR1m","C2HR50cm","C3LT10m","C3LT1m","C3LT50cm","C3LR10m","C3LR1m","C3LR50cm","C3HT10m","C3HT1m","C3HT50cm","C3HR10m","C3HR1m","C3HR50cm","C4LT10m","C4LT1m","C4LT50cm","C4LR10m","C4LR1m","C4LR50cm","C4HT10m","C4HT1m","C4HT50cm","C4HR10m","C4HR1m","C4HR50cm","C5LT10m","C5LT1m","C5LT50cm","C5LR10m","C5LR1m","C5LR50cm","C5HT10m","C5HT1m","C5HT50cm","C5HR10m","C5HR1m","C5HR50cm",
+            );
+        },
+    );
+}

@@ -1,0 +1,9 @@
+{
+	"id": "Hit weapon",
+	"renderModel": false,
+	"autoFire": false,
+	"damagePerSecond": 1,
+	"firePeriod": 0.5,
+	//"fireSound" : "sound/42108__marcuslee__Laser_Wrath_6.wav",
+	"maxAmmo": 1000000;
+}

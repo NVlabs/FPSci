@@ -1,0 +1,8 @@
+{ 
+    audioEnable = true; 
+    developerMode = false; 
+    experimentConfigPath = ""; 
+    fullscreen = true; 
+    userConfigPath = ""; 
+    waypointEditorMode = false; 
+} 

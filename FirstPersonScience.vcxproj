@@ -20,10 +20,10 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{D0B15FD1-8D51-4033-B19F-477FAAF59787}</ProjectGuid>
+    <ProjectGuid>{D5A2A476-FF0A-481F-80A2-E3610656DD47}</ProjectGuid>
     <RootNamespace>TargetExperiment</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
-    <ProjectName>FirstPersonScience</ProjectName>
+    <ProjectName>fpslatewarp</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -162,6 +162,8 @@
     <None Include="data-files\experimentconfig.Any" />
     <None Include="data-files\keymap.Any" />
     <None Include="data-files\shader\distort.pix" />
+    <None Include="data-files\shader\warp-3dof.pix" />
+    <None Include="data-files\shader\warp-3dof.vrt" />
     <None Include="data-files\startupconfig.Any" />
     <None Include="data-files\systemconfig.Any" />
     <None Include="data-files\userconfig.Any" />

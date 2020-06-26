@@ -1,0 +1,1065 @@
+
+{
+
+  // Information related to this file
+  "settingsVersion": 1, // Used for parsing this file
+
+  // General settings for the experiment
+  "appendingDescription": "default", // Description of this file
+  //"sceneName": "FPSci Square Map (1m gap)",
+  //"sceneName": "FPSci Square Map",
+  //"sceneName": "Shooting Range Textures",
+  "feedbackDuration": 0.0, // Time allocated for providing user feedback
+  "readyDuration": 0.25, // Time allocated for preparing for trial5:045:04 PM 12/6/20195:04 PM 12/6/20195:04 PM 12/6/20195:04 PM 12/6/20195:04 PM 12/6/20195:04 PM 12/6/2019 PM 12/6/2019
+  "taskDuration": 20.0, // Maximum duration allowed for completion of the task
+  "horizontalFieldOfView": 103.0, // Field of view (horizontal) for the user
+   clickPhotonColors = (
+     Color3(0.2, 0.2, 0.2 ),
+     Color3(0.8, 0.8, 0.8 ) );
+   clickPhotonSide = "right";
+   clickPhotonSize = Vector2(0.1, 0.1);
+   clickPhotonVertPos = 0.5;
+   clickPhotonMode="system";
+   renderClickPhoton = true; 
+  "horizontalFieldOfView":  103.0,            // Field of view (horizontal) for the user in degrees
+  "moveRate": 4.0,                            // Player move rate (0 for no motion)
+  "mouseEnabled" : false,
+  "playerAxisLock" = {false, true, true},     // Player can only move horizontally
+  "jumpVelocity": 0.0,                       // Player can't jump
+  "jumpInterval": 0.0,                        // Minimum jump interval
+  "jumpTouch": true,                          // Require touch for jump
+  "playerHeight":  1.5,                       // Normal player height
+  "crouchHeight": 0.8,                        // Crouch height
+  //"playerGravity": Vector3(0.0, -5.0, 0.0),   // Player gravity
+
+  "showHUD":  true,               // Show the player HUD (banner, ammo, health bar)
+  "showBanner":  true,            // Control the banner at the top of the screen (shows time, score, and session % complete)
+  "bannerLargeFontSize": 30.0,    // Large font size to use in the banner (% complete)
+  "bannerSmallFontSize": 14.0,    // Small font size to use in the banner (time remaining and score)
+  "hudFont": "console.fnt",       // Font to use for the HUD (fixed with highly suggested!)
+
+  // Basic weapon configuration
+  "weapon": {
+    "maxAmmo": 100000, // Maximum number of clicks to allow per trial
+    "firePeriod": 0, // Minimum period between shots (in seconds) to allow during the experiment
+    "damagePerSecond": 1,
+    "autoFire": true, // Whether the weapon fires automatically when the left mouse is held down
+  },
+
+
+  "sessions": [
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1LT10m",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1LT1m",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1LT50cm",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1LR10m",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1LR1m",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1LR50cm",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1HT10m",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1HT1m",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1HT50cm",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1HR10m",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1HR1m",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C1HR50cm",
+      "warpMethod": "none",
+      "frameDelay": 0,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2LT10m",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2LT1m",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2LT50cm",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2LR10m",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2LR1m",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2LR50cm",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2HT10m",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2HT1m",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2HT50cm",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2HR10m",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2HR1m",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C2HR50cm",
+      "warpMethod": "none",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3LT10m",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3LT1m",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3LT50cm",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3LR10m",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3LR1m",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3LR50cm",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3HT10m",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3HT1m",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3HT50cm",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3HR10m",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3HR1m",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C3HR50cm",
+      "warpMethod": "RIW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4LT10m",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4LT1m",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4LT50cm",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4LR10m",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4LR1m",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4LR50cm",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4HT10m",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4HT1m",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4HT50cm",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4HR10m",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4HR1m",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C4HR50cm",
+      "warpMethod": "RCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5LT10m",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5LT1m",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5LT50cm",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5LR10m",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5LR1m",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5LR50cm",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "renderWeaponStatus": false,
+      "weapon": #include("weapon/latewarp_exp1_L.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5HT10m",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5HT1m",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5HT50cm",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "training", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "minimum", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5HR10m",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (10m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5HR1m",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (1m gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+    {
+      "frameRate": 60, // Session frame rate (in frames per second)
+      "id": "C5HR50cm",
+      "warpMethod": "FCW",
+      "frameDelay": 5,
+      "sceneName": "FPSci Square Map (50cm gap)",
+      "cooldownThickness": 1,
+      "cooldownColor": Color4(1.0,1.0,1.0,0.75),
+      "weapon": #include("weapon/latewarp_exp1_H.Any");
+      "expMode": "real", // Experiment mode ("real" or "training")
+      "clickPhotonMode": "total", // "minimum" or "total"
+      "trials": [
+        {"ids": ["stray", ],"count": 15},
+        {"ids": ["Cw", ],"count": 5},
+        {"ids": ["CC", ],"count": 5},
+      ]
+    },
+  ],
+  "targets": [
+    {
+      "id": "stray",
+      "speed": [ 3.0, 5.0 ],
+      "visualSize": [ 0.75, 0.75 ],
+      "destSpace" : "world",
+      "spawnBounds": AABox {
+        Point3(-0.0, 2.0, -15.0),
+        Point3(0.0, 2.0, -15.0),
+      },
+      "moveBounds": AABox {
+        Point3(-5.0, 0.3, -15.0),
+        Point3(5.0, 4.0, -15.0),
+      },
+      "motionChangePeriod": [ 0.8, 1.5 ],
+      "jumpEnabled": false,
+      "respawnCount": 0,
+      "axisLocked": [false,false,true],
+    },
+    #include("Cw.Any"),
+    #include("CC.Any"),
+  ],
+
+}

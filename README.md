@@ -1,17 +1,40 @@
-# `FirstPersonScience` Application
-The `FirstPersonScience` application (`FPSci` for short) is a tool for conducting user studies on first person shooter (FPS) style tasks. 
+# `LateWarp` Variant of FPSci
+This simple FPS (First Person Shooter) game simulates network latency and allows testing latency reduction methods through user study. It includes features not present in the main FirstPersonScience app (see below).
 
-## G3D dependence
+## HPG 2020 Paper
+This code is released as a supplement to the following paper published in the High Performance Graphics research conference. Bibtex for that paper is as follows:
+
+```
+@inproceedings{kim2020late,
+  title={Late Input Sampling and Post-Render Warping Improves Aiming Under High Latency Condition},
+  author={Joohwan Kim and Pyarelal Knowles and Josef Spjut and Ben Boudaoud and Morgan McGuire},
+  year={2020},
+  booktitle={Proceedings of the Conference on High-Performance Graphics}
+}
+```
+
+### Reproducing the HPG Experiment
+The experiment computers used this modified version of FPSci built with Visual Studio 2017 and compiled against the [G3D revision `r6911`](https://sourceforge.net/p/g3d/code/6911/tree/) . You can get that version of G3D by running `svn checkout https://svn.code.sf.net/p/g3d/code/ g3d -r6911`. Note that an additional G3D patch is included which is required to be applied (instructions below).
+
+### Emulation of Network Latency
+This experiment only simulates additional latency. This simulation injects latency from inputs before the frame is emitted. In all experiment modes in this current version, the hit detection is always based on what is seen on the screen except for the case where everything is uniformly delayed, where hit detection also experiences the added latency.
+
+## Build Instructions
+The solution file (`fpslatewarp.sln`) can build and run using [Visual Studio](https://visualstudio.microsoft.com/vs/). Make sure the `fpslatewarp` project within the solution (not the `googletest` project) is set as active when running/debugging from Visual Studio. 
+
+Building this project/solution requires the G3D Innovation Engine be installed.
+
+### G3D Dependence
 FPSci depends on the [G3D innovation engine](https://casual-effects.com/g3d) which is a prerequisite for building FPSci. [Installation instructions](https://casual-effects.com/g3d/www/index.html#install).
 
 When you check out G3D, you'll need some data files from the `research` and `game` subdirectories so you can't just checkout the `common` subdirectory.
 
 If you install G3D using its `.hta` installer, then this will automatically install Visual Studio Community Edition for you.
 
-## Building instructions
-The solution file (`FirstPersonScience.sln`) can build and run using [Visual Studio](https://visualstudio.microsoft.com/vs/). 
+# `FirstPersonScience` Application
+The `FirstPersonScience` application (`FPSci` for short) is a tool for conducting user studies on first person shooter (FPS) style tasks. 
 
-## Instructions for configuring and running an experiment
+## Instructions for Configuring and Running an Experiment
 `FirstPersonScience` implements a simple mouse-controlled view model with a variety of parameters controllable through various `.Any` files (more on this below). The scene, weapon, target size/behavior, and frame rate/latency controls are all available via this interface.
 
 When running, the keypad `-` button can be pressed to exit the application, or you can press `TAB` or `ESC` to toggle the user configuration menu, which has a "quit" button in it.

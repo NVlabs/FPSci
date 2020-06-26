@@ -59,7 +59,8 @@ void PlayerEntity::init(AnyTableReader& propertyTable) {
     Sphere s(1.5f);
     propertyTable.getIfPresent("collisionSphere", s);
     // Create the player
-    init(v, s, heading);
+	//init(v, s, heading);
+	init(v, s, 0.0f);
 }
 
 float PlayerEntity::heightOffset(float height) const {
@@ -114,7 +115,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	m_jumpPressed = false;
 
 	// Get the mouse rotation here
-	Vector2 mouseRotate = ui->mouseDXY() * turnScale * (float)mouseSensitivity / 2000.0f;
+	Vector2 mouseRotate = ui->mouseDXY() * turnScale * (float)m_pixelsToRadians;
 	float yaw = mouseRotate.x;
 	float pitch = mouseRotate.y;
 
@@ -132,11 +133,14 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     simulatePose(absoluteTime, deltaTime);
 
 	if (!isNaN(deltaTime)) {
-		if(m_motionEnable) m_inContact = slideMove(deltaTime);
+		// Apply rotation first
 		m_headingRadians += m_desiredYawVelocity;	// *(float)deltaTime;		// Don't scale by time here
 		m_headingRadians = mod1(m_headingRadians / (2 * pif())) * 2 * pif();
 		m_headTilt = clamp(m_headTilt - m_desiredPitchVelocity, -89.9f * units::degrees(), 89.9f * units::degrees());
 		m_frame.rotation = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians) * Matrix3::fromAxisAngle(Vector3::unitX(), m_headTilt);
+		
+		// Apply player movement
+		if(m_motionEnable) m_inContact = slideMove(deltaTime);
 
 		// Check for "off map" condition and reset position here...
 		if (!isNaN(m_respawnHeight) && m_frame.translation.y < m_respawnHeight) {
@@ -217,7 +221,6 @@ bool PlayerEntity::findFirstCollision
 bool PlayerEntity::slideMove(SimTime deltaTime) { 
 	if (deltaTime == 0.0f) return false;
 	static const float epsilon = 0.0001f;
-	Point3 loc;
 
 	// Only allow y-axis gravity for now
     alwaysAssertM(((PhysicsScene*)m_scene)->gravity().x == 0.0f && ((PhysicsScene*)m_scene)->gravity().z == 0.0f, 
@@ -255,8 +258,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
     
     // Trivial implementation that ignores collisions:
 #   if NO_COLLISIONS
-		loc = m_frame.translation + velocity  * timeLeft;
-		setFrame(loc);
+		m_frame.translation += velocity  * timeLeft;
         return;
 #   endif
 
@@ -283,8 +285,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
 
         // Advance to just before the collision
         stepTime = max(0.0f, stepTime - epsilon * 0.5f);
-		loc = m_frame.translation + velocity * stepTime;
-		setFrame(loc);
+		m_frame.translation += velocity * stepTime;
 
         // Early out of loop when debugging
         //if (! runSimulation) { return; }
@@ -303,8 +304,7 @@ bool PlayerEntity::slideMove(SimTime deltaTime) {
                 // uses that to rise up steps.  Place the sphere
                 // adjacent to the triangle and eliminate all velocity
                 // towards the triangle.
-               loc = collisionPoint + collisionNormal * (m_collisionProxySphere.radius + epsilon * 2.0f);
-			   setFrame(loc);
+               m_frame.translation = collisionPoint + collisionNormal * (m_collisionProxySphere.radius + epsilon * 2.0f);
                 
 #               ifdef TRACE_COLLISIONS
                     debugPrintf("  Interpenetration detected.  Position after = %s\n",

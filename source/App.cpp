@@ -7,6 +7,9 @@
 #include "PhysicsScene.h"
 #include "WaypointManager.h"
 #include <chrono>
+#include <io.h>
+#include <typeinfo>
+#include <exception>
 
 // Scale and offset for target
 const float App::TARGET_MODEL_ARRAY_SCALING = 0.2f;
@@ -16,12 +19,32 @@ const float App::TARGET_MODEL_ARRAY_OFFSET = 20;
 FpsConfig SessionConfig::defaultConfig;
 int TrialCount::defaultCount;
 Array<String> UserSessionStatus::defaultSessionOrder;
+
 bool UserSessionStatus::randomizeDefaults;
 
 /** global startup config - sets developer flags and experiment/user paths */
-StartupConfig startupConfig;
+StartupConfig App::startupConfig;
 
-App::App(const GApp::Settings& settings) : GApp(settings) {}
+App::App(const GApp::Settings& settings) : GApp(settings)
+{
+	for (auto& arg : m_settings.argArray) {
+		if (arg == "--test") {
+			printf("Starting in automated testing mode\n");
+			m_testMode = true;
+		}
+	}
+}
+
+bool App::testModeRequested()
+{
+	return m_testMode;
+}
+
+void App::dumpNextFrame(String filename)
+{
+	m_dumpNextFrame = true;
+	m_frameDumpFilename = filename;
+}
 
 /** Initialize the app */
 void App::onInit() {
@@ -43,7 +66,7 @@ void App::onInit() {
 	userTable.printToLog();
 
 	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load();
+	userStatusTable = UserStatusTable::load(startupConfig.userStatusConfig());
 	userStatusTable.printToLog();
 	userStatusTable.validate(sessionIds);
 	
@@ -83,9 +106,21 @@ void App::onInit() {
 	loadModels();
 	setReticle(userTable.getCurrentUser()->reticleIndex);
 
+	m_noLatencyCamera = Camera::create();
+	m_noLatencyCamera->copyParametersFrom(activeCamera());
+    m_noLatencyCamera->filmSettings().setAntialiasingEnabled(false);
+    m_noLatencyCamera->filmSettings().setTemporalAntialiasingEnabled(false);
+    m_noLatencyCamera->filmSettings().setEffectsEnabled(false);
+
 	updateMouseSensitivity();			// Update (apply) mouse sensitivity
 	updateSessionDropDown();			// Update the session drop down to remove already completed sessions
 	updateSessionPress();				// Update session to create results file/start collection
+	
+	if (m_testMode) {
+		// Remove the menu
+		m_userSettingsMode = false;
+		m_userSettingsWindow->setVisible(m_userSettingsMode);
+	}
 }
 
 /** Handle then user settings window visibility */
@@ -99,9 +134,10 @@ void App::updateMouseSensitivity() {
     // G3D expects mouse sensitivity in radians
     // we're converting from mouseDPI and centimeters/360 which explains
     // the screen resolution (dots), cm->in factor (2.54) and 2PI
-    double mouseSensitivity = 2.0 * pi() * 2.54 * 1920.0 / (userTable.getCurrentUser()->cmp360 * userTable.getCurrentUser()->mouseDPI);
-    // additional correction factor based on few samples - TODO: need more careful setup to study this
-    mouseSensitivity = mouseSensitivity * 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
+	const double metersPerInch = 39.3701;
+	double metersPer360 = userTable.getCurrentUser()->cmp360 / 100.0;
+	double pixelsPerMeter = userTable.getCurrentUser()->mouseDPI * metersPerInch;
+    double m_pixelsToRadians = (2.0 * pi()) / (pixelsPerMeter * metersPer360);
     const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
     if (m_userSettingsMode) {
         // set to 3rd person
@@ -114,7 +150,7 @@ void App::updateMouseSensitivity() {
 	// Control player motion using the experiment config parameter
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	if (notNull(player)) {
-		player->mouseSensitivity = (float)mouseSensitivity;
+		player->m_pixelsToRadians = (float)m_pixelsToRadians;
 		player->turnScale = sessConfig->player.turnScale * userTable.getCurrentUser()->turnScale;
 	}
 }
@@ -386,6 +422,23 @@ shared_ptr<JumpingEntity> App::spawnJumpingTarget(
 	return target;
 }
 
+void App::loadDecals() {
+	Any decalSpec = PARSE_ANY(ArticulatedModel::Specification{
+	filename = "ifs/square.ifs";
+	preprocess = {
+		transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
+		setMaterial(all(), UniversalMaterial::Specification{
+			lambertian = Texture::Specification {
+				filename = "bullet-decal-256x256.png";
+				encoding = Color3(1, 1, 1);
+			};
+		});
+	};
+		});
+	decalSpec.set("scale", sessConfig->weapon.decalScale);
+	m_decalModel = ArticulatedModel::create(decalSpec, "decalModel");
+}
+
 void App::loadModels() {
 	if ((experimentConfig.weapon.renderModel || startupConfig.developerMode) && !experimentConfig.weapon.modelSpec.filename.empty()) {
 		// Load the model if we (might) need it
@@ -405,20 +458,6 @@ void App::loadModels() {
 
 	m_bulletModel = ArticulatedModel::create(bulletSpec, "bulletModel");
 
-	const static Any decalSpec = PARSE_ANY(ArticulatedModel::Specification{
-		filename = "ifs/square.ifs";
-		preprocess = {
-			transformGeometry(all(), Matrix4::scale(0.1, 0.1, 0.1));
-			setMaterial(all(), UniversalMaterial::Specification{
-				lambertian = Texture::Specification {
-					filename = "bullet-decal-256x256.png";
-					encoding = Color3(1, 1, 1);
-				};
-			});
-		}; });
-
-	m_decalModel = ArticulatedModel::create(decalSpec, "decalModel");
-
 	// Add all the unqiue targets to this list
 	Table<String, Any> toBuild;
 	for (TargetConfig target : experimentConfig.targets) {
@@ -436,6 +475,7 @@ void App::loadModels() {
 					maxNormalWeldAngleDegrees = 0;
 					maxSmoothAngleDegrees = 0;
 		};
+		scale = 0.2; // TODO: Ideally this should configurable and defined by Experiment class.
 	}));
 
 	// Setup the explosion specification
@@ -535,20 +575,56 @@ void App::makeGUI() {
     // set up user settings window
     m_userSettingsWindow = GuiWindow::create("User Settings", nullptr, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
     GuiPane* p = m_userSettingsWindow->pane();
-    m_currentUserPane = p->addPane("Current User Settings");
-    updateUserGUI();
+    GuiTabPane* tabPane = p->addTabPane();
+    {
+        m_currentUserPane = tabPane->addTab("Current User Settings");
+        updateUserGUI();
 
-    m_ddCurrentUser = userTable.getCurrentUserIndex();
-    p = p->addPane("Experiment Settings");
-    p->beginRow();
-        m_userDropDown = p->addDropDownList("User", userTable.getIds(), &m_ddCurrentUser);
-	    p->addButton("Select User", this, &App::updateUser);
-    p->endRow();
-    p->beginRow();
-        m_sessDropDown = p->addDropDownList("Session", Array<String>({}), &m_ddCurrentSession);
+        m_ddCurrentUser = userTable.getCurrentUserIndex();
+
+
+        GuiPane* p2 = m_currentUserPane->addPane("Experiment Settings");
+        p2->beginRow();
+        m_userDropDown = p2->addDropDownList("User", userTable.getIds(), &m_ddCurrentUser);
+        p2->addButton("Select User", this, &App::updateUser);
+        p2->endRow();
+        p2->beginRow();
+        m_sessDropDown = p2->addDropDownList("Session", Array<String>({}), &m_ddCurrentSession);
         updateSessionDropDown();
-	    p->addButton("Select Session", this, &App::updateSessionPress);
-    p->endRow();
+        p2->addButton("Select Session", this, &App::updateSessionPress);
+        p2->endRow();
+        m_currentUserPane->pack();
+    }
+    {
+        GuiPane* gp = tabPane->addTab("Late Warp Settings");
+        gp->addNumberBox("Framerate",
+            Pointer<float>(
+                [&]() { return 1.0f / float(realTimeTargetDuration()); },
+                [&](float f) {
+            setFramerate(f);
+        }),
+            "Hz", GuiTheme::LOG_SLIDER, 30.0f, 5000.0f);
+
+        gp->addNumberBox("Display Lag",
+            Pointer<int>(
+                [&]() { return m_simulationLagFrames; },
+                [&](int i) {
+            setLatencyFrames(i);
+        }),
+            "f", GuiTheme::LINEAR_SLIDER, 0, 60);
+
+        GuiControl* b = gp->addDropDownList("Latewarp", m_warpCompensation, &m_selectedWarpCompensation, nullptr);
+        GuiControl* c = nullptr;
+        c = gp->addDropDownList("Method", m_warpMethodList, &m_selectedMethod, nullptr); c->moveRightOf(b, 10.0f);
+        //gp->addLabel("Hit decision");
+        GuiPane* gp2 = gp->addPane("Hit decision");
+        c = gp2->addDropDownList("Input", m_inputTimingList, &m_selectedInputTiming, nullptr); c->moveBy(50.0f, 0.0f);
+        c = gp2->addDropDownList("Game State", m_gameStateTimingList, &m_selectedGameStateTiming, nullptr); c->moveBy(50.0f, 0.0f);
+        gp2->addCheckBox("Show SOL", &m_showSOL);
+        GuiControl* d = gp->addCheckBox("Visualize Latency", &m_latencyVisualizeEnable);
+        gp->pack();
+    }
+
     p->addButton("Quit", this, &App::quitRequest);
 
 	m_userSettingsWindow->pack();
@@ -708,15 +784,36 @@ void App::updateSessionPress(void) {
 	updateSession(getDropDownSessId());
 }
 
-void App::updateParameters(int frameDelay, float frameRate) {
-	// Apply frame lag
-	displayLagFrames = frameDelay;
-	lastSetFrameRate = frameRate;
+void App::updateParameters() {
 	// Set a maximum *finite* frame rate
-	float dt = 0;
-	if (frameRate > 0) dt = 1.0f / frameRate;
-	else dt = 1.0f / float(window()->settings().refreshRate);
-	setFrameDuration(dt, GApp::REAL_TIME);
+	float frameRate = lastSetFrameRate > 1e-5f ? lastSetFrameRate : float(window()->settings().refreshRate);
+	float dt = 1.0f / frameRate;
+	const float current = (float)realTimeTargetDuration();
+	if (abs(dt - current) > 1e-5f) {
+		// Only set when there is a change, otherwise the simulation's deltas are confused.
+		setFrameDuration(dt, GApp::REAL_TIME);
+	}
+}
+
+void App::setFramerate(float frameRate)
+{
+	if (frameRate < 10.f) {
+		frameRate = 10.f; // minimum frame rate is 10 hz
+	}
+	if (frameRate > 360.f) {
+		frameRate = 360.f; // maximum frame rate is 360 hz
+	}
+	lastSetFrameRate = frameRate;
+	updateParameters();
+}
+
+void App::setLatencyFrames(int frameDelay)
+{
+	if (frameDelay < 0) {
+		frameDelay = 0;
+	}
+	m_simulationLagFrames = frameDelay;
+	updateParameters();
 }
 
 void App::updateSession(const String& id) {
@@ -728,17 +825,43 @@ void App::updateSession(const String& id) {
 		logPrintf("User selected session: %s. Updating now...\n", id);				// Print message to log
 		m_sessDropDown->setSelectedValue(id);										// Update session drop-down selection
 		sess = Session::create(this, sessConfig);									// Create the session
-	}
-	else {
+	} else {
 		sessConfig = SessionConfig::create();										// Create an empty session
-		sess = Session::create(this);
+		sess = Session::create(this, sessConfig);											
 	}
 
 	// Update the controls for this session
 	updateControls();
 
 	// Update the frame rate/delay
-	updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
+	setFramerate(sessConfig->render.frameRate);
+	setLatencyFrames(sessConfig->render.frameDelay);
+
+	// Update latewarp configuration
+	if (sessConfig->render.warpMethod == "none") {
+		m_selectedWarpCompensation = 0;
+        m_selectedMethod = 0;
+        m_selectedInputTiming = 0;
+        m_selectedGameStateTiming = 0;
+	}
+	else if (sessConfig->render.warpMethod == "RIW") {
+		m_selectedWarpCompensation = 1;
+		m_selectedMethod = 0;
+		m_selectedInputTiming = 1;
+		m_selectedGameStateTiming = 1;
+	}
+    else if (sessConfig->render.warpMethod == "RCW") {
+        m_selectedWarpCompensation = 1;
+        m_selectedMethod = 1;
+        m_selectedInputTiming = 1;
+        m_selectedGameStateTiming = 1;
+    }
+    else if (sessConfig->render.warpMethod == "FCW") {
+        m_selectedWarpCompensation = 2;
+        m_selectedMethod = 1;
+        m_selectedInputTiming = 1;
+        m_selectedGameStateTiming = 1;
+    }
 
 	// Load (session dependent) fonts
 	hudFont = GFont::fromFile(System::findDataFile(sessConfig->hud.hudFont));
@@ -759,6 +882,8 @@ void App::updateSession(const String& id) {
 		loadScene(sessConfig->sceneName);
 		m_loadedScene = sessConfig->sceneName;
 	}
+
+	loadDecals();
 
 	// Check for play mode specific parameters
 	m_fireSound = Sound::create(System::findDataFile(sessConfig->weapon.fireSound));
@@ -783,12 +908,10 @@ void App::updateSession(const String& id) {
 	// Player parameters
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	sess->initialHeadingRadians = player->heading();
-	UserConfig *user = userTable.getCurrentUser();
-	// Copied from old FPM code
-	double mouseSens = 2.0 * pi() * 2.54 * 1920.0 / (user->cmp360 * user->mouseDPI);
-	mouseSens *= 1.0675 / 2.0; // 10.5 / 10.0 * 30.5 / 30.0
-	player->mouseSensitivity = (float)mouseSens;
-	player->turnScale = sessConfig->player.turnScale * user->turnScale;		// Compound the session turn scale w/ the user turn scale...
+
+	player->m_pixelsToRadians = 0.0f;
+	player->turnScale = Vector2::zero();
+	updateMouseSensitivity();
 	player->moveRate =		&sessConfig->player.moveRate;
 	player->moveScale =		&sessConfig->player.moveScale;
 	player->axisLock =		&sessConfig->player.axisLock;
@@ -797,6 +920,9 @@ void App::updateSession(const String& id) {
 	player->jumpTouch =		&sessConfig->player.jumpTouch;
 	player->height =		&sessConfig->player.height;
 	player->crouchHeight =	&sessConfig->player.crouchHeight;
+
+	// Make sure all targets are cleared
+	clearTargets();
 
 	// Check for need to start latency logging and if so run the logger now
 	SystemConfig sysConfig = SystemConfig::load();
@@ -828,7 +954,13 @@ void App::updateSession(const String& id) {
 }
 
 void App::quitRequest() {
+	// End session logging
+	if (sess != nullptr) {
+		sess->endLogging();
+	}
+	// Merge Python log into session log (if logging)
 	if (m_pyLogger != nullptr) {
+		// Merge (blocking here to keep from killing merge...)
 		m_pyLogger->mergeLogToDb(true);
 	}
     setExitCode(0);
@@ -844,6 +976,7 @@ void App::onAfterLoadScene(const Any& any, const String& sceneName) {
 	}
 	// Set the active camera to the player
 	setActiveCamera(scene()->typedEntity<Camera>("camera"));
+
     // make sure the scene has a "player" entity
     if (isNull(scene()->typedEntity<PlayerEntity>("player"))) {
         shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
@@ -879,38 +1012,168 @@ void App::onNetwork() {
 
 
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
+	BEGIN_PROFILER_EVENT("App::onGraphics3D");
 
-    if (displayLagFrames > 0) {
+	CFrame camraToWorldFrame = activeCamera()->frame();
+	Projection projection = activeCamera()->projection();
+	shared_ptr<Texture> noLatencyFrame; // points to a m_ldrDelayBufferQueue element, if used
+	
+	rd->setProjectionAndCameraMatrix(activeCamera()->projection(), activeCamera()->frame());
+
+	if (m_displayLagFrames > 0) {
+		// Should only be delaying real frames when latency simulation is done with a frame queue
+		assert(m_latencyConfig.latencySimulation == LatencyConfig::LATENCY_DELAY_FRAMES);
+
 		// Need one more frame in the queue than we have frames of delay, to hold the current frame
-		if (m_ldrDelayBufferQueue.size() <= displayLagFrames) {
+		if (m_ldrDelayBufferQueue.size() < m_displayLagFrames) {
 			// Allocate new textures
-			for (int i = displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
-				m_ldrDelayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
+			int framesToAdd = m_displayLagFrames - m_ldrDelayBufferQueue.size();
+			for (int i = 0; i < framesToAdd; ++i) {
+				DelayedFrame frame;
+				frame.fb = Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8()));
+				frame.mouseState = true;
+				m_ldrDelayBufferQueue.push(frame);
 			}
-			debugAssert(m_ldrDelayBufferQueue.size() == displayLagFrames + 1);
+			debugAssert(m_ldrDelayBufferQueue.size() == m_displayLagFrames);
 		}
 
-		// When the display lag changes, we must be sure to be within range
-		m_currentDelayBufferIndex = min(displayLagFrames, m_currentDelayBufferIndex);
+		// Advance the pointer to the next, which is also the oldest frame
+		m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % m_displayLagFrames;
+		auto& texture = m_ldrDelayBufferQueue[m_currentDelayBufferIndex].fb->texture(0);
+		m_mouseStateDelayed = m_ldrDelayBufferQueue[m_currentDelayBufferIndex].mouseState;
+		
+		BEGIN_PROFILER_EVENT("Draw delay frames");
+		rd->push2D();
+		if (m_latencyConfig.latewarpMethod != LatencyConfig::LATEWARP_NONE &&
+			m_latencyConfig.latencySimulation == LatencyConfig::LATENCY_DELAY_FRAMES) {
 
-		rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
+			if (m_latencyConfig.latewarpMethod == LatencyConfig::LATEWARP_FULLTRANSFORM) {
+				debugPrintf("Warning: LATEWARP_FULLTRANSFORM not implemented with LATENCY_DELAY_FRAMES\n");
+			}
+
+			// Set the on-screen view to the one we're late-warping to
+			m_displayedCameraFrame = m_ldrDelayBufferQueue[m_currentDelayBufferIndex].view;
+			m_displayedCameraFrame.rotation = camraToWorldFrame.rotation;
+
+			// Get view information for reprojection
+			auto oldCameraToWorld = m_ldrDelayBufferQueue[m_currentDelayBufferIndex].view.rotation;
+			auto currentWorldToCamera = camraToWorldFrame.rotation.transpose();
+			Matrix3 oldToCurrentCamera = currentWorldToCamera * oldCameraToWorld;
+
+			// Fix the projection as it includes the guardband
+			float hfov = projection.fieldOfViewAngle();
+			hfov = 2.0f * atan(tan(hfov * 0.5f) * rd->viewport().width() / m_gbuffer->colorRect().width());
+			projection.setFieldOfViewAngle(hfov);
+
+			// Build the camera's projection matrix
+			Matrix4 projectionMatrix;
+			projection.getProjectUnitMatrix(rd->viewport(), projectionMatrix);
+			projectionMatrix = projectionMatrix * Matrix4::scale(1, -1, 1); // Because getProjectUnitMatrix says to
+
+			// Build reprojection matrix - the delta between two images
+			auto transform = projectionMatrix * Matrix4(oldToCurrentCamera) * projectionMatrix.inverse();
+
+			Args args;
+			args.setUniform("sourceTexture", texture, Sampler::buffer());
+			args.setUniform("transform", transform);
+			//args.setUniform("viewDelta", viewDelta);
+			//args.setUniform("projection", projection);
+			//args.setUniform("projectionInv", projection.inverse());
+			args.setRect(rd->viewport());
+			LAUNCH_SHADER("warp-3dof.*", args);
+		} else {
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), texture, Sampler::buffer());
+
+			// Set the on-screen view to the one just copied over
+			m_displayedCameraFrame = m_ldrDelayBufferQueue[m_currentDelayBufferIndex].view;
+		}
+	
+		if (m_dumpNextFrame) {
+			const shared_ptr<Image>& screenshot = rd->screenshotPic();
+			String delay = "late";
+			screenshot->save(format("screenshots/%s_%s_%s.png", m_frameDumpFilename.c_str(), delay.c_str(), m_latencyConfig.getConfigShortName().c_str()));
+		}
+
+		rd->pop2D();
+		END_PROFILER_EVENT();
+
+		// Prepare to render into the current position of the delay queue
+		rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex].fb);
+		m_ldrDelayBufferQueue[m_currentDelayBufferIndex].view = camraToWorldFrame;
+		m_ldrDelayBufferQueue[m_currentDelayBufferIndex].mouseState = m_buttonUp;
+		noLatencyFrame = m_ldrDelayBufferQueue[m_currentDelayBufferIndex].fb->texture(0);
+	} else {
+		// Record the view we used to render the scene
+		m_displayedCameraFrame = camraToWorldFrame;
 	}
 
+	/*
 	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !emergencyTurbo;
 	activeCamera()->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
 	activeCamera()->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
+	*/
 
 	GApp::onGraphics3D(rd, surface);
-
-	if (displayLagFrames > 0) {
-		// Display the delayed frame
-		rd->popState();
-		rd->push2D(); {
-			// Advance the pointer to the next, which is also the oldest frame
-			m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (displayLagFrames + 1);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrDelayBufferQueue[m_currentDelayBufferIndex]->texture(0), Sampler::buffer());
-		} rd->pop2D();
+	
+	if (m_dumpNextFrame) {
+		const shared_ptr<Image>& screenshot = rd->screenshotPic();
+		String delay = m_displayLagFrames > 0 ? "real" : "late";
+		screenshot->save(format("screenshots/%s_%s_%s.png", m_frameDumpFilename.c_str(), delay.c_str(), m_latencyConfig.getConfigShortName().c_str()));
 	}
+
+	if (m_displayLagFrames > 0) {
+		rd->popState();
+	}
+
+	// Render again, creating a view without latency added
+	if (m_latencyVisualizeEnable) {
+		BEGIN_PROFILER_EVENT("Visualize latency");
+		if (m_latencyConfig.latencySimulation == LatencyConfig::LATENCY_DELAY_POSES) {
+			if (!m_latencyVisualizeFB) {
+				m_latencyVisualizeFB = Framebuffer::create(Texture::createEmpty("Latency visualization", rd->width(), rd->height(), ImageFormat::RGB8()));
+			}
+
+			rd->pushState(m_latencyVisualizeFB);
+
+			// A separate gbuffer is needed or rendering twice takes a huge perf hit.
+			if (!m_latencyVisualizeGbuffer) {
+				m_latencyVisualizeGbuffer = GBuffer::create(m_gbufferSpecification);
+			}
+			auto gbBackup = m_gbuffer;
+			m_gbuffer = m_latencyVisualizeGbuffer;
+
+			auto oldCamera = activeCamera();
+			setActiveCamera(m_noLatencyCamera);
+			scene()->lightingEnvironment().ambientOcclusionSettings.enabled = false;
+            
+			if (m_stateQueue.size() > 0) {
+				State& currentState = m_stateQueue.last();
+#if 1
+				GApp::onGraphics3D(rd, currentState.surfaceArray);
+#else
+				m_renderer->render(rd, m_lateWarpCamera, m_latencyVisualizeFB, nullptr, scene()->lightingEnvironment(), m_gbuffer, currentState.surfaceArray);
+#endif
+			}
+
+			// Restore rendering state
+			setActiveCamera(oldCamera);
+			m_gbuffer = gbBackup;
+
+			rd->popState();
+			noLatencyFrame = m_latencyVisualizeFB->texture(0);
+		}
+
+		if (noLatencyFrame) {
+			rd->push2D();
+			rd->setBlendFunc(Framebuffer::COLOR0, RenderDevice::BLEND_ONE, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA, RenderDevice::BLENDEQ_ADD);
+			Draw::rect2D(rd->viewport(), rd, Color4(1.0f, 1.0f, 1.0f, 0.2f), noLatencyFrame, Sampler::buffer());
+			rd->pop2D();
+		}
+
+		END_PROFILER_EVENT(); // Visualize latency
+	}
+    
+	END_PROFILER_EVENT(); // onGraphics3D
 }
 
 Point2 App::getViewDirection()
@@ -927,19 +1190,18 @@ Point3 App::getPlayerLocation()
 }
 
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
-
-	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
+	// Called manually because session is not registered with G3D
 	sess->onSimulation(rdt, sdt, idt);
 
 	// These are all we need from GApp::onSimulation() for walk mode
 	m_widgetManager->onSimulation(rdt, sdt, idt);
 	if (scene()) { scene()->onSimulation(sdt); }
-	if (scene()) { scene()->onSimulation(sdt); }
 
 	// make sure mouse sensitivity is set right
 	if (m_userSettingsMode) {
 		updateMouseSensitivity();
-		m_userSettingsWindow->setVisible(m_userSettingsMode);		// Make sure window stays coherent w/ user settings mode
+        // Make sure window stays coherent w/ user settings mode
+		m_userSettingsWindow->setVisible(m_userSettingsMode);
 	}
 
 	const RealTime now = System::time();
@@ -955,31 +1217,31 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			scene()->removeEntity(projectile.entity->name());
 			projectileArray.fastRemove(p);
 			--p;
-		}
-		else {
+		} else {
 			// Animate
 			projectile.entity->setFrame(projectile.entity->frame() + projectile.entity->frame().lookVector() * sessConfig->weapon.bulletSpeed);
 		}
 	}
 
+    // TODO: Make an explosion entity array?
 	// explosion animation
-	if (notNull(m_explosion) && m_explosionEndTime < now) {
+	if (notNull(m_explosion) && (m_explosionEndTime < now)) {
 		scene()->remove(m_explosion);
 		m_explosion = nullptr;
-	}
-	else {
+	} else {
 		// could update animation here...
 	}
 
 	// Move the player
 	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
 	activeCamera()->setFrame(p->getCameraFrame());
-	
+
 	// Handle developer mode features here
 	if (startupConfig.developerMode) {
 		// Handle frame rate/delay updates here
-		if (sessConfig->render.frameRate != lastSetFrameRate || displayLagFrames != sessConfig->render.frameDelay) {
-			updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
+		if (sessConfig->render.frameRate != lastSetFrameRate || m_displayLagFrames != sessConfig->render.frameDelay) {
+            setFramerate(sessConfig->render.frameRate);
+            setLatencyFrames(sessConfig->render.frameDelay);
 		}
 
 		if (startupConfig.waypointEditorMode) {
@@ -996,9 +1258,54 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	   
 	// Check for completed session
 	if (sess->moveOn) {
-		String nextSess = userStatusTable.getNextSession(userTable.currentUser);
+		const String& nextSess = userStatusTable.getNextSession(userTable.currentUser);
 		updateSession(nextSess);
 	}
+
+    // Duplicate the camera frame with zero latency before we add latency to it
+    m_noLatencyCamera->copyParametersFrom(activeCamera());
+	m_noLatencyCamera->setFrame(activeCamera()->frame());
+    
+    // If we're faking frame latency by just delaying poses, update the camera here using
+    // a delay queue. This is to delay everything we wouldn't normally be able to late-warp away.
+    // Otherwise, latency will be simulated with a queue of rendered frames
+	BEGIN_PROFILER_EVENT("Camera Enqueue");
+    if ((m_latencyConfig.latencySimulation == LatencyConfig::LATENCY_DELAY_POSES) && (m_cameraDelayFrames > 0)) {
+        if (m_cameraPoseQueue.size() == 0) {
+            m_delayedCameraFrame = activeCamera()->frame();
+        }
+
+        // Since we're messing with the camera behind G3D's back,
+        // the previous frame needs to be set too for motion vectors.
+        activeCamera()->setPreviousFrame(m_delayedCameraFrame);
+
+        // Update the queue to maintain a constant m_cameraDelayFrames number
+        // of frames. Structure the code to allow the the m_cameraDelayFrames "constant"
+        // to change suddenly due to GUI interaction, however.
+        m_cameraPoseQueue.enqueue(activeCamera()->frame());
+        while (m_cameraPoseQueue.size() > m_cameraDelayFrames) {
+            m_delayedCameraFrame = m_cameraPoseQueue.dequeue();
+        }
+		
+		// Add the mouse event. This must be kept in sync with the above pose queue.
+		// Remove the excess, leaving the current mouse state at the front of the queue.
+		m_mouseStatusDelayQueue.enqueue(m_buttonUp);
+		while (m_mouseStatusDelayQueue.size() > m_cameraDelayFrames) {
+			m_mouseStateDelayed = m_mouseStatusDelayQueue.dequeue();
+		}
+
+		if (m_latencyConfig.latewarpMethod == LatencyConfig::LATEWARP_ROTATION) {
+			// If late-warping is enabled, copy over the more up-to-date rotation
+			m_delayedCameraFrame.rotation = activeCamera()->frame().rotation;
+		} else if (m_latencyConfig.latewarpMethod == LatencyConfig::LATEWARP_FULLTRANSFORM) {
+			// Copy over the entire up to date transform
+			m_delayedCameraFrame = activeCamera()->frame();
+		}
+
+        // Use the delayed camera frame instead and don't replace the previous frame.
+        activeCamera()->setFrame(m_delayedCameraFrame, false);
+    }
+	END_PROFILER_EVENT();
 }
 
 bool App::onEvent(const GEvent& event) {
@@ -1141,68 +1448,57 @@ bool App::onEvent(const GEvent& event) {
 	return GApp::onEvent(event);
 }
 
-void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
-	// Put elements that should be delayed along w/ 3D here
-	rd->push2D(); {
-		const float scale = rd->viewport().width() / 1920.0f;
-		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+void App::drawHittingEffect(RenderDevice *rd) {
+	Color3 redColor = Color3::red();
+	if (!gamerMoving && (hittingRenderCount <= 15 || hittingRenderCount > 30))
+	{
+		renderTheEffect = 1;
+		hittingRenderCount++;
+		//printf("Rendering! %d\n", hittingRenderCount);
+	}
+	else if (!gamerMoving && hittingRenderCount > 15 && hittingRenderCount < 30)
+	{
+		renderTheEffect = 0;
+		hittingRenderCount++;
+		//printf("Not Rendering! %d\n", hittingRenderCount);
+	}
+	else
+	{
+		hittingRenderCount = 0;
+		renderTheEffect = 0;
+		//printf("All Good! %d %.1f %d\n", gamerMoving, hittingRenderCount, renderTheEffect);
+	}
 
-		// Draw target health bars
-		if (sessConfig->targetView.showHealthBars) {
-			for (auto const& target : targetArray) {
-				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
-					sessConfig->targetView.healthBarSize,
-					sessConfig->targetView.healthBarOffset,
-					sessConfig->targetView.healthBarBorderSize,
-					sessConfig->targetView.healthBarColors,
-					sessConfig->targetView.healthBarBorderColor);
-			}
-		}
 
-		// Draw the combat text
-		if (sessConfig->targetView.showCombatText) {
-			Array<int> toRemove;
-			for (int i = 0; i < m_combatTextList.size(); i++) {
-				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
-				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
-			}
-			// Remove the expired elements here
-			m_combatTextList.removeNulls();
-		}
+	Draw::rect2D(
+		Rect2D::xywh(
+			(float)m_framebuffer->width() * 0.0f,
+			(float)m_framebuffer->height() * 0.02f,
+			(float)m_framebuffer->width() *  renderTheEffect,
+			(float)m_framebuffer->height() * renderTheEffect * 0.04f
+		), rd, redColor
+	);
+	Draw::rect2D(
+		Rect2D::xywh(
+			(float)m_framebuffer->width() * 0.0f,
+			(float)m_framebuffer->height() * 0.02f,
+			(float)m_framebuffer->width() *  renderTheEffect * 0.04f,
+			(float)m_framebuffer->height() * renderTheEffect
+		), rd, redColor
+	);
 
-		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode == "total") {
-			drawClickIndicator(rd, "total");
-		}
+	Draw::rect2D(
+		Rect2D::xywh(
+			(float)m_framebuffer->width() * 0.0f,
+			(float)m_framebuffer->height() * 0.92f,
+			(float)m_framebuffer->width() *  renderTheEffect,
+			(float)m_framebuffer->height() * renderTheEffect * 0.04f
+		), rd, redColor
+	);
 
-		// Draw the HUD here
-		if (sessConfig->hud.enable) {
-			drawHUD(rd);
-		}
-
-		if (sessConfig->render.shader != "") {
-			// This code could be run more efficiently at LDR after Film::exposeAndRender or even during the
-			// latency queue copy
-
-			// Think about whether or not this is the right place to run the shader...
-
-			// Copy the post-VFX HDR framebuffer
-			static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("temp distortion source", 256, 256, m_framebuffer->texture(0)->format()));
-			temp->resize(m_framebuffer->width(), m_framebuffer->height());
-			m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
-
-			rd->push2D(m_framebuffer); {
-				Args args;
-				args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
-				args.setRect(rd->viewport());
-				LAUNCH_SHADER(sessConfig->render.shader, args);
-			} rd->pop2D();
-		}
-	}rd->pop2D();
-
-	GApp::onPostProcessHDR3DEffects(rd);
 }
 
-void App::drawClickIndicator(RenderDevice *rd, String mode) {
+void App::drawClickIndicator(RenderDevice *rd, bool mouseStatus, String mode) {
 	// Click to photon latency measuring corner box
 	if (sessConfig->clickToPhoton.enabled) {
 		float boxLeft = 0.0f;
@@ -1220,13 +1516,8 @@ void App::drawClickIndicator(RenderDevice *rd, String mode) {
 			boxLeft = (float)rd->viewport().width() - (guardband + latencyRect.x);
 		}
 		// Draw the "active" box
-		Color3 boxColor;
-		if (sessConfig->clickToPhoton.mode == "frameRate") {
-			boxColor = (m_frameToggle) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
-			m_frameToggle = !m_frameToggle;
-		}
-		else boxColor = (m_buttonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
-		Draw::rect2D(Rect2D::xywh(boxLeft, boxTop, latencyRect.x, latencyRect.y), rd, boxColor);
+		Color3 cornerColor = (mouseStatus) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+		Draw::rect2D(Rect2D::xywh(boxLeft, boxTop, latencyRect.x, latencyRect.y),  rd, cornerColor);
 	}
 }
 
@@ -1301,19 +1592,25 @@ void App::drawHUD(RenderDevice *rd) {
 	}
 
 	if (sessConfig->hud.showBanner && !emergencyTurbo) {
-		const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->hud.bannerVertVisible*hudTexture->height() * scale.y + debugMenuHeight());
+		const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->hud.bannerVertVisible*hudTexture->height() * scale.y + m_debugMenuHeight);
 		Draw::rect2D((hudTexture->rect2DBounds() * scale - hudTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), hudTexture);
 
 		// Create strings for time remaining, progress in sessions, and score
 		float remainingTime = sess->getRemainingTrialTime();
 		float printTime = remainingTime > 0 ? remainingTime : 0.0f;
-		String time_string = format("%0.2f", printTime);
+        String time_string;
+        if (sess->presentationState == PresentationState::task) {
+            time_string = format("%0.2f", printTime);
+        }
+        else {
+            time_string = format("%0.2f", 0.f);
+        }
 		float prog = sess->getProgress();
 		String prog_string = "";
 		if (!isnan(prog)) {
-			prog_string = format("%d", (int)(100.0f*sess->getProgress())) + "%";
+            prog_string = format("%d", (int)(100.0f*prog)) + "%";
 		}
-		String score_string = format("%d", (int)(10 * sess->getScore()));
+		String score_string = format("%0.1f", (sess->getScore()));
 
 		hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale.x, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 		hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale.x * sessConfig->hud.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
@@ -1321,74 +1618,89 @@ void App::drawHUD(RenderDevice *rd) {
 	}
 }
 
+void App::onPostProcessHDR3DEffects(RenderDevice *rd) {
+	GApp::onPostProcessHDR3DEffects(rd);
+}
+
 /** Method for handling weapon fire */
 shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
     BEGIN_PROFILER_EVENT("fire");
-	Point3 aimPoint = activeCamera()->frame().translation + activeCamera()->frame().lookVector() * 1000.0f;
+    
+    Ray ray;
+    CFrame rayFrame;
+	if (m_latencyConfig.hitDetectionInput == LatencyConfig::HitDetectionInput::LATEST) {
+        rayFrame = m_noLatencyCamera->frame();
+	} else {
+		rayFrame = m_displayedCameraFrame;
+	}
+	ray = rayFrame.lookRay();
+
+	Ray m_lastFireGamestateRay = m_noLatencyCamera->frame().lookRay();
+	Ray m_lastFireVisualRay = m_displayedCameraFrame.lookRay();
+
 	bool destroyedTarget = false;
 	static bool hitTarget = false;
 	bool hitScene = false;
 	static RealTime lastTime;
 	shared_ptr<TargetEntity> target = nullptr;
+    Vector3 hitPoint;
 
 	if (m_hitScan) {
-		const Ray& ray = activeCamera()->frame().lookRay();		// Use the camera lookray for hit detection
-		Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
-		for (auto projectile : projectileArray) {
-			dontHit.append(projectile.entity);
-		}
-		for (auto target : targetArray) {
-			dontHit.append(target);
-		}
+        // build the list of objects in the scene to ignore
+        Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
+        for (auto projectile : projectileArray) {
+            dontHit.append(projectile.entity);
+        }
+        for (auto target : targetArray) {
+            dontHit.append(target);
+        }
 
-		// Check for closest hit (in scene)
-		float closest = finf();
-		int closestIndex = -1;
-		Model::HitInfo info;
-		scene()->intersect(ray, closest, false, dontHit, info);
-		hitScene = closest < finf();
+        // initialize hit record and closest ray hit
+        float closest = finf();
+        int closestIndex = -1;
 
-		// Create the bullet
-		if (sessConfig->weapon.renderBullets) {
-			// Create the bullet start frame from the weapon frame plus muzzle offset
-			CFrame bulletStartFrame = m_weaponFrame;
-			bulletStartFrame.translation += sessConfig->weapon.muzzleOffset;
+        if (m_latencyConfig.hitDetectionTime == LatencyConfig::HIT_TIMESTAMP_VISUAL && m_poseLagCount > 0) {
+            // Test for hits against old target positions
+            State& oldState = m_delayedGameState;
+            assert(oldState.targets.size() == oldState.targetFrames.size());
 
-			// Angle the bullet start frame towards the aim point
-			if (hitScene) {
-				aimPoint = info.point;
-			}
-			bulletStartFrame.lookAt(aimPoint);
-			//bulletStartFrame.translation += bulletStartFrame.lookVector();
-			
-			// Non-laser weapon
-			if (sessConfig->weapon.firePeriod > 0.0f && sessConfig->weapon.autoFire) {
-				const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastUniqueID), scene().get(), m_bulletModel, bulletStartFrame);
-				bullet->setShouldBeSaved(false);
-				bullet->setCanCauseCollisions(false);
-				bullet->setCastsShadows(false);
-
-				/*
-				const shared_ptr<Entity::Track>& track = Entity::Track::create(bullet.get(), scene().get(),
-					Any::parse(format("%s", bulletStartFrame.toXYZYPRDegreesString().c_str())));
-				bullet->setTrack(track);
-				*/
-
-				projectileArray.push(Projectile(bullet, System::time() + fmin(closest, 100.0f) / sessConfig->weapon.bulletSpeed));
-				scene()->insert(bullet);
-			}
-			// Laser weapon (very hacky for now...)
-			else {
-				shared_ptr<CylinderShape> beam = std::make_shared<CylinderShape>(CylinderShape(Cylinder(bulletStartFrame.translation, aimPoint, 0.02f)));
-				debugDraw(beam, FLT_EPSILON, Color4(0.2f, 0.8f, 0.0f, 1.0f), Color4::clear());
-			}
-		}
-
-		for (int t = 0; t < targetArray.size(); ++t) {
-			if (targetArray[t]->intersect(ray, closest)) {
-				closestIndex = t;
-			}
-		}
+            scene()->intersect(ray, closest, false, dontHit);
+            for (size_t i = 0; i < oldState.targetFrames.size(); ++i) {
+                // Temporarily set the target frame to the old one before testing for an intersection
+                const CFrame backupFrame = oldState.targets[i]->frame();
+#if 0
+                oldState.targets[i]->setFrame(oldState.targetFrames[i], false);
+			    if (oldState.targets[i]->intersect(ray, closest)) {
+#else
+                // Compute the new ray for this alternative translation and rotation
+                Matrix4 delta = oldState.targets[i]->frame().toMatrix4() * oldState.targetFrames[i].toMatrix4().inverse();
+                Ray tmpRay((delta * Vector4(ray.origin(), 1.0)).xyz(), (delta * Vector4(ray.direction(), 0.0f)).xyz());
+                // Intersect the scene first
+			    if (oldState.targets[i]->intersect(tmpRay, closest)) {
+#endif
+				    // Find the index of the shot target in the target array
+                    for (int t = 0; t < targetArray.size(); ++t) {
+                        if (oldState.targets[i].get() == targetArray[t].get()) {
+				            closestIndex = t;
+                            break;
+                        }
+                    }
+			    }
+                oldState.targets[i]->setFrame(backupFrame, false);
+            }
+            if ((closestIndex != -1)&&(closest != finf())) {
+                hitScene = true;
+            }
+        } else {
+            // Intersect the scene first
+            scene()->intersect(ray, closest, false, dontHit);
+            // Find hits with current target positions
+		    for (int t = 0; t < targetArray.size(); ++t) {
+			    if (targetArray[t]->intersect(ray, closest)) {
+				    closestIndex = t;
+			    }
+		    }
+        }
 
 		// Hit logic
 		if (closestIndex >= 0) {
@@ -1396,7 +1708,9 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 
 			// Damage the target
 			float damage;
-			if (destroyImmediately) damage = target->health();
+			if (destroyImmediately || sessConfig->weapon.instantKill) {
+				damage = target->health();
+			}
 			else if (sessConfig->weapon.firePeriod == 0.0f && hitTarget) {		// Check if we are in "laser" mode hit the target last time
 				float dt = max(previousSimTimeStep(),0.0f);
 				damage = sessConfig->weapon.damagePerSecond * dt;
@@ -1405,6 +1719,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 				damage = sessConfig->weapon.damagePerSecond * sessConfig->weapon.firePeriod;
 			}
 			hitTarget = true;
+            hitPoint = ray.origin() + ray.direction() * closest;
 
 			// Check if we need to add combat text for this damage
 			if (sessConfig->targetView.showCombatText) {
@@ -1427,12 +1742,13 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 				// create explosion animation
 				CFrame explosionFrame = targetArray[closestIndex]->frame();
 				explosionFrame.rotation = activeCamera()->frame().rotation;
-				const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create("explosion", scene().get(), m_explosionModels[target->scaleIndex()], explosionFrame);
+				static size_t explosionIndex = 0;
+				const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create("explosion" + (explosionIndex++), scene().get(), m_explosionModels[target->scaleIndex()], explosionFrame);
 				scene()->insert(newExplosion);
 				m_explosion = newExplosion;
 				m_explosionEndTime = System::time() + 0.1f; // make explosion end in 0.5 seconds
 				sess->countDestroy();
-				respawned = target->respawn();
+				respawned = target->tryRespawn();
 				// check for respawn
 				if (!respawned) {
 					// This is the final respawn
@@ -1461,7 +1777,31 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 		else hitTarget = false;
 	}
 
-    // Play sounds (destroyed/hit target vs hit scene)
+	// Create the bullet
+	if (sessConfig->weapon.renderBullets) {
+#if 1
+		// Create the bullet start frame from the weapon frame plus muzzle offset
+		CFrame bulletStartFrame = m_weaponFrame;
+		bulletStartFrame.translation += sessConfig->weapon.muzzleOffset;
+#else
+        // Bullets start from the camera and match the hit scan exactly
+		CFrame bulletStartFrame = CFrame(ray.origin());
+#endif
+        
+		// Angle the bullet start frame towards the aim point
+		bulletStartFrame.lookAt(hitTarget ? hitPoint : ray.origin() + ray.direction() * 1000.0f);
+
+		bulletStartFrame.translation += bulletStartFrame.lookVector() * 2.0f;
+		const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastUniqueID), scene().get(), m_bulletModel, bulletStartFrame);
+		bullet->setShouldBeSaved(false);
+		bullet->setCanCauseCollisions(false);
+		bullet->setCastsShadows(false);
+
+		projectileArray.push(Projectile(bullet, System::time() + 1.0f));
+		scene()->insert(bullet);
+	}
+
+    // play sounds
     if (destroyedTarget) {
 		target->playDestroySound();
 	}
@@ -1479,7 +1819,6 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 
 	if (sessConfig->weapon.renderDecals && sessConfig->weapon.firePeriod > 0.0f && !hitTarget) {
 		// compute world intersection
-		const Ray& ray = activeCamera()->frame().lookRay();
 		float hitDist = finf();
 		Array<shared_ptr<Entity>> dontHit = { m_explosion, m_lastDecal, m_firstDecal };
 		for (auto projectile : projectileArray) {
@@ -1493,7 +1832,7 @@ shared_ptr<TargetEntity> App::fire(bool destroyImmediately) {
 		Model::HitInfo info;
 		scene()->intersect(ray, hitDist, false, dontHit, info);
 		// Find where to put the decal
-		CFrame decalFrame = activeCamera()->frame();
+		CFrame decalFrame = rayFrame;
 		decalFrame.translation += ray.direction() * (hitDist - 0.01f);
 		// Set the decal rotation to match the normal here
 		decalFrame.lookAt(decalFrame.translation - info.normal);
@@ -1519,13 +1858,19 @@ void App::clearTargets() {
 	while (targetArray.size() > 0) {
 		destroyTarget(0);
 	}
+	
+	// Remove any explosions when targets are reset.
+	// This is not so important, but this avoids confusion
+	// in test screenshots from old explosions.
+	if (m_explosion) {
+		scene()->remove(m_explosion);
+		m_explosion.reset();
+	}
 }
 
 /** Handle user input here */
 void App::onUserInput(UserInput* ui) {
 	BEGIN_PROFILER_EVENT("onUserInput");
-	static bool haveReleased = false;
-	static bool fired = false;
 	GApp::onUserInput(ui);
 	(void)ui;
 
@@ -1538,59 +1883,58 @@ void App::onUserInput(UserInput* ui) {
 		player->setDesiredAngularVelocity(0.0, 0.0);
 	}
 
+	// Holds the firing state for the frame. This is set here because
+	// there may be multiple fire buttons mapped. Initially true and
+	// if any fire button is down or was pressed, this is set to false.
+	m_buttonUp = true;
+
 	// Handle fire up/down events
 	for (GKey shootButton : keyMap.map["shoot"]) {
-		// Require release between clicks for non-autoFire modes
-		if (ui->keyReleased(shootButton)) {
-			m_buttonUp = true;
-			if (!sessConfig->weapon.autoFire) {
-				haveReleased = true;
-				fired = false;
-			}
-		}
+		// Record whether we clicked or are still holding the button down
+		m_buttonUp = m_buttonUp && !ui->keyPressed(shootButton) && !ui->keyDown(shootButton);
+
 		// Handle shoot down (fire) event here
-		if (ui->keyDown(shootButton)) {
-			if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
-				// check for hit, add graphics, update target state
-				if ((sess->presentationState == PresentationState::task) && !m_userSettingsMode) {
-					if (sess->canFire()) {
-						fired = true;
-						sess->countClick();						        // Count clicks
-						shared_ptr<TargetEntity> t = fire();			// Fire the weapon
-						if (notNull(t)) {								// Check if we hit anything
-							if (t->health() <= 0) {
-								// Target eliminated, must be 'destroy'.
-								sess->accumulatePlayerAction(PlayerActionType::Destroy, t->name());
-							}
-							else {
-								// Target 'hit', but still alive.
-								sess->accumulatePlayerAction(PlayerActionType::Hit, t->name());
-							}
+		bool firing = ui->keyPressed(shootButton);
+		if (sessConfig->weapon.autoFire)
+			firing = firing || ui->keyDown(shootButton);
+
+		if (firing) {
+			// check for hit, add graphics, update target state
+			if ((sess->presentationState == PresentationState::task) && !m_userSettingsMode) {
+				if (sess->canFire()) {
+					sess->countClick();						        // Count clicks
+					shared_ptr<TargetEntity> t = fire();			// Fire the weapon
+					if (notNull(t)) {								// Check if we hit anything
+						if (t->health() <= 0) {
+							// Target eliminated, must be 'destroy'.
+							sess->accumulatePlayerAction(PlayerActionType::Destroy, t->name());
 						}
 						else {
-							// Target still present, must be 'miss'.
-							sess->accumulatePlayerAction(PlayerActionType::Miss);
+							// Target 'hit', but still alive.
+							sess->accumulatePlayerAction(PlayerActionType::Hit, t->name());
 						}
 					}
-					// Avoid accumulating invalid clicks during holds...
 					else {
-						// Invalid click since the trial isn't ready for response
-						sess->accumulatePlayerAction(PlayerActionType::Invalid);
+						// Target still present, must be 'miss'.
+						sess->accumulatePlayerAction(PlayerActionType::Miss);
 					}
 				}
+				// Avoid accumulating invalid clicks during holds...
+				else {
+					// Invalid click since the trial isn't ready for response
+					sess->accumulatePlayerAction(PlayerActionType::Invalid);
+				}
 			}
-			else {
-				sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
-			}
-
-			// Check for developer mode editing here, if so set selected waypoint using the camera
-			if (startupConfig.developerMode && startupConfig.waypointEditorMode) {
-				waypointManager->aimSelectWaypoint(activeCamera());
-			}
-
-			haveReleased = false;					// Make it known we are no longer in released state
-			m_buttonUp = false;
 		}
+		else {
+			sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
+		}
+
+		// Check for developer mode editing here, if so set selected waypoint using the camera
+		if (startupConfig.developerMode && startupConfig.waypointEditorMode) {
+			waypointManager->aimSelectWaypoint(activeCamera());
+		}
+
 	}
 	
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
@@ -1602,6 +1946,50 @@ void App::onUserInput(UserInput* ui) {
 	if (m_lastReticleLoaded != userTable.getCurrentUser()->reticleIndex) {
 		// Slider was used to change the reticle
 		setReticle(userTable.getCurrentUser()->reticleIndex);
+	}
+
+	// Hot keys for late warp demo
+	if (ui->keyPressed(GKey::KP0)) {
+		m_selectedMethod++;
+		if (m_selectedMethod == m_warpMethodList.size()) {
+			m_selectedMethod = 0;
+		}
+	}
+	if (ui->keyPressed(GKey::KP1)) {
+		m_selectedWarpCompensation++;
+		if (m_selectedWarpCompensation == m_warpCompensation.size()) {
+			m_selectedWarpCompensation = 0;
+		}
+	}
+	if (ui->keyPressed(GKey::KP2)) {
+		m_selectedInputTiming++;
+		if (m_selectedInputTiming == m_inputTimingList.size()) {
+			m_selectedInputTiming = 0;
+		}
+	}
+	if (ui->keyPressed(GKey::KP3)) {
+		m_selectedGameStateTiming++;
+		if (m_selectedGameStateTiming == m_gameStateTimingList.size()) {
+			m_selectedGameStateTiming = 0;
+		}
+	}
+	if (ui->keyPressed(GKey::KP7)) {
+		setLatencyFrames(m_simulationLagFrames + 1);
+	}
+	if (ui->keyPressed(GKey::KP4)) {
+		setLatencyFrames(m_simulationLagFrames - 1);
+	}
+
+    if (ui->keyPressed(GKey::KP5)) {
+        m_latencyVisualizeEnable = !m_latencyVisualizeEnable;
+    }
+
+	if (ui->keyPressed(GKey::KP6)) {
+		setFramerate(getFrameRate() - 10.0f);
+	}
+
+	if (ui->keyPressed(GKey::KP9)) {
+		setFramerate(getFrameRate() + 10.0f);
 	}
 
 	activeCamera()->filmSettings().setSensitivity(sceneBrightness);
@@ -1635,6 +2023,35 @@ void App::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Surface2
 			m_viewModel->pose(surface, m_weaponFrame, activeCamera()->previousFrame() * prevWeaponPos, nullptr, nullptr, nullptr, Surface::ExpressiveLightScatteringProperties());
 		}
 	}
+    
+    if (m_poseLagCount > 0 ) {
+        BEGIN_PROFILER_EVENT("Pose enqueue");
+        State next;
+        next.surfaceArray.append(surface);
+        next.surface2DArray.append(surface2D);
+        for (auto& target : targetArray) {
+            next.targets.append(target);
+            next.targetFrames.append(target->frame());
+        }
+        m_stateQueue.enqueue(next);
+        END_PROFILER_EVENT();
+        
+        if (m_stateQueue.size() < m_poseLagCount) { // if we haven't accumulated m_stateQueue enough, don't draw anything
+            Array<shared_ptr<Surface>> s;
+            surface = s;
+            Array<shared_ptr<Surface2D>> s2;
+            surface2D = s2;
+        }
+        while (m_stateQueue.size() > m_poseLagCount) {
+            BEGIN_PROFILER_EVENT("Pose dequeue");
+            m_delayedGameState = m_stateQueue.dequeue();
+            if (m_latencyConfig.latencySimulation == LatencyConfig::LATENCY_DELAY_POSES) {
+                surface = m_delayedGameState.surfaceArray;
+                surface2D = m_delayedGameState.surface2DArray;
+            }
+            END_PROFILER_EVENT();
+        }
+    }
 }
 
 void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
@@ -1684,8 +2101,42 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 			outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f , m_debugMenuHeight*scale), 20.0f, Color3::red());
 		}
 
-		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode != "total") {
-			drawClickIndicator(rd, sessConfig->clickToPhoton.mode);
+		// Draw target health bars
+		if (sessConfig->targetView.showHealthBars) {
+			for (auto const& target : targetArray) {
+				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
+					sessConfig->targetView.healthBarSize,
+					sessConfig->targetView.healthBarOffset,
+					sessConfig->targetView.healthBarBorderSize,
+					sessConfig->targetView.healthBarColors,
+					sessConfig->targetView.healthBarBorderColor);
+			}
+		}
+
+		// Draw the combat text
+		if (sessConfig->targetView.showCombatText) {
+			Array<int> toRemove;
+			for (int i = 0; i < m_combatTextList.size(); i++) {
+				bool remove = !m_combatTextList[i]->draw(rd, *activeCamera(), *m_framebuffer);
+				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
+			}
+			// Remove the expired elements here
+			m_combatTextList.removeNulls();
+		}
+
+		// Draw the click indicator
+		if (sessConfig->clickToPhoton.enabled) {
+			bool status = m_buttonUp;
+			if (sessConfig->clickToPhoton.mode == "total") {
+				status = m_mouseStateDelayed;
+			}
+
+			drawClickIndicator(rd, status, sessConfig->clickToPhoton.mode);
+		}
+
+		// Draw the HUD here
+		if (sessConfig->hud.enable) {
+			drawHUD(rd);
 		}
 
 		// Reticle
@@ -1703,6 +2154,20 @@ void App::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) 
 		}
 
 	} rd->pop2D();
+
+	if (sessConfig->render.shader != "") {
+		// Copy the post-VFX HDR framebuffer
+		static shared_ptr<Framebuffer> temp = Framebuffer::create(Texture::createEmpty("temp distortion source", 256, 256, m_framebuffer->texture(0)->format()));
+		temp->resize(m_framebuffer->width(), m_framebuffer->height());
+		m_framebuffer->blitTo(rd, temp, false, false, false, false, true);
+
+		rd->push2D(m_framebuffer); {
+			Args args;
+			args.setUniform("sourceTexture", temp->texture(0), Sampler::video());
+			args.setRect(rd->viewport());
+			LAUNCH_SHADER(sessConfig->render.shader, args);
+		} rd->pop2D();
+	}
 
 	// Might not need this on the reaction trial
 	// This is rendering the GUI. Can remove if desired.
@@ -1728,8 +2193,104 @@ void App::onCleanup() {
 	// here instead of in the constructor so that exceptions can be caught.
 }
 
+void App::setLatewarpConfig(LatencyConfig config)
+{
+	// This could break things if set during oneFrame(). Better to double buffer 'config'.
+	// Currently it's only used by UnitTests but the caller needs to be aware.
+	m_latencyConfig = config;
+	
+	// The definitive state is currently coming from m_warpMethodList etc and not m_latencyConfig. This need cleaning up. Adding a pending config might help.
+	if (m_latencyConfig.latewarpMethod == LatencyConfig::LatewarpMethod::LATEWARP_NONE) {
+		m_selectedWarpCompensation = 0;
+	}
+	else if (m_latencyConfig.latewarpMethod == LatencyConfig::LatewarpMethod::LATEWARP_ROTATION) {
+		m_selectedWarpCompensation = 1;
+	}
+	else if (m_latencyConfig.latewarpMethod == LatencyConfig::LatewarpMethod::LATEWARP_FULLTRANSFORM) {
+		m_selectedWarpCompensation = 2;
+	}
+	if (m_latencyConfig.latencySimulation == LatencyConfig::LatencySimulation::LATENCY_DELAY_FRAMES) {
+		m_selectedMethod = 0;
+	}
+	else if (m_latencyConfig.latencySimulation == LatencyConfig::LatencySimulation::LATENCY_DELAY_POSES) {
+		m_selectedMethod = 1;
+	}
+	if (m_latencyConfig.hitDetectionInput == LatencyConfig::HitDetectionInput::LATEST) {
+		m_selectedInputTiming = 0;
+	}
+	else if (m_latencyConfig.hitDetectionInput == LatencyConfig::HitDetectionInput::VISUAL) {
+		m_selectedInputTiming = 1;
+	}
+	if (m_latencyConfig.hitDetectionTime == LatencyConfig::HitDetectionTime::HIT_TIMESTAMP_CLICK) {
+		m_selectedGameStateTiming = 0;
+	}
+	else if (m_latencyConfig.hitDetectionTime == LatencyConfig::HitDetectionTime::HIT_TIMESTAMP_VISUAL) {
+		m_selectedGameStateTiming = 1;
+	}
+}
+
+void App::configureLateWarp() {
+	// enable/disable late warp
+	if (m_warpCompensation[m_selectedWarpCompensation] == "None") {
+		m_latencyConfig.latewarpMethod = LatencyConfig::LatewarpMethod::LATEWARP_NONE;
+	}
+	else if (m_warpCompensation[m_selectedWarpCompensation] == "Rotation") {
+		m_latencyConfig.latewarpMethod = LatencyConfig::LatewarpMethod::LATEWARP_ROTATION;
+	}
+	else if (m_warpCompensation[m_selectedWarpCompensation] == "Full Transform") {
+		m_latencyConfig.latewarpMethod = LatencyConfig::LatewarpMethod::LATEWARP_FULLTRANSFORM;
+	}
+
+	// late warp simulation method
+	if (m_warpMethodList[m_selectedMethod] == "Image Operation") {
+		m_latencyConfig.latencySimulation = LatencyConfig::LatencySimulation::LATENCY_DELAY_FRAMES;
+	}
+	else if (m_warpMethodList[m_selectedMethod] == "Virtual Camera Steering") {
+		m_latencyConfig.latencySimulation = LatencyConfig::LatencySimulation::LATENCY_DELAY_POSES;
+	}
+
+	// input timing
+	if (m_inputTimingList[m_selectedInputTiming] == "Latest") {
+		m_latencyConfig.hitDetectionInput = LatencyConfig::HitDetectionInput::LATEST;
+	}
+	else if (m_inputTimingList[m_selectedInputTiming] == "On Visual") {
+		m_latencyConfig.hitDetectionInput = LatencyConfig::HitDetectionInput::VISUAL;
+	}
+
+	// game state timing
+	if (m_gameStateTimingList[m_selectedGameStateTiming] == "On Click") {
+		m_latencyConfig.hitDetectionTime = LatencyConfig::HitDetectionTime::HIT_TIMESTAMP_CLICK;
+	}
+	else if (m_gameStateTimingList[m_selectedGameStateTiming] == "On Visual") {
+		m_latencyConfig.hitDetectionTime = LatencyConfig::HitDetectionTime::HIT_TIMESTAMP_VISUAL;
+	}
+    
+	// Set delay queue lengths based on the above settings.
+    if (m_latencyConfig.latencySimulation == LatencyConfig::LATENCY_DELAY_FRAMES) {
+		if (m_displayLagFrames > m_simulationLagFrames) {
+			// We are truncating the delay frames. Rotate the latency queue so that the delay
+			// is immediately correct. After the rotate, all the frames that are too old will
+			// be at the end of the array and will be skipped.
+			int newDelayStart = (m_currentDelayBufferIndex + m_displayLagFrames - m_simulationLagFrames) % m_displayLagFrames;
+			std::rotate(m_ldrDelayBufferQueue.begin(), m_ldrDelayBufferQueue.begin() + newDelayStart, m_ldrDelayBufferQueue.begin() + m_displayLagFrames);
+			m_currentDelayBufferIndex = std::max(0, m_simulationLagFrames - 1);
+		}
+
+        m_displayLagFrames = m_simulationLagFrames;
+        m_cameraDelayFrames = 0;
+
+        // In this case we use the pose queue for hit detection.
+        m_poseLagCount = m_simulationLagFrames;
+    } else {
+        m_displayLagFrames = 0;
+        m_cameraDelayFrames = m_simulationLagFrames;
+        m_poseLagCount = m_simulationLagFrames;
+    }
+}
+
 /** Overridden (optimized) oneFrame() function to improve latency */
 void App::oneFrame() {
+	configureLateWarp();
 
     // Wait
     // Note: we might end up spending all of our time inside of
@@ -1938,40 +2499,56 @@ void App::oneFrame() {
     if (m_endProgram && window()->requiresMainLoop()) {
         window()->popLoopBody();
     }
+
+	m_dumpNextFrame = false;
 }
 
 
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
 G3D_START_AT_MAIN();
 
-int main(int argc, const char* argv[]) {
+int AbortReportHook(int reportType, char *message, int *returnValue)
+{
+	const char* typeStr;
+	switch (reportType) {
+	case _CRT_WARN: typeStr = "Warning"; break;
+	case _CRT_ERROR: typeStr = "Error"; break;
+	case _CRT_ASSERT: typeStr = "Assertion"; break;
+	default: typeStr = "<invalid report type>"; break;
+	}
+	printf("Abort (%s): %s\n", typeStr, message);
+	fflush(stdout);
+	*returnValue = 1;
+	return true; // no popup!
+}
 
+int main(int argc, const char* argv[]) {
     if (FileSystem::exists("startupconfig.Any")) {
-        startupConfig = Any::fromFile("startupconfig.Any");
+        App::startupConfig = Any::fromFile("startupconfig.Any");
     }
     else {
-        // autogenerate if it wasn't there (force all fields into this any file)
-        startupConfig.toAny(true).save("startupconfig.Any");
+        // autogenerate if it wasn't there
+        App::startupConfig.toAny().save("startupconfig.Any");
     }
 
 	{
 		G3DSpecification spec;
-        spec.audio = startupConfig.audioEnable;
+        spec.audio = App::startupConfig.audioEnable;
 		initGLG3D(spec);
 	}
 
 	(void)argc; (void)argv;
 	GApp::Settings settings(argc, argv);
 
-	if (startupConfig.fullscreen) {
+	if (App::startupConfig.fullscreen) {
 		settings.window.width = 1920;
 		settings.window.height = 1080;
 	}
 	else {
-		settings.window.width = (int)startupConfig.windowSize.x; 
-		settings.window.height = (int)startupConfig.windowSize.y;
+		settings.window.width = (int)App::startupConfig.windowSize.x;
+		settings.window.height = (int)App::startupConfig.windowSize.y;
 	}
-	settings.window.fullScreen = startupConfig.fullscreen;
+	settings.window.fullScreen = App::startupConfig.fullscreen;
 	settings.window.resizable = !settings.window.fullScreen;
 
     // V-sync off always
@@ -1980,8 +2557,8 @@ int main(int argc, const char* argv[]) {
 	settings.window.refreshRate = -1;
 	settings.window.defaultIconFilename = "icon.png";
 
-	settings.hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
-	settings.hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
+	settings.hdrFramebuffer.depthGuardBandThickness = Vector2int16(128, 128);
+	settings.hdrFramebuffer.colorGuardBandThickness = settings.hdrFramebuffer.depthGuardBandThickness;
 	settings.dataDir = FileSystem::currentDirectory();
 	settings.screenCapture.includeAppRevision = false;
 	settings.screenCapture.includeG3DRevision = false;
@@ -1991,6 +2568,8 @@ int main(int argc, const char* argv[]) {
 	settings.renderer.deferredShading = true;
 	settings.renderer.orderIndependentTransparency = false;
 
-	return App(settings).run();
+	App app(settings);
+
+	return app.run();
 }
 

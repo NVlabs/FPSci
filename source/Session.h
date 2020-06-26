@@ -47,7 +47,7 @@ public:
 		auto now = std::chrono::steady_clock::now();
 		int t = std::chrono::duration_cast<std::chrono::duration<int, std::milli>>(now - startTime).count();
 		return ((float)t) / 1000.0f;
-	};
+	}
 };
 
  struct FrameInfo {
@@ -168,6 +168,8 @@ public:
 	bool isComplete() const;
 	void nextCondition();
 
+	void endLogging();
+
 	/** randomly returns either +1 or -1 **/	
 	static float randSign() {
 		if (Random::common().uniform() > 0.5) {
@@ -191,7 +193,7 @@ public:
 
 	float getRemainingTrialTime();
 	float getProgress();
-	int getScore();
+	float getScore();
 	String getFeedbackMessage();
 
 	/** queues action with given name to insert into database when trial completes

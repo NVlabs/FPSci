@@ -32,8 +32,9 @@ This file provides information about the weapon to be used in the experiment. De
 |`renderBullets`        |bool       | Whether or not bullets are rendered from the barrel of the weapon when fired              |
 |`bulletSpeed`          |m/s        | The speed of rendered bullets                                                             |
 |`renderDecals`         |bool       | Whether or not bullet hole decals are put on misses when `autoFire` is `False` and `firePeriod` > 0 (i.e. not in laser mode) |
-|`renderMuzzleFlash`    |bool       | Whether or not a muzzle flash is rendered for the weapon                                  |
-|`muzzleOffset`         |`Vector3`(m)| The offset of the muzzle within the weapon frame                                         |
+|`decalScale`           |float      | A scale to apply to the decals drawn by this weapon, `1.0` means do not scale                         |
+|`renderMuzzleFlash`    |bool       | Whether or not a muzzle flash is rendered for the weapon                                              |
+|`muzzleOffset`         |`Vector3`(m)| The offset of the muzzle within the weapon frame                                                     |
 
 **Example**
 ```

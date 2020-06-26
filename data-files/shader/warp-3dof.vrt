@@ -1,0 +1,21 @@
+#version 460
+
+in vec4 g3d_Vertex;
+in vec2 g3d_TexCoord0;
+
+out vec2 g3d_TexCoord;
+
+uniform mat4 transform;
+
+void main() {
+	vec2 unitPos = g3d_TexCoord0;
+
+	// Increase the size of the quad to add a clamp-to-edge colored border
+	unitPos = unitPos * 3.0 - 1.0;
+
+	g3d_TexCoord = unitPos;
+	g3d_TexCoord.y = 1.0 - g3d_TexCoord.y;
+
+	// Ignore g3d_Vertex because it's in pixels
+    gl_Position = transform * vec4(unitPos * 2.0 - 1.0, 0.99, 1.0);
+}

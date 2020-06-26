@@ -13,7 +13,7 @@ data-files/*.db
 data-files/*.csv
 data-files/*.pdn
 data-files/result_data
-data-files/*.Any
+#data-files/*.Any
 data-files/*.jpg
 *.mp4
 #Don't check in any results
@@ -22,9 +22,10 @@ scripts/configs/*.Any
 results/
 # This avoids checking-in experiment-specific files
 data-files/sound
-data-files/scene
-data-files/model
+#data-files/scene
+#data-files/model
 # This stuff ignores any packaged outputs
 packaged
 *.zip
 *.tar
+*.orig

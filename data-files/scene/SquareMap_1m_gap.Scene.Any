@@ -1,0 +1,245 @@
+
+/* -*- c++ -*- */
+{ 
+    defaultCamera = "defaultCamera"; 
+    description = ""; 
+	Physics = {
+		minHeight = -10.0;
+	},
+    entities = { 
+        building = VisibleEntity { 
+            canCauseCollisions = true; 
+            canChange = false; 
+            castsShadows = false; 
+            mass = 1; 
+            model = "buildingModel"; 
+        };
+		
+       window1 = VisibleEntity { 
+            canCauseCollisions = true; 
+            canChange = false; 
+            castsShadows = false; 
+            mass = 1; 
+            model = "window1Model"; 
+        };
+
+       window2 = VisibleEntity { 
+            canCauseCollisions = true; 
+            canChange = false; 
+            castsShadows = false; 
+            mass = 1; 
+            model = "window2Model"; 
+        };		
+        
+		player = PlayerEntity {
+            model = "playerModel";
+            frame = Point3(0, 1.5, 6.0);
+			heading = 3.14159;
+        };
+		
+		camera = Camera {
+            frame = CFrame::fromXYZYPRDegrees(  -13.3, 1, -11.2, 0, 0, 0 );
+			
+            depthOfFieldSettings = DepthOfFieldSettings {
+                model = "ARTIST";
+                enabled = false;
+                nearSharpPlaneZ = -1.5;
+            };
+
+            motionBlurSettings = MotionBlurSettings {
+                enabled = false;
+            };
+
+            projection = Projection {
+                nearPlaneZ = -0.2;
+                farPlaneZ = -400;
+                fovDirection = "VERTICAL";
+                fovDegrees = 50;
+            }
+        };
+		
+        defaultCamera = Camera { 
+            canChange = false; 
+            depthOfFieldSettings = DepthOfFieldSettings { 
+                enabled = false; 
+                farBlurRadiusFraction = 0.006; 
+                farBlurryPlaneZ = -33.2498; 
+                farSharpPlaneZ = -7.04668; 
+                focusPlaneZ = -10; 
+                lensRadius = 0.01; 
+                model = "ARTIST"; 
+                nearBlurRadiusFraction = 0.003; 
+                nearBlurryPlaneZ = -0.1; 
+                nearSharpPlaneZ = -3.28801; 
+                reducedResolutionFactor = 1; 
+            }; 
+            
+            filmSettings = FilmSettings { 
+                antialiasingEnabled = true; 
+                antialiasingFilterRadius = 0; 
+                antialiasingHighQuality = true; 
+                bloomRadiusFraction = 0.009; 
+                bloomStrength = 0.5; 
+                debugZoom = 1; 
+                effectsEnabled = true; 
+                gamma = 2.2; 
+                sensitivity = 1; 
+                temporalAntialiasingEnabled = false; 
+                toneCurve = Spline { 
+                    control = ( 0, 0.0787234, 0.306383, 0.75532, 0.92 ); 
+                    extrapolationMode = "LINEAR"; 
+                    finalInterval = -1; 
+                    interpolationMode = "CUBIC"; 
+                    time = ( 0, 0.169565, 0.339131, 0.752174, 1 ); 
+                }; 
+                
+                vignetteBottomStrength = 0.05; 
+                vignetteSizeFraction = 0.17; 
+                vignetteTopStrength = 0.5; 
+            };
+            
+            frame = CFrame::fromXYZYPRDegrees(47.523, -2.3549, -0.35916, 87.025, 3.163, 0 ); 
+            mass = 1; 
+            motionBlurSettings = MotionBlurSettings { 
+                enabled = false; 
+                exposureFraction = 0.75; 
+                maxBlurDiameterFraction = 0.1; 
+                numSamples = 15; 
+            }; 
+            
+            overridePixelOffset = true; 
+            projection = Projection { 
+                farPlaneZ = -150; 
+                fovDegrees = 60; 
+                fovDirection = "VERTICAL"; 
+                nearPlaneZ = -0.1; 
+                pixelOffset = Vector2(0, 0 ); 
+            }; 
+            
+            visualizationScale = 1; 
+        }; 
+        
+        skybox = Skybox { 
+            mass = 1; 
+            texture = Texture::Specification { 
+                encoding = Texture::Encoding { 
+                    readMultiplyFirst = 2; 
+                }; 
+                
+                filename = "cubemap/islands/islands_*.jpg"; 
+            }; 
+            
+        }; 
+
+        sun = Light { 
+            attenuation = ( 0, 0, 1 ); 
+            bulbPower = Power3(200000, 180000, 130000 ); 
+            canCauseCollisions = true; 
+            canChange = false; 
+            enabled = true; 
+            frame = CFrame::fromXYZYPRDegrees(36.941, 84.394, -47.555, 179.84, -62.154, 0 ); 
+            mass = 1; 
+            producesDirectIllumination = true; 
+            producesIndirectIllumination = true; 
+            rectangular = true; 
+            shadowMapBias = 0.05; 
+            shadowMapSize = Vector2int16(2048, 2048 ); 
+            shadowsEnabled = true; 
+            spotHalfAngleDegrees = 10; 
+            type = "SPOT"; 
+        }; 
+                
+    }; 
+    
+    lightingEnvironment = LightingEnvironment { 
+        ambientOcclusionSettings = AmbientOcclusionSettings { 
+            bias = 0.0760417; 
+            blurRadius = 2; 
+            blurStepSize = 2; 
+            depthPeelSeparationHint = 0.02; 
+            edgeSharpness = 1; 
+            enabled = true; 
+            highQualityBlur = true; 
+            intensity = 1.5; 
+            monotonicallyDecreasingBilateralWeights = false; 
+            numSamples = 6; 
+            packBlurKeys = false; 
+            radius = 0.5; 
+            temporalFilterSettings = TemporalFilter::Settings { 
+                falloffEndDistance = 0.07; 
+                falloffStartDistance = 0.05; 
+                hysteresis = 0.98; 
+            }; 
+            
+            temporallyVarySamples = true; 
+            useDepthPeelBuffer = false; 
+            useNormalBuffer = true; 
+            useNormalsInBlur = true; 
+            zStorage = "HALF"; 
+        }; 
+        
+        environmentMap = Texture::Specification { 
+            /*
+            encoding = Texture::Encoding { 
+                readMultiplyFirst = 3; 
+                format = "SRGB8"
+            };             
+            filename = "cubemap/hourglass/hourglass_*.jpg"; 
+            */
+            encoding = Texture::Encoding { 
+            readMultiplyFirst = 1.7; 
+                format = "SRGB8"
+            };     
+            preprocess = Texture::Preprocess { gammaAdjust = 0.8; };
+            filename = "cubemap/sponza/sponza-*.png"; 
+        }; 
+        
+    }; 
+    
+    models = { 
+        playerModel = MD3Model::Specification { 
+           defaultSkin = MD3Model::Skin("md3/crusader/models/players/Crusader/lower_default.skin", "md3/crusader/models/players/Crusader/upper_default.skin", "md3/crusader/models/players/Crusader/head_default.skin"); 
+           directory = "md3/crusader/models/players/Crusader/"; 
+        }; 
+
+        buildingModel = ArticulatedModel::Specification { 
+            alphaFilter = "BINARY"; 
+            cleanGeometrySettings = CleanGeometrySettings { 
+                allowVertexMerging = true; 
+                forceVertexMerging = true; 
+            };
+            filename = "model/square_map/SquareMap.obj";           
+            scale = 1; 
+            stripLightMaps = true; 
+		};
+		
+		window1Model = ArticulatedModel::Specification{
+			filename="model/cube/cube.ifs";
+			preprocess = (
+				transformGeometry(root(), Matrix4::scale(20.0, 15, 0.1));
+				transformGeometry(root(), Matrix4::translation(-10.5, 7.5, 0));
+				setMaterial(all(), UniversalMaterial::Specification {
+					alphaFilter = "BLEND";
+					lambertian = Color4(0.0, 0.0, 1.0, 0.3);
+				};);
+			);
+			scale = 1.0;
+		};
+		
+		window2Model = ArticulatedModel::Specification{
+			filename="model/cube/cube.ifs";
+			preprocess = (
+				transformGeometry(root(), Matrix4::scale(20.0, 15, 0.1));
+				transformGeometry(root(), Matrix4::translation(10.5, 7.5, 0));
+				setMaterial(all(), UniversalMaterial::Specification {
+					alphaFilter = "BLEND";
+					lambertian = Color4(0.0, 0.0, 1.0, 0.3);
+				};);
+			);
+			scale = 1.0;
+		};
+        
+    }; 
+    
+    name = "FPSci Square Map (1m gap)"; 
+} 

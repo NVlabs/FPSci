@@ -92,6 +92,7 @@ public:
 			CloseHandle(pi.hProcess);
 			CloseHandle(pi.hThread);
 		}
+		logPrintf("Merge complete.\n");
 		return true;
 	}
 

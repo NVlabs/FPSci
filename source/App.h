@@ -15,6 +15,135 @@
 #include "GuiElements.h"
 #include "PyLogger.h"
 
+struct State {
+	Array<shared_ptr<Surface>> surfaceArray;
+	Array<shared_ptr<Surface2D>> surface2DArray;
+    Array<shared_ptr<TargetEntity>> targets;
+    Array<CFrame> targetFrames;
+};
+
+class FlyingEntity;
+class JumpingEntity;
+
+struct LatencyConfig {
+
+    /** When the player fires, this defines what mouse position is used. */
+    G3D_DECLARE_ENUM_CLASS(HitDetectionInput,
+        /** Always chooses the most recent player position and rotation, even if the client hasn't got a frame to show it.
+         * There may be a disconnect between crosshair and hit detection. */
+        LATEST,
+
+        /** Always match hit detection with what is seen on-screen. */
+        VISUAL
+    );
+    
+    /** When the server gets the fire event (ray start/direction), against which time in the game state history does it perform the hit scan. */
+    enum HitDetectionTime {
+		/** The server rolls back time and performs hit detection matching
+		 * the game state to the time the player fires. This will be newer than
+		 * the visual timestamp so again, the player needs to lead their shots. */
+		HIT_TIMESTAMP_CLICK = 0,
+
+		/** The server rolls back time and performs hit detection matching
+         * the game state to the timestamp of the image displayed when the player
+         * fires. */
+        HIT_TIMESTAMP_VISUAL = 1,
+    
+        /** The server performs hit detection with its current game state even
+         though the player shot some time ago. The player will need to lead
+         their shots a lot! */
+        // HIT_TIMESTAMP_ONPACKET,
+    };
+
+    enum LatewarpMethod {
+        /** Present old frames. There is no late-warp or input latency compensation. */
+        LATEWARP_NONE,
+
+        /** Warp rotation only */
+        LATEWARP_ROTATION,
+
+        /** Warp both rotation and translation */
+        LATEWARP_FULLTRANSFORM,
+    };
+
+    enum LatencySimulation {
+        /** No artificial latency. */
+        // LATENCY_DELAY_NONE
+
+        /** We render into a frame queue and do an image based late-warp when displaying the delayed frame */
+        LATENCY_DELAY_FRAMES,
+
+        /** We render using new camera input but delayed scene objects */
+        LATENCY_DELAY_POSES,
+    };
+
+	String getHitDetectionInputShortName() const {
+		return hitDetectionInput == HitDetectionInput::VISUAL ? "inputvisual" : "inputlatest";
+	}
+
+	String getHitDetectionTimeShortName() const {
+		return hitDetectionTime == HIT_TIMESTAMP_VISUAL ? "timevisual" : "timeclick";
+	}
+
+	String getLatewarpMethodShortName() const {
+		switch (latewarpMethod) {
+		case LATEWARP_NONE: return "nowarp";
+		case LATEWARP_ROTATION: return "warprot";
+		case LATEWARP_FULLTRANSFORM: return "warp6dof";
+		default: return "invalidwarp";
+		}
+	}
+
+	String getLatencySimulationShortName() const {
+		return latencySimulation == LATENCY_DELAY_FRAMES ? "frameq" : "poseq";
+	}
+
+	String getConfigShortName() const {
+		return format("%s_%s_%s_%s",
+			getLatewarpMethodShortName().c_str(),
+			getLatencySimulationShortName().c_str(),
+			getHitDetectionTimeShortName().c_str(),
+			getHitDetectionInputShortName().c_str());
+	}
+
+    HitDetectionInput     hitDetectionInput;
+    HitDetectionTime      hitDetectionTime;
+    LatewarpMethod        latewarpMethod;
+    LatencySimulation     latencySimulation;
+    
+    RealTime              delayClientDatacenter;
+    RealTime              delayDatacenterGameserver;
+
+    LatencyConfig() :
+        hitDetectionInput(HitDetectionInput::VISUAL),
+        hitDetectionTime(HIT_TIMESTAMP_CLICK),
+		//latewarpMethod(LATEWARP_ROTATION),
+		latewarpMethod(LATEWARP_NONE),
+		latencySimulation(LATENCY_DELAY_FRAMES),
+
+        // TODO: these should come from SessionConfig
+        delayClientDatacenter(0.1f),
+        delayDatacenterGameserver(0.04f)
+    {
+    }
+	
+    LatencyConfig(
+		HitDetectionInput initHitDetectionInput,
+		HitDetectionTime initHitDetectionTime,
+		LatewarpMethod initLatewarpMethod,
+		LatencySimulation initLatencySimulation
+		) :
+		hitDetectionInput(initHitDetectionInput),
+		hitDetectionTime(initHitDetectionTime),
+		latewarpMethod(initLatewarpMethod),
+		latencySimulation(initLatencySimulation)
+	{
+		// TODO: these should come from SessionConfig
+		delayClientDatacenter = 0.1f;
+		delayDatacenterGameserver = 0.04f;
+	}
+};
+
 class Session;
 class G3Dialog;
 class WaypointManager;
@@ -125,7 +254,11 @@ protected:
 	GuiLabel*						m_mouseDPILabel;					///< Label for mouse DPI field
 	GuiLabel*						m_cm360Label;						///< Label for cm/360 field
 
-	shared_ptr<PlayerControls>		m_playerControls;
+    Queue<State>                    m_stateQueue;
+    State                           m_delayedGameState;
+    int                             m_poseLagCount = 0;
+
+    shared_ptr<PlayerControls>		m_playerControls;
 	shared_ptr<RenderControls>		m_renderControls;
 	shared_ptr<WeaponControls>		m_weaponControls;
 
@@ -139,6 +272,8 @@ protected:
 
 	/** Coordinate frame of the weapon, updated in onPose() */
 	CFrame                          m_weaponFrame;						///< Frame for the weapon
+	int                             m_simulationLagFrames = 0;			///< Count of frames of latency to add
+	int                             m_displayLagFrames = 0;				///< Count of rendered frames to delay (depends on simulation method)
 
 	/** Used to detect GUI changes to m_reticleIndex */
 	int                             m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
@@ -156,14 +291,48 @@ protected:
 	RealTime						m_lastJumpTime = 0.0f;				///< Time of last jump
 
 	int                             m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
+	bool							m_sceneLoaded = false;				///< Indicates whether or not the scene has been loaded (prevents reload)
+	
+	/** Late-warp demo UI */
+	Array<String> m_warpCompensation = { "None", "Rotation", "Full Transform" };
+	int m_selectedWarpCompensation = 0;
+	Array<String> m_warpMethodList = { "Image Operation", "Virtual Camera Steering" };
+	int m_selectedMethod = 0;
+	Array<String> m_inputTimingList = { "Latest", "On Visual" };
+	int m_selectedInputTiming = 0;
+	Array<String> m_gameStateTimingList = { "On Click", "On Visual" };
+	int m_selectedGameStateTiming = 0;
+	bool m_showSOL = false;
+
+	///** Late-warp demo UI-related functions */
+	void configureLateWarp(); // TODO: ideally a callback from UI should handle this
+
+	// Hardware logger specific fields
+	bool							m_loggerRunning = false;			///< Flag to indicate whether a python logger (for HW logger) is running (i.e. needs to be closed)
+	HANDLE							m_loggerHandle = 0;					///< Process handle for the python logger instance (for HW logger) if running
+	String							m_logName;							///< The log name used by the python logger instance (for HW logger) if running
 	String							m_loadedScene = "";
 	String							m_defaultScene = "FPSci Simple Hallway";	// Default scene to load
 
 	shared_ptr<PythonLogger>		m_pyLogger = nullptr;
 
 	/** When m_displayLagFrames > 0, 3D frames are delayed in this queue */
-	Array<shared_ptr<Framebuffer>>  m_ldrDelayBufferQueue;
+    struct DelayedFrame {
+        shared_ptr<Framebuffer> fb;
+        CFrame view;
+		bool mouseState;
+    };
+	Array<DelayedFrame>				m_ldrDelayBufferQueue;
+	Queue<bool>						m_mouseStatusDelayQueue;
+	bool                            m_mouseStateDelayed;
 	int                             m_currentDelayBufferIndex = 0;
+
+    /** Parameters for how we simulate and compensate for latency. */
+    LatencyConfig                   m_latencyConfig;
+    
+    bool                            m_latencyVisualizeEnable = false;
+    shared_ptr<Framebuffer>         m_latencyVisualizeFB;
+    shared_ptr<GBuffer>             m_latencyVisualizeGbuffer;
 
     shared_ptr<GuiWindow>           m_userSettingsWindow;
     bool                            m_userSettingsMode = true;
@@ -172,13 +341,17 @@ protected:
 	void makeGUI();
 	void updateControls();
 	void loadModels();
+	void loadDecals();
 	void updateUser(void);
     void updateUserGUI();
 
 	void drawHUD(RenderDevice *rd);
-	void drawClickIndicator(RenderDevice *rd, String mode);
+	void drawClickIndicator(RenderDevice *rd, bool mouseStatus, String mode);
 
 public:
+
+	static StartupConfig startupConfig;
+
 	/* Moving from proctected so that Experiment classes can use it. */
 	shared_ptr<GFont>               outputFont;						///< Font used for output
 	shared_ptr<GFont>               hudFont;						///< Font used in HUD
@@ -189,10 +362,21 @@ public:
 	bool                            emergencyTurbo = false;			///< Lower rendering quality to improve performance
 
 	App(const GApp::Settings& settings = GApp::Settings());
+	
+	/** For automated testing, the app will run for a set number of frames and exit. */
+	bool m_testMode = false;
+	bool m_dumpNextFrame = false;
+	Ray m_lastFireGamestateRay;
+	Ray m_lastFireVisualRay;
+	String m_frameDumpFilename;
+	bool testModeRequested();
+	void dumpNextFrame(String filename);
 
 	/** Array of all targets in the scene */
 	Array<shared_ptr<TargetEntity>> targetArray;					///< Array of drawn targets
 	Array<Projectile>               projectileArray;				///< Arrray of drawn projectiles
+
+	int destroyedTargets = 0;										///< Number of targets destroyed
 
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
@@ -207,13 +391,17 @@ public:
 	shared_ptr<Session> sess;										///< Pointer to the experiment
 
 	bool renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
-	int  displayLagFrames = 0;			///< Count of frames of latency to add
 	float lastSetFrameRate = 0.0f;		///< Last set frame rate
 	const int numReticles = 55;			///< Total count of reticles available to choose from
 	float sceneBrightness = 1.0f;		///< Scene brightness scale factor
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
+
+    const LatencyConfig& latencyConfig() const {
+        return m_latencyConfig;
+    }
+
 	/** Destroy a target from the targets array */
 	void destroyTarget(int index);
 	/** Show the player controls */
@@ -224,6 +412,46 @@ public:
 	void showWeaponControls();
 	/** Save scene w/ updated player position */
 	void exportScene();
+	/** Provide all latency parameters at once. NOTE: do not call this mid-frame. */
+	void setLatewarpConfig(LatencyConfig config);
+
+	/** Utility functions for late warp demo UI */
+	int getFrameRate() {
+		return int(roundf(1.0f / m_wallClockTargetDuration));
+	}
+	float getLatency() {
+		return m_wallClockTargetDuration * (m_displayLagFrames + m_cameraDelayFrames);
+	}
+	String getLateWarpMethodName() {
+		if (m_latencyConfig.latewarpMethod == LatencyConfig::LatewarpMethod::LATEWARP_NONE) {
+			return "None";
+		} else if (m_latencyConfig.latewarpMethod == LatencyConfig::LatewarpMethod::LATEWARP_ROTATION) {
+			if (m_latencyConfig.latencySimulation == LatencyConfig::LatencySimulation::LATENCY_DELAY_FRAMES) {
+				return "Image-based warp";
+			} else if (m_latencyConfig.latencySimulation == LatencyConfig::LatencySimulation::LATENCY_DELAY_POSES) {
+				return "Camera rotation";
+			} else {
+                debugAssert(false);
+                return "Undefined condition";
+            }
+		} else {
+            debugAssert(false);
+			return "N/A";
+		}
+	}
+
+
+	String getGameStateTiming() {
+		if (m_latencyConfig.hitDetectionTime == LatencyConfig::HitDetectionTime::HIT_TIMESTAMP_CLICK) {
+			return "Latest state";
+		}
+		else if (m_latencyConfig.hitDetectionTime == LatencyConfig::HitDetectionTime::HIT_TIMESTAMP_VISUAL) {
+			return "As on screen";
+		} else {
+            debugAssert(false);
+            return "Unknown condition";
+        }
+	}
 
 	float debugMenuHeight() {
 		return m_debugMenuHeight;
@@ -292,7 +520,9 @@ public:
 	void markSessComplete(String id);
 	void updateSessionPress(void);
 	void updateSession(const String& id);
-	void updateParameters(int frameDelay, float frameRate);
+	void updateParameters();
+	void setFramerate(float frameRate);
+	void setLatencyFrames(int frameDelay);
 	void presentQuestion(Question question);
 
 	String getDropDownUserId(void);
@@ -342,7 +572,26 @@ public:
 	} m_screenSetting;
 
 	bool							m_buttonUp = true;
-	bool							m_frameToggle = false;		///< Simple toggle flag used for frame rate click-to-photon monitoring
+	Point3	currentGamerPosition = Point3(0,0,0);
+	float gamersHealth = 10000;
+	bool gamerMoving = false;
+	bool playerHitRender = false;
+	float renderTheEffect = 0;
+	void drawHittingEffect(RenderDevice *rd);
+	int hittingRenderCount = 0;
+	PresentationState previousState = PresentationState::task;
+
+	Queue<CFrame> m_cameraPoseQueue;
+	int m_cameraDelayFrames = 0;
+
+    /** The camera pose m_cameraDelayFrames frames ago after going through m_cameraPoseQueue */
+    CFrame m_delayedCameraFrame;
+
+    /** In onGraphics3D this is set to the camera pose of the frame, whether late-warped or not. */
+	CFrame m_displayedCameraFrame;
+    
+    /** Always contains the latest camera pose even if latency is being injected. Also disables effects. */
+	shared_ptr<Camera> m_noLatencyCamera;
 };
 
 // The "old" way of animation

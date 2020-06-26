@@ -1,0 +1,177 @@
+
+{
+
+    currentUser = "JK"; 
+    settingsVersion = 1; 
+
+    users = (
+        {
+            id = "DM";
+            cmp360 = 28; 
+            turnScale = Vector2(1, 1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+        {
+            id = "EP";
+            cmp360 = 17; 
+            turnScale = Vector2(1, 1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+        {
+            id = "CM";
+            cmp360 = 17; 
+            turnScale = Vector2(1, 1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+        {
+            id = "LN";
+            cmp360 = 20; 
+            turnScale = Vector2(1, 1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+        {
+            id = "MC";
+            cmp360 = 20; 
+            turnScale = Vector2(1, -1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+        {
+            id = "JC";
+            cmp360 = 22; 
+            turnScale = Vector2(1, 1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+        {
+            id = "MiB";
+            cmp360 = 13; 
+            turnScale = Vector2(1, 1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+        {
+            id = "JA";
+            cmp360 = 18; 
+            turnScale = Vector2(1, 1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+        {
+            id = "AE";
+            cmp360 = 14.4; 
+            turnScale = Vector2(1, 1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+        {
+            id = "MaB";
+            cmp360 = 18; 
+            turnScale = Vector2(1, 1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+        {
+            id = "SS";
+            cmp360 = 30; 
+            turnScale = Vector2(1, 1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+        {
+            id = "JK";
+            cmp360 = 30; 
+            turnScale = Vector2(1, 1 );
+            mouseDPI = 3200; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 0.75, 0.75 ); 
+            reticleShrinkTime = 0.3; 
+
+        },
+    );
+}
