@@ -34,3 +34,4 @@ data-files/model
 # Output of the fpsci_packager.py if run from the root
 dist
 scripts/package/fpsci_packager.sh
+README.txt
