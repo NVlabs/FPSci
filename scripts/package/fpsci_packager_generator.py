@@ -110,6 +110,7 @@ if __name__ == '__main__':
     readmeString = "Welcome to First Person Science! We're glad you're joining us in studying first person aiming.\n\n"
     readmeString += "This distribution represents the %s build of FPSci generated on %s.\n\n"%(currentRelease, now.strftime('%B %D, %Y'))
     readmeString += "You can find documentation on how to create and customize your experiments here: https://github.com/NVlabs/abstract-fps/tree/%s/docs\n\n"%(currentRelease)
+    readmeString += "In order to use this build, you may need to install the x64 version (and possibly the x86 version) of the Microsoft Visual C++ Redistributable found at this link available here: https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads\n\n"
     readmeString += "If you're interested, the source for this version is available here: https://github.com/NVlabs/abstract-fps/tree/%s\n"%(currentRelease)
     with open('README.txt', 'w') as readmeFile:
         readmeFile.write(readmeString)
