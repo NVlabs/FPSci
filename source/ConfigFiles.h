@@ -1482,6 +1482,47 @@ public:
 	}
 };
 
+class FeedbackConfig {
+public:
+	String initialWithRef = "Click to spawn a target, then use shift on red target to begin.";		///< An initial feedback message to show when reference targets are drawn
+	String initialNoRef = "Click to start the session!";									///< An initial feedback message to show when reference targets aren't drawn
+	String trialSuccess = "%tasktimems ms!" ;												///< Successful trial feedback message
+	String trialFailure = "Failure!";														///< Failed trial feedback message
+	String blockComplete = "Block %currblock complete! Starting block %nextblock.";			///< Block complete feedback message
+	String sessComplete = "Session complete! You scored %score!";							///< Session complete feedback message
+	String allSessComplete = "All Sessions Complete!";										///< All sessions complete feedback message
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("referenceTargetInitialFeedback", initialWithRef);
+			reader.getIfPresent("noReferenceTargetInitialFeedback", initialNoRef);
+			reader.getIfPresent("trialSuccessFeedback", trialSuccess);
+			reader.getIfPresent("trialFailureFeedback", trialFailure);
+			reader.getIfPresent("blockCompleteFeedback", blockComplete);
+			reader.getIfPresent("sessionCompleteFeedback", sessComplete);
+			reader.getIfPresent("allSessionsCompleteFeedback", allSessComplete);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a, bool forceAll = false) const {
+		FeedbackConfig def;
+		if (forceAll || def.initialWithRef != initialWithRef)	a["referenceTargetInitialFeedback"] = initialWithRef;
+		if (forceAll || def.initialNoRef != initialNoRef)		a["noReferenceTargetInitialFeedback"] = initialNoRef;
+		if (forceAll || def.trialSuccess != trialSuccess)		a["trialSuccessFeedback"] = trialSuccess;
+		if (forceAll || def.trialFailure != trialFailure)		a["trialFailureFeedback"] = trialFailure;
+		if (forceAll || def.blockComplete != blockComplete)		a["blockCompleteFeedback"] = blockComplete;
+		if (forceAll || def.sessComplete != sessComplete)		a["sessionCompleteFeedback"] = sessComplete;
+		if (forceAll || def.allSessComplete != allSessComplete) a["allSessionsCompleteFeedback"] = allSessComplete;
+		return a;
+	}
+
+};
+
 class LoggerConfig {
 public:
 	// Enable flags for log
@@ -1638,6 +1679,7 @@ public:
 	HudConfig			hud;									///< HUD related config parameters
 	AudioConfig			audio;									///< Audio related config parameters
 	TimingConfig		timing;									///< Timing related config parameters
+	FeedbackConfig		feedback;								///< Feedback message config parameters
 	TargetViewConfig	targetView;								///< Target drawing config parameters
 	ClickToPhotonConfig clickToPhoton;							///< Click to photon config parameters
 	LoggerConfig		logger;									///< Logging configuration
@@ -1668,6 +1710,7 @@ public:
 		clickToPhoton.load(reader, settingsVersion);
 		audio.load(reader, settingsVersion);
 		timing.load(reader, settingsVersion);
+		feedback.load(reader, settingsVersion);
 		logger.load(reader, settingsVersion);
 		menu.load(reader, settingsVersion);
 		commands.load(reader, settingsVersion);
@@ -1695,6 +1738,7 @@ public:
 		a = clickToPhoton.addToAny(a, forceAll);
 		a = audio.addToAny(a, forceAll);
 		a = timing.addToAny(a, forceAll);
+		a = feedback.addToAny(a, forceAll);
 		a = logger.addToAny(a, forceAll);
 		a = menu.addToAny(a, forceAll);
 		a = commands.addToAny(a, forceAll);

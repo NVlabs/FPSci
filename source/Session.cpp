@@ -72,9 +72,8 @@ void Session::onInit(String filename, String description) {
 	// Initialize presentation states
 	presentationState = PresentationState::initial;
 	if (m_config) {
-		m_feedbackMessage = m_config->targetView.showRefTarget ?
-			"Click to spawn a target, then use shift on red target to begin." :
-			"Click to start the session!";
+		m_feedbackMessage = formatFeedback(m_config->targetView.showRefTarget ?
+			m_config->feedback.initialWithRef: m_config->feedback.initialNoRef);
 	}
 
 	// Get the player from the app
@@ -204,12 +203,12 @@ void Session::processResponse()
 	if (m_remainingTargets == 0) {
 		m_totalRemainingTime += (double(m_config->timing.taskDuration) - m_taskExecutionTime);
 		if (m_config->description == "training") {
-			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
+			m_feedbackMessage = formatFeedback(m_config->feedback.trialSuccess);
 		}
 	}
 	else {
 		if (m_config->description == "training") {
-			m_feedbackMessage = "Failure!";
+			m_feedbackMessage = formatFeedback(m_config->feedback.trialFailure);
 		}
 	}
 }
@@ -302,14 +301,13 @@ void Session::updatePresentationState()
 						}
 						m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
 
-						int score = int(m_totalRemainingTime);
-						m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
+						m_feedbackMessage = formatFeedback(m_config->feedback.sessComplete);						// Update the feedback message
 						m_currQuestionIdx = -1;
 						newState = PresentationState::scoreboard;
 					}
 				}
 				else {					// Block is complete but session isn't
-					m_feedbackMessage = format("Block %d complete! Starting block %d.", m_currBlock - 1, m_currBlock);
+					m_feedbackMessage = formatFeedback(m_config->feedback.blockComplete);
 					updateBlock();
 					newState = PresentationState::initial;
 				}
@@ -332,14 +330,14 @@ void Session::updatePresentationState()
 
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
-					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
+					m_feedbackMessage = formatFeedback(m_config->feedback.allSessComplete); // Update the feedback message
 					moveOn = false;
 					if (m_app->experimentConfig.closeOnComplete || m_config->closeOnComplete) {
 						m_app->quitRequest();
 					}
 				}
 				else {
-					m_feedbackMessage = "Session Complete!"; // Update the feedback message
+					m_feedbackMessage = formatFeedback(m_config->feedback.sessComplete);	// Update the feedback message
 					if (m_config->closeOnComplete) {
 						m_app->quitRequest();
 					}
@@ -354,7 +352,7 @@ void Session::updatePresentationState()
 		else {
 			// Go ahead and move to the complete state since there aren't any valid sessions
 			newState = PresentationState::complete;
-			m_feedbackMessage = "All Sessions Complete!";
+			m_feedbackMessage = formatFeedback(m_config->feedback.allSessComplete);
 			moveOn = false;
 		}
 	}
@@ -494,6 +492,40 @@ float Session::getProgress() {
 
 int Session::getScore() {
 	return (int)(10.0 * m_totalRemainingTime);
+}
+
+String Session::formatFeedback(const String& input) {
+	String formatted = input;
+	int idx;
+	int idxThresh = 0;
+	// Look for "keywords" to replace, currently supports {%score, %currblock, %nextblock, and %taskstimems)
+	while (true) {
+		if ((idx = formatted.find("%score")) > idxThresh) {
+			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), int(m_totalRemainingTime), formatted.substr(idx + 5).c_str());
+			idxThresh = idx;
+			continue;
+		}
+		else if ((idx = formatted.find("%currblock")) > idxThresh) {
+			formatted = format("%s%d%s", input.substr(0, idx).c_str(), m_currBlock - 1, formatted.substr(idx + 10).c_str());
+			idxThresh = idx;
+			continue;
+		}
+		else if ((idx = formatted.find("%nextblock")) > idxThresh) {
+			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), m_currBlock, formatted.substr(idx + 10).c_str());
+			idxThresh = idx;
+			continue;
+		}
+		else if ((idx = formatted.find("%tasktimems")) > idxThresh) {
+			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), (int)(m_taskExecutionTime * 1000), formatted.substr(idx + 11).c_str());
+			idxThresh = idx;
+			continue;
+		}
+		else { 
+			break;		// We didn't find a keyword this pass, exit the loop
+		}		
+	}
+
+	return formatted;
 }
 
 String Session::getFeedbackMessage() {
