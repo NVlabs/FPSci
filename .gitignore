@@ -33,4 +33,4 @@ data-files/model
 *.tar
 # Output of the fpsci_packager.py if run from the root
 dist
-package.sh
+scripts/package/fpsci_packager.sh
