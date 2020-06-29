@@ -505,12 +505,12 @@ String Session::formatFeedback(const String& input) {
 			idxThresh = idx;
 			continue;
 		}
-		else if ((idx = formatted.find("%currblock")) > idxThresh) {
+		else if ((idx = formatted.find("%lastblock")) > idxThresh) {
 			formatted = format("%s%d%s", input.substr(0, idx).c_str(), m_currBlock - 1, formatted.substr(idx + 10).c_str());
 			idxThresh = idx;
 			continue;
 		}
-		else if ((idx = formatted.find("%nextblock")) > idxThresh) {
+		else if ((idx = formatted.find("%currblock")) > idxThresh) {
 			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), m_currBlock, formatted.substr(idx + 10).c_str());
 			idxThresh = idx;
 			continue;

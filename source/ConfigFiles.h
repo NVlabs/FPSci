@@ -1488,7 +1488,7 @@ public:
 	String initialNoRef = "Click to start the session!";									///< An initial feedback message to show when reference targets aren't drawn
 	String trialSuccess = "%tasktimems ms!" ;												///< Successful trial feedback message
 	String trialFailure = "Failure!";														///< Failed trial feedback message
-	String blockComplete = "Block %currblock complete! Starting block %nextblock.";			///< Block complete feedback message
+	String blockComplete = "Block %lastblock complete! Starting block %currblock.";			///< Block complete feedback message
 	String sessComplete = "Session complete! You scored %score!";							///< Session complete feedback message
 	String allSessComplete = "All Sessions Complete!";										///< All sessions complete feedback message
 
