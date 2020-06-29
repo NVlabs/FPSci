@@ -49,6 +49,40 @@ The following settings allow the user to control various timings/durations aroun
 "scoreboardDuration": 5.0,    // Time for user feedback between sessions
 ```
 
+## Feedback Configuration
+In addition to controlling the duration of displayed feedback messages, this configuration allows the experiment designer to control the messages provided as feedback themselves.
+
+| Parameter Name                    |Units    | Description                                                        |
+|-----------------------------------|---------|--------------------------------------------------------------------|
+|`referenceTargetInitialFeedback`   |`String` | The message to display at the start of a session that includes a reference target|
+|`noReferenceTargetInitialFeedback` |`String` | The message to display at the start of a session that doesn't include a reference target|
+|`trialSuccessFeedback`             |`String` | Message to display when a trial is a success                       |
+|`trialFailureFeedback`             |`String` | Message to display when a trial is a failure                       |
+|`blockCompleteFeedback`            |`String` | Message to display when a block is completed                       |
+|`sessionCompleteFeedback`          |`String` | Message to display when a session is completed                     |
+|`allSessionsCompleteFeedback`      |`String` | Message to display when all sessions are completed                 |
+
+For any/all of the feedback strings provided above, a number of `%`-delimited special strings are supported to allow find-and-replace with certain values. These include:
+
+| Substring         | Description                                           |
+|-------------------|-------------------------------------------------------|
+|`%score`           | The score from the current session                    |
+|`%lastblock`       | The index of the last block completed                 |
+|`%currblock`       | The index of the current block                        |
+|`%tasktimems`      | The time the previous task took to complete           |
+
+Using these custom strings we can implement the following (default) feedback messages:
+
+```
+referenceTargetInitialFeedback: "Click to spawn a target, then use shift on red target to begin.",
+noReferenceTargetInitialFeedback: "Click to start the session!",
+trialSuccessFeedback: "%tasktimems ms!",
+trialFailureFeedback: "Failure!",
+blockCompleteFeedback: "Block %lastblock complete! Starting block %currblock.",
+sessionCompleteFeedback: "Session complete! You scored %score!",
+allSessionsCompleteFeedback: "All Sessions Complete!",
+```
+
 ## Rendering Settings
 | Parameter Name            |Units  | Description                                                        |
 |---------------------------|-------|--------------------------------------------------------------------|
