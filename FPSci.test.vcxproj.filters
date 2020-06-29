@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="tests\main.cpp" />
+    <ClCompile Include="tests\TestFakeInput.cpp" />
+    <ClCompile Include="tests\FPSciTests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tests\FPSciTests.h" />
+    <ClInclude Include="tests\TestFakeInput.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="data-files\test\experimentconfig.Any">
+      <Filter>Config Files</Filter>
+    </None>
+    <None Include="data-files\test\startupconfig.Any">
+      <Filter>Config Files</Filter>
+    </None>
+    <None Include="data-files\test\userconfig.Any">
+      <Filter>Config Files</Filter>
+    </None>
+    <None Include="data-files\test\userstatus.Any">
+      <Filter>Config Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Config Files">
+      <UniqueIdentifier>{0a0d7aa9-d550-4a77-9e59-9a773778baf3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
