@@ -5,6 +5,7 @@
     readyDuration = 0.001;
     taskDuration = 10000000.0;
     playerAxisLock = (false,true,true);
+	showMenuOnStartup:  false,
 
     weapon = {
         id = "default"; 
