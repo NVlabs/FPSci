@@ -1,11 +1,19 @@
 {
-    description = "TestExperiment"; 
     settingsVersion = 1; 
+    
+    description = "TestExperiment";
+    sceneName = "G3D Simple Cornell Box (Empty CO)";
+
+    frameDelay = 0;
+    frameRate = 360;
+
     feedbackDuration = 0.0;
     readyDuration = 0.001;
     taskDuration = 10000000.0;
+
     playerAxisLock = (false,true,true);
-	showMenuOnStartup:  false,
+
+	showMenuOnStartup = false;
 
     weapon = {
         id = "default"; 
@@ -19,19 +27,12 @@
     sessions = (
         {
             id = "main";
-            frameDelay = 0;
-            frameRate = 360;
-            expMode = "real";
-            sceneName = "G3D Simple Cornell Box (Empty CO)";
             trials = (
                 {
                     ids = ( "keepalive", "front", "right" );
                     count = 10;
                 }
             );
-            weapon = {
-                id = "default"; 
-            }; 
         }
     );
 
