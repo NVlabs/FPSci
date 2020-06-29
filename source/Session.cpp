@@ -323,7 +323,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::scoreboard) {
 		if (m_hasSession) {
-			if (stateElapsedTime > m_config->timing.scoreboardDuration) {
+			if (stateElapsedTime > m_config->timing.scoreboardDuration && (!m_config->timing.scoreboardRequireClick || !m_app->m_buttonUp)) {
 				newState = PresentationState::complete;
 				m_app->userSaveButtonPress();				// Press the save button for the user...
 
