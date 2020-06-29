@@ -128,7 +128,7 @@ public:
 		if (firing && !m_firing) {
 			m_fireAudio = m_fireSound->play();
 		}
-		else if (m_firing && !firing) {
+		else if (m_firing && !firing && notNull(m_fireAudio)) {
 			m_fireAudio->stop();
 		}
 		m_firing = firing;
