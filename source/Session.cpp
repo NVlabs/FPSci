@@ -322,16 +322,17 @@ void Session::updatePresentationState()
 		}
 	}
 	else if (currentState == PresentationState::scoreboard) {
-		if (stateElapsedTime > m_config->timing.scoreboardDuration) {
-			newState = PresentationState::complete;
-			if (m_hasSession) {
+		if (m_hasSession) {
+			if (stateElapsedTime > m_config->timing.scoreboardDuration) {
+				newState = PresentationState::complete;
+        
 				// Save current user config and status
 				m_app->saveUserConfig();											
 				m_app->saveUserStatus();
-								
+        
 				closeSessionProcesses();					// Close the process we started at session start (if there is one)
 				runSessionCommands("end");					// Launch processes for the end of the session
-				
+
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
 					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
@@ -347,14 +348,17 @@ void Session::updatePresentationState()
 					}
 					moveOn = true;														// Check for session complete (signal start of next session)
 				}
+
+				if (m_app->experimentConfig.closeOnComplete) {
+					m_app->quitRequest();
+				}
 			}
-			else {
-				m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
-				moveOn = false;
-			}
-			if (m_app->experimentConfig.closeOnComplete) {
-				m_app->quitRequest();
-			}
+		}
+		else {
+			// Go ahead and move to the complete state since there aren't any valid sessions
+			newState = PresentationState::complete;
+			m_feedbackMessage = "All Sessions Complete!";
+			moveOn = false;
 		}
 	}
 

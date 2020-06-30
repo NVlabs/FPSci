@@ -1,5 +1,8 @@
 # `FirstPersonScience` Application
-The `FirstPersonScience` application (`FPSci` for short) is a tool for conducting user studies on first person shooter (FPS) style tasks. 
+The `FirstPersonScience` application (`FPSci` for short) is a tool for conducting user studies on first person shooter (FPS) style tasks.
+
+## Standalone Release
+You can get a stand alone version of `FPSci` compiled for Windows 10 [here](https://github.com/NVlabs/abstract-fps/releases). In order to use this build, you will also need to install the x64 version (and possibly the x86 version) of the [Microsoft Visual C++ Redistributable found at this link](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads).
 
 ## G3D dependence
 FPSci depends on the [G3D innovation engine](https://casual-effects.com/g3d) which is a prerequisite for building FPSci. [Installation instructions](https://casual-effects.com/g3d/www/index.html#install).
@@ -8,8 +11,8 @@ When you check out G3D, you'll need some data files from the `research` and `gam
 
 If you install G3D using its `.hta` installer, then this will automatically install Visual Studio Community Edition for you.
 
-## Building instructions
-The solution file (`FirstPersonScience.sln`) can build and run using [Visual Studio](https://visualstudio.microsoft.com/vs/). 
+## Build instructions
+The solution file (`FirstPersonScience.sln`) can build and run using [Visual Studio 2019](https://visualstudio.microsoft.com/vs/).
 
 ## Instructions for configuring and running an experiment
 `FirstPersonScience` implements a simple mouse-controlled view model with a variety of parameters controllable through various `.Any` files (more on this below). The scene, weapon, target size/behavior, and frame rate/latency controls are all available via this interface.
