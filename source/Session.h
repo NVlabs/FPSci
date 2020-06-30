@@ -116,9 +116,9 @@ protected:
 	shared_ptr<Camera> m_camera;						///< Camera entity
 
 	// Experiment management					
-	int m_remainingTargets;								///< Number of remaining targets (calculated at the end of the session)
 	int m_destroyedTargets = 0;							///< Number of destroyed target
-	int m_clickCount = 0;								///< Count of total clicks in this trial
+	int m_shotCount = 0;								///< Count of total clicks in this trial
+	int m_hitCount = 0;									///< Count of total hits in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
 	int	m_currBlock = 1;								///< Index to the current block of trials
 	Array<Array<shared_ptr<TargetConfig>>> m_trials;	///< Storage for trials (to repeat over blocks)
@@ -151,13 +151,11 @@ protected:
 	// Target parameters
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	
-	Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config)
-	{
+	Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config) {
 		m_hasSession = notNull(m_config);
 	}
 
-	Session(FPSciApp* app) : m_app(app)
-	{
+	Session(FPSciApp* app) : m_app(app) {
 		m_hasSession = false;
 	}
 
@@ -202,6 +200,21 @@ protected:
 
 	/** Insert a target into the target array/scene */
 	inline void insertTarget(shared_ptr<TargetEntity> target);
+
+	/** Get the total target count for the current trial */
+	int totalTrialTargets() const {
+		int totalTargets = 0;
+		for (shared_ptr<TargetConfig> target : m_targetConfigs[m_currTrialIdx]) {
+			if (target->respawnCount == -1) {
+				totalTargets = -1;		// Ininite spawn case
+				break;
+			}
+			else {
+				totalTargets += (target->respawnCount + 1);
+			}
+		}
+		return totalTargets;
+	}
 
 	shared_ptr<TargetEntity> spawnDestTarget(
 		shared_ptr<TargetConfig> config,
@@ -320,7 +333,7 @@ public:
 	void accumulateFrameInfo(RealTime rdt, float sdt, float idt);
 
 	void countDestroy() {
-		m_destroyedTargets += 1;
+		m_destroyedTargets++;
 	}
 
 	/** Destroy a target from the targets array */
@@ -346,7 +359,7 @@ public:
 	enum PresentationState presentationState;			///< Current presentation state
 
 	/** result recording */
-	void countClick() { m_clickCount++; }
+	void countShot() { m_shotCount++; }
 
 	const Array<shared_ptr<TargetEntity>>& targetArray() const {
 		return m_targetArray;

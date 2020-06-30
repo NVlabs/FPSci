@@ -72,8 +72,7 @@ void Session::onInit(String filename, String description) {
 	// Initialize presentation states
 	presentationState = PresentationState::initial;
 	if (m_config) {
-		m_feedbackMessage = formatFeedback(m_config->targetView.showRefTarget ?
-			m_config->feedback.initialWithRef: m_config->feedback.initialNoRef);
+		m_feedbackMessage = formatFeedback(m_config->targetView.showRefTarget ? m_config->feedback.initialWithRef: m_config->feedback.initialNoRef);
 	}
 
 	// Get the player from the app
@@ -173,34 +172,26 @@ void Session::initTargetAnimation() {
 		);
 	}
 
-	// Reset number of destroyed targets
+	// Reset number of destroyed targets (in the trial)
 	m_destroyedTargets = 0;
-	// reset click counter
-	m_clickCount = 0;
+	// Reset shot and hit counters (in the trial)
+	m_shotCount = 0;
+	m_hitCount = 0;
 }
 
 void Session::processResponse()
 {
 	m_taskExecutionTime = m_timer.getTime();
-	// Get total target count here
-	int totalTargets = 0;
-	for (shared_ptr<TargetConfig> target : m_targetConfigs[m_currTrialIdx]) {
-		if (target->respawnCount == -1) {
-			totalTargets = -1;		// Ininite spawn case
-			break;
-		}
-		else {
-			totalTargets += (target->respawnCount+1);
-		}
-	}
-	
-	recordTrialResponse(m_destroyedTargets, totalTargets); // NOTE: we need record response first before processing it with PsychHelper.
+
+	const int totalTargets = totalTrialTargets();
+	// Record the trial response into the database
+	recordTrialResponse(m_destroyedTargets, totalTargets); 
 	if (m_remainingTrials[m_currTrialIdx] > 0) {
 		m_remainingTrials[m_currTrialIdx] -= 1;
 	}
 
 	// Check for whether all targets have been destroyed
-	if (m_remainingTargets == 0) {
+	if (m_destroyedTargets == totalTargets) {
 		m_totalRemainingTime += (double(m_config->timing.taskDuration) - m_taskExecutionTime);
 		if (m_config->description == "training") {
 			m_feedbackMessage = formatFeedback(m_config->feedback.trialSuccess);
@@ -248,7 +239,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_config->timing.taskDuration) || (remainingTargets <= 0) || (m_clickCount == m_config->weapon.maxAmmo))
+		if ((stateElapsedTime > m_config->timing.taskDuration) || (remainingTargets <= 0) || (m_shotCount == m_config->weapon.maxAmmo))
 		{
 			m_taskEndTime = FPSciLogger::genUniqueTimestamp();
 			processResponse();
@@ -441,6 +432,9 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 		m_logger->logPlayerAction(pa);
 		END_PROFILER_EVENT();
 	}
+	
+	// Count hits here
+	if (action == PlayerActionType::Hit || action == PlayerActionType::Destroy) { m_hitCount++; }
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
@@ -469,7 +463,7 @@ float Session::weaponCooldownPercent() const {
 
 int Session::remainingAmmo() const {
 	if (isNull(m_config)) return 100;
-	return m_config->weapon.maxAmmo - m_clickCount;
+	return m_config->weapon.maxAmmo - m_shotCount;
 }
 
 
@@ -497,28 +491,51 @@ int Session::getScore() {
 String Session::formatFeedback(const String& input) {
 	String formatted = input;
 	int idx;
-	int idxThresh = 0;
+	int idxThresh = -1;
 	// Look for "keywords" to replace, currently supports {%score, %currblock, %nextblock, and %taskstimems)
 	while (true) {
-		if ((idx = formatted.find("%score")) > idxThresh) {
-			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), int(m_totalRemainingTime), formatted.substr(idx + 5).c_str());
+		if ((idx = formatted.find("%totalTimeLeftS")) > idxThresh) {
+			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), int(m_totalRemainingTime), formatted.substr(idx + 19).c_str());
 			idxThresh = idx;
 			continue;
 		}
-		else if ((idx = formatted.find("%lastblock")) > idxThresh) {
+		else if ((idx = formatted.find("%lastBlock")) > idxThresh) {
 			formatted = format("%s%d%s", input.substr(0, idx).c_str(), m_currBlock - 1, formatted.substr(idx + 10).c_str());
 			idxThresh = idx;
 			continue;
 		}
-		else if ((idx = formatted.find("%currblock")) > idxThresh) {
+		else if ((idx = formatted.find("%currBlock")) > idxThresh) {
 			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), m_currBlock, formatted.substr(idx + 10).c_str());
 			idxThresh = idx;
 			continue;
 		}
-		else if ((idx = formatted.find("%tasktimems")) > idxThresh) {
-			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), (int)(m_taskExecutionTime * 1000), formatted.substr(idx + 11).c_str());
+		else if ((idx = formatted.find("%trialTaskTimeMs")) > idxThresh) {
+			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), (int)(m_taskExecutionTime * 1000), formatted.substr(idx + 16).c_str());
 			idxThresh = idx;
 			continue;
+		}
+		else if ((idx = formatted.find("%trialTargetsDestroyed")) > idxThresh) {
+			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), m_destroyedTargets, formatted.substr(idx+22).c_str());
+			idxThresh = idx;
+		}
+		else if ((idx = formatted.find("%trialTotalTargets")) > idxThresh) {
+			int totalTargets = totalTrialTargets();
+			if (totalTargets > 0) {
+				// Finite target count case
+				formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), totalTrialTargets(), formatted.substr(idx + 18).c_str());
+			}
+			else {	// Inifinite target count case
+				formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), "ininite", formatted.substr(idx + 18).c_str());
+			}
+			idxThresh = idx;
+		}
+		else if ((idx = formatted.find("%trialShotsHit")) > idxThresh) {
+			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), m_hitCount, formatted.substr(idx + 14).c_str());
+			idxThresh = idx;
+		}
+		else if ((idx = formatted.find("%trialTotalShots")) > idxThresh) {
+			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), m_shotCount, formatted.substr(idx + 16).c_str());
+			idxThresh = idx;
 		}
 		else { 
 			break;		// We didn't find a keyword this pass, exit the loop

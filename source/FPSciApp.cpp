@@ -216,7 +216,7 @@ void FPSciApp::updateControls(bool firstSession) {
 	if(!firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
 
 	// Update the waypoint manager
-	waypointManager->updateControls();
+	if (startupConfig.waypointEditorMode) { waypointManager->updateControls(); }
 
 	// Setup the player control
 	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&FPSciApp::exportScene, this), theme);
@@ -1209,7 +1209,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 				if ((sess->presentationState == PresentationState::task) && !m_userSettingsWindow->visible()) {
 					if (sess->canFire()) {
 						fired = true;
-						sess->countClick();														// Count clicks
+						sess->countShot();						// Count shots
 						Array<shared_ptr<Entity>> dontHit;
 						dontHit.append(m_explosions);
 						Model::HitInfo info;

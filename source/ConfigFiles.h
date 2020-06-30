@@ -1485,12 +1485,12 @@ public:
 class FeedbackConfig {
 public:
 	String initialWithRef = "Click to spawn a target, then use shift on red target to begin.";		///< An initial feedback message to show when reference targets are drawn
-	String initialNoRef = "Click to start the session!";									///< An initial feedback message to show when reference targets aren't drawn
-	String trialSuccess = "%tasktimems ms!" ;												///< Successful trial feedback message
-	String trialFailure = "Failure!";														///< Failed trial feedback message
-	String blockComplete = "Block %lastblock complete! Starting block %currblock.";			///< Block complete feedback message
-	String sessComplete = "Session complete! You scored %score!";							///< Session complete feedback message
-	String allSessComplete = "All Sessions Complete!";										///< All sessions complete feedback message
+	String initialNoRef = "Click to start the session!";											///< An initial feedback message to show when reference targets aren't drawn
+	String trialSuccess = "%trialTaskTimeMs ms!" ;													///< Successful trial feedback message
+	String trialFailure = "Failure!";																///< Failed trial feedback message
+	String blockComplete = "Block %lastBlock complete! Starting block %currBlock.";					///< Block complete feedback message
+	String sessComplete = "Session complete! You scored %totalTimeLeftS!";							///< Session complete feedback message
+	String allSessComplete = "All Sessions Complete!";												///< All sessions complete feedback message
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
@@ -1520,7 +1520,6 @@ public:
 		if (forceAll || def.allSessComplete != allSessComplete) a["allSessionsCompleteFeedback"] = allSessComplete;
 		return a;
 	}
-
 };
 
 class LoggerConfig {
