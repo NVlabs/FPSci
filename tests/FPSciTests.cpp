@@ -49,7 +49,7 @@ protected:
 	static G3D::RealTime fixedTestDeltaTime();
 	static const shared_ptr<PlayerEntity> getPlayer();
 	static void zeroCameraRotation();
-	static void respawnTargets();
+	static int respawnTargets();
 	static void rotateCamera(double degX, double degY);
 	static void getTargets(shared_ptr<TargetEntity>& front, shared_ptr<TargetEntity>& right);
 	static void checkTargets(bool& aliveFront, bool& aliveRight);
@@ -167,9 +167,10 @@ void FPSciTests::zeroCameraRotation()
 	if (player) {
 		player->respawn();
 	}
+	EXPECT_EQ(player->heading(), 0.f);
 }
 
-void FPSciTests::respawnTargets()
+int FPSciTests::respawnTargets()
 {
 	s_app->sess->clearTargets();
 	s_app->sess->initTargetAnimation();
@@ -185,6 +186,7 @@ void FPSciTests::respawnTargets()
 	}
 
 	s_app->oneFrame();
+	return s_app->sess->targetArray().size();
 }
 
 void FPSciTests::rotateCamera(double degX, double degY)
@@ -287,7 +289,7 @@ TEST_F(FPSciTests, CanDetectWhichTargets) {
 TEST_F(FPSciTests, KillTargetFront) {
 	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
 
-	respawnTargets();
+	int spawnedTargets = respawnTargets();
 
 	// Kill the front target - just fire
 	zeroCameraRotation();
@@ -299,21 +301,25 @@ TEST_F(FPSciTests, KillTargetFront) {
 
 	bool aliveFront, aliveRight;
 	checkTargets(aliveFront, aliveRight);
-	EXPECT_EQ(s_app->sess->targetArray().size(), 2) << "We shot once. There should be two targets left.";
-	EXPECT_FALSE(aliveFront);
-	EXPECT_TRUE(aliveRight);
+	EXPECT_FALSE(aliveFront) << "Front target should not remain (should have been destroyed)!";
+	EXPECT_TRUE(aliveRight) << "Right target should remain (should not have been destroyed)!";
+	EXPECT_EQ(s_app->sess->targetArray().size(), spawnedTargets-1) << format("We shot once (and hit a target). There should be %d targets left.", spawnedTargets-1).c_str();
 }
 
 TEST_F(FPSciTests, KillTargetFrontHoldclick) {
 	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
-	respawnTargets();
+	
+	int spawnedTargets = respawnTargets();
+	
 	zeroCameraRotation();
 	s_fakeInput->window().injectMouseDown(0);
 	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
 	checkTargets(aliveFront, aliveRight);
-	EXPECT_FALSE(aliveFront);
+	EXPECT_FALSE(aliveFront) << "Front target should not remain (should have been destroyed)!";
+	EXPECT_TRUE(aliveRight) << "Right target should remain (should not have been destroyed)!";
+	EXPECT_EQ(s_app->sess->targetArray().size(), spawnedTargets - 1) << format("We shot once (and hit a target). There should be %d targets left.", spawnedTargets - 1).c_str();
 
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
@@ -321,7 +327,8 @@ TEST_F(FPSciTests, KillTargetFrontHoldclick) {
 
 TEST_F(FPSciTests, KillTargetRightRotate) {
 	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
-	respawnTargets();
+
+	int spawnedTargets = respawnTargets();
 
 	// Kill the right target by rotating to line it up
 	zeroCameraRotation();
@@ -332,14 +339,15 @@ TEST_F(FPSciTests, KillTargetRightRotate) {
 
 	bool aliveFront, aliveRight;
 	checkTargets(aliveFront, aliveRight);
-	EXPECT_EQ(s_app->sess->targetArray().size(), 2) << "We shot once. There should be two targets left.";
-	EXPECT_TRUE(aliveFront);
-	EXPECT_FALSE(aliveRight);
+	EXPECT_TRUE(aliveFront) << "Front target should remain (should not have been destroyed)!";
+	EXPECT_FALSE(aliveRight) << "Right target should not remain (should have been destroyed)!";
+	EXPECT_EQ(s_app->sess->targetArray().size(), spawnedTargets - 1) << format("We shot once (and hit a target). There should be %d targets left.", spawnedTargets - 1).c_str();
 }
 
 TEST_F(FPSciTests, KillTargetRightTranslate) {
 	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
-	respawnTargets();
+	
+	int spawnedTargets = respawnTargets();
 
 	zeroCameraRotation();
 	auto player = getPlayer();
@@ -359,9 +367,9 @@ TEST_F(FPSciTests, KillTargetRightTranslate) {
 	bool aliveFront, aliveRight;
 	checkTargets(aliveFront, aliveRight);
 	EXPECT_EQ(s_app->simStepDuration(), GApp::MATCH_REAL_TIME_TARGET);
-	EXPECT_EQ(s_app->sess->targetArray().size(), 2) << "We shot once. There should be two targets left.";
-	EXPECT_TRUE(aliveFront);
-	EXPECT_FALSE(aliveRight);
+	EXPECT_TRUE(aliveFront) << "Front target should remain (should not have been destroyed)!";
+	EXPECT_FALSE(aliveRight) << "Right target should not remain (should have been destroyed)!";
+	EXPECT_EQ(s_app->sess->targetArray().size(), spawnedTargets - 1) << format("We shot once (and hit a target). There should be %d targets left.", spawnedTargets - 1).c_str();
 }
 
 TEST_F(FPSciTests, ResetCamera) {
