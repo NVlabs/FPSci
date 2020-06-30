@@ -540,7 +540,9 @@ String Session::formatFeedback(const String& input) {
 		else if (!formatted.compare(foundIdx, trialTotalShots.length(), trialTotalShots)) {
 			formatted = formatted.substr(0, foundIdx) + format("%d", m_shotCount) + formatted.substr(foundIdx + trialTotalShots.length());
 		}
-		// Do nothing if the string following the delimiter doesn't match
+		else {
+			foundIdx++;		// Bump the found index past this character (not a valid substring)
+		}
 	}
 	return formatted;
 }
