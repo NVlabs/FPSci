@@ -1,5 +1,5 @@
 # General Configuration Parameters
-FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable parameters that can be set at either the "experiment" or "session" level. This document describes these parameters and gives examples of their usage.
+FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable parameters that can be set at either the "experiment" or "session" level. This document describes these parameters and gives examples of their usage. Note that any value specified at both the "experiment" and "session" level will use the value specified by the session level.
 
 ## Settings Version
 | Parameter Name     |Units| Description                                                        |
