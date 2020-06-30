@@ -82,10 +82,10 @@ Using these custom strings we can implement the following (default) feedback mes
 ```
 referenceTargetInitialFeedback: "Click to spawn a target, then use shift on red target to begin.",
 noReferenceTargetInitialFeedback: "Click to start the session!",
-trialSuccessFeedback: "%tasktimems ms!",
+trialSuccessFeedback: "%trialTaskTimeMs ms!",
 trialFailureFeedback: "Failure!",
-blockCompleteFeedback: "Block %lastblock complete! Starting block %currblock.",
-sessionCompleteFeedback: "Session complete! You scored %score!",
+blockCompleteFeedback: "Block %lastBlock complete! Starting block %currBlock.",
+sessionCompleteFeedback: "Session complete! You scored %totalTimeLeftS!",
 allSessionsCompleteFeedback: "All Sessions Complete!",
 ```
 
