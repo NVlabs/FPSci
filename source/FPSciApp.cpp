@@ -39,7 +39,7 @@ void FPSciApp::onInit() {
 	// Load per experiment user settings from file and make sure they are valid
 	userStatusTable = UserStatusTable::load(startupConfig.userStatusConfig());
 	userStatusTable.printToLog();
-	userStatusTable.validate(sessionIds);
+	userStatusTable.validate(sessionIds, userTable.getIds());
 	
 	// Get info about the system
 	SystemInfo info = SystemInfo::get();
@@ -77,7 +77,7 @@ void FPSciApp::onInit() {
 
 	// Load models and set the reticle
 	loadModels();
-	setReticle(userTable.getCurrentUser()->reticleIndex);
+	setReticle(currentUser()->reticleIndex);
 
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
@@ -108,7 +108,7 @@ void FPSciApp::closeUserSettingsWindow() {
 
 /** Update the mouse mode/sensitivity */
 void FPSciApp::updateMouseSensitivity() {
-	const UserConfig* user = userTable.getCurrentUser();
+	const shared_ptr<UserConfig> user = currentUser();
 	// Converting from mouseDPI (dots/in) and sensitivity (cm/turn) into rad/dot which explains cm->in (2.54) and turn->rad (2*PI) factors
 	// rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
 	const double radiansPerDot = 2.0 * pi() * 2.54 / (user->cmp360 * user->mouseDPI);
@@ -224,7 +224,7 @@ void FPSciApp::updateControls(bool firstSession) {
 	this->addWidget(m_playerControls);
 
 	// Setup the render control
-	m_renderControls = RenderControls::create(*sessConfig, *(userTable.getCurrentUser()), renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
+	m_renderControls = RenderControls::create(*sessConfig, *(currentUser()), renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(false);
 	this->addWidget(m_renderControls);
 
@@ -291,13 +291,6 @@ void FPSciApp::showWeaponControls() {
 	m_weaponControls->setVisible(true);
 }
 
-void FPSciApp::userSaveButtonPress(void) {
-	// Save the any file
-	Any a = Any(userTable);
-	a.save(startupConfig.userConfig());
-	logPrintf("User table saved.\n");			// Print message to log
-}	
-
 void FPSciApp::presentQuestion(Question question) {
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
@@ -323,11 +316,10 @@ void FPSciApp::markSessComplete(String sessId) {
 	if (m_pyLogger != nullptr) {
 		m_pyLogger->mergeLogToDb();
 	}
-	// Add the session id to completed session array
-	userStatusTable.addCompletedSession(userTable.currentUser, sessId);
-	// Save the file to any
-	userStatusTable.toAny().save("userstatus.Any");
-	logPrintf("Marked session: %s complete for user %s.\n", sessId, userTable.currentUser);
+	// Add the session id to completed session array and save the user status table
+	userStatusTable.addCompletedSession(userStatusTable.currentUser, sessId);
+	saveUserStatus();
+	logPrintf("Marked session: %s complete for user %s.\n", sessId, userStatusTable.currentUser);
 
 	// Update the session drop-down to remove this session
 	m_userSettingsWindow->updateSessionDropDown();
@@ -367,8 +359,6 @@ shared_ptr<PlayerEntity> FPSciApp::updatePlayer() {
 	player->setVisible(false);
 	player->setRespawnHeight(resetHeight);
 	player->setRespawnPosition(player->frame().translation);
-
-	UserConfig* user = userTable.getCurrentUser();
 
 	updateMouseSensitivity();
 	player->moveRate = &sessConfig->player.moveRate;
@@ -462,7 +452,7 @@ void FPSciApp::updateSession(const String& id) {
 	sess->initialHeadingRadians = player->heading();
 
 	// Check for need to start latency logging and if so run the logger now
-	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+	String logName = "../results/" + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
 	if (latencyLoggerConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
@@ -657,8 +647,8 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	   
 	// Check for completed session
 	if (sess->moveOn) {
-		String nextSess = userStatusTable.getNextSession(userTable.currentUser);
-		updateSession(nextSess);
+		// Get the next session for the current user
+		updateSession(userStatusTable.getNextSession());
 	}
 }
 
@@ -1028,7 +1018,7 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 }
 
 Vector2 FPSciApp::currentTurnScale() {
-	const UserConfig* user = userTable.getCurrentUser();
+	const shared_ptr<UserConfig> user = currentUser();
 	Vector2 baseTurnScale = sessConfig->player.turnScale * user->turnScale;
 	// Apply y-invert here
 	if (user->invertY) baseTurnScale.y = -baseTurnScale.y;
@@ -1261,9 +1251,9 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		}
 	}
 
-	if (m_lastReticleLoaded != userTable.getCurrentUser()->reticleIndex || m_userSettingsWindow->visible()) {
+	if (m_lastReticleLoaded != currentUser()->reticleIndex || m_userSettingsWindow->visible()) {
 		// Slider was used to change the reticle
-		setReticle(userTable.getCurrentUser()->reticleIndex);
+		setReticle(currentUser()->reticleIndex);
 		m_userSettingsWindow->updateReticlePreview();
 	}
 
@@ -1333,7 +1323,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		// Player camera only indicators
 		if (activeCamera() == playerCamera()) {
 			// Reticle
-			UserConfig* user = userTable.getCurrentUser();
+			const shared_ptr<UserConfig> user = currentUser();
 			float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleChangeTimeS), 1.0f), 0.0f);
 			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
 			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;

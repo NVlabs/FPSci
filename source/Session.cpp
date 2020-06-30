@@ -86,7 +86,7 @@ void Session::onInit(String filename, String description) {
 	// Check for valid session
 	if (m_hasSession) {
 		if (m_config->logger.enable) {
-			UserConfig user = *m_app->getCurrUser();
+			UserConfig user = *m_app->currentUser();
 			// Setup the logger and create results file
 			m_logger = FPSciLogger::create(filename, user.id, m_config, description);
 			if (m_config->logger.logUsers) {
@@ -312,10 +312,13 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::scoreboard) {
 		if (m_hasSession) {
-			if (stateElapsedTime > m_config->timing.scoreboardDuration) {
+			if (stateElapsedTime > m_config->timing.scoreboardDuration && (!m_config->timing.scoreboardRequireClick || !m_app->m_buttonUp)) {
 				newState = PresentationState::complete;
-				m_app->userSaveButtonPress();				// Press the save button for the user...
-
+        
+				// Save current user config and status
+				m_app->saveUserConfig();											
+				m_app->saveUserStatus();
+        
 				closeSessionProcesses();					// Close the process we started at session start (if there is one)
 				runSessionCommands("end");					// Launch processes for the end of the session
 
@@ -551,7 +554,7 @@ String Session::getFeedbackMessage() {
 
 void Session::endLogging() {
 	if (m_logger != nullptr) {
-		m_logger->logUserConfig(*m_app->getCurrUser(), m_config->id, "end");
+		m_logger->logUserConfig(*m_app->currentUser(), m_config->id, "end");
 		m_logger->flush(false);
 		m_logger.reset();
 	}

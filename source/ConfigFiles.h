@@ -388,7 +388,6 @@ public:
 /** Class for loading a user table and getting user info */
 class UserTable {
 public:
-	String					currentUser = "None";			///< The currently active user
 	Array<UserConfig>		users = {};						///< A list of valid users
 
 	UserTable() {};
@@ -401,7 +400,6 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("currentUser", currentUser);
 			reader.get("users", users, "Issue in the (required) \"users\" array in the user config file!");
 			if (users.size() == 0) {
 				throw "At least 1 user must be specified in the \"users\" array within the user configuration file!";
@@ -413,30 +411,10 @@ public:
 		}
 	}
 
-	/** Get the current user's config */
-    UserConfig* getCurrentUser() {
-        for (int i = 0; i < users.length(); ++i) {
-            if (!users[i].id.compare(currentUser)) return &(users[i]);
-        }
-        // return the first user by default and set the value
-        currentUser = users[0].id;
-        return &(users[0]);
-    }
-
-	/** Get the index of the current user from the user table */
-    int getCurrentUserIndex() {
-        for (int i = 0; i < users.length(); ++i) {
-            if (!users[i].id.compare(currentUser)) return i;
-        }
-        // return the first user by default
-        return 0;
-    }
-
 	/** Serialize to Any */
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
 		a["settingsVersion"] = 1;						///< Create a version 1 file
-		a["currentUser"] = currentUser;					///< Include current subject ID
 		a["users"] = users;								///< Include updated subject table
 		return a;
 	}
@@ -449,20 +427,12 @@ public:
 		return nullptr;
 	}
 
-	/** Get an array of user IDs */
-	Array<String> getIds() {
-		Array<String> ids;
-		for (UserConfig user : users) ids.append(user.id);
-		return ids;
-	}
-
 	/** Simple rotine to get the UserTable Any structure from file */
 	static UserTable load(String filename) {
 		// Create default UserConfig file
 		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
 			UserTable defTable = UserTable();
 			defTable.users.append(UserConfig());			// Append one default user
-			defTable.currentUser = defTable.users[0].id;	// Set this as the current user
 			defTable.save(filename);						// Save the .any file
 			return defTable;
 		}
@@ -471,9 +441,24 @@ public:
 
 	inline void save(String filename) { toAny().save(filename); }
 
+	/** Get an array of user IDs */
+	Array<String> getIds() {
+		Array<String> ids;
+		for (UserConfig user : users) ids.append(user.id);
+		return ids;
+	}
+
+	/** Get the index of the current user from the user table */
+	int getUserIndex(String userId) {
+		for (int i = 0; i < users.length(); ++i) {
+			if (!users[i].id.compare(userId)) return i;
+		}
+		// return the first user by default
+		return 0;
+	}
+
 	/** Print the user table to the log */
 	void printToLog() {
-		logPrintf("Current User: %s\n", currentUser.c_str());
 		for (UserConfig user : users) {
 			logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id.c_str(), user.cmp360, user.mouseDPI);
 		}
@@ -532,6 +517,7 @@ class UserStatusTable {
 public:
 	bool allowRepeat = false;							///< Flag for whether to (strictly) sequence these experiments (allow duplicates)
 	bool randomizeDefaults = false;						///< Randomize from default session order when applying to user
+	String currentUser;									///< Currently selected user
 	Array<String> defaultSessionOrder = {};				///< Default session ordering (for all unspecified users)
 	Array<UserSessionStatus> userInfo = {};				///< Array of user status
 
@@ -545,6 +531,7 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
+			reader.getIfPresent("currentUser", currentUser);
 			reader.getIfPresent("allowRepeat", allowRepeat);
 			reader.getIfPresent("sessions", defaultSessionOrder);
 			UserSessionStatus::defaultSessionOrder = defaultSessionOrder;				// Set the default order here
@@ -563,6 +550,7 @@ public:
 		Any a(Any::TABLE);
 		UserStatusTable def;
 		a["settingsVersion"] = 1;						// Create a version 1 file
+		a["currentUser"] = currentUser;
 		if (forceAll || def.allowRepeat != allowRepeat)				a["allowRepeat"] = allowRepeat;
 		if (forceAll || def.randomizeDefaults != randomizeDefaults)	a["randomizeSessionOrder"] = randomizeDefaults;
 		a["sessions"] = defaultSessionOrder;
@@ -577,11 +565,14 @@ public:
 			UserSessionStatus user;
 			user.sessionOrder = Array<String> ({ "60Hz", "30Hz" });	// Add "default" sessions we add to
 			defStatus.userInfo.append(user);						// Add single "default" user
-			defStatus.toAny().save(filename);				// Save .any file
+			defStatus.currentUser = user.id;						// Set "default" user as current user
+			defStatus.save(filename);								// Save .any file
 			return defStatus;
 		}
 		return Any::fromFile(System::findDataFile(filename));
 	}
+
+	inline void save(String filename = "userstatus.Any") { toAny().save(filename);  }
 
 	/** Get a given user's status from the table by ID */
 	shared_ptr<UserSessionStatus> getUserStatus(String id) {
@@ -592,8 +583,9 @@ public:
 	}
 
 	/** Get the next session ID for a given user (by ID) */
-	String getNextSession(String userId) {
+	String getNextSession(String userId = "") {
 		// Return the first valid session that has not been completed
+		if (userId.empty()) { userId = currentUser;  }
 		shared_ptr<UserSessionStatus> status = getUserStatus(userId);
 		// Handle sequence mode here (can be repeats)
 		if (allowRepeat) {
@@ -624,7 +616,7 @@ public:
 		}
 	}
 
-	void validate(Array<String> sessions) {
+	void validate(Array<String> sessions, Array<String> users) {
 		bool noSessions = true;	// Flag to demark no sessions are present
 		// Build a string list of valid options for session IDs from the experiment
 		String expSessions = "[";
@@ -641,13 +633,24 @@ public:
 		}
 
 		// Check each user for valid options
+		Array<String> userStatusIds;
 		for (UserSessionStatus userStatus : userInfo) {
+			userStatusIds.append(userStatus.id);
+			// Check all of this user's sessions appear in the session array
 			for (String userSessId : userStatus.sessionOrder) {
 				noSessions = false;
 				if (!sessions.contains(userSessId)) {
 					throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in the experimentconfig.Any \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
 				}
 			}
+		}
+
+		// Check current user has a valid config
+		if (currentUser.empty()) {
+			throw "\"currentUser\" field is not specified in the user status file!\nIf you are migrating from an older version of FPSci, please cut the \"currentUser = ...\" line\nfrom userconfig.Any and paste it in userstatus.Any.";
+		}
+		else if (!users.contains(currentUser)) {
+			throw format("Current user \"%s\" does not have a valid entry in the user config file!", currentUser);
 		}
 
 		// Check if no default/per user sessions are present
@@ -1454,6 +1457,8 @@ public:
 	float           taskDuration = 100000.0f;					///< Maximum time spent in any one task
 	float           feedbackDuration = 1.0f;					///< Time in feedback state in seconds
 	float			scoreboardDuration = 5.0f;					///< Time in scoreboard state in seconds
+	bool			scoreboardRequireClick = false;				///< Require a click to progress from the scoreboard?
+
 	// Trial count
 	int             defaultTrialCount = 5;						///< Default trial count
 
@@ -1464,6 +1469,7 @@ public:
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("scoreboardDuration", scoreboardDuration);
+			reader.getIfPresent("scoreboardRequireClick", scoreboardRequireClick);
 			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
 			break;
 		default:
@@ -1474,10 +1480,12 @@ public:
 
 	Any addToAny(Any a, bool forceAll = false) const {
 		TimingConfig def;
-		if(forceAll || def.feedbackDuration != feedbackDuration)	a["feedbackDuration"] = feedbackDuration;
-		if(forceAll || def.readyDuration != readyDuration)			a["readyDuration"] = readyDuration;
-		if(forceAll || def.taskDuration != taskDuration)			a["taskDuration"] = taskDuration;
-		if(forceAll || def.defaultTrialCount != defaultTrialCount)	a["defaultTrialCount"] = defaultTrialCount;
+		if(forceAll || def.feedbackDuration != feedbackDuration)		a["feedbackDuration"] = feedbackDuration;
+		if(forceAll || def.readyDuration != readyDuration)				a["readyDuration"] = readyDuration;
+		if(forceAll || def.taskDuration != taskDuration)				a["taskDuration"] = taskDuration;
+		if(forceAll || def.scoreboardDuration != scoreboardDuration)	a["scoreboardDuration"] = scoreboardDuration;
+		if(forceAll || def.scoreboardRequireClick != scoreboardRequireClick) a["scoreboardRequireClick"] = scoreboardRequireClick;
+		if(forceAll || def.defaultTrialCount != defaultTrialCount)		a["defaultTrialCount"] = defaultTrialCount;
 		return a;
 	}
 };

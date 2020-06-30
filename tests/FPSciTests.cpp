@@ -110,7 +110,7 @@ void FPSciTests::SetUpTestSuiteSafe() {
 	s_app->setFrameDuration(s_app->frameDuration(), GApp::MATCH_REAL_TIME_TARGET);
 
 	// Set up per-frame fake input
-	s_fakeInput = std::make_shared<TestFakeInput>(s_app, s_app->userTable.getCurrentUser()->mouseDPI);
+	s_fakeInput = std::make_shared<TestFakeInput>(s_app, s_app->currentUser()->mouseDPI);
 	s_app->addWidget(s_fakeInput);
 
 	// Prime the app and load the scene
@@ -189,7 +189,7 @@ void FPSciTests::respawnTargets()
 
 void FPSciTests::rotateCamera(double degX, double degY)
 {
-	double metersPer360 = s_app->userTable.getCurrentUser()->cmp360 / 100.0;
+	double metersPer360 = s_app->currentUser()->cmp360 / 100.0;
 	s_fakeInput->window().injectMove(metersPer360 * degX / 360.0, metersPer360 * degY / 360.0);
 }
 
