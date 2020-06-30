@@ -528,7 +528,7 @@ String Session::formatFeedback(const String& input) {
 				formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), totalTrialTargets(), formatted.substr(idx + 18).c_str());
 			}
 			else {	// Inifinite target count case
-				formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), "ininite", formatted.substr(idx + 18).c_str());
+				formatted = format("%s%s%s", formatted.substr(0, idx).c_str(), "infinite", formatted.substr(idx + 18).c_str());
 			}
 			idxThresh = idx;
 		}
