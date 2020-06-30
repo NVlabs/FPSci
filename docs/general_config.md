@@ -71,6 +71,7 @@ For any/all of the feedback strings provided above, a number of `%`-delimited sp
 |`%totalTimeLeftS`          | The (integer) sum of remaining time from trials in the current session  (score proxy) |
 |`%lastBlock`               | The index of the last block completed                                                 |
 |`%currBlock`               | The index of the current block                                                        |
+|`%totalBlocks`             | The total number of blocks in the current session                                     |
 |`%trialTaskTimeMs`         | The time the previous task took to complete as an integer number of milliseconds      |
 |`%trialTargetsDestroyed`   | The number of targets destroyed in the current trial                                  |
 |`%trialTotalTargets`       | The number of total targets in the current trial                                      |

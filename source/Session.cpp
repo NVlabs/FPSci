@@ -512,6 +512,10 @@ String Session::formatFeedback(const String& input) {
 			idxThresh = idx;
 			continue;
 		}
+		else if ((idx = (int)formatted.find("%totalBlocks")) > idxThresh) {
+			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), m_config->blockCount, formatted.substr(idx + 12).c_str());
+			idxThresh = idx;
+		}
 		else if ((idx = (int)formatted.find("%trialTaskTimeMs")) > idxThresh) {
 			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), (int)(m_taskExecutionTime * 1000), formatted.substr(idx + 16).c_str());
 			idxThresh = idx;
