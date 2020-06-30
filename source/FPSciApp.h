@@ -165,12 +165,19 @@ public:
 		return m_debugMenuHeight;
 	}
 
-    /** callback for saving user config */
-	void userSaveButtonPress(void);
+    /** callbacks for saving user status and config */
+	void saveUserConfig(void) {
+		userTable.save(startupConfig.userConfig());
+		logPrintf("User table saved.\n");			// Print message to log
+	}
+	void saveUserStatus(void) { 
+		userStatusTable.save(startupConfig.userStatusConfig()); 
+		logPrintf("User status saved.\n");
+	}
 
 	// Pass throughts to user settings window (for now)
 	Array<String> updateSessionDropDown(void) { return m_userSettingsWindow->updateSessionDropDown(); }
-	shared_ptr<UserConfig> getCurrUser(void) { return m_userSettingsWindow->getCurrUser(); }
+	shared_ptr<UserConfig> const currentUser(void) {  return userTable.getUserById(userStatusTable.currentUser); }
 
 	void markSessComplete(String id);
 	virtual void updateSession(const String& id);
@@ -182,7 +189,6 @@ public:
 	   
 	/** opens the user settings window */
     void openUserSettingsWindow();
-
 	void closeUserSettingsWindow();
 
 	/** changes the mouse interaction (camera direct vs pointer) */
