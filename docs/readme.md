@@ -12,6 +12,7 @@ Configuration
     * [`userconfig.Any`](userConfigReadme.md)
     * [`userstatus.Any`](userStatusReadme.md)
     * [`.weapon.Any` files](weaponConfigReadme.md)
+    * [`keymap.Any`](keymap.md)
 
 # Development
 FPSci gives you full source level control over modifying its functionality however you'd like. The "parent" readme below will help you get started with building FPSci from source. The Developer Mode and Path Editor are tools that can be helpful for experiment designers or software developers.
