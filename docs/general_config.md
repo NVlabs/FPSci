@@ -9,23 +9,39 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 "settingsVersion": 1,     // Used for file parsing (do not change unless you are introducing a new any parser)
 ```
 
-## Scene Control
-The `sceneName` parameter allows the user to control the scene in which the application is run. If unspecified, the `sceneName` comes from:
+## Scene Settings
+The `scene` parameter allows the user to control the (name of the) scene in which the application is run and it's parameters. The scene config allows experiment designers to respecify existing scenes (from G3D) as FPSci scenes by setting the `name` field to that of the G3D scene and specifying any missing infromation within the additional fields. 
 
-1. An inherited experiment-level `sceneName` parameter
-2. The last specified session-level `sceneName` parameter (in time)
-3. The `App::m_defaultScene` field within the source (currently set to `"FPSci Simple Hallway"` which is distributed with the repository)
+The following fields are specified within the `scene` parameter structure:
+
+| Parameter Name    |Units      | Description                                                        |
+|-------------------|-----------|--------------------------------------------------------------------|
+|`name`             |`String`   | The name of the scene to use (note this is not the filename, but rather the `name` field from within the G3D `.scene.Any` file). |
+|`playerCamera`     |`String`   | The name of the camera (from the `.scene.Any` file) to use for the player view. If this string is empty the `defaultCamera` from the G3D scene is used instead. |
+|`resetHeight`      |`float`    | The height at which the player should be respawned (overrides any setting in a `scene.Any` file if specified here).    |
+|`spawnPosition`    |`Point3`   | The location at which the player should be respawned (overrides any setting in a `scene.Any` file if specified here).  |
+|`spawnHeading`     |`float`    | The player heading (in radians) at which the player should be respawned (overrides the `scene.Any` file setting if specified here). |
+
+An example configuration is provided below for reference:
+
+```
+"scene" : {
+    "name" : "FPSci Simple Hallway",        // Use the default scene name 
+    "playerCamera" : "",                    // Use the default camera from wtihin this scene
+    "spawnPosition" : {0,0,0},              // Spawn the player at the origin
+    "spawnHeading": 0,                      // Spawn the player at 0 heading
+}
+```
+
+### Scene Name
+If unspecified, the scene `name` field comes from:
+
+1. An inherited experiment-level `name` parameter
+2. The last specified session-level `name` parameter (in time)
+3. The `App::m_defaultSceneName` field within the source (currently set to `"FPSci Simple Hallway"` which is distributed with the repository)
 
 If a scene name is specified at the experiment level it will be applied to all scenes that do not have a `sceneName` specified. If you do not specify a `sceneName` in the experiment config, and do not specify `sceneName` for every session, then session ordering may have an impact on which scene pairs with which session.
 
-
-| Parameter Name     |Units   | Description                                                            |
-|--------------------|--------|------------------------------------------------------------------------|
-|`sceneName`         |`String`|The `name` of the (virtual) scene (not necessarily the filename!)       |
-
-```
-"sceneName": "eSports Simple Hallway",              // Default scene
-```
 
 ## Weapon Configuration
 * `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](weaponConfigReadme.md))
