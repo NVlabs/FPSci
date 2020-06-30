@@ -494,7 +494,6 @@ int Session::getScore() {
 String Session::formatFeedback(const String& input) {
 	String formatted = input;		///< Output string
 	int foundIdx;						///< Index for searching for substrings
-	int lastFoundIdx = -1;			///< Last index at which we found a substring
 
 	// Substrings for replacement
 	const String totalTimeLeftS = "%totalTimeLeftS";					///< Sum of time remaining over all completed trials
@@ -509,52 +508,36 @@ String Session::formatFeedback(const String& input) {
 
 	// Look for "keywords" to replace, currently supports {%score, %currblock, %nextblock, and %taskstimems)
 	while (true) {
-		if ((foundIdx = (int)formatted.find(totalTimeLeftS)) > lastFoundIdx) {
-			formatted = format("%s%d%s", formatted.substr(0, foundIdx).c_str(), int(m_totalRemainingTime), formatted.substr(foundIdx + totalTimeLeftS.length()).c_str());
-			lastFoundIdx = foundIdx;
-			continue;
+		if ((foundIdx = (int)formatted.find(totalTimeLeftS)) > -1) {
+			formatted = formatted.substr(0, foundIdx) +  format("%d", int(m_totalRemainingTime)) + formatted.substr(foundIdx + totalTimeLeftS.length());
 		}
-		else if ((foundIdx = (int)formatted.find(lastBlock)) > lastFoundIdx) {
-			formatted = format("%s%d%s", input.substr(0, foundIdx).c_str(), m_currBlock - 1, formatted.substr(foundIdx + lastBlock.length()).c_str());
-			lastFoundIdx = foundIdx;
-			continue;
+		else if ((foundIdx = (int)formatted.find(lastBlock)) > -1) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_currBlock - 1) + formatted.substr(foundIdx + lastBlock.length());
 		}
-		else if ((foundIdx = (int)formatted.find(currBlock)) > lastFoundIdx) {
-			formatted = format("%s%d%s", formatted.substr(0, foundIdx).c_str(), m_currBlock, formatted.substr(foundIdx + currBlock.length()).c_str());
-			lastFoundIdx = foundIdx;
-			continue;
+		else if ((foundIdx = (int)formatted.find(currBlock)) > -1) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_currBlock) + formatted.substr(foundIdx + currBlock.length());
 		}
-		else if ((foundIdx = (int)formatted.find(totalBlocks)) > lastFoundIdx) {
-			formatted = format("%s%d%s", formatted.substr(0, foundIdx).c_str(), m_config->blockCount, formatted.substr(foundIdx + totalBlocks.length()).c_str());
-			lastFoundIdx = foundIdx;
+		else if ((foundIdx = (int)formatted.find(totalBlocks)) > -1) {
+			formatted = formatted.substr(0, foundIdx) + format("%d",  m_config->blockCount) + formatted.substr(foundIdx + totalBlocks.length());
 		}
-		else if ((foundIdx = (int)formatted.find(trialTaskTimeMs)) > lastFoundIdx) {
-			formatted = format("%s%d%s", formatted.substr(0, foundIdx).c_str(), (int)(m_taskExecutionTime * 1000), formatted.substr(foundIdx + trialTaskTimeMs.length()).c_str());
-			lastFoundIdx = foundIdx;
-			continue;
+		else if ((foundIdx = (int)formatted.find(trialTaskTimeMs)) > -1) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", (int)(m_taskExecutionTime * 1000)) + formatted.substr(foundIdx + trialTaskTimeMs.length());
 		}
-		else if ((foundIdx = (int)formatted.find(trialTargetsDestroyed)) > lastFoundIdx) {
-			formatted = format("%s%d%s", formatted.substr(0, foundIdx).c_str(), m_destroyedTargets, formatted.substr(foundIdx+ trialTargetsDestroyed.length()).c_str());
-			lastFoundIdx = foundIdx;
+		else if ((foundIdx = (int)formatted.find(trialTargetsDestroyed)) > -1) {
+			formatted = formatted.substr(0, foundIdx) + format("%d",  m_destroyedTargets) + formatted.substr(foundIdx+ trialTargetsDestroyed.length());
 		}
-		else if ((foundIdx = (int)formatted.find(trialTotalTargets)) > lastFoundIdx) {
+		else if ((foundIdx = (int)formatted.find(trialTotalTargets)) > -1) {
 			int totalTargets = totalTrialTargets();
-			if (totalTargets > 0) {
-				// Finite target count case
-				formatted = format("%s%d%s", formatted.substr(0, foundIdx).c_str(), totalTrialTargets(), formatted.substr(foundIdx + trialTotalTargets.length()).c_str());
-			}
-			else {	// Inifinite target count case
-				formatted = format("%s%s%s", formatted.substr(0, foundIdx).c_str(), "infinite", formatted.substr(foundIdx + trialTotalTargets.length()).c_str());
-			}
-			lastFoundIdx = foundIdx;
+			formatted = formatted.substr(0, foundIdx);
+			if (totalTargets > 0) { formatted += format("%d", totalTrialTargets()); }		// Finite target count
+			else { formatted += "infinite";  }												// Inifinite target count case
+			formatted += formatted.substr(foundIdx + trialTotalTargets.length());
 		}
-		else if ((foundIdx = (int)formatted.find(trialShotsHit)) > lastFoundIdx) {
-			formatted = format("%s%d%s", formatted.substr(0, foundIdx).c_str(), m_hitCount, formatted.substr(foundIdx + trialShotsHit.length()).c_str());
-			lastFoundIdx = foundIdx;
+		else if ((foundIdx = (int)formatted.find(trialShotsHit)) > -1) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_hitCount) + formatted.substr(foundIdx + trialShotsHit.length());
 		}
-		else if ((foundIdx = (int)formatted.find(trialTotalShots)) > lastFoundIdx) {
-			formatted = format("%s%d%s", formatted.substr(0, foundIdx).c_str(), m_shotCount, formatted.substr(foundIdx + trialTotalShots.length()).c_str());
-			lastFoundIdx = foundIdx;
+		else if ((foundIdx = (int)formatted.find(trialTotalShots)) > -1) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_shotCount) + formatted.substr(foundIdx + trialTotalShots.length());
 		}
 		else { 
 			break;		// We didn't find a keyword this pass, exit the loop
