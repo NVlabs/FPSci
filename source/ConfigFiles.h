@@ -647,7 +647,7 @@ public:
 
 		// Check current user has a valid config
 		if (currentUser.empty()) {
-			throw "\"currentUser\" field is not specified in the user status file!";
+			throw "\"currentUser\" field is not specified in the user status file!\nIf you are migrating from an older version of FPSci, please cut the \"currentUser = ...\" line\nfrom userconfig.Any and paste it in userstatus.Any.";
 		}
 		else if (!users.contains(currentUser)) {
 			throw format("Current user \"%s\" does not have a valid entry in the user config file!", currentUser);
