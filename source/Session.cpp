@@ -497,31 +497,31 @@ String Session::formatFeedback(const String& input) {
 	int idxThresh = -1;
 	// Look for "keywords" to replace, currently supports {%score, %currblock, %nextblock, and %taskstimems)
 	while (true) {
-		if ((idx = formatted.find("%totalTimeLeftS")) > idxThresh) {
+		if ((idx = (int)formatted.find("%totalTimeLeftS")) > idxThresh) {
 			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), int(m_totalRemainingTime), formatted.substr(idx + 19).c_str());
 			idxThresh = idx;
 			continue;
 		}
-		else if ((idx = formatted.find("%lastBlock")) > idxThresh) {
+		else if ((idx = (int)formatted.find("%lastBlock")) > idxThresh) {
 			formatted = format("%s%d%s", input.substr(0, idx).c_str(), m_currBlock - 1, formatted.substr(idx + 10).c_str());
 			idxThresh = idx;
 			continue;
 		}
-		else if ((idx = formatted.find("%currBlock")) > idxThresh) {
+		else if ((idx = (int)formatted.find("%currBlock")) > idxThresh) {
 			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), m_currBlock, formatted.substr(idx + 10).c_str());
 			idxThresh = idx;
 			continue;
 		}
-		else if ((idx = formatted.find("%trialTaskTimeMs")) > idxThresh) {
+		else if ((idx = (int)formatted.find("%trialTaskTimeMs")) > idxThresh) {
 			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), (int)(m_taskExecutionTime * 1000), formatted.substr(idx + 16).c_str());
 			idxThresh = idx;
 			continue;
 		}
-		else if ((idx = formatted.find("%trialTargetsDestroyed")) > idxThresh) {
+		else if ((idx = (int)formatted.find("%trialTargetsDestroyed")) > idxThresh) {
 			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), m_destroyedTargets, formatted.substr(idx+22).c_str());
 			idxThresh = idx;
 		}
-		else if ((idx = formatted.find("%trialTotalTargets")) > idxThresh) {
+		else if ((idx = (int)formatted.find("%trialTotalTargets")) > idxThresh) {
 			int totalTargets = totalTrialTargets();
 			if (totalTargets > 0) {
 				// Finite target count case
@@ -532,11 +532,11 @@ String Session::formatFeedback(const String& input) {
 			}
 			idxThresh = idx;
 		}
-		else if ((idx = formatted.find("%trialShotsHit")) > idxThresh) {
+		else if ((idx = (int)formatted.find("%trialShotsHit")) > idxThresh) {
 			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), m_hitCount, formatted.substr(idx + 14).c_str());
 			idxThresh = idx;
 		}
-		else if ((idx = formatted.find("%trialTotalShots")) > idxThresh) {
+		else if ((idx = (int)formatted.find("%trialTotalShots")) > idxThresh) {
 			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), m_shotCount, formatted.substr(idx + 16).c_str());
 			idxThresh = idx;
 		}
