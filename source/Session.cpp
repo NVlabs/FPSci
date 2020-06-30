@@ -495,10 +495,10 @@ String Session::formatFeedback(const String& input) {
 	String formatted = input;
 	int idx;
 	int idxThresh = -1;
-	// Look for "keywords" to replace, currently supports {%score, %currblock, %nextblock, and %taskstimems)
+	// Look for "keywords" to replace, currently supports
 	while (true) {
 		if ((idx = (int)formatted.find("%totalTimeLeftS")) > idxThresh) {
-			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), int(m_totalRemainingTime), formatted.substr(idx + 19).c_str());
+			formatted = format("%s%d%s", formatted.substr(0, idx).c_str(), int(m_totalRemainingTime), formatted.substr(idx + 15).c_str());
 			idxThresh = idx;
 			continue;
 		}
