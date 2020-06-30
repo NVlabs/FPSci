@@ -64,12 +64,16 @@ In addition to controlling the duration of displayed feedback messages, this con
 
 For any/all of the feedback strings provided above, a number of `%`-delimited special strings are supported to allow find-and-replace with certain values. These include:
 
-| Substring         | Description                                           |
-|-------------------|-------------------------------------------------------|
-|`%score`           | The score from the current session                    |
-|`%lastblock`       | The index of the last block completed                 |
-|`%currblock`       | The index of the current block                        |
-|`%tasktimems`      | The time the previous task took to complete           |
+| Substring                 | Description                                                                           |
+|---------------------------|---------------------------------------------------------------------------------------|
+|`%totalTimeLeftS`          | The (integer) sum of remaining time from trials in the current session  (score proxy) |
+|`%lastBlock`               | The index of the last block completed                                                 |
+|`%currBlock`               | The index of the current block                                                        |
+|`%trialTaskTimeMs`         | The time the previous task took to complete as an integer number of milliseconds      |
+|`%trialTargetsDestroyed`   | The number of targets destroyed in the current trial                                  |
+|`%trialTotalTargets`       | The number of total targets in the current trial                                      |
+|`%trialShotsHit`           | The number of shots the user hit in the current trial                                 |
+|`%trialTotalShots`         | The number of shots the user took in the current trial                                |
 
 Using these custom strings we can implement the following (default) feedback messages:
 
