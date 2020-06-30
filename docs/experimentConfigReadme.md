@@ -25,7 +25,9 @@ The experment config supports inclusion of any of the configuration parameters d
 ```
 
 ### Session Configuration
-Each session can specify any of the [general configuration parameters](general_config.md) used in the experiment config above to create experimental conditions. In addition to these general parameters each session also has a few unique parameters documented below.
+Each session can specify any of the [general configuration parameters](general_config.md) used in the experiment config above to create experimental conditions. If both the experiment level and the session level specify a field supported by the general configuration, the session value has priority and will be used for that session. The experiment level configuration will be used for any session that doesn't specify that parameter.
+
+In addition to these general parameters each session also has a few unique parameters documented below.
 
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
