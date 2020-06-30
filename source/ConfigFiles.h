@@ -1296,7 +1296,7 @@ class SceneConfig {
 public:
 
 	String name;															///< Name of the scene to load
-	String playerCamera = "playerCamera";									///< Name of the camera to use for the player
+	String playerCamera;													///< Name of the camera to use for the player
 
 	//float gravity = fnan();												///< Gravity for the PhysicsScene
 	float resetHeight = fnan();												///< Reset height for the PhysicsScene

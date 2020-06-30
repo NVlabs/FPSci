@@ -59,7 +59,7 @@ protected:
 
 	int										m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
 	String									m_loadedScene = "";
-	String									m_defaultScene = "FPSci Simple Hallway";	// Default scene to load
+	String									m_defaultSceneName = "FPSci Simple Hallway";	// Default scene to load
 
 	shared_ptr<PythonLogger>				m_pyLogger = nullptr;
 

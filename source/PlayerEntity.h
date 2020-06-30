@@ -102,8 +102,6 @@ public:
 		return f;
 	}
 
-    void resetHeading() { m_headingRadians = m_spawnHeadingRadians; }
-
 	void setCrouched(bool crouched) { m_crouched = crouched; };
 	void setJumpPressed(bool pressed=true) { m_jumpPressed = pressed; }
 	void setMoveEnable(bool enabled) { m_motionEnable = enabled; }

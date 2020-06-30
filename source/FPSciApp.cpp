@@ -377,8 +377,8 @@ void FPSciApp::updateSession(const String& id) {
 	if (sessConfig->scene.name.empty()) {
 		// No scene specified, load default scene
 		if (m_loadedScene.empty()) {
-			loadScene(m_defaultScene);
-			m_loadedScene = m_defaultScene;
+			loadScene(m_defaultSceneName);
+			m_loadedScene = m_defaultSceneName;
 		}
 		// Otherwise let the loaded scene persist
 	}
@@ -430,7 +430,7 @@ void FPSciApp::updateSession(const String& id) {
 	player->jumpTouch		= &sessConfig->player.jumpTouch;
 	player->height			= &sessConfig->player.height;
 	player->crouchHeight	= &sessConfig->player.crouchHeight;
-	player->resetHeading();
+	player->respawn();			// Set the intial player position/rotation
 
 	// Check for need to start latency logging and if so run the logger now
 	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
@@ -501,7 +501,10 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 	pscene->setGravity(grav);
 
 	// Set the active camera to the player
-	setActiveCamera(pscene->typedEntity<Camera>(sessConfig->scene.playerCamera));
+	const String pcamName = sessConfig->scene.playerCamera;
+	const shared_ptr<Camera> pcam = pcamName.empty() ? pscene->defaultCamera() : pscene->typedEntity<Camera>(sessConfig->scene.playerCamera);
+	alwaysAssertM(notNull(pcam), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, sessConfig->scene.playerCamera));
+	setActiveCamera(pcam);
 	activeCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
 
 	// Make sure the scene has a "player" entity
@@ -531,12 +534,12 @@ void FPSciApp::updateFromSceneConfig(shared_ptr<PlayerEntity> player) {
 	player->setRespawnHeight(resetHeight);
 
 	// Set respawn location
-	Point3 respawnPosition = sessConfig->scene.spawnPosition;
-	if (isnan(respawnPosition.x)) {
+	Point3 spawnPosition = sessConfig->scene.spawnPosition;
+	if (isnan(spawnPosition.x)) {
 		// If respawn position is not provided by the scene config, use the player position
-		respawnPosition = player->frame().translation;
+		spawnPosition = player->frame().translation;
 	}
-	player->setRespawnPosition(respawnPosition);
+	player->setRespawnPosition(spawnPosition);
 
 	float respawnHeading = sessConfig->scene.spawnHeading;
 	if (isnan(respawnHeading)) {
