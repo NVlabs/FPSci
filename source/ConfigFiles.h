@@ -16,9 +16,9 @@ class StartupConfig {
 private:
 public:
     bool	developerMode = false;				///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
-    bool	waypointEditorMode = false;			///< Sets whether the app is run w/ the waypoint editor available
-    bool	fullscreen = true;					///< Whether the app runs in windowed mode
-    Vector2 windowSize = { 1920, 980 };			///< Window size (when not run in fullscreen)
+	bool	waypointEditorMode = false;			///< Sets whether the app is run w/ the waypoint editor available
+	bool	fullscreen = true;					///< Whether the app runs in windowed mode
+	Vector2 windowSize = { 1920, 980 };			///< Window size (when not run in fullscreen)
     String	experimentConfigPath = "";			///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
     String	userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
     String	resultsDirPath = "";				///< Optional path to the results directory (defaults to "../results" if empty)
