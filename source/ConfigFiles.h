@@ -19,9 +19,11 @@ public:
 	bool	waypointEditorMode = false;			///< Sets whether the app is run w/ the waypoint editor available
 	bool	fullscreen = true;					///< Whether the app runs in windowed mode
 	Vector2 windowSize = { 1920, 980 };			///< Window size (when not run in fullscreen)
-    String	experimentConfigPath = "";			///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
-    String	userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
-    bool	audioEnable = true;					///< Audio on/off
+    String	experimentConfigPath;				///< Optional path to an experiment config file (if empty assumes "./experimentconfig.Any" will be this file)
+    String	userConfigPath;						///< Optional path to a user config file (if empty assumes "./userconfig.Any" will be this file)
+	String  userStatusPath;						///< Optional path to a user status file (if empty assumes "./userstatus.Any" will be this file)
+	String  latencyLoggerConfigPath;			///< Optional path to a latency logger config file (if empty assumes "./systemconfig.Any" will be this file)
+	bool	audioEnable = true;					///< Audio on/off
 
     StartupConfig() {};
 
@@ -39,6 +41,12 @@ public:
 			reader.getIfPresent("windowSize", windowSize);
             reader.getIfPresent("experimentConfigPath", experimentConfigPath);
             reader.getIfPresent("userConfigPath", userConfigPath);
+			reader.getIfPresent("userStatusPath", userStatusPath);
+			reader.getIfPresent("latencyLoggerConfigPath", latencyLoggerConfigPath);
+			checkValidAnyPath(experimentConfigPath);
+			checkValidAnyPath(userConfigPath);
+			checkValidAnyPath(userStatusPath);
+			checkValidAnyPath(latencyLoggerConfigPath);
             reader.getIfPresent("audioEnable", audioEnable);
             break;
         default:
@@ -56,23 +64,28 @@ public:
 		if(forceAll || def.fullscreen != fullscreen)						a["fullscreen"] = fullscreen;
         if(forceAll || def.experimentConfigPath != experimentConfigPath)	a["experimentConfigPath"] = experimentConfigPath;
         if(forceAll || def.userConfigPath != userConfigPath)				a["userConfigPath"] = userConfigPath;
+		if(forceAll || def.userStatusPath != userStatusPath)				a["userStatusPath"] = userStatusPath;
         if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
         return a;
     }
 
-    /** filename with given path to experiment config file */
-    String experimentConfig() {
-        return experimentConfigPath + "experimentconfig.Any";
-    }
+    /** full path (including filename) to experiment config file */
+    inline const String experimentConfig() { return experimentConfigPath.empty() ? "experimentconfig.Any" : experimentConfigPath; }
 
-    /** filename with given path to user config file */
-    String userConfig() {
-        return userConfigPath + "userconfig.Any";
-    }
+    /** full path (including filename) to user config file */
+	inline const String userConfig() { return userConfigPath.empty() ? "userconfig.Any" : userConfigPath; }
 	
-    /** filename with given path to user status file */
-	String userStatusConfig() {
-		return userConfigPath + "userstatus.Any";
+    /** full path (including filename) to user status file */
+	inline const String userStatusConfig() { return userStatusPath.empty() ? "userstatus.Any" : userStatusPath; }
+
+	/** full path (including filename) to latency logger config file */
+	inline const String latencyLoggerConfig() { return latencyLoggerConfigPath.empty() ? "systemconfig.Any" : latencyLoggerConfigPath; }
+
+	static void checkValidAnyPath(String path) {
+		if (path.empty()) return;		// Allow empty values since these are the defaults
+		// Check for non empty paths having ".any" file extension
+		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any",
+			format("All config files specified in the startup config must end with \".any\"!, check path: \"%s\"!", path));
 	}
 };
 
@@ -301,9 +314,9 @@ public:
 	}
 
 	/** Load a latency logger config from file */
-	static LatencyLoggerConfig load() {
+	static LatencyLoggerConfig load(String filename) {
 		// if file not found, create a default latency logger config
-		if (!FileSystem::exists("systemconfig.Any")) { 
+		if (!FileSystem::exists(filename)) { 
 			return LatencyLoggerConfig();		// Create the default
 		}
 		return Any::fromFile(System::findDataFile("systemconfig.Any"));

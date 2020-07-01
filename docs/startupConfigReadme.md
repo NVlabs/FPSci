@@ -13,6 +13,8 @@ The following fields are valid for a startupconfig.Any file:
 * `windowSize` controls the (default) window size when running in windowed mode (`fullscreen`=`false`) as a `Vector2`. The window can then be resized from this default while running.
 * `experimentConfigPath` sets the path to an [experiment config file](./experimentConfigReadme.md) for futher configuration of an experiment.
 * `userConfigPath` sets the path to a user config file for per user setup.
+* `userStatusPath` sets the path to a user status file for user tracking.
+* `latencyLoggerConfigPath` sets the path to a latency logger config file for controlling the latency logger hardware.
 * `audioEnable` turns on or off audio
 
 ## Sample/Default Values
