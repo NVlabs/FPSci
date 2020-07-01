@@ -2,10 +2,10 @@
 This file describes both the standard and custom key mapping/bindings for the application.
 
 ## Default Mapping
-The default key map for the application is split into 2 modes, "normal" mode (`playMode=true`) and "developer" mode (`playMode=false`). We outline commands for each mode below.
+The default key map for the application is split into 2 modes, "normal" mode (`developerMode=false`) and "developer" mode (`developerMode=true`). We outline commands for each mode below.
 
 ### Normal Mode
-When `playMode=true` the following keys are used:
+When `developerMode=false` the following keys are used:
 
 |Key Name       |Action                         |
 |---------------|-------------------------------|
@@ -21,7 +21,7 @@ When `playMode=true` the following keys are used:
 |`-`            |Quit the application           |
 
 ### Developer Mode
-When `playMode=false` the following keys/actions are available in addition to the "normal" key map above.
+When `developerMode=true` the following keys/actions are available in addition to the "normal" key map above.
 
 | Key Name  |Action                             |
 |-----------|-----------------------------------|
@@ -44,31 +44,31 @@ As an alternative to the standard key mappings provided above the user can chang
 This file associates each of the map names outlined below to an array of `GKey` strings indicating the key(s) that should be mapped to this action.
 
 
-|Action                             |Map Name               |Default Key(s)     |
-|-----------------------------------|-----------------------|-------------------|
-|Move forward                       |`moveForward`          |`["W", "Up"]`      |
-|Strafe left                        |`strafeLeft`           |`["A", "Left"]`    |
-|Move backward                      |`moveBackward`         |`["S", "Down"]`    |
-|Strafe right                       |`strafeRight`          |`["D", "Right"]`   |
-|Crouch                             |`crouch`               |`["L Ctrl"]`       |
-|Jump                               |`jump`                 |`["Spc"]`          |
-|Open in-game menu                  |`openMenu`             |`["Esc","Tab"]`    |
-|Fire the weapon during trial       |`shoot`                |`["L Mouse"]`      |
-|Use a scope                        |`scope`                |`["R Mouse"]`      |
-|Fire the weapon pre-trial          |`dummyShoot`           |`["R Shift"]`      |
-|Quit the application               |`quit`                 |`["-"]`            |
-|Drop a waypoint                    |`dropWaypoint`         |`["Q"]`            |
-|Record player motion as waypoints  |`toggleRecording`      |`["R"]`            |
-|Open the render control window     |`toggleRenderWindow`   |`["1"]`            |
-|Open the player control window     |`togglePlayerWindow`   |`["2"]`            |
-|Open the weapon control window     |`toggleWeaponWindow`   |`["3"]`            |
-|Open the waypoint control window   |`toggleWaypointWindow` |`["4"]`            |
-|Move waypoint up in space          |`moveWaypointUp`       |`["Pg Up"]`        |
-|Move waypoint down in space        |`moveWaypointDown`     |`["Pg Dn"]`        |
-|Move waypoint in in space          |`moveWaypointIn`       |`["Home"]`         |
-|Move waypoint out in space         |`moveWaypointOut`      |`["End"]`          |
-|Move waypoint right in space       |`moveWaypointRight`    |`["Ins"]`          |
-|Move waypoint left in space        |`moveWaypointLeft`     |`["Del"]`          |
+|Action                             |Map Name               |Default Key(s)         |
+|-----------------------------------|-----------------------|-----------------------|
+|Move forward                       |`moveForward`          |`["W", "Up"]`          |
+|Strafe left                        |`strafeLeft`           |`["A", "Left"]`        |
+|Move backward                      |`moveBackward`         |`["S", "Down"]`        |
+|Strafe right                       |`strafeRight`          |`["D", "Right"]`       |
+|Crouch                             |`crouch`               |`["L Ctrl"]`           |
+|Jump                               |`jump`                 |`["Spc"]`              |
+|Open in-game menu                  |`openMenu`             |`["Esc"]`              |
+|Fire the weapon during trial       |`shoot`                |`["L Mouse"]`          |
+|Use a scope                        |`scope`                |`["R Mouse"]`          |
+|Fire the weapon pre-trial          |`dummyShoot`           |`["R Shift"]`          |
+|Quit the application               |`quit`                 |`["Keypad -", "Pause"]`|
+|Drop a waypoint                    |`dropWaypoint`         |`["Q"]`                |
+|Record player motion as waypoints  |`toggleRecording`      |`["R"]`                |
+|Open the render control window     |`toggleRenderWindow`   |`["1"]`                |
+|Open the player control window     |`togglePlayerWindow`   |`["2"]`                |
+|Open the weapon control window     |`toggleWeaponWindow`   |`["3"]`                |
+|Open the waypoint control window   |`toggleWaypointWindow` |`["4"]`                |
+|Move waypoint up in space          |`moveWaypointUp`       |`["Pg Up"]`            |
+|Move waypoint down in space        |`moveWaypointDown`     |`["Pg Dn"]`            |
+|Move waypoint in in space          |`moveWaypointIn`       |`["Home"]`             |
+|Move waypoint out in space         |`moveWaypointOut`      |`["End"]`              |
+|Move waypoint right in space       |`moveWaypointRight`    |`["Ins"]`              |
+|Move waypoint left in space        |`moveWaypointLeft`     |`["Del"]`              |
 
 ### GKey Strings
 The table below provides some useful macros for mapping `String` --> `GKey`. Whenever you are referring to a "normal" character key, be sure to use upper case letters!
