@@ -82,7 +82,7 @@ public:
 	static String formatDirPath(String path) {
 		String fpath = path;
 		// Add a trailing slash to the directory name if missing
-		if (path.substr(path.length() - 1) != "/") {
+		if (!path.empty() && path.substr(path.length() - 1) != "/") {
 			fpath = path + "/";
 		}
 		return fpath;
