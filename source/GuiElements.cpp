@@ -364,18 +364,22 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 
 	// Experiment Settings Pane
 	m_ddCurrUserIdx = m_users.getUserIndex(m_userStatus.currentUser);
-	if (config.showExperimentSettings) {
-		m_expPane = m_parent->addPane("Experiment Settings");
-		m_expPane->setCaptionHeight(40);
-		m_expPane->beginRow(); {
-			m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
-			m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
-		} m_expPane->endRow();
-		m_expPane->beginRow(); {
-			m_sessDropDown = m_expPane->addDropDownList("Session", Array<String>({}), &m_ddCurrSessIdx);
-			updateSessionDropDown();
-			m_expPane->addButton("Select Session", this, &UserMenu::updateSessionPress);
-		} m_expPane->endRow();
+	m_expPane = m_parent->addPane("Experiment Settings");
+	m_expPane->setCaptionHeight(40);
+	m_expPane->beginRow(); {
+		m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
+		m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
+	} m_expPane->endRow();
+	m_expPane->beginRow(); {
+		m_sessDropDown = m_expPane->addDropDownList("Session", Array<String>({}), &m_ddCurrSessIdx);
+		updateSessionDropDown();
+		m_expPane->addButton("Select Session", this, &UserMenu::updateSessionPress);
+	} m_expPane->endRow();
+
+	// Hide the experiment settings if not requested to be drawn
+	if (!config.showExperimentSettings) { 
+		m_expPane->setVisible(false);
+		m_expPane->setHeight(0.f);
 	}
 
 	// User Settings Pane
