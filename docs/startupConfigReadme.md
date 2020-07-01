@@ -19,11 +19,12 @@ The following fields are valid for a startupconfig.Any file:
 ## Sample/Default Values
 The default `startup.Any` file is included below (as an example):
 ```
-"developerMode" = false;            // Set this to true to enable developer mode (extra windows)
-"waypointEditorMode" = false;       // Set this to true to enable waypoint editor mode (target path creation)
-"fullscreen" = true;                // Set this to false to run in windowed mode
-"windowSize" = Vector2(1920, 980);  // This sets the default window size (when running with fullscreen = false)
-"experimentConfigPath" = "";        // Leave this empty for default "experimentconfig.Any"
-"userConfigPath" = "";              // Leave this empty for default "userconfig.Any"
-"audioEnable" = true;               // Set false to turn off audio
+developerMode = false;            // Set this to true to enable developer mode (extra windows)
+waypointEditorMode = false;       // Set this to true to enable waypoint editor mode (target path creation)
+fullscreen = true;                // Set this to false to run in windowed mode
+windowSize = Vector2(1920, 980);  // This sets the default window size (when running with fullscreen = false)
+experimentConfigPath = "";        // Leave this empty for default "experimentconfig.Any"
+userConfigPath = "";              // Leave this empty for default "userconfig.Any"
+resultsDirPath = "./results/";    // Change to save results somewhere else
+audioEnable = true;               // Set false to turn off audio
 ```
