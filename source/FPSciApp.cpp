@@ -453,7 +453,9 @@ void FPSciApp::updateSession(const String& id) {
 
 	// Check for need to start latency logging and if so run the logger now
 	const String resultsDir = startupConfig.resultsDirPath.empty() ? "../results/" : startupConfig.resultsDirPath;
-	if (!FileSystem::isDirectory(resultsDir)) { FileSystem::createDirectory(resultsDir); }
+	if (!FileSystem::isDirectory(resultsDir)) {
+		FileSystem::createDirectory(resultsDir); 
+	}
 	const String logName = resultsDir + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
 	if (latencyLoggerConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
