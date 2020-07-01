@@ -236,7 +236,6 @@ void FPSciApp::updateControls(bool firstSession) {
 void FPSciApp::makeGUI() {
 	debugWindow->setVisible(startupConfig.developerMode);
 	developerWindow->setVisible(startupConfig.developerMode);
-	developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
 	developerWindow->cameraControlWindow->setVisible(startupConfig.developerMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
 	developerWindow->videoRecordDialog->setCaptureGui(true);
@@ -247,6 +246,7 @@ void FPSciApp::makeGUI() {
 	removeWidget(developerWindow->sceneEditorWindow);
 	developerWindow->sceneEditorWindow = SceneEditorWindow::create(this, scene(), theme);
 	developerWindow->sceneEditorWindow->moveTo(developerWindow->cameraControlWindow->rect().x0y1() + Vector2(0, 15));
+	developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
 
 	// Open sub-window buttons here (menu-style)
 	debugPane->beginRow(); {
