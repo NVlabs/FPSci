@@ -59,7 +59,7 @@ public:
 		if(forceAll || def.fullscreen != fullscreen)						a["fullscreen"] = fullscreen;
         if(forceAll || def.experimentConfigPath != experimentConfigPath)	a["experimentConfigPath"] = experimentConfigPath;
         if(forceAll || def.userConfigPath != userConfigPath)				a["userConfigPath"] = userConfigPath;
-		if(forceAll || def.resultsDirPath != resultsDirPath)				a["resultsPath"] = resultsDirPath;
+		if(forceAll || def.resultsDirPath != resultsDirPath)				a["resultsDirPath"] = resultsDirPath;
         if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
         return a;
     }
