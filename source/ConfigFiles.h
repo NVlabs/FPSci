@@ -21,6 +21,7 @@ public:
 	Vector2 windowSize = { 1920, 980 };			///< Window size (when not run in fullscreen)
     String	experimentConfigPath = "";			///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
     String	userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
+    String	resultsDirPath = "./results/";		///< Optional path to the results directory
     bool	audioEnable = true;					///< Audio on/off
 
     StartupConfig() {};
@@ -39,6 +40,8 @@ public:
 			reader.getIfPresent("windowSize", windowSize);
             reader.getIfPresent("experimentConfigPath", experimentConfigPath);
             reader.getIfPresent("userConfigPath", userConfigPath);
+			reader.getIfPresent("resultsDirPath", resultsDirPath);
+			resultsDirPath = formatDirPath(resultsDirPath);
             reader.getIfPresent("audioEnable", audioEnable);
             break;
         default:
@@ -56,6 +59,7 @@ public:
 		if(forceAll || def.fullscreen != fullscreen)						a["fullscreen"] = fullscreen;
         if(forceAll || def.experimentConfigPath != experimentConfigPath)	a["experimentConfigPath"] = experimentConfigPath;
         if(forceAll || def.userConfigPath != userConfigPath)				a["userConfigPath"] = userConfigPath;
+		if(forceAll || def.resultsDirPath != resultsDirPath)				a["resultsDirPath"] = resultsDirPath;
         if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
         return a;
     }
@@ -73,6 +77,15 @@ public:
     /** filename with given path to user status file */
 	String userStatusConfig() {
 		return userConfigPath + "userstatus.Any";
+	}
+
+	static String formatDirPath(String path) {
+		String fpath = path;
+		// Add a trailing slash to the directory name if missing
+		if (!path.empty() && path.substr(path.length() - 1) != "/") {
+			fpath = path + "/";
+		}
+		return fpath;
 	}
 };
 
