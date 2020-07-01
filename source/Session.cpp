@@ -510,7 +510,7 @@ String Session::formatFeedback(const String& input) {
 	// Walk through the string looking for instances of the delimiter
 	while ((foundIdx = (int)formatted.find(delimiter, (size_t)foundIdx)) > -1) {
 		if(!formatted.compare(foundIdx, totalTimeLeftS.length(), totalTimeLeftS)){
-			formatted = formatted.substr(0, foundIdx) + format("%d", int(m_totalRemainingTime)) + formatted.substr(foundIdx + totalTimeLeftS.length());
+			formatted = formatted.substr(0, foundIdx) + format("%.2f", m_totalRemainingTime) + formatted.substr(foundIdx + totalTimeLeftS.length());
 		}
 		else if (!formatted.compare(foundIdx, lastBlock.length(), lastBlock)) {
 			formatted = formatted.substr(0, foundIdx) + format("%d", m_currBlock - 1) + formatted.substr(foundIdx + lastBlock.length());
@@ -528,11 +528,17 @@ String Session::formatFeedback(const String& input) {
 			formatted = formatted.substr(0, foundIdx) + format("%d", m_destroyedTargets) + formatted.substr(foundIdx + trialTargetsDestroyed.length());
 		}
 		else if (!formatted.compare(foundIdx, trialTotalTargets.length(), trialTotalTargets)) {
-			formatted = formatted.substr(0, foundIdx);
+			String totalTargetsString;
 			int totalTargets = totalTrialTargets();
-			if (totalTargets > 0) { formatted += format("%d", totalTargets); }		// Finite target count
-			else { formatted += "infinite"; }										// Inifinite target count case
-			formatted += formatted.substr(foundIdx + trialTotalTargets.length());
+			if (totalTargets > 0) {
+				// Finite target count
+				totalTargetsString += format("%d", totalTargets);
+			}
+			else { 
+				// Inifinite target count case
+				totalTargetsString += "infinite";
+			}
+			formatted = formatted.substr(0, foundIdx) + totalTargetsString + formatted.substr(foundIdx + trialTotalTargets.length());
 		}
 		else if (!formatted.compare(foundIdx, trialShotsHit.length(), trialShotsHit)) {
 			formatted = formatted.substr(0, foundIdx) + format("%d", m_hitCount) + formatted.substr(foundIdx + trialShotsHit.length());
@@ -541,7 +547,8 @@ String Session::formatFeedback(const String& input) {
 			formatted = formatted.substr(0, foundIdx) + format("%d", m_shotCount) + formatted.substr(foundIdx + trialTotalShots.length());
 		}
 		else {
-			foundIdx++;		// Bump the found index past this character (not a valid substring)
+			// Bump the found index past this character (not a valid substring)
+			foundIdx++;
 		}
 	}
 	return formatted;
