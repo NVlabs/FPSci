@@ -72,9 +72,7 @@ void Session::onInit(String filename, String description) {
 	// Initialize presentation states
 	presentationState = PresentationState::initial;
 	if (m_config) {
-		m_feedbackMessage = m_config->targetView.showRefTarget ?
-			"Click to spawn a target, then use shift on red target to begin." :
-			"Click to start the session!";
+		m_feedbackMessage = formatFeedback(m_config->targetView.showRefTarget ? m_config->feedback.initialWithRef: m_config->feedback.initialNoRef);
 	}
 
 	// Get the player from the app
@@ -174,42 +172,34 @@ void Session::initTargetAnimation() {
 		);
 	}
 
-	// Reset number of destroyed targets
+	// Reset number of destroyed targets (in the trial)
 	m_destroyedTargets = 0;
-	// reset click counter
-	m_clickCount = 0;
+	// Reset shot and hit counters (in the trial)
+	m_shotCount = 0;
+	m_hitCount = 0;
 }
 
 void Session::processResponse()
 {
 	m_taskExecutionTime = m_timer.getTime();
-	// Get total target count here
-	int totalTargets = 0;
-	for (shared_ptr<TargetConfig> target : m_targetConfigs[m_currTrialIdx]) {
-		if (target->respawnCount == -1) {
-			totalTargets = -1;		// Ininite spawn case
-			break;
-		}
-		else {
-			totalTargets += (target->respawnCount+1);
-		}
-	}
-	
-	recordTrialResponse(m_destroyedTargets, totalTargets); // NOTE: we need record response first before processing it with PsychHelper.
+
+	const int totalTargets = totalTrialTargets();
+	// Record the trial response into the database
+	recordTrialResponse(m_destroyedTargets, totalTargets); 
 	if (m_remainingTrials[m_currTrialIdx] > 0) {
 		m_remainingTrials[m_currTrialIdx] -= 1;
 	}
 
 	// Check for whether all targets have been destroyed
-	if (m_remainingTargets == 0) {
+	if (m_destroyedTargets == totalTargets) {
 		m_totalRemainingTime += (double(m_config->timing.taskDuration) - m_taskExecutionTime);
 		if (m_config->description == "training") {
-			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
+			m_feedbackMessage = formatFeedback(m_config->feedback.trialSuccess);
 		}
 	}
 	else {
 		if (m_config->description == "training") {
-			m_feedbackMessage = "Failure!";
+			m_feedbackMessage = formatFeedback(m_config->feedback.trialFailure);
 		}
 	}
 }
@@ -249,7 +239,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::task)
 	{
-		if ((stateElapsedTime > m_config->timing.taskDuration) || (remainingTargets <= 0) || (m_clickCount == m_config->weapon.maxAmmo))
+		if ((stateElapsedTime > m_config->timing.taskDuration) || (remainingTargets <= 0) || (m_shotCount == m_config->weapon.maxAmmo))
 		{
 			m_taskEndTime = FPSciLogger::genUniqueTimestamp();
 			processResponse();
@@ -302,14 +292,13 @@ void Session::updatePresentationState()
 						}
 						m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
 
-						int score = int(m_totalRemainingTime);
-						m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
+						m_feedbackMessage = formatFeedback(m_config->feedback.sessComplete);						// Update the feedback message
 						m_currQuestionIdx = -1;
 						newState = PresentationState::scoreboard;
 					}
 				}
 				else {					// Block is complete but session isn't
-					m_feedbackMessage = format("Block %d complete! Starting block %d.", m_currBlock - 1, m_currBlock);
+					m_feedbackMessage = formatFeedback(m_config->feedback.blockComplete);
 					updateBlock();
 					newState = PresentationState::initial;
 				}
@@ -335,14 +324,14 @@ void Session::updatePresentationState()
 
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
-					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
+					m_feedbackMessage = formatFeedback(m_config->feedback.allSessComplete); // Update the feedback message
 					moveOn = false;
 					if (m_app->experimentConfig.closeOnComplete || m_config->closeOnComplete) {
 						m_app->quitRequest();
 					}
 				}
 				else {
-					m_feedbackMessage = "Session Complete!"; // Update the feedback message
+					m_feedbackMessage = formatFeedback(m_config->feedback.sessComplete);	// Update the feedback message
 					if (m_config->closeOnComplete) {
 						m_app->quitRequest();
 					}
@@ -357,7 +346,7 @@ void Session::updatePresentationState()
 		else {
 			// Go ahead and move to the complete state since there aren't any valid sessions
 			newState = PresentationState::complete;
-			m_feedbackMessage = "All Sessions Complete!";
+			m_feedbackMessage = formatFeedback(m_config->feedback.allSessComplete);
 			moveOn = false;
 		}
 	}
@@ -446,6 +435,9 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 		m_logger->logPlayerAction(pa);
 		END_PROFILER_EVENT();
 	}
+	
+	// Count hits here
+	if (action == PlayerActionType::Hit || action == PlayerActionType::Destroy) { m_hitCount++; }
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
@@ -474,7 +466,7 @@ float Session::weaponCooldownPercent() const {
 
 int Session::remainingAmmo() const {
 	if (isNull(m_config)) return 100;
-	return m_config->weapon.maxAmmo - m_clickCount;
+	return m_config->weapon.maxAmmo - m_shotCount;
 }
 
 
@@ -497,6 +489,69 @@ float Session::getProgress() {
 
 int Session::getScore() {
 	return (int)(10.0 * m_totalRemainingTime);
+}
+
+String Session::formatFeedback(const String& input) {
+	const char delimiter = '%';			///< Start of all valid substrings
+	String formatted = input;			///< Output string
+	int foundIdx = 0;					///< Index for searching for substrings
+
+	// Substrings for replacement
+	const String totalTimeLeftS			= "%totalTimeLeftS";				///< Sum of time remaining over all completed trials
+	const String lastBlock				= "%lastBlock";						///< The last (completed) block in this session
+	const String currBlock				= "%currBlock";						///< The current block of the session (next block at end of session)
+	const String totalBlocks			= "%totalBlocks";					///< The total blocks specified in the session
+	const String trialTaskTimeMs		= "%trialTaskTimeMs";				///< The time spent in the task state of this trial (in ms)
+	const String trialTargetsDestroyed	= "%trialTargetsDestroyed";			///< The number of targets destroyed in this trial
+	const String trialTotalTargets		= "%trialTotalTargets";				///< The number of targets in this trial ("infinite" if any target respawns infinitely)
+	const String trialShotsHit			= "%trialShotsHit";					///< The number of shots hit in this trial
+	const String trialTotalShots		= "%trialTotalShots";				///< The number of shots taken in this trial
+
+	// Walk through the string looking for instances of the delimiter
+	while ((foundIdx = (int)formatted.find(delimiter, (size_t)foundIdx)) > -1) {
+		if(!formatted.compare(foundIdx, totalTimeLeftS.length(), totalTimeLeftS)){
+			formatted = formatted.substr(0, foundIdx) + format("%.2f", m_totalRemainingTime) + formatted.substr(foundIdx + totalTimeLeftS.length());
+		}
+		else if (!formatted.compare(foundIdx, lastBlock.length(), lastBlock)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_currBlock - 1) + formatted.substr(foundIdx + lastBlock.length());
+		}
+		else if (!formatted.compare(foundIdx, currBlock.length(), currBlock)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_currBlock) + formatted.substr(foundIdx + currBlock.length());
+		}
+		else if (!formatted.compare(foundIdx, totalBlocks.length(), totalBlocks)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_config->blockCount) + formatted.substr(foundIdx + totalBlocks.length());
+		}
+		else if (!formatted.compare(foundIdx, trialTaskTimeMs.length(), trialTaskTimeMs)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", (int)(m_taskExecutionTime * 1000)) + formatted.substr(foundIdx + trialTaskTimeMs.length());
+		}
+		else if (!formatted.compare(foundIdx, trialTargetsDestroyed.length(), trialTargetsDestroyed)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_destroyedTargets) + formatted.substr(foundIdx + trialTargetsDestroyed.length());
+		}
+		else if (!formatted.compare(foundIdx, trialTotalTargets.length(), trialTotalTargets)) {
+			String totalTargetsString;
+			int totalTargets = totalTrialTargets();
+			if (totalTargets > 0) {
+				// Finite target count
+				totalTargetsString += format("%d", totalTargets);
+			}
+			else { 
+				// Inifinite target count case
+				totalTargetsString += "infinite";
+			}
+			formatted = formatted.substr(0, foundIdx) + totalTargetsString + formatted.substr(foundIdx + trialTotalTargets.length());
+		}
+		else if (!formatted.compare(foundIdx, trialShotsHit.length(), trialShotsHit)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_hitCount) + formatted.substr(foundIdx + trialShotsHit.length());
+		}
+		else if (!formatted.compare(foundIdx, trialTotalShots.length(), trialTotalShots)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_shotCount) + formatted.substr(foundIdx + trialTotalShots.length());
+		}
+		else {
+			// Bump the found index past this character (not a valid substring)
+			foundIdx++;
+		}
+	}
+	return formatted;
 }
 
 String Session::getFeedbackMessage() {
