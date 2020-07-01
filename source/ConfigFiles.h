@@ -21,7 +21,7 @@ public:
 	Vector2 windowSize = { 1920, 980 };			///< Window size (when not run in fullscreen)
     String	experimentConfigPath = "";			///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
     String	userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
-    String	resultsDirPath = "";				///< Optional path to the results directory (defaults to "../results" if empty)
+    String	resultsDirPath = "./results/";		///< Optional path to the results directory
     bool	audioEnable = true;					///< Audio on/off
 
     StartupConfig() {};
