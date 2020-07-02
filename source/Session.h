@@ -312,7 +312,8 @@ public:
 	int remainingAmmo() const;
 
 	bool blockComplete() const;
-	void nextCondition();
+	bool nextCondition();
+	bool hasNextCondition() const;
 
 	void endLogging();
 
@@ -357,7 +358,7 @@ public:
 	bool updateBlock(bool updateTargets = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
-	enum PresentationState presentationState;			///< Current presentation state
+	enum PresentationState currentState;			///< Current presentation state
 
 	/** result recording */
 	void countShot() { m_shotCount++; }

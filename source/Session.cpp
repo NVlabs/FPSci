@@ -32,16 +32,24 @@
 #include "PlayerEntity.h"
 #include "Dialogs.h"
 
-void Session::nextCondition() {
+bool Session::hasNextCondition() const{
+	for (int count : m_remainingTrials) {
+		if (count > 0) return true;
+	}
+	return false;
+}
+
+bool Session::nextCondition() {
 	Array<int> unrunTrialIdxs;
 	for (int i = 0; i < m_remainingTrials.size(); i++) {
 		if (m_remainingTrials[i] > 0 || m_remainingTrials[i] == -1) {
 			unrunTrialIdxs.append(i);
 		}
 	}
-	if (unrunTrialIdxs.size() == 0) return;
+	if (unrunTrialIdxs.size() == 0) return false;
 	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
 	m_currTrialIdx = unrunTrialIdxs[idx];
+	return true;
 }
 
 bool Session::blockComplete() const{
@@ -64,13 +72,12 @@ bool Session::updateBlock(bool updateTargets) {
 		m_remainingTrials.append(m_config->trials[i].count);
 		m_targetConfigs.append(targets);
 	}
-	nextCondition();
-	return true;
+	return nextCondition();
 }
 
 void Session::onInit(String filename, String description) {
 	// Initialize presentation states
-	presentationState = PresentationState::initial;
+	currentState = PresentationState::initial;
 	if (m_config) {
 		m_feedbackMessage = formatFeedback(m_config->targetView.showRefTarget ? m_config->feedback.initialWithRef: m_config->feedback.initialNoRef);
 	}
@@ -101,7 +108,7 @@ void Session::onInit(String filename, String description) {
 		updateBlock(true);
 	}
 	else {	// Invalid session, move to displaying message
-		presentationState = PresentationState::scoreboard;
+		currentState = PresentationState::scoreboard;
 	}
 }
 
@@ -130,7 +137,7 @@ void Session::initTargetAnimation() {
 	const Point3 initialSpawnPos = m_player->getCameraFrame().translation;
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
-	if (presentationState == PresentationState::task) {
+	if (currentState == PresentationState::task) {
 		if (m_config->targetView.previewWithRef) {
 			// Activate the preview targets
 			const Color3 activeColor = m_config->targetView.healthColors[0];
@@ -229,7 +236,6 @@ void Session::processResponse()
 void Session::updatePresentationState()
 {
 	// This updates presentation state and also deals with data collection when each trial ends.
-	PresentationState currentState = presentationState;
 	PresentationState newState;
 	int remainingTargets = hittableTargets().size();
 	float stateElapsedTime = m_timer.getTime();
@@ -383,9 +389,9 @@ void Session::updatePresentationState()
 		if (newState == PresentationState::task) {
 			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
 		}
-		presentationState = newState;
+		currentState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
-		if ((newState == PresentationState::task) || (newState == PresentationState::feedback && m_config->targetView.showRefTarget)) {
+		if ((newState == PresentationState::task) || (newState == PresentationState::feedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
 			initTargetAnimation();
 		}
 	}
@@ -397,7 +403,7 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	updatePresentationState();
 
 	// 2. Record target trajectories, view direction trajectories, and mouse motion.
-	if (presentationState == PresentationState::task)
+	if (currentState == PresentationState::task)
 	{
 		accumulateTrajectories();
 		accumulateFrameInfo(rdt, sdt, idt);
