@@ -304,6 +304,7 @@ public:
 
 	void randomizePosition(const shared_ptr<TargetEntity>& target) const;
 	void initTargetAnimation();
+	void spawnTrialTargets(Point3 initialSpawnPos, bool previewMode = false);
 	float weaponCooldownPercent() const;
 	RealTime lastFireTime() const {
 		return m_lastFireAt;
@@ -363,5 +364,25 @@ public:
 
 	const Array<shared_ptr<TargetEntity>>& targetArray() const {
 		return m_targetArray;
+	}
+
+	const Array<shared_ptr<TargetEntity>> hittableTargets() const {
+		Array<shared_ptr<TargetEntity>> hittable;
+		for (shared_ptr<TargetEntity> target: m_targetArray) {
+			if (target->canHit()) {
+				hittable.append(target);
+			}
+		}
+		return hittable;
+	}
+
+	const Array<shared_ptr<TargetEntity>> unhittableTargets() const {
+		Array<shared_ptr<TargetEntity>> unhittable;
+		for (shared_ptr<TargetEntity> target : m_targetArray) {
+			if (!target->canHit()) {
+				unhittable.append(target);
+			}
+		}
+		return unhittable;
 	}
 };

@@ -1205,11 +1205,12 @@ void FPSciApp::onUserInput(UserInput* ui) {
 						sess->countShot();						// Count shots
 						Array<shared_ptr<Entity>> dontHit;
 						dontHit.append(m_explosions);
+						dontHit.append(sess->unhittableTargets());
 						Model::HitInfo info;
 						float hitDist = finf();
 						int hitIdx = -1;
 
-						shared_ptr<TargetEntity> target = m_weapon->fire(sess->targetArray(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
+						shared_ptr<TargetEntity> target = m_weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
 						if (isNull(target)) // Miss case
 						{
 							// Play scene hit sound
@@ -1247,10 +1248,11 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		if (ui->keyPressed(dummyShoot) && (sess->presentationState == PresentationState::feedback)) {
 			Array<shared_ptr<Entity>> dontHit;
 			dontHit.append(m_explosions);
+			dontHit.append(sess->unhittableTargets());
 			Model::HitInfo info;
 			float hitDist = finf();
 			int hitIdx = -1;
-			shared_ptr<TargetEntity> target = m_weapon->fire(sess->targetArray(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
+			shared_ptr<TargetEntity> target = m_weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
 		}
 	}
 

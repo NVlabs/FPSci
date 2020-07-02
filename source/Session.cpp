@@ -128,41 +128,23 @@ void Session::initTargetAnimation() {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
 	const Point3 initialSpawnPos = m_player->getCameraFrame().translation;
-	CFrame f = CFrame::fromXYZYPRRadians(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians, 0.0f, 0.0f);
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (presentationState == PresentationState::task) {
-		// Iterate through the targets
-		for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
-			
-			const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, m_targetConfigs[m_currTrialIdx][i]->id, i);
-			const Color3 initColor = m_config->targetView.healthColors[0];
-			shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
-
-			const float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
-			const float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
-			const float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
-			bool isWorldSpace = target->destSpace == "world";
-
-			CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw- (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
-
-			// Check for case w/ destination array
-			if (target->destinations.size() > 0) {
-				Point3 offset =isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<TargetEntity> t = spawnDestTarget(target, offset, initColor, i, name);
+		if (m_config->targetView.previewWithRef) {
+			// Activate the preview targets
+			const Color3 activeColor = m_config->targetView.healthColors[0];
+			for (shared_ptr<TargetEntity> target : m_targetArray) {
+				target->setCanHit(true);
+				target->setColor(activeColor);
 			}
-			// Otherwise check if this is a jumping target
-			else if (target->jumpEnabled) {
-				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<JumpingEntity> t = spawnJumpingTarget(target, offset, initialSpawnPos, initColor, m_targetDistance, i, name);
-			}
-			else {
-				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<FlyingEntity> t = spawnFlyingTarget(target, offset, initialSpawnPos, initColor, i, name);
-			}
+		}
+		else {
+			spawnTrialTargets(initialSpawnPos);			// Spawn all the targets normally
 		}
 	}
 	else {
+		CFrame f = CFrame::fromXYZYPRRadians(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians, 0.0f, 0.0f);
 		// Make sure we reset the target color here (avoid color bugs)
 		spawnReferenceTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
@@ -170,6 +152,10 @@ void Session::initTargetAnimation() {
 			m_config->targetView.refTargetSize,
 			m_config->targetView.refTargetColor
 		);
+
+		if (m_config->targetView.previewWithRef) {
+			spawnTrialTargets(initialSpawnPos, true);		// Spawn all the targets in preview mode
+		}
 	}
 
 	// Reset number of destroyed targets (in the trial)
@@ -177,6 +163,42 @@ void Session::initTargetAnimation() {
 	// Reset shot and hit counters (in the trial)
 	m_shotCount = 0;
 	m_hitCount = 0;
+}
+
+void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
+	// Iterate through the targets
+	for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
+
+		const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, m_targetConfigs[m_currTrialIdx][i]->id, i);
+		const Color3 spawnColor = previewMode ? m_config->targetView.previewColor : m_config->targetView.healthColors[0];
+		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
+
+		const float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
+		const float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
+		const float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
+		bool isWorldSpace = target->destSpace == "world";
+
+		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw - (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
+
+		// Check for case w/ destination array
+		shared_ptr<TargetEntity> t;
+		if (target->destinations.size() > 0) {
+			Point3 offset = isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			t = spawnDestTarget(target, offset, spawnColor, i, name);
+		}
+		// Otherwise check if this is a jumping target
+		else if (target->jumpEnabled) {
+			Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			t = spawnJumpingTarget(target, offset, initialSpawnPos, spawnColor, m_targetDistance, i, name);
+		}
+		else {
+			Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			t = spawnFlyingTarget(target, offset, initialSpawnPos, spawnColor, i, name);
+		}
+
+		// Set whether the target can be hit based on whether we are in preview mode
+		t->setCanHit(!previewMode);
+	}
 }
 
 void Session::processResponse()
@@ -209,7 +231,7 @@ void Session::updatePresentationState()
 	// This updates presentation state and also deals with data collection when each trial ends.
 	PresentationState currentState = presentationState;
 	PresentationState newState;
-	int remainingTargets = m_targetArray.size();
+	int remainingTargets = hittableTargets().size();
 	float stateElapsedTime = m_timer.getTime();
 	newState = currentState;
 
