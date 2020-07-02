@@ -193,14 +193,10 @@ void Session::processResponse()
 	// Check for whether all targets have been destroyed
 	if (m_destroyedTargets == totalTargets) {
 		m_totalRemainingTime += (double(m_config->timing.taskDuration) - m_taskExecutionTime);
-		if (m_config->description == "training") {
-			m_feedbackMessage = formatFeedback(m_config->feedback.trialSuccess);
-		}
+		m_feedbackMessage = formatFeedback(m_config->feedback.trialSuccess);
 	}
 	else {
-		if (m_config->description == "training") {
-			m_feedbackMessage = formatFeedback(m_config->feedback.trialFailure);
-		}
+		m_feedbackMessage = formatFeedback(m_config->feedback.trialFailure);
 	}
 }
 
