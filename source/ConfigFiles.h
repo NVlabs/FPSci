@@ -23,8 +23,8 @@ public:
     String	userConfigPath;						///< Optional path to a user config file (if empty assumes "./userconfig.Any" will be this file)
 	String  userStatusPath;						///< Optional path to a user status file (if empty assumes "./userstatus.Any" will be this file)
 	String  latencyLoggerConfigPath;			///< Optional path to a latency logger config file (if empty assumes "./systemconfig.Any" will be this file)
+    String	resultsDirPath = "./results/";		///< Optional path to the results directory
 	bool	audioEnable = true;					///< Audio on/off
-
     StartupConfig() {};
 
 	/** Construct from any here */
@@ -47,6 +47,8 @@ public:
 			checkValidAnyPath(userConfigPath);
 			checkValidAnyPath(userStatusPath);
 			checkValidAnyPath(latencyLoggerConfigPath);
+			reader.getIfPresent("resultsDirPath", resultsDirPath);
+			resultsDirPath = formatDirPath(resultsDirPath);
             reader.getIfPresent("audioEnable", audioEnable);
             break;
         default:
@@ -65,6 +67,7 @@ public:
         if(forceAll || def.experimentConfigPath != experimentConfigPath)	a["experimentConfigPath"] = experimentConfigPath;
         if(forceAll || def.userConfigPath != userConfigPath)				a["userConfigPath"] = userConfigPath;
 		if(forceAll || def.userStatusPath != userStatusPath)				a["userStatusPath"] = userStatusPath;
+		if(forceAll || def.resultsDirPath != resultsDirPath)				a["resultsDirPath"] = resultsDirPath;
         if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
         return a;
     }
@@ -86,6 +89,15 @@ public:
 		// Check for non empty paths having ".any" file extension
 		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any",
 			format("All config files specified in the startup config must end with \".any\"!, check path: \"%s\"!", path));
+	}
+
+	static String formatDirPath(String path) {
+		String fpath = path;
+		// Add a trailing slash to the directory name if missing
+		if (!path.empty() && path.substr(path.length() - 1) != "/") {
+			fpath = path + "/";
+		}
+		return fpath;
 	}
 };
 

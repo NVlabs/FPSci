@@ -41,11 +41,6 @@ void FPSciLogger::createResultsFile(const String& filename,
 	const shared_ptr<SessionConfig>& sessConfig, 
 	const String& description)
 {
-	// generate folder result_data if it does not exist.
-	if (!FileSystem::isDirectory(String("../results"))) {
-		FileSystem::createDirectory(String("../results"));
-	}
-
 	// create a unique file name (can bring this back if desired)
 	String timeStr = genUniqueTimestamp();
 
