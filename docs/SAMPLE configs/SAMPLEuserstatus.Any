@@ -1,52 +1,51 @@
 
 {
-    settingsVersion : 1,
   // Create a user table with information about session ordering and completed sessions
   users: [
     {
-      "id": "JC",
-      "sessions": ["s11-training", "s11-real", "s2-training", "s2-real", "s7-training", "s7-real", "s10-training", "s10-real", "s1-training", "s1-real", "s8-training", "s8-real", "s9-training", "s9-real", "s3-training", "s3-real", "s6-training", "s6-real", "s5-training", "s5-real", "s12-training", "s12-real", "s4-training", "s4-real", ],
-      "completedSessions": []
+      id = "JC",
+      sessions = ["s2-training", "s2-real", "s1-training", "s1-real", "s3-training", "s3-real", "s4-training", "s4-real", ],
+      completedSessions = []
     },
     {
-      "id": "JongK",
-      "sessions": ["s12-training", "s12-real", "s3-training", "s3-real", "s9-training", "s9-real", "s11-training", "s11-real", "s5-training", "s5-real", "s1-training", "s1-real", "s7-training", "s7-real", "s4-training", "s4-real", "s8-training", "s8-real", "s2-training", "s2-real", "s10-training", "s10-real", "s6-training", "s6-real", ],
-      "completedSessions": []
+      id = "JongK",
+      sessions = ["s3-training", "s3-real", "s1-training", "s1-real", "s4-training", "s4-real", "s2-training", "s2-real", ],
+      completedSessions = []
     },
     {
-      "id": "LN",
-      "sessions": ["s3-training", "s3-real", "s9-training", "s9-real", "s8-training", "s8-real", "s10-training", "s10-real", "s2-training", "s2-real", "s6-training", "s6-real", "s1-training", "s1-real", "s11-training", "s11-real", "s7-training", "s7-real", "s4-training", "s4-real", "s5-training", "s5-real", "s12-training", "s12-real", ],
-      "completedSessions": []
+      id = "LN",
+      sessions = ["s3-training", "s3-real", "s2-training", "s2-real", "s1-training", "s1-real", "s4-training", "s4-real", ],
+      completedSessions = []
     },
     {
-      "id": "MB",
-      "sessions": ["s8-training", "s8-real", "s3-training", "s3-real", "s10-training", "s10-real", "s5-training", "s5-real", "s9-training", "s9-real", "s2-training", "s2-real", "s4-training", "s4-real", "s1-training", "s1-real", "s6-training", "s6-real", "s12-training", "s12-real", "s11-training", "s11-real", "s7-training", "s7-real", ],
-      "completedSessions": []
+      id = "MB",
+      sessions = ["s3-training", "s3-real", "s2-training", "s2-real", "s4-training", "s4-real", "s1-training", "s1-real", ],
+      completedSessions = []
     },
     {
-      "id": "JA",
-      "sessions": ["s1-training", "s1-real", "s5-training", "s5-real", "s9-training", "s9-real", "s4-training", "s4-real", "s12-training", "s12-real", "s10-training", "s10-real", "s7-training", "s7-real", "s8-training", "s8-real", "s11-training", "s11-real", "s6-training", "s6-real", "s3-training", "s3-real", "s2-training", "s2-real", ],
-      "completedSessions": []
+      id = "JA",
+      sessions = ["s1-training", "s1-real", "s4-training", "s4-real", "s3-training", "s3-real", "s2-training", "s2-real", ],
+      completedSessions = []
     },
     {
-      "id": "DM",
-      "sessions": ["s4-training", "s4-real", "s2-training", "s2-real", "s6-training", "s6-real", "s7-training", "s7-real", "s11-training", "s11-real", "s10-training", "s10-real", "s3-training", "s3-real", "s9-training", "s9-real", "s5-training", "s5-real", "s12-training", "s12-real", "s8-training", "s8-real", "s1-training", "s1-real", ],
-      "completedSessions": []
+      id = "DM",
+      sessions = ["s4-training", "s4-real", "s2-training", "s2-real", "s3-training", "s3-real", "s1-training", "s1-real", ],
+      completedSessions = []
     },
     {
-      "id": "CM",
-      "sessions": ["s7-training", "s7-real", "s5-training", "s5-real", "s2-training", "s2-real", "s3-training", "s3-real", "s8-training", "s8-real", "s4-training", "s4-real", "s12-training", "s12-real", "s6-training", "s6-real", "s10-training", "s10-real", "s1-training", "s1-real", "s11-training", "s11-real", "s9-training", "s9-real", ],
-      "completedSessions": []
+      id = "CM",
+      sessions = ["s2-training", "s2-real", "s3-training", "s3-real", "s4-training", "s4-real", "s1-training", "s1-real", ],
+      completedSessions = []
     },
     {
-      "id": "EP",
-      "sessions": ["s8-training", "s8-real", "s6-training", "s6-real", "s10-training", "s10-real", "s9-training", "s9-real", "s4-training", "s4-real", "s12-training", "s12-real", "s2-training", "s2-real", "s5-training", "s5-real", "s7-training", "s7-real", "s11-training", "s11-real", "s1-training", "s1-real", "s3-training", "s3-real", ],
-      "completedSessions": []
+      id = "EP",
+      sessions = ["s4-training", "s4-real", "s2-training", "s2-real", "s1-training", "s1-real", "s3-training", "s3-real", ],
+      completedSessions = []
     },
     {
-      "id": "SS",
-      "sessions": ["s12-training", "s12-real", "s8-training", "s8-real", "s3-training", "s3-real", "s5-training", "s5-real", "s7-training", "s7-real", "s6-training", "s6-real", "s4-training", "s4-real", "s10-training", "s10-real", "s1-training", "s1-real", "s2-training", "s2-real", "s9-training", "s9-real", "s11-training", "s11-real", ],
-      "completedSessions": []
+      id = "SS",
+      sessions = ["s3-training", "s3-real", "s4-training", "s4-real", "s1-training", "s1-real", "s2-training", "s2-real", ],
+      completedSessions = []
     },
 
   ]
