@@ -67,6 +67,7 @@ public:
         if(forceAll || def.experimentConfigPath != experimentConfigPath)	a["experimentConfigPath"] = experimentConfigPath;
         if(forceAll || def.userConfigPath != userConfigPath)				a["userConfigPath"] = userConfigPath;
 		if(forceAll || def.userStatusPath != userStatusPath)				a["userStatusPath"] = userStatusPath;
+		if(forceAll || def.latencyLoggerConfigPath != latencyLoggerConfigPath) a["latencyLoggerConfigPath"] = latencyLoggerConfigPath;
 		if(forceAll || def.resultsDirPath != resultsDirPath)				a["resultsDirPath"] = resultsDirPath;
         if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
         return a;
