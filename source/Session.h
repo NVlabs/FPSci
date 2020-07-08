@@ -197,6 +197,7 @@ protected:
 	}
 
 	String formatFeedback(const String& input);
+	String formatCommand(const String& input);
 
 	/** Insert a target into the target array/scene */
 	inline void insertTarget(shared_ptr<TargetEntity> target);
@@ -269,7 +270,8 @@ protected:
 		si.cb = sizeof(si);
 		ZeroMemory(&pi, sizeof(pi));
 
-		LPSTR command = LPSTR(cmd.c_str());
+		// Run the (formatted command)
+		LPSTR command = LPSTR(formatCommand(cmd).c_str());
 		if (!CreateProcess(NULL, command, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
 			logPrintf("Failed to run %s command: \"%s\". %s\n", evt, cmd, GetLastErrorString());
 		}
