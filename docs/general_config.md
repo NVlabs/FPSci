@@ -313,6 +313,24 @@ No static HUD elements are drawn by default. An example snippet including 2 (non
 ]
 ```
 
+## Latency Logger
+These flags support the reseach hardware latency logger:
+| Parameter Name     |Units                 | Description                                                                        |
+|--------------------|----------------------|------------------------------------------------------------------------------------|
+|`HasLatencyLogger`  |`bool`    | Whether this system has a click-to-photon logger connected, when set to `false` this parameter disables all calls to hardware logging scripts |
+|`LoggerComPort`     |`String`  | The port on which the logger is connected when `HasLogger` is set to `true`. Generally speaking this is a string (i.e. on windows `COM[X]`) |
+|`HasLatencyLoggerSync` |`bool` | Whether the system has an additional serial card where the DTR signal will be used for timebase syncing the logger to the PC (if `HasLatencyLogger` is `true` and `HasLatencyLoggerSync` is false, the first USB packet exchanged through the system is used to create the timestamp at a lower precision). |
+|`LoggerSyncComPort` |`String`  | The port on which the sync card is connected if `HasLatencyLoggerSync` is set to `true`. Generally speaking these ports tend to be enumerated at lower port numbers (i.e. `COM0` or `COM1`) than the Virtual COM Ports (VCPs) produced by USB. |
+
+An example of this structure's usage is provided below:
+
+```
+"HasLatencyLogger" :  true,
+"LoggerComPort" : "COM3",
+"HasLatencyLoggerSync": true,
+"LoggerSyncComPort" : "COM1",
+```
+
 ## Click to Photon Monitoring
 These flags help control the behavior of click-to-photon monitoring in application:
 

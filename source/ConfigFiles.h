@@ -285,17 +285,20 @@ public:
 	LatencyLoggerConfig() {};
 
 	/** Construct from Any */
-	LatencyLoggerConfig(const Any& any) {
-		int settingsVersion = 1;
-		AnyTableReader reader(any);
+	void load(AnyTableReader reader, int settingsVersion = 1) {
 		reader.getIfPresent("settingsVersion", settingsVersion);
 
 		switch (settingsVersion) {
 		case 1:
-			reader.get("HasLogger", hasLogger, "System config must specify the \"HasLogger\" flag!");
-			reader.get("HasSync", hasSync, "System config must specify the \"HasSync\" flag!");
-			reader.getIfPresent("LoggerComPort", loggerComPort);
-			reader.getIfPresent("SyncComPort", syncComPort);
+			reader.getIfPresent("HasLatencyLogger", hasLogger);
+			if (hasLogger) {
+				reader.get("LoggerComPort", loggerComPort, "Logger COM port must be provided if HasLogger = true!");
+			}
+
+			reader.getIfPresent("HasLatencyLoggerSync", hasSync);
+			if (hasSync) {
+				reader.get("LoggerSyncComPort", syncComPort, "Logger sync COM port must be provided if HasLoggerSync = true!");
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SystemConfig.\n", settingsVersion);
@@ -304,22 +307,13 @@ public:
 	}
 
 	/** Serialize to Any */
-	Any toAny(const bool forceAll = true) const{
-		Any a(Any::TABLE);
-		a["HasLogger"] = hasLogger;
-		a["LoggerComPort"] = loggerComPort;
-		a["HasSync"] = hasSync;
-		a["SyncComPort"] = syncComPort;
+	Any addToAny(Any a, const bool forceAll = true) const{
+		LatencyLoggerConfig def;
+		if(forceAll || def.hasLogger != hasLogger)			a["HasLogger"] = hasLogger;
+		if(forceAll || def.loggerComPort != loggerComPort)	a["LoggerComPort"] = loggerComPort;
+		if(forceAll || def.hasSync != hasSync)				a["HasLoggerSync"] = hasSync;
+		if(forceAll || def.syncComPort != syncComPort)		a["LoggerSyncComPort"] = syncComPort;
 		return a;
-	}
-
-	/** Load a latency logger config from file */
-	static LatencyLoggerConfig load() {
-		// if file not found, create a default latency logger config
-		if (!FileSystem::exists("systemconfig.Any")) { 
-			return LatencyLoggerConfig();		// Create the default
-		}
-		return Any::fromFile(System::findDataFile("systemconfig.Any"));
 	}
 
 	/** Print the latency logger config to log.txt */
@@ -1702,6 +1696,7 @@ public:
 	FeedbackConfig		feedback;								///< Feedback message config parameters
 	TargetViewConfig	targetView;								///< Target drawing config parameters
 	ClickToPhotonConfig clickToPhoton;							///< Click to photon config parameters
+	LatencyLoggerConfig latencyLogger;							///< Latency logger configuration
 	LoggerConfig		logger;									///< Logging configuration
 	WeaponConfig		weapon;			                        ///< Weapon to be used
 	MenuConfig			menu;									///< User settings window configuration
@@ -1728,6 +1723,7 @@ public:
 		hud.load(reader, settingsVersion);
 		targetView.load(reader, settingsVersion);
 		clickToPhoton.load(reader, settingsVersion);
+		latencyLogger.load(reader, settingsVersion);
 		audio.load(reader, settingsVersion);
 		timing.load(reader, settingsVersion);
 		feedback.load(reader, settingsVersion);
@@ -1756,6 +1752,7 @@ public:
 		a = hud.addToAny(a, forceAll);
 		a = targetView.addToAny(a, forceAll);
 		a = clickToPhoton.addToAny(a, forceAll);
+		a = latencyLogger.addToAny(a, forceAll);
 		a = audio.addToAny(a, forceAll);
 		a = timing.addToAny(a, forceAll);
 		a = feedback.addToAny(a, forceAll);

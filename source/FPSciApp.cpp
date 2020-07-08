@@ -46,8 +46,7 @@ void FPSciApp::onInit() {
 	info.printToLog();										// Print system info to log.txt
 
 	// Get and save system configuration
-	latencyLoggerConfig = LatencyLoggerConfig::load();
-	latencyLoggerConfig.printToLog();						// Print the latency logger config to log.txt								
+	experimentConfig.latencyLogger.printToLog();			// Print the latency logger config to log.txt								
 
 	// Get the size of the primary display
 	displayRes = OSWindow::primaryDisplaySize();						
@@ -456,12 +455,12 @@ void FPSciApp::updateSession(const String& id) {
 		FileSystem::createDirectory(startupConfig.resultsDirPath);
 	}
 	const String logName = startupConfig.resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
-	if (latencyLoggerConfig.hasLogger) {
+	if (sessConfig->latencyLogger.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
 		}
 		if (m_pyLogger == nullptr) {
-			m_pyLogger = PythonLogger::create(latencyLoggerConfig.loggerComPort, latencyLoggerConfig.hasSync, latencyLoggerConfig.syncComPort);
+			m_pyLogger = PythonLogger::create(sessConfig->latencyLogger.loggerComPort, sessConfig->latencyLogger.hasSync, sessConfig->latencyLogger.syncComPort);
 		}
 		else {
 			// Handle running logger if we need to (terminate then merge results)
