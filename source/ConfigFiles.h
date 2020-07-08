@@ -290,14 +290,20 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("HasLatencyLogger", hasLogger);
+			reader.getIfPresent("hasLatencyLogger", hasLogger);
 			if (hasLogger) {
-				reader.get("LoggerComPort", loggerComPort, "Logger COM port must be provided if HasLogger = true!");
+				reader.get("loggerComPort", loggerComPort, "Logger COM port must be provided if \"hasLogger\" = true!");
+			}
+			else {
+				reader.getIfPresent("loggerComPort", loggerComPort);
 			}
 
-			reader.getIfPresent("HasLatencyLoggerSync", hasSync);
+			reader.getIfPresent("hasLatencyLoggerSync", hasSync);
 			if (hasSync) {
-				reader.get("LoggerSyncComPort", syncComPort, "Logger sync COM port must be provided if HasLoggerSync = true!");
+				reader.get("loggerSyncComPort", syncComPort, "Logger sync COM port must be provided if \"hasLoggerSync\" = true!");
+			}
+			else {
+				reader.getIfPresent("loggerSyncComPort", syncComPort);
 			}
 			break;
 		default:

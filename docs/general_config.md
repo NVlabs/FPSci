@@ -317,18 +317,18 @@ No static HUD elements are drawn by default. An example snippet including 2 (non
 These flags support the reseach hardware latency logger:
 | Parameter Name     |Units                 | Description                                                                        |
 |--------------------|----------------------|------------------------------------------------------------------------------------|
-|`HasLatencyLogger`  |`bool`    | Whether this system has a click-to-photon logger connected, when set to `false` this parameter disables all calls to hardware logging scripts |
-|`LoggerComPort`     |`String`  | The port on which the logger is connected when `HasLogger` is set to `true`. Generally speaking this is a string (i.e. on windows `COM[X]`) |
-|`HasLatencyLoggerSync` |`bool` | Whether the system has an additional serial card where the DTR signal will be used for timebase syncing the logger to the PC (if `HasLatencyLogger` is `true` and `HasLatencyLoggerSync` is false, the first USB packet exchanged through the system is used to create the timestamp at a lower precision). |
-|`LoggerSyncComPort` |`String`  | The port on which the sync card is connected if `HasLatencyLoggerSync` is set to `true`. Generally speaking these ports tend to be enumerated at lower port numbers (i.e. `COM0` or `COM1`) than the Virtual COM Ports (VCPs) produced by USB. |
+|`hasLatencyLogger`  |`bool`    | Whether this system has a click-to-photon logger connected, when set to `false` this parameter disables all calls to hardware logging scripts |
+|`loggerComPort`     |`String`  | The port on which the logger is connected when `hasLogger` is set to `true`. Generally speaking this is a string (i.e. on windows `COM[X]`) |
+|`hasLatencyLoggerSync` |`bool` | Whether the system has an additional serial card where the DTR signal will be used for timebase syncing the logger to the PC (if `hasLatencyLogger` is `true` and `hasLatencyLoggerSync` is false, the first USB packet exchanged through the system is used to create the timestamp at a lower precision). |
+|`loggerSyncComPort` |`String`  | The port on which the sync card is connected if `hasLatencyLoggerSync` is set to `true`. Generally speaking these ports tend to be enumerated at lower port numbers (i.e. `COM0` or `COM1`) than the Virtual COM Ports (VCPs) produced by USB. |
 
 An example of this structure's usage is provided below:
 
 ```
-"HasLatencyLogger" :  true,
-"LoggerComPort" : "COM3",
-"HasLatencyLoggerSync": true,
-"LoggerSyncComPort" : "COM1",
+"hasLatencyLogger" :  true,
+"loggerComPort" : "COM3",
+"hasLatencyLoggerSync": true,
+"loggerSyncComPort" : "COM1",
 ```
 
 ## Click to Photon Monitoring
@@ -510,6 +510,22 @@ Another common use would be to run a python script/code at the start or end of a
 ```
 commandsOnSessionStart = ( "python \"../scripts/event logger/event_logger.py\"" );
 commandsOnSessionEnd = ( "python -c \"f = open('texttest.txt', 'w'); f.write('Hello world!'); f.close()\"" );
+```
+
+### Supported Substrings
+In addition to the basic commands provided above several replacable substrings are supported in commands. These include:
+
+| Substring         | Description                                                           |
+|-------------------|-----------------------------------------------------------------------|
+|`%loggerComPort`   | The logger COM port (optionally) provided in a general config         |
+|`%loggerSyncComPort`|  The logger sync COM port (optionally) provided in a general config  |
+
+Note that if either of these substrings is specified in a command, but empty/not provided in the experiment config file an exception will be thrown.
+
+An example of their use is provided below:
+
+```
+commandOnSessionStart = ( "python ../scripts/my_logger_script.py %loggerComPort" );
 ```
 
 # Frame Rate Modes
