@@ -309,9 +309,9 @@ public:
 	/** Serialize to Any */
 	Any addToAny(Any a, const bool forceAll = true) const{
 		LatencyLoggerConfig def;
-		if(forceAll || def.hasLogger != hasLogger)			a["HasLogger"] = hasLogger;
+		if(forceAll || def.hasLogger != hasLogger)			a["HasLatencyLogger"] = hasLogger;
 		if(forceAll || def.loggerComPort != loggerComPort)	a["LoggerComPort"] = loggerComPort;
-		if(forceAll || def.hasSync != hasSync)				a["HasLoggerSync"] = hasSync;
+		if(forceAll || def.hasSync != hasSync)				a["HasLatencyLoggerSync"] = hasSync;
 		if(forceAll || def.syncComPort != syncComPort)		a["LoggerSyncComPort"] = syncComPort;
 		return a;
 	}
