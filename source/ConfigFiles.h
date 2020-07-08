@@ -1594,10 +1594,17 @@ public:
 
 	CommandSpec() {}
 	CommandSpec(const Any& any){
-		AnyTableReader reader(any);
-		reader.get("command", cmdStr, "A command string must be specified!");
-		reader.getIfPresent("foreground", foreground);
-		reader.getIfPresent("blocking", blocking);
+		try {
+			AnyTableReader reader(any);
+			reader.get("command", cmdStr, "A command string must be specified!");
+			reader.getIfPresent("foreground", foreground);
+			reader.getIfPresent("blocking", blocking);
+		}
+		catch (ParseError e) {
+			// Handle errors related to older (pure) string-based commands
+			e.message = "Commands must be specified using a valid CommandSpec (refer to the general_config.md file for more information)!\n" + e.message;
+			throw e;
+		}
 	}
 
 	Any toAny(const bool forceAll = true) const {
