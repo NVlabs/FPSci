@@ -469,29 +469,49 @@ These flags control whether various information is written to the output databas
 ## Command Config
 In addition to the programmable behavior above the general config also supports running of arbitrary commands around the FPSci runtime. Note that the "end" commands keep running and there's the potential for orphaned processes if you specify commands that are long running or infinite. The command options include:
 
-| Parameter Name                    | Type              | Description                                                                                  |
-|-----------------------------------|-------------------|----------------------------------------------------------------------------------------------|
-|`commandsOnSessionStart`           |`Array<String>`    | Command(s) to run at the start of a new session. Command(s) quit on session end              |
-|`commandsOnSessionEnd`             |`Array<String>`    | Command(s) to run at the end of a new session. Command(s) not forced to quit                 |
-|`commandsOnTrialStart`             |`Array<String>`    | Command(s) to run at the start of a new trial within a session. Command(s) quit on trial end |
-|`commandsOnTrialEnd`               |`Array<String>`    | Command(s) to run at the end of a new trial within a session. Command(s) not forced to quit  |
+| Parameter Name                    | Type                  | Description                                                                                   |
+|-----------------------------------|------------------------|----------------------------------------------------------------------------------------------|
+|`commandsOnSessionStart`           |`Array<CommandSpec>`    | Command(s) to run at the start of a new session. Command(s) quit on session end              |
+|`commandsOnSessionEnd`             |`Array<CommandSpec>`    | Command(s) to run at the end of a new session. Command(s) not forced to quit                 |
+|`commandsOnTrialStart`             |`Array<CommandSpec>`    | Command(s) to run at the start of a new trial within a session. Command(s) quit on trial end |
+|`commandsOnTrialEnd`               |`Array<CommandSpec>`    | Command(s) to run at the end of a new trial within a session. Command(s) not forced to quit  |
 
-Note that the `Array` of commands provided for each of the parameters above is ordered, but the commands are launched (nearly) simultaneously in a non-blocking manner. This means that run order within a set of commands cannot be strictly guaranteed. If you have serial dependencies within a list of commands consider using a script to sequence them.
+Note that the `Array` of commands provided for each of the parameters above is ordered, but the commands are launched (nearly) simultaneously. This means that run order within a set of commands cannot be strictly guaranteed. If you have serial dependencies within a list of commands consider using a script to sequence them.
+
+### Command Specification
+Each command is specified using a `CommandSpec` which itself supports sub-fields for configuration:
+| Parameter Name    | Type        | Description                                                                                 |
+|-------------------|------------|----------------------------------------------------------------------------------------------|
+|`command`          |`String`    | Command string to run                                                                        |
+|`foreground`       |`bool`      | Run this command in the foreground? (By default commands are silent/background tasks)        |
+|`blocking`         |`bool`      | Block on this command being complete (forces command sequencing)                             |
 
 For example, the following will cause session start, session end, trial start and trial end strings to be written to a `commandLog.txt` file.
 
 ```
-commandsOnSessionStart = ( "cmd /c echo Session start>> commandLog.txt", "cmd /c echo Session start second command>> commandLog.txt" );
-commandsOnSessionEnd = ( "cmd /c echo Session end>> commandLog.txt", "cmd /c echo Session end second command>> commandLog.txt" );
-commandsOnTrialStart = ( "cmd /c echo Trial start>> commandLog.txt" );
-commandsOnTrialEnd = ( "cmd /c echo Trial end>> commandLog.txt" );
+commandsOnSessionStart = ( 
+    { command = "cmd /c echo Session start>> commandLog.txt", blocking = true },
+    { command = "cmd /c echo Session start second command>> commandLog.txt"} 
+);
+commandsOnSessionEnd = (
+    { command = "cmd /c echo Session end>> commandLog.txt", blocking = true }, 
+    { "cmd /c echo Session end second command>> commandLog.txt" }
+);
+commandsOnTrialStart = ( { command = {"cmd /c echo Trial start>> commandLog.txt" } );
+commandsOnTrialEnd = ( { command = "cmd /c echo Trial end>> commandLog.txt" } );
 ```
 
 Another common use would be to run a python script/code at the start or end of a session. For example:
 
 ```
-commandsOnSessionStart = ( "python \"../scripts/event logger/event_logger.py\"" );
-commandsOnSessionEnd = ( "python -c \"f = open('texttest.txt', 'w'); f.write('Hello world!'); f.close()\"" );
+commandsOnSessionStart = ( { command = "python \"../scripts/event logger/event_logger.py\"" } );
+commandsOnSessionEnd = ( { command = "python -c \"f = open('texttest.txt', 'w'); f.write('Hello world!'); f.close()\"", blocking = true } );
+```
+
+Alternatively, to open a web page at the end of a session you could use:
+
+```
+commandsOnSessionEnd = ( { command = "cmd /c start [webpage URL]", foreground = true } );
 ```
 
 # Frame Rate Modes
