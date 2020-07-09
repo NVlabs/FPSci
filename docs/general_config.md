@@ -497,7 +497,7 @@ commandsOnSessionEnd = (
     { command = "cmd /c echo Session end>> commandLog.txt", blocking = true }, 
     { "cmd /c echo Session end second command>> commandLog.txt" }
 );
-commandsOnTrialStart = ( { command = {"cmd /c echo Trial start>> commandLog.txt" } );
+commandsOnTrialStart = ( { command = "cmd /c echo Trial start>> commandLog.txt" } );
 commandsOnTrialEnd = ( { command = "cmd /c echo Trial end>> commandLog.txt" } );
 ```
 
