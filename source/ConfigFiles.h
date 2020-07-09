@@ -1604,8 +1604,8 @@ public:
 			// Handle errors related to older (pure) string-based commands
 			e.message += "\nCommands must be specified using a valid CommandSpec!\n";
 			e.message += "Refer to the general_config.md file for more information.\n";
-			e.message += "If migrating from an older experiment config, use the following syntax.\n";
-			e.message += "commandsOnTrialStart = ( { command = \"cmd / c echo Trial start >> commandLog.txt\" } );\n";
+			e.message += "If migrating from an older experiment config, use the following syntax:\n";
+			e.message += "commandsOnTrialStart = ( { command = \"cmd /c echo Trial start>> commandLog.txt\" } );\n";
 			throw e;
 		}
 	}
