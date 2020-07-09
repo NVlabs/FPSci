@@ -262,16 +262,28 @@ protected:
 		return m_camera->frame().translation;
 	}
 
-	HANDLE runCommand(String cmd, String evt) {
+	HANDLE runCommand(CommandSpec cmd, String evt) {
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
 		ZeroMemory(&si, sizeof(si));
 		si.cb = sizeof(si);
 		ZeroMemory(&pi, sizeof(pi));
 
-		LPSTR command = LPSTR(cmd.c_str());
-		if (!CreateProcess(NULL, command, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+		LPSTR command = LPSTR(cmd.cmdStr.c_str());
+		bool success;
+		if (cmd.foreground) {	// Run process in the foreground
+			success = CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+		}
+		else {				// Run process silently in the background
+			success = CreateProcess(NULL, command, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+		}
+
+		if (!success) {
 			logPrintf("Failed to run %s command: \"%s\". %s\n", evt, cmd, GetLastErrorString());
+		}
+
+		if (cmd.blocking) {	// Optional blocking behavior
+			WaitForSingleObject(pi.hProcess, INFINITE);
 		}
 
 		return pi.hProcess;

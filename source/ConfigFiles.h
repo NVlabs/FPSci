@@ -1586,12 +1586,47 @@ public:
 	}
 };
 
+class CommandSpec {
+public:
+	String	cmdStr;										///< Command string
+	bool foreground = false;							///< Flag to indicate foreground vs background
+	bool blocking = false;								///< Flag to indicate to block on this process complete
+
+	CommandSpec() {}
+	CommandSpec(const Any& any){
+		try {
+			AnyTableReader reader(any);
+			reader.get("command", cmdStr, "A command string must be specified!");
+			reader.getIfPresent("foreground", foreground);
+			reader.getIfPresent("blocking", blocking);
+		}
+		catch (ParseError e) {
+			// Handle errors related to older (pure) string-based commands
+			e.message += "\nCommands must be specified using a valid CommandSpec!\n";
+			e.message += "Refer to the general_config.md file for more information.\n";
+			e.message += "If migrating from an older experiment config, use the following syntax:\n";
+			e.message += "commandsOnTrialStart = ( { command = \"cmd /c echo Trial start>> commandLog.txt\" } );\n";
+			throw e;
+		}
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		CommandSpec def;
+		a["command"] = cmdStr;
+		if (forceAll || def.foreground != foreground)	a["foreground"] = foreground;
+		if (forceAll || def.blocking != blocking)		a["blocking"] = blocking;
+		return a;
+	}
+
+};
+
 class CommandConfig {
 public: 
-	Array<String> sessionStartCmds;						///< Command to run on start of a session
-	Array<String> sessionEndCmds;						///< Command to run on end of a session
-	Array<String> trialStartCmds;						///< Command to run on start of a trial
-	Array<String> trialEndCmds;							///< Command to run on end of a trial
+	Array<CommandSpec> sessionStartCmds;				///< Command to run on start of a session
+	Array<CommandSpec> sessionEndCmds;						///< Command to run on end of a session
+	Array<CommandSpec> trialStartCmds;						///< Command to run on start of a trial
+	Array<CommandSpec> trialEndCmds;							///< Command to run on end of a trial
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
