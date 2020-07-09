@@ -127,8 +127,12 @@ protected:
 	// Target management
 	Table<String, Array<shared_ptr<ArticulatedModel>>>* m_targetModels;
 	int m_modelScaleCount;
-	int m_lastUniqueID = 0;								///< Counter for creating unique names for various entities
-	Array<shared_ptr<TargetEntity>> m_targetArray;		///< Array of drawn targets
+	int m_lastUniqueID = 0;									///< Counter for creating unique names for various entities
+	
+	Array<shared_ptr<TargetEntity>> m_targetArray;			///< Array of drawn targets
+	Array<shared_ptr<TargetEntity>> m_hittableTargets;		///< Array of targets that can be hit
+	Array<shared_ptr<TargetEntity>> m_unhittableTargets;	///< Array of targets that can't be hit
+
 
 	int m_currTrialIdx;										///< Current trial
 	int m_currQuestionIdx = -1;								///< Current question index
@@ -339,7 +343,6 @@ public:
 	}
 
 	/** Destroy a target from the targets array */
-	void destroyTarget(int index);
 	void destroyTarget(shared_ptr<TargetEntity> target);
 
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
@@ -368,24 +371,12 @@ public:
 	}
 
 	/** dynamically allocates a new array of pointers to the hittable targets in the session */
-	const Array<shared_ptr<TargetEntity>> hittableTargets() const {
-		Array<shared_ptr<TargetEntity>> hittable;
-		for (shared_ptr<TargetEntity> target: m_targetArray) {
-			if (target->canHit()) {
-				hittable.append(target);
-			}
-		}
-		return hittable;
+	const Array<shared_ptr<TargetEntity>>& hittableTargets() const {
+		return m_hittableTargets;
 	}
 
 	/** dynamically allocates a new array of pointers to the unhittable (visible but inactive) targets in the session */
-	const Array<shared_ptr<TargetEntity>> unhittableTargets() const {
-		Array<shared_ptr<TargetEntity>> unhittable;
-		for (shared_ptr<TargetEntity> target : m_targetArray) {
-			if (!target->canHit()) {
-				unhittable.append(target);
-			}
-		}
-		return unhittable;
+	const Array<shared_ptr<TargetEntity>>& unhittableTargets() const {
+		return m_unhittableTargets;
 	}
 };

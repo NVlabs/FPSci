@@ -144,6 +144,7 @@ void Session::initTargetAnimation() {
 			for (shared_ptr<TargetEntity> target : m_targetArray) {
 				target->setCanHit(true);
 				target->setColor(activeColor);
+				m_hittableTargets.append(target);
 			}
 		}
 		else {
@@ -153,12 +154,13 @@ void Session::initTargetAnimation() {
 	else {
 		CFrame f = CFrame::fromXYZYPRRadians(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians, 0.0f, 0.0f);
 		// Make sure we reset the target color here (avoid color bugs)
-		spawnReferenceTarget(
+		auto t = spawnReferenceTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 			initialSpawnPos,
 			m_config->targetView.refTargetSize,
 			m_config->targetView.refTargetColor
 		);
+		m_hittableTargets.append(t);
 
 		if (m_config->targetView.previewWithRef) {
 			spawnTrialTargets(initialSpawnPos, true);		// Spawn all the targets in preview mode
@@ -205,6 +207,7 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 
 		// Set whether the target can be hit based on whether we are in preview mode
 		t->setCanHit(!previewMode);
+		previewMode ? m_unhittableTargets.append(t) : m_hittableTargets.append(t);
 	}
 }
 
@@ -237,7 +240,7 @@ void Session::updatePresentationState()
 {
 	// This updates presentation state and also deals with data collection when each trial ends.
 	PresentationState newState;
-	int remainingTargets = hittableTargets().size();
+	int remainingTargets = m_hittableTargets.size();
 	float stateElapsedTime = m_timer.getTime();
 	newState = currentState;
 
@@ -702,28 +705,29 @@ void Session::insertTarget(shared_ptr<TargetEntity> target) {
 	m_scene->insert(target);
 }
 
-void Session::destroyTarget(int index) {
-	// Not a reference because we're about to manipulate the array
-	const shared_ptr<VisibleEntity> target = m_targetArray[index];
-	if (!target) return;
-	// Remove the target from the target array
-	m_targetArray.fastRemove(index);
-	// Remove the target from the scene
-	m_scene->removeEntity(target->name());
-}
-
 void Session::destroyTarget(shared_ptr<TargetEntity> target) {
+	// Remove target from the scene
+	m_scene->removeEntity(target->name());
+	// Remove target from master list
 	for (int i = 0; i < m_targetArray.size(); i++) {
-		if (m_targetArray[i]->name() == target->name()) {
-			m_targetArray.fastRemove(i);
+		if (m_targetArray[i]->name() == target->name()) { m_targetArray.fastRemove(i); }
+	}
+	// Remove target from (un)hittable array
+	for (int i = 0; i < m_hittableTargets.size(); i++) {
+		if (m_hittableTargets[i]->name() == target->name()) { 
+			m_hittableTargets.fastRemove(i); 
+			return;	// Target can't be both hittable and unhittable
 		}
 	}
-	m_scene->removeEntity(target->name());
+	for (int i = 0; i < m_unhittableTargets.size(); i++) {
+		if (m_unhittableTargets[i]->name() == target->name()) { m_unhittableTargets.fastRemove(i); }
+	}
+
 }
 
 /** Clear all targets one by one */
 void Session::clearTargets() {
-	while (m_targetArray.size() > 0) {
-		destroyTarget(0);
+	for(auto target : m_targetArray) {
+		destroyTarget(target);
 	}
 }
