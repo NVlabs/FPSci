@@ -138,7 +138,7 @@ void Session::initTargetAnimation() {
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (currentState == PresentationState::task) {
-		if (m_config->targetView.previewWithRef) {
+		if (m_config->targetView.previewWithRef && m_config->targetView.showRefTarget) {
 			// Activate the preview targets
 			const Color3 activeColor = m_config->targetView.healthColors[0];
 			for (shared_ptr<TargetEntity> target : m_targetArray) {
@@ -151,9 +151,9 @@ void Session::initTargetAnimation() {
 			spawnTrialTargets(initialSpawnPos);			// Spawn all the targets normally
 		}
 	}
-	else {
+	else { // State is feedback and we are spawning a reference target
 		CFrame f = CFrame::fromXYZYPRRadians(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians, 0.0f, 0.0f);
-		// Make sure we reset the target color here (avoid color bugs)
+		// Spawn the reference target
 		auto t = spawnReferenceTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 			initialSpawnPos,
