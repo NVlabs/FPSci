@@ -367,6 +367,7 @@ public:
 		return m_targetArray;
 	}
 
+	/** dynamically allocates a new array of pointers to the hittable targets in the session */
 	const Array<shared_ptr<TargetEntity>> hittableTargets() const {
 		Array<shared_ptr<TargetEntity>> hittable;
 		for (shared_ptr<TargetEntity> target: m_targetArray) {
@@ -377,6 +378,7 @@ public:
 		return hittable;
 	}
 
+	/** dynamically allocates a new array of pointers to the unhittable (visible but inactive) targets in the session */
 	const Array<shared_ptr<TargetEntity>> unhittableTargets() const {
 		Array<shared_ptr<TargetEntity>> unhittable;
 		for (shared_ptr<TargetEntity> target : m_targetArray) {
