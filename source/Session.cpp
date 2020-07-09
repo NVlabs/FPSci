@@ -497,16 +497,16 @@ String Session::formatCommand(const String& input) {
 
 	while ((foundIdx = (int)formatted.find(delimiter, (size_t)foundIdx)) > -1) {
 		if (!formatted.compare(foundIdx, loggerComPort.length(), loggerComPort)) {
-			if (m_config->latencyLogger.loggerComPort.empty()) {
+			if (m_app->systemConfig.loggerComPort.empty()) {
 				throw "Found \"%loggerComPort\" substring in a command, but no \"loggerComPort\" is provided in the config!";
 			}
-			formatted = formatted.substr(0, foundIdx) + m_config->latencyLogger.loggerComPort + formatted.substr(foundIdx + loggerComPort.length());
+			formatted = formatted.substr(0, foundIdx) + m_app->systemConfig.loggerComPort + formatted.substr(foundIdx + loggerComPort.length());
 		}
 		else if (!formatted.compare(foundIdx, syncComPort.length(), syncComPort)) {
-			if (m_config->latencyLogger.syncComPort.empty()) {
+			if (m_app->systemConfig.syncComPort.empty()) {
 				throw "Found \"%loggerSyncComPort\" substring in a command, but no \"loggerSyncComPort\" is provided in the config!";
 			}
-			formatted = formatted.substr(0, foundIdx) + m_config->latencyLogger.syncComPort + formatted.substr(foundIdx + syncComPort.length());
+			formatted = formatted.substr(0, foundIdx) + m_app->systemConfig.syncComPort + formatted.substr(foundIdx + syncComPort.length());
 		}
 		else {
 			foundIdx++;

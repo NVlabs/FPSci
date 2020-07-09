@@ -21,7 +21,8 @@ public:
 	Vector2 windowSize = { 1920, 980 };			///< Window size (when not run in fullscreen)
     String	experimentConfigPath = "";			///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
     String	userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
-    String	resultsDirPath = "./results/";		///< Optional path to the results directory
+	String  systemConfigFilename = "";			///< System config file path
+	String	resultsDirPath = "./results/";		///< Optional path to the results directory
     bool	audioEnable = true;					///< Audio on/off
 
     StartupConfig() {};
@@ -40,6 +41,7 @@ public:
 			reader.getIfPresent("windowSize", windowSize);
             reader.getIfPresent("experimentConfigPath", experimentConfigPath);
             reader.getIfPresent("userConfigPath", userConfigPath);
+			reader.getIfPresent("systemConfigFilename", systemConfigFilename);
 			reader.getIfPresent("resultsDirPath", resultsDirPath);
 			resultsDirPath = formatDirPath(resultsDirPath);
             reader.getIfPresent("audioEnable", audioEnable);
@@ -59,6 +61,7 @@ public:
 		if(forceAll || def.fullscreen != fullscreen)						a["fullscreen"] = fullscreen;
         if(forceAll || def.experimentConfigPath != experimentConfigPath)	a["experimentConfigPath"] = experimentConfigPath;
         if(forceAll || def.userConfigPath != userConfigPath)				a["userConfigPath"] = userConfigPath;
+		if(forceAll || def.systemConfigFilename != systemConfigFilename)    a["systemConfigFilename"] = systemConfigFilename;
 		if(forceAll || def.resultsDirPath != resultsDirPath)				a["resultsDirPath"] = resultsDirPath;
         if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
         return a;
@@ -273,8 +276,8 @@ public:
 	}
 };
 
-/** Latency logging configuration */
-class LatencyLoggerConfig {
+/** System-specific configuration */
+class SystemConfig {
 public:
 	// Input parameters
 	bool	hasLogger = false;		///< Indicates that a hardware logger is present in the system
@@ -282,12 +285,12 @@ public:
 	bool	hasSync = false;		///< Indicates that a hardware sync will occur via serial card DTR signal
 	String	syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
 
-	LatencyLoggerConfig() {};
-
+	SystemConfig() {};
 	/** Construct from Any */
-	void load(AnyTableReader reader, int settingsVersion = 1) {
+	SystemConfig(const Any& any) {
+		AnyTableReader reader(any);
+		int settingsVersion = 1;
 		reader.getIfPresent("settingsVersion", settingsVersion);
-
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("hasLatencyLogger", hasLogger);
@@ -312,13 +315,25 @@ public:
 		}	
 	}
 
+	static SystemConfig load(String filename = "systemconfig.Any") {
+		if (filename.empty()) { filename = "systemconfig.Any"; }
+		// Create default UserConfig file
+		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
+			SystemConfig defConfig = SystemConfig();
+			defConfig.toAny().save(filename);						// Save the .any file
+			return defConfig;
+		}
+		return Any::fromFile(System::findDataFile(filename));
+	}
+
 	/** Serialize to Any */
-	Any addToAny(Any a, const bool forceAll = true) const{
-		LatencyLoggerConfig def;
-		if(forceAll || def.hasLogger != hasLogger)			a["HasLatencyLogger"] = hasLogger;
-		if(forceAll || def.loggerComPort != loggerComPort)	a["LoggerComPort"] = loggerComPort;
-		if(forceAll || def.hasSync != hasSync)				a["HasLatencyLoggerSync"] = hasSync;
-		if(forceAll || def.syncComPort != syncComPort)		a["LoggerSyncComPort"] = syncComPort;
+	Any toAny(const bool forceAll = true) const{
+		Any a(Any::TABLE);
+		SystemConfig def;
+		if(forceAll || def.hasLogger != hasLogger)			a["hasLatencyLogger"] = hasLogger;
+		if(forceAll || def.loggerComPort != loggerComPort)	a["loggerComPort"] = loggerComPort;
+		if(forceAll || def.hasSync != hasSync)				a["hasLatencyLoggerSync"] = hasSync;
+		if(forceAll || def.syncComPort != syncComPort)		a["loggerSyncComPort"] = syncComPort;
 		return a;
 	}
 
@@ -1702,7 +1717,6 @@ public:
 	FeedbackConfig		feedback;								///< Feedback message config parameters
 	TargetViewConfig	targetView;								///< Target drawing config parameters
 	ClickToPhotonConfig clickToPhoton;							///< Click to photon config parameters
-	LatencyLoggerConfig latencyLogger;							///< Latency logger configuration
 	LoggerConfig		logger;									///< Logging configuration
 	WeaponConfig		weapon;			                        ///< Weapon to be used
 	MenuConfig			menu;									///< User settings window configuration
@@ -1729,7 +1743,6 @@ public:
 		hud.load(reader, settingsVersion);
 		targetView.load(reader, settingsVersion);
 		clickToPhoton.load(reader, settingsVersion);
-		latencyLogger.load(reader, settingsVersion);
 		audio.load(reader, settingsVersion);
 		timing.load(reader, settingsVersion);
 		feedback.load(reader, settingsVersion);
@@ -1758,7 +1771,6 @@ public:
 		a = hud.addToAny(a, forceAll);
 		a = targetView.addToAny(a, forceAll);
 		a = clickToPhoton.addToAny(a, forceAll);
-		a = latencyLogger.addToAny(a, forceAll);
 		a = audio.addToAny(a, forceAll);
 		a = timing.addToAny(a, forceAll);
 		a = feedback.addToAny(a, forceAll);

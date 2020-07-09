@@ -130,6 +130,7 @@ public:
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
+	SystemConfig					systemConfig;					///< System configuration
 	KeyMapping						keyMap;
 	shared_ptr<WaypointManager>		waypointManager;				///< Waypoint mananger pointer
 	
