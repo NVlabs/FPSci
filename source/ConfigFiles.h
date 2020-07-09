@@ -19,10 +19,10 @@ public:
 	bool	waypointEditorMode = false;			///< Sets whether the app is run w/ the waypoint editor available
 	bool	fullscreen = true;					///< Whether the app runs in windowed mode
 	Vector2 windowSize = { 1920, 980 };			///< Window size (when not run in fullscreen)
-    String	experimentConfigPath;				///< Optional path to an experiment config file (if empty assumes "./experimentconfig.Any" will be this file)
-    String	userConfigPath;						///< Optional path to a user config file (if empty assumes "./userconfig.Any" will be this file)
-	String  userStatusPath;						///< Optional path to a user status file (if empty assumes "./userstatus.Any" will be this file)
-	String  latencyLoggerConfigPath;			///< Optional path to a latency logger config file (if empty assumes "./systemconfig.Any" will be this file)
+    String	experimentConfigFilename;			///< Optional path to an experiment config file (if empty assumes "./experimentconfig.Any" will be this file)
+    String	userConfigFilename;					///< Optional path to a user config file (if empty assumes "./userconfig.Any" will be this file)
+	String  userStatusFilename;					///< Optional path to a user status file (if empty assumes "./userstatus.Any" will be this file)
+	String  latencyLoggerConfigFilename;		///< Optional path to a latency logger config file (if empty assumes "./systemconfig.Any" will be this file)
     String	resultsDirPath = "./results/";		///< Optional path to the results directory
 	bool	audioEnable = true;					///< Audio on/off
     StartupConfig() {};
@@ -39,14 +39,14 @@ public:
 			reader.getIfPresent("waypointEditorMode", waypointEditorMode);
 			reader.getIfPresent("fullscreen", fullscreen);
 			reader.getIfPresent("windowSize", windowSize);
-            reader.getIfPresent("experimentConfigPath", experimentConfigPath);
-            reader.getIfPresent("userConfigPath", userConfigPath);
-			reader.getIfPresent("userStatusPath", userStatusPath);
-			reader.getIfPresent("latencyLoggerConfigPath", latencyLoggerConfigPath);
-			checkValidAnyPath(experimentConfigPath);
-			checkValidAnyPath(userConfigPath);
-			checkValidAnyPath(userStatusPath);
-			checkValidAnyPath(latencyLoggerConfigPath);
+            reader.getIfPresent("experimentConfigFilename", experimentConfigFilename);
+            reader.getIfPresent("userConfigFilename", userConfigFilename);
+			reader.getIfPresent("userStatusFilename", userStatusFilename);
+			reader.getIfPresent("latencyLoggerConfigFilename", latencyLoggerConfigFilename);
+			checkValidAnyFilename(experimentConfigFilename);
+			checkValidAnyFilename(userConfigFilename);
+			checkValidAnyFilename(userStatusFilename);
+			checkValidAnyFilename(latencyLoggerConfigFilename);
 			reader.getIfPresent("resultsDirPath", resultsDirPath);
 			resultsDirPath = formatDirPath(resultsDirPath);
             reader.getIfPresent("audioEnable", audioEnable);
@@ -64,28 +64,28 @@ public:
         if(forceAll || def.developerMode != developerMode)					a["developerMode"] = developerMode;
 		if(forceAll || def.waypointEditorMode != waypointEditorMode)		a["waypointEditorMode"] = waypointEditorMode;
 		if(forceAll || def.fullscreen != fullscreen)						a["fullscreen"] = fullscreen;
-        if(forceAll || def.experimentConfigPath != experimentConfigPath)	a["experimentConfigPath"] = experimentConfigPath;
-        if(forceAll || def.userConfigPath != userConfigPath)				a["userConfigPath"] = userConfigPath;
-		if(forceAll || def.userStatusPath != userStatusPath)				a["userStatusPath"] = userStatusPath;
-		if(forceAll || def.latencyLoggerConfigPath != latencyLoggerConfigPath) a["latencyLoggerConfigPath"] = latencyLoggerConfigPath;
+        if(forceAll || def.experimentConfigFilename != experimentConfigFilename)	a["experimentConfigPath"] = experimentConfigFilename;
+        if(forceAll || def.userConfigFilename != userConfigFilename)				a["userConfigPath"] = userConfigFilename;
+		if(forceAll || def.userStatusFilename != userStatusFilename)				a["userStatusPath"] = userStatusFilename;
+		if(forceAll || def.latencyLoggerConfigFilename != latencyLoggerConfigFilename) a["latencyLoggerConfigPath"] = latencyLoggerConfigFilename;
 		if(forceAll || def.resultsDirPath != resultsDirPath)				a["resultsDirPath"] = resultsDirPath;
         if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
         return a;
     }
 
     /** full path (including filename) to experiment config file */
-    inline const String experimentConfig() { return experimentConfigPath.empty() ? "experimentconfig.Any" : experimentConfigPath; }
+    inline const String experimentConfig() { return experimentConfigFilename.empty() ? "experimentconfig.Any" : experimentConfigFilename; }
 
     /** full path (including filename) to user config file */
-	inline const String userConfig() { return userConfigPath.empty() ? "userconfig.Any" : userConfigPath; }
+	inline const String userConfig() { return userConfigFilename.empty() ? "userconfig.Any" : userConfigFilename; }
 	
     /** full path (including filename) to user status file */
-	inline const String userStatusConfig() { return userStatusPath.empty() ? "userstatus.Any" : userStatusPath; }
+	inline const String userStatusConfig() { return userStatusFilename.empty() ? "userstatus.Any" : userStatusFilename; }
 
 	/** full path (including filename) to latency logger config file */
-	inline const String latencyLoggerConfig() { return latencyLoggerConfigPath.empty() ? "systemconfig.Any" : latencyLoggerConfigPath; }
+	inline const String latencyLoggerConfig() { return latencyLoggerConfigFilename.empty() ? "systemconfig.Any" : latencyLoggerConfigFilename; }
 
-	static void checkValidAnyPath(String path) {
+	static void checkValidAnyFilename(String path) {
 		if (path.empty()) return;		// Allow empty values since these are the defaults
 		// Check for non empty paths having ".any" file extension
 		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any",
