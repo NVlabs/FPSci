@@ -1343,6 +1343,9 @@ public:
 	float           refTargetSize = 0.05f;								///< Size of the reference target
 	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
 
+	bool			previewWithRef = false;								///< Show preview of per-trial targets with the reference
+	Color3			previewColor = Color3(0.5, 0.5, 0.5);				///< Color to show preview targets in
+
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
@@ -1365,6 +1368,8 @@ public:
 			reader.getIfPresent("showReferenceTarget", showRefTarget);
 			reader.getIfPresent("referenceTargetSize", refTargetSize);
 			reader.getIfPresent("referenceTargetColor", refTargetColor);
+			reader.getIfPresent("showPreviewTargetsWithReference", previewWithRef);
+			reader.getIfPresent("previewTargetColor", previewColor);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1390,9 +1395,11 @@ public:
 		if(forceAll || def.combatTextVelocity != combatTextVelocity)		a["floatingCombatTextVelocity"] = combatTextVelocity;
 		if(forceAll || def.combatTextFade != combatTextFade)				a["floatingCombatTextFade"] = combatTextFade;
 		if(forceAll || def.combatTextTimeout != combatTextTimeout)			a["floatingCombatTextTimeout"] = combatTextTimeout;
-		if (forceAll || def.showRefTarget != showRefTarget)					a["showRefTarget"] = showRefTarget;
+		if(forceAll || def.showRefTarget != showRefTarget)					a["showRefTarget"] = showRefTarget;
 		if(forceAll || def.refTargetSize != refTargetSize)					a["referenceTargetSize"] = refTargetSize;
 		if(forceAll || def.refTargetColor != refTargetColor)				a["referenceTargetColor"] = refTargetColor;
+		if(forceAll || def.previewWithRef != previewWithRef)				a["showPreviewTargetsWithReference"] = previewWithRef;
+		if(forceAll || def.previewColor != previewColor)					a["previewTargetColor"] = previewColor;
 		return a;
 	}
 };
