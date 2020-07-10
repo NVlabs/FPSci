@@ -22,7 +22,7 @@ public:
     String	experimentConfigFilename;			///< Optional path to an experiment config file (if empty assumes "./experimentconfig.Any" will be this file)
     String	userConfigFilename;					///< Optional path to a user config file (if empty assumes "./userconfig.Any" will be this file)
 	String  userStatusFilename;					///< Optional path to a user status file (if empty assumes "./userstatus.Any" will be this file)
-	String  latencyLoggerConfigFilename;		///< Optional path to a latency logger config file (if empty assumes "./systemconfig.Any" will be this file)
+	String  latencyLoggerConfigFilename = "systemconfig.Any";		///< Optional path to a latency logger config file
     String	resultsDirPath = "./results/";		///< Optional path to the results directory
 	bool	audioEnable = true;					///< Audio on/off
     StartupConfig() {};
@@ -64,10 +64,10 @@ public:
         if(forceAll || def.developerMode != developerMode)					a["developerMode"] = developerMode;
 		if(forceAll || def.waypointEditorMode != waypointEditorMode)		a["waypointEditorMode"] = waypointEditorMode;
 		if(forceAll || def.fullscreen != fullscreen)						a["fullscreen"] = fullscreen;
-        if(forceAll || def.experimentConfigFilename != experimentConfigFilename)	a["experimentConfigPath"] = experimentConfigFilename;
-        if(forceAll || def.userConfigFilename != userConfigFilename)				a["userConfigPath"] = userConfigFilename;
-		if(forceAll || def.userStatusFilename != userStatusFilename)				a["userStatusPath"] = userStatusFilename;
-		if(forceAll || def.latencyLoggerConfigFilename != latencyLoggerConfigFilename) a["latencyLoggerConfigPath"] = latencyLoggerConfigFilename;
+        if(forceAll || def.experimentConfigFilename != experimentConfigFilename)	a["experimentConfigFilename"] = experimentConfigFilename;
+        if(forceAll || def.userConfigFilename != userConfigFilename)				a["userConfigFilename"] = userConfigFilename;
+		if(forceAll || def.userStatusFilename != userStatusFilename)				a["userStatusFilename"] = userStatusFilename;
+		if(forceAll || def.latencyLoggerConfigFilename != latencyLoggerConfigFilename) a["latencyLoggerConfigFilename"] = latencyLoggerConfigFilename;
 		if(forceAll || def.resultsDirPath != resultsDirPath)				a["resultsDirPath"] = resultsDirPath;
         if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
         return a;
@@ -81,9 +81,6 @@ public:
 	
     /** full path (including filename) to user status file */
 	inline const String userStatusConfig() { return userStatusFilename.empty() ? "userstatus.Any" : userStatusFilename; }
-
-	/** full path (including filename) to latency logger config file */
-	inline const String latencyLoggerConfig() { return latencyLoggerConfigFilename.empty() ? "systemconfig.Any" : latencyLoggerConfigFilename; }
 
 	static void checkValidAnyFilename(String path) {
 		if (path.empty()) return;		// Allow empty values since these are the defaults

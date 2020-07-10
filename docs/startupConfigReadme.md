@@ -27,6 +27,6 @@ fullscreen = true;                  // Set this to false to run in windowed mode
 windowSize = Vector2(1920, 980);    // This sets the default window size (when running with fullscreen = false)
 experimentConfigFilename = "";      // Leave this empty for default "experimentconfig.Any"
 userConfigFilename = "";            // Leave this empty for default "userconfig.Any"
-resultsDirFilename = "./results/";  // Change to save results somewhere else
+resultsDirPath = "./results/";      // Change to save results somewhere else
 audioEnable = true;                 // Set false to turn off audio
 ```

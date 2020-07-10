@@ -46,7 +46,7 @@ void FPSciApp::onInit() {
 	info.printToLog();										// Print system info to log.txt
 
 	// Get and save system configuration
-	latencyLoggerConfig = LatencyLoggerConfig::load(startupConfig.latencyLoggerConfig());
+	latencyLoggerConfig = LatencyLoggerConfig::load(startupConfig.latencyLoggerConfigFilename);
 	latencyLoggerConfig.printToLog();						// Print the latency logger config to log.txt								
 
 	// Get the size of the primary display
