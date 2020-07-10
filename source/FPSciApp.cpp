@@ -26,18 +26,18 @@ void FPSciApp::onInit() {
 	GApp::onInit();
 
 	// Load experiment setting from file
-	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfig());
+	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfigFilename);
 	experimentConfig.printToLog();
 
 	Array<String> sessionIds;
 	experimentConfig.getSessionIds(sessionIds);
 
 	// Load per user settings from file
-	userTable = UserTable::load(startupConfig.userConfig());
+	userTable = UserTable::load(startupConfig.userConfigFilename);
 	userTable.printToLog();
 
 	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load(startupConfig.userStatusConfig());
+	userStatusTable = UserStatusTable::load(startupConfig.userStatusFilename);
 	userStatusTable.printToLog();
 	userStatusTable.validate(sessionIds, userTable.getIds());
 	
@@ -46,14 +46,14 @@ void FPSciApp::onInit() {
 	info.printToLog();										// Print system info to log.txt
 
 	// Get and save system configuration
-	latencyLoggerConfig = LatencyLoggerConfig::load();
+	latencyLoggerConfig = LatencyLoggerConfig::load(startupConfig.latencyLoggerConfigFilename);
 	latencyLoggerConfig.printToLog();						// Print the latency logger config to log.txt								
 
 	// Get the size of the primary display
 	displayRes = OSWindow::primaryDisplaySize();						
 
 	// Load the key binds
-	keyMap = KeyMapping::load();
+	keyMap = KeyMapping::load(startupConfig.keymapConfigFilename);
 	userInput->setKeyMapping(&keyMap.uiMap);
 
 	// Setup/update waypoint manager
