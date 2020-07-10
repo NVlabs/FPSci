@@ -1,8 +1,11 @@
 {
-	audioEnable = true;
-	experimentConfigPath = "test/"; 
 	playMode = true;
-	userConfigPath = "test/";
-	windowSize = Vector2(300, 200);
+	audioEnable = true;
+	
 	fullscreen = false;
+	windowSize = Vector2(300, 200);
+	
+	experimentConfigFilename = "test/experimentconfig.any"; 
+	userConfigFilename = "test/userconfig.any";
+	userStatusFilename = "test/userstatus.any";
 }
