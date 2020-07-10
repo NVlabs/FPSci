@@ -14,6 +14,7 @@ The following fields are valid for a startupconfig.Any file:
 * `experimentConfigFilename` sets the path and file name for an [experiment config file](./experimentConfigReadme.md).
 * `userConfigFilename` sets the path and file name for a [user config file](./userConfigReadme.md).
 * `userStatusFilename` sets the path and file name for a [user status file](./userStatusReadme.md).
+* `keymapConfigFilename` sets the path and file name for a [keymap config file](./keymap.md).
 * `latencyLoggerConfigFilename` sets the path and file name for a [latency logger config file](systemConfigReadme.md) for controlling latency logger hardware.
 * `resultsDirPath` sets the path to the results directory. If this directory does not exists the application will create it at runtime.
 * `audioEnable` turns on or off audio
@@ -28,6 +29,7 @@ windowSize = Vector2(1920, 980);                    // This sets the default win
 experimentConfigFilename = "experimentconfig.Any";  // Can include a path
 userConfigFilename = "userconfig.Any";              // Can include a path
 userStatusFilename = "userstatus.Any";              // Can include a path
+keymapConfigFilename = "keymap.Any";                // Can include a path
 latencyLoggerConfigFilename = "systemconfig.Any";   // Can include a path
 resultsDirPath = "./results/";                      // Change to save results somewhere else
 audioEnable = true;                                 // Set false to turn off audio

@@ -22,6 +22,7 @@ public:
     String	experimentConfigFilename = "experimentconfig.Any";	///< Optional path to an experiment config file
     String	userConfigFilename = "userconfig.Any";				///< Optional path to a user config file
 	String  userStatusFilename = "userstatus.Any";				///< Optional path to a user status file
+	String  keymapConfigFilename = "keymap.Any";				///< Optional path to a keymap config file
 	String  latencyLoggerConfigFilename = "systemconfig.Any";	///< Optional path to a latency logger config file
     String	resultsDirPath = "./results/";						///< Optional path to the results directory
 	bool	audioEnable = true;									///< Audio on/off
@@ -45,6 +46,8 @@ public:
 			checkValidAnyFilename("userConfigFilename", userConfigFilename);
 			reader.getIfPresent("userStatusFilename", userStatusFilename);
 			checkValidAnyFilename("userStatusFilename", userStatusFilename);
+			reader.getIfPresent("keymapConfigFilename", keymapConfigFilename);
+			checkValidAnyFilename("keymapConfigFilename", keymapConfigFilename);
 			reader.getIfPresent("latencyLoggerConfigFilename", latencyLoggerConfigFilename);
 			checkValidAnyFilename("latencyLoggerConfigFilename", latencyLoggerConfigFilename);
 			reader.getIfPresent("resultsDirPath", resultsDirPath);
@@ -67,6 +70,7 @@ public:
         if(forceAll || def.experimentConfigFilename != experimentConfigFilename)		a["experimentConfigFilename"] = experimentConfigFilename;
         if(forceAll || def.userConfigFilename != userConfigFilename)					a["userConfigFilename"] = userConfigFilename;
 		if(forceAll || def.userStatusFilename != userStatusFilename)					a["userStatusFilename"] = userStatusFilename;
+		if(forceAll || def.keymapConfigFilename != keymapConfigFilename)				a["keymapConfigFilename"] = keymapConfigFilename;
 		if(forceAll || def.latencyLoggerConfigFilename != latencyLoggerConfigFilename)	a["latencyLoggerConfigFilename"] = latencyLoggerConfigFilename;
 		if(forceAll || def.resultsDirPath != resultsDirPath)							a["resultsDirPath"] = resultsDirPath;
         if(forceAll || def.audioEnable != audioEnable)									a["audioEnable"] = audioEnable;
@@ -138,10 +142,10 @@ public:
 		return a;
 	}
 
-	static KeyMapping load(String filename = "keymap.Any") {
+	static KeyMapping load(String filename) {
 		if (!FileSystem::exists(System::findDataFile(filename, false))) {
 			KeyMapping mapping = KeyMapping();
-			mapping.toAny().save("keymap.Any");
+			mapping.toAny().save(filename);
 			return mapping;
 		}
 		return Any::fromFile(System::findDataFile(filename));

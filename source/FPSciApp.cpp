@@ -53,7 +53,7 @@ void FPSciApp::onInit() {
 	displayRes = OSWindow::primaryDisplaySize();						
 
 	// Load the key binds
-	keyMap = KeyMapping::load();
+	keyMap = KeyMapping::load(startupConfig.keymapConfigFilename);
 	userInput->setKeyMapping(&keyMap.uiMap);
 
 	// Setup/update waypoint manager
