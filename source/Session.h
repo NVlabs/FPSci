@@ -127,8 +127,12 @@ protected:
 	// Target management
 	Table<String, Array<shared_ptr<ArticulatedModel>>>* m_targetModels;
 	int m_modelScaleCount;
-	int m_lastUniqueID = 0;								///< Counter for creating unique names for various entities
-	Array<shared_ptr<TargetEntity>> m_targetArray;		///< Array of drawn targets
+	int m_lastUniqueID = 0;									///< Counter for creating unique names for various entities
+	
+	Array<shared_ptr<TargetEntity>> m_targetArray;			///< Array of drawn targets
+	Array<shared_ptr<TargetEntity>> m_hittableTargets;		///< Array of targets that can be hit
+	Array<shared_ptr<TargetEntity>> m_unhittableTargets;	///< Array of targets that can't be hit
+
 
 	int m_currTrialIdx;										///< Current trial
 	int m_currQuestionIdx = -1;								///< Current question index
@@ -263,7 +267,7 @@ protected:
 		return m_camera->frame().translation;
 	}
 
-	HANDLE runCommand(String cmd, String evt) {
+	HANDLE runCommand(CommandSpec cmd, String evt) {
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
 		ZeroMemory(&si, sizeof(si));
@@ -271,9 +275,21 @@ protected:
 		ZeroMemory(&pi, sizeof(pi));
 
 		// Run the (formatted command)
-		LPSTR command = LPSTR(formatCommand(cmd).c_str());
-		if (!CreateProcess(NULL, command, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+		LPSTR command = LPSTR(formatCommand(cmd.cmdStr).c_str());
+		bool success;
+		if (cmd.foreground) {	// Run process in the foreground
+			success = CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+		}
+		else {				// Run process silently in the background
+			success = CreateProcess(NULL, command, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+		}
+
+		if (!success) {
 			logPrintf("Failed to run %s command: \"%s\". %s\n", evt, cmd, GetLastErrorString());
+		}
+
+		if (cmd.blocking) {	// Optional blocking behavior
+			WaitForSingleObject(pi.hProcess, INFINITE);
 		}
 
 		return pi.hProcess;
@@ -306,6 +322,7 @@ public:
 
 	void randomizePosition(const shared_ptr<TargetEntity>& target) const;
 	void initTargetAnimation();
+	void spawnTrialTargets(Point3 initialSpawnPos, bool previewMode = false);
 	float weaponCooldownPercent() const;
 	RealTime lastFireTime() const {
 		return m_lastFireAt;
@@ -313,7 +330,8 @@ public:
 	int remainingAmmo() const;
 
 	bool blockComplete() const;
-	void nextCondition();
+	bool nextCondition();
+	bool hasNextCondition() const;
 
 	void endLogging();
 
@@ -339,7 +357,6 @@ public:
 	}
 
 	/** Destroy a target from the targets array */
-	void destroyTarget(int index);
 	void destroyTarget(shared_ptr<TargetEntity> target);
 
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
@@ -358,12 +375,22 @@ public:
 	bool updateBlock(bool updateTargets = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
-	enum PresentationState presentationState;			///< Current presentation state
+	enum PresentationState currentState;			///< Current presentation state
 
 	/** result recording */
 	void countShot() { m_shotCount++; }
 
 	const Array<shared_ptr<TargetEntity>>& targetArray() const {
 		return m_targetArray;
+	}
+
+	/** dynamically allocates a new array of pointers to the hittable targets in the session */
+	const Array<shared_ptr<TargetEntity>>& hittableTargets() const {
+		return m_hittableTargets;
+	}
+
+	/** dynamically allocates a new array of pointers to the unhittable (visible but inactive) targets in the session */
+	const Array<shared_ptr<TargetEntity>>& unhittableTargets() const {
+		return m_unhittableTargets;
 	}
 };

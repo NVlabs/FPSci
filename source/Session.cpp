@@ -32,16 +32,24 @@
 #include "PlayerEntity.h"
 #include "Dialogs.h"
 
-void Session::nextCondition() {
+bool Session::hasNextCondition() const{
+	for (int count : m_remainingTrials) {
+		if (count > 0) return true;
+	}
+	return false;
+}
+
+bool Session::nextCondition() {
 	Array<int> unrunTrialIdxs;
 	for (int i = 0; i < m_remainingTrials.size(); i++) {
 		if (m_remainingTrials[i] > 0 || m_remainingTrials[i] == -1) {
 			unrunTrialIdxs.append(i);
 		}
 	}
-	if (unrunTrialIdxs.size() == 0) return;
+	if (unrunTrialIdxs.size() == 0) return false;
 	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
 	m_currTrialIdx = unrunTrialIdxs[idx];
+	return true;
 }
 
 bool Session::blockComplete() const{
@@ -64,13 +72,12 @@ bool Session::updateBlock(bool updateTargets) {
 		m_remainingTrials.append(m_config->trials[i].count);
 		m_targetConfigs.append(targets);
 	}
-	nextCondition();
-	return true;
+	return nextCondition();
 }
 
 void Session::onInit(String filename, String description) {
 	// Initialize presentation states
-	presentationState = PresentationState::initial;
+	currentState = PresentationState::initial;
 	if (m_config) {
 		m_feedbackMessage = formatFeedback(m_config->targetView.showRefTarget ? m_config->feedback.initialWithRef: m_config->feedback.initialNoRef);
 	}
@@ -101,7 +108,7 @@ void Session::onInit(String filename, String description) {
 		updateBlock(true);
 	}
 	else {	// Invalid session, move to displaying message
-		presentationState = PresentationState::scoreboard;
+		currentState = PresentationState::scoreboard;
 	}
 }
 
@@ -128,48 +135,36 @@ void Session::initTargetAnimation() {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
 	const Point3 initialSpawnPos = m_player->getCameraFrame().translation;
-	CFrame f = CFrame::fromXYZYPRRadians(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians, 0.0f, 0.0f);
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
-	if (presentationState == PresentationState::task) {
-		// Iterate through the targets
-		for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
-			
-			const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, m_targetConfigs[m_currTrialIdx][i]->id, i);
-			const Color3 initColor = m_config->targetView.healthColors[0];
-			shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
-
-			const float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
-			const float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
-			const float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
-			bool isWorldSpace = target->destSpace == "world";
-
-			CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw- (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
-
-			// Check for case w/ destination array
-			if (target->destinations.size() > 0) {
-				Point3 offset =isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<TargetEntity> t = spawnDestTarget(target, offset, initColor, i, name);
-			}
-			// Otherwise check if this is a jumping target
-			else if (target->jumpEnabled) {
-				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<JumpingEntity> t = spawnJumpingTarget(target, offset, initialSpawnPos, initColor, m_targetDistance, i, name);
-			}
-			else {
-				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<FlyingEntity> t = spawnFlyingTarget(target, offset, initialSpawnPos, initColor, i, name);
+	if (currentState == PresentationState::task) {
+		if (m_config->targetView.previewWithRef && m_config->targetView.showRefTarget) {
+			// Activate the preview targets
+			const Color3 activeColor = m_config->targetView.healthColors[0];
+			for (shared_ptr<TargetEntity> target : m_targetArray) {
+				target->setCanHit(true);
+				target->setColor(activeColor);
+				m_hittableTargets.append(target);
 			}
 		}
+		else {
+			spawnTrialTargets(initialSpawnPos);			// Spawn all the targets normally
+		}
 	}
-	else {
-		// Make sure we reset the target color here (avoid color bugs)
-		spawnReferenceTarget(
+	else { // State is feedback and we are spawning a reference target
+		CFrame f = CFrame::fromXYZYPRRadians(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians, 0.0f, 0.0f);
+		// Spawn the reference target
+		auto t = spawnReferenceTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 			initialSpawnPos,
 			m_config->targetView.refTargetSize,
 			m_config->targetView.refTargetColor
 		);
+		m_hittableTargets.append(t);
+
+		if (m_config->targetView.previewWithRef) {
+			spawnTrialTargets(initialSpawnPos, true);		// Spawn all the targets in preview mode
+		}
 	}
 
 	// Reset number of destroyed targets (in the trial)
@@ -177,6 +172,43 @@ void Session::initTargetAnimation() {
 	// Reset shot and hit counters (in the trial)
 	m_shotCount = 0;
 	m_hitCount = 0;
+}
+
+void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
+	// Iterate through the targets
+	for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
+
+		const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, m_targetConfigs[m_currTrialIdx][i]->id, i);
+		const Color3 spawnColor = previewMode ? m_config->targetView.previewColor : m_config->targetView.healthColors[0];
+		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
+
+		const float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
+		const float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
+		const float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
+		bool isWorldSpace = target->destSpace == "world";
+
+		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw - (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
+
+		// Check for case w/ destination array
+		shared_ptr<TargetEntity> t;
+		if (target->destinations.size() > 0) {
+			Point3 offset = isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			t = spawnDestTarget(target, offset, spawnColor, i, name);
+		}
+		// Otherwise check if this is a jumping target
+		else if (target->jumpEnabled) {
+			Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			t = spawnJumpingTarget(target, offset, initialSpawnPos, spawnColor, m_targetDistance, i, name);
+		}
+		else {
+			Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			t = spawnFlyingTarget(target, offset, initialSpawnPos, spawnColor, i, name);
+		}
+
+		// Set whether the target can be hit based on whether we are in preview mode
+		t->setCanHit(!previewMode);
+		previewMode ? m_unhittableTargets.append(t) : m_hittableTargets.append(t);
+	}
 }
 
 void Session::processResponse()
@@ -203,9 +235,8 @@ void Session::processResponse()
 void Session::updatePresentationState()
 {
 	// This updates presentation state and also deals with data collection when each trial ends.
-	PresentationState currentState = presentationState;
 	PresentationState newState;
-	int remainingTargets = m_targetArray.size();
+	int remainingTargets = m_hittableTargets.size();
 	float stateElapsedTime = m_timer.getTime();
 	newState = currentState;
 
@@ -357,9 +388,9 @@ void Session::updatePresentationState()
 		if (newState == PresentationState::task) {
 			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
 		}
-		presentationState = newState;
+		currentState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
-		if ((newState == PresentationState::task) || (newState == PresentationState::feedback && m_config->targetView.showRefTarget)) {
+		if ((newState == PresentationState::task) || (newState == PresentationState::feedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
 			initTargetAnimation();
 		}
 	}
@@ -371,7 +402,7 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	updatePresentationState();
 
 	// 2. Record target trajectories, view direction trajectories, and mouse motion.
-	if (presentationState == PresentationState::task)
+	if (currentState == PresentationState::task)
 	{
 		accumulateTrajectories();
 		accumulateFrameInfo(rdt, sdt, idt);
@@ -698,28 +729,29 @@ void Session::insertTarget(shared_ptr<TargetEntity> target) {
 	m_scene->insert(target);
 }
 
-void Session::destroyTarget(int index) {
-	// Not a reference because we're about to manipulate the array
-	const shared_ptr<VisibleEntity> target = m_targetArray[index];
-	if (!target) return;
-	// Remove the target from the target array
-	m_targetArray.fastRemove(index);
-	// Remove the target from the scene
-	m_scene->removeEntity(target->name());
-}
-
 void Session::destroyTarget(shared_ptr<TargetEntity> target) {
+	// Remove target from the scene
+	m_scene->removeEntity(target->name());
+	// Remove target from master list
 	for (int i = 0; i < m_targetArray.size(); i++) {
-		if (m_targetArray[i]->name() == target->name()) {
-			m_targetArray.fastRemove(i);
+		if (m_targetArray[i]->name() == target->name()) { m_targetArray.fastRemove(i); }
+	}
+	// Remove target from (un)hittable array
+	for (int i = 0; i < m_hittableTargets.size(); i++) {
+		if (m_hittableTargets[i]->name() == target->name()) { 
+			m_hittableTargets.fastRemove(i); 
+			return;	// Target can't be both hittable and unhittable
 		}
 	}
-	m_scene->removeEntity(target->name());
+	for (int i = 0; i < m_unhittableTargets.size(); i++) {
+		if (m_unhittableTargets[i]->name() == target->name()) { m_unhittableTargets.fastRemove(i); }
+	}
+
 }
 
 /** Clear all targets one by one */
 void Session::clearTargets() {
-	while (m_targetArray.size() > 0) {
-		destroyTarget(0);
+	for(auto target : m_targetArray) {
+		destroyTarget(target);
 	}
 }

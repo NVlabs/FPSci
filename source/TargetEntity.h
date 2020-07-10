@@ -67,6 +67,7 @@ protected:
 	int		m_scaleIdx			= 0;				///< Index for scaled model
 	bool	m_isLogged			= true;				///< Control flag for logging
 	Point3	m_offset;								///< Offset for initial spawn
+	bool	m_canHit			= true;				///< Can this target be hit?	
 	Array<Destination> m_destinations;				///< Array of destinations to visit
 	shared_ptr<Sound> m_hitSound;					///< Sound to play when hit
 	float m_hitSoundVol;							///< Volume to play hit sound at
@@ -121,6 +122,7 @@ public:
 	}
 
 	void setWorldSpace(bool worldSpace) { m_worldSpace = worldSpace; }
+	void setCanHit(bool active) { m_canHit = active; }
 
 	void setHitSound(const String& hitSoundFilename, float hitSoundVol = 1.0f) {
 		if (hitSoundFilename == "") { m_hitSound = nullptr; }
@@ -194,8 +196,10 @@ public:
 	Array<Destination> destinations() const { return m_destinations; }
 	/** Getter for remaining respawn count */
 	int respawnsRemaining() const { return m_respawnCount; }
-	/** Getter for parmaeter index */
+	/** Getter for parameter index */
 	int paramIdx() const { return m_paramIdx; }
+	/** Getter for active/can hit */
+	bool canHit() const { return m_canHit; }
 
 	void drawHealthBar(RenderDevice* rd, const Camera& camera, const Framebuffer& framebuffer, Point2 size, Point3 offset, Point2 border, Array<Color4> colors, Color4 borderColor) const;
 	virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;

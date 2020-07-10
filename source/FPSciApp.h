@@ -167,11 +167,11 @@ public:
 
     /** callbacks for saving user status and config */
 	void saveUserConfig(void) {
-		userTable.save(startupConfig.userConfig());
+		userTable.save(startupConfig.userConfigFilename);
 		logPrintf("User table saved.\n");			// Print message to log
 	}
 	void saveUserStatus(void) { 
-		userStatusTable.save(startupConfig.userStatusConfig()); 
+		userStatusTable.save(startupConfig.userStatusFilename); 
 		logPrintf("User status saved.\n");
 	}
 
