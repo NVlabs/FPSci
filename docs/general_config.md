@@ -37,6 +37,7 @@ The following settings allow the user to control various timings/durations aroun
 
 | Parameter Name            |Units  | Description                                                        |
 |---------------------------|-------|--------------------------------------------------------------------|
+|`clickToStart`             |`bool` |Require the user to click at the start of the session to spawn the first reference target  |
 |`readyDuration`            |s      |The time before the start of each trial                             |
 |`taskDuration`             |s      |The maximum time over which the task can occur                      |
 |`feedbackDuration`         |s      |The duration of the feedback window between trials                  |
@@ -44,6 +45,7 @@ The following settings allow the user to control various timings/durations aroun
 |`scoreboardRequireClick`   |`bool` |Require the user to click to move past the scoreboard (in addition to waiting the `scoreboardDuration`)|
 
 ```
+"clickToStart : true,         // Require a click to start the session
 "readyDuration": 0.5,         // Time allocated for preparing for trial
 "taskDuration": 100000.0,     // Maximum duration allowed for completion of the task
 "feedbackDuration": 1.0,      // Time for user feedback between trials

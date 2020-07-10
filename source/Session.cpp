@@ -245,8 +245,7 @@ void Session::updatePresentationState()
 		if (m_config->player.stillBetweenTrials) {
 			m_player->setMoveEnable(false);
 		}
-		if (!m_app->m_buttonUp)
-		{
+		if (!(m_app->m_buttonUp && m_config->timing.clickToStart)) {
 			newState = PresentationState::feedback;
 		}
 	}
