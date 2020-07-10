@@ -15,16 +15,16 @@ static bool operator!=(Array<T> a1, Array<T> a2) {
 class StartupConfig {
 private:
 public:
-    bool	developerMode = false;				///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
-	bool	waypointEditorMode = false;			///< Sets whether the app is run w/ the waypoint editor available
-	bool	fullscreen = true;					///< Whether the app runs in windowed mode
-	Vector2 windowSize = { 1920, 980 };			///< Window size (when not run in fullscreen)
-    String	experimentConfigFilename;			///< Optional path to an experiment config file (if empty assumes "./experimentconfig.Any" will be this file)
-    String	userConfigFilename;					///< Optional path to a user config file (if empty assumes "./userconfig.Any" will be this file)
-	String  userStatusFilename;					///< Optional path to a user status file (if empty assumes "./userstatus.Any" will be this file)
-	String  latencyLoggerConfigFilename = "systemconfig.Any";		///< Optional path to a latency logger config file
-    String	resultsDirPath = "./results/";		///< Optional path to the results directory
-	bool	audioEnable = true;					///< Audio on/off
+    bool	developerMode = false;								///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
+	bool	waypointEditorMode = false;							///< Sets whether the app is run w/ the waypoint editor available
+	bool	fullscreen = true;									///< Whether the app runs in windowed mode
+	Vector2 windowSize = { 1920, 980 };							///< Window size (when not run in fullscreen)
+    String	experimentConfigFilename = "experimentconfig.Any";	///< Optional path to an experiment config file
+    String	userConfigFilename = "userconfig.Any";				///< Optional path to a user config file
+	String  userStatusFilename = "userstatus.Any";				///< Optional path to a user status file
+	String  latencyLoggerConfigFilename = "systemconfig.Any";	///< Optional path to a latency logger config file
+    String	resultsDirPath = "./results/";						///< Optional path to the results directory
+	bool	audioEnable = true;									///< Audio on/off
     StartupConfig() {};
 
 	/** Construct from any here */
@@ -61,35 +61,25 @@ public:
     Any toAny(const bool forceAll = true) const {
 		StartupConfig def;		// Create a dummy default config for value testing
         Any a(Any::TABLE);
-        if(forceAll || def.developerMode != developerMode)					a["developerMode"] = developerMode;
-		if(forceAll || def.waypointEditorMode != waypointEditorMode)		a["waypointEditorMode"] = waypointEditorMode;
-		if(forceAll || def.fullscreen != fullscreen)						a["fullscreen"] = fullscreen;
-        if(forceAll || def.experimentConfigFilename != experimentConfigFilename)	a["experimentConfigFilename"] = experimentConfigFilename;
-        if(forceAll || def.userConfigFilename != userConfigFilename)				a["userConfigFilename"] = userConfigFilename;
-		if(forceAll || def.userStatusFilename != userStatusFilename)				a["userStatusFilename"] = userStatusFilename;
-		if(forceAll || def.latencyLoggerConfigFilename != latencyLoggerConfigFilename) a["latencyLoggerConfigFilename"] = latencyLoggerConfigFilename;
-		if(forceAll || def.resultsDirPath != resultsDirPath)				a["resultsDirPath"] = resultsDirPath;
-        if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
+        if(forceAll || def.developerMode != developerMode)								a["developerMode"] = developerMode;
+		if(forceAll || def.waypointEditorMode != waypointEditorMode)					a["waypointEditorMode"] = waypointEditorMode;
+		if(forceAll || def.fullscreen != fullscreen)									a["fullscreen"] = fullscreen;
+        if(forceAll || def.experimentConfigFilename != experimentConfigFilename)		a["experimentConfigFilename"] = experimentConfigFilename;
+        if(forceAll || def.userConfigFilename != userConfigFilename)					a["userConfigFilename"] = userConfigFilename;
+		if(forceAll || def.userStatusFilename != userStatusFilename)					a["userStatusFilename"] = userStatusFilename;
+		if(forceAll || def.latencyLoggerConfigFilename != latencyLoggerConfigFilename)	a["latencyLoggerConfigFilename"] = latencyLoggerConfigFilename;
+		if(forceAll || def.resultsDirPath != resultsDirPath)							a["resultsDirPath"] = resultsDirPath;
+        if(forceAll || def.audioEnable != audioEnable)									a["audioEnable"] = audioEnable;
         return a;
     }
 
-    /** full path (including filename) to experiment config file */
-    inline const String experimentConfig() { return experimentConfigFilename.empty() ? "experimentconfig.Any" : experimentConfigFilename; }
-
-    /** full path (including filename) to user config file */
-	inline const String userConfig() { return userConfigFilename.empty() ? "userconfig.Any" : userConfigFilename; }
-	
-    /** full path (including filename) to user status file */
-	inline const String userStatusConfig() { return userStatusFilename.empty() ? "userstatus.Any" : userStatusFilename; }
-
-	static void checkValidAnyFilename(String path) {
-		if (path.empty()) return;		// Allow empty values since these are the defaults
-		// Check for non empty paths having ".any" file extension
+	/** Assert that the filename ends in .any */
+	static void checkValidAnyFilename(const String& path) {
 		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any",
-			format("All config files specified in the startup config must end with \".any\"!, check path: \"%s\"!", path));
+			format("All config filenames specified in the startup config must end with \".any\"!, check path: \"%s\"!", path));
 	}
 
-	static String formatDirPath(String path) {
+	static String formatDirPath(const String& path) {
 		String fpath = path;
 		// Add a trailing slash to the directory name if missing
 		if (!path.empty() && path.substr(path.length() - 1) != "/") {
@@ -324,7 +314,7 @@ public:
 	}
 
 	/** Load a latency logger config from file */
-	static LatencyLoggerConfig load(String filename) {
+	static LatencyLoggerConfig load(const String& filename) {
 		// if file not found, create a default latency logger config
 		if (!FileSystem::exists(filename)) { 
 			return LatencyLoggerConfig();		// Create the default
@@ -451,7 +441,7 @@ public:
 	}
 
 	/** Simple rotine to get the UserTable Any structure from file */
-	static UserTable load(String filename) {
+	static UserTable load(const String& filename) {
 		// Create default UserConfig file
 		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
 			UserTable defTable = UserTable();
@@ -462,7 +452,7 @@ public:
 		return Any::fromFile(System::findDataFile(filename));
 	}
 
-	inline void save(String filename) { toAny().save(filename); }
+	inline void save(const String& filename) { toAny().save(filename); }
 
 	/** Get an array of user IDs */
 	Array<String> getIds() {
@@ -582,20 +572,20 @@ public:
 	}
 
 	/** Get the user status table from file */
-	static UserStatusTable load(String filename) {
+	static UserStatusTable load(const String& filename) {
 		if (!FileSystem::exists(filename)) { // if file not found, create a default userstatus.Any
-			UserStatusTable defStatus = UserStatusTable();			// Create empty status
+			UserStatusTable defaultStatus = UserStatusTable();			// Create empty status
 			UserSessionStatus user;
 			user.sessionOrder = Array<String> ({ "60Hz", "30Hz" });	// Add "default" sessions we add to
-			defStatus.userInfo.append(user);						// Add single "default" user
-			defStatus.currentUser = user.id;						// Set "default" user as current user
-			defStatus.save(filename);								// Save .any file
-			return defStatus;
+			defaultStatus.userInfo.append(user);						// Add single "default" user
+			defaultStatus.currentUser = user.id;						// Set "default" user as current user
+			defaultStatus.save(filename);								// Save .any file
+			return defaultStatus;
 		}
 		return Any::fromFile(System::findDataFile(filename));
 	}
 
-	inline void save(String filename = "userstatus.Any") { toAny().save(filename);  }
+	inline void save(const String& filename = "userstatus.Any") { toAny().save(filename);  }
 
 	/** Get a given user's status from the table by ID */
 	shared_ptr<UserSessionStatus> getUserStatus(String id) {
@@ -2008,7 +1998,7 @@ public:
 	}
 
 	/** Get the experiment config from file */
-	static ExperimentConfig load(String filename) {
+	static ExperimentConfig load(const String& filename) {
         // if file not found, build a default
         if (!FileSystem::exists(System::findDataFile(filename, false))) {
             ExperimentConfig ex = ExperimentConfig();
