@@ -644,7 +644,7 @@ public:
 		for(String defSessId : defaultSessionOrder) {
 			noSessions = false;
 			if (!sessions.contains(defSessId)) {
-				throw format("Default session config in user status has session with ID: \"%s\". This session ID does not appear in experimentconfig.Any's \"sessions\" array. Valid options are: %s", defSessId, expSessions);
+				throw format("Default session config in user status has session with ID: \"%s\". This session ID does not appear in the experiment config file's \"sessions\" array. Valid options are: %s", defSessId, expSessions);
 			}
 		}
 
@@ -656,14 +656,14 @@ public:
 			for (String userSessId : userStatus.sessionOrder) {
 				noSessions = false;
 				if (!sessions.contains(userSessId)) {
-					throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in the experimentconfig.Any \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
+					throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in the experiment config file's \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
 				}
 			}
 		}
 
 		// Check current user has a valid config
 		if (currentUser.empty()) {
-			throw "\"currentUser\" field is not specified in the user status file!\nIf you are migrating from an older version of FPSci, please cut the \"currentUser = ...\" line\nfrom userconfig.Any and paste it in userstatus.Any.";
+			throw "\"currentUser\" field is not specified in the user status file!\nIf you are migrating from an older version of FPSci, please cut the \"currentUser = ...\" line\nfrom the user config file and paste it in the user status file.";
 		}
 		else if (!users.contains(currentUser)) {
 			throw format("Current user \"%s\" does not have a valid entry in the user config file!", currentUser);
@@ -671,7 +671,7 @@ public:
 
 		// Check if no default/per user sessions are present
 		if (noSessions) { 
-			throw "Found no sessions in the userstatus.Any file!"; 
+			throw "Found no sessions in the user status file!"; 
 		}
 	}
 
