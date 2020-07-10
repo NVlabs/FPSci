@@ -26,34 +26,34 @@ void FPSciApp::onInit() {
 	GApp::onInit();
 
 	// Load experiment setting from file
-	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfig());
+	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfigFilename);
 	experimentConfig.printToLog();
 
 	Array<String> sessionIds;
 	experimentConfig.getSessionIds(sessionIds);
 
 	// Load per user settings from file
-	userTable = UserTable::load(startupConfig.userConfig());
+	userTable = UserTable::load(startupConfig.userConfigFilename);
 	userTable.printToLog();
 
 	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load(startupConfig.userStatusConfig());
+	userStatusTable = UserStatusTable::load(startupConfig.userStatusFilename);
 	userStatusTable.printToLog();
-	userStatusTable.validate(sessionIds);
+	userStatusTable.validate(sessionIds, userTable.getIds());
 	
 	// Get info about the system
 	SystemInfo info = SystemInfo::get();
 	info.printToLog();										// Print system info to log.txt
 
 	// Get and save system configuration
-	latencyLoggerConfig = LatencyLoggerConfig::load();
+	latencyLoggerConfig = LatencyLoggerConfig::load(startupConfig.latencyLoggerConfigFilename);
 	latencyLoggerConfig.printToLog();						// Print the latency logger config to log.txt								
 
 	// Get the size of the primary display
 	displayRes = OSWindow::primaryDisplaySize();						
 
 	// Load the key binds
-	keyMap = KeyMapping::load();
+	keyMap = KeyMapping::load(startupConfig.keymapConfigFilename);
 	userInput->setKeyMapping(&keyMap.uiMap);
 
 	// Setup/update waypoint manager
@@ -77,7 +77,7 @@ void FPSciApp::onInit() {
 
 	// Load models and set the reticle
 	loadModels();
-	setReticle(userTable.getCurrentUser()->reticleIndex);
+	setReticle(currentUser()->reticleIndex);
 
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
@@ -108,7 +108,7 @@ void FPSciApp::closeUserSettingsWindow() {
 
 /** Update the mouse mode/sensitivity */
 void FPSciApp::updateMouseSensitivity() {
-	const UserConfig* user = userTable.getCurrentUser();
+	const shared_ptr<UserConfig> user = currentUser();
 	// Converting from mouseDPI (dots/in) and sensitivity (cm/turn) into rad/dot which explains cm->in (2.54) and turn->rad (2*PI) factors
 	// rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
 	const double radiansPerDot = 2.0 * pi() * 2.54 / (user->cmp360 * user->mouseDPI);
@@ -216,7 +216,7 @@ void FPSciApp::updateControls(bool firstSession) {
 	if(!firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
 
 	// Update the waypoint manager
-	waypointManager->updateControls();
+	if (startupConfig.waypointEditorMode) { waypointManager->updateControls(); }
 
 	// Setup the player control
 	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&FPSciApp::exportScene, this), theme);
@@ -224,7 +224,7 @@ void FPSciApp::updateControls(bool firstSession) {
 	this->addWidget(m_playerControls);
 
 	// Setup the render control
-	m_renderControls = RenderControls::create(*sessConfig, *(userTable.getCurrentUser()), renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
+	m_renderControls = RenderControls::create(*sessConfig, *(currentUser()), renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(false);
 	this->addWidget(m_renderControls);
 
@@ -236,7 +236,6 @@ void FPSciApp::updateControls(bool firstSession) {
 void FPSciApp::makeGUI() {
 	debugWindow->setVisible(startupConfig.developerMode);
 	developerWindow->setVisible(startupConfig.developerMode);
-	developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
 	developerWindow->cameraControlWindow->setVisible(startupConfig.developerMode);
 	developerWindow->videoRecordDialog->setEnabled(true);
 	developerWindow->videoRecordDialog->setCaptureGui(true);
@@ -247,6 +246,7 @@ void FPSciApp::makeGUI() {
 	removeWidget(developerWindow->sceneEditorWindow);
 	developerWindow->sceneEditorWindow = SceneEditorWindow::create(this, scene(), theme);
 	developerWindow->sceneEditorWindow->moveTo(developerWindow->cameraControlWindow->rect().x0y1() + Vector2(0, 15));
+	developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
 
 	// Open sub-window buttons here (menu-style)
 	debugPane->beginRow(); {
@@ -291,13 +291,6 @@ void FPSciApp::showWeaponControls() {
 	m_weaponControls->setVisible(true);
 }
 
-void FPSciApp::userSaveButtonPress(void) {
-	// Save the any file
-	Any a = Any(userTable);
-	a.save(startupConfig.userConfig());
-	logPrintf("User table saved.\n");			// Print message to log
-}	
-
 void FPSciApp::presentQuestion(Question question) {
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
@@ -323,11 +316,10 @@ void FPSciApp::markSessComplete(String sessId) {
 	if (m_pyLogger != nullptr) {
 		m_pyLogger->mergeLogToDb();
 	}
-	// Add the session id to completed session array
-	userStatusTable.addCompletedSession(userTable.currentUser, sessId);
-	// Save the file to any
-	userStatusTable.toAny().save("userstatus.Any");
-	logPrintf("Marked session: %s complete for user %s.\n", sessId, userTable.currentUser);
+	// Add the session id to completed session array and save the user status table
+	userStatusTable.addCompletedSession(userStatusTable.currentUser, sessId);
+	saveUserStatus();
+	logPrintf("Marked session: %s complete for user %s.\n", sessId, userStatusTable.currentUser);
 
 	// Update the session drop-down to remove this session
 	m_userSettingsWindow->updateSessionDropDown();
@@ -367,8 +359,6 @@ shared_ptr<PlayerEntity> FPSciApp::updatePlayer() {
 	player->setVisible(false);
 	player->setRespawnHeight(resetHeight);
 	player->setRespawnPosition(player->frame().translation);
-
-	UserConfig* user = userTable.getCurrentUser();
 
 	updateMouseSensitivity();
 	player->moveRate = &sessConfig->player.moveRate;
@@ -462,7 +452,10 @@ void FPSciApp::updateSession(const String& id) {
 	sess->initialHeadingRadians = player->heading();
 
 	// Check for need to start latency logging and if so run the logger now
-	String logName = "../results/" + id + "_" + userTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+	if (!FileSystem::isDirectory(startupConfig.resultsDirPath)) {
+		FileSystem::createDirectory(startupConfig.resultsDirPath);
+	}
+	const String logName = startupConfig.resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
 	if (latencyLoggerConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
@@ -657,8 +650,8 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	   
 	// Check for completed session
 	if (sess->moveOn) {
-		String nextSess = userStatusTable.getNextSession(userTable.currentUser);
-		updateSession(nextSess);
+		// Get the next session for the current user
+		updateSession(userStatusTable.getNextSession());
 	}
 }
 
@@ -1028,7 +1021,7 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 }
 
 Vector2 FPSciApp::currentTurnScale() {
-	const UserConfig* user = userTable.getCurrentUser();
+	const shared_ptr<UserConfig> user = currentUser();
 	Vector2 baseTurnScale = sessConfig->player.turnScale * user->turnScale;
 	// Apply y-invert here
 	if (user->invertY) baseTurnScale.y = -baseTurnScale.y;
@@ -1206,17 +1199,18 @@ void FPSciApp::onUserInput(UserInput* ui) {
 					m_weapon->setFiring(true);
 				}
 				// check for hit, add graphics, update target state
-				if ((sess->presentationState == PresentationState::task) && !m_userSettingsWindow->visible()) {
+				if ((sess->currentState == PresentationState::task) && !m_userSettingsWindow->visible()) {
 					if (sess->canFire()) {
 						fired = true;
-						sess->countClick();														// Count clicks
+						sess->countShot();						// Count shots
 						Array<shared_ptr<Entity>> dontHit;
 						dontHit.append(m_explosions);
+						dontHit.append(sess->unhittableTargets());
 						Model::HitInfo info;
 						float hitDist = finf();
 						int hitIdx = -1;
 
-						shared_ptr<TargetEntity> target = m_weapon->fire(sess->targetArray(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
+						shared_ptr<TargetEntity> target = m_weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
 						if (isNull(target)) // Miss case
 						{
 							// Play scene hit sound
@@ -1251,19 +1245,20 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	}
 	
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
-		if (ui->keyPressed(dummyShoot) && (sess->presentationState == PresentationState::feedback)) {
+		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::feedback)) {
 			Array<shared_ptr<Entity>> dontHit;
 			dontHit.append(m_explosions);
+			dontHit.append(sess->unhittableTargets());
 			Model::HitInfo info;
 			float hitDist = finf();
 			int hitIdx = -1;
-			shared_ptr<TargetEntity> target = m_weapon->fire(sess->targetArray(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
+			shared_ptr<TargetEntity> target = m_weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
 		}
 	}
 
-	if (m_lastReticleLoaded != userTable.getCurrentUser()->reticleIndex || m_userSettingsWindow->visible()) {
+	if (m_lastReticleLoaded != currentUser()->reticleIndex || m_userSettingsWindow->visible()) {
 		// Slider was used to change the reticle
-		setReticle(userTable.getCurrentUser()->reticleIndex);
+		setReticle(currentUser()->reticleIndex);
 		m_userSettingsWindow->updateReticlePreview();
 	}
 
@@ -1333,7 +1328,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		// Player camera only indicators
 		if (activeCamera() == playerCamera()) {
 			// Reticle
-			UserConfig* user = userTable.getCurrentUser();
+			const shared_ptr<UserConfig> user = currentUser();
 			float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleChangeTimeS), 1.0f), 0.0f);
 			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
 			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;

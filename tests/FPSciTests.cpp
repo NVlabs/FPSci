@@ -110,7 +110,7 @@ void FPSciTests::SetUpTestSuiteSafe() {
 	s_app->setFrameDuration(s_app->frameDuration(), GApp::MATCH_REAL_TIME_TARGET);
 
 	// Set up per-frame fake input
-	s_fakeInput = std::make_shared<TestFakeInput>(s_app, s_app->userTable.getCurrentUser()->mouseDPI);
+	s_fakeInput = std::make_shared<TestFakeInput>(s_app, s_app->currentUser()->mouseDPI);
 	s_app->addWidget(s_fakeInput);
 
 	// Prime the app and load the scene
@@ -191,7 +191,7 @@ int FPSciTests::respawnTargets()
 
 void FPSciTests::rotateCamera(double degX, double degY)
 {
-	double metersPer360 = s_app->userTable.getCurrentUser()->cmp360 / 100.0;
+	double metersPer360 = s_app->currentUser()->cmp360 / 100.0;
 	s_fakeInput->window().injectMove(metersPer360 * degX / 360.0, metersPer360 * degY / 360.0);
 }
 
@@ -276,7 +276,7 @@ TEST_F(FPSciTests, TestTargetPositions) {
 }
 
 TEST_F(FPSciTests, CanDetectWhichTargets) {
-	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
+	EXPECT_EQ(s_app->sess->currentState, PresentationState::task);
 
 	respawnTargets();
 
@@ -287,7 +287,7 @@ TEST_F(FPSciTests, CanDetectWhichTargets) {
 }
 
 TEST_F(FPSciTests, KillTargetFront) {
-	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
+	EXPECT_EQ(s_app->sess->currentState, PresentationState::task);
 
 	int spawnedTargets = respawnTargets();
 
@@ -307,7 +307,7 @@ TEST_F(FPSciTests, KillTargetFront) {
 }
 
 TEST_F(FPSciTests, KillTargetFrontHoldclick) {
-	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
+	EXPECT_EQ(s_app->sess->currentState, PresentationState::task);
 	
 	int spawnedTargets = respawnTargets();
 	
@@ -326,7 +326,7 @@ TEST_F(FPSciTests, KillTargetFrontHoldclick) {
 }
 
 TEST_F(FPSciTests, KillTargetRightRotate) {
-	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
+	EXPECT_EQ(s_app->sess->currentState, PresentationState::task);
 
 	int spawnedTargets = respawnTargets();
 
@@ -345,7 +345,7 @@ TEST_F(FPSciTests, KillTargetRightRotate) {
 }
 
 TEST_F(FPSciTests, KillTargetRightTranslate) {
-	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
+	EXPECT_EQ(s_app->sess->currentState, PresentationState::task);
 	
 	int spawnedTargets = respawnTargets();
 
@@ -373,7 +373,7 @@ TEST_F(FPSciTests, KillTargetRightTranslate) {
 }
 
 TEST_F(FPSciTests, ResetCamera) {
-	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
+	EXPECT_EQ(s_app->sess->currentState, PresentationState::task);
 
 	// Move the camera off zero
 	zeroCameraRotation();
@@ -394,7 +394,7 @@ TEST_F(FPSciTests, ResetCamera) {
 }
 
 TEST_F(FPSciTests, RotateCamera) {
-	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
+	EXPECT_EQ(s_app->sess->currentState, PresentationState::task);
 	zeroCameraRotation();
 	s_app->oneFrame();
 
@@ -419,7 +419,7 @@ TEST_F(FPSciTests, RotateCamera) {
 }
 
 TEST_F(FPSciTests, MoveCamera) {
-	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
+	EXPECT_EQ(s_app->sess->currentState, PresentationState::task);
 	zeroCameraRotation();
 	s_app->oneFrame();
 	EXPECT_EQ(s_app->simStepDuration(), GApp::MATCH_REAL_TIME_TARGET);
@@ -460,7 +460,7 @@ TEST_F(FPSciTests, MoveCamera) {
 }
 
 TEST_F(FPSciTests, TestAutoFire) {
-	EXPECT_EQ(s_app->sess->presentationState, PresentationState::task);
+	EXPECT_EQ(s_app->sess->currentState, PresentationState::task);
 	respawnTargets();
 	zeroCameraRotation();
 

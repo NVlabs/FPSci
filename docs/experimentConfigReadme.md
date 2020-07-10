@@ -25,7 +25,9 @@ The experment config supports inclusion of any of the configuration parameters d
 ```
 
 ### Session Configuration
-Each session can specify any of the [general configuration parameters](general_config.md) used in the experiment config above to create experimental conditions. In addition to these general parameters each session also has a few unique parameters documented below.
+Each session can specify any of the [general configuration parameters](general_config.md) used in the experiment config above to create experimental conditions. If both the experiment level and the session level specify a field supported by the general configuration, the session value has priority and will be used for that session. The experiment level configuration will be used for any session that doesn't specify that parameter.
+
+In addition to these general parameters each session also has a few unique parameters documented below.
 
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
@@ -77,7 +79,7 @@ The `targets` array specifies a list of targets each of which can contain any/al
 The following configuration is universal to all target types.
 
 * `id` a short string to refer to this target information
-* `respawnCount` is an integer providing the number of respawns to occur. For non-respawning items use `0` or leave unspecified.
+* `respawnCount` is an integer providing the number of respawns to occur. For non-respawning items use `0` or leave unspecified. A value of `-1` creates a target that respawns infinitely (trial ends when ammo or task time runs out).
 * `visualSize` is a vector indicating the minimum ([0]) and maximum ([1]) visual size for the target (in deg)
 * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
 * `hitSound` is a filename for the sound to play when the target is hit but not destroyed.

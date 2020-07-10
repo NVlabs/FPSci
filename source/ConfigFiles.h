@@ -15,14 +15,17 @@ static bool operator!=(Array<T> a1, Array<T> a2) {
 class StartupConfig {
 private:
 public:
-    bool	developerMode = false;				///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
-	bool	waypointEditorMode = false;			///< Sets whether the app is run w/ the waypoint editor available
-	bool	fullscreen = true;					///< Whether the app runs in windowed mode
-	Vector2 windowSize = { 1920, 980 };			///< Window size (when not run in fullscreen)
-    String	experimentConfigPath = "";			///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
-    String	userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
-    bool	audioEnable = true;					///< Audio on/off
-
+    bool	developerMode = false;								///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
+	bool	waypointEditorMode = false;							///< Sets whether the app is run w/ the waypoint editor available
+	bool	fullscreen = true;									///< Whether the app runs in windowed mode
+	Vector2 windowSize = { 1920, 980 };							///< Window size (when not run in fullscreen)
+    String	experimentConfigFilename = "experimentconfig.Any";	///< Optional path to an experiment config file
+    String	userConfigFilename = "userconfig.Any";				///< Optional path to a user config file
+	String  userStatusFilename = "userstatus.Any";				///< Optional path to a user status file
+	String  keymapConfigFilename = "keymap.Any";				///< Optional path to a keymap config file
+	String  latencyLoggerConfigFilename = "systemconfig.Any";	///< Optional path to a latency logger config file
+    String	resultsDirPath = "./results/";						///< Optional path to the results directory
+	bool	audioEnable = true;									///< Audio on/off
     StartupConfig() {};
 
 	/** Construct from any here */
@@ -37,8 +40,18 @@ public:
 			reader.getIfPresent("waypointEditorMode", waypointEditorMode);
 			reader.getIfPresent("fullscreen", fullscreen);
 			reader.getIfPresent("windowSize", windowSize);
-            reader.getIfPresent("experimentConfigPath", experimentConfigPath);
-            reader.getIfPresent("userConfigPath", userConfigPath);
+            reader.getIfPresent("experimentConfigFilename", experimentConfigFilename);
+			checkValidAnyFilename("experimentConfigFilename", experimentConfigFilename);
+            reader.getIfPresent("userConfigFilename", userConfigFilename);
+			checkValidAnyFilename("userConfigFilename", userConfigFilename);
+			reader.getIfPresent("userStatusFilename", userStatusFilename);
+			checkValidAnyFilename("userStatusFilename", userStatusFilename);
+			reader.getIfPresent("keymapConfigFilename", keymapConfigFilename);
+			checkValidAnyFilename("keymapConfigFilename", keymapConfigFilename);
+			reader.getIfPresent("latencyLoggerConfigFilename", latencyLoggerConfigFilename);
+			checkValidAnyFilename("latencyLoggerConfigFilename", latencyLoggerConfigFilename);
+			reader.getIfPresent("resultsDirPath", resultsDirPath);
+			resultsDirPath = formatDirPath(resultsDirPath);
             reader.getIfPresent("audioEnable", audioEnable);
             break;
         default:
@@ -51,28 +64,31 @@ public:
     Any toAny(const bool forceAll = true) const {
 		StartupConfig def;		// Create a dummy default config for value testing
         Any a(Any::TABLE);
-        if(forceAll || def.developerMode != developerMode)					a["developerMode"] = developerMode;
-		if(forceAll || def.waypointEditorMode != waypointEditorMode)		a["waypointEditorMode"] = waypointEditorMode;
-		if(forceAll || def.fullscreen != fullscreen)						a["fullscreen"] = fullscreen;
-        if(forceAll || def.experimentConfigPath != experimentConfigPath)	a["experimentConfigPath"] = experimentConfigPath;
-        if(forceAll || def.userConfigPath != userConfigPath)				a["userConfigPath"] = userConfigPath;
-        if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
+        if(forceAll || def.developerMode != developerMode)								a["developerMode"] = developerMode;
+		if(forceAll || def.waypointEditorMode != waypointEditorMode)					a["waypointEditorMode"] = waypointEditorMode;
+		if(forceAll || def.fullscreen != fullscreen)									a["fullscreen"] = fullscreen;
+        if(forceAll || def.experimentConfigFilename != experimentConfigFilename)		a["experimentConfigFilename"] = experimentConfigFilename;
+        if(forceAll || def.userConfigFilename != userConfigFilename)					a["userConfigFilename"] = userConfigFilename;
+		if(forceAll || def.userStatusFilename != userStatusFilename)					a["userStatusFilename"] = userStatusFilename;
+		if(forceAll || def.keymapConfigFilename != keymapConfigFilename)				a["keymapConfigFilename"] = keymapConfigFilename;
+		if(forceAll || def.latencyLoggerConfigFilename != latencyLoggerConfigFilename)	a["latencyLoggerConfigFilename"] = latencyLoggerConfigFilename;
+		if(forceAll || def.resultsDirPath != resultsDirPath)							a["resultsDirPath"] = resultsDirPath;
+        if(forceAll || def.audioEnable != audioEnable)									a["audioEnable"] = audioEnable;
         return a;
     }
 
-    /** filename with given path to experiment config file */
-    String experimentConfig() {
-        return experimentConfigPath + "experimentconfig.Any";
-    }
+	/** Assert that the filename `path` ends in .any and report `errorName` if it doesn't */
+	static void checkValidAnyFilename(const String& errorName, const String& path) {
+		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any", "Config filenames specified in the startup config must end with \".any\"!, check the " + errorName + "!\n");
+	}
 
-    /** filename with given path to user config file */
-    String userConfig() {
-        return userConfigPath + "userconfig.Any";
-    }
-	
-    /** filename with given path to user status file */
-	String userStatusConfig() {
-		return userConfigPath + "userstatus.Any";
+	/** Returns the provided path with trailing slashes added if missing */
+	static String formatDirPath(const String& path) {
+		String fpath = path;
+		if (!path.empty() && path.substr(path.length() - 1) != "/") {
+			fpath = path + "/";
+		}
+		return fpath;
 	}
 };
 
@@ -126,10 +142,10 @@ public:
 		return a;
 	}
 
-	static KeyMapping load(String filename = "keymap.Any") {
+	static KeyMapping load(const String& filename) {
 		if (!FileSystem::exists(System::findDataFile(filename, false))) {
 			KeyMapping mapping = KeyMapping();
-			mapping.toAny().save("keymap.Any");
+			mapping.toAny().save(filename);
 			return mapping;
 		}
 		return Any::fromFile(System::findDataFile(filename));
@@ -301,12 +317,12 @@ public:
 	}
 
 	/** Load a latency logger config from file */
-	static LatencyLoggerConfig load() {
+	static LatencyLoggerConfig load(const String& filename) {
 		// if file not found, create a default latency logger config
-		if (!FileSystem::exists("systemconfig.Any")) { 
+		if (!FileSystem::exists(filename)) { 
 			return LatencyLoggerConfig();		// Create the default
 		}
-		return Any::fromFile(System::findDataFile("systemconfig.Any"));
+		return Any::fromFile(System::findDataFile(filename));
 	}
 
 	/** Print the latency logger config to log.txt */
@@ -388,7 +404,6 @@ public:
 /** Class for loading a user table and getting user info */
 class UserTable {
 public:
-	String					currentUser = "None";			///< The currently active user
 	Array<UserConfig>		users = {};						///< A list of valid users
 
 	UserTable() {};
@@ -401,7 +416,6 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("currentUser", currentUser);
 			reader.get("users", users, "Issue in the (required) \"users\" array in the user config file!");
 			if (users.size() == 0) {
 				throw "At least 1 user must be specified in the \"users\" array within the user configuration file!";
@@ -413,30 +427,10 @@ public:
 		}
 	}
 
-	/** Get the current user's config */
-    UserConfig* getCurrentUser() {
-        for (int i = 0; i < users.length(); ++i) {
-            if (!users[i].id.compare(currentUser)) return &(users[i]);
-        }
-        // return the first user by default and set the value
-        currentUser = users[0].id;
-        return &(users[0]);
-    }
-
-	/** Get the index of the current user from the user table */
-    int getCurrentUserIndex() {
-        for (int i = 0; i < users.length(); ++i) {
-            if (!users[i].id.compare(currentUser)) return i;
-        }
-        // return the first user by default
-        return 0;
-    }
-
 	/** Serialize to Any */
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
 		a["settingsVersion"] = 1;						///< Create a version 1 file
-		a["currentUser"] = currentUser;					///< Include current subject ID
 		a["users"] = users;								///< Include updated subject table
 		return a;
 	}
@@ -449,6 +443,20 @@ public:
 		return nullptr;
 	}
 
+	/** Simple rotine to get the UserTable Any structure from file */
+	static UserTable load(const String& filename) {
+		// Create default UserConfig file
+		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
+			UserTable defTable = UserTable();
+			defTable.users.append(UserConfig());			// Append one default user
+			defTable.save(filename);						// Save the .any file
+			return defTable;
+		}
+		return Any::fromFile(System::findDataFile(filename));
+	}
+
+	inline void save(const String& filename) { toAny().save(filename); }
+
 	/** Get an array of user IDs */
 	Array<String> getIds() {
 		Array<String> ids;
@@ -456,24 +464,17 @@ public:
 		return ids;
 	}
 
-	/** Simple rotine to get the UserTable Any structure from file */
-	static UserTable load(String filename) {
-		// Create default UserConfig file
-		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
-			UserTable defTable = UserTable();
-			defTable.users.append(UserConfig());			// Append one default user
-			defTable.currentUser = defTable.users[0].id;	// Set this as the current user
-			defTable.save(filename);						// Save the .any file
-			return defTable;
+	/** Get the index of the current user from the user table */
+	int getUserIndex(String userId) {
+		for (int i = 0; i < users.length(); ++i) {
+			if (!users[i].id.compare(userId)) return i;
 		}
-		return Any::fromFile(System::findDataFile(filename));
+		// return the first user by default
+		return 0;
 	}
-
-	inline void save(String filename) { toAny().save(filename); }
 
 	/** Print the user table to the log */
 	void printToLog() {
-		logPrintf("Current User: %s\n", currentUser.c_str());
 		for (UserConfig user : users) {
 			logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id.c_str(), user.cmp360, user.mouseDPI);
 		}
@@ -532,6 +533,7 @@ class UserStatusTable {
 public:
 	bool allowRepeat = false;							///< Flag for whether to (strictly) sequence these experiments (allow duplicates)
 	bool randomizeDefaults = false;						///< Randomize from default session order when applying to user
+	String currentUser;									///< Currently selected user
 	Array<String> defaultSessionOrder = {};				///< Default session ordering (for all unspecified users)
 	Array<UserSessionStatus> userInfo = {};				///< Array of user status
 
@@ -545,6 +547,7 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
+			reader.getIfPresent("currentUser", currentUser);
 			reader.getIfPresent("allowRepeat", allowRepeat);
 			reader.getIfPresent("sessions", defaultSessionOrder);
 			UserSessionStatus::defaultSessionOrder = defaultSessionOrder;				// Set the default order here
@@ -563,6 +566,7 @@ public:
 		Any a(Any::TABLE);
 		UserStatusTable def;
 		a["settingsVersion"] = 1;						// Create a version 1 file
+		a["currentUser"] = currentUser;
 		if (forceAll || def.allowRepeat != allowRepeat)				a["allowRepeat"] = allowRepeat;
 		if (forceAll || def.randomizeDefaults != randomizeDefaults)	a["randomizeSessionOrder"] = randomizeDefaults;
 		a["sessions"] = defaultSessionOrder;
@@ -571,17 +575,20 @@ public:
 	}
 
 	/** Get the user status table from file */
-	static UserStatusTable load(String filename) {
-		if (!FileSystem::exists(filename)) { // if file not found, create a default userstatus.Any
-			UserStatusTable defStatus = UserStatusTable();			// Create empty status
+	static UserStatusTable load(const String& filename) {
+		if (!FileSystem::exists(filename)) {						// if file not found, create a default
+			UserStatusTable defaultStatus = UserStatusTable();		// Create empty status
 			UserSessionStatus user;
 			user.sessionOrder = Array<String> ({ "60Hz", "30Hz" });	// Add "default" sessions we add to
-			defStatus.userInfo.append(user);						// Add single "default" user
-			defStatus.toAny().save(filename);				// Save .any file
-			return defStatus;
+			defaultStatus.userInfo.append(user);					// Add single "default" user
+			defaultStatus.currentUser = user.id;					// Set "default" user as current user
+			defaultStatus.save(filename);							// Save .any file
+			return defaultStatus;
 		}
 		return Any::fromFile(System::findDataFile(filename));
 	}
+
+	inline void save(const String& filename) { toAny().save(filename);  }
 
 	/** Get a given user's status from the table by ID */
 	shared_ptr<UserSessionStatus> getUserStatus(String id) {
@@ -592,8 +599,9 @@ public:
 	}
 
 	/** Get the next session ID for a given user (by ID) */
-	String getNextSession(String userId) {
+	String getNextSession(String userId = "") {
 		// Return the first valid session that has not been completed
+		if (userId.empty()) { userId = currentUser;  }
 		shared_ptr<UserSessionStatus> status = getUserStatus(userId);
 		// Handle sequence mode here (can be repeats)
 		if (allowRepeat) {
@@ -624,7 +632,7 @@ public:
 		}
 	}
 
-	void validate(Array<String> sessions) {
+	void validate(Array<String> sessions, Array<String> users) {
 		bool noSessions = true;	// Flag to demark no sessions are present
 		// Build a string list of valid options for session IDs from the experiment
 		String expSessions = "[";
@@ -636,23 +644,34 @@ public:
 		for(String defSessId : defaultSessionOrder) {
 			noSessions = false;
 			if (!sessions.contains(defSessId)) {
-				throw format("Default session config in user status has session with ID: \"%s\". This session ID does not appear in experimentconfig.Any's \"sessions\" array. Valid options are: %s", defSessId, expSessions);
+				throw format("Default session config in user status has session with ID: \"%s\". This session ID does not appear in the experiment config file's \"sessions\" array. Valid options are: %s", defSessId, expSessions);
 			}
 		}
 
 		// Check each user for valid options
+		Array<String> userStatusIds;
 		for (UserSessionStatus userStatus : userInfo) {
+			userStatusIds.append(userStatus.id);
+			// Check all of this user's sessions appear in the session array
 			for (String userSessId : userStatus.sessionOrder) {
 				noSessions = false;
 				if (!sessions.contains(userSessId)) {
-					throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in the experimentconfig.Any \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
+					throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in the experiment config file's \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
 				}
 			}
 		}
 
+		// Check current user has a valid config
+		if (currentUser.empty()) {
+			throw "\"currentUser\" field is not specified in the user status file!\nIf you are migrating from an older version of FPSci, please cut the \"currentUser = ...\" line\nfrom the user config file and paste it in the user status file.";
+		}
+		else if (!users.contains(currentUser)) {
+			throw format("Current user \"%s\" does not have a valid entry in the user config file!", currentUser);
+		}
+
 		// Check if no default/per user sessions are present
 		if (noSessions) { 
-			throw "Found no sessions in the userstatus.Any file!"; 
+			throw "Found no sessions in the user status file!"; 
 		}
 	}
 
@@ -1327,6 +1346,9 @@ public:
 	float           refTargetSize = 0.05f;								///< Size of the reference target
 	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
 
+	bool			previewWithRef = false;								///< Show preview of per-trial targets with the reference
+	Color3			previewColor = Color3(0.5, 0.5, 0.5);				///< Color to show preview targets in
+
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
@@ -1349,6 +1371,8 @@ public:
 			reader.getIfPresent("showReferenceTarget", showRefTarget);
 			reader.getIfPresent("referenceTargetSize", refTargetSize);
 			reader.getIfPresent("referenceTargetColor", refTargetColor);
+			reader.getIfPresent("showPreviewTargetsWithReference", previewWithRef);
+			reader.getIfPresent("previewTargetColor", previewColor);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1374,9 +1398,11 @@ public:
 		if(forceAll || def.combatTextVelocity != combatTextVelocity)		a["floatingCombatTextVelocity"] = combatTextVelocity;
 		if(forceAll || def.combatTextFade != combatTextFade)				a["floatingCombatTextFade"] = combatTextFade;
 		if(forceAll || def.combatTextTimeout != combatTextTimeout)			a["floatingCombatTextTimeout"] = combatTextTimeout;
-		if (forceAll || def.showRefTarget != showRefTarget)					a["showRefTarget"] = showRefTarget;
+		if(forceAll || def.showRefTarget != showRefTarget)					a["showRefTarget"] = showRefTarget;
 		if(forceAll || def.refTargetSize != refTargetSize)					a["referenceTargetSize"] = refTargetSize;
 		if(forceAll || def.refTargetColor != refTargetColor)				a["referenceTargetColor"] = refTargetColor;
+		if(forceAll || def.previewWithRef != previewWithRef)				a["showPreviewTargetsWithReference"] = previewWithRef;
+		if(forceAll || def.previewColor != previewColor)					a["previewTargetColor"] = previewColor;
 		return a;
 	}
 };
@@ -1454,6 +1480,8 @@ public:
 	float           taskDuration = 100000.0f;					///< Maximum time spent in any one task
 	float           feedbackDuration = 1.0f;					///< Time in feedback state in seconds
 	float			scoreboardDuration = 5.0f;					///< Time in scoreboard state in seconds
+	bool			scoreboardRequireClick = false;				///< Require a click to progress from the scoreboard?
+
 	// Trial count
 	int             defaultTrialCount = 5;						///< Default trial count
 
@@ -1464,6 +1492,7 @@ public:
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("scoreboardDuration", scoreboardDuration);
+			reader.getIfPresent("scoreboardRequireClick", scoreboardRequireClick);
 			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
 			break;
 		default:
@@ -1474,10 +1503,52 @@ public:
 
 	Any addToAny(Any a, bool forceAll = false) const {
 		TimingConfig def;
-		if(forceAll || def.feedbackDuration != feedbackDuration)	a["feedbackDuration"] = feedbackDuration;
-		if(forceAll || def.readyDuration != readyDuration)			a["readyDuration"] = readyDuration;
-		if(forceAll || def.taskDuration != taskDuration)			a["taskDuration"] = taskDuration;
-		if(forceAll || def.defaultTrialCount != defaultTrialCount)	a["defaultTrialCount"] = defaultTrialCount;
+		if(forceAll || def.feedbackDuration != feedbackDuration)		a["feedbackDuration"] = feedbackDuration;
+		if(forceAll || def.readyDuration != readyDuration)				a["readyDuration"] = readyDuration;
+		if(forceAll || def.taskDuration != taskDuration)				a["taskDuration"] = taskDuration;
+		if(forceAll || def.scoreboardDuration != scoreboardDuration)	a["scoreboardDuration"] = scoreboardDuration;
+		if(forceAll || def.scoreboardRequireClick != scoreboardRequireClick) a["scoreboardRequireClick"] = scoreboardRequireClick;
+		if(forceAll || def.defaultTrialCount != defaultTrialCount)		a["defaultTrialCount"] = defaultTrialCount;
+		return a;
+	}
+};
+
+class FeedbackConfig {
+public:
+	String initialWithRef = "Click to spawn a target, then use shift on red target to begin.";		///< An initial feedback message to show when reference targets are drawn
+	String initialNoRef = "Click to start the session!";											///< An initial feedback message to show when reference targets aren't drawn
+	String trialSuccess = "%trialTaskTimeMs ms!" ;													///< Successful trial feedback message
+	String trialFailure = "Failure!";																///< Failed trial feedback message
+	String blockComplete = "Block %lastBlock complete! Starting block %currBlock.";					///< Block complete feedback message
+	String sessComplete = "Session complete! You scored %totalTimeLeftS!";							///< Session complete feedback message
+	String allSessComplete = "All Sessions Complete!";												///< All sessions complete feedback message
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("referenceTargetInitialFeedback", initialWithRef);
+			reader.getIfPresent("noReferenceTargetInitialFeedback", initialNoRef);
+			reader.getIfPresent("trialSuccessFeedback", trialSuccess);
+			reader.getIfPresent("trialFailureFeedback", trialFailure);
+			reader.getIfPresent("blockCompleteFeedback", blockComplete);
+			reader.getIfPresent("sessionCompleteFeedback", sessComplete);
+			reader.getIfPresent("allSessionsCompleteFeedback", allSessComplete);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a, bool forceAll = false) const {
+		FeedbackConfig def;
+		if (forceAll || def.initialWithRef != initialWithRef)	a["referenceTargetInitialFeedback"] = initialWithRef;
+		if (forceAll || def.initialNoRef != initialNoRef)		a["noReferenceTargetInitialFeedback"] = initialNoRef;
+		if (forceAll || def.trialSuccess != trialSuccess)		a["trialSuccessFeedback"] = trialSuccess;
+		if (forceAll || def.trialFailure != trialFailure)		a["trialFailureFeedback"] = trialFailure;
+		if (forceAll || def.blockComplete != blockComplete)		a["blockCompleteFeedback"] = blockComplete;
+		if (forceAll || def.sessComplete != sessComplete)		a["sessionCompleteFeedback"] = sessComplete;
+		if (forceAll || def.allSessComplete != allSessComplete) a["allSessionsCompleteFeedback"] = allSessComplete;
 		return a;
 	}
 };
@@ -1525,12 +1596,47 @@ public:
 	}
 };
 
+class CommandSpec {
+public:
+	String	cmdStr;										///< Command string
+	bool foreground = false;							///< Flag to indicate foreground vs background
+	bool blocking = false;								///< Flag to indicate to block on this process complete
+
+	CommandSpec() {}
+	CommandSpec(const Any& any){
+		try {
+			AnyTableReader reader(any);
+			reader.get("command", cmdStr, "A command string must be specified!");
+			reader.getIfPresent("foreground", foreground);
+			reader.getIfPresent("blocking", blocking);
+		}
+		catch (ParseError e) {
+			// Handle errors related to older (pure) string-based commands
+			e.message += "\nCommands must be specified using a valid CommandSpec!\n";
+			e.message += "Refer to the general_config.md file for more information.\n";
+			e.message += "If migrating from an older experiment config, use the following syntax:\n";
+			e.message += "commandsOnTrialStart = ( { command = \"cmd /c echo Trial start>> commandLog.txt\" } );\n";
+			throw e;
+		}
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		CommandSpec def;
+		a["command"] = cmdStr;
+		if (forceAll || def.foreground != foreground)	a["foreground"] = foreground;
+		if (forceAll || def.blocking != blocking)		a["blocking"] = blocking;
+		return a;
+	}
+
+};
+
 class CommandConfig {
 public: 
-	Array<String> sessionStartCmds;						///< Command to run on start of a session
-	Array<String> sessionEndCmds;						///< Command to run on end of a session
-	Array<String> trialStartCmds;						///< Command to run on start of a trial
-	Array<String> trialEndCmds;							///< Command to run on end of a trial
+	Array<CommandSpec> sessionStartCmds;				///< Command to run on start of a session
+	Array<CommandSpec> sessionEndCmds;						///< Command to run on end of a session
+	Array<CommandSpec> trialStartCmds;						///< Command to run on start of a trial
+	Array<CommandSpec> trialEndCmds;							///< Command to run on end of a trial
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
@@ -1638,6 +1744,7 @@ public:
 	HudConfig			hud;									///< HUD related config parameters
 	AudioConfig			audio;									///< Audio related config parameters
 	TimingConfig		timing;									///< Timing related config parameters
+	FeedbackConfig		feedback;								///< Feedback message config parameters
 	TargetViewConfig	targetView;								///< Target drawing config parameters
 	ClickToPhotonConfig clickToPhoton;							///< Click to photon config parameters
 	LoggerConfig		logger;									///< Logging configuration
@@ -1668,6 +1775,7 @@ public:
 		clickToPhoton.load(reader, settingsVersion);
 		audio.load(reader, settingsVersion);
 		timing.load(reader, settingsVersion);
+		feedback.load(reader, settingsVersion);
 		logger.load(reader, settingsVersion);
 		menu.load(reader, settingsVersion);
 		commands.load(reader, settingsVersion);
@@ -1695,6 +1803,7 @@ public:
 		a = clickToPhoton.addToAny(a, forceAll);
 		a = audio.addToAny(a, forceAll);
 		a = timing.addToAny(a, forceAll);
+		a = feedback.addToAny(a, forceAll);
 		a = logger.addToAny(a, forceAll);
 		a = menu.addToAny(a, forceAll);
 		a = commands.addToAny(a, forceAll);
@@ -1934,11 +2043,11 @@ public:
 	}
 
 	/** Get the experiment config from file */
-	static ExperimentConfig load(String filename) {
+	static ExperimentConfig load(const String& filename) {
         // if file not found, build a default
         if (!FileSystem::exists(System::findDataFile(filename, false))) {
             ExperimentConfig ex = ExperimentConfig();
-			ex.toAny().save("experimentconfig.Any");
+			ex.toAny().save(filename);
 			SessionConfig::defaultConfig = (FpsConfig)ex;
 			return ex;
 		}

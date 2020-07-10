@@ -363,19 +363,23 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	}
 
 	// Experiment Settings Pane
-	m_ddCurrUserIdx = m_users.getCurrentUserIndex();
-	if (config.showExperimentSettings) {
-		m_expPane = m_parent->addPane("Experiment Settings");
-		m_expPane->setCaptionHeight(40);
-		m_expPane->beginRow(); {
-			m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
-			m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
-		} m_expPane->endRow();
-		m_expPane->beginRow(); {
-			m_sessDropDown = m_expPane->addDropDownList("Session", Array<String>({}), &m_ddCurrSessIdx);
-			updateSessionDropDown();
-			m_expPane->addButton("Select Session", this, &UserMenu::updateSessionPress);
-		} m_expPane->endRow();
+	m_ddCurrUserIdx = m_users.getUserIndex(m_userStatus.currentUser);
+	m_expPane = m_parent->addPane("Experiment Settings");
+	m_expPane->setCaptionHeight(40);
+	m_expPane->beginRow(); {
+		m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
+		m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
+	} m_expPane->endRow();
+	m_expPane->beginRow(); {
+		m_sessDropDown = m_expPane->addDropDownList("Session", Array<String>({}), &m_ddCurrSessIdx);
+		updateSessionDropDown();
+		m_expPane->addButton("Select Session", this, &UserMenu::updateSessionPress);
+	} m_expPane->endRow();
+
+	// Hide the experiment settings if not requested to be drawn
+	if (!config.showExperimentSettings) { 
+		m_expPane->setVisible(false);
+		m_expPane->setHeight(0.f);
 	}
 
 	// User Settings Pane
@@ -411,9 +415,9 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 void UserMenu::drawUserPane(const MenuConfig& config) 
 {
 	// Basic user info
-	UserConfig* user = m_users.getCurrentUser();
+	const shared_ptr<UserConfig> user = currentUser();
 	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addLabel(format("Current User: %s", m_users.currentUser.c_str()))->setHeight(30.0);
+		m_currentUserPane->addLabel(format("Current User: %s", user->id.c_str()))->setHeight(30.0);
 	} m_currentUserPane->endRow();
 	m_currentUserPane->beginRow(); {
 		m_currentUserPane->addLabel(format("Mouse DPI: %f", user->mouseDPI));
@@ -533,7 +537,7 @@ void UserMenu::drawUserPane(const MenuConfig& config)
 	// Allow the user to save their settings?
 	if (config.allowUserSettingsSave) {
 		m_currentUserPane->beginRow(); {
-			m_currentUserPane->addButton("Save settings", m_app, &FPSciApp::userSaveButtonPress)->setSize(m_btnSize);
+			m_currentUserPane->addButton("Save settings", m_app, &FPSciApp::saveUserConfig)->setSize(m_btnSize);
 		} m_currentUserPane->endRow();
 	}
 
@@ -543,7 +547,7 @@ void UserMenu::drawUserPane(const MenuConfig& config)
 
 Array<String> UserMenu::updateSessionDropDown() {
 	// Create updated session list
-	String userId = m_users.getCurrentUser()->id;
+	String userId = m_userStatus.currentUser;
 	shared_ptr<UserSessionStatus> userStatus = m_userStatus.getUserStatus(userId);
 	// If we have a user that doesn't have specified sessions
 	if (userStatus == nullptr) {
@@ -554,7 +558,7 @@ Array<String> UserMenu::updateSessionDropDown() {
 		m_app->experimentConfig.getSessionIds(newStatus.sessionOrder);
 		m_userStatus.userInfo.append(newStatus);
 		userStatus = m_userStatus.getUserStatus(userId);
-		m_userStatus.toAny().save("userstatus.Any");
+		m_app->saveUserStatus();
 	}
 
 	Array<String> remainingSess = {};
@@ -583,6 +587,11 @@ Array<String> UserMenu::updateSessionDropDown() {
 		logPrintf("\t%s\n", id);
 	}
 
+	// Make sure there's an empty session in the list
+	if (remainingSess.size() == 0) {
+		remainingSess.append("");
+	}
+
 	return remainingSess;
 }
 
@@ -592,14 +601,14 @@ void UserMenu::updateUserPress() {
 		String userId = m_userDropDown->get(m_ddCurrUserIdx);
 
 		// Update the current user and save to the user config file
-		m_users.currentUser = userId;
-		m_users.save(m_app->startupConfig.userConfig());
+		m_userStatus.currentUser = userId;
+		m_app->saveUserStatus();
 
 		m_lastUserIdx = m_ddCurrUserIdx;
 		
 		// Update (selected) sessions
-		String sessId = updateSessionDropDown()[0];
-		if (m_sessDropDown->numElements() > 0) m_app->updateSession(sessId);
+		const String sessId = updateSessionDropDown()[0];
+		m_app->updateSession(sessId);
 	}
 }
 
@@ -609,7 +618,7 @@ void UserMenu::updateReticlePreview() {
 	m_reticlePreviewPane->removeAllChildren();
 	// Redraw the preview
 	shared_ptr<Texture> reticleTex = m_app->reticleTexture;
-	Color4 rColor = m_users.getCurrentUser()->reticleColor[0];
+	Color4 rColor = currentUser()->reticleColor[0];
 
 	RenderDevice* rd = m_app->renderDevice;
 	rd->push2D(m_reticleBuffer); {

@@ -52,7 +52,7 @@ As an added complexity this sensitivity measure requires the user also report th
 ### Selecting a Reticle
 In order to preview reticles we suggest either:
 
-1. Opening the application with `playMode=False` and using the `Render Controls` menu to setup the correct reticle/crosshair and color/size
+1. Opening the application with `developerMode=true` and using the `Render Controls` menu to setup the correct reticle/crosshair and color/size
 2. Preview the individual images (mostly located in `%g3d%\data10\common\gui\reticle`) to select the desired reticle index (appended to the filename)
 
 If you would not like to have a dynamic reticle (i.e. have it stay the same size/color all the time), then set both values in the array for `reticleScale` and `reticleColor` to the same value.
