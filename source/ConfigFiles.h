@@ -40,13 +40,13 @@ public:
 			reader.getIfPresent("fullscreen", fullscreen);
 			reader.getIfPresent("windowSize", windowSize);
             reader.getIfPresent("experimentConfigFilename", experimentConfigFilename);
+			checkValidAnyFilename("experimentConfigFilename", experimentConfigFilename);
             reader.getIfPresent("userConfigFilename", userConfigFilename);
+			checkValidAnyFilename("userConfigFilename", userConfigFilename);
 			reader.getIfPresent("userStatusFilename", userStatusFilename);
+			checkValidAnyFilename("userStatusFilename", userStatusFilename);
 			reader.getIfPresent("latencyLoggerConfigFilename", latencyLoggerConfigFilename);
-			checkValidAnyFilename(experimentConfigFilename);
-			checkValidAnyFilename(userConfigFilename);
-			checkValidAnyFilename(userStatusFilename);
-			checkValidAnyFilename(latencyLoggerConfigFilename);
+			checkValidAnyFilename("latencyLoggerConfigFilename", latencyLoggerConfigFilename);
 			reader.getIfPresent("resultsDirPath", resultsDirPath);
 			resultsDirPath = formatDirPath(resultsDirPath);
             reader.getIfPresent("audioEnable", audioEnable);
@@ -73,10 +73,9 @@ public:
         return a;
     }
 
-	/** Assert that the filename ends in .any */
-	static void checkValidAnyFilename(const String& path) {
-		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any",
-			format("All config filenames specified in the startup config must end with \".any\"!, check path: \"%s\"!", path));
+	/** Assert that the filename `path` ends in .any and report `errorName` if it doesn't */
+	static void checkValidAnyFilename(const String& errorName, const String& path) {
+		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any", "Config filenames specified in the startup config must end with \".any\"!, check the " + errorName + "!\n");
 	}
 
 	/** Returns the provided path with trailing slashes added if missing */
