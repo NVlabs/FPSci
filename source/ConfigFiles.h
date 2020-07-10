@@ -15,18 +15,19 @@ static bool operator!=(Array<T> a1, Array<T> a2) {
 class StartupConfig {
 private:
 public:
-    bool	developerMode = false;								///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
+	bool	developerMode = false;								///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
 	bool	waypointEditorMode = false;							///< Sets whether the app is run w/ the waypoint editor available
 	bool	fullscreen = true;									///< Whether the app runs in windowed mode
 	Vector2 windowSize = { 1920, 980 };							///< Window size (when not run in fullscreen)
-    String	experimentConfigFilename = "experimentconfig.Any";	///< Optional path to an experiment config file
-    String	userConfigFilename = "userconfig.Any";				///< Optional path to a user config file
+	String	experimentConfigFilename = "experimentconfig.Any";	///< Optional path to an experiment config file
+	String	userConfigFilename = "userconfig.Any";				///< Optional path to a user config file
 	String  userStatusFilename = "userstatus.Any";				///< Optional path to a user status file
 	String  keymapConfigFilename = "keymap.Any";				///< Optional path to a keymap config file
-	String  latencyLoggerConfigFilename = "systemconfig.Any";	///< Optional path to a latency logger config file
-    String	resultsDirPath = "./results/";						///< Optional path to the results directory
+	String  systemConfigFilename = "systemconfig.Any";			///< Optional path to a latency logger config file
+	String	resultsDirPath = "./results/";						///< Optional path to the results directory
 	bool	audioEnable = true;									///< Audio on/off
-    StartupConfig() {};
+
+	StartupConfig() {};
 
 	/** Construct from any here */
     StartupConfig(const Any& any) {
@@ -48,8 +49,8 @@ public:
 			checkValidAnyFilename("userStatusFilename", userStatusFilename);
 			reader.getIfPresent("keymapConfigFilename", keymapConfigFilename);
 			checkValidAnyFilename("keymapConfigFilename", keymapConfigFilename);
-			reader.getIfPresent("latencyLoggerConfigFilename", latencyLoggerConfigFilename);
-			checkValidAnyFilename("latencyLoggerConfigFilename", latencyLoggerConfigFilename);
+			reader.getIfPresent("systemConfigFilename", systemConfigFilename);
+			checkValidAnyFilename("systemConfigFilename", systemConfigFilename);
 			reader.getIfPresent("resultsDirPath", resultsDirPath);
 			resultsDirPath = formatDirPath(resultsDirPath);
             reader.getIfPresent("audioEnable", audioEnable);
@@ -71,7 +72,7 @@ public:
         if(forceAll || def.userConfigFilename != userConfigFilename)					a["userConfigFilename"] = userConfigFilename;
 		if(forceAll || def.userStatusFilename != userStatusFilename)					a["userStatusFilename"] = userStatusFilename;
 		if(forceAll || def.keymapConfigFilename != keymapConfigFilename)				a["keymapConfigFilename"] = keymapConfigFilename;
-		if(forceAll || def.latencyLoggerConfigFilename != latencyLoggerConfigFilename)	a["latencyLoggerConfigFilename"] = latencyLoggerConfigFilename;
+		if(forceAll || def.systemConfigFilename != systemConfigFilename)				a["systemConfigFilename"] = systemConfigFilename;
 		if(forceAll || def.resultsDirPath != resultsDirPath)							a["resultsDirPath"] = resultsDirPath;
         if(forceAll || def.audioEnable != audioEnable)									a["audioEnable"] = audioEnable;
         return a;
@@ -276,8 +277,8 @@ public:
 	}
 };
 
-/** Latency logging configuration */
-class LatencyLoggerConfig {
+/** System-specific configuration */
+class SystemConfig {
 public:
 	// Input parameters
 	bool	hasLogger = false;		///< Indicates that a hardware logger is present in the system
@@ -285,20 +286,29 @@ public:
 	bool	hasSync = false;		///< Indicates that a hardware sync will occur via serial card DTR signal
 	String	syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
 
-	LatencyLoggerConfig() {};
-
+	SystemConfig() {};
 	/** Construct from Any */
-	LatencyLoggerConfig(const Any& any) {
-		int settingsVersion = 1;
+	SystemConfig(const Any& any) {
 		AnyTableReader reader(any);
+		int settingsVersion = 1;
 		reader.getIfPresent("settingsVersion", settingsVersion);
-
 		switch (settingsVersion) {
 		case 1:
-			reader.get("HasLogger", hasLogger, "System config must specify the \"HasLogger\" flag!");
-			reader.get("HasSync", hasSync, "System config must specify the \"HasSync\" flag!");
-			reader.getIfPresent("LoggerComPort", loggerComPort);
-			reader.getIfPresent("SyncComPort", syncComPort);
+			reader.getIfPresent("hasLatencyLogger", hasLogger);
+			if (hasLogger) {
+				reader.get("loggerComPort", loggerComPort, "Logger COM port must be provided if \"hasLogger\" = true!");
+			}
+			else {
+				reader.getIfPresent("loggerComPort", loggerComPort);
+			}
+
+			reader.getIfPresent("hasLatencyLoggerSync", hasSync);
+			if (hasSync) {
+				reader.get("loggerSyncComPort", syncComPort, "Logger sync COM port must be provided if \"hasLoggerSync\" = true!");
+			}
+			else {
+				reader.getIfPresent("loggerSyncComPort", syncComPort);
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SystemConfig.\n", settingsVersion);
@@ -306,23 +316,26 @@ public:
 		}	
 	}
 
+	static SystemConfig load(String filename = "systemconfig.Any") {
+		if (filename.empty()) { filename = "systemconfig.Any"; }
+		// Create default UserConfig file
+		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
+			SystemConfig defConfig = SystemConfig();
+			defConfig.toAny().save(filename);						// Save the .any file
+			return defConfig;
+		}
+		return Any::fromFile(System::findDataFile(filename));
+	}
+
 	/** Serialize to Any */
 	Any toAny(const bool forceAll = true) const{
 		Any a(Any::TABLE);
-		a["HasLogger"] = hasLogger;
-		a["LoggerComPort"] = loggerComPort;
-		a["HasSync"] = hasSync;
-		a["SyncComPort"] = syncComPort;
+		SystemConfig def;
+		if(forceAll || def.hasLogger != hasLogger)			a["hasLatencyLogger"] = hasLogger;
+		if(forceAll || def.loggerComPort != loggerComPort)	a["loggerComPort"] = loggerComPort;
+		if(forceAll || def.hasSync != hasSync)				a["hasLatencyLoggerSync"] = hasSync;
+		if(forceAll || def.syncComPort != syncComPort)		a["loggerSyncComPort"] = syncComPort;
 		return a;
-	}
-
-	/** Load a latency logger config from file */
-	static LatencyLoggerConfig load(const String& filename) {
-		// if file not found, create a default latency logger config
-		if (!FileSystem::exists(filename)) { 
-			return LatencyLoggerConfig();		// Create the default
-		}
-		return Any::fromFile(System::findDataFile(filename));
 	}
 
 	/** Print the latency logger config to log.txt */

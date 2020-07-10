@@ -519,6 +519,22 @@ Alternatively, to open a web page at the end of a session you could use:
 commandsOnSessionEnd = ( { command = "cmd /c start [webpage URL]", foreground = true } );
 ```
 
+### Supported Substrings for Commands
+In addition to the basic commands provided above several replacable substrings are supported in commands. These include:
+
+| Substring         | Description                                                           |
+|-------------------|-----------------------------------------------------------------------|
+|`%loggerComPort`   | The logger COM port (optionally) provided in a general config         |
+|`%loggerSyncComPort`|  The logger sync COM port (optionally) provided in a general config  |
+
+Note that if either of these substrings is specified in a command, but empty/not provided in the experiment config file an exception will be thrown.
+
+An example of their use is provided below:
+
+```
+commandOnSessionStart = ( "python ../scripts/my_logger_script.py %loggerComPort" );
+```
+
 # Frame Rate Modes
 The `frameRate` parameter in any given session config can be used in 3 different modes:
 
