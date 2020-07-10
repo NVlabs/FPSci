@@ -2001,7 +2001,7 @@ public:
         // if file not found, build a default
         if (!FileSystem::exists(System::findDataFile(filename, false))) {
             ExperimentConfig ex = ExperimentConfig();
-			ex.toAny().save("experimentconfig.Any");
+			ex.toAny().save(filename);
 			SessionConfig::defaultConfig = (FpsConfig)ex;
 			return ex;
 		}
