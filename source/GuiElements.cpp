@@ -587,6 +587,11 @@ Array<String> UserMenu::updateSessionDropDown() {
 		logPrintf("\t%s\n", id);
 	}
 
+	// Make sure there's an empty session in the list
+	if (remainingSess.size() == 0) {
+		remainingSess.append("");
+	}
+
 	return remainingSess;
 }
 
