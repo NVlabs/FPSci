@@ -33,22 +33,22 @@ If a scene name is specified at the experiment level it will be applied to all s
 The `weapon` config should be thought of as an atomic type (just like an `int` or `float`). Even though it is a (more complex) data structure, it does not use the experiment-->session level inheritance appraoch offered elsewhere in the configuration format (i.e. any `weapon` specification should be complete). For this reason we recommend storing weapon configurations in independent `.weapon.Any` files and including them using the `.Any` `#include()` directive.
 
 ## Duration Settings
-The following settings allow the user to control various timings/durations around the per trial state machine.
+The following settings allow the user to control various timings/durations around the session state machine.
 
-| Parameter Name            |Units  | Description                                                        |
-|---------------------------|-------|--------------------------------------------------------------------|
-|`readyDuration`            |s      |The time before the start of each trial                             |
-|`taskDuration`             |s      |The maximum time over which the task can occur                      |
-|`feedbackDuration`         |s      |The duration of the feedback window between trials                  |
-|`scoreboardDuration`       |s      |The duration of the feedback window between sessions                |
-|`scoreboardRequireClick`   |`bool` |Require the user to click to move past the scoreboard (in addition to waiting the `scoreboardDuration`)|
+| Parameter Name                |Units  | Description                                                        |
+|-------------------------------|-------|--------------------------------------------------------------------|
+|`pretrialDuration`             |s      |The time before the start of each trial                             |
+|`maxTrialDuration`             |s      |The maximum time over which the task can occur                      |
+|`trialFeedbackDuration`        |s      |The duration of the feedback window between trials                  |
+|`sessionFeedbackDuration`      |s      |The duration of the feedback window between sessions                |
+|`sessionFeedbackRequireClick`  |`bool` |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
 
 ```
-"readyDuration": 0.5,         // Time allocated for preparing for trial
-"taskDuration": 100000.0,     // Maximum duration allowed for completion of the task
-"feedbackDuration": 1.0,      // Time for user feedback between trials
-"scoreboardDuration": 5.0,    // Time for user feedback between sessions
-"scoreboardRequireClick" : false,      // Don't require a click to move past the scoreboard
+"pretrialDuration": 0.5,            // Time allocated for preparing for trial
+"maxTrialDuration": 100000.0,       // Maximum duration allowed for completion of the task
+"trialFeedbackDuration": 1.0,       // Time for user feedback between trials
+"sessionFeedbackDuration": 5.0,     // Time for user feedback between sessions
+"sessionFeedbackRequireClick" : false,      // Don't require a click to move past the scoreboard
 ```
 
 ## Feedback Configuration

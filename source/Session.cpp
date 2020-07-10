@@ -108,7 +108,7 @@ void Session::onInit(String filename, String description) {
 		updateBlock(true);
 	}
 	else {	// Invalid session, move to displaying message
-		currentState = PresentationState::scoreboard;
+		currentState = PresentationState::sessionFeedback;
 	}
 }
 
@@ -137,7 +137,7 @@ void Session::initTargetAnimation() {
 	const Point3 initialSpawnPos = m_player->getCameraFrame().translation;
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
-	if (currentState == PresentationState::task) {
+	if (currentState == PresentationState::trialTask) {
 		if (m_config->targetView.previewWithRef && m_config->targetView.showRefTarget) {
 			// Activate the preview targets
 			const Color3 activeColor = m_config->targetView.healthColors[0];
@@ -224,7 +224,7 @@ void Session::processResponse()
 
 	// Check for whether all targets have been destroyed
 	if (m_destroyedTargets == totalTargets) {
-		m_totalRemainingTime += (double(m_config->timing.taskDuration) - m_taskExecutionTime);
+		m_totalRemainingTime += (double(m_config->timing.maxTrialDuration) - m_taskExecutionTime);
 		m_feedbackMessage = formatFeedback(m_config->feedback.trialSuccess);
 	}
 	else {
@@ -247,14 +247,14 @@ void Session::updatePresentationState()
 		}
 		if (!m_app->m_buttonUp)
 		{
-			newState = PresentationState::feedback;
+			newState = PresentationState::trialFeedback;
 		}
 	}
-	else if (currentState == PresentationState::ready)
+	else if (currentState == PresentationState::pretrial)
 	{
-		if (stateElapsedTime > m_config->timing.readyDuration)
+		if (stateElapsedTime > m_config->timing.pretrialDuration)
 		{
-			newState = PresentationState::task;
+			newState = PresentationState::trialTask;
 			if (m_config->player.stillBetweenTrials) {
 				m_player->setMoveEnable(true);
 			}
@@ -264,14 +264,14 @@ void Session::updatePresentationState()
 
 		}
 	}
-	else if (currentState == PresentationState::task)
+	else if (currentState == PresentationState::trialTask)
 	{
-		if ((stateElapsedTime > m_config->timing.taskDuration) || (remainingTargets <= 0) || (m_shotCount == m_config->weapon.maxAmmo))
+		if ((stateElapsedTime > m_config->timing.maxTrialDuration) || (remainingTargets <= 0) || (m_shotCount == m_config->weapon.maxAmmo))
 		{
 			m_taskEndTime = FPSciLogger::genUniqueTimestamp();
 			processResponse();
 			clearTargets(); // clear all remaining targets
-			newState = PresentationState::feedback;
+			newState = PresentationState::trialFeedback;
 			if (m_config->player.stillBetweenTrials) {
 				m_player->setMoveEnable(false);
 			}
@@ -283,9 +283,9 @@ void Session::updatePresentationState()
 			runTrialCommands("end");			// Run the end of trial processes
 		}
 	}
-	else if (currentState == PresentationState::feedback)
+	else if (currentState == PresentationState::trialFeedback)
 	{
-		if ((stateElapsedTime > m_config->timing.feedbackDuration) && (remainingTargets <= 0))
+		if ((stateElapsedTime > m_config->timing.trialFeedbackDuration) && (remainingTargets <= 0))
 		{
 			if (blockComplete()) {
 				m_currBlock++;		// Increment the block index
@@ -321,7 +321,7 @@ void Session::updatePresentationState()
 
 						m_feedbackMessage = formatFeedback(m_config->feedback.sessComplete);						// Update the feedback message
 						m_currQuestionIdx = -1;
-						newState = PresentationState::scoreboard;
+						newState = PresentationState::sessionFeedback;
 					}
 				}
 				else {					// Block is complete but session isn't
@@ -333,13 +333,13 @@ void Session::updatePresentationState()
 			else {
 				m_feedbackMessage = "";				// Clear the feedback message
 				nextCondition();
-				newState = PresentationState::ready;
+				newState = PresentationState::pretrial;
 			}
 		}
 	}
-	else if (currentState == PresentationState::scoreboard) {
+	else if (currentState == PresentationState::sessionFeedback) {
 		if (m_hasSession) {
-			if (stateElapsedTime > m_config->timing.scoreboardDuration && (!m_config->timing.scoreboardRequireClick || !m_app->m_buttonUp)) {
+			if (stateElapsedTime > m_config->timing.sessionFeedbackDuration && (!m_config->timing.sessionFeedbackRequireClick || !m_app->m_buttonUp)) {
 				newState = PresentationState::complete;
         
 				// Save current user config and status
@@ -385,12 +385,12 @@ void Session::updatePresentationState()
 	if (currentState != newState)
 	{ // handle state transition.
 		m_timer.startTimer();
-		if (newState == PresentationState::task) {
+		if (newState == PresentationState::trialTask) {
 			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
 		}
 		currentState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
-		if ((newState == PresentationState::task) || (newState == PresentationState::feedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
+		if ((newState == PresentationState::trialTask) || (newState == PresentationState::trialFeedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
 			initTargetAnimation();
 		}
 	}
@@ -402,7 +402,7 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	updatePresentationState();
 
 	// 2. Record target trajectories, view direction trajectories, and mouse motion.
-	if (currentState == PresentationState::task)
+	if (currentState == PresentationState::trialTask)
 	{
 		accumulateTrajectories();
 		accumulateFrameInfo(rdt, sdt, idt);
@@ -499,7 +499,7 @@ int Session::remainingAmmo() const {
 
 float Session::getRemainingTrialTime() {
 	if (isNull(m_config)) return 10.0;
-	return m_config->timing.taskDuration - m_timer.getTime();
+	return m_config->timing.maxTrialDuration - m_timer.getTime();
 }
 
 float Session::getProgress() {

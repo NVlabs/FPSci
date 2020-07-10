@@ -1476,11 +1476,11 @@ public:
 class TimingConfig {
 public:
 	// Timing parameters
-	float           readyDuration = 0.5f;						///< Time in ready state in seconds
-	float           taskDuration = 100000.0f;					///< Maximum time spent in any one task
-	float           feedbackDuration = 1.0f;					///< Time in feedback state in seconds
-	float			scoreboardDuration = 5.0f;					///< Time in scoreboard state in seconds
-	bool			scoreboardRequireClick = false;				///< Require a click to progress from the scoreboard?
+	float           pretrialDuration = 0.5f;					///< Time in ready (pre-trial) state in seconds
+	float           maxTrialDuration = 100000.0f;				///< Maximum time spent in any one trial task
+	float           trialFeedbackDuration = 1.0f;				///< Time in the per-trial feedback state in seconds
+	float			sessionFeedbackDuration = 5.0f;				///< Time in the session feedback state in seconds
+	bool			sessionFeedbackRequireClick = false;		///< Require a click to progress from the session feedback?
 
 	// Trial count
 	int             defaultTrialCount = 5;						///< Default trial count
@@ -1488,11 +1488,11 @@ public:
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("feedbackDuration", feedbackDuration);
-			reader.getIfPresent("readyDuration", readyDuration);
-			reader.getIfPresent("taskDuration", taskDuration);
-			reader.getIfPresent("scoreboardDuration", scoreboardDuration);
-			reader.getIfPresent("scoreboardRequireClick", scoreboardRequireClick);
+			reader.getIfPresent("trialFeedbackDuration", trialFeedbackDuration);
+			reader.getIfPresent("pretrialDuration", pretrialDuration);
+			reader.getIfPresent("maxTrialDuration", maxTrialDuration);
+			reader.getIfPresent("sessionFeedbackDuration", sessionFeedbackDuration);
+			reader.getIfPresent("sessionFeedbackRequireClick", sessionFeedbackRequireClick);
 			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
 			break;
 		default:
@@ -1503,11 +1503,11 @@ public:
 
 	Any addToAny(Any a, bool forceAll = false) const {
 		TimingConfig def;
-		if(forceAll || def.feedbackDuration != feedbackDuration)		a["feedbackDuration"] = feedbackDuration;
-		if(forceAll || def.readyDuration != readyDuration)				a["readyDuration"] = readyDuration;
-		if(forceAll || def.taskDuration != taskDuration)				a["taskDuration"] = taskDuration;
-		if(forceAll || def.scoreboardDuration != scoreboardDuration)	a["scoreboardDuration"] = scoreboardDuration;
-		if(forceAll || def.scoreboardRequireClick != scoreboardRequireClick) a["scoreboardRequireClick"] = scoreboardRequireClick;
+		if(forceAll || def.trialFeedbackDuration != trialFeedbackDuration)		a["trialFeedbackDuration"] = trialFeedbackDuration;
+		if(forceAll || def.pretrialDuration != pretrialDuration)				a["pretrialDuration"] = pretrialDuration;
+		if(forceAll || def.maxTrialDuration != maxTrialDuration)				a["maxTrialDuration"] = maxTrialDuration;
+		if(forceAll || def.sessionFeedbackDuration != sessionFeedbackDuration)	a["sessionFeedbackDuration"] = sessionFeedbackDuration;
+		if(forceAll || def.sessionFeedbackRequireClick != sessionFeedbackRequireClick) a["sessionFeedbackRequireClick"] = sessionFeedbackRequireClick;
 		if(forceAll || def.defaultTrialCount != defaultTrialCount)		a["defaultTrialCount"] = defaultTrialCount;
 		return a;
 	}
@@ -2056,8 +2056,8 @@ public:
 
 	/** Print the experiment config to the log */
 	void printToLog() {
-		logPrintf("\n-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-			description.c_str(), sceneName.c_str(), timing.feedbackDuration, timing.readyDuration, timing.taskDuration, weapon.maxAmmo);
+		logPrintf("\n-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nTrial Feedback Duration = %f\nPretrial Duration = %f\nMax Trial Task Duration = %f\nMax Clicks = %d\n",
+			description.c_str(), sceneName.c_str(), timing.trialFeedbackDuration, timing.pretrialDuration, timing.maxTrialDuration, weapon.maxAmmo);
 		// Iterate through sessions and print them
 		for (int i = 0; i < sessions.size(); i++) {
 			SessionConfig sess = sessions[i];
