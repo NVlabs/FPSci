@@ -11,10 +11,10 @@ The following fields are valid for a startupconfig.Any file:
 * `waypointEditorMode` controls whether the application is run including additional support for [target path creation/waypoint editing](./patheditor.md). Waypoint editor mode **only applies when `developerMode`=`true`**! In waypoint editor mode an additional menu is made available and the user can drop waypoints or start/stop record their motion using key bound functions.
 * `fullscreen` controls whether the application is run in fullscreen mode or windowed (independent of other options)
 * `windowSize` controls the (default) window size when running in windowed mode (`fullscreen`=`false`) as a `Vector2`. The window can then be resized from this default while running.
-* `experimentConfigFilename` sets the file name and path to an [experiment config file](./experimentConfigReadme.md).
-* `userConfigFilename` sets the file name and path to a [user config file](./userConfigReadme.md).
-* `userStatusFilename` sets the file path to a [user status file](./userStatusReadme.md).
-* `latencyLoggerConfigFilename` sets the file path to a [latency logger config file](systemConfigReadme.md) for controlling latency logger hardware.
+* `experimentConfigFilename` sets the path and file name for an [experiment config file](./experimentConfigReadme.md).
+* `userConfigFilename` sets the path and file name for a [user config file](./userConfigReadme.md).
+* `userStatusFilename` sets the path and file name for a [user status file](./userStatusReadme.md).
+* `latencyLoggerConfigFilename` sets the path and file name for a [latency logger config file](systemConfigReadme.md) for controlling latency logger hardware.
 * `resultsDirPath` sets the path to the results directory. If this directory does not exists the application will create it at runtime.
 * `audioEnable` turns on or off audio
 
