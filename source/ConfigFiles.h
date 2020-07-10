@@ -142,7 +142,7 @@ public:
 		return a;
 	}
 
-	static KeyMapping load(String filename) {
+	static KeyMapping load(const String& filename) {
 		if (!FileSystem::exists(System::findDataFile(filename, false))) {
 			KeyMapping mapping = KeyMapping();
 			mapping.toAny().save(filename);
@@ -322,7 +322,7 @@ public:
 		if (!FileSystem::exists(filename)) { 
 			return LatencyLoggerConfig();		// Create the default
 		}
-		return Any::fromFile(System::findDataFile("systemconfig.Any"));
+		return Any::fromFile(System::findDataFile(filename));
 	}
 
 	/** Print the latency logger config to log.txt */
@@ -576,19 +576,19 @@ public:
 
 	/** Get the user status table from file */
 	static UserStatusTable load(const String& filename) {
-		if (!FileSystem::exists(filename)) { // if file not found, create a default userstatus.Any
-			UserStatusTable defaultStatus = UserStatusTable();			// Create empty status
+		if (!FileSystem::exists(filename)) {						// if file not found, create a default
+			UserStatusTable defaultStatus = UserStatusTable();		// Create empty status
 			UserSessionStatus user;
 			user.sessionOrder = Array<String> ({ "60Hz", "30Hz" });	// Add "default" sessions we add to
-			defaultStatus.userInfo.append(user);						// Add single "default" user
-			defaultStatus.currentUser = user.id;						// Set "default" user as current user
-			defaultStatus.save(filename);								// Save .any file
+			defaultStatus.userInfo.append(user);					// Add single "default" user
+			defaultStatus.currentUser = user.id;					// Set "default" user as current user
+			defaultStatus.save(filename);							// Save .any file
 			return defaultStatus;
 		}
 		return Any::fromFile(System::findDataFile(filename));
 	}
 
-	inline void save(const String& filename = "userstatus.Any") { toAny().save(filename);  }
+	inline void save(const String& filename) { toAny().save(filename);  }
 
 	/** Get a given user's status from the table by ID */
 	shared_ptr<UserSessionStatus> getUserStatus(String id) {
