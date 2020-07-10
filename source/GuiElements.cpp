@@ -607,8 +607,8 @@ void UserMenu::updateUserPress() {
 		m_lastUserIdx = m_ddCurrUserIdx;
 		
 		// Update (selected) sessions
-		String sessId = updateSessionDropDown()[0];
-		if (m_sessDropDown->numElements() > 0) m_app->updateSession(sessId);
+		const String sessId = updateSessionDropDown()[0];
+		m_app->updateSession(sessId);
 	}
 }
 
