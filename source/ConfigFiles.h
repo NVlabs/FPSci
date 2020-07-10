@@ -79,9 +79,9 @@ public:
 			format("All config filenames specified in the startup config must end with \".any\"!, check path: \"%s\"!", path));
 	}
 
+	/** Returns the provided path with trailing slashes added if missing */
 	static String formatDirPath(const String& path) {
 		String fpath = path;
-		// Add a trailing slash to the directory name if missing
 		if (!path.empty() && path.substr(path.length() - 1) != "/") {
 			fpath = path + "/";
 		}
