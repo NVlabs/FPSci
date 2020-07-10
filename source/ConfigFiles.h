@@ -1480,6 +1480,7 @@ public:
 	float           maxTrialDuration = 100000.0f;				///< Maximum time spent in any one trial task
 	float           trialFeedbackDuration = 1.0f;				///< Time in the per-trial feedback state in seconds
 	float			sessionFeedbackDuration = 5.0f;				///< Time in the session feedback state in seconds
+	bool			clickToStart = true;						///< Require a click before starting the first session (spawning the reference target)
 	bool			sessionFeedbackRequireClick = false;		///< Require a click to progress from the session feedback?
 
 	// Trial count
@@ -1492,7 +1493,7 @@ public:
 			reader.getIfPresent("pretrialDuration", pretrialDuration);
 			reader.getIfPresent("maxTrialDuration", maxTrialDuration);
 			reader.getIfPresent("sessionFeedbackDuration", sessionFeedbackDuration);
-			reader.getIfPresent("sessionFeedbackRequireClick", sessionFeedbackRequireClick);
+			reader.getIfPresent("clickToStart", clickToStart);
 			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
 			break;
 		default:
@@ -1507,8 +1508,9 @@ public:
 		if(forceAll || def.pretrialDuration != pretrialDuration)				a["pretrialDuration"] = pretrialDuration;
 		if(forceAll || def.maxTrialDuration != maxTrialDuration)				a["maxTrialDuration"] = maxTrialDuration;
 		if(forceAll || def.sessionFeedbackDuration != sessionFeedbackDuration)	a["sessionFeedbackDuration"] = sessionFeedbackDuration;
+		if(forceAll || def.clickToStart != clickToStart)						a["clickToStart"] = clickToStart;
 		if(forceAll || def.sessionFeedbackRequireClick != sessionFeedbackRequireClick) a["sessionFeedbackRequireClick"] = sessionFeedbackRequireClick;
-		if(forceAll || def.defaultTrialCount != defaultTrialCount)		a["defaultTrialCount"] = defaultTrialCount;
+		if(forceAll || def.defaultTrialCount != defaultTrialCount)				a["defaultTrialCount"] = defaultTrialCount;
 		return a;
 	}
 };
