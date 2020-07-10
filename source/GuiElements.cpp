@@ -587,6 +587,11 @@ Array<String> UserMenu::updateSessionDropDown() {
 		logPrintf("\t%s\n", id);
 	}
 
+	// Make sure there's an empty session in the list
+	if (remainingSess.size() == 0) {
+		remainingSess.append("");
+	}
+
 	return remainingSess;
 }
 
@@ -602,8 +607,8 @@ void UserMenu::updateUserPress() {
 		m_lastUserIdx = m_ddCurrUserIdx;
 		
 		// Update (selected) sessions
-		String sessId = updateSessionDropDown()[0];
-		if (m_sessDropDown->numElements() > 0) m_app->updateSession(sessId);
+		const String sessId = updateSessionDropDown()[0];
+		m_app->updateSession(sessId);
 	}
 }
 
