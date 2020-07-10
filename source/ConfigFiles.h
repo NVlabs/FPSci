@@ -1480,6 +1480,7 @@ public:
 	float           taskDuration = 100000.0f;					///< Maximum time spent in any one task
 	float           feedbackDuration = 1.0f;					///< Time in feedback state in seconds
 	float			scoreboardDuration = 5.0f;					///< Time in scoreboard state in seconds
+	bool			clickToStart = true;						///< Require a click before starting the first session (spawning the reference target)
 	bool			scoreboardRequireClick = false;				///< Require a click to progress from the scoreboard?
 
 	// Trial count
@@ -1492,6 +1493,7 @@ public:
 			reader.getIfPresent("readyDuration", readyDuration);
 			reader.getIfPresent("taskDuration", taskDuration);
 			reader.getIfPresent("scoreboardDuration", scoreboardDuration);
+			reader.getIfPresent("clickToStart", clickToStart);
 			reader.getIfPresent("scoreboardRequireClick", scoreboardRequireClick);
 			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
 			break;
@@ -1507,6 +1509,7 @@ public:
 		if(forceAll || def.readyDuration != readyDuration)				a["readyDuration"] = readyDuration;
 		if(forceAll || def.taskDuration != taskDuration)				a["taskDuration"] = taskDuration;
 		if(forceAll || def.scoreboardDuration != scoreboardDuration)	a["scoreboardDuration"] = scoreboardDuration;
+		if(forceAll || def.clickToStart != clickToStart)				a["clickToStart"] = clickToStart;
 		if(forceAll || def.scoreboardRequireClick != scoreboardRequireClick) a["scoreboardRequireClick"] = scoreboardRequireClick;
 		if(forceAll || def.defaultTrialCount != defaultTrialCount)		a["defaultTrialCount"] = defaultTrialCount;
 		return a;
