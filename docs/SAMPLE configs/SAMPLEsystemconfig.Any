@@ -1,6 +1,0 @@
-{ 
-    HasLogger = false; 
-    HasSync = false; 
-    LoggerComPort = "COM3"; 
-    SyncComPort = "COM1"; 
-} 
