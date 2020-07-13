@@ -1489,11 +1489,12 @@ public:
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("trialFeedbackDuration", trialFeedbackDuration);
 			reader.getIfPresent("pretrialDuration", pretrialDuration);
 			reader.getIfPresent("maxTrialDuration", maxTrialDuration);
+			reader.getIfPresent("trialFeedbackDuration", trialFeedbackDuration);
 			reader.getIfPresent("sessionFeedbackDuration", sessionFeedbackDuration);
 			reader.getIfPresent("clickToStart", clickToStart);
+			reader.getIfPresent("sessionFeedbackRequireClick", sessionFeedbackRequireClick);
 			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
 			break;
 		default:
@@ -1504,13 +1505,13 @@ public:
 
 	Any addToAny(Any a, bool forceAll = false) const {
 		TimingConfig def;
-		if(forceAll || def.trialFeedbackDuration != trialFeedbackDuration)		a["trialFeedbackDuration"] = trialFeedbackDuration;
-		if(forceAll || def.pretrialDuration != pretrialDuration)				a["pretrialDuration"] = pretrialDuration;
-		if(forceAll || def.maxTrialDuration != maxTrialDuration)				a["maxTrialDuration"] = maxTrialDuration;
-		if(forceAll || def.sessionFeedbackDuration != sessionFeedbackDuration)	a["sessionFeedbackDuration"] = sessionFeedbackDuration;
-		if(forceAll || def.clickToStart != clickToStart)						a["clickToStart"] = clickToStart;
-		if(forceAll || def.sessionFeedbackRequireClick != sessionFeedbackRequireClick) a["sessionFeedbackRequireClick"] = sessionFeedbackRequireClick;
-		if(forceAll || def.defaultTrialCount != defaultTrialCount)				a["defaultTrialCount"] = defaultTrialCount;
+		if (forceAll || def.pretrialDuration != pretrialDuration)				a["pretrialDuration"] = pretrialDuration;
+		if (forceAll || def.maxTrialDuration != maxTrialDuration)				a["maxTrialDuration"] = maxTrialDuration;
+		if (forceAll || def.trialFeedbackDuration != trialFeedbackDuration)		a["trialFeedbackDuration"] = trialFeedbackDuration;
+		if (forceAll || def.sessionFeedbackDuration != sessionFeedbackDuration)	a["sessionFeedbackDuration"] = sessionFeedbackDuration;
+		if (forceAll || def.clickToStart != clickToStart)						a["clickToStart"] = clickToStart;
+		if (forceAll || def.sessionFeedbackRequireClick != sessionFeedbackRequireClick) a["sessionFeedbackRequireClick"] = sessionFeedbackRequireClick;
+		if (forceAll || def.defaultTrialCount != defaultTrialCount)				a["defaultTrialCount"] = defaultTrialCount;
 		return a;
 	}
 };
