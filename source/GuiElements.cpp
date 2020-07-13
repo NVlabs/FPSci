@@ -415,7 +415,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 void UserMenu::drawUserPane(const MenuConfig& config) 
 {
 	// Basic user info
-	const shared_ptr<UserConfig> user = currentUser();
+	UserConfig* user = &(m_users.users[m_users.getUserIndex(m_userStatus.currentUser)]);
 	m_currentUserPane->beginRow(); {
 		m_currentUserPane->addLabel(format("Current User: %s", user->id.c_str()))->setHeight(30.0);
 	} m_currentUserPane->endRow();
@@ -618,7 +618,7 @@ void UserMenu::updateReticlePreview() {
 	m_reticlePreviewPane->removeAllChildren();
 	// Redraw the preview
 	shared_ptr<Texture> reticleTex = m_app->reticleTexture;
-	Color4 rColor = currentUser()->reticleColor[0];
+	Color4 rColor = m_users.getUserById(m_userStatus.currentUser)->reticleColor[0];
 
 	RenderDevice* rd = m_app->renderDevice;
 	rd->push2D(m_reticleBuffer); {
