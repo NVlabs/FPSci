@@ -5,7 +5,7 @@
     sceneName = "G3D Simple Cornell Box (Empty CO)";
 
     frameDelay = 0;
-    frameRate = 360;
+    frameRate = 60;
 
     feedbackDuration = 0.0;
     readyDuration = 0.001;
