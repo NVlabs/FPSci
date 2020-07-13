@@ -53,17 +53,24 @@ protected:
 	static void rotateCamera(double degX, double degY);
 	static void getTargets(shared_ptr<TargetEntity>& front, shared_ptr<TargetEntity>& right);
 	static void checkTargets(bool& aliveFront, bool& aliveRight);
+	inline void injectFire();
 
-	static std::shared_ptr<FPSciApp>				s_app;
-	static CFrame							s_cameraSpawnFrame;
+	static std::shared_ptr<FPSciApp>		s_app;
+	static CFrame							s_cameraSpawnFrame;	
 	static std::shared_ptr<TestFakeInput>	s_fakeInput;
 	static float							s_targetSpawnDistance;
 };
 
-std::shared_ptr<FPSciApp>			FPSciTests::s_app;
+std::shared_ptr<FPSciApp>		FPSciTests::s_app;
 CFrame							FPSciTests::s_cameraSpawnFrame;
 std::shared_ptr<TestFakeInput>	FPSciTests::s_fakeInput;
-float							FPSciTests::s_targetSpawnDistance = 3.0f;
+float							FPSciTests::s_targetSpawnDistance = 0.5f;
+
+void FPSciTests::injectFire() {
+	s_fakeInput->window().injectMouseDown(0);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
+}
 
 void FPSciTests::SetUpTestSuite() {
 	try {
@@ -293,7 +300,8 @@ TEST_F(FPSciTests, KillTargetFront) {
 
 	// Kill the front target - just fire
 	zeroCameraRotation();
-	s_fakeInput->window().injectFire();
+	injectFire();
+
 	s_app->oneFrame();
 	s_app->oneFrame();
 	s_app->oneFrame();
@@ -334,7 +342,7 @@ TEST_F(FPSciTests, KillTargetRightRotate) {
 	zeroCameraRotation();
 	rotateCamera(30.0, 0);
 	s_app->oneFrame();
-	s_fakeInput->window().injectFire();
+	injectFire();
 	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
@@ -361,7 +369,7 @@ TEST_F(FPSciTests, KillTargetRightTranslate) {
 	s_app->oneFrame();
 	s_fakeInput->window().injectKeyUp(GKey('d'));
 
-	s_fakeInput->window().injectFire();
+	injectFire();
 	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
