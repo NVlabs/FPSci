@@ -53,7 +53,8 @@ protected:
 	static void rotateCamera(double degX, double degY);
 	static void getTargets(shared_ptr<TargetEntity>& front, shared_ptr<TargetEntity>& right);
 	static void checkTargets(bool& aliveFront, bool& aliveRight);
-	inline void injectFire();
+	static inline void injectFire();
+	static inline void spinFrames(int n);
 
 	static std::shared_ptr<FPSciApp>		s_app;
 	static CFrame							s_cameraSpawnFrame;	
@@ -70,6 +71,12 @@ void FPSciTests::injectFire() {
 	s_fakeInput->window().injectMouseDown(0);
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
+}
+
+void FPSciTests::spinFrames(int n) {
+	for (int i = 0; i < n; i++) {
+		s_app->oneFrame();
+	}
 }
 
 void FPSciTests::SetUpTestSuite() {
@@ -121,7 +128,6 @@ void FPSciTests::SetUpTestSuiteSafe() {
 	s_app->addWidget(s_fakeInput);
 
 	// Prime the app and load the scene
-	s_app->oneFrame();
 	s_app->oneFrame();
 	s_cameraSpawnFrame = s_app->activeCamera()->frame();
 
@@ -303,9 +309,6 @@ TEST_F(FPSciTests, KillTargetFront) {
 	injectFire();
 
 	s_app->oneFrame();
-	s_app->oneFrame();
-	s_app->oneFrame();
-	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
 	checkTargets(aliveFront, aliveRight);
@@ -362,12 +365,13 @@ TEST_F(FPSciTests, KillTargetRightTranslate) {
 	ASSERT_TRUE(notNull(player));
 
 	// Kill the right target by moving to line it up
-	const float moveX = 2.5f;
+	const float moveX = 0.5f;
 	*player->moveRate = (float)(moveX / fixedTestDeltaTime());
 	*player->moveScale = Vector2::one();
 	s_fakeInput->window().injectKeyDown(GKey('d'));
 	s_app->oneFrame();
 	s_fakeInput->window().injectKeyUp(GKey('d'));
+	s_app->oneFrame();
 
 	injectFire();
 	s_app->oneFrame();
@@ -477,10 +481,10 @@ TEST_F(FPSciTests, TestAutoFire) {
 
 	s_app->sessConfig->weapon.autoFire = true;
 	s_app->sessConfig->weapon.damagePerSecond = (float)(damagePerFrame / fixedTestDeltaTime());
+	s_app->sessConfig->weapon.firePeriod = fixedTestDeltaTime();
 
 	s_fakeInput->window().injectMouseDown(0);
-	for (int i = 0; i < frames; ++i)
-		s_app->oneFrame();
+	spinFrames(frames);
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
 
