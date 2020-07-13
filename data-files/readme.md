@@ -15,14 +15,12 @@ Brief outlines of the sub-directories to this directory are included below:
 
 In addition the following files are included in this directory:
 
-* `SAMPLE[x]config.Any` an example config that is (typically) copied into the "default" config if no file is present on the user's machine
-* `[x]ConfigReadme.md` documentation for each type of `.Any` config file
 * `icon.png` and `icon.ico` are files affiliated with the application's icon
-* `done.png` is a done banner (currently unused in the experiment)
+* `log.txt` the output log from a run of the application (contains some descriptive)
 * `reticle.png` is an unused reticle
 
 ## Included Documentation
-The following documentation is included here.
+The following documentation used to be included here (it has now been moved to the [`docs](../docs) directory.
 
 ### Configuration Files
 * [`experimentConfigReadme.md`](../docs/experimentConfigReadme.md) - A guide to the `experimentconfig.Any` file
@@ -30,6 +28,7 @@ The following documentation is included here.
 * [`userConfigReadme.md`](../docs/userConfigReadme.md) - A guide to the `userconfig.Any` file
 * [`userStatusReadme.md`](../docs/userStatusReadme.md) - A guide to the `userstatus.Any` file
 * [`weaponConfigReadme.md`](../docs/weaponConfigReadme.md) - A guide to weapon configurations in `experimentconfig.Any`
+* [`keymap.md](../docs/keymap.md) - A guide to the `keymap.Any` file
 
 ### Scene Files
 More information on scene files is available in the [scene readme](scene/readme.md).

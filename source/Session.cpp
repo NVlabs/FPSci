@@ -245,8 +245,7 @@ void Session::updatePresentationState()
 		if (m_config->player.stillBetweenTrials) {
 			m_player->setMoveEnable(false);
 		}
-		if (!m_app->m_buttonUp)
-		{
+		if (!(m_app->m_buttonUp && m_config->timing.clickToStart)) {
 			newState = PresentationState::feedback;
 		}
 	}
@@ -516,6 +515,34 @@ float Session::getProgress() {
 
 int Session::getScore() {
 	return (int)(10.0 * m_totalRemainingTime);
+}
+
+String Session::formatCommand(const String& input) {
+	const char delimiter = '%';			///< Start of all valid substrings
+	String formatted = input;			///< Output string
+	int foundIdx = 0;					///< Index for searching for substrings
+
+	const String loggerComPort = "%loggerComPort";
+	const String syncComPort = "%loggerSyncComPort";
+
+	while ((foundIdx = (int)formatted.find(delimiter, (size_t)foundIdx)) > -1) {
+		if (!formatted.compare(foundIdx, loggerComPort.length(), loggerComPort)) {
+			if (m_app->systemConfig.loggerComPort.empty()) {
+				throw "Found \"%loggerComPort\" substring in a command, but no \"loggerComPort\" is provided in the config!";
+			}
+			formatted = formatted.substr(0, foundIdx) + m_app->systemConfig.loggerComPort + formatted.substr(foundIdx + loggerComPort.length());
+		}
+		else if (!formatted.compare(foundIdx, syncComPort.length(), syncComPort)) {
+			if (m_app->systemConfig.syncComPort.empty()) {
+				throw "Found \"%loggerSyncComPort\" substring in a command, but no \"loggerSyncComPort\" is provided in the config!";
+			}
+			formatted = formatted.substr(0, foundIdx) + m_app->systemConfig.syncComPort + formatted.substr(foundIdx + syncComPort.length());
+		}
+		else {
+			foundIdx++;
+		}
+	}
+	return formatted;
 }
 
 String Session::formatFeedback(const String& input) {

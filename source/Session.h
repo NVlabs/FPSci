@@ -201,6 +201,7 @@ protected:
 	}
 
 	String formatFeedback(const String& input);
+	String formatCommand(const String& input);
 
 	/** Insert a target into the target array/scene */
 	inline void insertTarget(shared_ptr<TargetEntity> target);
@@ -273,7 +274,8 @@ protected:
 		si.cb = sizeof(si);
 		ZeroMemory(&pi, sizeof(pi));
 
-		LPSTR command = LPSTR(cmd.cmdStr.c_str());
+		// Run the (formatted command)
+		LPSTR command = LPSTR(formatCommand(cmd.cmdStr).c_str());
 		bool success;
 		if (cmd.foreground) {	// Run process in the foreground
 			success = CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
