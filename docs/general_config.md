@@ -43,6 +43,7 @@ The following settings allow the user to control various timings/durations aroun
 |`trialFeedbackDuration`        |s      |The duration of the feedback window between trials                  |
 |`sessionFeedbackDuration`      |s      |The duration of the feedback window between sessions                |
 |`sessionFeedbackRequireClick`  |`bool` |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
+|`defaultTrialCount`            |`int`  |The value to use for trials with no specified `count` settings      |
 
 ```
 "clickToStart : true,               // Require a click to start the session
@@ -51,6 +52,7 @@ The following settings allow the user to control various timings/durations aroun
 "trialFeedbackDuration": 1.0,       // Time for user feedback between trials
 "sessionFeedbackDuration": 5.0,     // Time for user feedback between sessions
 "sessionFeedbackRequireClick" : false,      // Don't require a click to move past the scoreboard
+"defaultTrialCount" : 5,
 ```
 
 ## Feedback Configuration
