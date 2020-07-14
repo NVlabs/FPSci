@@ -32,15 +32,8 @@ TEST(DefaultConfigTests, DISABLED_RenderTenFrames)
 	app.quitRequest();
 }
 
-void FPSciTests::injectFire(int frames) {
-	// Not sure why we can't do up and down in one frame?
-	s_fakeInput->window().injectMouseDown(0);
-	spinFrames(frames);
-	s_fakeInput->window().injectMouseUp(0);
-}
-
-void FPSciTests::spinFrames(int n) {
-	for (int i = 0; i < n; i++) {
+void FPSciTests::runAppFrames(int n) {
+	for (int i = 0; i < n; ++i) {
 		s_app->oneFrame();
 	}
 }
@@ -100,7 +93,10 @@ void FPSciTests::SetUpTestSuiteSafe() {
 	assert(s_app->sess->currentState == PresentationState::initial);
 
 	// Fire to make the red target appear
-	injectFire();
+	s_fakeInput->window().injectMouseDown(0);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
+
 	s_app->oneFrame();
 
 	assert(s_app->sess->currentState == PresentationState::trialFeedback);
@@ -269,7 +265,9 @@ TEST_F(FPSciTests, KillTargetFront) {
 
 	// Kill the front target - just fire
 	zeroCameraRotation();
-	injectFire();
+	s_fakeInput->window().injectMouseDown(0);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
 
 	s_app->oneFrame();
 
@@ -308,9 +306,11 @@ TEST_F(FPSciTests, KillTargetRightRotate) {
 	zeroCameraRotation();
 	rotateCamera(30.0, 0);
 
-	spinFrames(10);
+	runAppFrames(10);
 
-	injectFire();
+	s_fakeInput->window().injectMouseDown(0);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
@@ -338,7 +338,10 @@ TEST_F(FPSciTests, KillTargetRightTranslate) {
 	s_fakeInput->window().injectKeyUp(GKey('d'));
 	s_app->oneFrame();
 
-	injectFire();
+	// Fire with mouse click
+	s_fakeInput->window().injectMouseDown(0);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
@@ -451,7 +454,9 @@ TEST_F(FPSciTests, TestAutoFire) {
 
 	s_app->oneFrame();
 
-	injectFire(frames);
+	s_fakeInput->window().injectMouseDown(0);
+	runAppFrames(frames);
+	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
 
 	bool frontAlive = false;

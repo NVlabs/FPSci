@@ -36,11 +36,9 @@ protected:
 	static G3D::RealTime fixedTestDeltaTime();
 	/** Player entity getter */
 	static const shared_ptr<PlayerEntity> getPlayer();
-	
-	/** Delay and process an integer number of frames/main loop executions */
-	static inline void spinFrames(int n);
-	/** Inject a fire event with an integer number of frames with the mouse button down */
-	static inline void injectFire(int frames = 1);
+
+	/** Run n app oneFrame() steps*/
+	void runAppFrames(int n);
 
 	/** Reset the camera rotation to it's spawn position (expected to be 0 heading) */
 	static void zeroCameraRotation();
