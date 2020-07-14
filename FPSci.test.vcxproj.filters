@@ -23,6 +23,12 @@
     <None Include="data-files\test\userstatus.Any">
       <Filter>Config Files</Filter>
     </None>
+    <None Include="data-files\test\keymap.Any">
+      <Filter>Config Files</Filter>
+    </None>
+    <None Include="data-files\test\systemconfig.Any">
+      <Filter>Config Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Config Files">
