@@ -1,0 +1,17 @@
+{ 
+    currentUser = "anon"; 
+    sessions = ( ); 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            completedSessions = ( ); 
+            id = "TestUser"; 
+            sessions = ( "main"); 
+        }, 
+        { 
+            completedSessions = ( ); 
+            id = "anon"; 
+            sessions = ( "main"); 
+        } ); 
+    
+} 

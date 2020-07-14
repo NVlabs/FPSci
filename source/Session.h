@@ -31,7 +31,7 @@
 #include "ConfigFiles.h"
 #include <ctime>
 
-class App;
+class FPSciApp;
 class PlayerEntity;
 class TargetEntity;
 class FPSciLogger;
@@ -107,75 +107,119 @@ struct PlayerAction {
 
 class Session : public ReferenceCountedObject {
 protected:
-	App* m_app = nullptr;								///< Pointer to the app
+	FPSciApp* m_app = nullptr;							///< Pointer to the app
 	Scene* m_scene = nullptr;							///< Pointer to the scene
 	
 	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
-	shared_ptr<FPSciLogger> m_logger;						///< Output results logger
+	shared_ptr<FPSciLogger> m_logger;					///< Output results logger
 	shared_ptr<PlayerEntity> m_player;					///< Player entity
 	shared_ptr<Camera> m_camera;						///< Camera entity
 
 	// Experiment management					
-	int m_remainingTargets;								///< Number of remaining targets (calculated at the end of the session)
 	int m_destroyedTargets = 0;							///< Number of destroyed target
-	int m_clickCount = 0;								///< Count of total clicks in this trial
+	int m_shotCount = 0;								///< Count of total clicks in this trial
+	int m_hitCount = 0;									///< Count of total hits in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
+	int	m_currBlock = 1;								///< Index to the current block of trials
+	Array<Array<shared_ptr<TargetConfig>>> m_trials;	///< Storage for trials (to repeat over blocks)
 	String m_feedbackMessage;							///< Message to show when trial complete
 
 	// Target management
 	Table<String, Array<shared_ptr<ArticulatedModel>>>* m_targetModels;
 	int m_modelScaleCount;
-	int m_lastUniqueID = 0;								///< Counter for creating unique names for various entities
-	Array<shared_ptr<TargetEntity>> m_targetArray;		///< Array of drawn targets
+	int m_lastUniqueID = 0;									///< Counter for creating unique names for various entities
+	
+	Array<shared_ptr<TargetEntity>> m_targetArray;			///< Array of drawn targets
+	Array<shared_ptr<TargetEntity>> m_hittableTargets;		///< Array of targets that can be hit
+	Array<shared_ptr<TargetEntity>> m_unhittableTargets;	///< Array of targets that can't be hit
 
-	int m_currTrialIdx;									///< Current trial
-	int m_currQuestionIdx = -1;							///< Current question index
-	Array<int> m_remainingTrials;								///< Completed flags
-	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;		///< Target configurations by trial
+
+	int m_currTrialIdx;										///< Current trial
+	int m_currQuestionIdx = -1;								///< Current question index
+	Array<int> m_remainingTrials;							///< Completed flags
+	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
 	// Time-based parameters
 	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial
 	String m_taskStartTime;								///< Recorded task start timestamp							
 	String m_taskEndTime;								///< Recorded task end timestamp
 	RealTime m_totalRemainingTime = 0;					///< Time remaining in the trial
-	RealTime m_scoreboardDuration = 10.0;				///< Show the score for at least this amount of seconds.
 	RealTime m_lastFireAt = 0.f;						///< Time of the last shot
 	Timer m_timer;										///< Timer used for timing tasks	
 	// Could move timer above to stopwatch in future
 	//Stopwatch stopwatch;			
 
+	Array<HANDLE> m_sessProcesses;						///< Handles for session-level processes
+	Array<HANDLE> m_trialProcesses;						///< Handles for trial-level processes
+
 	// Target parameters
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	
-	Session(App* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config)
-	{
+	Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config) {
 		m_hasSession = notNull(m_config);
 	}
 
-	Session(App* app) : m_app(app)
-	{
+	Session(FPSciApp* app) : m_app(app) {
 		m_hasSession = false;
 	}
 
 	~Session(){
-		clearTargets();		// Clear the targets when the session is done
+		clearTargets();					// Clear the targets when the session is done
+		// For now leave "orphaned" processes to allow (session) end commands to run until completion
+		//closeTrialProcesses();		// Close any trial processes affiliated with this session
+		//closeSessionProcesses();		// Close any processes affiliated with this session
 	}
 
-	/** Creates a random target with motion based on parameters
-	@param motionDuration time in seconds to produce a motion path for
-	@param motionDecisionPeriod time in seconds when new motion direction is chosen
-	@param speed world-space velocity (m/s) of target
-	@param radius world-space distance to target
-	@param scale size of target TODO: is this radius or diameter in meters?*/
-	//void spawnParameterizedRandomTarget(float motionDuration, float motionDecisionPeriod, float speed, float radius, float scale);
-	/** Creates a random target in front of the player */
-	//void spawnRandomTarget();
-	/** Creates a spinning target */
+	inline void runTrialCommands(String evt) {
+		evt = toLower(evt);
+		auto cmds = (evt == "start") ? m_config->commands.trialStartCmds : m_config->commands.trialEndCmds;
+		for (auto cmd : cmds) { 
+			m_trialProcesses.append(runCommand(cmd, evt + " of trial")); 
+		}
+	}
 
-	//shared_ptr<FlyingEntity> spawnTarget(const Point3& position, float scale, bool spinLeft = true, const Color3& color = Color3::red(), String modelName = "model/target/target.obj");
+	inline void closeTrialProcesses() {
+		for (auto handle : m_trialProcesses) { 
+			TerminateProcess(handle, 0); 
+		}
+		m_trialProcesses.clear();
+	}
 
-		/** Insert a target into the target array/scene */
+	inline void runSessionCommands(String evt) {
+		evt = toLower(evt);
+		auto cmds = (evt == "start") ? m_config->commands.sessionStartCmds : m_config->commands.sessionEndCmds;
+		for (auto cmd : cmds) { 
+			m_sessProcesses.append(runCommand(cmd, evt + " of session")); 
+		}
+	}
+
+	inline void closeSessionProcesses() {
+		for (auto handle : m_sessProcesses) { 
+			TerminateProcess(handle, 0); 
+		}
+		m_sessProcesses.clear();
+	}
+
+	String formatFeedback(const String& input);
+	String formatCommand(const String& input);
+
+	/** Insert a target into the target array/scene */
 	inline void insertTarget(shared_ptr<TargetEntity> target);
+
+	/** Get the total target count for the current trial */
+	int totalTrialTargets() const {
+		int totalTargets = 0;
+		for (shared_ptr<TargetConfig> target : m_targetConfigs[m_currTrialIdx]) {
+			if (target->respawnCount == -1) {
+				totalTargets = -1;		// Ininite spawn case
+				break;
+			}
+			else {
+				totalTargets += (target->respawnCount + 1);
+			}
+		}
+		return totalTargets;
+	}
 
 	shared_ptr<TargetEntity> spawnDestTarget(
 		shared_ptr<TargetConfig> config,
@@ -223,27 +267,71 @@ protected:
 		return m_camera->frame().translation;
 	}
 
+	HANDLE runCommand(CommandSpec cmd, String evt) {
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+		ZeroMemory(&si, sizeof(si));
+		si.cb = sizeof(si);
+		ZeroMemory(&pi, sizeof(pi));
+
+		// Run the (formatted command)
+		LPSTR command = LPSTR(formatCommand(cmd.cmdStr).c_str());
+		bool success;
+		if (cmd.foreground) {	// Run process in the foreground
+			success = CreateProcess(NULL, command, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+		}
+		else {				// Run process silently in the background
+			success = CreateProcess(NULL, command, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+		}
+
+		if (!success) {
+			logPrintf("Failed to run %s command: \"%s\". %s\n", evt, cmd, GetLastErrorString());
+		}
+
+		if (cmd.blocking) {	// Optional blocking behavior
+			WaitForSingleObject(pi.hProcess, INFINITE);
+		}
+
+		return pi.hProcess;
+	}
+
+	String GetLastErrorString() {
+		DWORD error = GetLastError();
+		if (error) {
+			LPVOID lpMsgBuf;
+			DWORD bufLen = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL);
+			if (bufLen) {
+				LPCSTR lpMsgStr = (LPCSTR)lpMsgBuf;
+				std::string result(lpMsgStr, lpMsgStr + bufLen);
+				LocalFree(lpMsgBuf);
+				return String(result);
+			}
+		}
+		return String();
+	}
 
 public:
 	float initialHeadingRadians = 0.0f;
 
-	static shared_ptr<Session> create(App* app) {
+	static shared_ptr<Session> create(FPSciApp* app) {
 		return createShared<Session>(app);
 	}
-	static shared_ptr<Session> create(App* app, shared_ptr<SessionConfig> config) {
+	static shared_ptr<Session> create(FPSciApp* app, shared_ptr<SessionConfig> config) {
 		return createShared<Session>(app, config);
 	}
 
 	void randomizePosition(const shared_ptr<TargetEntity>& target) const;
 	void initTargetAnimation();
+	void spawnTrialTargets(Point3 initialSpawnPos, bool previewMode = false);
 	float weaponCooldownPercent() const;
 	RealTime lastFireTime() const {
 		return m_lastFireAt;
 	}
 	int remainingAmmo() const;
 
-	bool isComplete() const;
-	void nextCondition();
+	bool blockComplete() const;
+	bool nextCondition();
+	bool hasNextCondition() const;
 
 	void endLogging();
 
@@ -265,11 +353,10 @@ public:
 	void accumulateFrameInfo(RealTime rdt, float sdt, float idt);
 
 	void countDestroy() {
-		m_destroyedTargets += 1;
+		m_destroyedTargets++;
 	}
 
 	/** Destroy a target from the targets array */
-	void destroyTarget(int index);
 	void destroyTarget(shared_ptr<TargetEntity> target);
 
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
@@ -285,15 +372,25 @@ public:
 	void accumulatePlayerAction(PlayerActionType action, String target="");
 	bool canFire();
 
-	bool setupTrialParams(Array<Array<shared_ptr<TargetConfig>>> trials);
+	bool updateBlock(bool updateTargets = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
-	enum PresentationState presentationState;			///< Current presentation state
+	enum PresentationState currentState;			///< Current presentation state
 
 	/** result recording */
-	void countClick() { m_clickCount++; }
+	void countShot() { m_shotCount++; }
 
-	Array<shared_ptr<TargetEntity>> targetArray() {
+	const Array<shared_ptr<TargetEntity>>& targetArray() const {
 		return m_targetArray;
+	}
+
+	/** dynamically allocates a new array of pointers to the hittable targets in the session */
+	const Array<shared_ptr<TargetEntity>>& hittableTargets() const {
+		return m_hittableTargets;
+	}
+
+	/** dynamically allocates a new array of pointers to the unhittable (visible but inactive) targets in the session */
+	const Array<shared_ptr<TargetEntity>>& unhittableTargets() const {
+		return m_unhittableTargets;
 	}
 };

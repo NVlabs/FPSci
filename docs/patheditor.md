@@ -49,7 +49,7 @@ To preview a path with a default target model, press the `Preview` button at any
 If you modify a path during a preview it is suggested that you stop/restart the preview to see the newest path.
 
 ### Player Motion Recording
-Player motion recording is configured within the waypoint manager window in the developer mode (`playMode=False`) of the application. Once configured, recording can be toggled using the `R` key and a visual indicator for recording is presented in the top right of the display.
+Player motion recording is configured within the waypoint manager window in the developer mode (`developerMode=true`) of the application. Once configured, recording can be toggled using the `R` key and a visual indicator for recording is presented in the top right of the display.
 
 #### Motion Recording Modes
 Player motion can be recorded in two different modalities with the application:

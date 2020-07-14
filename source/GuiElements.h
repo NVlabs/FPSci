@@ -3,7 +3,7 @@
 #include "ConfigFiles.h"
 #include "TargetEntity.h"
 
-class App;
+class FPSciApp;
 
 struct WaypointDisplayConfig {
 	// Formatting parameters
@@ -51,9 +51,9 @@ protected:
 
 	GuiScrollPane*	m_scrollPane;
 	TreeDisplay*	m_treeDisplay;
-	App* m_app;
+	FPSciApp* m_app;
 
-	WaypointDisplay(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints);
+	WaypointDisplay(FPSciApp* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints);
 public:
 
 	int getSelected() {
@@ -65,7 +65,7 @@ public:
 	}
 
 	virtual void setManager(WidgetManager* manager);
-	static shared_ptr<WaypointDisplay> create(App* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) {
+	static shared_ptr<WaypointDisplay> create(FPSciApp* app, const shared_ptr<GuiTheme>& theme, WaypointDisplayConfig config, shared_ptr<Array<Destination>> waypoints) {
 		return createShared<WaypointDisplay>(app, theme, config, waypoints);
 
 	}
@@ -100,5 +100,76 @@ protected:
 public:
 	static shared_ptr<WeaponControls> create(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f) {
 		return createShared<WeaponControls>(config, theme, width, height);
+	}
+};
+
+class UserMenu : public GuiWindow {
+protected:
+	FPSciApp* m_app = nullptr;									///< Store the app here
+	UserTable& m_users;										///< User table
+	UserStatusTable& m_userStatus;							///< User status table
+	MenuConfig m_config;									///< Menu configuration
+
+	GuiPane* m_parent				= nullptr;				///< Parent pane
+	GuiPane* m_expPane				= nullptr;				///< Pane for session/user selection
+	GuiPane* m_currentUserPane		= nullptr;				///< Pane for current user controls
+	GuiPane* m_reticlePreviewPane	= nullptr;				///< Reticle preview pane
+	GuiPane* m_resumeQuitPane		= nullptr;				///< Pane for resume/quit buttons
+
+	GuiDropDownList* m_userDropDown = nullptr;				///< Dropdown menu for user selection
+	GuiDropDownList* m_sessDropDown = nullptr;				///< Dropdown menu for session selection
+
+	shared_ptr<Texture> m_reticlePreviewTexture;			///< Reticle preview texture
+	shared_ptr<Framebuffer> m_reticleBuffer;				///< Reticle preview framebuffer
+
+	int m_ddCurrUserIdx = 0;								///< Current user index
+	int m_ddCurrSessIdx = 0;								///< Current session index
+	int m_lastUserIdx = -1;									///< Previously selected user in the drop-down
+
+	const Vector2 m_btnSize = { 100.f, 30.f };				///< Default button size
+	const Vector2 m_reticlePreviewSize = { 150.f, 150.f };	///< Reticle texture preview size
+	const float m_sliderWidth = 300.f;						///< Default width for (non-RGB) sliders
+	const float m_rgbSliderWidth = 80.f;					///< Default width for RGB sliders
+
+	UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect);
+
+	/** Creates a GUI Pane for the specified user allowing changeable paramters to be changed */
+	void drawUserPane(const MenuConfig& config, UserConfig& user);
+
+	void updateUserPress();
+	void updateSessionPress();
+
+public:
+	static shared_ptr<UserMenu> create(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) {
+		return createShared<UserMenu>(app, users, userStatus, config, theme, rect);
+	}
+
+	void setVisible(bool visibile);
+	Array<String> updateSessionDropDown();
+	void updateReticlePreview();
+
+	void toggleVisibliity() {
+		setVisible(!visible());
+	}
+
+	void setSelectedSession(const String& id) {
+		m_sessDropDown->setSelectedValue(id);
+	}
+
+	String selectedSession() const {
+		if (m_ddCurrSessIdx == -1) return "";
+		return m_sessDropDown->get(m_ddCurrSessIdx);
+	}
+
+	int sessionsForSelectedUser() const {
+		return m_sessDropDown->numElements();
+	}
+
+	String selectedUserID() const {
+		return m_userDropDown->get(m_ddCurrUserIdx);
+	}
+
+	shared_ptr<UserConfig> getCurrUser() {
+		return m_users.getUserById(selectedUserID());
 	}
 };

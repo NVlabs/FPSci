@@ -15,15 +15,19 @@ static bool operator!=(Array<T> a1, Array<T> a2) {
 class StartupConfig {
 private:
 public:
-    bool	developerMode = false;				///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
-	bool	waypointEditorMode = false;			///< Sets whether the app is run w/ the waypoint editor available
-	bool	fullscreen = true;					///< Whether the app runs in windowed mode
-	Vector2 windowSize = { 1920, 980 };			///< Window size (when not run in fullscreen)
-    String	experimentConfigPath = "";			///< Optional path to an experiment config file (if "experimentconfig.Any" will not be this file)
-    String	userConfigPath = "";				///< Optional path to a user config file (if "userconfig.Any" will not be this file)
-    bool	audioEnable = true;					///< Audio on/off
+	bool	developerMode = false;								///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
+	bool	waypointEditorMode = false;							///< Sets whether the app is run w/ the waypoint editor available
+	bool	fullscreen = true;									///< Whether the app runs in windowed mode
+	Vector2 windowSize = { 1920, 980 };							///< Window size (when not run in fullscreen)
+	String	experimentConfigFilename = "experimentconfig.Any";	///< Optional path to an experiment config file
+	String	userConfigFilename = "userconfig.Any";				///< Optional path to a user config file
+	String  userStatusFilename = "userstatus.Any";				///< Optional path to a user status file
+	String  keymapConfigFilename = "keymap.Any";				///< Optional path to a keymap config file
+	String  systemConfigFilename = "systemconfig.Any";			///< Optional path to a latency logger config file
+	String	resultsDirPath = "./results/";						///< Optional path to the results directory
+	bool	audioEnable = true;									///< Audio on/off
 
-    StartupConfig() {};
+	StartupConfig() {};
 
 	/** Construct from any here */
     StartupConfig(const Any& any) {
@@ -37,8 +41,18 @@ public:
 			reader.getIfPresent("waypointEditorMode", waypointEditorMode);
 			reader.getIfPresent("fullscreen", fullscreen);
 			reader.getIfPresent("windowSize", windowSize);
-            reader.getIfPresent("experimentConfigPath", experimentConfigPath);
-            reader.getIfPresent("userConfigPath", userConfigPath);
+            reader.getIfPresent("experimentConfigFilename", experimentConfigFilename);
+			checkValidAnyFilename("experimentConfigFilename", experimentConfigFilename);
+            reader.getIfPresent("userConfigFilename", userConfigFilename);
+			checkValidAnyFilename("userConfigFilename", userConfigFilename);
+			reader.getIfPresent("userStatusFilename", userStatusFilename);
+			checkValidAnyFilename("userStatusFilename", userStatusFilename);
+			reader.getIfPresent("keymapConfigFilename", keymapConfigFilename);
+			checkValidAnyFilename("keymapConfigFilename", keymapConfigFilename);
+			reader.getIfPresent("systemConfigFilename", systemConfigFilename);
+			checkValidAnyFilename("systemConfigFilename", systemConfigFilename);
+			reader.getIfPresent("resultsDirPath", resultsDirPath);
+			resultsDirPath = formatDirPath(resultsDirPath);
             reader.getIfPresent("audioEnable", audioEnable);
             break;
         default:
@@ -51,24 +65,32 @@ public:
     Any toAny(const bool forceAll = true) const {
 		StartupConfig def;		// Create a dummy default config for value testing
         Any a(Any::TABLE);
-        if(forceAll || def.developerMode != developerMode)					a["developerMode"] = developerMode;
-		if(forceAll || def.waypointEditorMode != waypointEditorMode)		a["waypointEditorMode"] = waypointEditorMode;
-		if(forceAll || def.fullscreen != fullscreen)						a["fullscreen"] = fullscreen;
-        if(forceAll || def.experimentConfigPath != experimentConfigPath)	a["experimentConfigPath"] = experimentConfigPath;
-        if(forceAll || def.userConfigPath != userConfigPath)				a["userConfigPath"] = userConfigPath;
-        if(forceAll || def.audioEnable != audioEnable)						a["audioEnable"] = audioEnable;
+        if(forceAll || def.developerMode != developerMode)								a["developerMode"] = developerMode;
+		if(forceAll || def.waypointEditorMode != waypointEditorMode)					a["waypointEditorMode"] = waypointEditorMode;
+		if(forceAll || def.fullscreen != fullscreen)									a["fullscreen"] = fullscreen;
+        if(forceAll || def.experimentConfigFilename != experimentConfigFilename)		a["experimentConfigFilename"] = experimentConfigFilename;
+        if(forceAll || def.userConfigFilename != userConfigFilename)					a["userConfigFilename"] = userConfigFilename;
+		if(forceAll || def.userStatusFilename != userStatusFilename)					a["userStatusFilename"] = userStatusFilename;
+		if(forceAll || def.keymapConfigFilename != keymapConfigFilename)				a["keymapConfigFilename"] = keymapConfigFilename;
+		if(forceAll || def.systemConfigFilename != systemConfigFilename)				a["systemConfigFilename"] = systemConfigFilename;
+		if(forceAll || def.resultsDirPath != resultsDirPath)							a["resultsDirPath"] = resultsDirPath;
+        if(forceAll || def.audioEnable != audioEnable)									a["audioEnable"] = audioEnable;
         return a;
     }
 
-    /** filename with given path to experiment config file */
-    String experimentConfig() {
-        return experimentConfigPath + "experimentconfig.Any";
-    }
+	/** Assert that the filename `path` ends in .any and report `errorName` if it doesn't */
+	static void checkValidAnyFilename(const String& errorName, const String& path) {
+		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any", "Config filenames specified in the startup config must end with \".any\"!, check the " + errorName + "!\n");
+	}
 
-    /** filename with given path to user config file */
-    String userConfig() {
-        return userConfigPath + "userconfig.Any";
-    }
+	/** Returns the provided path with trailing slashes added if missing */
+	static String formatDirPath(const String& path) {
+		String fpath = path;
+		if (!path.empty() && path.substr(path.length() - 1) != "/") {
+			fpath = path + "/";
+		}
+		return fpath;
+	}
 };
 
 /** Key mapping */
@@ -83,8 +105,8 @@ public:
 		map.set("strafeLeft", Array<GKey>{ (GKey)'a', GKey::LEFT });
 		map.set("moveBackward", Array<GKey>{ (GKey)'s', GKey::DOWN });
 		map.set("strafeRight", Array<GKey>{ (GKey)'d', GKey::RIGHT });
-		map.set("openMenu", Array<GKey>{ GKey::ESCAPE, GKey::TAB });
-		map.set("quit", Array<GKey>{ GKey::MINUS });
+		map.set("openMenu", Array<GKey>{ GKey::ESCAPE });
+		map.set("quit", Array<GKey>{ GKey::KP_MINUS, GKey::PAUSE });
 		map.set("crouch", Array<GKey>{ GKey::LCTRL });
 		map.set("jump", Array<GKey>{ GKey::SPACE });
 		map.set("shoot", Array<GKey>{ GKey::LEFT_MOUSE });
@@ -121,10 +143,10 @@ public:
 		return a;
 	}
 
-	static KeyMapping load(String filename = "keymap.Any") {
+	static KeyMapping load(const String& filename) {
 		if (!FileSystem::exists(System::findDataFile(filename, false))) {
 			KeyMapping mapping = KeyMapping();
-			mapping.toAny().save("keymap.Any");
+			mapping.toAny().save(filename);
 			return mapping;
 		}
 		return Any::fromFile(System::findDataFile(filename));
@@ -140,10 +162,13 @@ public:
 	}
 };
 
-/** System configuration control and logging */
-class SystemConfig {
-public:
+/** Information about the system being used
+The current implementation is heavily Windows-specific */
+class SystemInfo {
+public: 
 	// Output/runtime read parameters
+	String	hostName;			///< System host (PC) name
+	String  userName;			///< System username
 	String	cpuName;			///< The vendor name of the CPU being used
 	int		coreCount;			///< Core count for the CPU being used
 	String	gpuName;			///< The vendor name of the GPU being used
@@ -154,68 +179,13 @@ public:
 	int		displayXSize;		///< The horizontal size of the display in mm
 	int		displayYSize;		///< The vertical size of the display in mm
 
-	// Input parameters
-	bool	hasLogger = false;			///< Indicates that a hardware logger is present in the system
-	String	loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
-	bool	hasSync = false;			///< Indicates that a hardware sync will occur via serial card DTR signal
-	String	syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
-
-	SystemConfig() {};
-
-	/** Construct from Any */
-	SystemConfig(const Any& any) {
-		int settingsVersion = 1;
-		AnyTableReader reader(any);
-		reader.getIfPresent("settingsVersion", settingsVersion);
-
-		switch (settingsVersion) {
-		case 1:
-			reader.get("HasLogger", hasLogger, "System config must specify the \"HasLogger\" flag!");
-			reader.get("HasSync", hasSync, "System config must specify the \"HasSync\" flag!");
-			reader.getIfPresent("LoggerComPort", loggerComPort);
-			reader.getIfPresent("SyncComPort", syncComPort);
-			break;
-		default:
-			debugPrintf("Settings version '%d' not recognized in SystemConfig.\n", settingsVersion);
-			break;
-		}
-		// Get the system info
-		getSystemInfo();		
-	}
-
-	/** Serialize to Any */
-	Any toAny(const bool forceAll = true) const{
-		Any a(Any::TABLE);
-		a["CPU"] = cpuName;
-		a["GPU"] = gpuName;
-		a["CoreCount"] = coreCount;
-		a["MemoryCapacityMB"] = memCapacityMB;
-		a["DisplayName"] = displayName;
-		a["DisplayResXpx"] = displayXRes;
-		a["DisplayResYpx"] = displayYRes;
-		a["DisplaySizeXmm"] = displayXSize;
-		a["DisplaySizeYmm"] = displayYSize;
-		a["HasLogger"] = hasLogger;
-		a["LoggerComPort"] = loggerComPort;
-		a["HasSync"] = hasSync;
-		a["SyncComPort"] = syncComPort;
-		return a;
-	}
-
-	/** Load a system config from file */
-	static SystemConfig load() {
-		// if file not found, create a default system config
-		if (!FileSystem::exists("systemconfig.Any")) { 
-			SystemConfig config = SystemConfig();		// Create the default
-			config.getSystemInfo();						// Get system info
-			config.toAny().save("systemconfig.Any");	// Save a file
-			return config;
-		}
-		return Any::fromFile(System::findDataFile("systemconfig.Any"));
-	}
-
 	/** Get the system info using (windows) calls */
-	void getSystemInfo(void) {
+	static SystemInfo get(void) {
+		SystemInfo info;
+
+		info.hostName = getenv("COMPUTERNAME");		// Get the host (computer) name
+		info.userName = getenv("USERNAME");			// Get the current logged in username
+
 		// Get CPU name string
 		int cpuInfo[4] = { -1 };
 		unsigned nExIds, i = 0;
@@ -236,26 +206,28 @@ public:
 				memcpy(cpuBrandString + 32, cpuInfo, sizeof(cpuInfo));
 				break;
 			default:
-				logPrintf("Couldn't get system info...\n");
+				// Removed these are they are unnecessary prints...
+				//logPrintf("Couldn't get system info...\n");
+				break;
 			}
 		}
-		cpuName = cpuBrandString;
+		info.cpuName = cpuBrandString;
 
 		// Get CPU core count
 		SYSTEM_INFO sysInfo;
 		GetSystemInfo(&sysInfo);
-		coreCount = sysInfo.dwNumberOfProcessors;
+		info.coreCount = sysInfo.dwNumberOfProcessors;
 
 		// Get memory size
 		MEMORYSTATUSEX statex;
 		statex.dwLength = sizeof(statex);
 		GlobalMemoryStatusEx(&statex);
-		memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
+		info.memCapacityMB = (long)(statex.ullTotalPhys / (1024 * 1024));
 
 		// Get GPU name string
 		String gpuVendor = String((char*)glGetString(GL_VENDOR)).append(" ");
 		String gpuRenderer = String((char*)glGetString(GL_RENDERER));
-		gpuName = gpuVendor.append(gpuRenderer);
+		info.gpuName = gpuVendor.append(gpuRenderer);
 
 		// Get display information (monitor name)
 		// This seems to break on many systems/provide less than descriptive names!!!
@@ -266,27 +238,116 @@ public:
 		std::string deviceName = dd.DeviceName;
 		EnumDisplayDevices(deviceName.c_str(), monitorIndex, &dd, 0);
 		displayName = String(dd.DeviceString);*/
-		displayName = String("TODO");
+		info.displayName = String("TODO");
 
 		// Get screen resolution
-		displayXRes = GetSystemMetrics(SM_CXSCREEN);
-		displayYRes = GetSystemMetrics(SM_CYSCREEN);
+		info.displayXRes = GetSystemMetrics(SM_CXSCREEN);
+		info.displayYRes = GetSystemMetrics(SM_CYSCREEN);
 
 		// Get display size
 		HWND const hwnd = 0;
 		HDC const hdc = GetDC(hwnd);
 		assert(hdc);
-		displayXSize = GetDeviceCaps(hdc, HORZSIZE);
-		displayYSize = GetDeviceCaps(hdc, VERTSIZE);
+		info.displayXSize = GetDeviceCaps(hdc, HORZSIZE);
+		info.displayYSize = GetDeviceCaps(hdc, VERTSIZE);
+		
+		return info;
 	}
 
-	/** Print the system info to log.txt */
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		a["hostname"] = hostName;
+		a["username"] = userName;
+		a["CPU"] = cpuName;
+		a["GPU"] = gpuName;
+		a["CoreCount"] = coreCount;
+		a["MemoryCapacityMB"] = memCapacityMB;
+		a["DisplayName"] = displayName;
+		a["DisplayResXpx"] = displayXRes;
+		a["DisplayResYpx"] = displayYRes;
+		a["DisplaySizeXmm"] = displayXSize;
+		a["DisplaySizeYmm"] = displayYSize;
+		return a;
+	}
+
 	void printToLog() {
 		// Print system info to log
-		logPrintf("System Info: \n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n",
-			cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
-		logPrintf("Logger Present: %s\nLogger COM Port: %s\nSync Card Present: %s\nSync COM Port: %s\n",
-			hasLogger ? "True" : "False", loggerComPort, hasSync ? "True" : "False", syncComPort);
+		logPrintf("\n-------------------\nSystem Info:\n-------------------\n\tHostname: %s\n\tUsername: %s\n\tProcessor: %s\n\tCore Count: %d\n\tMemory: %dMB\n\tGPU: %s\n\tDisplay: %s\n\tDisplay Resolution: %d x %d (px)\n\tDisplay Size: %d x %d (mm)\n\n",
+			hostName, userName, cpuName, coreCount, memCapacityMB, gpuName, displayName, displayXRes, displayYRes, displayXSize, displayYSize);
+	}
+};
+
+/** System-specific configuration */
+class SystemConfig {
+public:
+	// Input parameters
+	bool	hasLogger = false;		///< Indicates that a hardware logger is present in the system
+	String	loggerComPort = "";		///< Indicates the COM port that the logger is on when hasLogger = True
+	bool	hasSync = false;		///< Indicates that a hardware sync will occur via serial card DTR signal
+	String	syncComPort = "";		///< Indicates the COM port that the sync is on when hasSync = True
+
+	SystemConfig() {};
+	/** Construct from Any */
+	SystemConfig(const Any& any) {
+		AnyTableReader reader(any);
+		int settingsVersion = 1;
+		reader.getIfPresent("settingsVersion", settingsVersion);
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("hasLatencyLogger", hasLogger);
+			if (hasLogger) {
+				reader.get("loggerComPort", loggerComPort, "Logger COM port must be provided if \"hasLogger\" = true!");
+			}
+			else {
+				reader.getIfPresent("loggerComPort", loggerComPort);
+			}
+
+			reader.getIfPresent("hasLatencyLoggerSync", hasSync);
+			if (hasSync) {
+				reader.get("loggerSyncComPort", syncComPort, "Logger sync COM port must be provided if \"hasLoggerSync\" = true!");
+			}
+			else {
+				reader.getIfPresent("loggerSyncComPort", syncComPort);
+			}
+			break;
+		default:
+			debugPrintf("Settings version '%d' not recognized in SystemConfig.\n", settingsVersion);
+			break;
+		}	
+	}
+
+	static SystemConfig load(String filename = "systemconfig.Any") {
+		if (filename.empty()) { filename = "systemconfig.Any"; }
+		// Create default UserConfig file
+		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
+			SystemConfig defConfig = SystemConfig();
+			defConfig.toAny().save(filename);						// Save the .any file
+			return defConfig;
+		}
+		return Any::fromFile(System::findDataFile(filename));
+	}
+
+	/** Serialize to Any */
+	Any toAny(const bool forceAll = true) const{
+		Any a(Any::TABLE);
+		SystemConfig def;
+		if(forceAll || def.hasLogger != hasLogger)			a["hasLatencyLogger"] = hasLogger;
+		if(forceAll || def.loggerComPort != loggerComPort)	a["loggerComPort"] = loggerComPort;
+		if(forceAll || def.hasSync != hasSync)				a["hasLatencyLoggerSync"] = hasSync;
+		if(forceAll || def.syncComPort != syncComPort)		a["loggerSyncComPort"] = syncComPort;
+		return a;
+	}
+
+	/** Print the latency logger config to log.txt */
+	void printToLog() {
+		const String loggerComStr = hasLogger ? loggerComPort : "None";
+		const String syncComStr = hasSync ? syncComPort : "None";
+		logPrintf("-------------------\nLDAT-R Config:\n-------------------\n\tLogger Present: %s\n\tLogger COM Port: %s\n\tSync Card Present: %s\n\tSync COM Port: %s\n\n",
+			hasLogger ? "True" : "False",
+			loggerComStr.c_str(),
+			hasSync ? "True" : "False",
+			syncComStr.c_str()
+		);
 	}
 };
 
@@ -297,6 +358,7 @@ public:
     double			mouseDPI			= 800.0;						///< Mouse DPI setting
     double			cmp360				= 12.75;						///< Mouse sensitivity, reported as centimeters per 360�
 	Vector2			turnScale			= Vector2(1.0f, 1.0f);			///< Turn scale for player, can be used to invert controls in either direction
+	bool			invertY				= false;						///< Extra flag for Y-invert (duplicates turn scale, but very common)
 	Vector2			scopeTurnScale		= Vector2(0.0f, 0.0f);			///< Scoped turn scale (0's imply default scaling)
 
 	int				currentSession		= 0;							///< Currently selected session
@@ -305,7 +367,7 @@ public:
 	Array<float>	reticleScale		= { 1.0f, 1.0f };				///< Scale for the user's reticle
 	Array<Color4>	reticleColor		= {Color4(1.0, 0.0, 0.0, 1.0),	///< Color for the user's reticle
 										Color4(1.0, 0.0, 0.0, 1.0)};	
-	float			reticleShrinkTimeS	= 0.3f;							///< Time for reticle to contract after expand on shot (in seconds)
+	float			reticleChangeTimeS	= 0.3f;							///< Time for reticle to contract after expand on shot (in seconds)
 
 
 	UserConfig() {};
@@ -323,8 +385,9 @@ public:
 			reader.getIfPresent("reticleIndex", reticleIndex);
 			reader.getIfPresent("reticleScale", reticleScale);
 			reader.getIfPresent("reticleColor", reticleColor);
-			reader.getIfPresent("reticleShrinkTime", reticleShrinkTimeS);
+			reader.getIfPresent("reticleChangeTime", reticleChangeTimeS);
 			reader.getIfPresent("turnScale", turnScale);
+			reader.getIfPresent("invertY", invertY);
 			reader.getIfPresent("scopeTurnScale", scopeTurnScale);
 			break;
         default:
@@ -343,8 +406,9 @@ public:
 		if (forceAll || def.reticleIndex != reticleIndex)				a["reticleIndex"] = reticleIndex;
 		if (forceAll || def.reticleScale != reticleScale)				a["reticleScale"] = reticleScale;
 		if (forceAll || def.reticleColor != reticleColor)				a["reticleColor"] = reticleColor;
-		if (forceAll || def.reticleShrinkTimeS != reticleShrinkTimeS)	a["reticleShrinkTime"] = reticleShrinkTimeS;
+		if (forceAll || def.reticleChangeTimeS != reticleChangeTimeS)	a["reticleChangeTime"] = reticleChangeTimeS;
 		if (forceAll || def.turnScale != turnScale)						a["turnScale"] = turnScale;
+		if (forceAll || def.invertY != invertY)							a["invertY"] = invertY;
 		if (forceAll || def.scopeTurnScale != scopeTurnScale)			a["scopeTurnScale"] = scopeTurnScale;
 		return a;
 	}
@@ -353,7 +417,6 @@ public:
 /** Class for loading a user table and getting user info */
 class UserTable {
 public:
-	String					currentUser = "None";			///< The currently active user
 	Array<UserConfig>		users = {};						///< A list of valid users
 
 	UserTable() {};
@@ -366,7 +429,6 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("currentUser", currentUser);
 			reader.get("users", users, "Issue in the (required) \"users\" array in the user config file!");
 			if (users.size() == 0) {
 				throw "At least 1 user must be specified in the \"users\" array within the user configuration file!";
@@ -378,30 +440,10 @@ public:
 		}
 	}
 
-	/** Get the current user's config */
-    UserConfig* getCurrentUser() {
-        for (int i = 0; i < users.length(); ++i) {
-            if (!users[i].id.compare(currentUser)) return &(users[i]);
-        }
-        // return the first user by default and set the value
-        currentUser = users[0].id;
-        return &(users[0]);
-    }
-
-	/** Get the index of the current user from the user table */
-    int getCurrentUserIndex() {
-        for (int i = 0; i < users.length(); ++i) {
-            if (!users[i].id.compare(currentUser)) return i;
-        }
-        // return the first user by default
-        return 0;
-    }
-
 	/** Serialize to Any */
 	Any toAny(const bool forceAll = true) const {
 		Any a(Any::TABLE);
 		a["settingsVersion"] = 1;						///< Create a version 1 file
-		a["currentUser"] = currentUser;					///< Include current subject ID
 		a["users"] = users;								///< Include updated subject table
 		return a;
 	}
@@ -414,6 +456,20 @@ public:
 		return nullptr;
 	}
 
+	/** Simple rotine to get the UserTable Any structure from file */
+	static UserTable load(const String& filename) {
+		// Create default UserConfig file
+		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
+			UserTable defTable = UserTable();
+			defTable.users.append(UserConfig());			// Append one default user
+			defTable.save(filename);						// Save the .any file
+			return defTable;
+		}
+		return Any::fromFile(System::findDataFile(filename));
+	}
+
+	inline void save(const String& filename) { toAny().save(filename); }
+
 	/** Get an array of user IDs */
 	Array<String> getIds() {
 		Array<String> ids;
@@ -421,24 +477,19 @@ public:
 		return ids;
 	}
 
-	/** Simple rotine to get the UserTable Any structure from file */
-	static UserTable load(String filename) {
-		// Create default UserConfig file
-		if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
-			UserTable defTable = UserTable();
-			defTable.users.append(UserConfig());			// Append one default user
-			defTable.currentUser = defTable.users[0].id;	// Set this as the current user
-			defTable.toAny().save("userconfig.Any");		// Save the .any file
-			return defTable;
+	/** Get the index of the current user from the user table */
+	int getUserIndex(String userId) {
+		for (int i = 0; i < users.length(); ++i) {
+			if (!users[i].id.compare(userId)) return i;
 		}
-		return Any::fromFile(System::findDataFile(filename));
+		// return the first user by default
+		return 0;
 	}
 
 	/** Print the user table to the log */
 	void printToLog() {
-		logPrintf("Current User: %s\n", currentUser);
 		for (UserConfig user : users) {
-			logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id, user.cmp360, user.mouseDPI);
+			logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id.c_str(), user.cmp360, user.mouseDPI);
 		}
 	}
 };
@@ -495,6 +546,7 @@ class UserStatusTable {
 public:
 	bool allowRepeat = false;							///< Flag for whether to (strictly) sequence these experiments (allow duplicates)
 	bool randomizeDefaults = false;						///< Randomize from default session order when applying to user
+	String currentUser;									///< Currently selected user
 	Array<String> defaultSessionOrder = {};				///< Default session ordering (for all unspecified users)
 	Array<UserSessionStatus> userInfo = {};				///< Array of user status
 
@@ -508,6 +560,7 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
+			reader.getIfPresent("currentUser", currentUser);
 			reader.getIfPresent("allowRepeat", allowRepeat);
 			reader.getIfPresent("sessions", defaultSessionOrder);
 			UserSessionStatus::defaultSessionOrder = defaultSessionOrder;				// Set the default order here
@@ -526,6 +579,7 @@ public:
 		Any a(Any::TABLE);
 		UserStatusTable def;
 		a["settingsVersion"] = 1;						// Create a version 1 file
+		a["currentUser"] = currentUser;
 		if (forceAll || def.allowRepeat != allowRepeat)				a["allowRepeat"] = allowRepeat;
 		if (forceAll || def.randomizeDefaults != randomizeDefaults)	a["randomizeSessionOrder"] = randomizeDefaults;
 		a["sessions"] = defaultSessionOrder;
@@ -534,17 +588,20 @@ public:
 	}
 
 	/** Get the user status table from file */
-	static UserStatusTable load(void) {
-		if (!FileSystem::exists("userstatus.Any")) { // if file not found, create a default userstatus.Any
-			UserStatusTable defStatus = UserStatusTable();			// Create empty status
+	static UserStatusTable load(const String& filename) {
+		if (!FileSystem::exists(filename)) {						// if file not found, create a default
+			UserStatusTable defaultStatus = UserStatusTable();		// Create empty status
 			UserSessionStatus user;
 			user.sessionOrder = Array<String> ({ "60Hz", "30Hz" });	// Add "default" sessions we add to
-			defStatus.userInfo.append(user);						// Add single "default" user
-			defStatus.toAny().save("userstatus.Any");				// Save .any file
-			return defStatus;
+			defaultStatus.userInfo.append(user);					// Add single "default" user
+			defaultStatus.currentUser = user.id;					// Set "default" user as current user
+			defaultStatus.save(filename);							// Save .any file
+			return defaultStatus;
 		}
-		return Any::fromFile(System::findDataFile("userstatus.Any"));
+		return Any::fromFile(System::findDataFile(filename));
 	}
+
+	inline void save(const String& filename) { toAny().save(filename);  }
 
 	/** Get a given user's status from the table by ID */
 	shared_ptr<UserSessionStatus> getUserStatus(String id) {
@@ -555,8 +612,9 @@ public:
 	}
 
 	/** Get the next session ID for a given user (by ID) */
-	String getNextSession(String userId) {
+	String getNextSession(String userId = "") {
 		// Return the first valid session that has not been completed
+		if (userId.empty()) { userId = currentUser;  }
 		shared_ptr<UserSessionStatus> status = getUserStatus(userId);
 		// Handle sequence mode here (can be repeats)
 		if (allowRepeat) {
@@ -587,7 +645,7 @@ public:
 		}
 	}
 
-	void validate(Array<String> sessions) {
+	void validate(Array<String> sessions, Array<String> users) {
 		bool noSessions = true;	// Flag to demark no sessions are present
 		// Build a string list of valid options for session IDs from the experiment
 		String expSessions = "[";
@@ -599,23 +657,34 @@ public:
 		for(String defSessId : defaultSessionOrder) {
 			noSessions = false;
 			if (!sessions.contains(defSessId)) {
-				throw format("Default session config in user status has session with ID: \"%s\". This session ID does not appear in experimentconfig.Any's \"sessions\" array. Valid options are: %s", defSessId, expSessions);
+				throw format("Default session config in user status has session with ID: \"%s\". This session ID does not appear in the experiment config file's \"sessions\" array. Valid options are: %s", defSessId, expSessions);
 			}
 		}
 
 		// Check each user for valid options
+		Array<String> userStatusIds;
 		for (UserSessionStatus userStatus : userInfo) {
+			userStatusIds.append(userStatus.id);
+			// Check all of this user's sessions appear in the session array
 			for (String userSessId : userStatus.sessionOrder) {
 				noSessions = false;
 				if (!sessions.contains(userSessId)) {
-					throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in the experimentconfig.Any \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
+					throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in the experiment config file's \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
 				}
 			}
 		}
 
+		// Check current user has a valid config
+		if (currentUser.empty()) {
+			throw "\"currentUser\" field is not specified in the user status file!\nIf you are migrating from an older version of FPSci, please cut the \"currentUser = ...\" line\nfrom the user config file and paste it in the user status file.";
+		}
+		else if (!users.contains(currentUser)) {
+			throw format("Current user \"%s\" does not have a valid entry in the user config file!", currentUser);
+		}
+
 		// Check if no default/per user sessions are present
 		if (noSessions) { 
-			throw "Found no sessions in the userstatus.Any file!"; 
+			throw "Found no sessions in the user status file!"; 
 		}
 	}
 
@@ -633,7 +702,7 @@ public:
 			}
 			completedSess = completedSess.substr(0, completedSess.length() - 2);
 
-			logPrintf("Subject ID: %s\nSession Order: [%s]\nCompleted Sessions: [%s]\n", status.id, sessOrder, completedSess);
+			logPrintf("Subject ID: %s\nSession Order: [%s]\nCompleted Sessions: [%s]\n", status.id.c_str(), sessOrder.c_str(), completedSess.c_str());
 		}
 	}
 };
@@ -1088,7 +1157,7 @@ public:
 	float           moveRate = 0.0f;							///< Player move rate (defaults to no motion)
 	float           height = 1.5f;								///< Height for the player view (in walk mode)
 	float           crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
-	float           jumpVelocity = 7.0f;						///< Jump velocity for the player
+	float           jumpVelocity = 3.5f;						///< Jump velocity for the player
 	float           jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
 	bool            jumpTouch = true;							///< Require the player to be touch a surface to jump?
 	Vector3         gravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
@@ -1138,10 +1207,39 @@ public:
 
 };
 
+/** Storage for static (never changing) HUD elements */
+struct StaticHudElement {
+	String			filename;												///< Filename of the image
+	Vector2			position;												///< Position to place the element (fractional window-space)
+	Vector2			scale = Vector2(1.0, 1.0);								///< Scale to apply to the image
+
+	StaticHudElement() {};
+	StaticHudElement(const Any& any) {
+		AnyTableReader reader(any);
+		reader.get("filename", filename, "Must provide filename for all Static HUD elements!");
+		reader.get("position", position, "Must provide position for all static HUD elements");
+		reader.getIfPresent("scale", scale);
+	}
+
+	Any toAny(const bool forceAll = false) const {
+		Any a(Any::TABLE);
+		a["filename"] = filename;
+		a["position"] = position;
+		if (forceAll || scale != Vector2(1.0, 1.0))  a["scale"] = scale;
+		return a;
+	}
+
+	bool operator!=(StaticHudElement other) const {
+		return filename != other.filename ||
+			position != other.position ||
+			scale != other.scale;
+	}
+};
+
 class HudConfig {
 public:
 	// HUD parameters
-	bool            enable = false;							            ///< Master control for all HUD elements
+	bool            enable = false;											///< Master control for all HUD elements
 	bool            showBanner = false;						                ///< Show the banner display
 	float           bannerVertVisible = 0.41f;				                ///< Vertical banner visibility
 	float           bannerLargeFontSize = 30.0f;				            ///< Banner percent complete font size
@@ -1173,6 +1271,8 @@ public:
 	int             cooldownSubdivisions = 64;									///< Number of polygon divisions in the "ring"
 	Color4          cooldownColor = Color4(1.0f, 1.0f, 1.0f, 0.75f);			///< Cooldown ring color when active (transparent when inactive)
 
+	Array<StaticHudElement> staticElements;										///< A set of static HUD elements to draw
+
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
@@ -1197,6 +1297,7 @@ public:
 			reader.getIfPresent("cooldownThickness", cooldownThickness);
 			reader.getIfPresent("cooldownSubdivisions", cooldownSubdivisions);
 			reader.getIfPresent("cooldownColor", cooldownColor);
+			reader.getIfPresent("staticHUDElements", staticElements);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1227,6 +1328,7 @@ public:
 		if(forceAll || def.cooldownThickness != cooldownThickness)						a["cooldownThickness"] = cooldownThickness;
 		if(forceAll || def.cooldownSubdivisions != cooldownSubdivisions)				a["cooldownSubdivisions"] = cooldownSubdivisions;
 		if(forceAll || def.cooldownColor != cooldownColor)								a["cooldownColor"] = cooldownColor;
+		if (forceAll || def.staticElements != staticElements)							a["staticHUDElements"] = staticElements;
 		return a;
 	}
 };
@@ -1262,8 +1364,12 @@ public:
 	float           combatTextTimeout = 0.5f;							///< Time for combat text to disappear (in seconds)
 
 	// Reference/dummy target
+	bool			showRefTarget = true;								///< Show the reference target?
 	float           refTargetSize = 0.05f;								///< Size of the reference target
 	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
+
+	bool			previewWithRef = false;								///< Show preview of per-trial targets with the reference
+	Color3			previewColor = Color3(0.5, 0.5, 0.5);				///< Color to show preview targets in
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
@@ -1284,8 +1390,11 @@ public:
 			reader.getIfPresent("floatingCombatTextVelocity", combatTextVelocity);
 			reader.getIfPresent("floatingCombatTextFade", combatTextFade);
 			reader.getIfPresent("floatingCombatTextTimeout", combatTextTimeout);
+			reader.getIfPresent("showReferenceTarget", showRefTarget);
 			reader.getIfPresent("referenceTargetSize", refTargetSize);
 			reader.getIfPresent("referenceTargetColor", refTargetColor);
+			reader.getIfPresent("showPreviewTargetsWithReference", previewWithRef);
+			reader.getIfPresent("previewTargetColor", previewColor);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1311,8 +1420,11 @@ public:
 		if(forceAll || def.combatTextVelocity != combatTextVelocity)		a["floatingCombatTextVelocity"] = combatTextVelocity;
 		if(forceAll || def.combatTextFade != combatTextFade)				a["floatingCombatTextFade"] = combatTextFade;
 		if(forceAll || def.combatTextTimeout != combatTextTimeout)			a["floatingCombatTextTimeout"] = combatTextTimeout;
+		if(forceAll || def.showRefTarget != showRefTarget)					a["showRefTarget"] = showRefTarget;
 		if(forceAll || def.refTargetSize != refTargetSize)					a["referenceTargetSize"] = refTargetSize;
 		if(forceAll || def.refTargetColor != refTargetColor)				a["referenceTargetColor"] = refTargetColor;
+		if(forceAll || def.previewWithRef != previewWithRef)				a["showPreviewTargetsWithReference"] = previewWithRef;
+		if(forceAll || def.previewColor != previewColor)					a["previewTargetColor"] = previewColor;
 		return a;
 	}
 };
@@ -1386,18 +1498,25 @@ public:
 class TimingConfig {
 public:
 	// Timing parameters
-	float           readyDuration = 0.5f;						///< Time in ready state in seconds
-	float           taskDuration = 100000.0f;					///< Maximum time spent in any one task
-	float           feedbackDuration = 1.0f;					///< Time in feedback state in seconds
+	float           pretrialDuration = 0.5f;					///< Time in ready (pre-trial) state in seconds
+	float           maxTrialDuration = 100000.0f;				///< Maximum time spent in any one trial task
+	float           trialFeedbackDuration = 1.0f;				///< Time in the per-trial feedback state in seconds
+	float			sessionFeedbackDuration = 5.0f;				///< Time in the session feedback state in seconds
+	bool			clickToStart = true;						///< Require a click before starting the first session (spawning the reference target)
+	bool			sessionFeedbackRequireClick = false;		///< Require a click to progress from the session feedback?
+
 	// Trial count
 	int             defaultTrialCount = 5;						///< Default trial count
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("feedbackDuration", feedbackDuration);
-			reader.getIfPresent("readyDuration", readyDuration);
-			reader.getIfPresent("taskDuration", taskDuration);
+			reader.getIfPresent("pretrialDuration", pretrialDuration);
+			reader.getIfPresent("maxTrialDuration", maxTrialDuration);
+			reader.getIfPresent("trialFeedbackDuration", trialFeedbackDuration);
+			reader.getIfPresent("sessionFeedbackDuration", sessionFeedbackDuration);
+			reader.getIfPresent("clickToStart", clickToStart);
+			reader.getIfPresent("sessionFeedbackRequireClick", sessionFeedbackRequireClick);
 			reader.getIfPresent("defaultTrialCount", defaultTrialCount);
 			break;
 		default:
@@ -1408,10 +1527,53 @@ public:
 
 	Any addToAny(Any a, bool forceAll = false) const {
 		TimingConfig def;
-		if(forceAll || def.feedbackDuration != feedbackDuration)	a["feedbackDuration"] = feedbackDuration;
-		if(forceAll || def.readyDuration != readyDuration)			a["readyDuration"] = readyDuration;
-		if(forceAll || def.taskDuration != taskDuration)			a["taskDuration"] = taskDuration;
-		if(forceAll || def.defaultTrialCount != defaultTrialCount)	a["defaultTrialCount"] = defaultTrialCount;
+		if (forceAll || def.pretrialDuration != pretrialDuration)				a["pretrialDuration"] = pretrialDuration;
+		if (forceAll || def.maxTrialDuration != maxTrialDuration)				a["maxTrialDuration"] = maxTrialDuration;
+		if (forceAll || def.trialFeedbackDuration != trialFeedbackDuration)		a["trialFeedbackDuration"] = trialFeedbackDuration;
+		if (forceAll || def.sessionFeedbackDuration != sessionFeedbackDuration)	a["sessionFeedbackDuration"] = sessionFeedbackDuration;
+		if (forceAll || def.clickToStart != clickToStart)						a["clickToStart"] = clickToStart;
+		if (forceAll || def.sessionFeedbackRequireClick != sessionFeedbackRequireClick) a["sessionFeedbackRequireClick"] = sessionFeedbackRequireClick;
+		if (forceAll || def.defaultTrialCount != defaultTrialCount)				a["defaultTrialCount"] = defaultTrialCount;
+		return a;
+	}
+};
+
+class FeedbackConfig {
+public:
+	String initialWithRef = "Click to spawn a target, then use shift on red target to begin.";		///< An initial feedback message to show when reference targets are drawn
+	String initialNoRef = "Click to start the session!";											///< An initial feedback message to show when reference targets aren't drawn
+	String trialSuccess = "%trialTaskTimeMs ms!" ;													///< Successful trial feedback message
+	String trialFailure = "Failure!";																///< Failed trial feedback message
+	String blockComplete = "Block %lastBlock complete! Starting block %currBlock.";					///< Block complete feedback message
+	String sessComplete = "Session complete! You scored %totalTimeLeftS!";							///< Session complete feedback message
+	String allSessComplete = "All Sessions Complete!";												///< All sessions complete feedback message
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("referenceTargetInitialFeedback", initialWithRef);
+			reader.getIfPresent("noReferenceTargetInitialFeedback", initialNoRef);
+			reader.getIfPresent("trialSuccessFeedback", trialSuccess);
+			reader.getIfPresent("trialFailureFeedback", trialFailure);
+			reader.getIfPresent("blockCompleteFeedback", blockComplete);
+			reader.getIfPresent("sessionCompleteFeedback", sessComplete);
+			reader.getIfPresent("allSessionsCompleteFeedback", allSessComplete);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a, bool forceAll = false) const {
+		FeedbackConfig def;
+		if (forceAll || def.initialWithRef != initialWithRef)	a["referenceTargetInitialFeedback"] = initialWithRef;
+		if (forceAll || def.initialNoRef != initialNoRef)		a["noReferenceTargetInitialFeedback"] = initialNoRef;
+		if (forceAll || def.trialSuccess != trialSuccess)		a["trialSuccessFeedback"] = trialSuccess;
+		if (forceAll || def.trialFailure != trialFailure)		a["trialFailureFeedback"] = trialFailure;
+		if (forceAll || def.blockComplete != blockComplete)		a["blockCompleteFeedback"] = blockComplete;
+		if (forceAll || def.sessComplete != sessComplete)		a["sessionCompleteFeedback"] = sessComplete;
+		if (forceAll || def.allSessComplete != allSessComplete) a["allSessionsCompleteFeedback"] = allSessComplete;
 		return a;
 	}
 };
@@ -1459,6 +1621,143 @@ public:
 	}
 };
 
+class CommandSpec {
+public:
+	String	cmdStr;										///< Command string
+	bool foreground = false;							///< Flag to indicate foreground vs background
+	bool blocking = false;								///< Flag to indicate to block on this process complete
+
+	CommandSpec() {}
+	CommandSpec(const Any& any){
+		try {
+			AnyTableReader reader(any);
+			reader.get("command", cmdStr, "A command string must be specified!");
+			reader.getIfPresent("foreground", foreground);
+			reader.getIfPresent("blocking", blocking);
+		}
+		catch (ParseError e) {
+			// Handle errors related to older (pure) string-based commands
+			e.message += "\nCommands must be specified using a valid CommandSpec!\n";
+			e.message += "Refer to the general_config.md file for more information.\n";
+			e.message += "If migrating from an older experiment config, use the following syntax:\n";
+			e.message += "commandsOnTrialStart = ( { command = \"cmd /c echo Trial start>> commandLog.txt\" } );\n";
+			throw e;
+		}
+	}
+
+	Any toAny(const bool forceAll = true) const {
+		Any a(Any::TABLE);
+		CommandSpec def;
+		a["command"] = cmdStr;
+		if (forceAll || def.foreground != foreground)	a["foreground"] = foreground;
+		if (forceAll || def.blocking != blocking)		a["blocking"] = blocking;
+		return a;
+	}
+
+};
+
+class CommandConfig {
+public: 
+	Array<CommandSpec> sessionStartCmds;				///< Command to run on start of a session
+	Array<CommandSpec> sessionEndCmds;						///< Command to run on end of a session
+	Array<CommandSpec> trialStartCmds;						///< Command to run on start of a trial
+	Array<CommandSpec> trialEndCmds;							///< Command to run on end of a trial
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("commandsOnSessionStart", sessionStartCmds);
+			reader.getIfPresent("commandsOnSessionEnd", sessionEndCmds);
+			reader.getIfPresent("commandsOnTrialStart", trialStartCmds);
+			reader.getIfPresent("commandsOnTrialEnd", trialEndCmds);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any addToAny(Any a, const bool forceAll = false) const {
+		if (forceAll || sessionStartCmds.size() > 0)		a["commandsOnSessionStart"] = sessionStartCmds;
+		if (forceAll || sessionEndCmds.size() > 0)			a["commandsOnSessionEnd"] = sessionEndCmds;
+		if (forceAll || trialStartCmds.size() > 0)			a["commandsOnTrialStart"] = trialStartCmds;
+		if (forceAll || trialEndCmds.size() > 0)			a["commandsOnTrialEnd"] = trialEndCmds;
+		return a;
+	}
+};
+
+class MenuConfig {
+public: 
+	// Menu controls
+	bool showMenuLogo					= true;							///< Show the FPSci logo in the user menu
+	bool showExperimentSettings			= true;							///< Show the experiment settings options (session/user selection)
+	bool showUserSettings				= true;							///< Show the user settings options (master switch)
+	bool allowUserSettingsSave			= true;							///< Allow the user to save settings changes
+	bool allowSensitivityChange			= true;							///< Allow in-game sensitivity change		
+	
+	bool allowTurnScaleChange			= true;							///< Allow the user to apply X/Y turn scaling
+	String xTurnScaleAdjustMode			= "None";						///< X turn scale adjustment mode (can be "None" or "Slider")
+	String yTurnScaleAdjustMode			= "Invert";						///< Y turn scale adjustment mode (can be "None", "Invert", or "Slider")
+
+	bool allowReticleChange				= false;						///< Allow the user to adjust their crosshair
+	bool allowReticleIdxChange			= true;							///< If reticle change is allowed, allow index change
+	bool allowReticleSizeChange			= true;							///< If reticle change is allowed, allow size change
+	bool allowReticleColorChange		= true;							///< If reticle change is allowed, allow color change
+	bool allowReticleChangeTimeChange	= false;						///< Allow the user to change the reticle change time
+	bool showReticlePreview				= true;							///< Show a preview of the reticle
+
+	bool showMenuOnStartup				= true;							///< Show the user menu on startup?
+	bool showMenuBetweenSessions		= true;							///< Show the user menu between session?
+
+	void load(AnyTableReader reader, int settingsVersion = 1) {
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("showMenuLogo", showMenuLogo);
+			reader.getIfPresent("showExperimentSettings", showExperimentSettings);
+			reader.getIfPresent("showUserSettings", showUserSettings);
+			reader.getIfPresent("allowUserSettingsSave", allowUserSettingsSave);
+			reader.getIfPresent("allowSensitivityChange", allowSensitivityChange);
+			reader.getIfPresent("allowTurnScaleChange", allowTurnScaleChange);
+			reader.getIfPresent("xTurnScaleAdjustMode", xTurnScaleAdjustMode);
+			reader.getIfPresent("yTurnScaleAdjustMode", yTurnScaleAdjustMode);
+			reader.getIfPresent("allowReticleChange", allowReticleChange);
+			reader.getIfPresent("allowReticleIdxChange", allowReticleIdxChange);
+			reader.getIfPresent("allowReticleSizeChange", allowReticleSizeChange);
+			reader.getIfPresent("allowReticleColorChange", allowReticleColorChange);
+			reader.getIfPresent("allowReticleChangeTimeChange", allowReticleChangeTimeChange);
+			reader.getIfPresent("showReticlePreview", showReticlePreview);
+			reader.getIfPresent("showMenuOnStartup", showMenuOnStartup);
+			reader.getIfPresent("showMenuBetweenSessions", showMenuBetweenSessions);
+			break;
+		default:
+			throw format("Did not recognize settings version: %d", settingsVersion);
+			break;
+		}
+
+	}
+
+	Any addToAny(Any a, const bool forceAll = false) const {
+		MenuConfig def;
+		if (forceAll || def.showMenuLogo != showMenuLogo)									a["showMenuLogo"] = showMenuLogo;
+		if (forceAll || def.showExperimentSettings != showExperimentSettings)				a["showExperimentSettings"] = showExperimentSettings;
+		if (forceAll || def.showUserSettings != showUserSettings)							a["showUserSettings"] = showUserSettings;
+		if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)					a["allowUserSettingsSave"] = allowUserSettingsSave;
+		if (forceAll || def.allowSensitivityChange != allowSensitivityChange)				a["allowSensitivityChange"] = allowSensitivityChange;
+		if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)					a["allowTurnScaleChange"] = allowTurnScaleChange;
+		if (forceAll || def.xTurnScaleAdjustMode != xTurnScaleAdjustMode)					a["xTurnScaleAdjustMode"] = xTurnScaleAdjustMode;
+		if (forceAll || def.yTurnScaleAdjustMode != yTurnScaleAdjustMode)					a["yTurnScaleAdjustMode"] = yTurnScaleAdjustMode;
+		if (forceAll || def.allowReticleChange != allowReticleChange)						a["allowReticleChange"] = allowReticleChange;
+		if (forceAll || def.allowReticleIdxChange != allowReticleIdxChange)					a["allowReticleIdxChange"] = allowReticleIdxChange;
+		if (forceAll || def.allowReticleSizeChange != allowReticleSizeChange)				a["allowReticleSizeChange"] = allowReticleSizeChange;
+		if (forceAll || def.allowReticleColorChange != allowReticleColorChange)				a["allowReticleColorChange"] = allowReticleColorChange;
+		if (forceAll || def.allowReticleChangeTimeChange != allowReticleChangeTimeChange)	a["allowReticleChangeTimeChange"] = allowReticleChangeTimeChange;
+		if (forceAll || def.showReticlePreview != showReticlePreview)						a["showReticlePreview"] = showReticlePreview;
+		if (forceAll || def.showMenuOnStartup != showMenuOnStartup)							a["showMenuOnStartup"] = showMenuOnStartup;
+		if (forceAll || def.showMenuBetweenSessions != showMenuBetweenSessions)				a["showMenuBetweenSessions"] = showMenuBetweenSessions;
+		return a;
+	}
+};
+
 class FpsConfig : public ReferenceCountedObject {
 public:
 	int	            settingsVersion = 1;						///< Settings version
@@ -1470,11 +1769,14 @@ public:
 	HudConfig			hud;									///< HUD related config parameters
 	AudioConfig			audio;									///< Audio related config parameters
 	TimingConfig		timing;									///< Timing related config parameters
+	FeedbackConfig		feedback;								///< Feedback message config parameters
 	TargetViewConfig	targetView;								///< Target drawing config parameters
 	ClickToPhotonConfig clickToPhoton;							///< Click to photon config parameters
 	LoggerConfig		logger;									///< Logging configuration
 	WeaponConfig		weapon;			                        ///< Weapon to be used
-	Array<Question> questionArray;								///< Array of questions for this experiment/trial
+	MenuConfig			menu;									///< User settings window configuration
+	CommandConfig		commands;								///< Commands to run during execution
+	Array<Question>		questionArray;							///< Array of questions for this experiment/trial
 
 	// Constructors
 	FpsConfig(const Any& any) {
@@ -1498,7 +1800,10 @@ public:
 		clickToPhoton.load(reader, settingsVersion);
 		audio.load(reader, settingsVersion);
 		timing.load(reader, settingsVersion);
+		feedback.load(reader, settingsVersion);
 		logger.load(reader, settingsVersion);
+		menu.load(reader, settingsVersion);
+		commands.load(reader, settingsVersion);
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("sceneName", sceneName);
@@ -1523,7 +1828,10 @@ public:
 		a = clickToPhoton.addToAny(a, forceAll);
 		a = audio.addToAny(a, forceAll);
 		a = timing.addToAny(a, forceAll);
+		a = feedback.addToAny(a, forceAll);
 		a = logger.addToAny(a, forceAll);
+		a = menu.addToAny(a, forceAll);
+		a = commands.addToAny(a, forceAll);
 		a["weapon"] =  weapon.toAny(forceAll);
 		return a;
 	}
@@ -1534,7 +1842,9 @@ class SessionConfig : public FpsConfig {
 public:
 	String				id;								///< Session ID
 	String				description = "Session";		///< String indicating whether session is training or real
+	int					blockCount = 1;					///< Default to just 1 block per session
 	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
+	bool				closeOnComplete = false;		///< Close application on session completed?
 	static FpsConfig	defaultConfig;
 
 	SessionConfig() : FpsConfig(defaultConfig) {}
@@ -1552,6 +1862,8 @@ public:
 			// Unique session info
 			reader.get("id", id, "An \"id\" field must be provided for each session!");
 			reader.getIfPresent("description", description);
+			reader.getIfPresent("closeOnComplete", closeOnComplete);
+			reader.getIfPresent("blockCount", blockCount);
 			reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
 			break;
 		default:
@@ -1563,16 +1875,19 @@ public:
 	Any toAny(const bool forceAll = false) const {
 		// Get the base any config
 		Any a = FpsConfig::toAny(forceAll);
+		SessionConfig def;
 
 		// Update w/ the session-specific fields
 		a["id"] = id;
 		a["description"] = description;
+		if( forceAll || def.closeOnComplete != closeOnComplete )	a["closeOnComplete"] = closeOnComplete;
+		if( forceAll || def.blockCount != blockCount )				a["blockCount"] = blockCount;
 		a["trials"] = trials;
 		return a;
 	}
 
 	/** Get the total number of trials in this session */
-	float getTotalTrials(void) {
+	float getTrialsPerBlock(void) {
 		float count = 0.f;
 		for (const TrialCount& tc : trials) {
 			if (count < 0) {
@@ -1592,6 +1907,7 @@ public:
 	String description = "Experiment";					///< Experiment description
 	Array<SessionConfig> sessions;						///< Array of sessions
 	Array<TargetConfig> targets;						///< Array of trial configs   
+	bool closeOnComplete = false;						///< Close application on all sessions complete
 
 	ExperimentConfig() { init(); }
 	
@@ -1604,6 +1920,7 @@ public:
 			SessionConfig::defaultConfig = (FpsConfig)(*this);												// Setup the default configuration here
 			// Experiment-specific info
 			reader.getIfPresent("description", description);
+			reader.getIfPresent("closeOnComplete", closeOnComplete);
 			reader.get("targets", targets, "Issue in the (required) \"targets\" array for the experiment!");	// Targets must be specified for the experiment
 			reader.get("sessions", sessions, "Issue in the (required) \"sessions\" array for the experiment config!");
 			break;
@@ -1632,7 +1949,7 @@ public:
 			tMove.id = "moving";
 			tMove.destSpace = "player";
 			tMove.size = Array<float>({ 0.05f, 0.05f });
-			tMove.speed = Array<float>({ 3.5f, 5.f });
+			tMove.speed = Array<float>({ 7.f, 10.f });
 			tMove.motionChangePeriod = Array<float>({ 0.8f, 1.5f });
 			tMove.axisLock = Array<bool>({ false, false, true });
 			
@@ -1642,7 +1959,7 @@ public:
 			tJump.id = "jumping";
 			tJump.destSpace = "player";
 			tJump.size = Array<float>({ 0.05f, 0.05f });
-			tJump.speed = Array<float>({ 5.f, 5.f });
+			tJump.speed = Array<float>({ 10.f, 10.f });
 			tJump.motionChangePeriod = Array<float>({ 0.8f, 1.5f });
 			tJump.jumpEnabled = true;
 			tJump.jumpSpeed = Array<float>({ 10.f, 10.f });
@@ -1743,18 +2060,19 @@ public:
 		Any a = FpsConfig::toAny(forceAll);
 		SessionConfig def;
 		// Write the experiment configuration-specific 
-		if(forceAll || def.description != description) a["description"] = description;
+		if(forceAll || def.description != description)			a["description"] = description;
+		if (forceAll || def.closeOnComplete != closeOnComplete) a["closeOnComplete"] = closeOnComplete;
 		a["targets"] = targets;
 		a["sessions"] = sessions;
 		return a;
 	}
 
 	/** Get the experiment config from file */
-	static ExperimentConfig load(String filename) {
+	static ExperimentConfig load(const String& filename) {
         // if file not found, build a default
         if (!FileSystem::exists(System::findDataFile(filename, false))) {
             ExperimentConfig ex = ExperimentConfig();
-			ex.toAny().save("experimentconfig.Any");
+			ex.toAny().save(filename);
 			SessionConfig::defaultConfig = (FpsConfig)ex;
 			return ex;
 		}
@@ -1763,24 +2081,27 @@ public:
 
 	/** Print the experiment config to the log */
 	void printToLog() {
-		logPrintf("-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nFeedback Duration = %f\nReady Duration = %f\nTask Duration = %f\nMax Clicks = %d\n",
-			description, sceneName, timing.feedbackDuration, timing.readyDuration, timing.taskDuration, weapon.maxAmmo);
+		logPrintf("\n-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nTrial Feedback Duration = %f\nPretrial Duration = %f\nMax Trial Task Duration = %f\nMax Clicks = %d\n",
+			description.c_str(), sceneName.c_str(), timing.trialFeedbackDuration, timing.pretrialDuration, timing.maxTrialDuration, weapon.maxAmmo);
 		// Iterate through sessions and print them
 		for (int i = 0; i < sessions.size(); i++) {
 			SessionConfig sess = sessions[i];
 			logPrintf("\t-------------------\n\tSession Config\n\t-------------------\n\tID = %s\n\tFrame Rate = %f\n\tFrame Delay = %d\n",
-				sess.id, sess.render.frameRate, sess.render.frameDelay);
+				sess.id.c_str(), sess.render.frameRate, sess.render.frameDelay);
 			// Now iterate through each run
 			for (int j = 0; j < sess.trials.size(); j++) {
-				logPrintf("\t\tTrial Run Config: IDs = %s, Count = %d\n",
-					sess.trials[j].ids, sess.trials[j].count);
+				String ids;
+				for (String id : sess.trials[j].ids) { ids += format("%s, ", id.c_str()); }
+				if(ids.length() > 2) ids = ids.substr(0, ids.length() - 2);
+				logPrintf("\t\tTrial Run Config: IDs = [%s], Count = %d\n",
+					ids.c_str(), sess.trials[j].count);
 			}
 		}
 		// Iterate through trials and print them
 		for (int i = 0; i < targets.size(); i++) {
 			TargetConfig target = targets[i];
 			logPrintf("\t-------------------\n\tTarget Config\n\t-------------------\n\tID = %s\n\tMotion Change Period = [%f-%f]\n\tMin Speed = %f\n\tMax Speed = %f\n\tVisual Size = [%f-%f]\n\tUpper Hemisphere Only = %s\n\tJump Enabled = %s\n\tJump Period = [%f-%f]\n\tjumpSpeed = [%f-%f]\n\tAccel Gravity = [%f-%f]\n\tAxis Lock = [%s, %s, %s]\n",
-				target.id, target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.size[0], target.size[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1],
+				target.id.c_str(), target.motionChangePeriod[0], target.motionChangePeriod[1], target.speed[0], target.speed[1], target.size[0], target.size[1], target.upperHemisphereOnly ? "True" : "False", target.jumpEnabled ? "True" : "False", target.jumpPeriod[0], target.jumpPeriod[1], target.jumpSpeed[0], target.jumpSpeed[1], target.accelGravity[0], target.accelGravity[1],
 				target.axisLock[0]?"true":"false", target.axisLock[1] ? "true" : "false", target.axisLock[2] ? "true" : "false");
 		}
 	}

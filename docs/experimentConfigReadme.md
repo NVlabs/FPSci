@@ -11,23 +11,29 @@ Broad areas of control included in this config file include:
 For a full description of fields see the descriptions below. Along with each subsection an example configuration is provided. In many cases the example values below are the defaults provided in these field values. Where this is not the case the default will be indicated in the comments.
 
 ## File Location
-The [`experimentconfig.Any` file](../data-files/experimentconfig.Any) is located in the [`data-files`](../data-files/) directory at the root of the project. If no `experimentconfig.Any` file is present at startup, [`SAMPLEexperimentconfig.Any`](../data-files/SAMPLEexperimentconfig.Any) is copied to `experimentconfig.Any`.
+The `experimentconfig.Any` file is located in the [`data-files`](../data-files/) directory at the root of the project. If no `experimentconfig.Any` file is present at startup, a default experiment configuration is written to `experimentconfig.Any`.
 
 # Experiment Config Field Descriptions
 
 The experment config supports inclusion of any of the configuration parameters documented in the [general configuration parameter guide](general_config.md). In addition to these common parameters, there are a number of unique inputs to experiment config. The following is a description of what each one means, and how it is meant to be used.
 
 * `description` allows the user to annotate this experiment's results with a custom string
+* `closeOnComplete` closes the application once all sessions from the sessions array (defined below) are complete 
 ```
 "description": "your description here",    // Description of this file (default = "default")
+"closeOnComplete": false,                  // Don't close automatically when all sessions are complete
 ```
 
 ### Session Configuration
-Each session can specify any of the [general configuration parameters](general_config.md) used in the experiment config above to create experimental conditions. In addition to these general parameters each session also has a few unique parameters documented below.
+Each session can specify any of the [general configuration parameters](general_config.md) used in the experiment config above to create experimental conditions. If both the experiment level and the session level specify a field supported by the general configuration, the session value has priority and will be used for that session. The experiment level configuration will be used for any session that doesn't specify that parameter.
+
+In addition to these general parameters each session also has a few unique parameters documented below.
 
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
     * `description` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
+    * `closeOnComplete` signals to close the application whenever this session (in particular) is completed
+    * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided).
     * `trials` is a list of trials referencing the `trials` table above:
         * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
         * `count` provides the number of trials in this session
@@ -40,7 +46,9 @@ An example session configuration snippet is included below:
     {
         "id" : "test-session",          // This is a short name for our session
         "description" : "test",         // This is an arbitrary string tag (for now)
+        "closeOnComplete": false,       // Don't automatically close the application when the session completes
         "frameRate" : 120,              // Example of a generic parameter modified for this session
+        "blockCount" : 1,         // Single block design
         "trials" : [
             {
                 // Single target example
@@ -71,7 +79,7 @@ The `targets` array specifies a list of targets each of which can contain any/al
 The following configuration is universal to all target types.
 
 * `id` a short string to refer to this target information
-* `respawnCount` is an integer providing the number of respawns to occur. For non-respawning items use `0` or leave unspecified.
+* `respawnCount` is an integer providing the number of respawns to occur. For non-respawning items use `0` or leave unspecified. A value of `-1` creates a target that respawns infinitely (trial ends when ammo or task time runs out).
 * `visualSize` is a vector indicating the minimum ([0]) and maximum ([1]) visual size for the target (in deg)
 * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
 * `hitSound` is a filename for the sound to play when the target is hit but not destroyed.
@@ -155,7 +163,7 @@ targets = [
 ```
 
 ## Target Paths (Using Destinations)
-The `destinations` array within the target object overrides much of the default motion behavior in the target motion controls. Once a destinations array (including more than 2 destiantions) is specified all other motion parameters are considered unused. Once a `destinations` array is specified only the following fields from the [target configuration](###-Target-Configuration) apply:
+The `destinations` array within the target object overrides much of the default motion behavior in the target motion controls. Once a destinations array (including more than 2 destiantions) is specified all other motion parameters are considered unused. Once a `destinations` array is specified only the following fields from the [target configuration](#target-configuration) apply:
 
 * `id`
 * `visualSize`

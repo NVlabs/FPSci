@@ -1,0 +1,96 @@
+{
+    settingsVersion = 1; 
+    
+    description = "TestExperiment";
+    sceneName = "G3D Simple Cornell Box (Empty CO)";
+
+    frameDelay = 0;
+    frameRate = 60;
+
+    trialFeedbackDuration = 0.0;
+    pretrialDuration = 0.001;
+    maxTrialDuration = 10000000.0;
+
+    playerAxisLock = (false,true,true);
+    playerGravity = Vector3(0,0,0);
+
+	showMenuOnStartup = false;
+
+    weapon = {
+        id = "default"; 
+        maxAmmo = 100000;
+        firePeriod = 0.1;
+        instantKill = true;
+        damagePerSecond = 100;
+        autoFire = false;
+    };
+
+    sessions = (
+        {
+            id = "main";
+            trials = (
+                {
+                    ids = ( "keepalive", "front", "right" );
+                    count = 10;
+                }
+            );
+        }
+    );
+
+    targets = (
+        {
+            id = "keepalive";
+            speed = [ 0.0, 0.0 ];
+            visualSize = [ 0.75, 0.75 ];
+            destSpace = "world";
+            spawnBounds = AABox {
+                Point3(0.0, 10.0, -2.00001),
+                Point3(0.00001, 10.00001, -2.0),
+            };
+            moveBounds = AABox {
+                Point3(-100.0, -100.0, -100.0),
+                Point3(100.0, 100.0, 100.0),
+            };
+            motionChangePeriod = [ 0.8, 1.5 ];
+            jumpEnabled = false;
+            respawnCount = 0;
+            axisLocked = [false,true,true];
+        },
+        {
+            id = "front";
+            speed = [ 0.0, 0.0 ];
+            visualSize = [ 0.75, 0.75 ];
+            destSpace = "world";
+            spawnBounds = AABox {
+                Point3(0.0, 0.0, -2.00001),
+                Point3(0.00001, 0.00001, -2.0),
+            };
+            moveBounds = AABox {
+                Point3(-100.0, -100.0, -100.0),
+                Point3(100.0, 100.0, 100.0),
+            };
+            motionChangePeriod = [ 0.8, 1.5 ];
+            jumpEnabled = false;
+            respawnCount = 0;
+            axisLocked = [false,true,true];
+        },
+        {
+            id = "right";
+            speed = [ 0.0, 0.0 ];
+            visualSize = [ 0.75, 0.75 ];
+            destSpace = "world";
+            spawnBounds = AABox {
+                Point3(1.0, 0.0, -1.732054807568),
+                Point3(1.00001, 0.00001, -1.732044807568),
+            };
+            moveBounds = AABox {
+                Point3(-100.0, -100.0, -100.0),
+                Point3(100.0, 100.0, 100.0),
+            };
+            motionChangePeriod = [ 0.8, 1.5 ];
+            jumpEnabled = false;
+            respawnCount = 0;
+            axisLocked = [false,true,true];
+        }
+    );
+}

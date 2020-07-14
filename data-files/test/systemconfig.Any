@@ -1,0 +1,6 @@
+{ 
+    hasLatencyLogger = false; 
+    hasLatencyLoggerSync = false; 
+    loggerComPort = ""; 
+    loggerSyncComPort = ""; 
+} 

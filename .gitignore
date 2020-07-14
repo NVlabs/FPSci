@@ -3,6 +3,8 @@
 .vs
 # Don't check in any compiled results
 x64
+Build
+packages
 # Avoid .pyc files (everywhere)
 *.pyc
 # Don't check-in any of these data-files
@@ -12,11 +14,12 @@ data-files/log.txt
 data-files/*.db
 data-files/*.csv
 data-files/*.pdn
-data-files/result_data
 data-files/*.Any
 data-files/*.jpg
 *.mp4
-#Don't check in any results
+# Test generated files
+data-files/test/userconfig.Any
+# Don't check in any results
 "scripts/event logger/software/Logs"
 scripts/configs/*.Any
 results/
@@ -25,6 +28,8 @@ data-files/sound
 data-files/scene
 data-files/model
 # This stuff ignores any packaged outputs
-packaged
 *.zip
 *.tar
+# Output of the fpsci_packager.py if run from the root
+dist
+README.txt
