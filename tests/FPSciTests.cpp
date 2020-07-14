@@ -281,7 +281,7 @@ TEST_F(FPSciTests, KillTargetFront) {
 }
 
 TEST_F(FPSciTests, KillTargetFrontHoldclick) {
-	EXPECT_EQ(s_app->sess->currentState, PresentationState::trialTask;
+	EXPECT_EQ(s_app->sess->currentState, PresentationState::trialTask);
 	
 	int spawnedTargets = respawnTargets();
 	
@@ -443,7 +443,7 @@ TEST_F(FPSciTests, TestAutoFire) {
 
 	const int frames = 3;
 	const float damagePerFrame = 0.1f;
-	const float firePeriod = fixedTestDeltaTime() - 0.001;
+	const float firePeriod = (float)fixedTestDeltaTime() - 0.001f;
 
 	s_app->sessConfig->weapon.autoFire = true;
 	s_app->sessConfig->weapon.damagePerSecond = damagePerFrame / firePeriod;
