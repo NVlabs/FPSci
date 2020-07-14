@@ -1,32 +1,32 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="tests\main.cpp" />
-    <ClCompile Include="tests\TestFakeInput.cpp" />
-    <ClCompile Include="tests\FPSciTests.cpp" />
+    <ClCompile Include="..\tests\main.cpp" />
+    <ClCompile Include="..\tests\TestFakeInput.cpp" />
+    <ClCompile Include="..\tests\FPSciTests.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="tests\FPSciTests.h" />
-    <ClInclude Include="tests\TestFakeInput.h" />
+    <ClInclude Include="..\tests\FPSciTests.h" />
+    <ClInclude Include="..\tests\TestFakeInput.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="data-files\test\experimentconfig.Any">
+    <None Include="..\data-files\test\experimentconfig.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\test\startupconfig.Any">
+    <None Include="..\data-files\test\startupconfig.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\test\userconfig.Any">
+    <None Include="..\data-files\test\userconfig.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\test\userstatus.Any">
+    <None Include="..\data-files\test\userstatus.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\test\keymap.Any">
+    <None Include="..\data-files\test\keymap.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\test\systemconfig.Any">
+    <None Include="..\data-files\test\systemconfig.Any">
       <Filter>Config Files</Filter>
     </None>
   </ItemGroup>
