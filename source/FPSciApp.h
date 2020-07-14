@@ -26,7 +26,7 @@ class WaypointManager;
 // ready: ready scene that happens before beginning of a task.
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
-enum PresentationState { initial, ready, task, feedback, scoreboard, complete };
+enum PresentationState { initial, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
 
 class FPSciApp : public GApp {
 protected:

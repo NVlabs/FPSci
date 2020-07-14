@@ -7,9 +7,9 @@
     frameDelay = 0;
     frameRate = 60;
 
-    feedbackDuration = 0.0;
-    readyDuration = 0.001;
-    taskDuration = 10000000.0;
+    trialFeedbackDuration = 0.0;
+    pretrialDuration = 0.001;
+    maxTrialDuration = 10000000.0;
 
     playerAxisLock = (false,true,true);
     playerGravity = Vector3(0,0,0);
