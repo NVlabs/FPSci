@@ -5,7 +5,8 @@
 	fullscreen = false;
 	windowSize = Vector2(300, 200);
 	
-	experimentConfigFilename = "test/experimentconfig.any"; 
-	userConfigFilename = "test/userconfig.any";
-	userStatusFilename = "test/userstatus.any";
+	experimentConfigFilename = "test/experimentconfig.Any"; 
+	userConfigFilename = "test/userconfig.Any";
+	userStatusFilename = "test/userstatus.Any";
+	latencyLoggerConfigFilename = "test/systemconfig.Any";
 }
