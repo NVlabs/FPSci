@@ -344,7 +344,9 @@ TEST_F(FPSciTests, KillTargetRightRotate) {
 	// Kill the right target by rotating to line it up
 	zeroCameraRotation();
 	rotateCamera(30.0, 0);
-	s_app->oneFrame();
+
+	spinFrames(10);
+
 	injectFire();
 	s_app->oneFrame();
 
@@ -476,12 +478,15 @@ TEST_F(FPSciTests, TestAutoFire) {
 	respawnTargets();
 	zeroCameraRotation();
 
-	int frames = 3;
-	float damagePerFrame = 0.1f;
+	const int frames = 3;
+	const float damagePerFrame = 0.1f;
+	const float firePeriod = fixedTestDeltaTime() - 0.001;
 
 	s_app->sessConfig->weapon.autoFire = true;
-	s_app->sessConfig->weapon.damagePerSecond = (float)(damagePerFrame / fixedTestDeltaTime());
-	s_app->sessConfig->weapon.firePeriod = fixedTestDeltaTime();
+	s_app->sessConfig->weapon.damagePerSecond = damagePerFrame / firePeriod;
+	s_app->sessConfig->weapon.firePeriod = firePeriod;
+
+	s_app->oneFrame();
 
 	s_fakeInput->window().injectMouseDown(0);
 	spinFrames(frames);
