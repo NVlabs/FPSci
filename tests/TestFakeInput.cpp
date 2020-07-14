@@ -13,6 +13,7 @@ void FakeWindow::injectEvents(FakeInputEvent events)
 	}
 }
 
+// This function doesn't work because the mouse down gets lost without a frame between it and mouse up
 void FakeWindow::injectFire()
 {
 	injectMouseDown(0);
