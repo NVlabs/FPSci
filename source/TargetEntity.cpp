@@ -126,6 +126,11 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	Point3 delta = currDest.position - nextDest.position; 	// Get the delta vector to move along
 	setFrame((prog*delta) + currDest.position + m_offset);	// Set the new positions
 
+	// Set changed time if it moved
+	if (delta != Point3(0.f, 0.f, 0.f) && m_offset != Vector3(0.f, 0.f, 0.f)) {
+		m_lastChangeTime = System::time();
+	}
+
 #ifdef DRAW_BOUNDING_SPHERES
 	// Draw a 1m sphere at this position
 	debugDraw(Sphere(m_frame, BOUNDING_SPHERE_RADIUS), 0.0f, Color4::clear(), Color3::black());
@@ -291,7 +296,6 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 				throw "Cannot lock all axes for non-static target!";
 			}
 			m_velocity = vel * (destination - m_frame.translation).direction();
-		
 		}
 		// Check for whether the target has "left" the bounds, if so "reflect" it about the wall
 		else if (!m_bounds.contains(pos)) {
@@ -318,6 +322,11 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		// Update the position and set the frame
 		pos += m_velocity*deltaTime;		
 		setFrame(pos);
+
+		// Set changed time if it moved
+		if (m_velocity != Vector3(0.f, 0.f, 0.f)) {
+			m_lastChangeTime = System::time();
+		}
 	}
 	else {
 		// Handle non-world space (player projection here)
@@ -386,6 +395,11 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 				const Vector3& V = (destinationVector - currentVector * projection).direction();
 
 				setFrame(m_orbitCenter + (cos(angleChange) * U + sin(angleChange) * V) * radius);
+
+				// Set changed time if it moved
+				if (angleChange != 0.f) {
+					m_lastChangeTime = System::time();
+				}
 			}
 
 			if (m_upperHemisphereOnly) {
@@ -612,6 +626,11 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
 		// Update the position
 		setFrame(pos);
+
+		// Set changed time if it moved
+		if (m_velocity != Vector3(0.f, 0.f, 0.f) || m_inJump) {
+			m_lastChangeTime = System::time();
+		}
 	}
 	else {
 		while (deltaTime > 0.000001f) {
@@ -666,6 +685,9 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			// Project to the spherical surface, and update the frame translation vector.
 			Point3 relativePos = m_simulatedPos - m_orbitCenter;
 			m_frame.translation = relativePos.direction() * m_orbitRadius + m_orbitCenter;
+
+			// Set changed time since we don't track whether we moved
+			m_lastChangeTime = System::time();
 
 			/// Update velocity
 			if (m_inJump) {

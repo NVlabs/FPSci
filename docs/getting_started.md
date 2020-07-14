@@ -12,10 +12,10 @@ To start out with we don't have any of the required configuration files we will 
 ### Experiment Configuraion
 Generally speaking, when starting a new experiment design, it makes sense to start from the [`experimentconfig.Any` file](experimentConfigReadme.md). This file contains both the experiment-wide application parameters and the configurations for sessions and targets/trials within these sessions.
 
-There are 2 ways to get started on an `experimentconfig.Any` file. You can either start writing a file from scrath, or run the application the first time to produce the deafult `experimentconfig.Any` and edit from here.
+There are 2 ways to get started on an `experimentconfig.Any` file. You can either start writing a file from scratch, or run the application the first time to produce the default `experimentconfig.Any` and edit from here.
 
 #### General Configuration
-To begin with we need to specify the `settingsVersion` (used for parsing) as `1` (currently the only supported settings verison). We should also provide a `description` for the experiment.
+To begin with we need to specify the `settingsVersion` (used for parsing) as `1` (currently the only supported settings version). We should also provide a `description` for the experiment.
 
 ```
 {
@@ -50,7 +50,7 @@ To start with we will setup a simple target that uses the apps default target mo
 ```
 
 #### Adding Sessions
-Let's add a session to the experiment. We do this by creating a `sessions` array within the top-level experiment config. Within this `sessions` array we can add an insteance of a session. Within this session we can (again) modify any of the [general parameters](general_config.md).
+Let's add a session to the experiment. We do this by creating a `sessions` array within the top-level experiment config. Within this `sessions` array we can add an instance of a session. Within this session we can (again) modify any of the [general parameters](general_config.md).
 
 The only _required_ field within any given session configuration is the `trials` array. Which specifies a series of targets (using their `id` field) and counts for each of these targets.
 
@@ -69,7 +69,7 @@ The only _required_ field within any given session configuration is the `trials`
 ```
 
 ### Setting Up User Parameters
-User configuration is managed via 2 files ([`userconfig.Any`](userConfigReadme.md) and [`userstatus.Any`](userStatusReadme.md)). The [`userconfig.Any` file](userConfigReadme.md) specifies per-user settings (DPI and mouse sensitivity in cm/360°) as well as the `currentUser` (user to set as active when loading the app). All of these values are editable from within the application runtime.
+User configuration is managed via 2 files ([`userconfig.Any`](userConfigReadme.md) and [`userstatus.Any`](userStatusReadme.md)). The [`userconfig.Any` file](userConfigReadme.md) specifies per-user settings (DPI and mouse sensitivity in cm/360°). The `userstatus.Any` file specifies the `currentUser` (user to set as active when loading the app) and tracks the progress of each user through the experiment sessions. Many of these values are editable from within the application runtime.
 
 The [`userstatus.Any` file](userStatusReadme.md) tracks the `sessions` to be completed as well as the `completedSessions` for any given user. These values cannot be edited from within the application.
 
@@ -80,7 +80,6 @@ Let's create a single user for our new experiment. To do this we will start in t
 ```
 {
     settingsVersion: 1,
-    currentUser: "user",
     users = [
         {
             id: "user",
@@ -99,6 +98,7 @@ Now that we have a configuration for our new user, we can update the [`userstatu
 ```
 {
     settingsVersion: 1,
+    currentUser: "user",
     users = [
         {
             id: "user",

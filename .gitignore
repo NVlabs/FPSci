@@ -14,10 +14,11 @@ data-files/log.txt
 data-files/*.db
 data-files/*.csv
 data-files/*.pdn
-data-files/result_data
 data-files/*.Any
 data-files/*.jpg
 *.mp4
+# Test generated files
+data-files/test/userconfig.Any
 # Don't check in any results
 "scripts/event logger/software/Logs"
 scripts/configs/*.Any
@@ -31,4 +32,4 @@ data-files/model
 *.tar
 # Output of the fpsci_packager.py if run from the root
 dist
-package.sh
+README.txt

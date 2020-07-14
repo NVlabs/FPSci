@@ -26,7 +26,7 @@ class WaypointManager;
 // ready: ready scene that happens before beginning of a task.
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
-enum PresentationState { initial, ready, task, feedback, scoreboard, complete };
+enum PresentationState { initial, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
 
 class FPSciApp : public GApp {
 protected:
@@ -83,6 +83,10 @@ protected:
 	void updateControls(bool firstSession = false);
 	virtual void loadModels();
 	void updateFromSceneConfig(shared_ptr<PlayerEntity> player);
+	shared_ptr<PlayerEntity> updatePlayer();
+
+	/** Get the player camera */
+	shared_ptr<Camera> playerCamera() {  return scene()->typedEntity<Camera>("playerCamera"); }
 
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {
@@ -127,7 +131,7 @@ public:
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
 	UserStatusTable					userStatusTable;				///< Table of user status (session ordering/completed sessions) that do change across experiments
 	ExperimentConfig                experimentConfig;				///< Configuration for the experiment and its sessions
-	LatencyLoggerConfig				latencyLoggerConfig;			///< Configuration for the system/hardware
+	SystemConfig					systemConfig;					///< System configuration
 	KeyMapping						keyMap;
 	shared_ptr<WaypointManager>		waypointManager;				///< Waypoint mananger pointer
 	
@@ -162,12 +166,19 @@ public:
 		return m_debugMenuHeight;
 	}
 
-    /** callback for saving user config */
-	void userSaveButtonPress(void);
+    /** callbacks for saving user status and config */
+	void saveUserConfig(void) {
+		userTable.save(startupConfig.userConfigFilename);
+		logPrintf("User table saved.\n");			// Print message to log
+	}
+	void saveUserStatus(void) { 
+		userStatusTable.save(startupConfig.userStatusFilename); 
+		logPrintf("User status saved.\n");
+	}
 
 	// Pass throughts to user settings window (for now)
 	Array<String> updateSessionDropDown(void) { return m_userSettingsWindow->updateSessionDropDown(); }
-	shared_ptr<UserConfig> getCurrUser(void) { return m_userSettingsWindow->getCurrUser(); }
+	shared_ptr<UserConfig> const currentUser(void) {  return userTable.getUserById(userStatusTable.currentUser); }
 
 	void markSessComplete(String id);
 	virtual void updateSession(const String& id);
@@ -179,7 +190,6 @@ public:
 	   
 	/** opens the user settings window */
     void openUserSettingsWindow();
-
 	void closeUserSettingsWindow();
 
 	/** changes the mouse interaction (camera direct vs pointer) */

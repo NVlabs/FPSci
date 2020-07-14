@@ -1,5 +1,5 @@
 # General Configuration Parameters
-FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable parameters that can be set at either the "experiment" or "session" level. This document describes these parameters and gives examples of their usage.
+FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable parameters that can be set at either the "experiment" or "session" level. This document describes these parameters and gives examples of their usage. Note that any value specified at both the "experiment" and "session" level will use the value specified by the session level.
 
 ## Settings Version
 | Parameter Name     |Units| Description                                                        |
@@ -49,18 +49,65 @@ If a scene name is specified at the experiment level it will be applied to all s
 The `weapon` config should be thought of as an atomic type (just like an `int` or `float`). Even though it is a (more complex) data structure, it does not use the experiment-->session level inheritance appraoch offered elsewhere in the configuration format (i.e. any `weapon` specification should be complete). For this reason we recommend storing weapon configurations in independent `.weapon.Any` files and including them using the `.Any` `#include()` directive.
 
 ## Duration Settings
-The following settings allow the user to control various timings/durations around the per trial state machine.
+The following settings allow the user to control various timings/durations around the session state machine.
 
-| Parameter Name     |Units| Description                                                        |
-|--------------------|-----|--------------------------------------------------------------------|
-|`feedbackDuration`  |s    |The duration of the feedback window between experiments             |
-|`readyDuration`     |s    |The time before the start of each trial                             |
-|`taskDuration`      |s    |The maximum time over which the task can occur                      |
+| Parameter Name                |Units  | Description                                                        |
+|-------------------------------|-------|--------------------------------------------------------------------|
+|`clickToStart`                 |`bool` |Require the user to click at the start of the session to spawn the first reference target  |
+|`pretrialDuration`             |s      |The time before the start of each trial                             |
+|`maxTrialDuration`             |s      |The maximum time over which the task can occur                      |
+|`trialFeedbackDuration`        |s      |The duration of the feedback window between trials                  |
+|`sessionFeedbackDuration`      |s      |The duration of the feedback window between sessions                |
+|`sessionFeedbackRequireClick`  |`bool` |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
+|`defaultTrialCount`            |`int`  |The value to use for trials with no specified `count` settings      |
 
 ```
-"feedbackDuration": 1.0,    // Time allocated for providing user feedback
-"readyDuration": 0.5,       // Time allocated for preparing for trial
-"taskDuration": 100000.0,   // Maximum duration allowed for completion of the task
+"clickToStart : true,               // Require a click to start the session
+"pretrialDuration": 0.5,            // Time allocated for preparing for trial
+"maxTrialDuration": 100000.0,       // Maximum duration allowed for completion of the task
+"trialFeedbackDuration": 1.0,       // Time for user feedback between trials
+"sessionFeedbackDuration": 5.0,     // Time for user feedback between sessions
+"sessionFeedbackRequireClick" : false,      // Don't require a click to move past the scoreboard
+"defaultTrialCount" : 5,
+```
+
+## Feedback Configuration
+In addition to controlling the duration of displayed feedback messages, this configuration allows the experiment designer to control the messages provided as feedback themselves.
+
+| Parameter Name                    |Units    | Description                                                        |
+|-----------------------------------|---------|--------------------------------------------------------------------|
+|`referenceTargetInitialFeedback`   |`String` | The message to display at the start of a session that includes a reference target|
+|`noReferenceTargetInitialFeedback` |`String` | The message to display at the start of a session that doesn't include a reference target|
+|`trialSuccessFeedback`             |`String` | Message to display when a trial is a success                       |
+|`trialFailureFeedback`             |`String` | Message to display when a trial is a failure                       |
+|`blockCompleteFeedback`            |`String` | Message to display when a block is completed                       |
+|`sessionCompleteFeedback`          |`String` | Message to display when a session is completed                     |
+|`allSessionsCompleteFeedback`      |`String` | Message to display when all sessions are completed                 |
+
+For any/all of the feedback strings provided above, a number of `%`-delimited special strings are supported to allow find-and-replace with certain values. These include:
+
+| Substring                 | Description                                                                           |
+|---------------------------|---------------------------------------------------------------------------------------|
+|`%totalTimeLeftS`          | The (integer) sum of remaining time from trials in the current session  (score proxy) |
+|`%lastBlock`               | The index of the last block completed                                                 |
+|`%currBlock`               | The index of the current block                                                        |
+|`%totalBlocks`             | The total number of blocks in the current session                                     |
+|`%trialTaskTimeMs`         | The time the previous task took to complete as an integer number of milliseconds      |
+|`%trialTargetsDestroyed`   | The number of targets destroyed in the current trial                                  |
+|`%trialTotalTargets`       | The number of total targets in the current trial                                      |
+|`%trialShotsHit`           | The number of shots the user hit in the current trial                                 |
+|`%trialTotalShots`         | The number of shots the user took in the current trial                                |
+
+Using these custom strings we can implement the following (default) feedback messages:
+
+```
+referenceTargetInitialFeedback: "Click to spawn a target, then use shift on red target to begin.",
+noReferenceTargetInitialFeedback: "Click to start the session!",
+trialSuccessFeedback: "%trialTaskTimeMs ms!",
+trialFailureFeedback: "Failure!",
+blockCompleteFeedback: "Block %lastBlock complete! Starting block %currBlock.",
+sessionCompleteFeedback: "Session complete! You scored %totalTimeLeftS!",
+allSessionsCompleteFeedback: "All Sessions Complete!",
 ```
 
 ## Rendering Settings
@@ -314,17 +361,22 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 | Parameter Name        |Units                  | Description                                                                        |
 |-----------------------|-----------------------|------------------------------------------------------------------------------------|
 |`targetHealthColors`   |[`Color3`, `Color3`]   | The max/min health colors for the target as an array of [`max color`, `min color`], if you do not want the target to change color as its health drops, set these values both to the same color                                              |
+|`showReferenceTarget`   |`bool`                | Show a reference target to re-center the view between trials/sessions?             |
 |`referenceTargetColor` |`Color3`               | The color of the "reference" targets spawned between trials                        |
 |`referenceTargetSize`  |m                      | The size of the "reference" targets spawned between trials                         |
-
+|`showPreviewTargetsWithReference` |`bool`      | Show a preview of the trial targets (unhittable) with the reference target. Make these targets hittable once the reference is destroyed |
+|`previewTargetColor`   |`Color3`               | Set the color to draw the preview targets with (before they are active)            |
 
 ```
 "targetHealthColors": [                         // Array of two colors to interpolate between for target health
     Color3(0.0, 1.0, 0.0),
     Color3(1.0, 0.0, 0.0)
 ],
+"showReferenceTarget": true,                    // Show a reference target between trials
 "referenceTargetColor": Color3(1.0,1.0,1.0),    // Reference target color (return to "0" view direction)
 "referenceTargetSize": 0.01,                    // This is a size in meters
+"showPreviewTargetsWithReference" : false,      // Don't show the preview targets with the reference
+"previewTargetColor" = Color3(0.5, 0.5, 0.5),   // Use gray for preview targets (if they are shown)
 ```
 
 ### Target Health Bars
@@ -435,6 +487,70 @@ These flags control whether various information is written to the output databas
 "logPlayerActions" = true,
 "logTrialResponse" = true,
 "logUsers" = true,
+```
+
+## Command Config
+In addition to the programmable behavior above the general config also supports running of arbitrary commands around the FPSci runtime. Note that the "end" commands keep running and there's the potential for orphaned processes if you specify commands that are long running or infinite. The command options include:
+
+| Parameter Name                    | Type                  | Description                                                                                   |
+|-----------------------------------|------------------------|----------------------------------------------------------------------------------------------|
+|`commandsOnSessionStart`           |`Array<CommandSpec>`    | Command(s) to run at the start of a new session. Command(s) quit on session end              |
+|`commandsOnSessionEnd`             |`Array<CommandSpec>`    | Command(s) to run at the end of a new session. Command(s) not forced to quit                 |
+|`commandsOnTrialStart`             |`Array<CommandSpec>`    | Command(s) to run at the start of a new trial within a session. Command(s) quit on trial end |
+|`commandsOnTrialEnd`               |`Array<CommandSpec>`    | Command(s) to run at the end of a new trial within a session. Command(s) not forced to quit  |
+
+Note that the `Array` of commands provided for each of the parameters above is ordered, but the commands are launched (nearly) simultaneously. This means that run order within a set of commands cannot be strictly guaranteed. If you have serial dependencies within a list of commands consider using a script to sequence them.
+
+### Command Specification
+Each command is specified using a `CommandSpec` which itself supports sub-fields for configuration:
+| Parameter Name    | Type        | Description                                                                                 |
+|-------------------|------------|----------------------------------------------------------------------------------------------|
+|`command`          |`String`    | Command string to run                                                                        |
+|`foreground`       |`bool`      | Run this command in the foreground? (By default commands are silent/background tasks)        |
+|`blocking`         |`bool`      | Block on this command being complete (forces command sequencing)                             |
+
+For example, the following will cause session start, session end, trial start and trial end strings to be written to a `commandLog.txt` file.
+
+```
+commandsOnSessionStart = ( 
+    { command = "cmd /c echo Session start>> commandLog.txt", blocking = true },
+    { command = "cmd /c echo Session start second command>> commandLog.txt"} 
+);
+commandsOnSessionEnd = (
+    { command = "cmd /c echo Session end>> commandLog.txt", blocking = true }, 
+    { command = "cmd /c echo Session end second command>> commandLog.txt" }
+);
+commandsOnTrialStart = ( { command = "cmd /c echo Trial start>> commandLog.txt" } );
+commandsOnTrialEnd = ( { command = "cmd /c echo Trial end>> commandLog.txt" } );
+```
+
+Another common use would be to run a python script/code at the start or end of a session. For example:
+
+```
+commandsOnSessionStart = ( { command = "python \"../scripts/event logger/event_logger.py\"" } );
+commandsOnSessionEnd = ( { command = "python -c \"f = open('texttest.txt', 'w'); f.write('Hello world!'); f.close()\"", blocking = true } );
+```
+
+Alternatively, to open a web page at the end of a session you could use:
+
+```
+commandsOnSessionEnd = ( { command = "cmd /c start [webpage URL]", foreground = true } );
+```
+
+### Supported Substrings for Commands
+In addition to the basic commands provided above several replacable substrings are supported in commands. These include:
+
+| Substring         | Description                                                           |
+|-------------------|-----------------------------------------------------------------------|
+|`%loggerComPort`   | The logger COM port (optionally) provided in a general config         |
+|`%loggerSyncComPort`|  The logger sync COM port (optionally) provided in a general config  |
+
+Note that if either of these substrings is specified in a command, but empty/not provided in the experiment config file an exception will be thrown.
+
+An example of their use is provided below:
+
+```
+commandOnSessionStart = ( "python ../scripts/my_logger_script.py %loggerComPort" );
 ```
 
 # Frame Rate Modes

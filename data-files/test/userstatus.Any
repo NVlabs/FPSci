@@ -1,4 +1,5 @@
 { 
+    currentUser = "anon"; 
     sessions = ( ); 
     settingsVersion = 1; 
     users = ( 

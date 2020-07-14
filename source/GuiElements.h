@@ -138,6 +138,8 @@ protected:
 	void updateUserPress();
 	void updateSessionPress();
 
+	shared_ptr<UserConfig> currentUser() const { return m_users.getUserById(m_userStatus.currentUser); }
+
 public:
 	static shared_ptr<UserMenu> create(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) {
 		return createShared<UserMenu>(app, users, userStatus, config, theme, rect);

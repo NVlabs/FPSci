@@ -21,78 +21,78 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\sqlHelpers.h">
+    <ClInclude Include="..\source\sqlHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\TargetEntity.h">
+    <ClInclude Include="..\source\TargetEntity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\Logger.h">
+    <ClInclude Include="..\source\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\PhysicsScene.h">
+    <ClInclude Include="..\source\PhysicsScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\PlayerEntity.h">
+    <ClInclude Include="..\source\PlayerEntity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\GuiElements.h">
+    <ClInclude Include="..\source\GuiElements.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\Session.h">
+    <ClInclude Include="..\source\Session.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\Dialogs.h">
+    <ClInclude Include="..\source\Dialogs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\WaypointManager.h">
+    <ClInclude Include="..\source\WaypointManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\ConfigFiles.h">
+    <ClInclude Include="..\source\ConfigFiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\Weapon.h">
+    <ClInclude Include="..\source\Weapon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\CombatText.h">
+    <ClInclude Include="..\source\CombatText.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\PythonLogger.h">
+    <ClInclude Include="..\source\PythonLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\FPSciApp.h">
+    <ClInclude Include="..\source\FPSciApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\sqlHelpers.cpp">
+    <ClCompile Include="..\source\sqlHelpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\TargetEntity.cpp">
+    <ClCompile Include="..\source\TargetEntity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\Logger.cpp">
+    <ClCompile Include="..\source\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\PhysicsScene.cpp">
+    <ClCompile Include="..\source\PhysicsScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\PlayerEntity.cpp">
+    <ClCompile Include="..\source\PlayerEntity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\GuiElements.cpp">
+    <ClCompile Include="..\source\GuiElements.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\Session.cpp">
+    <ClCompile Include="..\source\Session.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\WaypointManager.cpp">
+    <ClCompile Include="..\source\WaypointManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\Weapon.cpp">
+    <ClCompile Include="..\source\Weapon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\FPSciApp.cpp">
+    <ClCompile Include="..\source\FPSciApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -102,25 +102,25 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="data-files\experimentconfig.Any">
+    <None Include="..\data-files\experimentconfig.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\userconfig.Any">
+    <None Include="..\data-files\userconfig.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\shader\distort.pix">
+    <None Include="..\data-files\shader\distort.pix">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="data-files\systemconfig.Any">
+    <None Include="..\data-files\userstatus.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\userstatus.Any">
+    <None Include="..\data-files\startupconfig.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\startupconfig.Any">
+    <None Include="..\data-files\keymap.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\keymap.Any">
+    <None Include="..\data-files\systemconfig.Any">
       <Filter>Config Files</Filter>
     </None>
   </ItemGroup>

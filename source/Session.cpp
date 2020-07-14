@@ -32,16 +32,24 @@
 #include "PlayerEntity.h"
 #include "Dialogs.h"
 
-void Session::nextCondition() {
+bool Session::hasNextCondition() const{
+	for (int count : m_remainingTrials) {
+		if (count > 0) return true;
+	}
+	return false;
+}
+
+bool Session::nextCondition() {
 	Array<int> unrunTrialIdxs;
 	for (int i = 0; i < m_remainingTrials.size(); i++) {
 		if (m_remainingTrials[i] > 0 || m_remainingTrials[i] == -1) {
 			unrunTrialIdxs.append(i);
 		}
 	}
-	if (unrunTrialIdxs.size() == 0) return;
+	if (unrunTrialIdxs.size() == 0) return false;
 	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
 	m_currTrialIdx = unrunTrialIdxs[idx];
+	return true;
 }
 
 bool Session::blockComplete() const{
@@ -64,14 +72,15 @@ bool Session::updateBlock(bool updateTargets) {
 		m_remainingTrials.append(m_config->trials[i].count);
 		m_targetConfigs.append(targets);
 	}
-	nextCondition();
-	return true;
+	return nextCondition();
 }
 
 void Session::onInit(String filename, String description) {
 	// Initialize presentation states
-	presentationState = PresentationState::initial;
-	m_feedbackMessage = "Click to spawn a target, then use shift on red target to begin.";
+	currentState = PresentationState::initial;
+	if (m_config) {
+		m_feedbackMessage = formatFeedback(m_config->targetView.showRefTarget ? m_config->feedback.initialWithRef: m_config->feedback.initialNoRef);
+	}
 
 	// Get the player from the app
 	m_player = m_app->scene()->typedEntity<PlayerEntity>("player");
@@ -84,7 +93,7 @@ void Session::onInit(String filename, String description) {
 	// Check for valid session
 	if (m_hasSession) {
 		if (m_config->logger.enable) {
-			UserConfig user = *m_app->getCurrUser();
+			UserConfig user = *m_app->currentUser();
 			// Setup the logger and create results file
 			m_logger = FPSciLogger::create(filename, user.id, m_config, description);
 			if (m_config->logger.logUsers) {
@@ -92,12 +101,14 @@ void Session::onInit(String filename, String description) {
 			}
 		}
 
+		runSessionCommands("start");				// Run start of session commands
+
 		// Iterate over the sessions here and add a config for each
 		m_trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
 		updateBlock(true);
 	}
 	else {	// Invalid session, move to displaying message
-		presentationState = PresentationState::scoreboard;
+		currentState = PresentationState::sessionFeedback;
 	}
 }
 
@@ -124,96 +135,108 @@ void Session::initTargetAnimation() {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
 	const Point3 initialSpawnPos = m_player->getCameraFrame().translation;
-	CFrame f = CFrame::fromXYZYPRRadians(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians, 0.0f, 0.0f);
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
-	if (presentationState == PresentationState::task) {
-		// Iterate through the targets
-		for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
-			
-			const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, m_targetConfigs[m_currTrialIdx][i]->id, i);
-			const Color3 initColor = m_config->targetView.healthColors[0];
-			shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
-
-			const float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
-			const float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
-			const float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
-			bool isWorldSpace = target->destSpace == "world";
-
-			CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw- (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
-
-			// Check for case w/ destination array
-			if (target->destinations.size() > 0) {
-				Point3 offset =isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<TargetEntity> t = spawnDestTarget(target, offset, initColor, i, name);
-			}
-			// Otherwise check if this is a jumping target
-			else if (target->jumpEnabled) {
-				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<JumpingEntity> t = spawnJumpingTarget(target, offset, initialSpawnPos, initColor, m_targetDistance, i, name);
-			}
-			else {
-				Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-				shared_ptr<FlyingEntity> t = spawnFlyingTarget(target, offset, initialSpawnPos, initColor, i, name);
+	if (currentState == PresentationState::trialTask) {
+		if (m_config->targetView.previewWithRef && m_config->targetView.showRefTarget) {
+			// Activate the preview targets
+			const Color3 activeColor = m_config->targetView.healthColors[0];
+			for (shared_ptr<TargetEntity> target : m_targetArray) {
+				target->setCanHit(true);
+				target->setColor(activeColor);
+				m_hittableTargets.append(target);
 			}
 		}
+		else {
+			spawnTrialTargets(initialSpawnPos);			// Spawn all the targets normally
+		}
 	}
-	else {
-		// Make sure we reset the target color here (avoid color bugs)
-		spawnReferenceTarget(
+	else { // State is feedback and we are spawning a reference target
+		CFrame f = CFrame::fromXYZYPRRadians(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians, 0.0f, 0.0f);
+		// Spawn the reference target
+		auto t = spawnReferenceTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 			initialSpawnPos,
 			m_config->targetView.refTargetSize,
 			m_config->targetView.refTargetColor
 		);
+		m_hittableTargets.append(t);
+
+		if (m_config->targetView.previewWithRef) {
+			spawnTrialTargets(initialSpawnPos, true);		// Spawn all the targets in preview mode
+		}
 	}
 
-	// Reset number of destroyed targets
+	// Reset number of destroyed targets (in the trial)
 	m_destroyedTargets = 0;
-	// reset click counter
-	m_clickCount = 0;
+	// Reset shot and hit counters (in the trial)
+	m_shotCount = 0;
+	m_hitCount = 0;
+}
+
+void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
+	// Iterate through the targets
+	for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
+
+		const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, m_targetConfigs[m_currTrialIdx][i]->id, i);
+		const Color3 spawnColor = previewMode ? m_config->targetView.previewColor : m_config->targetView.healthColors[0];
+		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
+
+		const float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
+		const float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
+		const float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
+		bool isWorldSpace = target->destSpace == "world";
+
+		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw - (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
+
+		// Check for case w/ destination array
+		shared_ptr<TargetEntity> t;
+		if (target->destinations.size() > 0) {
+			Point3 offset = isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			t = spawnDestTarget(target, offset, spawnColor, i, name);
+		}
+		// Otherwise check if this is a jumping target
+		else if (target->jumpEnabled) {
+			Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			t = spawnJumpingTarget(target, offset, initialSpawnPos, spawnColor, m_targetDistance, i, name);
+		}
+		else {
+			Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			t = spawnFlyingTarget(target, offset, initialSpawnPos, spawnColor, i, name);
+		}
+
+		// Set whether the target can be hit based on whether we are in preview mode
+		t->setCanHit(!previewMode);
+		previewMode ? m_unhittableTargets.append(t) : m_hittableTargets.append(t);
+	}
 }
 
 void Session::processResponse()
 {
 	m_taskExecutionTime = m_timer.getTime();
-	// Get total target count here
-	int totalTargets = 0;
-	for (shared_ptr<TargetConfig> target : m_targetConfigs[m_currTrialIdx]) {
-		if (target->respawnCount == -1) {
-			totalTargets = -1;		// Ininite spawn case
-			break;
-		}
-		else {
-			totalTargets += (target->respawnCount+1);
-		}
-	}
-	
-	recordTrialResponse(m_destroyedTargets, totalTargets); // NOTE: we need record response first before processing it with PsychHelper.
+
+	const int totalTargets = totalTrialTargets();
+	// Record the trial response into the database
+	recordTrialResponse(m_destroyedTargets, totalTargets); 
 	if (m_remainingTrials[m_currTrialIdx] > 0) {
 		m_remainingTrials[m_currTrialIdx] -= 1;
 	}
 
 	// Check for whether all targets have been destroyed
-	if (m_remainingTargets == 0) {
-		m_totalRemainingTime += (double(m_config->timing.taskDuration) - m_taskExecutionTime);
-		if (m_config->description == "training") {
-			m_feedbackMessage = format("%d ms!", (int)(m_taskExecutionTime * 1000));
-		}
+	if (m_destroyedTargets == totalTargets) {
+		m_totalRemainingTime += (double(m_config->timing.maxTrialDuration) - m_taskExecutionTime);
+		m_feedbackMessage = formatFeedback(m_config->feedback.trialSuccess);
 	}
 	else {
-		if (m_config->description == "training") {
-			m_feedbackMessage = "Failure!";
-		}
+		m_feedbackMessage = formatFeedback(m_config->feedback.trialFailure);
 	}
 }
 
 void Session::updatePresentationState()
 {
 	// This updates presentation state and also deals with data collection when each trial ends.
-	PresentationState currentState = presentationState;
 	PresentationState newState;
-	int remainingTargets = m_targetArray.size();
+	int remainingTargets = m_hittableTargets.size();
 	float stateElapsedTime = m_timer.getTime();
 	newState = currentState;
 
@@ -222,40 +245,46 @@ void Session::updatePresentationState()
 		if (m_config->player.stillBetweenTrials) {
 			m_player->setMoveEnable(false);
 		}
-		if (!m_app->m_buttonUp)
-		{
-			newState = PresentationState::feedback;
+		if (!(m_app->m_buttonUp && m_config->timing.clickToStart)) {
+			newState = PresentationState::trialFeedback;
 		}
 	}
-	else if (currentState == PresentationState::ready)
+	else if (currentState == PresentationState::pretrial)
 	{
-		if (stateElapsedTime > m_config->timing.readyDuration)
+		if (stateElapsedTime > m_config->timing.pretrialDuration)
 		{
-			newState = PresentationState::task;
+			newState = PresentationState::trialTask;
 			if (m_config->player.stillBetweenTrials) {
 				m_player->setMoveEnable(true);
 			}
+
+			closeTrialProcesses();						// End previous process (if running)
+			runTrialCommands("start");					// Run start of trial commands
+
 		}
 	}
-	else if (currentState == PresentationState::task)
+	else if (currentState == PresentationState::trialTask)
 	{
-		if ((stateElapsedTime > m_config->timing.taskDuration) || (remainingTargets <= 0) || (m_clickCount == m_config->weapon.maxAmmo))
+		if ((stateElapsedTime > m_config->timing.maxTrialDuration) || (remainingTargets <= 0) || (m_shotCount == m_config->weapon.maxAmmo))
 		{
 			m_taskEndTime = FPSciLogger::genUniqueTimestamp();
 			processResponse();
 			clearTargets(); // clear all remaining targets
-			newState = PresentationState::feedback;
+			newState = PresentationState::trialFeedback;
 			if (m_config->player.stillBetweenTrials) {
 				m_player->setMoveEnable(false);
 			}
 			if (m_config->player.resetPositionPerTrial) {
 				m_player->respawn();
 			}
+
+			closeTrialProcesses();				// Stop start of trial processes
+			runTrialCommands("end");			// Run the end of trial processes
 		}
 	}
-	else if (currentState == PresentationState::feedback)
+	else if (currentState == PresentationState::trialFeedback)
 	{
-		if ((stateElapsedTime > m_config->timing.feedbackDuration) && (remainingTargets <= 0))
+		if ((stateElapsedTime > m_config->timing.trialFeedbackDuration) && (remainingTargets <= 0))
 		{
 			if (blockComplete()) {
 				m_currBlock++;		// Increment the block index
@@ -285,58 +314,66 @@ void Session::updatePresentationState()
 					}
 					else {
 						if (m_config->logger.enable) {
-							m_logger->logUserConfig(*m_app->getCurrUser(), m_config->id, "end");
-							m_logger->flush(false);
-							m_logger.reset();
+							endLogging();
 						}
 						m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
 
-						int score = int(m_totalRemainingTime);
-						m_feedbackMessage = format("Session complete! You scored %d!", score);						// Update the feedback message
+						m_feedbackMessage = formatFeedback(m_config->feedback.sessComplete);						// Update the feedback message
 						m_currQuestionIdx = -1;
-						newState = PresentationState::scoreboard;
+						newState = PresentationState::sessionFeedback;
 					}
 				}
 				else {					// Block is complete but session isn't
-					m_feedbackMessage = format("Block %d complete! Starting block %d.", m_currBlock - 1, m_currBlock);
+					m_feedbackMessage = formatFeedback(m_config->feedback.blockComplete);
 					updateBlock();
 					newState = PresentationState::initial;
 				}
 			}
 			else {
-				m_feedbackMessage = "";
+				m_feedbackMessage = "";				// Clear the feedback message
 				nextCondition();
-				newState = PresentationState::ready;
+				newState = PresentationState::pretrial;
 			}
 		}
 	}
-	else if (currentState == PresentationState::scoreboard) {
-		//if (stateElapsedTime > m_scoreboardDuration) {
-			newState = PresentationState::complete;
-			if (m_hasSession) {
-				m_app->userSaveButtonPress();												// Press the save button for the user...
+	else if (currentState == PresentationState::sessionFeedback) {
+		if (m_hasSession) {
+			if (stateElapsedTime > m_config->timing.sessionFeedbackDuration && (!m_config->timing.sessionFeedbackRequireClick || !m_app->m_buttonUp)) {
+				newState = PresentationState::complete;
+        
+				// Save current user config and status
+				m_app->saveUserConfig();											
+				m_app->saveUserStatus();
+        
+				closeSessionProcesses();					// Close the process we started at session start (if there is one)
+				runSessionCommands("end");					// Launch processes for the end of the session
+
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
-					m_feedbackMessage = "All Sessions Complete!"; // Update the feedback message
+					m_feedbackMessage = formatFeedback(m_config->feedback.allSessComplete); // Update the feedback message
 					moveOn = false;
 					if (m_app->experimentConfig.closeOnComplete || m_config->closeOnComplete) {
 						m_app->quitRequest();
 					}
 				}
 				else {
-					m_feedbackMessage = "Session Complete!"; // Update the feedback message
+					m_feedbackMessage = formatFeedback(m_config->feedback.sessComplete);	// Update the feedback message
 					if (m_config->closeOnComplete) {
 						m_app->quitRequest();
 					}
 					moveOn = true;														// Check for session complete (signal start of next session)
 				}
-			}
-			else {
-				m_feedbackMessage = "All Sessions Complete!";							// Update the feedback message
-				moveOn = false;
+
 				if (m_app->experimentConfig.closeOnComplete) {
 					m_app->quitRequest();
 				}
+			}
+		}
+		else {
+			// Go ahead and move to the complete state since there aren't any valid sessions
+			newState = PresentationState::complete;
+			m_feedbackMessage = formatFeedback("All sessions complete!");
+			moveOn = false;
 		}
 	}
 
@@ -347,12 +384,12 @@ void Session::updatePresentationState()
 	if (currentState != newState)
 	{ // handle state transition.
 		m_timer.startTimer();
-		if (newState == PresentationState::task) {
+		if (newState == PresentationState::trialTask) {
 			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
 		}
-		presentationState = newState;
+		currentState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
-		if ((newState == PresentationState::task) || (newState == PresentationState::feedback)) {
+		if ((newState == PresentationState::trialTask) || (newState == PresentationState::trialFeedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
 			initTargetAnimation();
 		}
 	}
@@ -364,7 +401,7 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	updatePresentationState();
 
 	// 2. Record target trajectories, view direction trajectories, and mouse motion.
-	if (presentationState == PresentationState::task)
+	if (currentState == PresentationState::trialTask)
 	{
 		accumulateTrajectories();
 		accumulateFrameInfo(rdt, sdt, idt);
@@ -424,6 +461,9 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 		m_logger->logPlayerAction(pa);
 		END_PROFILER_EVENT();
 	}
+	
+	// Count hits here
+	if (action == PlayerActionType::Hit || action == PlayerActionType::Destroy) { m_hitCount++; }
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
@@ -452,13 +492,13 @@ float Session::weaponCooldownPercent() const {
 
 int Session::remainingAmmo() const {
 	if (isNull(m_config)) return 100;
-	return m_config->weapon.maxAmmo - m_clickCount;
+	return m_config->weapon.maxAmmo - m_shotCount;
 }
 
 
 float Session::getRemainingTrialTime() {
 	if (isNull(m_config)) return 10.0;
-	return m_config->timing.taskDuration - m_timer.getTime();
+	return m_config->timing.maxTrialDuration - m_timer.getTime();
 }
 
 float Session::getProgress() {
@@ -477,12 +517,105 @@ int Session::getScore() {
 	return (int)(10.0 * m_totalRemainingTime);
 }
 
+String Session::formatCommand(const String& input) {
+	const char delimiter = '%';			///< Start of all valid substrings
+	String formatted = input;			///< Output string
+	int foundIdx = 0;					///< Index for searching for substrings
+
+	const String loggerComPort = "%loggerComPort";
+	const String syncComPort = "%loggerSyncComPort";
+
+	while ((foundIdx = (int)formatted.find(delimiter, (size_t)foundIdx)) > -1) {
+		if (!formatted.compare(foundIdx, loggerComPort.length(), loggerComPort)) {
+			if (m_app->systemConfig.loggerComPort.empty()) {
+				throw "Found \"%loggerComPort\" substring in a command, but no \"loggerComPort\" is provided in the config!";
+			}
+			formatted = formatted.substr(0, foundIdx) + m_app->systemConfig.loggerComPort + formatted.substr(foundIdx + loggerComPort.length());
+		}
+		else if (!formatted.compare(foundIdx, syncComPort.length(), syncComPort)) {
+			if (m_app->systemConfig.syncComPort.empty()) {
+				throw "Found \"%loggerSyncComPort\" substring in a command, but no \"loggerSyncComPort\" is provided in the config!";
+			}
+			formatted = formatted.substr(0, foundIdx) + m_app->systemConfig.syncComPort + formatted.substr(foundIdx + syncComPort.length());
+		}
+		else {
+			foundIdx++;
+		}
+	}
+	return formatted;
+}
+
+String Session::formatFeedback(const String& input) {
+	const char delimiter = '%';			///< Start of all valid substrings
+	String formatted = input;			///< Output string
+	int foundIdx = 0;					///< Index for searching for substrings
+
+	// Substrings for replacement
+	const String totalTimeLeftS			= "%totalTimeLeftS";				///< Sum of time remaining over all completed trials
+	const String lastBlock				= "%lastBlock";						///< The last (completed) block in this session
+	const String currBlock				= "%currBlock";						///< The current block of the session (next block at end of session)
+	const String totalBlocks			= "%totalBlocks";					///< The total blocks specified in the session
+	const String trialTaskTimeMs		= "%trialTaskTimeMs";				///< The time spent in the task state of this trial (in ms)
+	const String trialTargetsDestroyed	= "%trialTargetsDestroyed";			///< The number of targets destroyed in this trial
+	const String trialTotalTargets		= "%trialTotalTargets";				///< The number of targets in this trial ("infinite" if any target respawns infinitely)
+	const String trialShotsHit			= "%trialShotsHit";					///< The number of shots hit in this trial
+	const String trialTotalShots		= "%trialTotalShots";				///< The number of shots taken in this trial
+
+	// Walk through the string looking for instances of the delimiter
+	while ((foundIdx = (int)formatted.find(delimiter, (size_t)foundIdx)) > -1) {
+		if(!formatted.compare(foundIdx, totalTimeLeftS.length(), totalTimeLeftS)){
+			formatted = formatted.substr(0, foundIdx) + format("%.2f", m_totalRemainingTime) + formatted.substr(foundIdx + totalTimeLeftS.length());
+		}
+		else if (!formatted.compare(foundIdx, lastBlock.length(), lastBlock)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_currBlock - 1) + formatted.substr(foundIdx + lastBlock.length());
+		}
+		else if (!formatted.compare(foundIdx, currBlock.length(), currBlock)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_currBlock) + formatted.substr(foundIdx + currBlock.length());
+		}
+		else if (!formatted.compare(foundIdx, totalBlocks.length(), totalBlocks)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_config->blockCount) + formatted.substr(foundIdx + totalBlocks.length());
+		}
+		else if (!formatted.compare(foundIdx, trialTaskTimeMs.length(), trialTaskTimeMs)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", (int)(m_taskExecutionTime * 1000)) + formatted.substr(foundIdx + trialTaskTimeMs.length());
+		}
+		else if (!formatted.compare(foundIdx, trialTargetsDestroyed.length(), trialTargetsDestroyed)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_destroyedTargets) + formatted.substr(foundIdx + trialTargetsDestroyed.length());
+		}
+		else if (!formatted.compare(foundIdx, trialTotalTargets.length(), trialTotalTargets)) {
+			String totalTargetsString;
+			int totalTargets = totalTrialTargets();
+			if (totalTargets > 0) {
+				// Finite target count
+				totalTargetsString += format("%d", totalTargets);
+			}
+			else { 
+				// Inifinite target count case
+				totalTargetsString += "infinite";
+			}
+			formatted = formatted.substr(0, foundIdx) + totalTargetsString + formatted.substr(foundIdx + trialTotalTargets.length());
+		}
+		else if (!formatted.compare(foundIdx, trialShotsHit.length(), trialShotsHit)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_hitCount) + formatted.substr(foundIdx + trialShotsHit.length());
+		}
+		else if (!formatted.compare(foundIdx, trialTotalShots.length(), trialTotalShots)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_shotCount) + formatted.substr(foundIdx + trialTotalShots.length());
+		}
+		else {
+			// Bump the found index past this character (not a valid substring)
+			foundIdx++;
+		}
+	}
+	return formatted;
+}
+
 String Session::getFeedbackMessage() {
 	return m_feedbackMessage;
 }
 
 void Session::endLogging() {
 	if (m_logger != nullptr) {
+		m_logger->logUserConfig(*m_app->currentUser(), m_config->id, "end");
+		m_logger->flush(false);
 		m_logger.reset();
 	}
 }
@@ -595,27 +728,29 @@ void Session::insertTarget(shared_ptr<TargetEntity> target) {
 	m_scene->insert(target);
 }
 
-void Session::destroyTarget(int index) {
-	// Not a reference because we're about to manipulate the array
-	const shared_ptr<VisibleEntity> target = m_targetArray[index];
-	// Remove the target from the target array
-	m_targetArray.fastRemove(index);
-	// Remove the target from the scene
-	m_scene->removeEntity(target->name());
-}
-
 void Session::destroyTarget(shared_ptr<TargetEntity> target) {
+	// Remove target from the scene
+	m_scene->removeEntity(target->name());
+	// Remove target from master list
 	for (int i = 0; i < m_targetArray.size(); i++) {
-		if (m_targetArray[i]->name() == target->name()) {
-			m_targetArray.fastRemove(i);
+		if (m_targetArray[i]->name() == target->name()) { m_targetArray.fastRemove(i); }
+	}
+	// Remove target from (un)hittable array
+	for (int i = 0; i < m_hittableTargets.size(); i++) {
+		if (m_hittableTargets[i]->name() == target->name()) { 
+			m_hittableTargets.fastRemove(i); 
+			return;	// Target can't be both hittable and unhittable
 		}
 	}
-	m_scene->removeEntity(target->name());
+	for (int i = 0; i < m_unhittableTargets.size(); i++) {
+		if (m_unhittableTargets[i]->name() == target->name()) { m_unhittableTargets.fastRemove(i); }
+	}
+
 }
 
 /** Clear all targets one by one */
 void Session::clearTargets() {
-	while (m_targetArray.size() > 0) {
-		destroyTarget(0);
+	for(auto target : m_targetArray) {
+		destroyTarget(target);
 	}
 }
