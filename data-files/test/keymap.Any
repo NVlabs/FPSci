@@ -1,0 +1,25 @@
+{ 
+    crouch = ( "L Ctrl"); 
+    dropWaypoint = ( "Q"); 
+    dummyShoot = ( "L Shift"); 
+    jump = ( "Spc"); 
+    moveBackward = ( "S", "Down"); 
+    moveForward = ( "W", "Up"); 
+    moveWaypointDown = ( "Pg Dn"); 
+    moveWaypointIn = ( "Home"); 
+    moveWaypointLeft = ( "Del"); 
+    moveWaypointOut = ( "End"); 
+    moveWaypointRight = ( "Ins"); 
+    moveWaypointUp = ( "Pg Up"); 
+    openMenu = ( "Esc"); 
+    quit = ( "Keypad -", "Pause"); 
+    scope = ( "R Mouse"); 
+    shoot = ( "L Mouse"); 
+    strafeLeft = ( "A", "Left"); 
+    strafeRight = ( "D", "Right"); 
+    togglePlayerWindow = ( "2"); 
+    toggleRecording = ( "R"); 
+    toggleRenderWindow = ( "1"); 
+    toggleWaypointWindow = ( "4"); 
+    toggleWeaponWindow = ( "3"); 
+} 

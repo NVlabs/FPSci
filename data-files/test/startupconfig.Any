@@ -8,5 +8,6 @@
 	experimentConfigFilename = "test/experimentconfig.Any"; 
 	userConfigFilename = "test/userconfig.Any";
 	userStatusFilename = "test/userstatus.Any";
-	latencyLoggerConfigFilename = "test/systemconfig.Any";
+	keymapConfigFilename = "test/keymap.Any";
+	systemConfigFilename = "test/systemconfig.Any";
 }
