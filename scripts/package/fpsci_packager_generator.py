@@ -66,7 +66,7 @@ if __name__ == '__main__':
     lineSet.add('cp c:/g3d/G3D10/data-files/shader/UniversalSurface/UniversalSurface_depthPeel.pix dist/shader/UniversalSurface/\n')
 
     # Set up copy of .exe
-    lineSet.add('cp Build/FirstPersonScience-x64-Release/FirstPersonScience.exe ' + distPath + '\n')
+    lineSet.add('cp vs/Build/FirstPersonScience-x64-Release/FirstPersonScience.exe ' + distPath + '\n')
 
     # main loop, need to ignore lines before the file list begins
     beforeFiles = True

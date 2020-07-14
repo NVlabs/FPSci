@@ -35,13 +35,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Microsoft-googletest-v140-windesktop-msvcstl-static-rt-dyn-Disable-gtest_main>true</Microsoft-googletest-v140-windesktop-msvcstl-static-rt-dyn-Disable-gtest_main>
-    <IncludePath>$(IncludePath);$(ProjectDir)\Source;$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
+    <IncludePath>$(IncludePath);$(ProjectDir)\..\Source;$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
     <OutDir>$(ProjectDir)Build\$(ProjectName)-$(Platform)-$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(ProjectName)-$(Platform)-$(Configuration)\Intermediates\</IntDir>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(g3d)\G3D10\build\lib</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(IncludePath);$(ProjectDir)\Source;$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
+    <IncludePath>$(IncludePath);$(ProjectDir)\..\Source;$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
     <OutDir>$(ProjectDir)Build\$(ProjectName)-$(Platform)-$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(ProjectName)-$(Platform)-$(Configuration)\Intermediates\</IntDir>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(g3d)\G3D10\build\lib</LibraryPath>
@@ -49,29 +49,29 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(ProjectDir)Build\$(ProjectName)-$(Platform)-$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(ProjectName)-$(Platform)-$(Configuration)\Intermediates\</IntDir>
-    <IncludePath>$(IncludePath);$(ProjectDir)\Source;$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
+    <IncludePath>$(IncludePath);$(ProjectDir)\..\Source;$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(ProjectDir)Build\$(ProjectName)-$(Platform)-$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(ProjectName)-$(Platform)-$(Configuration)\Intermediates\</IntDir>
-    <IncludePath>$(IncludePath);$(ProjectDir)\Source;$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
+    <IncludePath>$(IncludePath);$(ProjectDir)\..\Source;$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="tests\main.cpp" />
-    <ClCompile Include="tests\TestFakeInput.cpp" />
-    <ClCompile Include="tests\FPSciTests.cpp" />
+    <ClCompile Include="..\tests\main.cpp" />
+    <ClCompile Include="..\tests\TestFakeInput.cpp" />
+    <ClCompile Include="..\tests\FPSciTests.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="tests\FPSciTests.h" />
-    <ClInclude Include="tests\TestFakeInput.h" />
+    <ClInclude Include="..\tests\FPSciTests.h" />
+    <ClInclude Include="..\tests\TestFakeInput.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="data-files\test\experimentconfig.Any" />
-    <None Include="data-files\test\keymap.Any" />
-    <None Include="data-files\test\startupconfig.Any" />
-    <None Include="data-files\test\systemconfig.Any" />
-    <None Include="data-files\test\userconfig.Any" />
-    <None Include="data-files\test\userstatus.Any" />
+    <None Include="..\data-files\test\experimentconfig.Any" />
+    <None Include="..\data-files\test\keymap.Any" />
+    <None Include="..\data-files\test\startupconfig.Any" />
+    <None Include="..\data-files\test\systemconfig.Any" />
+    <None Include="..\data-files\test\userconfig.Any" />
+    <None Include="..\data-files\test\userstatus.Any" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -82,7 +82,7 @@
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets" Condition="Exists('packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets')" />
+    <Import Project="..\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets" Condition="Exists('..\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets')" />
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -152,6 +152,6 @@
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.3\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.targets'))" />
   </Target>
 </Project>
