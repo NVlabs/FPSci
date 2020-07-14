@@ -14,27 +14,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\main.cpp">
+    <ClCompile Include="..\source\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="data-files\experimentconfig.Any">
+    <None Include="..\data-files\experimentconfig.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\keymap.Any">
+    <None Include="..\data-files\keymap.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\startupconfig.Any">
+    <None Include="..\data-files\startupconfig.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\systemconfig.Any">
+    <None Include="..\data-files\systemconfig.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\userconfig.Any">
+    <None Include="..\data-files\userconfig.Any">
       <Filter>Config Files</Filter>
     </None>
-    <None Include="data-files\userstatus.Any">
+    <None Include="..\data-files\userstatus.Any">
       <Filter>Config Files</Filter>
     </None>
   </ItemGroup>
