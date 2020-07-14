@@ -96,7 +96,6 @@ void FPSciTests::SetUpTestSuiteSafe() {
 	s_fakeInput->window().injectMouseDown(0);
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
-
 	s_app->oneFrame();
 
 	assert(s_app->sess->currentState == PresentationState::trialFeedback);
@@ -268,7 +267,6 @@ TEST_F(FPSciTests, KillTargetFront) {
 	s_fakeInput->window().injectMouseDown(0);
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
-
 	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
