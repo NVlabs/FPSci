@@ -118,7 +118,7 @@ void FPSciTests::SetUpTestSuiteSafe() {
 	s_app->oneFrame();
 	s_cameraSpawnFrame = s_app->activeCamera()->frame();
 
-	assert(s_app->sess->presentationState == PresentationState::initial);
+	assert(s_app->sess->currentState == PresentationState::initial);
 
 	// Fire to make the red target appear
 	// TODO: there is an issue where the app misses the event entirely if it's down and up in the same frame
@@ -127,7 +127,7 @@ void FPSciTests::SetUpTestSuiteSafe() {
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
 
-	assert(s_app->sess->presentationState == PresentationState::trialFeedback);
+	assert(s_app->sess->currentState == PresentationState::trialFeedback);
 
 	System::sleep(0.5f);
 	s_app->oneFrame();
