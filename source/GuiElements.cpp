@@ -385,7 +385,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	// User Settings Pane
 	if (config.showUserSettings) {
 		m_currentUserPane = m_parent->addPane("Current User Settings");
-		drawUserPane(config);
+		drawUserPane(config, m_users.users[m_users.getUserIndex(m_userStatus.currentUser)]);
 	}
 
 	// Resume/Quite Pane
@@ -412,18 +412,17 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	m_resumeQuitPane->pack();
 }
 
-void UserMenu::drawUserPane(const MenuConfig& config) 
+void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 {
 	// Basic user info
-	UserConfig* user = &(m_users.users[m_users.getUserIndex(m_userStatus.currentUser)]);
 	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addLabel(format("Current User: %s", user->id.c_str()))->setHeight(30.0);
+		m_currentUserPane->addLabel(format("Current User: %s", user.id.c_str()))->setHeight(30.0);
 	} m_currentUserPane->endRow();
 	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addLabel(format("Mouse DPI: %f", user->mouseDPI));
+		m_currentUserPane->addLabel(format("Mouse DPI: %f", user.mouseDPI));
 	} m_currentUserPane->endRow();
 	m_currentUserPane->beginRow(); {
-		auto sensitivityNb = m_currentUserPane->addNumberBox("Mouse 360", &(user->cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
+		auto sensitivityNb = m_currentUserPane->addNumberBox("Mouse 360", &(user.cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
 		sensitivityNb->setWidth(300.0);
 		sensitivityNb->setEnabled(config.allowSensitivityChange);
 	} m_currentUserPane->endRow();
@@ -432,17 +431,17 @@ void UserMenu::drawUserPane(const MenuConfig& config)
 		// X turn scale
 		if (config.xTurnScaleAdjustMode != "None") {
 			m_currentUserPane->beginRow(); {
-				m_currentUserPane->addNumberBox("Turn Scale X", &(user->turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
+				m_currentUserPane->addNumberBox("Turn Scale X", &(user.turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
 			} m_currentUserPane->endRow();
 		}
 		// Y turn scale
 		if (config.yTurnScaleAdjustMode != "None") {
 			m_currentUserPane->beginRow(); {
 				if (config.yTurnScaleAdjustMode == "Slider") {
-					m_currentUserPane->addNumberBox("Turn Scale Y", &(user->turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
+					m_currentUserPane->addNumberBox("Turn Scale Y", &(user.turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
 				}
 				else if (config.yTurnScaleAdjustMode == "Invert") {
-					m_currentUserPane->addCheckBox("Invert Y", &(user->invertY));
+					m_currentUserPane->addCheckBox("Invert Y", &(user.invertY));
 
 				}
 			} m_currentUserPane->endRow();
@@ -457,7 +456,7 @@ void UserMenu::drawUserPane(const MenuConfig& config)
 		// Reticle index selection
 		if (config.allowReticleIdxChange) {
 			reticleControlPane->beginRow(); {
-				auto c = reticleControlPane->addNumberBox("Reticle", &(user->reticleIndex), "", GuiTheme::LINEAR_SLIDER, 0, m_app->numReticles, 1);
+				auto c = reticleControlPane->addNumberBox("Reticle", &(user.reticleIndex), "", GuiTheme::LINEAR_SLIDER, 0, m_app->numReticles, 1);
 				c->setCaptionWidth(reticleCaptionWidth);
 				c->setWidth(m_sliderWidth);
 			} reticleControlPane->endRow();
@@ -466,13 +465,13 @@ void UserMenu::drawUserPane(const MenuConfig& config)
 		// Reticle size selection
 		if (config.allowReticleSizeChange) {
 			reticleControlPane->beginRow(); {
-				auto c = reticleControlPane->addNumberBox("Reticle Scale Min", &(user->reticleScale[0]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
+				auto c = reticleControlPane->addNumberBox("Reticle Scale Min", &(user.reticleScale[0]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
 				c->setCaptionWidth(reticleCaptionWidth);
 				c->setWidth(m_sliderWidth);
 			} reticleControlPane->endRow();
 
 			reticleControlPane->beginRow(); {
-				auto c = reticleControlPane->addNumberBox("Reticle Scale Max", &(user->reticleScale[1]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
+				auto c = reticleControlPane->addNumberBox("Reticle Scale Max", &(user.reticleScale[1]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
 				c->setCaptionWidth(reticleCaptionWidth);
 				c->setWidth(m_sliderWidth);
 			} reticleControlPane->endRow();
@@ -483,43 +482,43 @@ void UserMenu::drawUserPane(const MenuConfig& config)
 			const float rgbCaptionWidth = 10.f;
 			reticleControlPane->beginRow(); {
 				reticleControlPane->addLabel("Reticle Color Min")->setWidth(120.f);
-				auto r = reticleControlPane->addSlider("R", &(user->reticleColor[0].r), 0.0f, 1.0f);
+				auto r = reticleControlPane->addSlider("R", &(user.reticleColor[0].r), 0.0f, 1.0f);
 				r->setCaptionWidth(rgbCaptionWidth);
 				r->setWidth(m_rgbSliderWidth);
-				auto g = reticleControlPane->addSlider("G", &(user->reticleColor[0].g), 0.0f, 1.0f);
+				auto g = reticleControlPane->addSlider("G", &(user.reticleColor[0].g), 0.0f, 1.0f);
 				g->setCaptionWidth(rgbCaptionWidth);
 				g->setWidth(m_rgbSliderWidth);
 				g->moveRightOf(r, rgbCaptionWidth);
-				auto b = reticleControlPane->addSlider("B", &(user->reticleColor[0].b), 0.0f, 1.0f);
+				auto b = reticleControlPane->addSlider("B", &(user.reticleColor[0].b), 0.0f, 1.0f);
 				b->setCaptionWidth(rgbCaptionWidth);
 				b->setWidth(m_rgbSliderWidth);
 				b->moveRightOf(g, rgbCaptionWidth);
-				auto a = reticleControlPane->addSlider("A", &(user->reticleColor[0].a), 0.0f, 1.0f);
+				auto a = reticleControlPane->addSlider("A", &(user.reticleColor[0].a), 0.0f, 1.0f);
 				a->setCaptionWidth(rgbCaptionWidth);
 				a->setWidth(m_rgbSliderWidth);
 				a->moveRightOf(b, rgbCaptionWidth);
 			} reticleControlPane->endRow();
 			reticleControlPane->beginRow(); {
 				reticleControlPane->addLabel("Reticle Color Max")->setWidth(120.f);
-				auto r = reticleControlPane->addSlider("R", &(user->reticleColor[1].r), 0.0f, 1.0f);
+				auto r = reticleControlPane->addSlider("R", &(user.reticleColor[1].r), 0.0f, 1.0f);
 				r->setCaptionWidth(rgbCaptionWidth);
 				r->setWidth(m_rgbSliderWidth);
-				auto g = reticleControlPane->addSlider("G", &(user->reticleColor[1].g), 0.0f, 1.0f);
+				auto g = reticleControlPane->addSlider("G", &(user.reticleColor[1].g), 0.0f, 1.0f);
 				g->setCaptionWidth(rgbCaptionWidth);
 				g->setWidth(m_rgbSliderWidth);
 				g->moveRightOf(r, rgbCaptionWidth);
-				auto b = reticleControlPane->addSlider("B", &(user->reticleColor[1].b), 0.0f, 1.0f);
+				auto b = reticleControlPane->addSlider("B", &(user.reticleColor[1].b), 0.0f, 1.0f);
 				b->setCaptionWidth(rgbCaptionWidth);
 				b->setWidth(m_rgbSliderWidth);
 				b->moveRightOf(g, rgbCaptionWidth);
-				auto a = reticleControlPane->addSlider("A", &(user->reticleColor[1].a), 0.0f, 1.0f);
+				auto a = reticleControlPane->addSlider("A", &(user.reticleColor[1].a), 0.0f, 1.0f);
 				a->setCaptionWidth(rgbCaptionWidth);
 				a->setWidth(m_rgbSliderWidth);
 				a->moveRightOf(b, rgbCaptionWidth);
 			} reticleControlPane->endRow();
 			if (config.allowReticleChangeTimeChange) {
 				reticleControlPane->beginRow(); {
-					auto c = reticleControlPane->addNumberBox("Reticle Change Time", &(user->reticleChangeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
+					auto c = reticleControlPane->addNumberBox("Reticle Change Time", &(user.reticleChangeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
 					c->setCaptionWidth(150.0f);
 					c->setWidth(m_sliderWidth);
 				} reticleControlPane->endRow();

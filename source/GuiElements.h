@@ -133,7 +133,8 @@ protected:
 
 	UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect);
 
-	void drawUserPane(const MenuConfig& config);
+	/** Creates a GUI Pane for the specified user allowing changeable paramters to be changed */
+	void drawUserPane(const MenuConfig& config, UserConfig& user);
 
 	void updateUserPress();
 	void updateSessionPress();
