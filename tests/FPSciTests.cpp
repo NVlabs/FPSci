@@ -1,15 +1,14 @@
-
 #include "FPSciTests.h"
-#include "TestFakeInput.h"
-#include <FPSciApp.h>
-#include <PlayerEntity.h>
-#include <Session.h>
-#include <gtest/gtest.h>
-
-using namespace G3D;
 
 std::unique_ptr<GApp::Settings> g_defaultSettings;
 std::unique_ptr<GApp::Settings> g_settings;
+
+// Static storage
+std::shared_ptr<FPSciApp>		FPSciTests::s_app;
+CFrame							FPSciTests::s_cameraSpawnFrame;
+std::shared_ptr<TestFakeInput>	FPSciTests::s_fakeInput;
+
+float							FPSciTests::s_targetSpawnDistance = 0.5f;
 
 // Most basic smoke test - launch the app with the default config. Covers frequent exceptions thrown.
 // TODO: Disabled because G3D has trouble running twice
@@ -33,43 +32,10 @@ TEST(DefaultConfigTests, DISABLED_RenderTenFrames)
 	app.quitRequest();
 }
 
-class FPSciTests : public ::testing::Test {
-protected:
-	void SetUp()
-	{
-		// Catch the case when SetUpTestCase/SetUpTestSuite is silently skipped due to different googletest versions.
-		assert(s_app);
-	}
-
-	static void SetUpTestSuite();
-	static void SetUpTestSuiteSafe();
-	static void TearDownTestSuite();
-	static void SetUpTestCase() { SetUpTestSuite(); };
-	static void TearDownTestCase() { TearDownTestSuite(); };
-	static G3D::RealTime fixedTestDeltaTime();
-	static const shared_ptr<PlayerEntity> getPlayer();
-	static void zeroCameraRotation();
-	static int respawnTargets();
-	static void rotateCamera(double degX, double degY);
-	static void getTargets(shared_ptr<TargetEntity>& front, shared_ptr<TargetEntity>& right);
-	static void checkTargets(bool& aliveFront, bool& aliveRight);
-	static inline void injectFire();
-	static inline void spinFrames(int n);
-
-	static std::shared_ptr<FPSciApp>		s_app;
-	static CFrame							s_cameraSpawnFrame;	
-	static std::shared_ptr<TestFakeInput>	s_fakeInput;
-	static float							s_targetSpawnDistance;
-};
-
-std::shared_ptr<FPSciApp>		FPSciTests::s_app;
-CFrame							FPSciTests::s_cameraSpawnFrame;
-std::shared_ptr<TestFakeInput>	FPSciTests::s_fakeInput;
-float							FPSciTests::s_targetSpawnDistance = 0.5f;
-
-void FPSciTests::injectFire() {
+void FPSciTests::injectFire(int frames) {
+	// Not sure why we can't do up and down in one frame?
 	s_fakeInput->window().injectMouseDown(0);
-	s_app->oneFrame();
+	spinFrames(frames);
 	s_fakeInput->window().injectMouseUp(0);
 }
 
@@ -134,10 +100,7 @@ void FPSciTests::SetUpTestSuiteSafe() {
 	assert(s_app->sess->presentationState == PresentationState::initial);
 
 	// Fire to make the red target appear
-	// TODO: there is an issue where the app misses the event entirely if it's down and up in the same frame
-	s_fakeInput->window().injectMouseDown(0);
-	s_app->oneFrame();
-	s_fakeInput->window().injectMouseUp(0);
+	injectFire();
 	s_app->oneFrame();
 
 	assert(s_app->sess->presentationState == PresentationState::feedback);
@@ -488,9 +451,7 @@ TEST_F(FPSciTests, TestAutoFire) {
 
 	s_app->oneFrame();
 
-	s_fakeInput->window().injectMouseDown(0);
-	spinFrames(frames);
-	s_fakeInput->window().injectMouseUp(0);
+	injectFire(frames);
 	s_app->oneFrame();
 
 	bool frontAlive = false;
