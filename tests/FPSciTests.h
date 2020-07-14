@@ -38,7 +38,7 @@ protected:
 	static const shared_ptr<PlayerEntity> getPlayer();
 
 	/** Run n app oneFrame() steps*/
-	void runAppFrames(int n);
+	static inline void runAppFrames(int n);
 
 	/** Reset the camera rotation to it's spawn position (expected to be 0 heading) */
 	static void zeroCameraRotation();
