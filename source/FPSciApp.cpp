@@ -749,6 +749,10 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			toggleUserSettingsMenu();
 			foundKey = true;
 		}
+		else if (keyMap.map["quit"].contains(ksym)) {
+			quitRequest();
+			return true;
+		}
 		else if (activeCamera() == playerCamera()) {
 			// Override 'q', 'z', 'c', and 'e' keys (unused) 
 			// THIS IS A PROBLEM IF THESE ARE KEY MAPPED!!!
@@ -764,12 +768,10 @@ bool FPSciApp::onEvent(const GEvent& event) {
 				scene()->typedEntity<PlayerEntity>("player")->setJumpPressed(true);
 				foundKey = true;
 			}
-			else if (keyMap.map["quit"].contains(ksym)) {
-				quitRequest();
-				return true;
-			}
 		}
-		else if ((event.type == GEventType::KEY_UP)) {
+	}
+	else if ((event.type == GEventType::KEY_UP)) {
+		if (activeCamera() == playerCamera()) {
 			if (keyMap.map["crouch"].contains(ksym)) {
 				scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
 				foundKey = true;
