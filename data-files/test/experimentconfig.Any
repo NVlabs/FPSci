@@ -1,15 +1,25 @@
 {
-    description = "TestExperiment"; 
     settingsVersion = 1; 
+    
+    description = "TestExperiment";
+    sceneName = "G3D Simple Cornell Box (Empty CO)";
+
+    frameDelay = 0;
+    frameRate = 60;
+
     trialFeedbackDuration = 0.0;
     pretrialDuration = 0.001;
     maxTrialDuration = 10000000.0;
+
     playerAxisLock = (false,true,true);
+    playerGravity = Vector3(0,0,0);
+
+	showMenuOnStartup = false;
 
     weapon = {
         id = "default"; 
         maxAmmo = 100000;
-        firePeriod = 0.0001;
+        firePeriod = 0.1;
         instantKill = true;
         damagePerSecond = 100;
         autoFire = false;
@@ -18,19 +28,12 @@
     sessions = (
         {
             id = "main";
-            frameDelay = 0;
-            frameRate = 360;
-            expMode = "real";
-            sceneName = "G3D Simple Cornell Box (Empty CO)";
             trials = (
                 {
                     ids = ( "keepalive", "front", "right" );
                     count = 10;
                 }
             );
-            weapon = {
-                id = "default"; 
-            }; 
         }
     );
 

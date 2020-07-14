@@ -66,6 +66,12 @@
     <ClInclude Include="tests\TestFakeInput.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="data-files\test\experimentconfig.Any" />
+    <None Include="data-files\test\keymap.Any" />
+    <None Include="data-files\test\startupconfig.Any" />
+    <None Include="data-files\test\systemconfig.Any" />
+    <None Include="data-files\test\userconfig.Any" />
+    <None Include="data-files\test\userstatus.Any" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

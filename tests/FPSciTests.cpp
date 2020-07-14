@@ -1,15 +1,14 @@
-
 #include "FPSciTests.h"
-#include "TestFakeInput.h"
-#include <FPSciApp.h>
-#include <PlayerEntity.h>
-#include <Session.h>
-#include <gtest/gtest.h>
-
-using namespace G3D;
 
 std::unique_ptr<GApp::Settings> g_defaultSettings;
 std::unique_ptr<GApp::Settings> g_settings;
+
+// Static storage
+std::shared_ptr<FPSciApp>		FPSciTests::s_app;
+CFrame							FPSciTests::s_cameraSpawnFrame;
+std::shared_ptr<TestFakeInput>	FPSciTests::s_fakeInput;
+
+float							FPSciTests::s_targetSpawnDistance = 0.5f;
 
 // Most basic smoke test - launch the app with the default config. Covers frequent exceptions thrown.
 // TODO: Disabled because G3D has trouble running twice
@@ -33,37 +32,11 @@ TEST(DefaultConfigTests, DISABLED_RenderTenFrames)
 	app.quitRequest();
 }
 
-class FPSciTests : public ::testing::Test {
-protected:
-	void SetUp()
-	{
-		// Catch the case when SetUpTestCase/SetUpTestSuite is silently skipped due to different googletest versions.
-		assert(s_app);
+void FPSciTests::runAppFrames(int n) {
+	for (int i = 0; i < n; ++i) {
+		s_app->oneFrame();
 	}
-
-	static void SetUpTestSuite();
-	static void SetUpTestSuiteSafe();
-	static void TearDownTestSuite();
-	static void SetUpTestCase() { SetUpTestSuite(); };
-	static void TearDownTestCase() { TearDownTestSuite(); };
-	static G3D::RealTime fixedTestDeltaTime();
-	static const shared_ptr<PlayerEntity> getPlayer();
-	static void zeroCameraRotation();
-	static void respawnTargets();
-	static void rotateCamera(double degX, double degY);
-	static void getTargets(shared_ptr<TargetEntity>& front, shared_ptr<TargetEntity>& right);
-	static void checkTargets(bool& aliveFront, bool& aliveRight);
-
-	static std::shared_ptr<FPSciApp>				s_app;
-	static CFrame							s_cameraSpawnFrame;
-	static std::shared_ptr<TestFakeInput>	s_fakeInput;
-	static float							s_targetSpawnDistance;
-};
-
-std::shared_ptr<FPSciApp>			FPSciTests::s_app;
-CFrame							FPSciTests::s_cameraSpawnFrame;
-std::shared_ptr<TestFakeInput>	FPSciTests::s_fakeInput;
-float							FPSciTests::s_targetSpawnDistance = 3.0f;
+}
 
 void FPSciTests::SetUpTestSuite() {
 	try {
@@ -115,13 +88,11 @@ void FPSciTests::SetUpTestSuiteSafe() {
 
 	// Prime the app and load the scene
 	s_app->oneFrame();
-	s_app->oneFrame();
 	s_cameraSpawnFrame = s_app->activeCamera()->frame();
 
 	assert(s_app->sess->currentState == PresentationState::initial);
 
 	// Fire to make the red target appear
-	// TODO: there is an issue where the app misses the event entirely if it's down and up in the same frame
 	s_fakeInput->window().injectMouseDown(0);
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
@@ -167,9 +138,10 @@ void FPSciTests::zeroCameraRotation()
 	if (player) {
 		player->respawn();
 	}
+	EXPECT_EQ(player->heading(), 0.f);
 }
 
-void FPSciTests::respawnTargets()
+int FPSciTests::respawnTargets()
 {
 	s_app->sess->clearTargets();
 	s_app->sess->initTargetAnimation();
@@ -185,6 +157,7 @@ void FPSciTests::respawnTargets()
 	}
 
 	s_app->oneFrame();
+	return s_app->sess->targetArray().size();
 }
 
 void FPSciTests::rotateCamera(double degX, double degY)
@@ -287,33 +260,36 @@ TEST_F(FPSciTests, CanDetectWhichTargets) {
 TEST_F(FPSciTests, KillTargetFront) {
 	EXPECT_EQ(s_app->sess->currentState, PresentationState::trialTask);
 
-	respawnTargets();
+	int spawnedTargets = respawnTargets();
 
 	// Kill the front target - just fire
 	zeroCameraRotation();
-	s_fakeInput->window().injectFire();
+	s_fakeInput->window().injectMouseDown(0);
 	s_app->oneFrame();
-	s_app->oneFrame();
-	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
 	checkTargets(aliveFront, aliveRight);
-	EXPECT_EQ(s_app->sess->targetArray().size(), 2) << "We shot once. There should be two targets left.";
-	EXPECT_FALSE(aliveFront);
-	EXPECT_TRUE(aliveRight);
+	EXPECT_FALSE(aliveFront) << "Front target should not remain (should have been destroyed)!";
+	EXPECT_TRUE(aliveRight) << "Right target should remain (should not have been destroyed)!";
+	EXPECT_EQ(s_app->sess->targetArray().size(), spawnedTargets-1) << format("We shot once (and hit a target). There should be %d targets left.", spawnedTargets-1).c_str();
 }
 
 TEST_F(FPSciTests, KillTargetFrontHoldclick) {
 	EXPECT_EQ(s_app->sess->currentState, PresentationState::trialTask);
-	respawnTargets();
+	
+	int spawnedTargets = respawnTargets();
+	
 	zeroCameraRotation();
 	s_fakeInput->window().injectMouseDown(0);
 	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
 	checkTargets(aliveFront, aliveRight);
-	EXPECT_FALSE(aliveFront);
+	EXPECT_FALSE(aliveFront) << "Front target should not remain (should have been destroyed)!";
+	EXPECT_TRUE(aliveRight) << "Right target should remain (should not have been destroyed)!";
+	EXPECT_EQ(s_app->sess->targetArray().size(), spawnedTargets - 1) << format("We shot once (and hit a target). There should be %d targets left.", spawnedTargets - 1).c_str();
 
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
@@ -321,47 +297,57 @@ TEST_F(FPSciTests, KillTargetFrontHoldclick) {
 
 TEST_F(FPSciTests, KillTargetRightRotate) {
 	EXPECT_EQ(s_app->sess->currentState, PresentationState::trialTask);
-	respawnTargets();
+
+	int spawnedTargets = respawnTargets();
 
 	// Kill the right target by rotating to line it up
 	zeroCameraRotation();
 	rotateCamera(30.0, 0);
+
+	runAppFrames(10);
+
+	s_fakeInput->window().injectMouseDown(0);
 	s_app->oneFrame();
-	s_fakeInput->window().injectFire();
+	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
 	checkTargets(aliveFront, aliveRight);
-	EXPECT_EQ(s_app->sess->targetArray().size(), 2) << "We shot once. There should be two targets left.";
-	EXPECT_TRUE(aliveFront);
-	EXPECT_FALSE(aliveRight);
+	EXPECT_TRUE(aliveFront) << "Front target should remain (should not have been destroyed)!";
+	EXPECT_FALSE(aliveRight) << "Right target should not remain (should have been destroyed)!";
+	EXPECT_EQ(s_app->sess->targetArray().size(), spawnedTargets - 1) << format("We shot once (and hit a target). There should be %d targets left.", spawnedTargets - 1).c_str();
 }
 
 TEST_F(FPSciTests, KillTargetRightTranslate) {
 	EXPECT_EQ(s_app->sess->currentState, PresentationState::trialTask);
-	respawnTargets();
+	
+	int spawnedTargets = respawnTargets();
 
 	zeroCameraRotation();
 	auto player = getPlayer();
 	ASSERT_TRUE(notNull(player));
 
 	// Kill the right target by moving to line it up
-	const float moveX = 2.5f;
+	const float moveX = 0.5f;
 	*player->moveRate = (float)(moveX / fixedTestDeltaTime());
 	*player->moveScale = Vector2::one();
 	s_fakeInput->window().injectKeyDown(GKey('d'));
 	s_app->oneFrame();
 	s_fakeInput->window().injectKeyUp(GKey('d'));
+	s_app->oneFrame();
 
-	s_fakeInput->window().injectFire();
+	// Fire with mouse click
+	s_fakeInput->window().injectMouseDown(0);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
 	checkTargets(aliveFront, aliveRight);
 	EXPECT_EQ(s_app->simStepDuration(), GApp::MATCH_REAL_TIME_TARGET);
-	EXPECT_EQ(s_app->sess->targetArray().size(), 2) << "We shot once. There should be two targets left.";
-	EXPECT_TRUE(aliveFront);
-	EXPECT_FALSE(aliveRight);
+	EXPECT_TRUE(aliveFront) << "Front target should remain (should not have been destroyed)!";
+	EXPECT_FALSE(aliveRight) << "Right target should not remain (should have been destroyed)!";
+	EXPECT_EQ(s_app->sess->targetArray().size(), spawnedTargets - 1) << format("We shot once (and hit a target). There should be %d targets left.", spawnedTargets - 1).c_str();
 }
 
 TEST_F(FPSciTests, ResetCamera) {
@@ -456,15 +442,18 @@ TEST_F(FPSciTests, TestAutoFire) {
 	respawnTargets();
 	zeroCameraRotation();
 
-	int frames = 3;
-	float damagePerFrame = 0.1f;
+	const int frames = 3;
+	const float damagePerFrame = 0.1f;
+	const float firePeriod = (float)fixedTestDeltaTime() - 0.001f;
 
 	s_app->sessConfig->weapon.autoFire = true;
-	s_app->sessConfig->weapon.damagePerSecond = (float)(damagePerFrame / fixedTestDeltaTime());
+	s_app->sessConfig->weapon.damagePerSecond = damagePerFrame / firePeriod;
+	s_app->sessConfig->weapon.firePeriod = firePeriod;
+
+	s_app->oneFrame();
 
 	s_fakeInput->window().injectMouseDown(0);
-	for (int i = 0; i < frames; ++i)
-		s_app->oneFrame();
+	runAppFrames(frames);
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
 
