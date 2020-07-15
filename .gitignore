@@ -2,7 +2,6 @@
 .vscode
 .vs
 # Don't check in any compiled results
-vs/Build/x64
 vs/Build
 vs/packages
 # Avoid .pyc files (everywhere)
