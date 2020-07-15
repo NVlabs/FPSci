@@ -1145,7 +1145,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 
 void FPSciApp::missEvent() {
 	if (sess) {
-		sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
+			sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
 	}
 }
 
@@ -1218,10 +1218,6 @@ void FPSciApp::onUserInput(UserInput* ui) {
 							// Play scene hit sound
 							if (!sessConfig->weapon.isLaser()) {
 								m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
-							}
-							// Handle logging player miss for hitscanned weapons
-							if (sessConfig->weapon.hitScan && hitDist < finf()) {
-								sess->accumulatePlayerAction(PlayerActionType::Miss);
 							}
 						}
 					}
