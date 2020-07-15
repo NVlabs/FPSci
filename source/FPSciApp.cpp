@@ -1145,7 +1145,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 
 void FPSciApp::missEvent() {
 	if (sess) {
-			sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
+		sess->accumulatePlayerAction(PlayerActionType::Miss);		// Declare this shot a miss here
 	}
 }
 
