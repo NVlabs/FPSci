@@ -1219,10 +1219,6 @@ void FPSciApp::onUserInput(UserInput* ui) {
 							if (!sessConfig->weapon.isLaser()) {
 								m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
 							}
-							// Handle logging player miss for hitscanned weapons
-							if (sessConfig->weapon.hitScan && hitDist < finf()) {
-								sess->accumulatePlayerAction(PlayerActionType::Miss);
-							}
 						}
 					}
 					// Avoid accumulating invalid clicks during holds...
