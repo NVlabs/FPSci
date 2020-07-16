@@ -99,7 +99,7 @@ protected:
 	/** Set the scoped view (and also adjust the turn scale), use setScopeView(!weapon->scoped()) to toggle scope */
 	void setScopeView(bool scoped = true);
 
-	void hitTarget(shared_ptr<TargetEntity>);
+	void hitTarget(shared_ptr<TargetEntity> target);
 	void missEvent();
 
 	virtual void drawHUD(RenderDevice *rd);
@@ -182,6 +182,7 @@ public:
 	void markSessComplete(String id);
 	virtual void updateSession(const String& id);
 	void updateParameters(int frameDelay, float frameRate);
+	void updateTargetColor(shared_ptr<TargetEntity> target);
 	void presentQuestion(Question question);
 
     void quitRequest();

@@ -140,10 +140,9 @@ void Session::initTargetAnimation() {
 	if (currentState == PresentationState::trialTask) {
 		if (m_config->targetView.previewWithRef && m_config->targetView.showRefTarget) {
 			// Activate the preview targets
-			const Color3 activeColor = m_config->targetView.healthColors[0];
 			for (shared_ptr<TargetEntity> target : m_targetArray) {
 				target->setCanHit(true);
-				target->setColor(activeColor);
+				m_app->updateTargetColor(target);
 				m_hittableTargets.append(target);
 			}
 		}

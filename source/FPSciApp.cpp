@@ -1128,19 +1128,24 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 		if (respawned) {
 			sess->randomizePosition(target);
 		}
-		BEGIN_PROFILER_EVENT("fire/changeColor");
-		BEGIN_PROFILER_EVENT("fire/clone");
-		shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
-		END_PROFILER_EVENT();
-		BEGIN_PROFILER_EVENT("fire/materialSet");
-		shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health()*m_MatTableSize), m_MatTableSize - 1)];
-		pose->materialTable.set("core/icosahedron_default", mat);
-		END_PROFILER_EVENT();
-		BEGIN_PROFILER_EVENT("fire/setPose");
-		target->setPose(pose);
-		END_PROFILER_EVENT();
-		END_PROFILER_EVENT();
+		// Update the target color based on it's health
+		updateTargetColor(target);
 	}
+}
+
+void FPSciApp::updateTargetColor(shared_ptr<TargetEntity> target) {
+	BEGIN_PROFILER_EVENT("fire/changeColor");
+	BEGIN_PROFILER_EVENT("fire/clone");
+	shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
+	END_PROFILER_EVENT();
+	BEGIN_PROFILER_EVENT("fire/materialSet");
+	shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health() * m_MatTableSize), m_MatTableSize - 1)];
+	pose->materialTable.set("core/icosahedron_default", mat);
+	END_PROFILER_EVENT();
+	BEGIN_PROFILER_EVENT("fire/setPose");
+	target->setPose(pose);
+	END_PROFILER_EVENT();
+	END_PROFILER_EVENT();
 }
 
 void FPSciApp::missEvent() {
