@@ -1232,9 +1232,9 @@ void FPSciApp::onUserInput(UserInput* ui) {
 						sess->accumulatePlayerAction(PlayerActionType::Invalid);
 					}
 				}
-			}
-			else {
-				sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
+				else {
+					sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
+				}
 			}
 
 			// Check for developer mode editing here, if so set selected waypoint using the camera
