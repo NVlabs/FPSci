@@ -258,6 +258,9 @@ void Session::updatePresentationState()
 				m_player->setMoveEnable(true);
 			}
 
+			// Reset weapon cooldown
+			m_lastFireAt = 0.f;
+
 			closeTrialProcesses();						// End previous process (if running)
 			runTrialCommands("start");					// Run start of trial commands
 
