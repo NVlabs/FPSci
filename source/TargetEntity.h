@@ -154,7 +154,7 @@ public:
 		}
 	}
 
-	/**Simple routine to do damage */
+	/**Apply damage to health and return true if health <= 0 */
 	bool doDamage(float damage) {
 		m_health -= damage;
 		return m_health <= 0;
