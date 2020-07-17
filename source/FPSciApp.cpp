@@ -1133,7 +1133,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	}
 }
 
-void FPSciApp::updateTargetColor(shared_ptr<TargetEntity>& target) {
+void FPSciApp::updateTargetColor(const shared_ptr<TargetEntity>& target) {
 	BEGIN_PROFILER_EVENT("updateTargetColor/changeColor");
 	BEGIN_PROFILER_EVENT("updateTargetColor/clone");
 	shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
