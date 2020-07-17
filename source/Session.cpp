@@ -279,6 +279,9 @@ void Session::updatePresentationState()
 
 			closeTrialProcesses();				// Stop start of trial processes
 			runTrialCommands("end");			// Run the end of trial processes
+
+			// Reset weapon cooldown
+			m_lastFireAt = 0.f;
 		}
 	}
 	else if (currentState == PresentationState::trialFeedback)
