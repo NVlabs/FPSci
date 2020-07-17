@@ -182,7 +182,7 @@ public:
 	void markSessComplete(String id);
 	virtual void updateSession(const String& id);
 	void updateParameters(int frameDelay, float frameRate);
-	void updateTargetColor(shared_ptr<TargetEntity> target);
+	void updateTargetColor(shared_ptr<TargetEntity>& target);
 	void presentQuestion(Question question);
 
     void quitRequest();
