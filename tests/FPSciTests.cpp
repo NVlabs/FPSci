@@ -114,6 +114,31 @@ void FPSciTests::SetUpTestSuiteSafe() {
 	s_app->oneFrame();
 }
 
+void FPSciTests::SelectSession(const String& sessionId) {
+	s_app->updateSession(sessionId);
+
+	// Fire to make the red target appear
+	s_fakeInput->window().injectMouseDown(0);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
+	s_app->oneFrame();
+
+	assert(s_app->sess->currentState == PresentationState::trialFeedback);
+
+	System::sleep(0.5f);
+	s_app->oneFrame();
+
+	// Press shift to become ready
+	// If this fails, future g_app->sess->presentationState checks will fail
+	s_fakeInput->window().injectReady();
+	s_app->oneFrame();
+
+	// Wait for the ready timer
+	// TODO: it sounds like this should be needed before injectReady() and not after as well, but it often fails without.
+	System::sleep(0.5f);
+	s_app->oneFrame();
+}
+
 void FPSciTests::TearDownTestSuite() {
 	s_app->quitRequest();
 	s_app.reset();
@@ -469,4 +494,54 @@ TEST_F(FPSciTests, TestAutoFire) {
 	EXPECT_TRUE(frontAlive) << "Low damage-per-second with auto-fire but target still died";
 
 	s_app->sessConfig->weapon.autoFire = false;
+}
+
+
+TEST_F(FPSciTests, TestTargetSizes) {
+	SelectSession("sizes");
+
+	// epsilon for size comparisons
+	float e = 0.00001f;
+
+	s_app->oneFrame();
+	auto spawnedtargets = respawnTargets();
+
+	ASSERT_EQ(spawnedtargets, 5);
+	auto small = s_app->sess->targetArray()[0];
+	auto medium = s_app->sess->targetArray()[1];
+	auto large = s_app->sess->targetArray()[2];
+	auto toosmall = s_app->sess->targetArray()[3];
+	auto toolarge = s_app->sess->targetArray()[4];
+
+	// All of the below sizes are what is computed in TargetEntity.h and 
+	// *do not match* the values written in the config
+	auto smallid = small->id();
+	EXPECT_TRUE(smallid.compare("small") == 0);
+	auto smallsize = small->size();
+	float targetsmallsize = 0.05408785f;
+	EXPECT_NEAR(smallsize, targetsmallsize, targetsmallsize * e);
+
+	auto mediumid = medium->id();
+	EXPECT_TRUE(mediumid.compare("medium") == 0);
+	auto mediumsize = medium->size();
+	float targetmediumsize = 0.09346383f;
+	EXPECT_NEAR(mediumsize, targetmediumsize, targetmediumsize * e);
+
+	auto largeid = large->id();
+	EXPECT_TRUE(largeid.compare("large") == 0);
+	auto largesize = large->size();
+	float targetlargesize = 2.07360029f;
+	EXPECT_NEAR(largesize, targetlargesize, targetlargesize * e);
+
+	auto toosmallid = toosmall->id();
+	EXPECT_TRUE(toosmallid.compare("toosmall") == 0);
+	auto toosmallsize = toosmall->size();
+	float targettoosmallsize = 0.02608403f;
+	EXPECT_NEAR(toosmallsize, targettoosmallsize, targettoosmallsize * e);
+
+	auto toolargeid = toolarge->id();
+	EXPECT_TRUE(toolargeid.compare("toolarge") == 0);
+	auto toolargesize = toolarge ->size();
+	float targettoolargesize = 5.15978241f;
+	EXPECT_NEAR(toolargesize, targettoolargesize, targettoolargesize * e);
 }
