@@ -7,9 +7,10 @@ class TargetConfig;
 //#define DRAW_BOUNDING_SPHERES	1		// Uncomment this to draw bounding spheres (useful for target sizing)
 #define BOUNDING_SPHERE_RADIUS	0.5		///< Use a 0.5m radius for sizing here
 
-// Scale and offset for target
+// Scale, offset and count for target scaling
 const float TARGET_MODEL_ARRAY_SCALING = 0.25992104989f;
 const float TARGET_MODEL_ARRAY_OFFSET = 40;
+const int	TARGET_MODEL_SCALE_COUNT = 50;
 
 struct Destination{
 public:

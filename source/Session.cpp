@@ -88,7 +88,6 @@ void Session::onInit(String filename, String description) {
 	m_camera = m_app->activeCamera();
 
 	m_targetModels = &(m_app->targetModels);
-	m_modelScaleCount = m_app->modelScaleCount;
 
 	// Check for valid session
 	if (m_hasSession) {
@@ -630,7 +629,7 @@ shared_ptr<TargetEntity> Session::spawnDestTarget(
 	// Create the target
 	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
-	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 
 	const shared_ptr<TargetEntity>& target = TargetEntity::create(config, nameStr, m_scene, (*m_targetModels)[config->id][scaleIndex], position, scaleIndex, paramIdx);
 
@@ -651,7 +650,7 @@ shared_ptr<FlyingEntity> Session::spawnReferenceTarget(
 	const float size,
 	const Color3& color)
 {
-	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 	const shared_ptr<FlyingEntity>& target = FlyingEntity::create("reference", m_scene, (*m_targetModels)["reference"][scaleIndex], CFrame());
 
 	// Setup additional target parameters
@@ -672,7 +671,7 @@ shared_ptr<FlyingEntity> Session::spawnFlyingTarget(
 	const String& name)
 {
 	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
-	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const bool isWorldSpace = config->destSpace == "world";
 
@@ -702,7 +701,7 @@ shared_ptr<JumpingEntity> Session::spawnJumpingTarget(
 	const String& name)
 {
 	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
-	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const bool isWorldSpace = config->destSpace == "world";
 

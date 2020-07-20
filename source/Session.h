@@ -126,7 +126,6 @@ protected:
 
 	// Target management
 	Table<String, Array<shared_ptr<ArticulatedModel>>>* m_targetModels;
-	int m_modelScaleCount;
 	int m_lastUniqueID = 0;									///< Counter for creating unique names for various entities
 	
 	Array<shared_ptr<TargetEntity>> m_targetArray;			///< Array of drawn targets
