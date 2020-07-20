@@ -136,7 +136,6 @@ public:
 	shared_ptr<DialogBase>			dialog;							///< Dialog box
 
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
-	const int											modelScaleCount = 30;
 
 	shared_ptr<Session> sess;			///< Pointer to the experiment
 	shared_ptr<Camera> playerCamera;	///< Pointer to the player camera						

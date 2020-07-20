@@ -187,7 +187,7 @@ void FPSciApp::loadModels() {
 
 		// Create the target/explosion models for this target
 		Array<shared_ptr<ArticulatedModel>> tModels, expModels;
-		for (int i = 0; i <= modelScaleCount; ++i) {
+		for (int i = 0; i <= TARGET_MODEL_SCALE_COUNT; ++i) {
 			const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
 			tSpec.set("scale", scale*default_scale);
 			explosionSpec.set("scale", (20.0 * scale * explosionScales.get(id)));

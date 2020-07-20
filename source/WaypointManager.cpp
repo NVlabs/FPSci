@@ -193,7 +193,7 @@ shared_ptr<TargetEntity> WaypointManager::spawnDestTargetPreview(
 {
 	// Create the target
 	const String nameStr = name.empty() ? format("destPreview") : name;
-	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_app->modelScaleCount - 1);
+	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, m_scene, m_app->targetModels[id][scaleIndex], scaleIndex, 0);
 
 	// Setup (additional) target parameters
