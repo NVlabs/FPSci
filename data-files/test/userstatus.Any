@@ -6,12 +6,12 @@
         { 
             completedSessions = ( ); 
             id = "TestUser"; 
-            sessions = ( "main"); 
+            sessions = ( "main", "sizes"); 
         }, 
         { 
             completedSessions = ( ); 
             id = "anon"; 
-            sessions = ( "main"); 
+            sessions = ( "main", "sizes"); 
         } ); 
     
 } 
