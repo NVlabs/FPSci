@@ -41,8 +41,6 @@
             trials = (
                 {
                     ids = ( "small", "medium", "large", "toosmall", "toolarge");
-                    //ids = ( "small");
-                    //ids = ( "small", "small", "small", "small", "small");
                     count = 5;
                 }
             );
@@ -110,8 +108,8 @@
             visualSize = [ 0.05, 0.05 ];
             destSpace = "world";
             spawnBounds = AABox {
-                Point3(0.0, 0.0, -2.00001),
-                Point3(0.00001, 0.00001, -2.0),
+                Point3(-0.5, 0.5, -1.00001),
+                Point3(-0.50001, 0.50001, -1.0),
             };
             moveBounds = AABox {
                 Point3(-100.0, -100.0, -100.0),
@@ -126,8 +124,8 @@
             visualSize = [ 0.1, 0.1 ];
             destSpace = "world";
             spawnBounds = AABox {
-                Point3(0.0, 0.0, -2.00001),
-                Point3(0.00001, 0.00001, -2.0),
+                Point3(0.0, 0.5, -1.00001),
+                Point3(0.00001, 0.50001, -1.0),
             };
             moveBounds = AABox {
                 Point3(-100.0, -100.0, -100.0),
@@ -142,8 +140,8 @@
             visualSize = [ 2, 2 ];
             destSpace = "world";
             spawnBounds = AABox {
-                Point3(0.0, 0.0, -2.00001),
-                Point3(0.00001, 0.00001, -2.0),
+                Point3(1.25, 0.5, -1.00001),
+                Point3(1.25001, 0.50001, -1.0),
             };
             moveBounds = AABox {
                 Point3(-100.0, -100.0, -100.0),
@@ -158,8 +156,8 @@
             visualSize = [ 0.000001, 0.000001 ];
             destSpace = "world";
             spawnBounds = AABox {
-                Point3(0.0, 0.0, -2.00001),
-                Point3(0.00001, 0.00001, -2.0),
+                Point3(0.02, -1.0, -0.00201),
+                Point3(0.02001, -1.00001, -0.002),
             };
             moveBounds = AABox {
                 Point3(-100.0, -100.0, -100.0),
@@ -174,11 +172,11 @@
             visualSize = [ 100000000, 100000000 ];
             destSpace = "world";
             spawnBounds = AABox {
-                Point3(0.0, 0.0, -2.00001),
-                Point3(0.00001, 0.00001, -2.0),
+                Point3(0.0, -2.0, -100.00001),
+                Point3(0.00001, -2.00001, -100.0),
             };
             moveBounds = AABox {
-                Point3(-100.0, -100.0, -100.0),
+                Point3(-100.0, -100.0, -100000000.0),
                 Point3(100.0, 100.0, 100.0),
             };
             motionChangePeriod = [ 0.8, 1.5 ];
