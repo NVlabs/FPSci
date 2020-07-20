@@ -85,9 +85,6 @@ protected:
 	void updateFromSceneConfig(shared_ptr<PlayerEntity> player);
 	shared_ptr<PlayerEntity> updatePlayer();
 
-	/** Get the player camera */
-	shared_ptr<Camera> playerCamera() {  return scene()->typedEntity<Camera>("playerCamera"); }
-
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {
 		const float scale = 0.5f / m_userSettingsWindow->pixelScale();
@@ -141,7 +138,8 @@ public:
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
 	const int											modelScaleCount = 30;
 
-	shared_ptr<Session> sess;										///< Pointer to the experiment
+	shared_ptr<Session> sess;			///< Pointer to the experiment
+	shared_ptr<Camera> playerCamera;	///< Pointer to the player camera						
 
 	bool renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
 	int  displayLagFrames = 0;			///< Count of frames of latency to add
