@@ -8,8 +8,8 @@ class TargetConfig;
 #define BOUNDING_SPHERE_RADIUS	0.5		///< Use a 0.5m radius for sizing here
 
 // Scale and offset for target
-const float TARGET_MODEL_ARRAY_SCALING = 0.4f;
-const float TARGET_MODEL_ARRAY_OFFSET = 20;
+const float TARGET_MODEL_ARRAY_SCALING = 0.25992104989f;
+const float TARGET_MODEL_ARRAY_OFFSET = 40;
 
 struct Destination{
 public:
