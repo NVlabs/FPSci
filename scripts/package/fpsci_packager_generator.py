@@ -17,6 +17,7 @@ currentRelease = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']
 
 # Name of the packaging script to generate
 outputScript = 'scripts/package/fpsci_packager.sh'
+outputBatchScript = 'scripts/package/fpsci_packager.bat'
 
 # Path of the log.txt file to use
 inputLog = 'data-files/log.txt'
@@ -45,9 +46,6 @@ from datetime import datetime
 now = datetime.now()
 
 if __name__ == '__main__':
-    # The log file which lists the files used
-    log = open(inputLog)
-
     # Get the current set of lines in the script
     lineSet = set(open(outputScript))
     for line in sorted(lineSet):
@@ -61,58 +59,76 @@ if __name__ == '__main__':
     lineSet.add('cp README.txt '  + distPath + '\n')
     # For some reason these files aren't captured by G3D as used
     lineSet.add('mkdir -p dist/shader/DefaultRenderer/\n')
-    lineSet.add('cp c:/g3d/G3D10/data-files/shader/DefaultRenderer/DefaultRenderer_OIT_writePixel.glsl dist/shader/DefaultRenderer/\n')
+    lineSet.add('cp $g3d/G3D10/data-files/shader/DefaultRenderer/DefaultRenderer_OIT_writePixel.glsl dist/shader/DefaultRenderer/\n')
     lineSet.add('mkdir -p dist/shader/UniversalSurface/\n')
-    lineSet.add('cp c:/g3d/G3D10/data-files/shader/UniversalSurface/UniversalSurface_depthPeel.pix dist/shader/UniversalSurface/\n')
+    lineSet.add('cp $g3d/G3D10/data-files/shader/UniversalSurface/UniversalSurface_depthPeel.pix dist/shader/UniversalSurface/\n')
 
     # Set up copy of .exe
     lineSet.add('cp vs/Build/FirstPersonScience-x64-Release/FirstPersonScience.exe ' + distPath + '\n')
 
-    # main loop, need to ignore lines before the file list begins
-    beforeFiles = True
-    for line in log.readlines():
-        # In the file list, add this file to what we want to copy
-        if not beforeFiles and line != '\n':
-            filename = line.strip()
-            basename = filename.split('/')[-1]
+    # The log file which lists the files used
+    try:
+        log = open(inputLog)
+    except FileNotFoundError:
+        print('No %s found, continuing without it.'%(inputLog))
+    else:
+        with log:
+            print('Adding files from %s to %s.'%(inputLog, outputScript))
+            # main loop, need to ignore lines before the file list begins
+            beforeFiles = True
+            for line in log.readlines():
+                # In the file list, add this file to what we want to copy
+                if not beforeFiles and line != '\n':
+                    filename = line.strip()
+                    basename = filename.split('/')[-1]
 
-            # Exclude the lists of files we don't want to package
-            if basename in excludeList or basename in secondaryExcludeList:
-                continue
-            
-            # Absolute path given
-            if filename[1:].startswith(':/'):
-                for path in basePath:
-                    dest = filename.find(path)
-                    if dest > 0:
-                        dest += len(path) + 1
-                        additionalPath = filename[dest:-len(basename)]
-                        # if this file is inside a compressed structure, skip copying it
-                        if additionalPath.find('.pk3') > 0 or additionalPath.find('.zip') > 0:
-                            break
+                    # Exclude the lists of files we don't want to package
+                    if basename in excludeList or basename in secondaryExcludeList:
+                        continue
+                    
+                    # Absolute path given
+                    if filename[1:].startswith(':/'):
+                        for path in basePath:
+                            dest = filename.find(path)
+                            if dest > 0:
+                                dest += len(path) + 1
+                                additionalPath = filename[dest:-len(basename)]
+                                # if this file is inside a compressed structure, skip copying it
+                                if additionalPath.find('.pk3') > 0 or additionalPath.find('.zip') > 0:
+                                    break
 
-                        # Make paths generic
-                        filename = filename.replace(g3dPath, "$g3d").replace(runPath, ".")
+                                # Make paths generic
+                                filename = filename.replace(g3dPath, "$g3d").replace(runPath, ".")
 
-                        # Write commands to file
-                        lineSet.add('mkdir -p ' + distPath + additionalPath + '\n')
-                        lineSet.add('cp ' + filename + ' ' + distPath + additionalPath + '\n')
+                                # Write commands to file
+                                lineSet.add('mkdir -p ' + distPath + additionalPath + '\n')
+                                lineSet.add('cp ' + filename + ' ' + distPath + additionalPath + '\n')
 
-            # file is in the PATH, need to find it
-            else:
-                lineSet.add('cp `which ' + filename + '` ' + distPath + '\n')
+                    # file is in the PATH, need to find it
+                    else:
+                        # Use the `which` version if $g3d is the wrong path
+                        # lineSet.add('cp `which ' + filename + '` ' + distPath + '\n')
+                        lineSet.add('cp `$g3d/G3D10/build/bin/' + filename + ' ' + distPath + '\n')
 
-        # Find where the filenames start
-        if line.startswith('    ###    Files Used    ###'):
-            beforeFiles = False
-    log.close()
+                # Find where the filenames start
+                if line.startswith('    ###    Files Used    ###'):
+                    beforeFiles = False
 
     # Write the set of commands in sorted order
     with open(outputScript, 'w') as packageScript:
+        print('Writing updated bash script to ' + outputScript + '.')
         # Script header and timestamp
         packageScript.writelines(['#!/bin/bash\n', '# Autogenerated ' + now.strftime('%Y %m %d %H:%M:%S\n')])
         for line in sorted(lineSet, reverse=True):
             packageScript.write(line)
+
+    # Write the set of commands in sorted order as a batch script
+    with open(outputBatchScript, 'w') as packageScript:
+        print('Writing updated batch script to ' + outputBatchScript + '.')
+        # Script timestamp
+        packageScript.writelines(['REM Autogenerated ' + now.strftime('%Y %m %d %H:%M:%S\n')])
+        for line in sorted(lineSet, reverse=True):
+            packageScript.write(line.replace('/', '\\').replace('mkdir -p ', 'mkdir ').replace('cp ', 'copy ').replace('$g3d', '%g3d%'))
 
     # Write readme
     readmeString = "Welcome to First Person Science! We're glad you're joining us in studying first person aiming.\n\n"
@@ -121,5 +137,6 @@ if __name__ == '__main__':
     readmeString += "In order to use this build, you may need to install the x64 version (and possibly the x86 version) of the Microsoft Visual C++ Redistributable found at this link available here: https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads\n\n"
     readmeString += "If you're interested, the source for this version is available here: https://github.com/NVlabs/abstract-fps/tree/%s\n"%(currentRelease)
     with open('README.txt', 'w') as readmeFile:
+        print('Writing generated readme to README.txt.')
         readmeFile.write(readmeString)
 

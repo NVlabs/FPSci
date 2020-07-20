@@ -140,10 +140,9 @@ void Session::initTargetAnimation() {
 	if (currentState == PresentationState::trialTask) {
 		if (m_config->targetView.previewWithRef && m_config->targetView.showRefTarget) {
 			// Activate the preview targets
-			const Color3 activeColor = m_config->targetView.healthColors[0];
 			for (shared_ptr<TargetEntity> target : m_targetArray) {
 				target->setCanHit(true);
-				target->setColor(activeColor);
+				m_app->updateTargetColor(target);
 				m_hittableTargets.append(target);
 			}
 		}
@@ -280,6 +279,9 @@ void Session::updatePresentationState()
 
 			closeTrialProcesses();				// Stop start of trial processes
 			runTrialCommands("end");			// Run the end of trial processes
+
+			// Reset weapon cooldown
+			m_lastFireAt = 0.f;
 		}
 	}
 	else if (currentState == PresentationState::trialFeedback)

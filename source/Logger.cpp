@@ -29,7 +29,7 @@ String FPSciLogger::formatFileTime(FILETIME ft) {
 
 String FPSciLogger::genFileTimestamp() {
 	_SYSTEMTIME t;
-	GetLocalTime(&t);
+	GetSystemTime(&t);
 	char tmCharArray[30] = { 0 };
 	sprintf(tmCharArray, "%04d_%02d_%02d-%02d_%02d_%02d", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
 	std::string timeStr(tmCharArray);
