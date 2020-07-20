@@ -500,8 +500,8 @@ TEST_F(FPSciTests, TestAutoFire) {
 TEST_F(FPSciTests, TestTargetSizes) {
 	SelectSession("sizes");
 
-	// epsilon for size comparisons
-	float e = 0.00001f;
+	// % error for size comparisons
+	float e = 0.035f;
 
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
@@ -518,30 +518,30 @@ TEST_F(FPSciTests, TestTargetSizes) {
 	auto smallid = small->id();
 	EXPECT_TRUE(smallid.compare("small") == 0);
 	auto smallsize = small->size();
-	float targetsmallsize = 0.05408785f;
+	float targetsmallsize = 0.05f;
 	EXPECT_NEAR(smallsize, targetsmallsize, targetsmallsize * e);
 
 	auto mediumid = medium->id();
 	EXPECT_TRUE(mediumid.compare("medium") == 0);
 	auto mediumsize = medium->size();
-	float targetmediumsize = 0.09346383f;
+	float targetmediumsize = 0.1f;
 	EXPECT_NEAR(mediumsize, targetmediumsize, targetmediumsize * e);
 
 	auto largeid = large->id();
 	EXPECT_TRUE(largeid.compare("large") == 0);
 	auto largesize = large->size();
-	float targetlargesize = 2.07360029f;
+	float targetlargesize = 2.0f;
 	EXPECT_NEAR(largesize, targetlargesize, targetlargesize * e);
 
 	auto toosmallid = toosmall->id();
 	EXPECT_TRUE(toosmallid.compare("toosmall") == 0);
 	auto toosmallsize = toosmall->size();
-	float targettoosmallsize = 0.02608403f;
+	float targettoosmallsize = 0.0001f;
 	EXPECT_NEAR(toosmallsize, targettoosmallsize, targettoosmallsize * e);
 
 	auto toolargeid = toolarge->id();
 	EXPECT_TRUE(toolargeid.compare("toolarge") == 0);
 	auto toolargesize = toolarge ->size();
-	float targettoolargesize = 5.15978241f;
+	float targettoolargesize = 8.0f;
 	EXPECT_NEAR(toolargesize, targettoolargesize, targettoolargesize * e);
 }
