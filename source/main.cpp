@@ -18,6 +18,11 @@ int main(int argc, const char* argv[]) {
 	{
 		G3DSpecification spec;
 		spec.audio = FPSciApp::startupConfig.audioEnable;
+		
+		// lower audio latency
+		spec.audioBufferLength = 256;
+		spec.audioNumBuffers = 1;
+
 		initGLG3D(spec);
 	}
 
