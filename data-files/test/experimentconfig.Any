@@ -169,14 +169,14 @@
         {
             id = "toolarge";
             speed = [ 0.0, 0.0 ];
-            visualSize = [ 100000000, 100000000 ];
+            visualSize = [ 200, 200 ];
             destSpace = "world";
             spawnBounds = AABox {
                 Point3(0.0, -2.0, -100.00001),
                 Point3(0.00001, -2.00001, -100.0),
             };
             moveBounds = AABox {
-                Point3(-100.0, -100.0, -100000000.0),
+                Point3(-100.0, -100.0, -200.0),
                 Point3(100.0, 100.0, 100.0),
             };
             motionChangePeriod = [ 0.8, 1.5 ];

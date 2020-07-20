@@ -513,8 +513,7 @@ TEST_F(FPSciTests, TestTargetSizes) {
 	auto toosmall = s_app->sess->targetArray()[3];
 	auto toolarge = s_app->sess->targetArray()[4];
 
-	// All of the below sizes are what is computed in TargetEntity.h and 
-	// *do not match* the values written in the config
+	// Expect to match the values written in the config
 	auto smallid = small->id();
 	EXPECT_TRUE(smallid.compare("small") == 0);
 	auto smallsize = small->size();
@@ -536,12 +535,14 @@ TEST_F(FPSciTests, TestTargetSizes) {
 	auto toosmallid = toosmall->id();
 	EXPECT_TRUE(toosmallid.compare("toosmall") == 0);
 	auto toosmallsize = toosmall->size();
+	// smallest target is 0.1 mm
 	float targettoosmallsize = 0.0001f;
 	EXPECT_NEAR(toosmallsize, targettoosmallsize, targettoosmallsize * e);
 
 	auto toolargeid = toolarge->id();
 	EXPECT_TRUE(toolargeid.compare("toolarge") == 0);
 	auto toolargesize = toolarge ->size();
+	// largest target is 8 m
 	float targettoolargesize = 8.0f;
 	EXPECT_NEAR(toolargesize, targettoolargesize, targettoolargesize * e);
 }
