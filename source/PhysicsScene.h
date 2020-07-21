@@ -19,17 +19,11 @@ public:
 
     void poseExceptExcluded(Array<shared_ptr<Surface> >& surfaceArray, const String& excludedEntity);
 
-    void setGravity(const Vector3& newGravity) {
-        m_gravity = newGravity;
-    }
+    void setGravity(const Vector3& newGravity) { m_gravity = newGravity; }
+    void setResetHeight(const float resetHeight) { m_resetHeight = resetHeight;  }
 
-	float resetHeight() {
-		return m_resetHeight;
-	}
-
-    Vector3 gravity() const {
-        return m_gravity;
-    }
+	float resetHeight() { return m_resetHeight; }
+    Vector3 gravity() const { return m_gravity; }
 
     /** Extend to read in physics properties */
     virtual Any load(const String& sceneName, const LoadOptions& loadOptions = LoadOptions()) override;

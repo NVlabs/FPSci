@@ -275,7 +275,7 @@ void FPSciApp::makeGUI() {
 void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
-	String filename = Scene::sceneNameToFilename(sessConfig->sceneName);
+	String filename = Scene::sceneNameToFilename(sessConfig->scene.name);
 	scene()->toAny().save(filename);
 }
 
@@ -337,30 +337,41 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, simStepDuration());
 }
 
-shared_ptr<PlayerEntity> FPSciApp::updatePlayer() {
-	// Pick between experiment and session settings
+void FPSciApp::initPlayer() {
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
+
+	// Set gravity and camera field of view
 	Vector3 grav = experimentConfig.player.gravity;
 	float FoV = experimentConfig.render.hFoV;
 	if (sessConfig != nullptr) {
 		grav = sessConfig->player.gravity;
 		FoV = sessConfig->render.hFoV;
 	}
-
-	// Get the reset height
-	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
 	pscene->setGravity(grav);
-	float resetHeight = pscene->resetHeight();
-	if (isnan(resetHeight)) {
-		resetHeight = -1e6;
-	}
+	playerCamera->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
 
 	// For now make the player invisible (prevent issues w/ seeing model from inside)
-	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	player->setVisible(false);
-	player->setRespawnHeight(resetHeight);
-	player->setRespawnPosition(player->frame().translation);
 
-	updateMouseSensitivity();
+	// Set the reset height
+	float resetHeight = sessConfig->scene.resetHeight;
+	if (isnan(resetHeight)) {
+		float resetHeight = pscene->resetHeight();
+		if (isnan(resetHeight)) {
+			resetHeight = -1e6;
+		}
+	}
+	player->setRespawnHeight(resetHeight);
+
+	// Set player respawn location
+	Point3 spawnPosition = sessConfig->scene.spawnPosition;
+	if (isnan(spawnPosition.x)) {
+		spawnPosition = player->frame().translation;
+	}
+	player->setRespawnPosition(spawnPosition);
+
+	// Set player values from session config
 	player->moveRate = &sessConfig->player.moveRate;
 	player->moveScale = &sessConfig->player.moveScale;
 	player->axisLock = &sessConfig->player.axisLock;
@@ -370,8 +381,12 @@ shared_ptr<PlayerEntity> FPSciApp::updatePlayer() {
 	player->height = &sessConfig->player.height;
 	player->crouchHeight = &sessConfig->player.crouchHeight;
 
-	playerCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
-	return player;
+	// Respawn player
+	player->respawn();
+	updateMouseSensitivity();
+
+	// Set initial heading for session
+	sess->initialHeadingRadians = player->heading();
 }
 
 void FPSciApp::updateSession(const String& id) {
@@ -408,17 +423,17 @@ void FPSciApp::updateSession(const String& id) {
 	if (notNull(scene())) sess->clearTargets();
 
 	// Load the experiment scene if we haven't already (target only)
-	if (sessConfig->sceneName.empty()) {
+	if (sessConfig->scene.name.empty()) {
 		// No scene specified, load default scene
 		if (m_loadedScene.empty()) {
-			loadScene(m_defaultScene);
-			m_loadedScene = m_defaultScene;
+			loadScene(m_defaultSceneName);
+			m_loadedScene = m_defaultSceneName;
 		}
 		// Otherwise let the loaded scene persist
 	}
-	else if (sessConfig->sceneName != m_loadedScene) {
-		loadScene(sessConfig->sceneName);
-		m_loadedScene = sessConfig->sceneName;
+	else if (sessConfig->scene.name != m_loadedScene) {
+		loadScene(sessConfig->scene.name);
+		m_loadedScene = sessConfig->scene.name;
 	}
 
 	// Check for play mode specific parameters
@@ -448,8 +463,7 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Player parameters
-	shared_ptr<PlayerEntity> player = updatePlayer();
-	sess->initialHeadingRadians = player->heading();
+	initPlayer();
 
 	// Check for need to start latency logging and if so run the logger now
 	if (!FileSystem::isDirectory(startupConfig.resultsDirPath)) {
@@ -511,10 +525,9 @@ void FPSciApp::toggleUserSettingsMenu() {
 }
 
 void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
-	
+
 	// Make sure the scene has a "player" entity
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-	//alwaysAssertM(player, "All FPSci scene files must provide a \"PlayerEntity\"!");
 
 	// Add a player if one isn't present in the scene
 	if (isNull(player)) {
@@ -524,20 +537,17 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 	}
 
 	// Set the active camera to the player
-	shared_ptr<Camera> playerCam = playerCamera();
-	// Check for no player cam, but a player, if so make the camera from the player
-	if (isNull(playerCam)) {
-		playerCam = Camera::create("playerCamera");
-		scene()->insert((shared_ptr<Entity>)playerCam);
-	}
-	setActiveCamera(playerCam);
+	const String pcamName = sessConfig->scene.playerCamera;
+	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(sessConfig->scene.playerCamera);
+	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, sessConfig->scene.playerCamera));
+	scene()->insert((shared_ptr<Entity>)playerCamera);
+	setActiveCamera(playerCamera);
 
-	// Update the player entity
-	updatePlayer();
+	initPlayer();
 
 	if (m_weapon) {
 		m_weapon->setScene(scene());
-		m_weapon->setCamera(playerCamera());
+		m_weapon->setCamera(playerCamera);
 	}
 }
 
@@ -572,8 +582,8 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 	}
 
 	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !emergencyTurbo;
-	playerCamera()->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
-	playerCamera()->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
+	playerCamera->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
+	playerCamera->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
 
 	GApp::onGraphics3D(rd, surface);
 
@@ -622,7 +632,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// Move the player
 	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
-	playerCamera()->setFrame(p->getCameraFrame());
+	playerCamera->setFrame(p->getCameraFrame());
 	
 	// Handle developer mode features here
 	if (startupConfig.developerMode) {
@@ -753,7 +763,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			quitRequest();
 			return true;
 		}
-		else if (activeCamera() == playerCamera()) {
+		else if (activeCamera() == playerCamera) {
 			// Override 'q', 'z', 'c', and 'e' keys (unused) 
 			// THIS IS A PROBLEM IF THESE ARE KEY MAPPED!!!
 			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
@@ -771,7 +781,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 		}
 	}
 	else if ((event.type == GEventType::KEY_UP)) {
-		if (activeCamera() == playerCamera()) {
+		if (activeCamera() == playerCamera) {
 			if (keyMap.map["crouch"].contains(ksym)) {
 				scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
 				foundKey = true;
@@ -818,7 +828,7 @@ void FPSciApp::onAfterEvents() {
 }
 
 void FPSciApp::onPostProcessHDR3DEffects(RenderDevice *rd) {
-	if (activeCamera() == playerCamera()) {
+	if (activeCamera() == playerCamera) {
 		// Put elements that should be delayed along w/ 3D here
 		rd->push2D(); {
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
@@ -839,7 +849,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			if (sessConfig->targetView.showCombatText) {
 				Array<int> toRemove;
 				for (int i = 0; i < m_combatTextList.size(); i++) {
-					bool remove = !m_combatTextList[i]->draw(rd, *playerCamera(), *m_framebuffer);
+					bool remove = !m_combatTextList[i]->draw(rd, *playerCamera, *m_framebuffer);
 					if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
 				}
 				// Remove the expired elements here
@@ -1036,7 +1046,7 @@ Vector2 FPSciApp::currentTurnScale() {
 	}
 	else {
 		// Otherwise scale the scope turn scalue using the ratio of FoV
-		return playerCamera()->fieldOfViewAngleDegrees() / sessConfig->render.hFoV * baseTurnScale;
+		return playerCamera->fieldOfViewAngleDegrees() / sessConfig->render.hFoV * baseTurnScale;
 	}
 }
 
@@ -1046,7 +1056,7 @@ void FPSciApp::setScopeView(bool scoped) {
 	const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
 	m_weapon->setScoped(scoped);														// Update the weapon state		
 	const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
-	playerCamera()->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
+	playerCamera->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
 
@@ -1090,7 +1100,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	else if (target->health() <= 0) {
 		// Position explosion
 		CFrame explosionFrame = target->frame();
-		explosionFrame.rotation = playerCamera()->frame().rotation;
+		explosionFrame.rotation = playerCamera->frame().rotation;
 		// Create the explosion
 		const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create(
 			format("explosion%d", m_explosionIdx), 
@@ -1163,7 +1173,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	(void)ui;
 
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
-	if (m_mouseDirectMode && activeCamera() == playerCamera() && notNull(player)) {
+	if (m_mouseDirectMode && activeCamera() == playerCamera && notNull(player)) {
 		player->updateFromInput(ui);
 	}
 	else if (notNull(player)) {	// Zero the player velocity and rotation when in the setting menu
@@ -1265,7 +1275,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		m_userSettingsWindow->updateReticlePreview();
 	}
 
-	playerCamera()->filmSettings().setSensitivity(sceneBrightness);
+	playerCamera->filmSettings().setSensitivity(sceneBrightness);
     END_PROFILER_EVENT();
 }
 
@@ -1329,7 +1339,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		}
 
 		// Player camera only indicators
-		if (activeCamera() == playerCamera()) {
+		if (activeCamera() == playerCamera) {
 			// Reticle
 			const shared_ptr<UserConfig> user = currentUser();
 			float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleChangeTimeS), 1.0f), 0.0f);
@@ -1485,7 +1495,7 @@ void FPSciApp::oneFrame() {
         // The debug camera is not in the scene, so we have
         // to explicitly pose it. This actually does nothing, but
         // it allows us to trigger the TAA code.
-		playerCamera()->onPose(m_posed3D);
+		playerCamera->onPose(m_posed3D);
     } m_poseWatch.tock();
     END_PROFILER_EVENT();
 

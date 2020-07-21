@@ -59,7 +59,7 @@ protected:
 
 	int										m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
 	String									m_loadedScene = "";
-	String									m_defaultScene = "FPSci Simple Hallway";	// Default scene to load
+	String									m_defaultSceneName = "FPSci Simple Hallway";	// Default scene to load
 
 	shared_ptr<PythonLogger>				m_pyLogger = nullptr;
 
@@ -82,10 +82,8 @@ protected:
 	void makeGUI();
 	void updateControls(bool firstSession = false);
 	virtual void loadModels();
-	shared_ptr<PlayerEntity> updatePlayer();
-
-	/** Get the player camera */
-	shared_ptr<Camera> playerCamera() {  return scene()->typedEntity<Camera>("playerCamera"); }
+	/** Initializes player settings from configs and resets player to initial position */
+	void initPlayer();
 
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {
@@ -139,7 +137,8 @@ public:
 
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
 
-	shared_ptr<Session> sess;										///< Pointer to the experiment
+	shared_ptr<Session> sess;			///< Pointer to the experiment
+	shared_ptr<Camera> playerCamera;	///< Pointer to the player camera						
 
 	bool renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
 	int  displayLagFrames = 0;			///< Count of frames of latency to add

@@ -1325,6 +1325,59 @@ public:
 	}
 };
 
+class SceneConfig {
+public:
+
+	String name;										///< Name of the scene to load
+	String playerCamera;								///< Name of the camera to use for the player
+
+	//float gravity = fnan();							///< Gravity for the PhysicsScene
+	float resetHeight = fnan();							///< Reset height for the PhysicsScene
+
+	Point3 spawnPosition = { fnan(),fnan(), fnan() };	///< Location for player spawn
+	float spawnHeading = fnan();						///< Heading for player spawn
+
+	SceneConfig() {}
+	SceneConfig(const Any& any) {
+		AnyTableReader reader(any);
+		int settingsVersion = 1;
+		reader.getIfPresent("settingsVersion", settingsVersion);
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("name", name);
+			reader.getIfPresent("playerCamera", playerCamera);
+			//reader.getIfPresent("gravity", gravity);
+			reader.getIfPresent("resetHeight", resetHeight);
+			reader.getIfPresent("spawnPosition", spawnPosition);
+			reader.getIfPresent("spawnHeading", spawnHeading);
+			break;
+		default:
+			throw format("Did not recognize scene config settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any toAny(const bool forceAll = false) const {
+		Any a(Any::TABLE);
+		SceneConfig def;
+		if (forceAll || def.name != name)					a["name"] = name;
+		if (forceAll || def.playerCamera != playerCamera)   a["playerCamera"] = playerCamera;
+		//if (forceAll || def.gravity != gravity)				a["gravity"] = gravity;
+		if (forceAll || def.resetHeight != resetHeight)		a["resetHeight"] = resetHeight;
+		if (forceAll || def.spawnPosition != spawnPosition) a["spawnPosition"] = spawnPosition;
+		if (forceAll || def.spawnHeading != spawnHeading)   a["spawnHeading"] = spawnHeading;
+		return a;
+	}
+
+	bool operator!=(SceneConfig other) const {
+		return name != other.name ||
+			//gravity != other.gravity ||
+			resetHeight != other.resetHeight ||
+			spawnPosition != other.spawnPosition ||
+			spawnHeading != other.spawnHeading;
+	}
+};
+
 class TargetViewConfig {
 public:
 	// Target color based on health
@@ -1753,9 +1806,9 @@ public:
 class FpsConfig : public ReferenceCountedObject {
 public:
 	int	            settingsVersion = 1;						///< Settings version
-	String          sceneName = "";							    ///< Scene name
 
 	// Sub structures
+	SceneConfig			scene;									///< Scene related config parameters			
 	RenderConfig		render;									///< Render related config parameters
 	PlayerConfig		player;									///< Player related config parameters
 	HudConfig			hud;									///< HUD related config parameters
@@ -1798,7 +1851,7 @@ public:
 		commands.load(reader, settingsVersion);
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("sceneName", sceneName);
+			reader.getIfPresent("scene", scene);
 			reader.getIfPresent("weapon", weapon);
 			reader.getIfPresent("questions", questionArray);
 			break;
@@ -1806,13 +1859,20 @@ public:
 			debugPrintf("Settings version '%d' not recognized in FpsConfig.\n", settingsVersion);
 			break;
 		}
+
+		// Warning message for deprecated sceneName parameter
+		String sceneName = "";
+		if (reader.getIfPresent("sceneName", sceneName)) {
+			logPrintf("WARNING: deprecated sceneName parameter found. The value will not be used. Switch to the following:\n");
+			logPrintf("    scene = { name = \"%s\"; };\n", sceneName);
+		}
 	}
 
 	Any toAny(const bool forceAll = false) const {
 		Any a(Any::TABLE);
 		FpsConfig def;
 		a["settingsVersion"] = settingsVersion;
-		if(forceAll || def.sceneName != sceneName) a["sceneName"] = sceneName;
+		if(forceAll || def.scene != scene) a["scene"] = scene;
 		a = render.addToAny(a, forceAll);
 		a = player.addToAny(a, forceAll);
 		a = hud.addToAny(a, forceAll);
@@ -2074,7 +2134,7 @@ public:
 	/** Print the experiment config to the log */
 	void printToLog() {
 		logPrintf("\n-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nTrial Feedback Duration = %f\nPretrial Duration = %f\nMax Trial Task Duration = %f\nMax Clicks = %d\n",
-			description.c_str(), sceneName.c_str(), timing.trialFeedbackDuration, timing.pretrialDuration, timing.maxTrialDuration, weapon.maxAmmo);
+			description.c_str(), scene.name.c_str(), timing.trialFeedbackDuration, timing.pretrialDuration, timing.maxTrialDuration, weapon.maxAmmo);
 		// Iterate through sessions and print them
 		for (int i = 0; i < sessions.size(); i++) {
 			SessionConfig sess = sessions[i];
