@@ -2,7 +2,7 @@
     settingsVersion = 1; 
     
     description = "TestExperiment";
-    sceneName = "G3D Simple Cornell Box (Empty CO)";
+    scene = { name = "G3D Simple Cornell Box (Empty CO)"; };
 
     frameDelay = 0;
     frameRate = 60;
