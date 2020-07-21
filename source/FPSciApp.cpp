@@ -337,16 +337,7 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, simStepDuration());
 }
 
-/** Sets scene gravity from session config if set, otherwise from player
-	Sets playerCamera field of view from session config if it exists, otherwise from the experiment render settings
-	Sets player to invisible
-	Sets player reset height from session config if set, otherwise from scene if set, otherwise -1e6
-	Sets player respawn position from session config if set, otherwise from player's current frame translation
-	Sets player respawn heading from session config if set, otherwise from player's current heading
-	Sets player values from session config values (moveRate, moveScale, axisLock, jumpVelocity, jumpInterval, jumpTouch, height, crouchHeight) 
-	Respawns player (at newly set values) and calls updateMouseSensitivity()
-	Sets session initial heading  to player's heading */
-void FPSciApp::updatePlayer() {
+void FPSciApp::initPlayer() {
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
 
@@ -472,7 +463,7 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Player parameters
-	updatePlayer();
+	initPlayer();
 
 	// Check for need to start latency logging and if so run the logger now
 	if (!FileSystem::isDirectory(startupConfig.resultsDirPath)) {
@@ -552,7 +543,7 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 	scene()->insert((shared_ptr<Entity>)playerCamera);
 	setActiveCamera(playerCamera);
 
-	updatePlayer();
+	initPlayer();
 
 	if (m_weapon) {
 		m_weapon->setScene(scene());
