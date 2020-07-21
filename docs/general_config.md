@@ -28,7 +28,7 @@ An example configuration is provided below for reference:
 "scene" : {
     "name" : "FPSci Simple Hallway",        // Use the default scene name 
     "playerCamera" : "",                    // Use the default camera from wtihin this scene
-    "spawnPosition" : {0,0,0},              // Spawn the player at the origin
+    "spawnPosition" : Point3(0,0,0),        // Spawn the player at the origin
     "spawnHeading": 0,                      // Spawn the player at 0 heading
 }
 ```
