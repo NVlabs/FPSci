@@ -82,7 +82,7 @@ protected:
 	void makeGUI();
 	void updateControls(bool firstSession = false);
 	virtual void loadModels();
-	void updateFromSceneConfig(shared_ptr<PlayerEntity> player);
+	//void updateFromSceneConfig(shared_ptr<PlayerEntity> player);
 	shared_ptr<PlayerEntity> updatePlayer();
 
 	/** Move a window to the center of the display */
