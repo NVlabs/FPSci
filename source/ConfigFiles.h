@@ -1328,14 +1328,14 @@ public:
 class SceneConfig {
 public:
 
-	String name;															///< Name of the scene to load
-	String playerCamera;													///< Name of the camera to use for the player
+	String name;										///< Name of the scene to load
+	String playerCamera;								///< Name of the camera to use for the player
 
-	//float gravity = fnan();												///< Gravity for the PhysicsScene
-	float resetHeight = fnan();												///< Reset height for the PhysicsScene
+	//float gravity = fnan();							///< Gravity for the PhysicsScene
+	float resetHeight = fnan();							///< Reset height for the PhysicsScene
 
-	Point3 spawnPosition = { fnan(),fnan(), fnan() };						///< Location for player spawn
-	float spawnHeading = fnan();											///< Heading for player spawn
+	Point3 spawnPosition = { fnan(),fnan(), fnan() };	///< Location for player spawn
+	float spawnHeading = fnan();						///< Heading for player spawn
 
 	SceneConfig() {}
 	SceneConfig(const Any& any) {
@@ -1858,6 +1858,13 @@ public:
 		default:
 			debugPrintf("Settings version '%d' not recognized in FpsConfig.\n", settingsVersion);
 			break;
+		}
+
+		// Warning message for deprecated sceneName parameter
+		String sceneName = "";
+		if (reader.getIfPresent("sceneName", sceneName)) {
+			logPrintf("WARNING: deprecated sceneName parameter found. The value will not be used. Switch to the following:\n");
+			logPrintf("    scene = { name = \"%s\"; };\n", sceneName);
 		}
 	}
 
