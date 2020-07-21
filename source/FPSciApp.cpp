@@ -339,17 +339,18 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 
 /** Sets scene gravity from session config if set, otherwise from player
 	Sets playerCamera field of view from session config if it exists, otherwise from the experiment render settings
-	Sets player respawn height from session config if set, otherwise from scene if set, otherwise -1e6
 	Sets player to invisible
+	Sets player reset height from session config if set, otherwise from scene if set, otherwise -1e6
 	Sets player respawn position from session config if set, otherwise from player's current frame translation
 	Sets player respawn heading from session config if set, otherwise from player's current heading
-	Calls updateMouseSensitivity()
-	Sets player values from session config values (moveRate, moveScale, axisLock, jumpVelocity, jumpInterval, jumpTouch, height, crouchHeight) */
-shared_ptr<PlayerEntity> FPSciApp::updatePlayer() {
+	Sets player values from session config values (moveRate, moveScale, axisLock, jumpVelocity, jumpInterval, jumpTouch, height, crouchHeight) 
+	Respawns player (at newly set values) and calls updateMouseSensitivity()
+	Sets session initial heading  to player's heading */
+void FPSciApp::updatePlayer() {
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
 
-	// Pick between experiment and session settings
+	// Set gravity and camera field of view
 	Vector3 grav = experimentConfig.player.gravity;
 	float FoV = experimentConfig.render.hFoV;
 	if (sessConfig != nullptr) {
@@ -359,30 +360,27 @@ shared_ptr<PlayerEntity> FPSciApp::updatePlayer() {
 	pscene->setGravity(grav);
 	playerCamera->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
 
-	// Take the reset height from the scene conifg
+	// For now make the player invisible (prevent issues w/ seeing model from inside)
+	player->setVisible(false);
+
+	// Set the reset height
 	float resetHeight = sessConfig->scene.resetHeight;
 	if (isnan(resetHeight)) {
-		// If no reset height is specified in the scene config, look in the scene file
 		float resetHeight = pscene->resetHeight();
 		if (isnan(resetHeight)) {
-			// If no reset height is specified in either the scene config or file, use default
 			resetHeight = -1e6;
 		}
 	}
 	player->setRespawnHeight(resetHeight);
 
-	// For now make the player invisible (prevent issues w/ seeing model from inside)
-	player->setVisible(false);
-
-	// Set respawn location
+	// Set player respawn location
 	Point3 spawnPosition = sessConfig->scene.spawnPosition;
 	if (isnan(spawnPosition.x)) {
-		// If respawn position is not provided by the scene config, use the player position
 		spawnPosition = player->frame().translation;
 	}
 	player->setRespawnPosition(spawnPosition);
 
-	updateMouseSensitivity();
+	// Set player values from session config
 	player->moveRate = &sessConfig->player.moveRate;
 	player->moveScale = &sessConfig->player.moveScale;
 	player->axisLock = &sessConfig->player.axisLock;
@@ -392,43 +390,13 @@ shared_ptr<PlayerEntity> FPSciApp::updatePlayer() {
 	player->height = &sessConfig->player.height;
 	player->crouchHeight = &sessConfig->player.crouchHeight;
 
-	return player;
-}
+	// Respawn player
+	player->respawn();
+	updateMouseSensitivity();
 
-/** Sets player respawn height from session config if set, otherwise from scene if set, otherwise -1e6
-	Sets player respawn position from session config if set, otherwise from player's current frame translation
-	Sets player respawn heading from session config if set, otherwise from player's current heading*/
-//void FPSciApp::updateFromSceneConfig(shared_ptr<PlayerEntity> player) {
-//	const shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
-//
-//	// Take the reset height from the scene conifg
-//	float resetHeight = sessConfig->scene.resetHeight;
-//	if (isnan(resetHeight)) {
-//		// If no reset height is specified in the scene config, look in the scene file
-//		float resetHeight = pscene->resetHeight();
-//		if (isnan(resetHeight)) {
-//			// If no reset height is specified in either the scene config or file, use default
-//			resetHeight = -1e6;
-//		}
-//	}
-//	player->setRespawnHeight(resetHeight);
-//
-//	// Set respawn location
-//	Point3 spawnPosition = sessConfig->scene.spawnPosition;
-//	if (isnan(spawnPosition.x)) {
-//		// If respawn position is not provided by the scene config, use the player position
-//		spawnPosition = player->frame().translation;
-//	}
-//	player->setRespawnPosition(spawnPosition);
-//
-//	// Set respawn heading
-//	float respawnHeading = sessConfig->scene.spawnHeading;
-//	if (isnan(respawnHeading)) {
-//		// If respawn heading is not provided by the scene config, use the physics scene parameter
-//		respawnHeading = player->heading();
-//	}
-//	player->setRespawnHeading(respawnHeading);
-//}
+	// Set initial heading for session
+	sess->initialHeadingRadians = player->heading();
+}
 
 void FPSciApp::updateSession(const String& id) {
 	// Check for a valid ID (non-emtpy and 
@@ -504,9 +472,7 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Player parameters
-	shared_ptr<PlayerEntity> player = updatePlayer();
-	//updateFromSceneConfig(player);
-	sess->initialHeadingRadians = player->heading();
+	updatePlayer();
 
 	// Check for need to start latency logging and if so run the logger now
 	if (!FileSystem::isDirectory(startupConfig.resultsDirPath)) {
