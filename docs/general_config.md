@@ -10,7 +10,7 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 ```
 
 ## Scene Settings
-The `scene` parameter allows the user to control the (name of the) scene in which the application is run and it's parameters. The scene config allows experiment designers to respecify existing scenes (from G3D) as FPSci scenes by setting the `name` field to that of the G3D scene and specifying any missing infromation within the additional fields. 
+The `scene` parameter allows the user to specify the (name of the) scene to be used and it's parameters. The scene config allows experiment designers to use existing scenes (from G3D) by setting the `name` field to that of the G3D scene and specifying FPSci-specific infromation within the additional fields. 
 
 The following fields are specified within the `scene` parameter structure:
 
@@ -18,19 +18,20 @@ The following fields are specified within the `scene` parameter structure:
 |-------------------|-----------|--------------------------------------------------------------------|
 |`name`             |`String`   | The name of the scene to use (note this is not the filename, but rather the `name` field from within the G3D `.scene.Any` file). |
 |`playerCamera`     |`String`   | The name of the camera (from the `.scene.Any` file) to use for the player view. If this string is empty the `defaultCamera` from the G3D scene is used instead. |
-|`resetHeight`      |`float`    | The height at which the player should be respawned (overrides any setting in a `scene.Any` file if specified here).    |
+|`resetHeight`      |`float`    | The height at which the player should be respawned when falling (overrides any setting in a `scene.Any` file if specified here).    |
 |`spawnPosition`    |`Point3`   | The location at which the player should be respawned (overrides any setting in a `scene.Any` file if specified here).  |
 |`spawnHeading`     |`float`    | The player heading (in radians) at which the player should be respawned (overrides the `scene.Any` file setting if specified here). |
 
 An example configuration is provided below for reference:
 
 ```
-"scene" : {
-    "name" : "FPSci Simple Hallway",        // Use the default scene name 
-    "playerCamera" : "",                    // Use the default camera from wtihin this scene
-    "spawnPosition" : Point3(0,0,0),        // Spawn the player at the origin
-    "spawnHeading": 0,                      // Spawn the player at 0 heading
-}
+scene = {
+    name = "FPSci Simple Hallway";      // Use the "FPSci Simple Hallway" scene
+    playerCamera = "";                  // Use the default camera from wtihin this scene
+    resetHeight = -5;                   // Reset player position when falling past -5 m
+    spawnPosition = Point3(0,0,0);      // Spawn the player at the origin
+    spawnHeading = 0;                   // Spawn the player at 0 heading
+};
 ```
 
 ### Scene Name
@@ -41,6 +42,8 @@ If unspecified, the scene `name` field comes from:
 3. The `App::m_defaultSceneName` field within the source (currently set to `"FPSci Simple Hallway"` which is distributed with the repository)
 
 If a scene name is specified at the experiment level it will be applied to all scenes that do not have a `sceneName` specified. If you do not specify a `sceneName` in the experiment config, and do not specify `sceneName` for every session, then session ordering may have an impact on which scene pairs with which session.
+
+The scene name is used to refer to the G3D scene that should be used for the experiment (or session). G3D applications, including FPSci, search for files that end in `.Scene.Any` in a number of locations, including places specified by the `G3D10DATA` environment variable, `data-files` or the directory FPSci was run from as well as all of the above locations with `scene/` added to the path. The set of `.Scene.Any` files found are printed to the `log.txt` on startup including the scene name as well as the path to the `.Scene.Any` files found (search for "Found scenes" in `log.txt`). Additionally, when FPSci is in developer mode, you can see a list of found scene names from the scene drop down GUI. Note that FPSci expects to find a scene name in the experiment config, and not the file name of the `.Scene.Any` file for that scene.
 
 
 ## Weapon Configuration
