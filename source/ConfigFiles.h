@@ -124,6 +124,7 @@ public:
 		map.set("moveWaypointOut", Array<GKey>{ GKey::END });
 		map.set("moveWaypointRight", Array<GKey>{ GKey::INSERT });
 		map.set("moveWaypointLeft", Array<GKey>{ GKey::DELETE });
+		map.set("reloadConfigs", Array<GKey>{GKey::F5});
 		getUiKeyMapping();
 	};
 

@@ -25,36 +25,11 @@ void FPSciApp::onInit() {
 	// Initialize the app
 	GApp::onInit();
 
-	// Load experiment setting from file
-	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfigFilename);
-	experimentConfig.printToLog();
-
-	Array<String> sessionIds;
-	experimentConfig.getSessionIds(sessionIds);
-
-	// Load per user settings from file
-	userTable = UserTable::load(startupConfig.userConfigFilename);
-	userTable.printToLog();
-
-	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load(startupConfig.userStatusFilename);
-	userStatusTable.printToLog();
-	userStatusTable.validate(sessionIds, userTable.getIds());
-	
-	// Get info about the system
-	SystemInfo info = SystemInfo::get();
-	info.printToLog();										// Print system info to log.txt
-
-	// Get system configuration
-	systemConfig = SystemConfig::load(startupConfig.systemConfigFilename);
-	systemConfig.printToLog();			// Print the latency logger config to log.txt								
+	// Load config from files
+	loadConfigs();
 
 	// Get the size of the primary display
 	displayRes = OSWindow::primaryDisplaySize();						
-
-	// Load the key binds
-	keyMap = KeyMapping::load(startupConfig.keymapConfigFilename);
-	userInput->setKeyMapping(&keyMap.uiMap);
 
 	// Setup/update waypoint manager
 	waypointManager = WaypointManager::create(this);
@@ -126,6 +101,36 @@ void FPSciApp::setDirectMode(bool enable) {
 	m_mouseDirectMode = enable;
 	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 	fpm->setMouseMode(enable ? FirstPersonManipulator::MOUSE_DIRECT : FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
+}
+
+void FPSciApp::loadConfigs() {
+	// Load experiment setting from file
+	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfigFilename);
+	experimentConfig.printToLog();
+
+	Array<String> sessionIds;
+	experimentConfig.getSessionIds(sessionIds);
+
+	// Load per user settings from file
+	userTable = UserTable::load(startupConfig.userConfigFilename);
+	userTable.printToLog();
+
+	// Load per experiment user settings from file and make sure they are valid
+	userStatusTable = UserStatusTable::load(startupConfig.userStatusFilename);
+	userStatusTable.printToLog();
+	userStatusTable.validate(sessionIds, userTable.getIds());
+
+	// Get info about the system
+	SystemInfo info = SystemInfo::get();
+	info.printToLog();										// Print system info to log.txt
+
+	// Get system configuration
+	systemConfig = SystemConfig::load(startupConfig.systemConfigFilename);
+	systemConfig.printToLog();			// Print the latency logger config to log.txt	
+
+	// Load the key binds
+	keyMap = KeyMapping::load(startupConfig.keymapConfigFilename);
+	userInput->setKeyMapping(&keyMap.uiMap);
 }
 
 void FPSciApp::loadModels() {
@@ -682,6 +687,14 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			} else if (keyMap.map["toggleWeaponWindow"].contains(ksym)) {
 				m_weaponControls->setVisible(!m_weaponControls->visible());
 				foundKey = true;
+			}
+			else if (keyMap.map["reloadConfigs"].contains(ksym)) {
+				loadConfigs();												// (Re)load the configs
+				// Update session from the reloaded configs
+				updateMouseSensitivity();									// Update (apply) mouse sensitivity
+				m_userSettingsWindow->updateSessionDropDown();				// Update the session drop down to remove already completed sessions
+				updateSession(m_userSettingsWindow->selectedSession());		// Update session to create results file/start collection
+				// Pass the key stroke on to onEvent() for now?
 			}
 			// Waypoint editor only keys
 			else if (startupConfig.waypointEditorMode) {

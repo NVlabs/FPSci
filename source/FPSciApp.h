@@ -81,6 +81,7 @@ protected:
 	/** Called from onInit */
 	void makeGUI();
 	void updateControls(bool firstSession = false);
+	void loadConfigs();
 	virtual void loadModels();
 	/** Initializes player settings from configs and resets player to initial position */
 	void initPlayer();
