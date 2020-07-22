@@ -767,6 +767,15 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			}
 		}
 	}
+	// Handle key strokes explicitly for non-developer mode
+	else {
+		if (event.type == GEventType::KEY_DOWN) {
+			const Array<GKey> player_masked = { GKey::F8 };
+			if (player_masked.contains(ksym)) {
+				foundKey = true;
+			}
+		}
+	}
 	
 	// Handle normal keypresses
 	if (event.type == GEventType::KEY_DOWN) {
@@ -782,7 +791,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			// Override 'q', 'z', 'c', and 'e' keys (unused)
 			// Remove F8 as it isn't masked by useDeveloperTools = False
 			// THIS IS A PROBLEM IF THESE ARE KEY MAPPED!!!
-			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q', GKey::F8 };
+			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q'};
 			if (unused.contains(ksym)) {
 				foundKey = true;
 			}
