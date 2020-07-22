@@ -239,19 +239,21 @@ void FPSciApp::updateControls(bool firstSession) {
 }
 
 void FPSciApp::makeGUI() {
-	debugWindow->setVisible(startupConfig.developerMode);
-	developerWindow->setVisible(startupConfig.developerMode);
-	developerWindow->cameraControlWindow->setVisible(startupConfig.developerMode);
-	developerWindow->videoRecordDialog->setEnabled(true);
-	developerWindow->videoRecordDialog->setCaptureGui(true);
 
 	theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
+	debugWindow->setVisible(startupConfig.developerMode);
 
-	// Update the scene editor (for new PhysicsScene pointer, initially loaded in GApp)
-	removeWidget(developerWindow->sceneEditorWindow);
-	developerWindow->sceneEditorWindow = SceneEditorWindow::create(this, scene(), theme);
-	developerWindow->sceneEditorWindow->moveTo(developerWindow->cameraControlWindow->rect().x0y1() + Vector2(0, 15));
-	developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
+	if (startupConfig.developerMode) {
+		developerWindow->cameraControlWindow->setVisible(startupConfig.developerMode);
+		developerWindow->videoRecordDialog->setEnabled(true);
+		developerWindow->videoRecordDialog->setCaptureGui(true);
+
+		// Update the scene editor (for new PhysicsScene pointer, initially loaded in GApp)
+		removeWidget(developerWindow->sceneEditorWindow);
+		developerWindow->sceneEditorWindow = SceneEditorWindow::create(this, scene(), theme);
+		developerWindow->sceneEditorWindow->moveTo(developerWindow->cameraControlWindow->rect().x0y1() + Vector2(0, 15));
+		developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
+	}
 
 	// Open sub-window buttons here (menu-style)
 	debugPane->beginRow(); {
@@ -1625,6 +1627,8 @@ FPSciApp::Settings::Settings(const StartupConfig& startupConfig, int argc, const
 	window.caption = "First Person Science";
 	window.refreshRate = -1;
 	window.defaultIconFilename = "icon.png";
+
+	useDeveloperTools = startupConfig.developerMode;
 
 	hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
 	hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
