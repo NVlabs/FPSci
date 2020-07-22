@@ -779,9 +779,10 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			return true;
 		}
 		else if (activeCamera() == playerCamera) {
-			// Override 'q', 'z', 'c', and 'e' keys (unused) 
+			// Override 'q', 'z', 'c', and 'e' keys (unused)
+			// Remove F8 as it isn't masked by useDeveloperTools = False
 			// THIS IS A PROBLEM IF THESE ARE KEY MAPPED!!!
-			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
+			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q', GKey::F8 };
 			if (unused.contains(ksym)) {
 				foundKey = true;
 			}
