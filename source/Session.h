@@ -111,7 +111,10 @@ protected:
 	Scene* m_scene = nullptr;							///< Pointer to the scene
 	
 	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
+	
 	shared_ptr<FPSciLogger> m_logger;					///< Output results logger
+	String m_dbFilename;								///< Filename for output logging (less the .db extension)
+
 	shared_ptr<PlayerEntity> m_player;					///< Player entity
 	shared_ptr<Camera> m_camera;						///< Camera entity
 

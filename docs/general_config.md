@@ -543,10 +543,11 @@ commandsOnSessionEnd = ( { command = "cmd /c start [webpage URL]", foreground = 
 ### Supported Substrings for Commands
 In addition to the basic commands provided above several replacable substrings are supported in commands. These include:
 
-| Substring         | Description                                                           |
-|-------------------|-----------------------------------------------------------------------|
-|`%loggerComPort`   | The logger COM port (optionally) provided in a general config         |
-|`%loggerSyncComPort`|  The logger sync COM port (optionally) provided in a general config  |
+| Substring             | Description                                                           |
+|-----------------------|-----------------------------------------------------------------------|
+|`%loggerComPort`       | The logger COM port (optionally) provided in a general config         |
+|`%loggerSyncComPort`   |  The logger sync COM port (optionally) provided in a general config   |
+|`%dbFilename`          | The filename of the created db file (less the `.db` extension)        |
 
 Note that if either of these substrings is specified in a command, but empty/not provided in the experiment config file an exception will be thrown.
 
