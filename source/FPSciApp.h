@@ -139,14 +139,17 @@ public:
 
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
 
-	shared_ptr<Session> sess;			///< Pointer to the experiment
-	shared_ptr<Camera> playerCamera;	///< Pointer to the player camera						
+	shared_ptr<Session> sess;					///< Pointer to the experiment
+	shared_ptr<Camera> playerCamera;			///< Pointer to the player camera						
 
-	bool renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
-	int  displayLagFrames = 0;			///< Count of frames of latency to add
-	float lastSetFrameRate = 0.0f;		///< Last set frame rate
-	const int numReticles = 55;			///< Total count of reticles available to choose from
-	float sceneBrightness = 1.0f;		///< Scene brightness scale factor
+	bool		renderFPS			= false;	///< Control flag used to draw (or not draw) FPS information to the display	
+	int			displayLagFrames	= 0;		///< Count of frames of latency to add
+	float		lastSetFrameRate	= 0.0f;		///< Last set frame rate
+	const int	numReticles			= 55;		///< Total count of reticles available to choose from
+	float		sceneBrightness		= 1.0f;		///< Scene brightness scale factor
+
+	bool		buttonUp			= true;		///< Pass button up to session
+	bool		frameToggle			= false;	///< Simple toggle flag used for frame rate click-to-photon monitoring
 
 	Vector2 displayRes;
 
@@ -213,8 +216,6 @@ public:
 	virtual void onCleanup() override;
     virtual void oneFrame() override;
 
-	bool							m_buttonUp = true;
-	bool							m_frameToggle = false;		///< Simple toggle flag used for frame rate click-to-photon monitoring
 };
 
 // The "old" way of animation

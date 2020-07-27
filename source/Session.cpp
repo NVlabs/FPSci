@@ -95,6 +95,7 @@ void Session::onInit(String filename, String description) {
 			UserConfig user = *m_app->currentUser();
 			// Setup the logger and create results file
 			m_logger = FPSciLogger::create(filename, user.id, m_config, description);
+			m_dbFilename = filename.substr(0, filename.length() - 3);
 			if (m_config->logger.logUsers) {
 				m_logger->logUserConfig(user, m_config->id, "start");
 			}
@@ -243,7 +244,7 @@ void Session::updatePresentationState()
 		if (m_config->player.stillBetweenTrials) {
 			m_player->setMoveEnable(false);
 		}
-		if (!(m_app->m_buttonUp && m_config->timing.clickToStart)) {
+		if (!(m_app->buttonUp && m_config->timing.clickToStart)) {
 			newState = PresentationState::trialFeedback;
 		}
 	}
@@ -339,7 +340,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::sessionFeedback) {
 		if (m_hasSession) {
-			if (stateElapsedTime > m_config->timing.sessionFeedbackDuration && (!m_config->timing.sessionFeedbackRequireClick || !m_app->m_buttonUp)) {
+			if (stateElapsedTime > m_config->timing.sessionFeedbackDuration && (!m_config->timing.sessionFeedbackRequireClick || !m_app->buttonUp)) {
 				newState = PresentationState::complete;
         
 				// Save current user config and status
@@ -525,6 +526,7 @@ String Session::formatCommand(const String& input) {
 
 	const String loggerComPort = "%loggerComPort";
 	const String syncComPort = "%loggerSyncComPort";
+	const String dbFilename = "%dbFilename";
 
 	while ((foundIdx = (int)formatted.find(delimiter, (size_t)foundIdx)) > -1) {
 		if (!formatted.compare(foundIdx, loggerComPort.length(), loggerComPort)) {
@@ -538,6 +540,12 @@ String Session::formatCommand(const String& input) {
 				throw "Found \"%loggerSyncComPort\" substring in a command, but no \"loggerSyncComPort\" is provided in the config!";
 			}
 			formatted = formatted.substr(0, foundIdx) + m_app->systemConfig.syncComPort + formatted.substr(foundIdx + syncComPort.length());
+		}
+		else if (!formatted.compare(foundIdx, dbFilename.length(), dbFilename)) {
+			if (m_dbFilename.empty()) {
+				throw "No database filename found to support the %dbFilename substring!";
+			}
+			formatted = formatted.substr(0, foundIdx) + m_dbFilename + formatted.substr(foundIdx + dbFilename.length());
 		}
 		else {
 			foundIdx++;

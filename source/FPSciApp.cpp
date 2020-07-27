@@ -947,10 +947,10 @@ void FPSciApp::drawClickIndicator(RenderDevice *rd, String mode) {
 		// Draw the "active" box
 		Color3 boxColor;
 		if (sessConfig->clickToPhoton.mode == "frameRate") {
-			boxColor = (m_frameToggle) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
-			m_frameToggle = !m_frameToggle;
+			boxColor = (frameToggle) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+			frameToggle = !frameToggle;
 		}
-		else boxColor = (m_buttonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+		else boxColor = (buttonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
 		Draw::rect2D(Rect2D::xywh(boxLeft, boxTop, latencyRect.x, latencyRect.y), rd, boxColor);
 	}
 }
@@ -1226,7 +1226,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	for (GKey shootButton : keyMap.map["shoot"]) {
 		// Require release between clicks for non-autoFire modes
 		if (ui->keyReleased(shootButton)) {
-			m_buttonUp = true;
+			buttonUp = true;
 			haveReleased = true;
 			m_weapon->setFiring(false);
 			if (!sessConfig->weapon.autoFire) {
@@ -1277,7 +1277,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 			}
 
 			haveReleased = false;					// Make it known we are no longer in released state
-			m_buttonUp = false;
+			buttonUp = false;
 		}
 	}
 	
