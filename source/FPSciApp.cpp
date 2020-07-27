@@ -25,36 +25,11 @@ void FPSciApp::onInit() {
 	// Initialize the app
 	GApp::onInit();
 
-	// Load experiment setting from file
-	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfigFilename);
-	experimentConfig.printToLog();
-
-	Array<String> sessionIds;
-	experimentConfig.getSessionIds(sessionIds);
-
-	// Load per user settings from file
-	userTable = UserTable::load(startupConfig.userConfigFilename);
-	userTable.printToLog();
-
-	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load(startupConfig.userStatusFilename);
-	userStatusTable.printToLog();
-	userStatusTable.validate(sessionIds, userTable.getIds());
-	
-	// Get info about the system
-	SystemInfo info = SystemInfo::get();
-	info.printToLog();										// Print system info to log.txt
-
-	// Get system configuration
-	systemConfig = SystemConfig::load(startupConfig.systemConfigFilename);
-	systemConfig.printToLog();			// Print the latency logger config to log.txt								
+	// Load config from files
+	loadConfigs();
 
 	// Get the size of the primary display
 	displayRes = OSWindow::primaryDisplaySize();						
-
-	// Load the key binds
-	keyMap = KeyMapping::load(startupConfig.keymapConfigFilename);
-	userInput->setKeyMapping(&keyMap.uiMap);
 
 	// Setup/update waypoint manager
 	waypointManager = WaypointManager::create(this);
@@ -126,6 +101,36 @@ void FPSciApp::setDirectMode(bool enable) {
 	m_mouseDirectMode = enable;
 	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 	fpm->setMouseMode(enable ? FirstPersonManipulator::MOUSE_DIRECT : FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
+}
+
+void FPSciApp::loadConfigs() {
+	// Load experiment setting from file
+	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfigFilename);
+	experimentConfig.printToLog();
+
+	Array<String> sessionIds;
+	experimentConfig.getSessionIds(sessionIds);
+
+	// Load per user settings from file
+	userTable = UserTable::load(startupConfig.userConfigFilename);
+	userTable.printToLog();
+
+	// Load per experiment user settings from file and make sure they are valid
+	userStatusTable = UserStatusTable::load(startupConfig.userStatusFilename);
+	userStatusTable.printToLog();
+	userStatusTable.validate(sessionIds, userTable.getIds());
+
+	// Get info about the system
+	SystemInfo info = SystemInfo::get();
+	info.printToLog();										// Print system info to log.txt
+
+	// Get system configuration
+	systemConfig = SystemConfig::load(startupConfig.systemConfigFilename);
+	systemConfig.printToLog();			// Print the latency logger config to log.txt	
+
+	// Load the key binds
+	keyMap = KeyMapping::load(startupConfig.keymapConfigFilename);
+	userInput->setKeyMapping(&keyMap.uiMap);
 }
 
 void FPSciApp::loadModels() {
@@ -234,19 +239,21 @@ void FPSciApp::updateControls(bool firstSession) {
 }
 
 void FPSciApp::makeGUI() {
-	debugWindow->setVisible(startupConfig.developerMode);
-	developerWindow->setVisible(startupConfig.developerMode);
-	developerWindow->cameraControlWindow->setVisible(startupConfig.developerMode);
-	developerWindow->videoRecordDialog->setEnabled(true);
-	developerWindow->videoRecordDialog->setCaptureGui(true);
 
 	theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
+	debugWindow->setVisible(startupConfig.developerMode);
 
-	// Update the scene editor (for new PhysicsScene pointer, initially loaded in GApp)
-	removeWidget(developerWindow->sceneEditorWindow);
-	developerWindow->sceneEditorWindow = SceneEditorWindow::create(this, scene(), theme);
-	developerWindow->sceneEditorWindow->moveTo(developerWindow->cameraControlWindow->rect().x0y1() + Vector2(0, 15));
-	developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
+	if (startupConfig.developerMode) {
+		developerWindow->cameraControlWindow->setVisible(startupConfig.developerMode);
+		developerWindow->videoRecordDialog->setEnabled(true);
+		developerWindow->videoRecordDialog->setCaptureGui(true);
+
+		// Update the scene editor (for new PhysicsScene pointer, initially loaded in GApp)
+		removeWidget(developerWindow->sceneEditorWindow);
+		developerWindow->sceneEditorWindow = SceneEditorWindow::create(this, scene(), theme);
+		developerWindow->sceneEditorWindow->moveTo(developerWindow->cameraControlWindow->rect().x0y1() + Vector2(0, 15));
+		developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
+	}
 
 	// Open sub-window buttons here (menu-style)
 	debugPane->beginRow(); {
@@ -683,6 +690,13 @@ bool FPSciApp::onEvent(const GEvent& event) {
 				m_weaponControls->setVisible(!m_weaponControls->visible());
 				foundKey = true;
 			}
+			else if (keyMap.map["reloadConfigs"].contains(ksym)) {
+				loadConfigs();												// (Re)load the configs
+				// Update session from the reloaded configs
+				m_userSettingsWindow->updateSessionDropDown();
+				updateSession(m_userSettingsWindow->selectedSession());
+				// Do not set foundKey = true to allow shader reloading from GApp::onEvent()
+			}
 			// Waypoint editor only keys
 			else if (startupConfig.waypointEditorMode) {
 				if (keyMap.map["toggleWaypointWindow"].contains(ksym)) {
@@ -752,6 +766,16 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			}
 		}
 	}
+	// Handle key strokes explicitly for non-developer mode
+	else {
+		if (event.type == GEventType::KEY_DOWN) {
+			// Remove F8 as it isn't masked by useDeveloperTools = False
+			const Array<GKey> player_masked = { GKey::F8 };
+			if (player_masked.contains(ksym)) {
+				foundKey = true;
+			}
+		}
+	}
 	
 	// Handle normal keypresses
 	if (event.type == GEventType::KEY_DOWN) {
@@ -764,7 +788,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			return true;
 		}
 		else if (activeCamera() == playerCamera) {
-			// Override 'q', 'z', 'c', and 'e' keys (unused) 
+			// Override 'q', 'z', 'c', and 'e' keys (unused)
 			// THIS IS A PROBLEM IF THESE ARE KEY MAPPED!!!
 			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
 			if (unused.contains(ksym)) {
@@ -1612,6 +1636,8 @@ FPSciApp::Settings::Settings(const StartupConfig& startupConfig, int argc, const
 	window.caption = "First Person Science";
 	window.refreshRate = -1;
 	window.defaultIconFilename = "icon.png";
+
+	useDeveloperTools = startupConfig.developerMode;
 
 	hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
 	hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);

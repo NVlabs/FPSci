@@ -145,6 +145,7 @@ public:
 	}
 
 	void setVisible(bool visibile);
+	/** Resets session drop down clearing completed sessions and adding any new sessions. */
 	Array<String> updateSessionDropDown();
 	void updateReticlePreview();
 
