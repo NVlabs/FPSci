@@ -693,10 +693,9 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			else if (keyMap.map["reloadConfigs"].contains(ksym)) {
 				loadConfigs();												// (Re)load the configs
 				// Update session from the reloaded configs
-				updateMouseSensitivity();									// Update (apply) mouse sensitivity
-				m_userSettingsWindow->updateSessionDropDown();				// Update the session drop down to remove already completed sessions
-				updateSession(m_userSettingsWindow->selectedSession());		// Update session to create results file/start collection
-				// Pass the key stroke on to onEvent() for now?
+				m_userSettingsWindow->updateSessionDropDown();
+				updateSession(m_userSettingsWindow->selectedSession());
+				// Do not set foundKey = true to allow shader reloading from GApp::onEvent()
 			}
 			// Waypoint editor only keys
 			else if (startupConfig.waypointEditorMode) {

@@ -83,7 +83,8 @@ protected:
 	void updateControls(bool firstSession = false);
 	void loadConfigs();
 	virtual void loadModels();
-	/** Initializes player settings from configs and resets player to initial position */
+	/** Initializes player settings from configs and resets player to initial position 
+		Also updates mouse sensitivity. */
 	void initPlayer();
 
 	/** Move a window to the center of the display */
@@ -179,6 +180,7 @@ public:
 	shared_ptr<UserConfig> const currentUser(void) {  return userTable.getUserById(userStatusTable.currentUser); }
 
 	void markSessComplete(String id);
+	/** Updates experiment state to the provided session id and updates player parameters (including mouse sensitivity) */
 	virtual void updateSession(const String& id);
 	void updateParameters(int frameDelay, float frameRate);
 	void updateTargetColor(const shared_ptr<TargetEntity>& target);
