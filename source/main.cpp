@@ -19,9 +19,11 @@ int main(int argc, const char* argv[]) {
 		G3DSpecification spec;
 		spec.audio = FPSciApp::startupConfig.audioEnable;
 		
-		// lower audio latency
+		// lower audio latency to 256 / 48000 * 1000 * (3 - 1.5) = 8 ms
+		// Based on Average latency (ms) = bufferlength / 48kHz * 1000ms/s * (numbuffers - 1.5)
+		// See more here: https://github.com/NVlabs/abstract-fps/pull/223
 		spec.audioBufferLength = 256;
-		spec.audioNumBuffers = 1;
+		spec.audioNumBuffers = 3;
 
 		initGLG3D(spec);
 	}
