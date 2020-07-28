@@ -97,7 +97,7 @@ void Session::onInit(String filename, String description) {
 			m_logger = FPSciLogger::create(filename, user.id, m_config, description);
 			m_dbFilename = filename.substr(0, filename.length() - 3);
 			if (m_config->logger.logUsers) {
-				m_logger->logUserConfig(user, m_config->id, "start");
+				m_logger->logUserConfig(user, m_config->id, "start", m_config->player.turnScale);
 			}
 		}
 
@@ -623,7 +623,7 @@ String Session::getFeedbackMessage() {
 
 void Session::endLogging() {
 	if (m_logger != nullptr) {
-		m_logger->logUserConfig(*m_app->currentUser(), m_config->id, "end");
+		m_logger->logUserConfig(*m_app->currentUser(), m_config->id, "end", m_config->player.turnScale);
 		m_logger->flush(false);
 		m_logger.reset();
 	}

@@ -167,8 +167,12 @@ void FPSciLogger::createResultsFile(const String& filename,
 		{"reticleScaleMax", "real"},
 		{"reticleColorMinScale", "text"},
 		{"reticleColorMaxScale", "text"},
-		{"turnScaleX", "real"},
-		{"turnScaleY", "real"}
+		{"userTurnScaleX", "real"},
+		{"userTurnScaleY", "real"},
+		{"sessTurnScaleX", "real"},
+		{"sessTurnScaleY", "real"},
+		{"sensitivityX", "real"},
+		{"sensitivityY", "real"}
 	};
 	createTableInDB(m_db, "Users", userColumns);
 }
@@ -362,9 +366,11 @@ void FPSciLogger::addQuestion(Question q, String session) {
 	logQuestionResult(rowContents);
 }
 
-void FPSciLogger::logUserConfig(const UserConfig& user, const String session_ref, const String position) {
+void FPSciLogger::logUserConfig(const UserConfig& user, const String& session_ref, const String& position, const Vector2& sessTurnScale) {
 	// Collapse Y-inversion into per-user turn scale (no need to complicate the log)
-	float yTurnScale = user.invertY ? -user.turnScale.y : user.turnScale.y;
+	const float userYTurnScale = user.invertY ? -user.turnScale.y : user.turnScale.y;
+	const Vector2 sensitivity = user.turnScale * sessTurnScale * user.cmp360;
+
 	RowEntry row = {
 		"'" + user.id + "'",
 		"'" + session_ref + "'",
@@ -377,7 +383,11 @@ void FPSciLogger::logUserConfig(const UserConfig& user, const String session_ref
 		"'" + user.reticleColor[0].toString() + "'",
 		"'" + user.reticleColor[1].toString() + "'",
 		String(std::to_string(user.turnScale.x)),
-		String(std::to_string(yTurnScale))
+		String(std::to_string(userYTurnScale)),
+		String(std::to_string(sessTurnScale.x)),
+		String(std::to_string(sessTurnScale.y)),
+		String(std::to_string(sensitivity.x)),
+		String(std::to_string(sensitivity.y))
 	};
 	m_users.append(row);
 }

@@ -107,7 +107,7 @@ public:
 	void logTargetInfo(const TargetInfo& targetInfo) { addToQueue(m_targets, targetInfo); }
 	void logTrial(const TrialValues& trial) { addToQueue(m_trials, trial); }
 
-	void logUserConfig(const UserConfig& userConfig, const String session_ref, const String position);
+	void logUserConfig(const UserConfig& userConfig, const String& session_ref, const String& position, const Vector2& sessTurnScale);
 
 	/** Wakes up the logging thread and flushes even if the buffer limit is not reached yet. */
 	void flush(bool blockUntilDone);
