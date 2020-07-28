@@ -83,10 +83,14 @@ void FPSciLogger::createResultsFile(const String& filename,
 	Columns targetColumns = {
 			{ "name", "text"},
 			{ "id", "text" },
+			{ "spawn_time", "text"},
 			{ "type", "text"},
 			{ "destSpace", "text"},
 			{ "refresh_rate", "real"},
 			{ "added_frame_lag", "real"},
+			{ "size", "real"},
+			{ "spawn_ecc_h", "real"},
+			{ "spawn_ecc_v", "real"},
 			{ "min_size", "real"},
 			{ "max_size", "real"},
 			{ "min_ecc_h", "real" },
@@ -330,17 +334,21 @@ void FPSciLogger::flush(bool blockUntilDone)
 	m_queueCV.notify_one();
 }
 
-void FPSciLogger::addTarget(String name, shared_ptr<TargetConfig> config, float refreshRate, int addedFrameLag) {
+void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& config, const String& spawnTime, const float& size, const Point2& spawnEcc, const float& refreshRate, const int& addedFrameLag) {
 	const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
 	const String jumpEnabled = config->jumpEnabled ? "True" : "False";
 	const String modelName = config->modelSpec["filename"];
 	const RowEntry targetValues = {
 		"'" + name + "'",
 		"'" + config->id + "'",
+		"'" + spawnTime + "'",
 		"'" + type + "'",
 		"'" + config->destSpace + "'",
 		String(std::to_string(refreshRate)),
 		String(std::to_string(addedFrameLag)),
+		String(std::to_string(size)),
+		String(std::to_string(spawnEcc.x)),
+		String(std::to_string(spawnEcc.y)),
 		String(std::to_string(config->size[0])),
 		String(std::to_string(config->size[1])),
 		String(std::to_string(config->eccH[0])),
@@ -369,7 +377,7 @@ void FPSciLogger::addQuestion(Question q, String session) {
 void FPSciLogger::logUserConfig(const UserConfig& user, const String& session_ref, const String& position, const Vector2& sessTurnScale) {
 	// Collapse Y-inversion into per-user turn scale (no need to complicate the log)
 	const float userYTurnScale = user.invertY ? -user.turnScale.y : user.turnScale.y;
-	const Vector2 sensitivity = user.turnScale * sessTurnScale * user.cmp360;
+	const Vector2 sensitivity = (float)user.cmp360 * user.turnScale * sessTurnScale;
 
 	RowEntry row = {
 		"'" + user.id + "'",

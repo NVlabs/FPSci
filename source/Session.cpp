@@ -63,12 +63,6 @@ bool Session::blockComplete() const{
 bool Session::updateBlock(bool updateTargets) {
 	for (int i = 0; i < m_trials.size(); i++) {
 		Array<shared_ptr<TargetConfig>> targets = m_trials[i];
-		if (m_config->logger.enable && updateTargets) {
-			for (int j = 0; j < targets.size(); j++) {
-				const String name = format("%s_%d_%s_%d", m_config->id, i, targets[j]->id, j);
-				m_logger->addTarget(name, targets[j], m_config->render.frameRate, m_config->render.frameDelay);
-			}
-		}
 		m_remainingTrials.append(m_config->trials[i].count);
 		m_targetConfigs.append(targets);
 	}
@@ -181,12 +175,19 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 		const Color3 spawnColor = previewMode ? m_config->targetView.previewColor : m_config->targetView.healthColors[0];
 		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
 
-		const float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
-		const float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
+		const float spawn_eccV = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
+		const float spawn_eccH = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
 		const float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
 		bool isWorldSpace = target->destSpace == "world";
 
-		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw - (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
+		// Log the target if desired
+		if (m_config->logger.enable) {
+			const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, target->id, i);
+			const String spawnTime = FPSciLogger::genUniqueTimestamp();
+			m_logger->addTarget(name, target, spawnTime, targetSize, Point2(spawn_eccH, spawn_eccV), m_config->render.frameRate, m_config->render.frameDelay);
+		}
+
+		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, spawn_eccH - (initialHeadingRadians * 180.0f / (float)pi()), spawn_eccV, 0.0f);
 
 		// Check for case w/ destination array
 		shared_ptr<TargetEntity> t;

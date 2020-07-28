@@ -125,5 +125,13 @@ public:
 	void addQuestion(Question question, String session);
 
 	/** Add a target to an experiment */
-	void addTarget(String name, shared_ptr<TargetConfig> targetConfig, float refreshRate, int addedFrameLag);
+	void addTarget(
+		const String& name, 
+		const shared_ptr<TargetConfig>& targetConfig, 
+		const String& spawnTime,
+		const float& size, 
+		const Point2& spawnEcc, 
+		const float& refreshRate, 
+		const int& addedFrameLag
+	);
 };
