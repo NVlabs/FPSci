@@ -94,9 +94,9 @@ void FPSciLogger::createResultsFile(const String& filename,
 			{ "min_size", "real"},
 			{ "max_size", "real"},
 			{ "min_ecc_h", "real" },
-			{ "min_ecc_V", "real" },
+			{ "min_ecc_v", "real" },
 			{ "max_ecc_h", "real" },
-			{ "max_ecc_V", "real" },
+			{ "max_ecc_v", "real" },
 			{ "min_speed", "real" },
 			{ "max_speed", "real" },
 			{ "min_motion_change_period", "real" },
@@ -153,9 +153,9 @@ void FPSciLogger::createResultsFile(const String& filename,
 
 	// 7. Question responses
 	Columns questionColumns = {
-		{"Session", "text"},
-		{"Question", "text"},
-		{"Response", "text"}
+		{"session", "text"},
+		{"question", "text"},
+		{"response", "text"}
 	};
 	createTableInDB(m_db, "Questions", questionColumns);
 
