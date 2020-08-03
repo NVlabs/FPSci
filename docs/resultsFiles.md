@@ -80,8 +80,6 @@ The `Targets` table is intended to provide additional detailed infomration about
 * `destSpace`: The destination space used by the target (can be `player` or `world`)
     * `player` space targets move about the player and are typically only supported with `parametrized` types
     * `world` space targets can be specified as either `waypoint` based or `parametrized` with certain world-space bounds they cannot leave
-* `refresh_rate`: This is a historical field that records the update rate for the target; however, this can only be varied at a session-by-session level and can be logged to the [`Sessions` table](#sessions) using the `sessParamsToLog` parameter.
-* `added_frame_log`: This is a historical field that records the added latency for the target; however, this can only be varied at a session-by-session level and can be logged to the [`Sessions` table](#sessions) using the `sessParamsToLog` parameter.
 * `size`: This records the actual size of the target (useful when randomized in a range for the `parametrized` type)
 
 #### Parametric Target Info
@@ -128,6 +126,7 @@ The users table provides user-based information for the logged session. The tabl
 * `reticleScaleMax`: The maximum scale of the reticle (shortly after a shot)
 * `reticleColorMinScale`: The reticle color when at the minimum sclae (long after a shot)
 * `reticleColorMaxScale`: The reticle color when at the maximum scale (shortly after a shot)
+* `reticleChangeTime`: The time it takes for the reticle to scale/change colors following a shot
 * `userTurnScaleX`: The user provided X turn scale
 * `userTurnScaleY`: The user provided Y turn scale (negative if inverted)
 * `sessTurnScaleX`: The session provided X turn scale (stacks with user turn scale)
