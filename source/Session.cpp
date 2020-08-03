@@ -184,7 +184,7 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 		if (m_config->logger.enable) {
 			const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, target->id, i);
 			const String spawnTime = FPSciLogger::genUniqueTimestamp();
-			m_logger->addTarget(name, target, spawnTime, targetSize, Point2(spawn_eccH, spawn_eccV), m_config->render.frameRate, m_config->render.frameDelay);
+			m_logger->addTarget(name, target, spawnTime, targetSize, Point2(spawn_eccH, spawn_eccV));
 		}
 
 		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, spawn_eccH - (initialHeadingRadians * 180.0f / (float)pi()), spawn_eccV, 0.0f);

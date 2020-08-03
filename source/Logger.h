@@ -125,13 +125,5 @@ public:
 	void addQuestion(Question question, String session);
 
 	/** Add a target to an experiment */
-	void addTarget(
-		const String& name, 
-		const shared_ptr<TargetConfig>& targetConfig, 
-		const String& spawnTime,
-		const float& size, 
-		const Point2& spawnEcc, 
-		const float& refreshRate, 
-		const int& addedFrameLag
-	);
+	void addTarget(const String& name, const shared_ptr<TargetConfig>& targetConfig, const String& spawnTime, const float& size, const Point2& spawnEcc);
 };

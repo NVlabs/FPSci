@@ -86,8 +86,6 @@ void FPSciLogger::createResultsFile(const String& filename,
 			{ "spawn_time", "text"},
 			{ "type", "text"},
 			{ "destSpace", "text"},
-			{ "refresh_rate", "real"},
-			{ "added_frame_lag", "real"},
 			{ "size", "real"},
 			{ "spawn_ecc_h", "real"},
 			{ "spawn_ecc_v", "real"},
@@ -334,7 +332,7 @@ void FPSciLogger::flush(bool blockUntilDone)
 	m_queueCV.notify_one();
 }
 
-void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& config, const String& spawnTime, const float& size, const Point2& spawnEcc, const float& refreshRate, const int& addedFrameLag) {
+void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& config, const String& spawnTime, const float& size, const Point2& spawnEcc) {
 	const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
 	const String jumpEnabled = config->jumpEnabled ? "True" : "False";
 	const String modelName = config->modelSpec["filename"];
@@ -344,8 +342,6 @@ void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& 
 		"'" + spawnTime + "'",
 		"'" + type + "'",
 		"'" + config->destSpace + "'",
-		String(std::to_string(refreshRate)),
-		String(std::to_string(addedFrameLag)),
 		String(std::to_string(size)),
 		String(std::to_string(spawnEcc.x)),
 		String(std::to_string(spawnEcc.y)),

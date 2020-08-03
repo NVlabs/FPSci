@@ -1635,7 +1635,7 @@ public:
 	bool logUsers				= true;		///< Log user infomration in table?
 
 	// Session parameter logging
-	Array<String> sessParamsToLog;			///< Parameter names to log to the Sessions table of the DB
+	Array<String> sessParamsToLog = {"frameRate", "frameDelay"};			///< Parameter names to log to the Sessions table of the DB
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {

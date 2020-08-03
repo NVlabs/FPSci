@@ -188,7 +188,7 @@ As part of the general configuration parameters several controls over reporting 
 "logFrameInfo": true,
 "logPlayerActions": true,
 "logTrialResponse": true,
-"sessParamsToLog" : [],
+"sessParamsToLog" : ["frameRate", "frameDelay"],
 ```
 
 ### Logging Session Parameters
