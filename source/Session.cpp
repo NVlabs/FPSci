@@ -435,17 +435,12 @@ void Session::accumulateTrajectories()
 {
 	if (notNull(m_logger) && m_config->logger.logTargetTrajectories) {
 		for (shared_ptr<TargetEntity> target : m_targetArray) {
-			if (!target->isLogged()) continue;
-			// recording target trajectories
-			Point3 targetAbsolutePosition = target->frame().translation;
-			Point3 initialSpawnPos = m_camera->frame().translation;
-			Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
-					   
+			if (!target->isLogged()) continue;					   
 			//// below for 2D direction calculation (azimuth and elevation)
 			//Point3 t = targetPosition.direction();
 			//float az = atan2(-t.z, -t.x) * 180 / pif();
 			//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
-			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), target->name(), targetPosition);
+			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), target->name(), target->frame().translation);
 			m_logger->logTargetLocation(location);
 		}
 	}
