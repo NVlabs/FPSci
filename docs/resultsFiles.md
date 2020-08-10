@@ -12,8 +12,10 @@ This section outlines the high-level results tables, with more info provided on 
 * [`Frame_Info`](#frame_info): Timing information about each frame presented to the user during the session
 * [`Player_Action`](#player_action): Information about each aim/fire point the player made during the session
 * [`Questions`](#questions): Results from questions answered using the in-app questions systems
+
+* [`Targets`](#targets): Trial-specific details of individual targets that were spawned
+* [`Target_Types`](#target_types): The high-level parameters/randomized ranges used to spawn a particular type of target
 * [`Target_Trajectory`](#target_trajectory): The position of each target (in cartesian coordiantes) over time
-* [`Targets`](#targets): The high-level parameters/randomized ranges used to spawn a particular target
 * [`Trials`](#trials): High-level information about each trial and it's completion
 * [`Users`](#users): Information about the user(s) who took part in this session
 
@@ -69,24 +71,20 @@ The `Target_Trajectory` table describes the motion of targets within the session
 * `position_y`: The target world position (translation) Y coordinate
 * `position_z`: The target world position (translation) Z coordinate
 
-### Targets
-The `Targets` table is intended to provide additional detailed infomration about each type of target that was spawned within a trial. Both the parametric spawn information and the selected values are logged to this table. Table columns include:
+### Target_Types
+The `Target_Types` table is intended to provide high-level parameters for classes of targets spawned within a session. Table columns include:
 
-* `name`: The target name, corresponding to the name logged in the [`Target_Trajectory` table](#target_trajectory) and notably, not unique to an individual trial
-* `spawn_time`: The time at which this target spawned (assumed unique to an individual trial)
-* `type`: The type of the target (can be `waypoint` or `parametrized`)
+* `name`: The target type name, corresponding to the name logged in the `target_type_name` column of the [`Targets`](#targets) table. Not unique to individual trials/spawns of targets.
+* `motion_type`: The type of the target (can be `waypoint` or `parametrized`)
     * `waypoint` based targets do not use randomized parameters, and instead move between a set of predefined waypoints
     * `parametrized` targets randomize various motion parameters within provided ranges and create new target paths based on these values
-* `destSpace`: The destination space used by the target (can be `player` or `world`)
+* `dest_space`: The destination space used by the target (can be `player` or `world`)
     * `player` space targets move about the player and are typically only supported with `parametrized` types
     * `world` space targets can be specified as either `waypoint` based or `parametrized` with certain world-space bounds they cannot leave
-* `size`: This records the actual size of the target (useful when randomized in a range for the `parametrized` type)
 
 #### Parametric Target Info
 The following columns are only valid for `parametrized` target types. They can/should be ignored for all `waypoint` targets.
 
-* `spawn_ecc_h`: The (randomized) horizontal spawn eccentricity of the target
-* `spawn_ecc_v`: The (randomized) vertical spawn eccentricity of the target
 * `min_size`: The minimum spawned target size (low end of randomized range)
 * `max_size`: The maximum spawned target size (high end of randomized range)
 * `min_ecc_h`: The minimum horizontal spawn eccentricity (low end of randomized range)
@@ -99,6 +97,20 @@ The following columns are only valid for `parametrized` target types. They can/s
 * `max_motion_change_period`: The maximum time after which target motion can change
 * `jump_enabled`: Whether the target was allowed to perform "jump" motions
 * `model_file`: The name of the model file used for this target
+
+### Targets
+The `Targets` table is intended to provide additional detailed infomration about each target that was spawned within a trial. Table columns include:
+
+* `name`: The target name, corresponding to the name logged in the [`Target_Trajectory` table](#target_trajectory) and notably, unique to an individual trial
+* `target_type_name`: The name of the target type, in correspondence with the [`Target_Types`](#target_types) table
+* `spawn_time`: The time at which this target spawned (assumed unique to an individual trial)
+* `size`: This records the actual size of the target (useful when randomized in a range for the `parametrized` type)
+
+#### Parametric Target Info
+The following columns are only valid for `parametrized` target types. They can/should be ignored for all `waypoint` targets.
+
+* `spawn_ecc_h`: The (randomized) horizontal spawn eccentricity of the target
+* `spawn_ecc_v`: The (randomized) vertical spawn eccentricity of the target
 
 ### Trials
 The `Trials` table provides more detailed feedback on user performance within each trial. Table columns include:
