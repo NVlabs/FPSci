@@ -94,7 +94,7 @@ public:
 	
 	static shared_ptr<FPSciLogger> create(const String& filename, 
 		const String& subjectID, 
-		const shared_ptr<SessionConfig>& sessConfig, 
+		const shared_ptr<SessionConfig>& sessConfig,
 		const String& description="None") 
 	{
 		return createShared<FPSciLogger>(filename, subjectID, sessConfig, description);
@@ -108,6 +108,7 @@ public:
 	void logTrial(const TrialValues& trial) { addToQueue(m_trials, trial); }
 
 	void logUserConfig(const UserConfig& userConfig, const String& session_ref, const String& position, const Vector2& sessTurnScale);
+	void logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets);
 
 	/** Wakes up the logging thread and flushes even if the buffer limit is not reached yet. */
 	void flush(bool blockUntilDone);

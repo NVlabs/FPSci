@@ -50,9 +50,7 @@ void FPSciLogger::createResultsFile(const String& filename,
 		logPrintf(("Error creating log file: " + filename).c_str());
 	}
 
-	// create tables inside the db file.
-	// 1. Experiment description (time and subject ID)
-	// create sqlite table
+	// Session description (time and subject ID)
 	Columns sessColumns = {
 		// format: column name, data type, sqlite modifier(s)
 			{ "sessionID", "text", "NOT NULL"},
@@ -78,17 +76,11 @@ void FPSciLogger::createResultsFile(const String& filename,
 	// add header row
 	insertRowIntoDB(m_db, "Sessions", sessValues);
 
-	// 2. Targets
-	// create sqlite table
-	Columns targetColumns = {
-			{ "name", "text"},
-			{ "id", "text" },
-			{ "spawn_time", "text"},
-			{ "type", "text"},
-			{ "destSpace", "text"},
-			{ "size", "real"},
-			{ "spawn_ecc_h", "real"},
-			{ "spawn_ecc_v", "real"},
+	// Targets Type table (written once per session)
+	Columns targetTypeColumns = {
+			{ "name", "text" },
+			{ "motion_type", "text"},
+			{ "dest_space", "text"},
 			{ "min_size", "real"},
 			{ "max_size", "real"},
 			{ "min_ecc_h", "real" },
@@ -102,9 +94,20 @@ void FPSciLogger::createResultsFile(const String& filename,
 			{ "jump_enabled", "text" },
 			{ "model_file", "text" }
 	};
-	createTableInDB(m_db, "Targets", targetColumns); // Primary Key needed for this table.
+	createTableInDB(m_db, "Target_Types", targetTypeColumns); // Primary Key needed for this table.
 
-	// 3. Trials, only need to create the table.
+	// Targets table
+	Columns targetColumns = {
+		{ "name", "text" },
+		{ "target_type_name", "text"},
+		{ "spawn_time", "text"},
+		{ "size", "real"},
+		{ "spawn_ecc_h", "real"},
+		{ "spawn_ecc_v", "real"},
+	};
+	createTableInDB(m_db, "Targets", targetColumns);
+
+	// Trials table
 	Columns trialColumns = {
 			{ "trial_id", "integer" },
 			{ "session_id", "text" },
@@ -118,7 +121,7 @@ void FPSciLogger::createResultsFile(const String& filename,
 	};
 	createTableInDB(m_db, "Trials", trialColumns);
 
-	// 4. Target_Trajectory, only need to create the table.
+	// Target_Trajectory, only need to create the table.
 	Columns targetTrajectoryColumns = {
 			{ "time", "text" },
 			{ "target_id", "text"},
@@ -128,7 +131,7 @@ void FPSciLogger::createResultsFile(const String& filename,
 	};
 	createTableInDB(m_db, "Target_Trajectory", targetTrajectoryColumns);
 
-	// 5. Player_Action, only need to create the table.
+	// Player_Action table
 	Columns viewTrajectoryColumns = {
 			{ "time", "text" },
 			{ "position_az", "real" },
@@ -141,7 +144,7 @@ void FPSciLogger::createResultsFile(const String& filename,
 	};
 	createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
 
-	// 6. Frame_Info, create the table
+	// Frame_Info table
 	Columns frameInfoColumns = {
 			{"time", "text"},
 			//{"idt", "real"},
@@ -149,7 +152,7 @@ void FPSciLogger::createResultsFile(const String& filename,
 	};
 	createTableInDB(m_db, "Frame_Info", frameInfoColumns);
 
-	// 7. Question responses
+	// Questions table
 	Columns questionColumns = {
 		{"session", "text"},
 		{"question", "text"},
@@ -157,7 +160,7 @@ void FPSciLogger::createResultsFile(const String& filename,
 	};
 	createTableInDB(m_db, "Questions", questionColumns);
 
-	//8. User information
+	// Users table
 	Columns userColumns = {
 		{"subjectID", "text"},
 		{"session", "text"},
@@ -333,31 +336,43 @@ void FPSciLogger::flush(bool blockUntilDone)
 	m_queueCV.notify_one();
 }
 
+// Log target parameters into Target_Types table
+void FPSciLogger::logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets) {
+	Array<RowEntry> rows;
+	for (auto config : targets) {
+		const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
+		const String jumpEnabled = config->jumpEnabled ? "True" : "False";
+		const String modelName = config->modelSpec["filename"];
+		const RowEntry targetTypeRow = {
+			"'" + config->id + "'",
+			"'" + type + "'",
+			"'" + config->destSpace + "'",
+			String(std::to_string(config->size[0])),
+			String(std::to_string(config->size[1])),
+			String(std::to_string(config->eccH[0])),
+			String(std::to_string(config->eccH[1])),
+			String(std::to_string(config->eccV[0])),
+			String(std::to_string(config->eccV[1])),
+			String(std::to_string(config->speed[0])),
+			String(std::to_string(config->speed[1])),
+			String(std::to_string(config->motionChangePeriod[0])),
+			String(std::to_string(config->motionChangePeriod[1])),
+			"'" + jumpEnabled + "'",
+			"'" + modelName + "'"
+		};
+		rows.append(targetTypeRow);
+	}
+	insertRowsIntoDB(m_db, "Target_Types", rows);
+}
+
 void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& config, const String& spawnTime, const float& size, const Point2& spawnEcc) {
-	const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
-	const String jumpEnabled = config->jumpEnabled ? "True" : "False";
-	const String modelName = config->modelSpec["filename"];
 	const RowEntry targetValues = {
 		"'" + name + "'",
 		"'" + config->id + "'",
 		"'" + spawnTime + "'",
-		"'" + type + "'",
-		"'" + config->destSpace + "'",
 		String(std::to_string(size)),
 		String(std::to_string(spawnEcc.x)),
 		String(std::to_string(spawnEcc.y)),
-		String(std::to_string(config->size[0])),
-		String(std::to_string(config->size[1])),
-		String(std::to_string(config->eccH[0])),
-		String(std::to_string(config->eccH[1])),
-		String(std::to_string(config->eccV[0])),
-		String(std::to_string(config->eccV[1])),
-		String(std::to_string(config->speed[0])),
-		String(std::to_string(config->speed[1])),
-		String(std::to_string(config->motionChangePeriod[0])),
-		String(std::to_string(config->motionChangePeriod[1])),
-		"'" + jumpEnabled + "'",
-		"'" + modelName + "'"
 	};
 	logTargetInfo(targetValues);
 }

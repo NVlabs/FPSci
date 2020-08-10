@@ -2090,11 +2090,13 @@ public:
 		return nullptr;
 	}
 
-	Array<Array<shared_ptr<TargetConfig>>> getTargetsForSession(const String& id) const {
-		return getTargetsForSession(getSessionIndex(id));
+	// Get target configs by trial (not recommended for repeated calls)
+	Array<Array<shared_ptr<TargetConfig>>> getTargetsByTrial(const String& id) const {
+		return getTargetsByTrial(getSessionIndex(id));
 	}
 
-	Array<Array<shared_ptr<TargetConfig>>> getTargetsForSession(int sessionIndex) const {
+	// Get target configs by trial (not recommended for repeated calls)
+	Array<Array<shared_ptr<TargetConfig>>> getTargetsByTrial(int sessionIndex) const {
 		Array<Array<shared_ptr<TargetConfig>>> trials;
 		// Iterate through the trials
 		for (int i = 0; i < sessions[sessionIndex].trials.size(); i++) {
@@ -2106,6 +2108,22 @@ public:
 			trials.append(targets);
 		}
 		return trials;
+	}
+
+	// Get all targets affiliated with a session (not recommended for repeated calls)
+	Array<shared_ptr<TargetConfig>> getSessionTargets(const String& id) {
+		const int idx = getSessionIndex(id);		// Get session index
+		Array<shared_ptr<TargetConfig>> targets;
+		Array<String> loggedIds;
+		for (auto trial : sessions[idx].trials) {
+			for (String id : trial.ids) {
+				if (!loggedIds.contains(id)) {
+					loggedIds.append(id);
+					targets.append(getTargetConfigById(id));
+				}
+			}
+		}
+		return targets;
 	}
 
 	Any toAny(const bool forceAll = false) const {

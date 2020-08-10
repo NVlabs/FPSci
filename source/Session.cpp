@@ -60,11 +60,17 @@ bool Session::blockComplete() const{
 	return allTrialsComplete;
 }
 
-bool Session::updateBlock(bool updateTargets) {
+bool Session::updateBlock(bool init) {
 	for (int i = 0; i < m_trials.size(); i++) {
-		Array<shared_ptr<TargetConfig>> targets = m_trials[i];
-		m_remainingTrials.append(m_config->trials[i].count);
-		m_targetConfigs.append(targets);
+		const Array<shared_ptr<TargetConfig>>& targets = m_trials[i];
+		if (init) { // If this is the first block in the session
+			m_completedTrials.append(0);							// This increments across blocks (unique trial index)
+			m_remainingTrials.append(m_config->trials[i].count);	// This is reset across blocks (tracks progress)
+			m_targetConfigs.append(targets);						// This only needs to be setup once
+		}
+		else { // Update for a new block in the session
+			m_remainingTrials[i] += m_config->trials[i].count;		// Add another set of trials of this type
+		}
 	}
 	return nextCondition();
 }
@@ -89,6 +95,7 @@ void Session::onInit(String filename, String description) {
 			UserConfig user = *m_app->currentUser();
 			// Setup the logger and create results file
 			m_logger = FPSciLogger::create(filename, user.id, m_config, description);
+			m_logger->logTargetTypes(m_app->experimentConfig.getSessionTargets(m_config->id));
 			m_dbFilename = filename.substr(0, filename.length() - 3);
 			if (m_config->logger.logUsers) {
 				m_logger->logUserConfig(user, m_config->id, "start", m_config->player.turnScale);
@@ -98,7 +105,7 @@ void Session::onInit(String filename, String description) {
 		runSessionCommands("start");				// Run start of session commands
 
 		// Iterate over the sessions here and add a config for each
-		m_trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
+		m_trials = m_app->experimentConfig.getTargetsByTrial(m_config->id);
 		updateBlock(true);
 	}
 	else {	// Invalid session, move to displaying message
@@ -170,10 +177,9 @@ void Session::initTargetAnimation() {
 void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 	// Iterate through the targets
 	for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
-
-		const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, m_targetConfigs[m_currTrialIdx][i]->id, i);
 		const Color3 spawnColor = previewMode ? m_config->targetView.previewColor : m_config->targetView.healthColors[0];
 		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
+		const String name = format("%s_%d_%d_%s_%d", m_config->id, m_currTrialIdx, m_completedTrials[m_currTrialIdx], target->id, i);
 
 		const float spawn_eccV = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
 		const float spawn_eccH = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
@@ -182,7 +188,6 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 
 		// Log the target if desired
 		if (m_config->logger.enable) {
-			const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, target->id, i);
 			const String spawnTime = FPSciLogger::genUniqueTimestamp();
 			m_logger->addTarget(name, target, spawnTime, targetSize, Point2(spawn_eccH, spawn_eccV));
 		}
@@ -219,7 +224,8 @@ void Session::processResponse()
 	// Record the trial response into the database
 	recordTrialResponse(m_destroyedTargets, totalTargets); 
 	if (m_remainingTrials[m_currTrialIdx] > 0) {
-		m_remainingTrials[m_currTrialIdx] -= 1;
+		m_completedTrials[m_currTrialIdx] += 1;
+		m_remainingTrials[m_currTrialIdx] -= 1;	
 	}
 
 	// Check for whether all targets have been destroyed

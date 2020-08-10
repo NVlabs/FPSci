@@ -139,6 +139,7 @@ protected:
 	int m_currTrialIdx;										///< Current trial
 	int m_currQuestionIdx = -1;								///< Current question index
 	Array<int> m_remainingTrials;							///< Completed flags
+	Array<int> m_completedTrials;								///< Count of completed trials
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
 	// Time-based parameters
@@ -374,7 +375,7 @@ public:
 	void accumulatePlayerAction(PlayerActionType action, String target="");
 	bool canFire();
 
-	bool updateBlock(bool updateTargets = false);
+	bool updateBlock(bool init = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState currentState;			///< Current presentation state
