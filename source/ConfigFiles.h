@@ -1646,7 +1646,7 @@ public:
 			reader.getIfPresent("logPlayerActions", logPlayerActions);
 			reader.getIfPresent("logTrialResponse", logTrialResponse);
 			reader.getIfPresent("logUsers", logUsers);
-			reader.getIfPresent("sessParamsToLog", sessParamsToLog);
+			reader.getIfPresent("sessionParametersToLog", sessParamsToLog);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1662,7 +1662,7 @@ public:
 		if(forceAll || def.logPlayerActions != logPlayerActions)			a["logPlayerActions"] = logPlayerActions;
 		if(forceAll || def.logTrialResponse != logTrialResponse)			a["logTrialResponse"] = logTrialResponse;
 		if(forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
-		if(forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessParamsToLog"] = sessParamsToLog;
+		if(forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessionParametersToLog"] = sessParamsToLog;
 		return a;
 	}
 };
