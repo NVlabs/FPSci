@@ -94,12 +94,10 @@ void Session::onInit(String filename, String description) {
 		if (m_config->logger.enable) {
 			UserConfig user = *m_app->currentUser();
 			// Setup the logger and create results file
-			m_logger = FPSciLogger::create(filename, user.id, m_config, description);
-			m_logger->logTargetTypes(m_app->experimentConfig.getSessionTargets(m_config->id));
+			logger = FPSciLogger::create(filename, user.id, m_config, description);
+			logger->logTargetTypes(m_app->experimentConfig.getSessionTargets(m_config->id));			// Log target info at start of session
+			logger->logUserConfig(user, m_config->id, m_config->player.turnScale);						// Log user info at start of session
 			m_dbFilename = filename.substr(0, filename.length() - 3);
-			if (m_config->logger.logUsers) {
-				m_logger->logUserConfig(user, m_config->id, "start", m_config->player.turnScale);
-			}
 		}
 
 		runSessionCommands("start");				// Run start of session commands
@@ -189,7 +187,7 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 		// Log the target if desired
 		if (m_config->logger.enable) {
 			const String spawnTime = FPSciLogger::genUniqueTimestamp();
-			m_logger->addTarget(name, target, spawnTime, targetSize, Point2(spawn_eccH, spawn_eccV));
+			logger->addTarget(name, target, spawnTime, targetSize, Point2(spawn_eccH, spawn_eccV));
 		}
 
 		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, spawn_eccH - (initialHeadingRadians * 180.0f / (float)pi()), spawn_eccV, 0.0f);
@@ -309,7 +307,7 @@ void Session::updatePresentationState()
 							if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
 								m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
 								if (m_config->logger.enable) {
-									m_logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
+									logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
 								}
 								m_currQuestionIdx++;																// Present the next question (if there is one)
 								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
@@ -351,7 +349,7 @@ void Session::updatePresentationState()
 				newState = PresentationState::complete;
         
 				// Save current user config and status
-				m_app->saveUserConfig();											
+				m_app->saveUserConfig(true);											
 				m_app->saveUserStatus();
         
 				closeSessionProcesses();					// Close the process we started at session start (if there is one)
@@ -433,13 +431,13 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 			String(std::to_string(destroyedTargets)),
 			String(std::to_string(totalTargets))
 		};
-		m_logger->logTrial(trialValues);
+		logger->logTrial(trialValues);
 	}
 }
 
 void Session::accumulateTrajectories()
 {
-	if (notNull(m_logger) && m_config->logger.logTargetTrajectories) {
+	if (notNull(logger) && m_config->logger.logTargetTrajectories) {
 		for (shared_ptr<TargetEntity> target : m_targetArray) {
 			if (!target->isLogged()) continue;					   
 			//// below for 2D direction calculation (azimuth and elevation)
@@ -447,7 +445,7 @@ void Session::accumulateTrajectories()
 			//float az = atan2(-t.z, -t.x) * 180 / pif();
 			//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
 			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), target->name(), target->frame().translation);
-			m_logger->logTargetLocation(location);
+			logger->logTargetLocation(location);
 		}
 	}
 	// recording view direction trajectories
@@ -456,13 +454,13 @@ void Session::accumulateTrajectories()
 
 void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 {
-	if (notNull(m_logger) && m_config->logger.logPlayerActions) {
+	if (notNull(logger) && m_config->logger.logPlayerActions) {
 		BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 		// recording target trajectories
 		Point2 dir = getViewDirection();
 		Point3 loc = getPlayerLocation();
 		PlayerAction pa = PlayerAction(FPSciLogger::getFileTime(), dir, loc, action, targetName);
-		m_logger->logPlayerAction(pa);
+		logger->logPlayerAction(pa);
 		END_PROFILER_EVENT();
 	}
 	
@@ -471,8 +469,8 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
-	if (notNull(m_logger) && m_config->logger.logFrameInfo) {
-		m_logger->logFrameInfo(FrameInfo(FPSciLogger::getFileTime(), sdt));
+	if (notNull(logger) && m_config->logger.logFrameInfo) {
+		logger->logFrameInfo(FrameInfo(FPSciLogger::getFileTime(), sdt));
 	}
 }
 
@@ -624,10 +622,11 @@ String Session::getFeedbackMessage() {
 }
 
 void Session::endLogging() {
-	if (m_logger != nullptr) {
-		m_logger->logUserConfig(*m_app->currentUser(), m_config->id, "end", m_config->player.turnScale);
-		m_logger->flush(false);
-		m_logger.reset();
+	if (logger != nullptr) {
+
+		//m_logger->logUserConfig(*m_app->currentUser(), m_config->id, m_config->player.turnScale);
+		logger->flush(false);
+		logger.reset();
 	}
 }
 

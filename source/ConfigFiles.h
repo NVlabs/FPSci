@@ -10,6 +10,10 @@ static bool operator!=(Array<T> a1, Array<T> a2) {
 	}
 	return false;
 }
+template <class T>
+static bool operator==(Array<T> a1, Array<T> a2) {
+	return !(a1 != a2);
+}
 
 /** Configure how the application should start */
 class StartupConfig {
@@ -412,6 +416,14 @@ public:
 		if (forceAll || def.invertY != invertY)							a["invertY"] = invertY;
 		if (forceAll || def.scopeTurnScale != scopeTurnScale)			a["scopeTurnScale"] = scopeTurnScale;
 		return a;
+	}
+
+	// Define not equal operator for comparison
+	bool operator==(const UserConfig& other) const {
+		bool eq = id == other.id && cmp360 == other.cmp360 && reticleIndex == other.reticleIndex &&
+			reticleScale == other.reticleScale && reticleColor == other.reticleColor && reticleChangeTimeS == other.reticleChangeTimeS && 
+			turnScale == other.turnScale && invertY == other.invertY && scopeTurnScale == other.scopeTurnScale;
+		return eq;
 	}
 };
 
@@ -1632,7 +1644,7 @@ public:
 	bool logFrameInfo			= true;		///< Log frame info in table?
 	bool logPlayerActions		= true;		///< Log player actions in table?
 	bool logTrialResponse		= true;		///< Log trial response in table?
-	bool logUsers				= true;		///< Log user infomration in table?
+	bool logUsers				= true;		///< Log user information in table?
 
 	// Session parameter logging
 	Array<String> sessParamsToLog = {"frameRate", "frameDelay"};			///< Parameter names to log to the Sessions table of the DB

@@ -28,6 +28,8 @@ protected:
 	
 	const size_t m_bufferLimit = 1024 * 1024;		///< Flush every this many bytes
 	
+	const LoggerConfig& m_config;					/// Logger configuration
+
 	bool m_running = false;
 	bool m_flushNow = false;
 	std::thread m_thread;
@@ -107,7 +109,7 @@ public:
 	void logTargetInfo(const TargetInfo& targetInfo) { addToQueue(m_targets, targetInfo); }
 	void logTrial(const TrialValues& trial) { addToQueue(m_trials, trial); }
 
-	void logUserConfig(const UserConfig& userConfig, const String& session_ref, const String& position, const Vector2& sessTurnScale);
+	void logUserConfig(const UserConfig& userConfig, const String& sessId, const Vector2& sessTurnScale);
 	void logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets);
 
 	/** Wakes up the logging thread and flushes even if the buffer limit is not reached yet. */

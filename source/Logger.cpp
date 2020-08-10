@@ -298,7 +298,7 @@ FPSciLogger::FPSciLogger(const String& filename,
 	const String& subjectID, 
 	const shared_ptr<SessionConfig>& sessConfig, 
 	const String& description 
-	) : m_db(nullptr) 
+	) : m_db(nullptr), m_config(sessConfig->logger)
 {
 	// Reserve some space in these arrays here
 	m_playerActions.reserve(5000);
@@ -386,15 +386,17 @@ void FPSciLogger::addQuestion(Question q, String session) {
 	logQuestionResult(rowContents);
 }
 
-void FPSciLogger::logUserConfig(const UserConfig& user, const String& session_ref, const String& position, const Vector2& sessTurnScale) {
+void FPSciLogger::logUserConfig(const UserConfig& user, const String& sessId, const Vector2& sessTurnScale) {
+	if (!m_config.logUsers) return;
 	// Collapse Y-inversion into per-user turn scale (no need to complicate the log)
 	const float userYTurnScale = user.invertY ? -user.turnScale.y : user.turnScale.y;
 	const Vector2 sensitivity = (float)user.cmp360 * user.turnScale * sessTurnScale;
+	const String time = genUniqueTimestamp();
 
 	RowEntry row = {
 		"'" + user.id + "'",
-		"'" + session_ref + "'",
-		"'" + position + "'",
+		"'" + sessId + "'",
+		"'" + time + "'",
 		String(std::to_string(user.cmp360)),
 		String(std::to_string(user.mouseDPI)),
 		String(std::to_string(user.reticleIndex)),

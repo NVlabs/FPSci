@@ -27,6 +27,7 @@ void FPSciApp::onInit() {
 
 	// Load config from files
 	loadConfigs();
+	m_lastSavedUser = *currentUser();			// Copy over the startup user for saves
 
 	// Get the size of the primary display
 	displayRes = OSWindow::primaryDisplaySize();						
@@ -70,15 +71,47 @@ void FPSciApp::onInit() {
 	setFrameDuration(frameDuration(), REAL_TIME);
 }
 
+void FPSciApp::toggleUserSettingsMenu() {
+	if (!m_userSettingsWindow->visible()) {
+		openUserSettingsWindow();
+	}
+	else {
+		closeUserSettingsWindow();
+	}
+	// Make sure any change to sensitivity are applied
+	updateMouseSensitivity();
+}
+
 /** Handle the user settings window visibility */
 void FPSciApp::openUserSettingsWindow() {
+	// set focus so buttons properly highlight
+	moveToCenter(m_userSettingsWindow);
     m_userSettingsWindow->setVisible(true);
+	m_widgetManager->setFocusedWidget(m_userSettingsWindow);
 }
 
 /** Handle the user settings window visibility */
 void FPSciApp::closeUserSettingsWindow() {
-
+	if (sessConfig->menu.allowUserSettingsSave) {		// If the user could have saved their settings
+		saveUserConfig(true);							// Save the user config (if it has changed) whenever this window is closed
+	}
 	m_userSettingsWindow->setVisible(false);
+}
+
+void FPSciApp::saveUserConfig(bool onDiff) {
+	// Check for save on diff, without mismatch
+	if (onDiff && m_lastSavedUser == *currentUser()) return;
+	if (sess->logger) {
+		sess->logger->logUserConfig(*currentUser(), sessConfig->id, sessConfig->player.turnScale);
+	}
+	userTable.save(startupConfig.userConfigFilename);
+	m_lastSavedUser = *currentUser();			// Copy over this user
+	logPrintf("User table saved.\n");			// Print message to log
+}
+
+void FPSciApp::saveUserStatus(void) {
+	userStatusTable.save(startupConfig.userStatusFilename);
+	logPrintf("User status saved.\n");
 }
 
 /** Update the mouse mode/sensitivity */
@@ -119,7 +152,7 @@ void FPSciApp::loadConfigs() {
 	userStatusTable = UserStatusTable::load(startupConfig.userStatusFilename);
 	userStatusTable.printToLog();
 	userStatusTable.validate(sessionIds, userTable.getIds());
-
+		
 	// Get info about the system
 	SystemInfo info = SystemInfo::get();
 	info.printToLog();										// Print system info to log.txt
@@ -518,17 +551,6 @@ void FPSciApp::quitRequest() {
 		m_pyLogger->mergeLogToDb(true);
 	}
     setExitCode(0);
-}
-
-void FPSciApp::toggleUserSettingsMenu() {
-	m_userSettingsWindow->toggleVisibliity();
-	if (m_userSettingsWindow->visible()) {
-		// set focus so buttons properly highlight
-		moveToCenter(m_userSettingsWindow);
-		m_widgetManager->setFocusedWidget(m_userSettingsWindow);
-	}
-	// Make sure any change to sensitivity are applied
-	updateMouseSensitivity();
 }
 
 void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {

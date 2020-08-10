@@ -112,7 +112,6 @@ protected:
 	
 	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
 	
-	shared_ptr<FPSciLogger> m_logger;					///< Output results logger
 	String m_dbFilename;								///< Filename for output logging (less the .db extension)
 
 	shared_ptr<PlayerEntity> m_player;					///< Player entity
@@ -315,6 +314,7 @@ protected:
 
 public:
 	float initialHeadingRadians = 0.0f;
+	shared_ptr<FPSciLogger> logger;					///< Output results logger
 
 	static shared_ptr<Session> create(FPSciApp* app) {
 		return createShared<Session>(app);
