@@ -115,9 +115,9 @@ The following columns are only valid for `parametrized` target types. They can/s
 ### Trials
 The `Trials` table provides more detailed feedback on user performance within each trial. Table columns include:
 
-* `trial_id`: The ID (index) of the trial being performed within the session (i.e. its index within the session specifications `trials` array)
 * `session_id`: The ID string of the session the trial was performed within
-* `session_mode`: Historically named, the description field from the session the trial was logged from within
+* `trial_id`: The ID (index) of the trial type being performed within the session (i.e. its index within the session specifications `trials` array)
+* `trial_index`: The index of the particular trial type being performed (unqiue to the trial). This together with `session_id` and `trial_id` can be used to uniquely affiliate spawned targets to trials
 * `block_id`: The ID (index) of the current block being performed within the session (repeats trials)
 * `start_time`: The (wall clock) start time of the trial (useful for affiliating player/target actions)
 * `end_time`: The (wall clock) end time of the trial (useful for affiliating player/target actions)
