@@ -109,9 +109,9 @@ void FPSciLogger::createResultsFile(const String& filename,
 
 	// Trials table
 	Columns trialColumns = {
-			{ "trial_id", "integer" },
 			{ "session_id", "text" },
-			{ "session_mode", "text" },
+			{ "trial_id", "integer" },
+			{ "trial_index", "integer"},
 			{ "block_id", "text"},
 			{ "start_time", "text" },
 			{ "end_time", "text" },

@@ -421,9 +421,9 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 	if (m_config->logger.logTrialResponse) {
 		// Trials table. Record trial start time, end time, and task completion time.
 		FPSciLogger::TrialValues trialValues = {
-			String(std::to_string(m_currTrialIdx)),
 			"'" + m_config->id + "'",
-			"'" + m_config->description + "'",
+			String(std::to_string(m_currTrialIdx)),
+			String(std::to_string(m_completedTrials[m_currTrialIdx])),
 			format("'Block %d'", m_currBlock),
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
