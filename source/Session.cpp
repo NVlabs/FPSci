@@ -220,9 +220,10 @@ void Session::processResponse()
 
 	const int totalTargets = totalTrialTargets();
 	// Record the trial response into the database
-	recordTrialResponse(m_destroyedTargets, totalTargets); 
+	recordTrialResponse(m_destroyedTargets, totalTargets);
+
+	m_completedTrials[m_currTrialIdx] += 1;
 	if (m_remainingTrials[m_currTrialIdx] > 0) {
-		m_completedTrials[m_currTrialIdx] += 1;
 		m_remainingTrials[m_currTrialIdx] -= 1;	
 	}
 
