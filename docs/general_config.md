@@ -75,16 +75,24 @@ The following settings allow the user to control various timings/durations aroun
 ```
 
 ## Feedback Configuration
+In addition to the trial/session feedback duration control, the formatting and strings used for feedback are also configurable.
 
 ### Feedback Formatting
 The formatting of feedback messages is controllable from general config, included formatting parameters include:
 
 | Parameter Name                    |Units      | Description                                                           |
 |-----------------------------------|-----------|-----------------------------------------------------------------------|
+|`feedbackFontSize`                 |`float`    | The font size to use for the feedback message (scales w/ window)      |
 |`feedbackColor`                    |`Color3`   | The text color to use for the feedback message                        |
 |`feedbackOutlineColor`             |`Color4`   | The text outline color to use for the feedback message                |
-|`feedbackFontSize`                 |`float`    | The font size to use for the feedback message (scales w/ window)      |
 |`feedbackBackgroundColor`          |`Color4`   | The "back plate" color to apply to the feedback message (use clear for no plate) |
+
+```
+feedbackFontSize = 20;                          // Feedback font size of 20
+feedbackColor = Color3(0.648, 1.0, 0);          // Feedback text foreground color
+feedbackOutlineColor = Color4(0,0,0,0);         // Transparent feedback text outline
+feedbackBackgroundColor = Color4(0,0,0,0.5);    // Semi-transparent back plate
+```
 
 ### Feedback Messages
 In addition to controlling the duration and formatting of displayed feedback messages, this configuration allows the experiment designer to control the messages provided as feedback themselves.
