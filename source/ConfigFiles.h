@@ -10,6 +10,10 @@ static bool operator!=(Array<T> a1, Array<T> a2) {
 	}
 	return false;
 }
+template <class T>
+static bool operator==(Array<T> a1, Array<T> a2) {
+	return !(a1 != a2);
+}
 
 /** Configure how the application should start */
 class StartupConfig {
@@ -412,6 +416,14 @@ public:
 		if (forceAll || def.invertY != invertY)							a["invertY"] = invertY;
 		if (forceAll || def.scopeTurnScale != scopeTurnScale)			a["scopeTurnScale"] = scopeTurnScale;
 		return a;
+	}
+
+	// Define not equal operator for comparison
+	bool operator==(const UserConfig& other) const {
+		bool eq = id == other.id && cmp360 == other.cmp360 && reticleIndex == other.reticleIndex &&
+			reticleScale == other.reticleScale && reticleColor == other.reticleColor && reticleChangeTimeS == other.reticleChangeTimeS && 
+			turnScale == other.turnScale && invertY == other.invertY && scopeTurnScale == other.scopeTurnScale;
+		return eq;
 	}
 };
 
@@ -1632,10 +1644,10 @@ public:
 	bool logFrameInfo			= true;		///< Log frame info in table?
 	bool logPlayerActions		= true;		///< Log player actions in table?
 	bool logTrialResponse		= true;		///< Log trial response in table?
-	bool logUsers				= true;		///< Log user infomration in table?
+	bool logUsers				= true;		///< Log user information in table?
 
 	// Session parameter logging
-	Array<String> sessParamsToLog;			///< Parameter names to log to the Sessions table of the DB
+	Array<String> sessParamsToLog = {"frameRate", "frameDelay"};			///< Parameter names to log to the Sessions table of the DB
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
@@ -1646,7 +1658,7 @@ public:
 			reader.getIfPresent("logPlayerActions", logPlayerActions);
 			reader.getIfPresent("logTrialResponse", logTrialResponse);
 			reader.getIfPresent("logUsers", logUsers);
-			reader.getIfPresent("sessParamsToLog", sessParamsToLog);
+			reader.getIfPresent("sessionParametersToLog", sessParamsToLog);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1662,7 +1674,7 @@ public:
 		if(forceAll || def.logPlayerActions != logPlayerActions)			a["logPlayerActions"] = logPlayerActions;
 		if(forceAll || def.logTrialResponse != logTrialResponse)			a["logTrialResponse"] = logTrialResponse;
 		if(forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
-		if(forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessParamsToLog"] = sessParamsToLog;
+		if(forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessionParametersToLog"] = sessParamsToLog;
 		return a;
 	}
 };
@@ -2090,11 +2102,13 @@ public:
 		return nullptr;
 	}
 
-	Array<Array<shared_ptr<TargetConfig>>> getTargetsForSession(const String& id) const {
-		return getTargetsForSession(getSessionIndex(id));
+	// Get target configs by trial (not recommended for repeated calls)
+	Array<Array<shared_ptr<TargetConfig>>> getTargetsByTrial(const String& id) const {
+		return getTargetsByTrial(getSessionIndex(id));
 	}
 
-	Array<Array<shared_ptr<TargetConfig>>> getTargetsForSession(int sessionIndex) const {
+	// Get target configs by trial (not recommended for repeated calls)
+	Array<Array<shared_ptr<TargetConfig>>> getTargetsByTrial(int sessionIndex) const {
 		Array<Array<shared_ptr<TargetConfig>>> trials;
 		// Iterate through the trials
 		for (int i = 0; i < sessions[sessionIndex].trials.size(); i++) {
@@ -2106,6 +2120,22 @@ public:
 			trials.append(targets);
 		}
 		return trials;
+	}
+
+	// Get all targets affiliated with a session (not recommended for repeated calls)
+	Array<shared_ptr<TargetConfig>> getSessionTargets(const String& id) {
+		const int idx = getSessionIndex(id);		// Get session index
+		Array<shared_ptr<TargetConfig>> targets;
+		Array<String> loggedIds;
+		for (auto trial : sessions[idx].trials) {
+			for (String id : trial.ids) {
+				if (!loggedIds.contains(id)) {
+					loggedIds.append(id);
+					targets.append(getTargetConfigById(id));
+				}
+			}
+		}
+		return targets;
 	}
 
 	Any toAny(const bool forceAll = false) const {

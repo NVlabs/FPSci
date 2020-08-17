@@ -180,7 +180,7 @@ As part of the general configuration parameters several controls over reporting 
 |`logFrameInfo`         |`bool` | Whether or not to log frame info into the `Frame_Info` table                     |
 |`logPlayerActions`     |`bool` | Whether or not to log player actions into the `Player_Action` table              |
 |`logTrialResponse`     |`bool` | Whether or not to log trial responses into the `Trials` table                    |
-|`sessParamsToLog`      |`Array<String>`| A list of additional parameter names (from the config) to log            |
+|`sessionParametersToLog`      |`Array<String>`| A list of additional parameter names (from the config) to log            |
 
 ```
 "logEnable" : true,
@@ -188,13 +188,13 @@ As part of the general configuration parameters several controls over reporting 
 "logFrameInfo": true,
 "logPlayerActions": true,
 "logTrialResponse": true,
-"sessParamsToLog" : [],
+"sessionParametersToLog" : ["frameRate", "frameDelay"],
 ```
 
 ### Logging Session Parameters
-The `sessParamsToLog` parameter allows the user to provide an additional list of parameter names to log into the `Sessions` table in the output database. This allows users to control their reporting of conditions on a per-session basis. These logging control can (of course) also be specified at the experiment level. For example, if we had a series of sessions over which the player's `moveRate` or the HUD's `showAmmo` value was changing we could add these to the `sessParamsToLog` array by specifying:
+The `sessionParametersToLog` parameter allows the user to provide an additional list of parameter names to log into the `Sessions` table in the output database. This allows users to control their reporting of conditions on a per-session basis. These logging control can (of course) also be specified at the experiment level. For example, if we had a series of sessions over which the player's `moveRate` or the HUD's `showAmmo` value was changing we could add these to the `sessionParametersToLog` array by specifying:
 ```
-"sessParamsToLog" = ["moveRate", "showAmmo"],
+"sessionParametersToLog" = ["moveRate", "showAmmo"],
 ```
 In the top-level of the experiment config file. This allows the experiment designer to tag their sessions w/ relevant/changing parameters as needed for ease of reference later on from the database output file(s).
 

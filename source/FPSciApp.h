@@ -73,6 +73,7 @@ protected:
 	bool									m_showUserMenu = true;				///< Show the user menu after update?
 
 	bool									m_firstSession = true;
+	UserConfig								m_lastSavedUser;					///< Used to track if user has changed since last save
 
 	shared_ptr<PlayerControls>				m_playerControls;					///< Player controls window (developer mode)
 	shared_ptr<RenderControls>				m_renderControls;					///< Render controls window (developer mode)
@@ -169,14 +170,9 @@ public:
 	}
 
     /** callbacks for saving user status and config */
-	void saveUserConfig(void) {
-		userTable.save(startupConfig.userConfigFilename);
-		logPrintf("User table saved.\n");			// Print message to log
-	}
-	void saveUserStatus(void) { 
-		userStatusTable.save(startupConfig.userStatusFilename); 
-		logPrintf("User status saved.\n");
-	}
+	void saveUserConfig(bool onDiff);
+	void saveUserConfig() { saveUserConfig(false); }
+	void saveUserStatus(void);
 
 	// Pass throughts to user settings window (for now)
 	Array<String> updateSessionDropDown(void) { return m_userSettingsWindow->updateSessionDropDown(); }
