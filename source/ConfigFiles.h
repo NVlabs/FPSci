@@ -1606,10 +1606,11 @@ public:
 	String sessComplete = "Session complete! You scored %totalTimeLeftS!";							///< Session complete feedback message
 	String allSessComplete = "All Sessions Complete!";												///< All sessions complete feedback message
 
-	float fontSize = 20.0f;							///< Default font scale/size
-	Color4 color = Color3::yellow();				///< Color to draw the feedback message foreground
-	Color4 outlineColor = Color4::clear();			///< Color to draw the feedback message background
-	Color4 backgroundColor = Color4::clear();		///< Background color
+	float fontSize = 20.0f;											///< Default font scale/size
+
+	Color4 color = Color3(0.638f, 1.0f, 0.0f);						///< Color to draw the feedback message foreground
+	Color4 outlineColor = Color4::clear();							///< Color to draw the feedback message background
+	Color4 backgroundColor = Color4(0.0f, 0.0f, 0.0f, 0.5f);		///< Background color
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
