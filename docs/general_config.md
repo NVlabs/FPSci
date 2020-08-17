@@ -84,6 +84,7 @@ The formatting of feedback messages is controllable from general config, include
 |`feedbackColor`                    |`Color3`   | The text color to use for the feedback message                        |
 |`feedbackOutlineColor`             |`Color4`   | The text outline color to use for the feedback message                |
 |`feedbackFontSize`                 |`float`    | The font size to use for the feedback message (scales w/ window)      |
+|`feedbackBackgroundColor`          |`Color4`   | The "back plate" color to apply to the feedback message (use clear for no plate) |
 
 ### Feedback Messages
 In addition to controlling the duration and formatting of displayed feedback messages, this configuration allows the experiment designer to control the messages provided as feedback themselves.

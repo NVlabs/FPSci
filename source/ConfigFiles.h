@@ -1606,10 +1606,10 @@ public:
 	String sessComplete = "Session complete! You scored %totalTimeLeftS!";							///< Session complete feedback message
 	String allSessComplete = "All Sessions Complete!";												///< All sessions complete feedback message
 
+	float fontSize = 20.0f;							///< Default font scale/size
 	Color4 color = Color3::yellow();				///< Color to draw the feedback message foreground
 	Color4 outlineColor = Color4::clear();			///< Color to draw the feedback message background
-
-	float fontSize = 20.0f;							///< Default font scale/size
+	Color4 backgroundColor = Color4::clear();		///< Background color
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
@@ -1624,6 +1624,7 @@ public:
 			reader.getIfPresent("feedbackColor", color);
 			reader.getIfPresent("feedbackOutlineColor", outlineColor);
 			reader.getIfPresent("feedbackFontSize", fontSize);
+			reader.getIfPresent("feedbackBackgroundColor", backgroundColor);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1643,6 +1644,7 @@ public:
 		if (forceAll || def.color != color)						a["feedbackColor"] = color;
 		if (forceAll || def.outlineColor != outlineColor)		a["feedbackOutlineColor"] = outlineColor;
 		if (forceAll || def.fontSize != fontSize)				a["feedbackFontSize"] = fontSize;
+		if (forceAll || def.backgroundColor != backgroundColor) a["feedbackBackgroundColor"] = backgroundColor;
 		return a;
 	}
 };
