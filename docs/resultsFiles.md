@@ -15,7 +15,7 @@ This section outlines the high-level results tables, with more info provided on 
 
 * [`Targets`](#targets): Trial-specific details of individual targets that were spawned
 * [`Target_Types`](#target_types): The high-level parameters/randomized ranges used to spawn a particular type of target
-* [`Target_Trajectory`](#target_trajectory): The position of each target (in cartesian coordiantes) over time
+* [`Target_Trajectory`](#target_trajectory): The position of each target (in Cartesian coordinates) over time
 * [`Trials`](#trials): High-level information about each trial and it's completion
 * [`Users`](#users): Information about the user(s) who took part in this session
 
@@ -25,7 +25,7 @@ The `Frame_Info` table is intended primarily for debugging issues with rendering
 * `time`: The (wall clock) time at which a frame occurred
 * `sdt`: The simulation time delta that matches this frame
 
-Looking for variation in the `sdt` column values can help detect/verify conditions like frame stutter and other timing issues.
+Looking for variation in the `sdt` column values can help detect or verify conditions like frame stutter and other timing issues.
 
 ### Player_Action
 The `Player_Action` table is the primary tool for analyzing player move, aim, and fire actions in more detail. It includes the following columns:
@@ -40,7 +40,7 @@ The `Player_Action` table is the primary tool for analyzing player move, aim, an
     * `invalid`: Occurs when a player fires during the weapon cooldown period during a trial
     * `non-task`: Occurs when the player fires outside of the trial (including destroying a reference target)
     * `aim`: This row records a player aim direction without a fire event occurring
-    * `miss`: Occurs when a player fires and misses. When using hit scanned weapons this is at the time of the fire, otherwise it is when the (propogated) projectile intersects geometry that is not a target
+    * `miss`: Occurs when a player fires and misses. When using hit scanned weapons this is at the time of the fire, otherwise it is when the (propagated) projectile intersects geometry that is not a target
     * `hit`: Occurs when a player fires and hits a target during a trial
     * `destroy`: Occurs when a player fires, hits a target, and destroys that target with this hit during a trial
 * `target_id`: When the event is `hit`, `destroy`, or `non-task` (destroying the reference target) this records the target that was interacted with by the player action. When the reference target is destroyed this field will be `reference`. Otherwise this field is an empty string.
@@ -55,7 +55,7 @@ The `Questions` table is intended to quickly capture feedback from questions ask
 ### Sessions
 The `Sessions` table is the highest-level description in the per-session results files. By default the sessions table supports the following columns:
 
-* `sessionID`: The id of this sesion
+* `sessionID`: The id of this session
 * `time`: The (wall clock) time at which the session started/the results file was created
 * `subjectID`: The subject who took part in this session
 * `appendingDescription`: The experiment description appended to the session description (separated by a `/`)
@@ -99,7 +99,7 @@ The following columns are only valid for `parametrized` target types. They can/s
 * `model_file`: The name of the model file used for this target
 
 ### Targets
-The `Targets` table is intended to provide additional detailed infomration about each target that was spawned within a trial. Table columns include:
+The `Targets` table is intended to provide additional detailed information about each target that was spawned within a trial. Table columns include:
 
 * `name`: The target name, corresponding to the name logged in the [`Target_Trajectory` table](#target_trajectory) and notably, unique to an individual trial
 * `target_type_name`: The name of the target type, in correspondence with the [`Target_Types`](#target_types) table
@@ -117,7 +117,7 @@ The `Trials` table provides more detailed feedback on user performance within ea
 
 * `session_id`: The ID string of the session the trial was performed within
 * `trial_id`: The ID (index) of the trial type being performed within the session (i.e. its index within the session specifications `trials` array)
-* `trial_index`: The index of the particular trial type being performed (unqiue to the trial). This together with `session_id` and `trial_id` can be used to uniquely affiliate spawned targets to trials
+* `trial_index`: The index of the particular trial type being performed (unique to the trial). This together with `session_id` and `trial_id` can be used to uniquely affiliate spawned targets to trials
 * `block_id`: The ID (index) of the current block being performed within the session (repeats trials)
 * `start_time`: The (wall clock) start time of the trial (useful for affiliating player/target actions)
 * `end_time`: The (wall clock) end time of the trial (useful for affiliating player/target actions)
@@ -126,7 +126,7 @@ The `Trials` table provides more detailed feedback on user performance within ea
 * `total_targets`: A count of the total targets to be presented in this trial (if an unlimited number of targets has been specified this value is `-1`).
 
 ### Users
-The users table provides user-based information for the logged session. The table is logged to once at the start and once at the end of each session to allow those performing data anaylsis to be aware if user settings changed during the session. The table includes the following columns:
+The users table provides user-based information for the logged session. The table is logged to once at the start and once at the end of each session to allow those performing data analysis to be aware if user settings changed during the session. The table includes the following columns:
 
 * `subjectID`: The subject ID of the user
 * `session`: The ID of the current session
@@ -136,7 +136,7 @@ The users table provides user-based information for the logged session. The tabl
 * `reticleIndex`: The index of the reticle the user has selected
 * `reticleScaleMin`: The minimum scale of the reticle (long after a shot)
 * `reticleScaleMax`: The maximum scale of the reticle (shortly after a shot)
-* `reticleColorMinScale`: The reticle color when at the minimum sclae (long after a shot)
+* `reticleColorMinScale`: The reticle color when at the minimum scale (long after a shot)
 * `reticleColorMaxScale`: The reticle color when at the maximum scale (shortly after a shot)
 * `reticleChangeTime`: The time it takes for the reticle to scale/change colors following a shot
 * `userTurnScaleX`: The user provided X turn scale
