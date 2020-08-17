@@ -1397,7 +1397,12 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			String message = sess->getFeedbackMessage();
 			if (!message.empty()) {
 				outputFont->draw2D(rd, message.c_str(),
-					(Point2(rd->viewport().width()*0.5f, rd->viewport().height()*0.4f)).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+					(Point2(rd->viewport().width()*0.5f, rd->viewport().height()*0.4f)).floor(), 
+					floor(sessConfig->feedback.fontSize * scale),
+					sessConfig->feedback.color, 
+					sessConfig->feedback.outlineColor, 
+					GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
+				);
 			}
 		}
 

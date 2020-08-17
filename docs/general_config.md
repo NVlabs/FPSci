@@ -75,7 +75,18 @@ The following settings allow the user to control various timings/durations aroun
 ```
 
 ## Feedback Configuration
-In addition to controlling the duration of displayed feedback messages, this configuration allows the experiment designer to control the messages provided as feedback themselves.
+
+### Feedback Formatting
+The formatting of feedback messages is controllable from general config, included formatting parameters include:
+
+| Parameter Name                    |Units      | Description                                                           |
+|-----------------------------------|-----------|-----------------------------------------------------------------------|
+|`feedbackColor`                    |`Color3`   | The text color to use for the feedback message                        |
+|`feedbackOutlineColor`             |`Color4`   | The text outline color to use for the feedback message                |
+|`feedbackFontSize`                 |`float`    | The font size to use for the feedback message (scales w/ window)      |
+
+### Feedback Messages
+In addition to controlling the duration and formatting of displayed feedback messages, this configuration allows the experiment designer to control the messages provided as feedback themselves.
 
 | Parameter Name                    |Units    | Description                                                        |
 |-----------------------------------|---------|--------------------------------------------------------------------|
@@ -86,6 +97,7 @@ In addition to controlling the duration of displayed feedback messages, this con
 |`blockCompleteFeedback`            |`String` | Message to display when a block is completed                       |
 |`sessionCompleteFeedback`          |`String` | Message to display when a session is completed                     |
 |`allSessionsCompleteFeedback`      |`String` | Message to display when all sessions are completed                 |
+
 
 For any/all of the feedback strings provided above, a number of `%`-delimited special strings are supported to allow find-and-replace with certain values. These include:
 
