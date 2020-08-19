@@ -314,6 +314,10 @@ void Session::updatePresentationState()
 								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
 									m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
 								}
+								else {
+									// Null the dialog pointer when all questions complete
+									m_app->dialog = nullptr;
+								}
 							}
 							else {
 								m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);					// Relaunch the same dialog (this wasn't completed)

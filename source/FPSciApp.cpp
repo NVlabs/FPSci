@@ -348,7 +348,7 @@ void FPSciApp::presentQuestion(Question question) {
 	}
 
 	moveToCenter(dialog);
-	this->addWidget(dialog);
+	addWidget(dialog);
 	setDirectMode(false);
 }
 
