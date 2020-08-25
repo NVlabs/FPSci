@@ -1559,7 +1559,7 @@ public:
 	float           pretrialDuration = 0.5f;					///< Time in ready (pre-trial) state in seconds
 	float           maxTrialDuration = 100000.0f;				///< Maximum time spent in any one trial task
 	float           trialFeedbackDuration = 1.0f;				///< Time in the per-trial feedback state in seconds
-	float			sessionFeedbackDuration = 5.0f;				///< Time in the session feedback state in seconds
+	float			sessionFeedbackDuration = 2.0f;				///< Time in the session feedback state in seconds
 	bool			clickToStart = true;						///< Require a click before starting the first session (spawning the reference target)
 	bool			sessionFeedbackRequireClick = false;		///< Require a click to progress from the session feedback?
 
@@ -1606,6 +1606,12 @@ public:
 	String sessComplete = "Session complete! You scored %totalTimeLeftS!";							///< Session complete feedback message
 	String allSessComplete = "All Sessions Complete!";												///< All sessions complete feedback message
 
+	float fontSize = 20.0f;											///< Default font scale/size
+
+	Color4 color = Color3(0.638f, 1.0f, 0.0f);						///< Color to draw the feedback message foreground
+	Color4 outlineColor = Color4::clear();							///< Color to draw the feedback message background
+	Color4 backgroundColor = Color4(0.0f, 0.0f, 0.0f, 0.5f);		///< Background color
+
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
@@ -1616,6 +1622,10 @@ public:
 			reader.getIfPresent("blockCompleteFeedback", blockComplete);
 			reader.getIfPresent("sessionCompleteFeedback", sessComplete);
 			reader.getIfPresent("allSessionsCompleteFeedback", allSessComplete);
+			reader.getIfPresent("feedbackColor", color);
+			reader.getIfPresent("feedbackOutlineColor", outlineColor);
+			reader.getIfPresent("feedbackFontSize", fontSize);
+			reader.getIfPresent("feedbackBackgroundColor", backgroundColor);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1632,6 +1642,10 @@ public:
 		if (forceAll || def.blockComplete != blockComplete)		a["blockCompleteFeedback"] = blockComplete;
 		if (forceAll || def.sessComplete != sessComplete)		a["sessionCompleteFeedback"] = sessComplete;
 		if (forceAll || def.allSessComplete != allSessComplete) a["allSessionsCompleteFeedback"] = allSessComplete;
+		if (forceAll || def.color != color)						a["feedbackColor"] = color;
+		if (forceAll || def.outlineColor != outlineColor)		a["feedbackOutlineColor"] = outlineColor;
+		if (forceAll || def.fontSize != fontSize)				a["feedbackFontSize"] = fontSize;
+		if (forceAll || def.backgroundColor != backgroundColor) a["feedbackBackgroundColor"] = backgroundColor;
 		return a;
 	}
 };
