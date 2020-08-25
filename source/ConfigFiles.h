@@ -1559,7 +1559,7 @@ public:
 	float           pretrialDuration = 0.5f;					///< Time in ready (pre-trial) state in seconds
 	float           maxTrialDuration = 100000.0f;				///< Maximum time spent in any one trial task
 	float           trialFeedbackDuration = 1.0f;				///< Time in the per-trial feedback state in seconds
-	float			sessionFeedbackDuration = 5.0f;				///< Time in the session feedback state in seconds
+	float			sessionFeedbackDuration = 2.0f;				///< Time in the session feedback state in seconds
 	bool			clickToStart = true;						///< Require a click before starting the first session (spawning the reference target)
 	bool			sessionFeedbackRequireClick = false;		///< Require a click to progress from the session feedback?
 
