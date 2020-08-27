@@ -130,25 +130,42 @@ public:
 
 class TextEntryDialog : public DialogBase {
 protected:	
+	bool m_allowEmpty;
+	GuiLabel* m_warningLabel;
+	GuiMultiLineTextBox* m_textbox;
+
 	void submitCallback() {
-		complete = true;
-		setVisible(false);
+		if (!m_allowEmpty && result.length() == 0) {
+			m_warningLabel->setCaption("Must provide a response!");
+			m_textbox->setFocused(true);
+		}
+		else {
+			complete = true;
+			setVisible(false);
+		}
 	}
 
-	TextEntryDialog(String prompt, const shared_ptr<GuiTheme> theme, 
-		String title = "Dialog", Point2 position = Point2(200.0f, 200.0f), Point2 size = Point2(400.0f, 200.0f)) :
+	TextEntryDialog(String prompt, const shared_ptr<GuiTheme> theme, String title = "Dialog", bool allowEmpty = true,
+		Point2 position = Point2(200.0f, 200.0f), Point2 size = Point2(400.0f, 200.0f)) :
 		DialogBase(theme, title, position, size) 
 	{
 		m_prompt = prompt;
+		m_allowEmpty = allowEmpty;
 		GuiPane *pane = GuiWindow::pane();
 		pane->beginRow(); {
 			auto l = pane->addLabel(m_prompt);
 			l->setSize(size[0], 50.0f);
 		} pane->endRow();
 
+		if (!m_allowEmpty) {
+			pane->beginRow(); {
+				m_warningLabel = pane->addLabel("", GFont::XALIGN_CENTER);
+			}pane->endRow();
+		}
+
 		pane->beginRow(); {
-			auto textBox = pane->addMultiLineTextBox("", &result);
-			textBox->setSize(size[0], size[1] - 100.0f);
+			m_textbox = pane->addMultiLineTextBox("", &result);
+			m_textbox->setSize(size[0], size[1] - 100.0f);
 		} pane->endRow();
 
 		pane->beginRow(); {
@@ -159,9 +176,9 @@ protected:
 	}
 public:
 	static shared_ptr<TextEntryDialog> create(String prompt, const shared_ptr<GuiTheme> theme, 
-		String title = "Dialog", Point2 position = Point2(200.0f, 200.0f), Point2 size = Point2(400.0f, 300.0f)) 
+		String title = "Dialog", bool allowEmpty=true, Point2 position = Point2(200.0f, 200.0f), Point2 size = Point2(400.0f, 300.0f)) 
 	{
-		return createShared<TextEntryDialog>(prompt, theme, title, position, size);
+		return createShared<TextEntryDialog>(prompt, theme, title, allowEmpty, position, size);
 	}
 };
 

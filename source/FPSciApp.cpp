@@ -337,7 +337,7 @@ void FPSciApp::presentQuestion(Question question) {
 		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title, true);
 		break;
 	case Question::Type::Entry:
-		dialog = TextEntryDialog::create(question.prompt, theme, question.title);
+		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false);
 		break;
 	case Question::Type::Rating:
 		dialog = RatingDialog::create(question.prompt, question.options, theme, question.title, true);
