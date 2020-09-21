@@ -187,8 +187,8 @@ int FPSciTests::respawnTargets()
 
 void FPSciTests::rotateCamera(double degX, double degY)
 {
-	double metersPer360 = s_app->currentUser()->cmp360 / 100.0;
-	s_fakeInput->window().injectMove(metersPer360 * degX / 360.0, metersPer360 * degY / 360.0);
+	const double degPerMm = s_app->currentUser()->mouseDegPerMm;
+	s_fakeInput->window().injectMove(0.001 * degX / degPerMm, 0.001 * degY / degPerMm);
 }
 
 void FPSciTests::getTargets(shared_ptr<TargetEntity>& front, shared_ptr<TargetEntity>& right)

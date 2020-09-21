@@ -422,9 +422,14 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 		m_currentUserPane->addLabel(format("Mouse DPI: %f", user.mouseDPI));
 	} m_currentUserPane->endRow();
 	m_currentUserPane->beginRow(); {
-		auto sensitivityNb = m_currentUserPane->addNumberBox("Mouse 360", &(user.cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
-		sensitivityNb->setWidth(300.0);
+		auto sensitivityNb = m_currentUserPane->addNumberBox("Mouse Sens", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.1, 60.0, 0.2);
+		sensitivityNb->setWidth(320.0);
+		sensitivityNb->setUnitsSize(40.0);
 		sensitivityNb->setEnabled(config.allowSensitivityChange);
+	} m_currentUserPane->endRow();
+	m_currentUserPane->beginRow(); {
+		m_currentUserPane->addButton("Get cm/360°", this, &UserMenu::updateCmp360Press);
+		m_cmp360 = m_currentUserPane->addLabel("");
 	} m_currentUserPane->endRow();
 
 	if (config.allowTurnScaleChange) {
@@ -640,6 +645,11 @@ void UserMenu::updateReticlePreview() {
 
 void UserMenu::updateSessionPress() {
 	m_app->updateSession(selectedSession());
+}
+
+void UserMenu::updateCmp360Press() {
+	const UserConfig user = m_users.users[m_users.getUserIndex(m_userStatus.currentUser)];
+	m_cmp360->setCaption(format("%.1f cm/360°", 36/user.mouseDegPerMm));
 }
 
 void UserMenu::setVisible(bool enable) {

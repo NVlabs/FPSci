@@ -390,14 +390,15 @@ void FPSciLogger::logUserConfig(const UserConfig& user, const String& sessId, co
 	if (!m_config.logUsers) return;
 	// Collapse Y-inversion into per-user turn scale (no need to complicate the log)
 	const float userYTurnScale = user.invertY ? -user.turnScale.y : user.turnScale.y;
-	const Vector2 sensitivity = (float)user.cmp360 * user.turnScale * sessTurnScale;
+	const float cmp360 = 36.f / (float)user.mouseDegPerMm;
+	const Vector2 sensitivity = cmp360 * user.turnScale * sessTurnScale;
 	const String time = genUniqueTimestamp();
 
 	RowEntry row = {
 		"'" + user.id + "'",
 		"'" + sessId + "'",
 		"'" + time + "'",
-		String(std::to_string(user.cmp360)),
+		String(std::to_string(cmp360)),
 		String(std::to_string(user.mouseDPI)),
 		String(std::to_string(user.reticleIndex)),
 		String(std::to_string(user.reticleScale[0])),

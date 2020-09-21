@@ -118,6 +118,7 @@ protected:
 
 	GuiDropDownList* m_userDropDown = nullptr;				///< Dropdown menu for user selection
 	GuiDropDownList* m_sessDropDown = nullptr;				///< Dropdown menu for session selection
+	GuiLabel* m_cmp360				= nullptr;				///< Numberbox for cmp360 preview
 
 	shared_ptr<Texture> m_reticlePreviewTexture;			///< Reticle preview texture
 	shared_ptr<Framebuffer> m_reticleBuffer;				///< Reticle preview framebuffer
@@ -138,6 +139,7 @@ protected:
 
 	void updateUserPress();
 	void updateSessionPress();
+	void updateCmp360Press();
 
 public:
 	static shared_ptr<UserMenu> create(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) {
