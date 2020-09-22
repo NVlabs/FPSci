@@ -422,7 +422,7 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 		m_currentUserPane->addLabel(format("Mouse DPI: %f", user.mouseDPI));
 	} m_currentUserPane->endRow();
 	m_currentUserPane->beginRow(); {
-		auto sensitivityNb = m_currentUserPane->addNumberBox("Mouse Sens", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.1, 60.0, 0.2);
+		auto sensitivityNb = m_currentUserPane->addNumberBox("Mouse Sens", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.1, 60.0, 0.01);
 		sensitivityNb->setWidth(320.0);
 		sensitivityNb->setUnitsSize(40.0);
 		sensitivityNb->setEnabled(config.allowSensitivityChange);
