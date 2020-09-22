@@ -428,8 +428,10 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 		sensitivityNb->setEnabled(config.allowSensitivityChange);
 	} m_currentUserPane->endRow();
 	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addButton("Get cm/360°", this, &UserMenu::updateCmp360Press);
-		m_cmp360 = m_currentUserPane->addLabel("");
+		auto b = m_currentUserPane->addButton("Get cm/360°", this, &UserMenu::updateCmp360Press);
+		b->setEnabled(config.allowSensitivityChange);
+		m_cmp360 = m_currentUserPane->addLabel(format("%.1f cm/360°", 36 / user.mouseDegPerMm));
+		m_cmp360->setEnabled(config.allowSensitivityChange);
 	} m_currentUserPane->endRow();
 
 	if (config.allowTurnScaleChange) {
