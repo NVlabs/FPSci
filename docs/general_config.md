@@ -107,6 +107,7 @@ In addition to controlling the duration and formatting of displayed feedback mes
 |`sessionCompleteFeedback`          |`String` | Message to display when a session is completed                     |
 |`allSessionsCompleteFeedback`      |`String` | Message to display when all sessions are completed                 |
 
+Multi-line feedback strings can be provided by inserting a `\n` character in the string at the point at which the line break should occur.
 
 For any/all of the feedback strings provided above, a number of `%`-delimited special strings are supported to allow find-and-replace with certain values. These include:
 

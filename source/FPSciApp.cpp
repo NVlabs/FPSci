@@ -1398,15 +1398,25 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			const float centerHeight = rd->viewport().height() * 0.4f;
 			const float scaledFontSize = floor(sessConfig->feedback.fontSize * scale);
 			if (!message.empty()) {
+				String currLine;
+				Array<String> lines = stringSplit(message, '\n');
+				float vertPos = centerHeight - (scaledFontSize * 1.5 * lines.length()/ 2.0f);
 				// Draw a "back plate"
-				Draw::rect2D(Rect2D::xywh(0.0f, centerHeight - scaledFontSize, rd->viewport().width(), 2.0f * scaledFontSize), rd, sessConfig->feedback.backgroundColor);
-				outputFont->draw2D(rd, message.c_str(),
-					(Point2(rd->viewport().width() * 0.5f, centerHeight)).floor(),
-					scaledFontSize,
-					sessConfig->feedback.color, 
-					sessConfig->feedback.outlineColor, 
-					GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
-				);
+				Draw::rect2D(Rect2D::xywh(0.0f, 
+					vertPos - 1.5f * scaledFontSize,
+					rd->viewport().width(), 
+					scaledFontSize * (lines.length()+1) * 1.5),
+					rd, sessConfig->feedback.backgroundColor);
+				for (String line : lines) {
+					outputFont->draw2D(rd, line.c_str(),
+						(Point2(rd->viewport().width() * 0.5f, vertPos)).floor(),
+						scaledFontSize,
+						sessConfig->feedback.color,
+						sessConfig->feedback.outlineColor,
+						GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
+					);
+					vertPos += scaledFontSize * 1.5f;
+				}
 			}
 		}
 
