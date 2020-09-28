@@ -429,14 +429,14 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 		dpiDisplay->setEnabled(false);
 	} sensPane->endRow();
 	sensPane->beginRow(); {
-		auto sensitivityNb = sensPane->addNumberBox("Sensitivity", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.01, 20.0, 0.01);
+		auto sensitivityNb = sensPane->addNumberBox("Sensitivity", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.01, 100.0, 0.01);
 		sensitivityNb->setWidth(300.0);
 		sensitivityNb->setCaptionWidth(captionWidth);
 		sensitivityNb->setUnitsSize(unitSize);
 		sensitivityNb->setEnabled(config.allowSensitivityChange);
 	} sensPane->endRow();
 	sensPane->beginRow(); {
-		auto cmp360Nb = sensPane->addNumberBox("", &m_cmp360, "cm/360°", GuiTheme::NO_SLIDER, 0.0, 1000.0, 0.01);
+		auto cmp360Nb = sensPane->addNumberBox("", &m_cmp360, "cm/360°", GuiTheme::NO_SLIDER, 0.0, 3600.0, 0.1);
 		cmp360Nb->setWidth(180.0);
 		cmp360Nb->setCaptionWidth(captionWidth);
 		cmp360Nb->setUnitsSize(unitSize);
