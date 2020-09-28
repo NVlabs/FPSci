@@ -250,7 +250,7 @@ void FPSciApp::loadModels() {
 
 void FPSciApp::updateControls(bool firstSession) {
 	// Update the user settings window
-	m_updateUserMenu = true;
+	updateUserMenu = true;
 	if(!firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
 
 	// Update the waypoint manager
@@ -262,7 +262,7 @@ void FPSciApp::updateControls(bool firstSession) {
 	this->addWidget(m_playerControls);
 
 	// Setup the render control
-	m_renderControls = RenderControls::create(*sessConfig, *(currentUser()), renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
+	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(false);
 	this->addWidget(m_renderControls);
 
@@ -854,7 +854,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 }
 
 void FPSciApp::onAfterEvents() {
-	if (m_updateUserMenu) {
+	if (updateUserMenu) {
 		// Remove the old settings window
 		removeWidget(m_userSettingsWindow);
 
@@ -867,7 +867,7 @@ void FPSciApp::onAfterEvents() {
 
 		// Add the new settings window and clear the semaphore
 		addWidget(m_userSettingsWindow);
-		m_updateUserMenu = false;
+		updateUserMenu = false;
 	}
 
 	GApp::onAfterEvents();

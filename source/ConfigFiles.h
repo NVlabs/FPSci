@@ -1828,6 +1828,11 @@ public:
 		if (forceAll || def.showMenuBetweenSessions != showMenuBetweenSessions)				a["showMenuBetweenSessions"] = showMenuBetweenSessions;
 		return a;
 	}
+
+	bool allowAnyChange() {
+		return allowSensitivityChange && allowTurnScaleChange &&
+			allowReticleChange && allowReticleIdxChange && allowReticleColorChange && allowReticleSizeChange && allowReticleChangeTimeChange;
+	}
 };
 
 class FpsConfig : public ReferenceCountedObject {

@@ -85,12 +85,19 @@ public:
 
 class RenderControls : public GuiWindow {
 protected:
-	RenderControls(SessionConfig& config, UserConfig& user, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
+	FPSciApp* m_app = nullptr;
+	GuiButton* m_showFullUserMenuBtn = nullptr;
+	MenuConfig m_storedMenuConfig;
+	bool	m_showFullUserMenu = false;
+
+	void updateUserMenu(void);
+
+	RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, const int maxFrameDelay = 360, const float minFrameRate = 1.0f, const float maxFrameRate=1000.0f, float width=400.0f, float height=10.0f);
 public:
-	static shared_ptr<RenderControls> create(SessionConfig& config, UserConfig &user, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
+	static shared_ptr<RenderControls> create(FPSciApp* app, SessionConfig& config, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, const int maxFrameDelay = 360, const float minFrameRate = 1.0f, const float maxFrameRate=1000.0f, float width = 400.0f, float height = 10.0f) {
-		return createShared<RenderControls>(config, user, drawFps, turbo, numReticles, brightness, theme, maxFrameDelay, minFrameRate, maxFrameRate, width, height);
+		return createShared<RenderControls>(app, config, drawFps, turbo, numReticles, brightness, theme, maxFrameDelay, minFrameRate, maxFrameRate, width, height);
 	}
 };
 
