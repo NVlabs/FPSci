@@ -119,7 +119,7 @@ void FPSciApp::updateMouseSensitivity() {
 	const shared_ptr<UserConfig> user = currentUser();
 	// Converting from mouseDPI (dots/in) and sensitivity (cm/turn) into rad/dot which explains cm->in (2.54) and turn->rad (2*PI) factors
 	// rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
-	const double cmp360 = 36 / user->mouseDegPerMm;
+	const double cmp360 = 36.0 / user->mouseDegPerMm;
 	const double radiansPerDot = 2.0 * pi() * 2.54 / (cmp360 * user->mouseDPI);
 	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 
