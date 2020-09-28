@@ -139,7 +139,6 @@ protected:
 
 	void updateUserPress();
 	void updateSessionPress();
-	void updateCmp360Press();
 
 public:
 	static shared_ptr<UserMenu> create(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) {
@@ -175,4 +174,7 @@ public:
 	shared_ptr<UserConfig> getCurrUser() {
 		return m_users.getUserById(selectedUserID());
 	}
+
+	/** updates the displayed cmp360 value based on the current setting */
+	void updateCmp360();
 };

@@ -129,6 +129,8 @@ void FPSciApp::updateMouseSensitivity() {
 		player->m_cameraRadiansPerMouseDot = (float)radiansPerDot;
 		player->turnScale = currentTurnScale();
 	}
+
+	m_userSettingsWindow->updateCmp360();
 }
 
 void FPSciApp::setDirectMode(bool enable) {

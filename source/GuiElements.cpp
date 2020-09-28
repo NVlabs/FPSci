@@ -422,18 +422,14 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 		m_currentUserPane->addLabel(format("Mouse DPI: %f", user.mouseDPI));
 	} m_currentUserPane->endRow();
 	m_currentUserPane->beginRow(); {
-		auto sensitivityNb = m_currentUserPane->addNumberBox("Mouse Sens", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.01, 60.0, 0.01);
-		sensitivityNb->setWidth(320.0);
-		sensitivityNb->setUnitsSize(40.0);
+		auto sensitivityNb = m_currentUserPane->addNumberBox("Mouse Sens", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.01, 20.0, 0.01);
+		sensitivityNb->setWidth(235.0);
+		sensitivityNb->setCaptionWidth(70.0);
+		sensitivityNb->setUnitsSize(35.0);
 		sensitivityNb->setEnabled(config.allowSensitivityChange);
-	} m_currentUserPane->endRow();
-	m_currentUserPane->beginRow(); {
-		m_cmp360 = m_currentUserPane->addLabel(format("%.2f cm/360°", 36.0 / user.mouseDegPerMm));
-		m_cmp360->moveBy(Vector2(80., 0.));
+		m_cmp360 = m_currentUserPane->addLabel(format("%.1f cm/360°", 36.0 / user.mouseDegPerMm));
+		m_cmp360->setWidth(95.0);
 		m_cmp360->setEnabled(config.allowSensitivityChange);
-		auto b = m_currentUserPane->addButton("Update cm/360°", this, &UserMenu::updateCmp360Press);
-		b->setEnabled(config.allowSensitivityChange);
-		b->moveBy(Vector2(-120., 0.));
 	} m_currentUserPane->endRow();
 
 	if (config.allowTurnScaleChange) {
@@ -651,9 +647,9 @@ void UserMenu::updateSessionPress() {
 	m_app->updateSession(selectedSession());
 }
 
-void UserMenu::updateCmp360Press() {
+void UserMenu::updateCmp360() {
 	const UserConfig user = m_users.users[m_users.getUserIndex(m_userStatus.currentUser)];
-	m_cmp360->setCaption(format("%.2f cm/360°", 36.0/user.mouseDegPerMm));
+	m_cmp360->setCaption(format("%.1f cm/360°", 36.0/user.mouseDegPerMm));
 }
 
 void UserMenu::setVisible(bool enable) {
