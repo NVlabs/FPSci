@@ -379,6 +379,10 @@ public:
 
 	/** Load from Any */
     UserConfig(const Any& any) {
+		// for loading old user configs
+		double cmp360 = 12.75;
+		bool foundMouseDegPerMm = false;
+
         int settingsVersion = 1; // used to allow different version numbers to be loaded differently
         AnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
@@ -386,7 +390,8 @@ public:
         case 1:
             reader.getIfPresent("id", id);
             reader.getIfPresent("mouseDPI", mouseDPI);
-            reader.getIfPresent("mouseDegPerMillimeter", mouseDegPerMm);
+            foundMouseDegPerMm = reader.getIfPresent("mouseDegPerMillimeter", mouseDegPerMm);
+			reader.getIfPresent("cmp360", cmp360);
 			reader.getIfPresent("reticleIndex", reticleIndex);
 			reader.getIfPresent("reticleScale", reticleScale);
 			reader.getIfPresent("reticleColor", reticleColor);
@@ -399,6 +404,11 @@ public:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
             break;
         }
+
+		// Set mouseDPmm if not found
+		if (!foundMouseDegPerMm) {
+			mouseDegPerMm = 36.0 / cmp360;
+		}
     }
 	
 	/** Serialize to Any */

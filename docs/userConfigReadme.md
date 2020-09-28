@@ -23,6 +23,8 @@ Each entry in the user table contains the following fields:
 |`invertY`              |`bool`   |A quick flag for inverting the Y view (as opposed to setting the y-value for `turnScale` to -1)      |
 |`turnScale`            |`Vector2(float)`|Provides a per-player view rotation/mouse sensitivity scale, designed to compound with the experiment/session-level `turnScale`.|
 |`scopeTurnScale`       |`Vector2(float)`|Provides an (optional) additional turn scale to apply when scoped. If this value is `Vector2(0,0)` (or unspecified) then a "default" scaling of the ratio of FoV (scoped vs unscoped) is used to scale mouse sensitivity |
+|        |  |     |
+|`cmp360`               |`float`  | **_Deprecated_** - ignored if `mouseDegPerMillimeter` is found. The mouse sensitivity for the user (measured in cm/360°) |
 
 The full specification for the default user is provided below as an example:
 
@@ -51,6 +53,8 @@ The unit of mouse sensitivity measure selected for the application is `°/mm`. T
 2. It matches the intuition that high value ==> more sensitive (unlike `cmp360`)
 
 This unit is related to `cm/360°` (`cm/360° = 36 / (°/mm)`), since the distance (in mm) reuqired to make one full turn in game is just 360° / `°/mm`. Using this formula, a player can measure the full-turn distance for their game of choice, then transfer the setting into the abstract-fps application's user config.
+
+Though the functionality is deprecated, since previous versions of `FPSci` supported using a `cmp360` variable, you can enter `cmp360` instead of `mouseDegPerMillimeter` in the user config and FPSci will convert it for you. If both `mouseDegPerMillimeter` and `cmp360` are found, then the `mouseDegPerMillimeter` will be used.
 
 As an added complexity this sensitivity measure requires the user also report the mouse Dots Per Inch (DPI) setting so that signaling from the mouse can be correctly converted to centimeters traveled. This also means that while mice with dynamic DPI setting (i.e. a DPI button) will work fine; however, only a single DPI setting can be affiliated with the sensitivity recorded for the mouse.
 
