@@ -1023,8 +1023,9 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 
 	// Draw the player health bar
 	if (sessConfig->hud.showPlayerHealthBar) {
+		const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
 		const float health = scene()->typedEntity<PlayerEntity>("player")->health();
-		const Point2 location = Point2(sessConfig->hud.playerHealthBarPos.x, sessConfig->hud.playerHealthBarPos.y + m_debugMenuHeight);
+		const Point2 location = Point2(sessConfig->hud.playerHealthBarPos.x, sessConfig->hud.playerHealthBarPos.y + m_debugMenuHeight) + Point2(guardband, guardband);
 		const Point2 size = sessConfig->hud.playerHealthBarSize;
 		const Point2 border = sessConfig->hud.playerHealthBarBorderSize;
 		const Color4 borderColor = sessConfig->hud.playerHealthBarBorderColor;
@@ -1035,7 +1036,8 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 	}
 	// Draw the ammo indicator
 	if (sessConfig->hud.showAmmo) {
-		Point2 lowerRight = Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height()));
+		const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
+		Point2 lowerRight = Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height())) - Point2(guardband, guardband);
 		hudFont->draw2D(rd,
 			format("%d/%d", sess->remainingAmmo(), sessConfig->weapon.maxAmmo),
 			lowerRight - sessConfig->hud.ammoPosition,
