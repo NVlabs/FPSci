@@ -47,7 +47,7 @@ void FPSciApp::onInit() {
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
-	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), scene(), activeCamera());
+	m_weapon = Weapon::create(&experimentConfig.weapon, scene(), activeCamera());
 	m_weapon->setHitCallback(std::bind(&FPSciApp::hitTarget, this, std::placeholders::_1));
 	m_weapon->setMissCallback(std::bind(&FPSciApp::missEvent, this));
 
@@ -253,7 +253,7 @@ void FPSciApp::loadModels() {
 
 void FPSciApp::updateControls(bool firstSession) {
 	// Update the user settings window
-	m_updateUserMenu = true;
+	updateUserMenu = true;
 	if(!firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
 
 	// Update the waypoint manager
@@ -265,7 +265,7 @@ void FPSciApp::updateControls(bool firstSession) {
 	this->addWidget(m_playerControls);
 
 	// Setup the render control
-	m_renderControls = RenderControls::create(*sessConfig, *(currentUser()), renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
+	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(false);
 	this->addWidget(m_renderControls);
 
@@ -480,7 +480,7 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Check for play mode specific parameters
-	m_weapon->setConfig(sessConfig->weapon);
+	m_weapon->setConfig(&sessConfig->weapon);
 	m_weapon->setScene(scene());
 	m_weapon->setCamera(activeCamera());
 
@@ -857,7 +857,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 }
 
 void FPSciApp::onAfterEvents() {
-	if (m_updateUserMenu) {
+	if (updateUserMenu) {
 		// Remove the old settings window
 		removeWidget(m_userSettingsWindow);
 
@@ -870,7 +870,7 @@ void FPSciApp::onAfterEvents() {
 
 		// Add the new settings window and clear the semaphore
 		addWidget(m_userSettingsWindow);
-		m_updateUserMenu = false;
+		updateUserMenu = false;
 	}
 
 	GApp::onAfterEvents();
@@ -1026,8 +1026,9 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 
 	// Draw the player health bar
 	if (sessConfig->hud.showPlayerHealthBar) {
+		const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
 		const float health = scene()->typedEntity<PlayerEntity>("player")->health();
-		const Point2 location = Point2(sessConfig->hud.playerHealthBarPos.x, sessConfig->hud.playerHealthBarPos.y + m_debugMenuHeight);
+		const Point2 location = Point2(sessConfig->hud.playerHealthBarPos.x, sessConfig->hud.playerHealthBarPos.y + m_debugMenuHeight) + Point2(guardband, guardband);
 		const Point2 size = sessConfig->hud.playerHealthBarSize;
 		const Point2 border = sessConfig->hud.playerHealthBarBorderSize;
 		const Color4 borderColor = sessConfig->hud.playerHealthBarBorderColor;
@@ -1038,7 +1039,8 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 	}
 	// Draw the ammo indicator
 	if (sessConfig->hud.showAmmo) {
-		Point2 lowerRight = Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height()));
+		const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
+		Point2 lowerRight = Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height())) - Point2(guardband, guardband);
 		hudFont->draw2D(rd,
 			format("%d/%d", sess->remainingAmmo(), sessConfig->weapon.maxAmmo),
 			lowerRight - sessConfig->hud.ammoPosition,

@@ -68,19 +68,18 @@ public:
 
 class Weapon : Entity {
 protected:
-	Weapon(shared_ptr<WeaponConfig> config, shared_ptr<Scene>& scene, shared_ptr<Camera>& cam) :
+	Weapon(WeaponConfig* config, shared_ptr<Scene>& scene, shared_ptr<Camera>& cam) :
 		m_config(config), m_scene(scene), m_camera(cam) {};
 
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
 	shared_ptr<ArticulatedModel>    m_bulletModel;						///< Model for the "bullet"
 	shared_ptr<Sound>               m_fireSound;						///< Sound for weapon firing
 	shared_ptr<AudioChannel>		m_fireAudio;						///< Audio channel for fire sound
+	WeaponConfig*					m_config;							///< Weapon configuration
 
 	Array<shared_ptr<Projectile>>	m_projectiles;						///< Arrray of drawn projectiles
 
-	shared_ptr<WeaponConfig>		m_config;							///< Weapon configuration
 	int								m_lastBulletId = 0;					///< Bullet ID (auto incremented)
-
 	bool							m_scoped = false;					///< Flag used for scope management
 	bool							m_firing = false;					///< Flag used for auto fire management
 
@@ -98,7 +97,7 @@ protected:
 	Array<shared_ptr<VisibleEntity>>		m_currentMissDecals;				///< Pointers to miss decals
 
 public:
-	static shared_ptr<Weapon> create(shared_ptr<WeaponConfig> config, shared_ptr<Scene> scene, shared_ptr<Camera> cam) {
+	static shared_ptr<Weapon> create(WeaponConfig* config, shared_ptr<Scene> scene, shared_ptr<Camera> cam) {
 		return createShared<Weapon>(config, scene, cam);
 	};
 
@@ -119,7 +118,7 @@ public:
 	void setHitCallback(std::function<void(shared_ptr<TargetEntity>)> callback) { m_hitCallback = callback; }
 	void setMissCallback(std::function<void(void)> callback) { m_missCallback = callback; }
 	
-	void setConfig(const WeaponConfig& config) { m_config = std::make_shared<WeaponConfig>(config); }
+	void setConfig(WeaponConfig* config) { m_config = config; }
 	void setCamera(const shared_ptr<Camera>& cam) { m_camera = cam; }
 	void setScene(const shared_ptr<Scene>& scene) { m_scene = scene; }
 	void setScoped(bool state = true) { m_scoped = state; }

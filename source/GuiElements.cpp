@@ -199,9 +199,9 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 	moveTo(Vector2(440, 300));
 }
 
-RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
+RenderControls::RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
 	const shared_ptr<GuiTheme>& theme, const int maxFrameDelay, const float minFrameRate, const float maxFrameRate, float width, float height) :
-	GuiWindow("Render Controls", theme, Rect2D::xywh(5,5,width,height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
+	GuiWindow("Render Controls", theme, Rect2D::xywh(5,5,width,height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_app(app)
 {
 	// Create the GUI pane
 	GuiPane* pane = GuiWindow::pane();
@@ -220,7 +220,6 @@ RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& dr
 		drawPane->addCheckBox("Show Health", &(config.hud.showPlayerHealthBar));
 	} drawPane->endRow();
 
-	
 	auto framePane = pane->addPane("Frame Rate/Delay");
 	framePane->beginRow(); {
 		framePane->addCheckBox("Show FPS", &drawFps);
@@ -235,62 +234,17 @@ RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& dr
 		c->setWidth(width*0.95f);
 	}framePane->endRow();
 
-
-	auto reticlePane = pane->addPane("Reticle");
-	reticlePane->beginRow(); {
-		auto c = reticlePane->addNumberBox("Reticle", &(user.reticleIndex), "", GuiTheme::LINEAR_SLIDER, 0, numReticles, 1);
-		c->setWidth(width*0.95f);
-	} reticlePane->endRow();
-
-	reticlePane->beginRow(); {
-		auto c = reticlePane->addNumberBox("Reticle Scale Min", &(user.reticleScale[0]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
-		c->setCaptionWidth(120.0f);
-		c->setWidth(width*0.95f);
-	} reticlePane->endRow();
-
-	reticlePane->beginRow(); {
-		auto c = reticlePane->addNumberBox("Reticle Scale Max", &(user.reticleScale[1]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
-		c->setCaptionWidth(120.0f);
-		c->setWidth(width*0.95f);
-	} reticlePane->endRow();
-
-	reticlePane->beginRow(); {
-		auto l = reticlePane->addLabel("Reticle Color Min");
-		l->setWidth(100.0f);
-		auto c = reticlePane->addSlider("R", &(user.reticleColor[0].r), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("G", &(user.reticleColor[0].g), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("B", &(user.reticleColor[0].b), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("A", &(user.reticleColor[0].a), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-	} reticlePane->endRow();
-	reticlePane->beginRow(); {
-		auto l = reticlePane->addLabel("Reticle Color Max");
-		l->setWidth(100.0f);
-		auto c = reticlePane->addSlider("R", &(user.reticleColor[1].r), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("G", &(user.reticleColor[1].g), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("B", &(user.reticleColor[1].b), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("A", &(user.reticleColor[1].a), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-	} reticlePane->endRow();
-	reticlePane->beginRow(); {
-		auto c = reticlePane->addNumberBox("Reticle Change Time", &(user.reticleChangeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
-		c->setCaptionWidth(150.0f);
-		c->setWidth(width*0.95f);
-	} reticlePane->endRow();
+	auto menuPane = pane->addPane("User Menu");
+	menuPane->beginRow(); {
+		m_storedMenuConfig.allowReticleChange = true;
+		m_storedMenuConfig.allowReticleChangeTimeChange = true;
+		m_showFullUserMenuBtn = menuPane->addButton("Show Full User Menu", this, &RenderControls::updateUserMenu);
+		if (config.menu.allowAnyChange()) {
+			// Default setup already allows any change
+			m_showFullUserMenuBtn->setEnabled(false);
+			m_showFullUserMenu = true;
+		}
+	} menuPane->endRow();
 
 	auto otherPane = pane->addPane("Other");
 	otherPane->beginRow();{
@@ -300,6 +254,21 @@ RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& dr
 
 	pack();
 	moveTo(Vector2(0, 300));
+}
+
+void RenderControls::updateUserMenu() {
+	MenuConfig tmp = m_app->sessConfig->menu;		// Store current config
+	m_app->sessConfig->menu = m_storedMenuConfig;	// Swap the config w/ the stored version
+	if (!m_showFullUserMenu) {
+		m_showFullUserMenu = true;
+		m_showFullUserMenuBtn->setCaption("Hide Full User Menu");
+	}
+	else {
+		m_showFullUserMenu = false;
+		m_showFullUserMenuBtn->setCaption("Show Full User Menu");
+	}
+	m_storedMenuConfig = tmp;						// Update the stored config
+	m_app->updateUserMenu = true;					// Set the semaphore to update the user menu
 }
 
 WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width, float height) : 

@@ -69,7 +69,6 @@ protected:
 
     shared_ptr<UserMenu>					m_userSettingsWindow;				///< User settings window
 	bool									m_mouseDirectMode = true;			///< Does the mouse currently have control over the view
-	bool									m_updateUserMenu = false;			///< Semaphore to indicate user settings needs update
 	bool									m_showUserMenu = true;				///< Show the user menu after update?
 
 	bool									m_firstSession = true;
@@ -151,6 +150,7 @@ public:
 
 	bool		buttonUp			= true;		///< Pass button up to session
 	bool		frameToggle			= false;	///< Simple toggle flag used for frame rate click-to-photon monitoring
+	bool		updateUserMenu		= false;	///< Semaphore to indicate user settings needs update
 
 	Vector2 displayRes;
 
