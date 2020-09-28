@@ -106,30 +106,32 @@ public:
 class UserMenu : public GuiWindow {
 protected:
 	FPSciApp* m_app = nullptr;									///< Store the app here
-	UserTable& m_users;										///< User table
-	UserStatusTable& m_userStatus;							///< User status table
-	MenuConfig m_config;									///< Menu configuration
+	UserTable& m_users;											///< User table
+	UserStatusTable& m_userStatus;								///< User status table
+	MenuConfig m_config;										///< Menu configuration
 
-	GuiPane* m_parent				= nullptr;				///< Parent pane
-	GuiPane* m_expPane				= nullptr;				///< Pane for session/user selection
-	GuiPane* m_currentUserPane		= nullptr;				///< Pane for current user controls
-	GuiPane* m_reticlePreviewPane	= nullptr;				///< Reticle preview pane
-	GuiPane* m_resumeQuitPane		= nullptr;				///< Pane for resume/quit buttons
+	GuiPane* m_parent					= nullptr;				///< Parent pane
+	GuiPane* m_expPane					= nullptr;				///< Pane for session/user selection
+	GuiPane* m_currentUserPane			= nullptr;				///< Pane for current user controls
+	GuiPane* m_reticlePreviewPane		= nullptr;				///< Reticle preview pane
+	GuiPane* m_resumeQuitPane			= nullptr;				///< Pane for resume/quit buttons
 
-	GuiDropDownList* m_userDropDown = nullptr;				///< Dropdown menu for user selection
-	GuiDropDownList* m_sessDropDown = nullptr;				///< Dropdown menu for session selection
+	GuiDropDownList* m_userDropDown		= nullptr;				///< Dropdown menu for user selection
+	GuiDropDownList* m_sessDropDown		= nullptr;				///< Dropdown menu for session selection
 
-	shared_ptr<Texture> m_reticlePreviewTexture;			///< Reticle preview texture
-	shared_ptr<Framebuffer> m_reticleBuffer;				///< Reticle preview framebuffer
+	shared_ptr<Texture> m_reticlePreviewTexture;				///< Reticle preview texture
+	shared_ptr<Framebuffer> m_reticleBuffer;					///< Reticle preview framebuffer
 
-	int m_ddCurrUserIdx = 0;								///< Current user index
-	int m_ddCurrSessIdx = 0;								///< Current session index
-	int m_lastUserIdx = -1;									///< Previously selected user in the drop-down
+	int m_ddCurrUserIdx = 0;									///< Current user index
+	int m_ddCurrSessIdx = 0;									///< Current session index
+	int m_lastUserIdx = -1;										///< Previously selected user in the drop-down
 
-	const Vector2 m_btnSize = { 100.f, 30.f };				///< Default button size
-	const Vector2 m_reticlePreviewSize = { 150.f, 150.f };	///< Reticle texture preview size
-	const float m_sliderWidth = 300.f;						///< Default width for (non-RGB) sliders
-	const float m_rgbSliderWidth = 80.f;					///< Default width for RGB sliders
+	double	m_cmp360;											///< cm/360° setting
+
+	const Vector2 m_btnSize = { 100.f, 30.f };					///< Default button size
+	const Vector2 m_reticlePreviewSize = { 150.f, 150.f };		///< Reticle texture preview size
+	const float m_sliderWidth = 300.f;							///< Default width for (non-RGB) sliders
+	const float m_rgbSliderWidth = 80.f;						///< Default width for RGB sliders
 
 	UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect);
 
@@ -173,4 +175,7 @@ public:
 	shared_ptr<UserConfig> getCurrUser() {
 		return m_users.getUserById(selectedUserID());
 	}
+
+	/** updates the displayed cmp360 value based on the current setting */
+	void updateCmp360();
 };

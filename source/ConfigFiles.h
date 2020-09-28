@@ -361,7 +361,7 @@ class UserConfig {
 public:
     String			id					= "anon";						///< Subject ID (as recorded in output DB)
     double			mouseDPI			= 800.0;						///< Mouse DPI setting
-    double			cmp360				= 12.75;						///< Mouse sensitivity, reported as centimeters per 360�
+	double			mouseDegPerMm		= 2.824;						///< Mouse sensitivity, reported as degree per mm
 	Vector2			turnScale			= Vector2(1.0f, 1.0f);			///< Turn scale for player, can be used to invert controls in either direction
 	bool			invertY				= false;						///< Extra flag for Y-invert (duplicates turn scale, but very common)
 	Vector2			scopeTurnScale		= Vector2(0.0f, 0.0f);			///< Scoped turn scale (0's imply default scaling)
@@ -379,6 +379,10 @@ public:
 
 	/** Load from Any */
     UserConfig(const Any& any) {
+		// for loading old user configs
+		double cmp360 = 12.75;
+		bool foundMouseDegPerMm = false;
+
         int settingsVersion = 1; // used to allow different version numbers to be loaded differently
         AnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
@@ -386,7 +390,8 @@ public:
         case 1:
             reader.getIfPresent("id", id);
             reader.getIfPresent("mouseDPI", mouseDPI);
-            reader.getIfPresent("cmp360", cmp360);
+            foundMouseDegPerMm = reader.getIfPresent("mouseDegPerMillimeter", mouseDegPerMm);
+			reader.getIfPresent("cmp360", cmp360);
 			reader.getIfPresent("reticleIndex", reticleIndex);
 			reader.getIfPresent("reticleScale", reticleScale);
 			reader.getIfPresent("reticleColor", reticleColor);
@@ -399,6 +404,11 @@ public:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
             break;
         }
+
+		// Set mouseDPmm if not found
+		if (!foundMouseDegPerMm) {
+			mouseDegPerMm = 36.0 / cmp360;
+		}
     }
 	
 	/** Serialize to Any */
@@ -407,7 +417,7 @@ public:
 		Any a(Any::TABLE);
 		a["id"] = id;										// Include subject ID
 		a["mouseDPI"] = mouseDPI;							// Include mouse DPI
-		a["cmp360"] = cmp360;								// Include cm/360
+		a["mouseDegPerMillimeter"] = mouseDegPerMm;						// Include sensitivity
 		if (forceAll || def.reticleIndex != reticleIndex)				a["reticleIndex"] = reticleIndex;
 		if (forceAll || def.reticleScale != reticleScale)				a["reticleScale"] = reticleScale;
 		if (forceAll || def.reticleColor != reticleColor)				a["reticleColor"] = reticleColor;
@@ -420,7 +430,7 @@ public:
 
 	// Define not equal operator for comparison
 	bool operator==(const UserConfig& other) const {
-		bool eq = id == other.id && cmp360 == other.cmp360 && reticleIndex == other.reticleIndex &&
+		bool eq = id == other.id && mouseDegPerMm == other.mouseDegPerMm && reticleIndex == other.reticleIndex &&
 			reticleScale == other.reticleScale && reticleColor == other.reticleColor && reticleChangeTimeS == other.reticleChangeTimeS && 
 			turnScale == other.turnScale && invertY == other.invertY && scopeTurnScale == other.scopeTurnScale;
 		return eq;
@@ -502,7 +512,7 @@ public:
 	/** Print the user table to the log */
 	void printToLog() {
 		for (UserConfig user : users) {
-			logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id.c_str(), user.cmp360, user.mouseDPI);
+			logPrintf("\tUser ID: %s, sensitivity = %f deg/mm, mouseDPI = %d\n", user.id.c_str(), user.mouseDegPerMm, user.mouseDPI);
 		}
 	}
 };
