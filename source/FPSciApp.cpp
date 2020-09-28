@@ -334,13 +334,13 @@ void FPSciApp::showWeaponControls() {
 void FPSciApp::presentQuestion(Question question) {
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
-		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title);
+		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title, true);
 		break;
 	case Question::Type::Entry:
-		dialog = TextEntryDialog::create(question.prompt, theme, question.title);
+		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false);
 		break;
 	case Question::Type::Rating:
-		dialog = RatingDialog::create(question.prompt, question.options, theme, question.title);
+		dialog = RatingDialog::create(question.prompt, question.options, theme, question.title, true);
 		break;
 	default:
 		throw "Unknown question type!";
