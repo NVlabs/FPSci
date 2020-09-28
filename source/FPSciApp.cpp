@@ -47,7 +47,7 @@ void FPSciApp::onInit() {
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
-	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), scene(), activeCamera());
+	m_weapon = Weapon::create(&experimentConfig.weapon, scene(), activeCamera());
 	m_weapon->setHitCallback(std::bind(&FPSciApp::hitTarget, this, std::placeholders::_1));
 	m_weapon->setMissCallback(std::bind(&FPSciApp::missEvent, this));
 
@@ -480,7 +480,7 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Check for play mode specific parameters
-	m_weapon->setConfig(sessConfig->weapon);
+	m_weapon->setConfig(&sessConfig->weapon);
 	m_weapon->setScene(scene());
 	m_weapon->setCamera(activeCamera());
 
