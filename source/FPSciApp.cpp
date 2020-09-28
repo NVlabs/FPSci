@@ -1400,12 +1400,12 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			if (!message.empty()) {
 				String currLine;
 				Array<String> lines = stringSplit(message, '\n');
-				float vertPos = centerHeight - (scaledFontSize * 1.5 * lines.length()/ 2.0f);
+				float vertPos = centerHeight - (scaledFontSize * 1.5f * lines.length()/ 2.0f);
 				// Draw a "back plate"
 				Draw::rect2D(Rect2D::xywh(0.0f, 
 					vertPos - 1.5f * scaledFontSize,
 					rd->viewport().width(), 
-					scaledFontSize * (lines.length()+1) * 1.5),
+					scaledFontSize * (lines.length()+1) * 1.5f),
 					rd, sessConfig->feedback.backgroundColor);
 				for (String line : lines) {
 					outputFont->draw2D(rd, line.c_str(),
