@@ -387,39 +387,54 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 	m_currentUserPane->beginRow(); {
 		m_currentUserPane->addLabel(format("Current User: %s", user.id.c_str()))->setHeight(30.0);
 	} m_currentUserPane->endRow();
-	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addLabel(format("Mouse DPI: %f", user.mouseDPI));
-	} m_currentUserPane->endRow();
-	m_currentUserPane->beginRow(); {
-		auto sensitivityNb = m_currentUserPane->addNumberBox("Mouse 360", &(user.cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
-		sensitivityNb->setWidth(300.0);
-		sensitivityNb->setEnabled(config.allowSensitivityChange);
-	} m_currentUserPane->endRow();
 
+	const double captionWidth = 70.0;
+	const double unitSize = 50.0;
+	auto sensPane = m_currentUserPane->addPane("Mouse Settings", GuiTheme::ORNATE_PANE_STYLE);
+	sensPane->beginRow(); {
+		auto dpiDisplay = sensPane->addNumberBox("DPI", &user.mouseDPI, "", GuiTheme::NO_SLIDER, 1.0, 100000.0, 1.0);
+		dpiDisplay->setCaptionWidth(captionWidth);
+		dpiDisplay->setWidth(150.0);
+		dpiDisplay->setEnabled(false);
+	} sensPane->endRow();
+	sensPane->beginRow(); {
+		auto sensitivityNb = sensPane->addNumberBox("Sensitivity", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.01, 100.0, 0.01);
+		sensitivityNb->setWidth(300.0);
+		sensitivityNb->setCaptionWidth(captionWidth);
+		sensitivityNb->setUnitsSize(unitSize);
+		sensitivityNb->setEnabled(config.allowSensitivityChange);
+	} sensPane->endRow();
+	sensPane->beginRow(); {
+		auto cmp360Nb = sensPane->addNumberBox("", &m_cmp360, "cm/360°", GuiTheme::NO_SLIDER, 0.0, 3600.0, 0.1);
+		cmp360Nb->setWidth(180.0);
+		cmp360Nb->setCaptionWidth(captionWidth);
+		cmp360Nb->setUnitsSize(unitSize);
+		cmp360Nb->setEnabled(false);
+	} sensPane->endRow();
 	if (config.allowTurnScaleChange) {
 		// X turn scale
 		if (config.xTurnScaleAdjustMode != "None") {
-			m_currentUserPane->beginRow(); {
-				m_currentUserPane->addNumberBox("Turn Scale X", &(user.turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
-			} m_currentUserPane->endRow();
+			sensPane->beginRow(); {
+				sensPane->addNumberBox("Turn Scale X", &(user.turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
+			} sensPane->endRow();
 		}
 		// Y turn scale
 		if (config.yTurnScaleAdjustMode != "None") {
-			m_currentUserPane->beginRow(); {
+			sensPane->beginRow(); {
 				if (config.yTurnScaleAdjustMode == "Slider") {
-					m_currentUserPane->addNumberBox("Turn Scale Y", &(user.turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
+					sensPane->addNumberBox("Turn Scale Y", &(user.turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
 				}
 				else if (config.yTurnScaleAdjustMode == "Invert") {
-					m_currentUserPane->addCheckBox("Invert Y", &(user.invertY));
+					sensPane->addCheckBox("Invert Y", &(user.invertY));
 
 				}
-			} m_currentUserPane->endRow();
+			} sensPane->endRow();
 		}
 	}
 
 	// Reticle configuration
 	if (config.allowReticleChange) {
-		auto reticleControlPane = m_currentUserPane->addPane("Reticle Control");
+		auto reticleControlPane = m_currentUserPane->addPane("Reticle Control", GuiTheme::ORNATE_PANE_STYLE);
 		const float reticleCaptionWidth = 120.f;
 
 		// Reticle index selection
@@ -609,6 +624,11 @@ void UserMenu::updateReticlePreview() {
 
 void UserMenu::updateSessionPress() {
 	m_app->updateSession(selectedSession());
+}
+
+void UserMenu::updateCmp360() {
+	const UserConfig user = m_users.users[m_users.getUserIndex(m_userStatus.currentUser)];
+	m_cmp360 = 36.0/user.mouseDegPerMm;
 }
 
 void UserMenu::setVisible(bool enable) {
