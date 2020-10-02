@@ -133,6 +133,8 @@ protected:
 	int m_ddCurrSessIdx = 0;									///< Current session index
 	int m_lastUserIdx = -1;										///< Previously selected user in the drop-down
 
+	String m_newUser;											///< New user string
+
 	double	m_cmp360;											///< cm/360° setting
 
 	const Vector2 m_btnSize = { 100.f, 30.f };					///< Default button size
@@ -146,6 +148,7 @@ protected:
 	void drawUserPane(const MenuConfig& config, UserConfig& user);
 
 	void updateUserPress();
+	void addUserPress();
 	void updateSessionPress();
 
 public:

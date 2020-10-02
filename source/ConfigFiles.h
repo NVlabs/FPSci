@@ -1774,6 +1774,7 @@ public:
 	bool showMenuLogo					= true;							///< Show the FPSci logo in the user menu
 	bool showExperimentSettings			= true;							///< Show the experiment settings options (session/user selection)
 	bool showUserSettings				= true;							///< Show the user settings options (master switch)
+	bool allowUserAdd					= false;						///< Allow the user to add a new user to the experiment
 	bool allowUserSettingsSave			= true;							///< Allow the user to save settings changes
 	bool allowSensitivityChange			= true;							///< Allow in-game sensitivity change		
 	
@@ -1797,6 +1798,7 @@ public:
 			reader.getIfPresent("showMenuLogo", showMenuLogo);
 			reader.getIfPresent("showExperimentSettings", showExperimentSettings);
 			reader.getIfPresent("showUserSettings", showUserSettings);
+			reader.getIfPresent("allowUserAdd", allowUserAdd);
 			reader.getIfPresent("allowUserSettingsSave", allowUserSettingsSave);
 			reader.getIfPresent("allowSensitivityChange", allowSensitivityChange);
 			reader.getIfPresent("allowTurnScaleChange", allowTurnScaleChange);
@@ -1823,6 +1825,7 @@ public:
 		if (forceAll || def.showMenuLogo != showMenuLogo)									a["showMenuLogo"] = showMenuLogo;
 		if (forceAll || def.showExperimentSettings != showExperimentSettings)				a["showExperimentSettings"] = showExperimentSettings;
 		if (forceAll || def.showUserSettings != showUserSettings)							a["showUserSettings"] = showUserSettings;
+		if (forceAll || def.allowUserAdd != allowUserAdd)									a["allowUserAdd"] = allowUserAdd;
 		if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)					a["allowUserSettingsSave"] = allowUserSettingsSave;
 		if (forceAll || def.allowSensitivityChange != allowSensitivityChange)				a["allowSensitivityChange"] = allowSensitivityChange;
 		if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)					a["allowTurnScaleChange"] = allowTurnScaleChange;

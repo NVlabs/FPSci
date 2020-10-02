@@ -339,6 +339,12 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 		m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
 		m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
 	} m_expPane->endRow();
+	if (m_config.allowUserAdd) {
+		m_expPane->beginRow(); {
+			m_expPane->addTextBox("New User", &m_newUser);
+			m_expPane->addButton("Add User", this, &UserMenu::addUserPress);
+		} m_expPane->endRow();
+	}
 	m_expPane->beginRow(); {
 		m_sessDropDown = m_expPane->addDropDownList("Session", Array<String>({}), &m_ddCurrSessIdx);
 		updateSessionDropDown();
@@ -593,6 +599,28 @@ void UserMenu::updateUserPress() {
 		const String sessId = updateSessionDropDown()[0];
 		m_app->updateSession(sessId);
 	}
+}
+
+void UserMenu::addUserPress() {
+	// Create new user
+	UserConfig user;
+	user.id = m_newUser;
+
+	// Add user to config and save
+	m_users.users.append(user);
+	m_app->saveUserConfig();
+
+	// Add user status and save
+	UserSessionStatus status = m_userStatus.userInfo.last();
+	status.id = m_newUser;
+	if (m_userStatus.randomizeDefaults) { status.sessionOrder.randomize(); }
+	m_userStatus.userInfo.append(status);
+	m_userStatus.currentUser = m_newUser;
+	m_app->saveUserStatus();
+
+	m_userDropDown->append(m_newUser);
+	m_ddCurrUserIdx = m_users.users.length() - 1;;
+	updateUserPress();
 }
 
 void UserMenu::updateReticlePreview() {
