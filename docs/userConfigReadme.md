@@ -8,6 +8,15 @@ The user config is setup to work across multiple experiments (i.e. it does not h
 ## File Location
 The `userconfig.Any` file is located in the [`data-files` directory](../data-files/) at the root of the project. If no `userconfig.Any` file is present the application writes a default to `userconfig.Any`. The default user is named `anon` and corresponds to the default `userstatus.Any` file. This config assumes an 800DPI mouse and a 12.75cm/360° mouse sensitivity without mouse inversion.
 
+# User ID Uniqueness
+The `requireUnique` flag is settable at the top of the user configuration file (defaults to `true`). When this flag is set to true, all users will be reuqired to have unique IDs. This is particularly useful when allowing users to enter their own user IDs using the `allowUserAdd` flag in the [user menu configuration](general_config.md#menu-config). Regardless of whether new users can be added in app,  will check for non-duplicate user IDs and throw an exception at startup.
+
+To disable the unique user ID requirement add the following to the top of your user config file:
+
+```
+requireUnique: False;
+```
+
 # User Table
 Each entry in the user table contains the following fields:
 

@@ -125,6 +125,7 @@ protected:
 
 	GuiDropDownList* m_userDropDown		= nullptr;				///< Dropdown menu for user selection
 	GuiDropDownList* m_sessDropDown		= nullptr;				///< Dropdown menu for session selection
+	GuiLabel* m_newUserFeedback			= nullptr;				///< Feedback field for new user
 
 	shared_ptr<Texture> m_reticlePreviewTexture;				///< Reticle preview texture
 	shared_ptr<Framebuffer> m_reticleBuffer;					///< Reticle preview framebuffer
@@ -169,9 +170,9 @@ public:
 		m_sessDropDown->setSelectedValue(id);
 	}
 
-	String selectedSession() const {
-		if (m_ddCurrSessIdx == -1) return "";
-		return m_sessDropDown->get(m_ddCurrSessIdx);
+	const String selectedSession() const {
+		if (m_ddCurrSessIdx >= m_sessDropDown->numElements()) return "";
+		return m_sessDropDown->get(m_ddCurrSessIdx).text();
 	}
 
 	int sessionsForSelectedUser() const {

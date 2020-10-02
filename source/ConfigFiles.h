@@ -440,6 +440,8 @@ public:
 /** Class for loading a user table and getting user info */
 class UserTable {
 public:
+
+	bool					requireUnique = true;			///< Require users to be unique by ID
 	Array<UserConfig>		users = {};						///< A list of valid users
 
 	UserTable() {};
@@ -452,7 +454,17 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
+			reader.getIfPresent("requireUnique", requireUnique);
 			reader.get("users", users, "Issue in the (required) \"users\" array in the user config file!");
+			// Unique user check (if required)
+			if (requireUnique) {
+				const Array<String> userIds = getIds();
+				for (String id : userIds) {
+					if (userIds.findIndex(id) != userIds.rfindIndex(id)) {
+						throw "Multiple users with the same ID (\"" + id + "\") specified in the user config file!";
+					}
+				}
+			}
 			if (users.size() == 0) {
 				throw "At least 1 user must be specified in the \"users\" array within the user configuration file!";
 			}

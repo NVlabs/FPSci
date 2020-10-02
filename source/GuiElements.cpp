@@ -342,7 +342,8 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	if (m_config.allowUserAdd) {
 		m_expPane->beginRow(); {
 			m_expPane->addTextBox("New User", &m_newUser);
-			m_expPane->addButton("Add User", this, &UserMenu::addUserPress);
+			m_expPane->addButton("+", this, &UserMenu::addUserPress)->setWidth(20.0f);
+			m_newUserFeedback = m_expPane->addLabel("");
 		} m_expPane->endRow();
 	}
 	m_expPane->beginRow(); {
@@ -602,24 +603,45 @@ void UserMenu::updateUserPress() {
 }
 
 void UserMenu::addUserPress() {
-	// Create new user
+	// Check for unique user name requirement
+	if (m_newUser.empty()) {
+		m_newUserFeedback->setCaption("Empty!");
+		return;
+	}
+	else if (m_users.requireUnique && m_users.getIds().contains(m_newUser)) {
+		m_newUser = "";
+		m_newUserFeedback->setCaption("In use!");
+		return;
+	}
+	m_newUserFeedback->setCaption("");		// Clear the user feedback caption on success
+
+	// Create new user config
 	UserConfig user;
 	user.id = m_newUser;
-
-	// Add user to config and save
+	
+	// Add user config to table and save
 	m_users.users.append(user);
 	m_app->saveUserConfig();
 
-	// Add user status and save
-	UserSessionStatus status = m_userStatus.userInfo.last();
-	status.id = m_newUser;
+	// Create new user status
+	UserSessionStatus status = m_userStatus.userInfo.last();		// Start by coping over last user
+	status.id = m_newUser;											// Update the user ID
+	status.completedSessions.clear();								// Empty any completed sessions from previous user
+	// Inherit default session order (if available)
+	if (m_userStatus.defaultSessionOrder.length() > 0) { status.sessionOrder = m_userStatus.defaultSessionOrder;  }
+	// Randomize if requested
 	if (m_userStatus.randomizeDefaults) { status.sessionOrder.randomize(); }
+	
+	// Add user status, set as current, and save
 	m_userStatus.userInfo.append(status);
 	m_userStatus.currentUser = m_newUser;
 	m_app->saveUserStatus();
 
+	logPrintf("Added new user: %s\n", m_newUser);
+
+	// Add user to dropdown then update the user/session
 	m_userDropDown->append(m_newUser);
-	m_ddCurrUserIdx = m_users.users.length() - 1;;
+	m_ddCurrUserIdx = m_users.users.length() - 1;
 	updateUserPress();
 }
 
