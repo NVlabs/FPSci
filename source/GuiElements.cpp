@@ -381,7 +381,6 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 		m_expPane->setVisible(false);
 		m_expPane->setHeight(0.f);
 	}
-	m_expPane->pack();
 
 	// User Settings Pane
 	if (config.showUserSettings) {
@@ -403,11 +402,10 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	} m_resumeQuitPane->endRow();
 
 	// Pack the window here (size for elements)
-	m_parent->pack();
 	pack();
 
 	// Centering for (non-updated) menu elements
-	if (logoTb) logoTb->moveBy({ bounds().width() / 2.f - logoTb->rect().width() / 2.f - 5.f, 0.f });
+	if(logoTb) logoTb->moveBy({ bounds().width() / 2.f - logoTb->rect().width() / 2.f - 5.f, 0.f });
 	
 	// Position quit button on the right
 	quitBtn->moveBy({ bounds().width() - 2.f * quitBtn->rect().width() - 15.f, 0.f });
