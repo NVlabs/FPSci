@@ -763,6 +763,7 @@ public:
 	float	hitDecalColorMult = 2.0f;									///< "Encoding" field (aka color multiplier) for hit decal
 	
 	float	fireSpread = 0;												///< The spread of the fire
+	String  fireSpreadShape = "uniform";								///< The shape of the fire spread distribution
 	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
 	float	damageRollOffDistance = 0;									///< Damage roll of w/ distance
 
@@ -824,6 +825,8 @@ public:
 			reader.getIfPresent("hitDecalColorMult", hitDecalColorMult);
 
 			reader.getIfPresent("fireSpread", fireSpread);
+			reader.getIfPresent("fireSpreadShape", fireSpreadShape);
+
 			reader.getIfPresent("damageRollOffAim", damageRollOffAim);
 			reader.getIfPresent("damageRollOffDistance", damageRollOffDistance);
 
@@ -871,6 +874,7 @@ public:
 		if (forceAll || def.hitDecalColorMult != hitDecalColorMult)			a["hitDecalColorMult"] = hitDecalColorMult;
 
 		if (forceAll || def.fireSpread != fireSpread)						a["fireSpread"] = fireSpread;
+		if (forceAll || def.fireSpreadShape != fireSpreadShape)				a["fireSpreadShape"] = fireSpreadShape;
 		if (forceAll || def.damageRollOffAim != damageRollOffAim)			a["damageRollOffAim"] = damageRollOffAim;
 		if (forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
 		if (forceAll || def.scopeFoV != scopeFoV)							a["scopeFoV"] = scopeFoV;

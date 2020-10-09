@@ -27,6 +27,7 @@ This file provides information about the weapon to be used in the experiment. De
 |`damagePerSecond`      |damage/s   | The damage done by the weapon per second, when `firePeriod` > 0 the damage per round is set by `damagePerSecond`*`firePeriod`, when `firePeriod` is 0 and `autoFire` is `True` damage is computed based on time hitting the target.        |
 |`hitScan`              |`bool`     | Whether or not the weapon acts as an instantaneous hitscan (true) vs propagated projectile (false)    |
 |`fireSpread`           |`float`    | The angular (horizontal and vertical) spread of bullets fired from the weapon (no cooldown effect)    |
+|`fireSpreadShape`      |`String`   | The distributional shape to draw the fire spread from (can be `"uniform"` or `"gaussian"`). Invalid fire types will result in no spread. When using a `"gaussian"` distribution shape `fireSpread` is the width of the ±3σ interval. |
 
 ```
     "maxAmmo" : 10000;              // Large ammo count
@@ -35,6 +36,7 @@ This file provides information about the weapon to be used in the experiment. De
     "damagePerSecond": 2.0;         // 1 damage per shot (single shot to destroy)
     "hitScan" : true;               // Use hitscan (not propogated projectile) for hit detection
     "fireSpread": 0;                // No fire spread by default
+    "fireSpreadShape": "uniform";   // Uniform shape of fire spread distribution by default
 ```
 
 ## Sound and View Model
