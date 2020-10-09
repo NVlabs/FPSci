@@ -201,7 +201,12 @@ shared_ptr<TargetEntity> Weapon::fire(
 	Array<shared_ptr<Entity>>& dontHit)
 {
 	static RealTime lastTime;
-	const Ray& ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
+	Ray ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
+	const float spread = m_config->fireSpread * 2.f * pif() / 360.f;
+	Matrix3 rotMat = Matrix3::fromEulerAnglesXYZ(m_rand.uniform(-spread/2, spread/2) , m_rand.uniform(-spread / 2, spread / 2), 0);
+	Vector3 dir = ray.direction() * rotMat;
+	ray.set(ray.origin(), dir);
+
 	// Check for closest hit (in scene, otherwise this ray hits the skybox)
 	float closest = finf();
 	Array<shared_ptr<Entity>> dontHitItems = dontHit;
@@ -217,10 +222,10 @@ shared_ptr<TargetEntity> Weapon::fire(
 		CFrame bulletStartFrame = m_camera->frame();
 		
 		// Apply bullet offset w/ camera rotation here
-		bulletStartFrame.translation += m_camera->frame().rotation * m_config->bulletOffset;
+		bulletStartFrame.translation += ray.direction() * m_config->bulletOffset;
 
 		// Angle the bullet start frame towards the aim point
-		Point3 aimPoint = m_camera->frame().translation + m_camera->frame().lookVector() * 1000.0f;
+		Point3 aimPoint = m_camera->frame().translation + ray.direction() * 1000.0f;
 		// If we hit the scene w/ this ray, angle it towards that collision point
 		if (closest < finf()) {
 			aimPoint = hitInfo.point;
@@ -263,9 +268,8 @@ shared_ptr<TargetEntity> Weapon::fire(
 			targetIdx = closestIndex;				// Write back the index of the target
 
 			m_hitCallback(target);				// If we did, we are in hitscan mode, apply the damage and manage the target here
-			const Vector3& camDir = -m_camera->frame().lookVector();
-			// Offset position slightly along normal to avoid Z-fighting the target
-			drawDecal(hitInfo.point + 0.01f * camDir, camDir, true);
+			// Offset position slightly along shot direction to avoid Z-fighting the target
+			drawDecal(hitInfo.point + 0.01f * -ray.direction(), ray.direction(), true);
 		}
 		else { 
 			m_missCallback(); 
