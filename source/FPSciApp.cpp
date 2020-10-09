@@ -645,7 +645,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 
 	// Simulate the projectiles
-	m_weapon->simulateProjectiles(sdt, sess->targetArray());
+	m_weapon->simulateProjectiles(sdt, sess->hittableTargets());
 
 	// explosion animation
 	for (int i = 0; i < m_explosions.size(); i++) {
