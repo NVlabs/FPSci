@@ -85,8 +85,13 @@ void Weapon::onPose(Array<shared_ptr<Surface> >& surface) {
 		// Update the weapon frame for all of these cases
 		const float yScale = -0.12f;
 		const float zScale = -yScale * 0.5f;
-		const float lookY = m_camera->frame().lookVector().y;
-		m_frame = m_camera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
+		float kick = 0.f;
+		const RealTime timeSinceFire = timeSinceLastFire();
+		if (timeSinceFire < m_config->kickDuration) {
+			kick = m_config->kickAngle * sinf((float)timeSinceFire / m_config->kickDuration * pif());
+		}
+		const float lookY = m_camera->frame().lookVector().y - 6.f * sin(2 * pif() / 360.0f * kick);
+		m_frame = m_camera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5+kick);
 		// Pose the view model (weapon) for render here
 		if (m_config->renderModel) {
 			const float prevLookY = m_camera->previousFrame().lookVector().y;

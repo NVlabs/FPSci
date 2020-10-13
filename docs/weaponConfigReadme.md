@@ -44,12 +44,16 @@ Controls specific to the sound/view model for the weapon are provided below:
 |`fireSoundVol`         |ratio      | The volume to play the `fireSound` clip with                                                          |
 |`renderModel`          |`bool`     | Whether or not a weapon model is rendered in the first-person view                                    |
 |`modelSpec`            |`ArticulatedModel::Specification` | Any-based specification for the weapon being used                              |
+|`kickAngle`            |`float`    | The angle (in degrees) the weapon model should kick after fire                                        |
+|`kickDuration`         |`float`    | The time over which the weapon kicks following a shot (in seconds). Recommended to be less than or equal to the `firePeriod`. |
 
 ```
     "fireSound" : "sound/42108__marcuslee__Laser_Wrath_6.wav"           // This comes w/ G3D
     "fireSoundVol" : 0.5;       // Play the fire sound at 1/2 volume
     "renderModel" : false;      // Don't render a weapon model
     "modelSpec" : [];           // No default model spec provided (see the example config below for more info)
+    "kickAngle": 0;             // Weapons don't kick by default
+    "kickDuration": 0;          // Weapons don't kick by default
 ```
 
 ## Projectiles 
