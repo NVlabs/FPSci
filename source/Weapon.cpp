@@ -198,9 +198,12 @@ shared_ptr<TargetEntity> Weapon::fire(
 	int& targetIdx, 
 	float& hitDist, 
 	Model::HitInfo& hitInfo, 
-	Array<shared_ptr<Entity>>& dontHit)
+	Array<shared_ptr<Entity>>& dontHit,
+	bool consumeAmmo)
 {
-	static RealTime lastTime;
+	m_lastFireAt = System::time();						// Capture the time
+	if (consumeAmmo) { m_ammo -= 1; }					// Reduce the ammo
+
 	const Ray& ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
 	// Check for closest hit (in scene, otherwise this ray hits the skybox)
 	float closest = finf();
@@ -283,4 +286,14 @@ shared_ptr<TargetEntity> Weapon::fire(
 	END_PROFILER_EVENT();
 
 	return target;
+}
+
+bool Weapon::canFire() const {
+	if (isNull(m_config)) return true;
+	return timeSinceLastFire() > m_config->firePeriod;
+}
+
+float Weapon::cooldownRatio() const {
+	if (isNull(m_config) || m_config->firePeriod == 0.0) return 1.0f;
+	return min((float)timeSinceLastFire() / m_config->firePeriod, 1.0f);
 }

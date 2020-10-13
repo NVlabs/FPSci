@@ -35,6 +35,7 @@ class FPSciApp;
 class PlayerEntity;
 class TargetEntity;
 class FPSciLogger;
+class Weapon;
 
 // Simple timer for measuring time offsets
 class Timer
@@ -115,11 +116,11 @@ protected:
 	String m_dbFilename;								///< Filename for output logging (less the .db extension)
 
 	shared_ptr<PlayerEntity> m_player;					///< Player entity
+	shared_ptr<Weapon> m_weapon;						///< Weapon
 	shared_ptr<Camera> m_camera;						///< Camera entity
 
 	// Experiment management					
 	int m_destroyedTargets = 0;							///< Number of destroyed target
-	int m_shotCount = 0;								///< Count of total clicks in this trial
 	int m_hitCount = 0;									///< Count of total hits in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
 	int	m_currBlock = 1;								///< Index to the current block of trials
@@ -146,7 +147,6 @@ protected:
 	String m_taskStartTime;								///< Recorded task start timestamp							
 	String m_taskEndTime;								///< Recorded task end timestamp
 	RealTime m_totalRemainingTime = 0;					///< Time remaining in the trial
-	RealTime m_lastFireAt = 0.f;						///< Time of the last shot
 	Timer m_timer;										///< Timer used for timing tasks	
 	// Could move timer above to stopwatch in future
 	//Stopwatch stopwatch;			
@@ -157,13 +157,8 @@ protected:
 	// Target parameters
 	const float m_targetDistance = 1.0f;				///< Actual distance to target
 	
-	Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config) {
-		m_hasSession = notNull(m_config);
-	}
-
-	Session(FPSciApp* app) : m_app(app) {
-		m_hasSession = false;
-	}
+	Session(FPSciApp* app, shared_ptr<SessionConfig> config);
+	Session(FPSciApp* app);
 
 	~Session(){
 		clearTargets();					// Clear the targets when the session is done
@@ -326,11 +321,6 @@ public:
 	void randomizePosition(const shared_ptr<TargetEntity>& target) const;
 	void initTargetAnimation();
 	void spawnTrialTargets(Point3 initialSpawnPos, bool previewMode = false);
-	float weaponCooldownPercent() const;
-	RealTime lastFireTime() const {
-		return m_lastFireAt;
-	}
-	int remainingAmmo() const;
 
 	bool blockComplete() const;
 	bool nextCondition();
@@ -373,15 +363,11 @@ public:
 	/** queues action with given name to insert into database when trial completes
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */
 	void accumulatePlayerAction(PlayerActionType action, String target="");
-	bool canFire();
-
+	
 	bool updateBlock(bool init = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState currentState;			///< Current presentation state
-
-	/** result recording */
-	void countShot() { m_shotCount++; }
 
 	const Array<shared_ptr<TargetEntity>>& targetArray() const {
 		return m_targetArray;

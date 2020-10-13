@@ -36,8 +36,6 @@ protected:
 	shared_ptr<GFont>						m_combatFont;						///< Font used for floating combat text
 	Array<shared_ptr<FloatingCombatText>>	m_combatTextList;					///< Array of existing combat text
 
-	shared_ptr<Weapon>						m_weapon;							///< Current weapon
-
 	Array<shared_ptr<VisibleEntity>>		m_explosions;						///< Model for target destroyed decal
 	Array<RealTime>							m_explosionRemainingTimes;			///< Time for end of explosion
 	int										m_explosionIdx = 0;					///< Explosion index
@@ -141,6 +139,7 @@ public:
 
 	shared_ptr<Session> sess;					///< Pointer to the experiment
 	shared_ptr<Camera> playerCamera;			///< Pointer to the player camera						
+	shared_ptr<Weapon> weapon;					///< Current weapon
 
 	bool		renderFPS			= false;	///< Control flag used to draw (or not draw) FPS information to the display	
 	int			displayLagFrames	= 0;		///< Count of frames of latency to add
