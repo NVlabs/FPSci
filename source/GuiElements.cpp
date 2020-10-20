@@ -271,8 +271,8 @@ void RenderControls::updateUserMenu() {
 	m_app->updateUserMenu = true;					// Set the semaphore to update the user menu
 }
 
-WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width, float height) : 
-	GuiWindow("Weapon Controls", theme, Rect2D::xywh(5, 5, width, height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
+WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width, float height) :
+	GuiWindow("Weapon Controls", theme, Rect2D::xywh(5, 5, width, height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_config(config)
 {
 	// Create the GUI pane
 	GuiPane* pane = GuiWindow::pane();
@@ -283,10 +283,15 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 		pane->addCheckBox("Autofire", &(config.autoFire));
 	} pane->endRow();
 	pane->beginRow(); {
+		pane->addCheckBox("Hitscan", &(config.hitScan));
 		auto n = pane->addNumberBox("Damage", &(config.damagePerSecond), "health/s", GuiTheme::LINEAR_SLIDER, 0.0f, 100.0f, 0.1f);
 		n->setWidth(300.0f);
 		n->setUnitsSize(50.0f);
 	} pane->endRow();
+	pane->beginRow(); {
+		pane->addNumberBox("Fire Spread", &(config.fireSpread), "deg", GuiTheme::LINEAR_SLIDER, 0.f, 40.f, 0.1f);
+		pane->addDropDownList("Spread Shape", m_spreadShapes, &m_spreadShapeIdx, std::bind(&WeaponControls::updateFireSpreadShape, this));
+	}
 	//pane->beginRow(); {
 	//	auto c = pane->addLabel("Muzzle offset");
 	//	c->setWidth(100.0f);
@@ -306,6 +311,10 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 
 	pack();
 	moveTo(Vector2(0, 720));
+}
+
+void WeaponControls::updateFireSpreadShape() {
+	m_config.fireSpreadShape = m_spreadShapes[m_spreadShapeIdx];
 }
 
 ////////////////////////
@@ -398,14 +407,14 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 		dpiDisplay->setEnabled(false);
 	} sensPane->endRow();
 	sensPane->beginRow(); {
-		auto sensitivityNb = sensPane->addNumberBox("Sensitivity", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.01, 100.0, 0.01);
+		auto sensitivityNb = sensPane->addNumberBox("Sensitivity", &(user.mouseDegPerMm), "ï¿½/mm", GuiTheme::LOG_SLIDER, 0.01, 100.0, 0.01);
 		sensitivityNb->setWidth(300.0);
 		sensitivityNb->setCaptionWidth(captionWidth);
 		sensitivityNb->setUnitsSize(unitSize);
 		sensitivityNb->setEnabled(config.allowSensitivityChange);
 	} sensPane->endRow();
 	sensPane->beginRow(); {
-		auto cmp360Nb = sensPane->addNumberBox("", &m_cmp360, "cm/360°", GuiTheme::NO_SLIDER, 0.0, 3600.0, 0.1);
+		auto cmp360Nb = sensPane->addNumberBox("", &m_cmp360, "cm/360ï¿½", GuiTheme::NO_SLIDER, 0.0, 3600.0, 0.1);
 		cmp360Nb->setWidth(180.0);
 		cmp360Nb->setCaptionWidth(captionWidth);
 		cmp360Nb->setUnitsSize(unitSize);

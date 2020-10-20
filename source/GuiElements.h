@@ -103,6 +103,12 @@ public:
 
 class WeaponControls : public GuiWindow {
 protected:
+	int	m_spreadShapeIdx = 0;											// Index of fire spread shape
+	const Array<String> m_spreadShapes = { "uniform", "gaussian" };		// Optional shapes to select from
+	void updateFireSpreadShape(void);
+
+	WeaponConfig& m_config;
+
 	WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
 public:
 	static shared_ptr<WeaponControls> create(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f) {
