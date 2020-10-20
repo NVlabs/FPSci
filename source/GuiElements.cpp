@@ -287,6 +287,10 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 		n->setWidth(300.0f);
 		n->setUnitsSize(50.0f);
 	} pane->endRow();
+	pane->beginRow(); {
+		pane->addNumberBox("Kick Angle", &(config.kickAngle), "deg", GuiTheme::LINEAR_SLIDER, 0.f, 45.f, 0.1f);
+		pane->addNumberBox("Kick Duration", &(config.kickDuration), "s", GuiTheme::LINEAR_SLIDER, 0.f, 2.f, 0.01f);
+	}
 	//pane->beginRow(); {
 	//	auto c = pane->addLabel("Muzzle offset");
 	//	c->setWidth(100.0f);
