@@ -171,7 +171,7 @@ public:
 	}
 
 	const String selectedSession() const {
-		if (m_ddCurrSessIdx >= m_sessDropDown->numElements()) return "";
+		if (m_ddCurrSessIdx == -1 || m_ddCurrSessIdx >= m_sessDropDown->numElements()) return "";
 		return m_sessDropDown->get(m_ddCurrSessIdx).text();
 	}
 
