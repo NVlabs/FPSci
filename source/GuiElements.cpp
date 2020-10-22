@@ -618,6 +618,7 @@ void UserMenu::addUserPress() {
 	// Create new user config
 	UserConfig user;
 	user.id = m_newUser;
+	user.mouseDPI = m_users.users.last().mouseDPI;
 	
 	// Add user config to table and save
 	m_users.users.append(user);
