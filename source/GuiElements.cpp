@@ -344,6 +344,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 			m_expPane->addTextBox("New User", &m_newUser);
 			m_expPane->addButton("+", this, &UserMenu::addUserPress)->setWidth(20.0f);
 			m_newUserFeedback = m_expPane->addLabel("");
+			m_newUserFeedback->setWidth(70.f);
 		} m_expPane->endRow();
 	}
 	m_expPane->beginRow(); {
