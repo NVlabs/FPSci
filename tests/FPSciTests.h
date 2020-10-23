@@ -24,6 +24,8 @@ protected:
 	static void SetUpTestSuite();
 	/** Setup the suite for all tests (FPSci specific) */
 	static void SetUpTestSuiteSafe();
+	/** Setup a new session with the provided id*/
+	static void SelectSession(const String& id);
 	/** Teardown the suite for all tests */
 	static void TearDownTestSuite();
 	/** Setup and individual test case (setup the test suite) */

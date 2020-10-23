@@ -7,9 +7,12 @@ class TargetConfig;
 //#define DRAW_BOUNDING_SPHERES	1		// Uncomment this to draw bounding spheres (useful for target sizing)
 #define BOUNDING_SPHERE_RADIUS	0.5		///< Use a 0.5m radius for sizing here
 
-// Scale and offset for target
-const float TARGET_MODEL_ARRAY_SCALING = 0.2f;
-const float TARGET_MODEL_ARRAY_OFFSET = 20;
+// 1 - 2 ^ (1/3) makes multiples of 2 regular
+#define TARGET_MODEL_ARRAY_SCALING 0.25992104989f
+// Model size offset
+#define TARGET_MODEL_ARRAY_OFFSET 40.0f
+// Number of target model sizes
+#define TARGET_MODEL_SCALE_COUNT 50
 
 struct Destination{
 public:
@@ -154,7 +157,7 @@ public:
 		}
 	}
 
-	/**Simple routine to do damage */
+	/**Apply damage to health and return true if health <= 0 */
 	bool doDamage(float damage) {
 		m_health -= damage;
 		return m_health <= 0;

@@ -85,12 +85,19 @@ public:
 
 class RenderControls : public GuiWindow {
 protected:
-	RenderControls(SessionConfig& config, UserConfig& user, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
+	FPSciApp* m_app = nullptr;
+	GuiButton* m_showFullUserMenuBtn = nullptr;
+	MenuConfig m_storedMenuConfig;
+	bool	m_showFullUserMenu = false;
+
+	void updateUserMenu(void);
+
+	RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, const int maxFrameDelay = 360, const float minFrameRate = 1.0f, const float maxFrameRate=1000.0f, float width=400.0f, float height=10.0f);
 public:
-	static shared_ptr<RenderControls> create(SessionConfig& config, UserConfig &user, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
+	static shared_ptr<RenderControls> create(FPSciApp* app, SessionConfig& config, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, const int maxFrameDelay = 360, const float minFrameRate = 1.0f, const float maxFrameRate=1000.0f, float width = 400.0f, float height = 10.0f) {
-		return createShared<RenderControls>(config, user, drawFps, turbo, numReticles, brightness, theme, maxFrameDelay, minFrameRate, maxFrameRate, width, height);
+		return createShared<RenderControls>(app, config, drawFps, turbo, numReticles, brightness, theme, maxFrameDelay, minFrameRate, maxFrameRate, width, height);
 	}
 };
 
@@ -106,30 +113,35 @@ public:
 class UserMenu : public GuiWindow {
 protected:
 	FPSciApp* m_app = nullptr;									///< Store the app here
-	UserTable& m_users;										///< User table
-	UserStatusTable& m_userStatus;							///< User status table
-	MenuConfig m_config;									///< Menu configuration
+	UserTable& m_users;											///< User table
+	UserStatusTable& m_userStatus;								///< User status table
+	MenuConfig m_config;										///< Menu configuration
 
-	GuiPane* m_parent				= nullptr;				///< Parent pane
-	GuiPane* m_expPane				= nullptr;				///< Pane for session/user selection
-	GuiPane* m_currentUserPane		= nullptr;				///< Pane for current user controls
-	GuiPane* m_reticlePreviewPane	= nullptr;				///< Reticle preview pane
-	GuiPane* m_resumeQuitPane		= nullptr;				///< Pane for resume/quit buttons
+	GuiPane* m_parent					= nullptr;				///< Parent pane
+	GuiPane* m_expPane					= nullptr;				///< Pane for session/user selection
+	GuiPane* m_currentUserPane			= nullptr;				///< Pane for current user controls
+	GuiPane* m_reticlePreviewPane		= nullptr;				///< Reticle preview pane
+	GuiPane* m_resumeQuitPane			= nullptr;				///< Pane for resume/quit buttons
 
-	GuiDropDownList* m_userDropDown = nullptr;				///< Dropdown menu for user selection
-	GuiDropDownList* m_sessDropDown = nullptr;				///< Dropdown menu for session selection
+	GuiDropDownList* m_userDropDown		= nullptr;				///< Dropdown menu for user selection
+	GuiDropDownList* m_sessDropDown		= nullptr;				///< Dropdown menu for session selection
+	GuiLabel* m_newUserFeedback			= nullptr;				///< Feedback field for new user
 
-	shared_ptr<Texture> m_reticlePreviewTexture;			///< Reticle preview texture
-	shared_ptr<Framebuffer> m_reticleBuffer;				///< Reticle preview framebuffer
+	shared_ptr<Texture> m_reticlePreviewTexture;				///< Reticle preview texture
+	shared_ptr<Framebuffer> m_reticleBuffer;					///< Reticle preview framebuffer
 
-	int m_ddCurrUserIdx = 0;								///< Current user index
-	int m_ddCurrSessIdx = 0;								///< Current session index
-	int m_lastUserIdx = -1;									///< Previously selected user in the drop-down
+	int m_ddCurrUserIdx = 0;									///< Current user index
+	int m_ddCurrSessIdx = 0;									///< Current session index
+	int m_lastUserIdx = -1;										///< Previously selected user in the drop-down
 
-	const Vector2 m_btnSize = { 100.f, 30.f };				///< Default button size
-	const Vector2 m_reticlePreviewSize = { 150.f, 150.f };	///< Reticle texture preview size
-	const float m_sliderWidth = 300.f;						///< Default width for (non-RGB) sliders
-	const float m_rgbSliderWidth = 80.f;					///< Default width for RGB sliders
+	String m_newUser;											///< New user string
+
+	double	m_cmp360;											///< cm/360° setting
+
+	const Vector2 m_btnSize = { 100.f, 30.f };					///< Default button size
+	const Vector2 m_reticlePreviewSize = { 150.f, 150.f };		///< Reticle texture preview size
+	const float m_sliderWidth = 300.f;							///< Default width for (non-RGB) sliders
+	const float m_rgbSliderWidth = 80.f;						///< Default width for RGB sliders
 
 	UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect);
 
@@ -137,6 +149,7 @@ protected:
 	void drawUserPane(const MenuConfig& config, UserConfig& user);
 
 	void updateUserPress();
+	void addUserPress();
 	void updateSessionPress();
 
 public:
@@ -145,6 +158,7 @@ public:
 	}
 
 	void setVisible(bool visibile);
+	/** Resets session drop down clearing completed sessions and adding any new sessions. */
 	Array<String> updateSessionDropDown();
 	void updateReticlePreview();
 
@@ -156,9 +170,9 @@ public:
 		m_sessDropDown->setSelectedValue(id);
 	}
 
-	String selectedSession() const {
-		if (m_ddCurrSessIdx == -1) return "";
-		return m_sessDropDown->get(m_ddCurrSessIdx);
+	const String selectedSession() const {
+		if (m_ddCurrSessIdx == -1 || m_ddCurrSessIdx >= m_sessDropDown->numElements()) return "";
+		return m_sessDropDown->get(m_ddCurrSessIdx).text();
 	}
 
 	int sessionsForSelectedUser() const {
@@ -172,4 +186,7 @@ public:
 	shared_ptr<UserConfig> getCurrUser() {
 		return m_users.getUserById(selectedUserID());
 	}
+
+	/** updates the displayed cmp360 value based on the current setting */
+	void updateCmp360();
 };

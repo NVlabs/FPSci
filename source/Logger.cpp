@@ -50,9 +50,7 @@ void FPSciLogger::createResultsFile(const String& filename,
 		logPrintf(("Error creating log file: " + filename).c_str());
 	}
 
-	// create tables inside the db file.
-	// 1. Experiment description (time and subject ID)
-	// create sqlite table
+	// Session description (time and subject ID)
 	Columns sessColumns = {
 		// format: column name, data type, sqlite modifier(s)
 			{ "sessionID", "text", "NOT NULL"},
@@ -78,21 +76,17 @@ void FPSciLogger::createResultsFile(const String& filename,
 	// add header row
 	insertRowIntoDB(m_db, "Sessions", sessValues);
 
-	// 2. Targets
-	// create sqlite table
-	Columns targetColumns = {
-			{ "name", "text"},
-			{ "id", "text" },
-			{ "type", "text"},
-			{ "destSpace", "text"},
-			{ "refresh_rate", "real"},
-			{ "added_frame_lag", "real"},
+	// Targets Type table (written once per session)
+	Columns targetTypeColumns = {
+			{ "name", "text" },
+			{ "motion_type", "text"},
+			{ "dest_space", "text"},
 			{ "min_size", "real"},
 			{ "max_size", "real"},
 			{ "min_ecc_h", "real" },
-			{ "min_ecc_V", "real" },
+			{ "min_ecc_v", "real" },
 			{ "max_ecc_h", "real" },
-			{ "max_ecc_V", "real" },
+			{ "max_ecc_v", "real" },
 			{ "min_speed", "real" },
 			{ "max_speed", "real" },
 			{ "min_motion_change_period", "real" },
@@ -100,13 +94,24 @@ void FPSciLogger::createResultsFile(const String& filename,
 			{ "jump_enabled", "text" },
 			{ "model_file", "text" }
 	};
-	createTableInDB(m_db, "Targets", targetColumns); // Primary Key needed for this table.
+	createTableInDB(m_db, "Target_Types", targetTypeColumns); // Primary Key needed for this table.
 
-	// 3. Trials, only need to create the table.
+	// Targets table
+	Columns targetColumns = {
+		{ "name", "text" },
+		{ "target_type_name", "text"},
+		{ "spawn_time", "text"},
+		{ "size", "real"},
+		{ "spawn_ecc_h", "real"},
+		{ "spawn_ecc_v", "real"},
+	};
+	createTableInDB(m_db, "Targets", targetColumns);
+
+	// Trials table
 	Columns trialColumns = {
-			{ "trial_id", "integer" },
 			{ "session_id", "text" },
-			{ "session_mode", "text" },
+			{ "trial_id", "integer" },
+			{ "trial_index", "integer"},
 			{ "block_id", "text"},
 			{ "start_time", "text" },
 			{ "end_time", "text" },
@@ -116,7 +121,7 @@ void FPSciLogger::createResultsFile(const String& filename,
 	};
 	createTableInDB(m_db, "Trials", trialColumns);
 
-	// 4. Target_Trajectory, only need to create the table.
+	// Target_Trajectory, only need to create the table.
 	Columns targetTrajectoryColumns = {
 			{ "time", "text" },
 			{ "target_id", "text"},
@@ -126,7 +131,7 @@ void FPSciLogger::createResultsFile(const String& filename,
 	};
 	createTableInDB(m_db, "Target_Trajectory", targetTrajectoryColumns);
 
-	// 5. Player_Action, only need to create the table.
+	// Player_Action table
 	Columns viewTrajectoryColumns = {
 			{ "time", "text" },
 			{ "position_az", "real" },
@@ -139,7 +144,7 @@ void FPSciLogger::createResultsFile(const String& filename,
 	};
 	createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
 
-	// 6. Frame_Info, create the table
+	// Frame_Info table
 	Columns frameInfoColumns = {
 			{"time", "text"},
 			//{"idt", "real"},
@@ -147,28 +152,34 @@ void FPSciLogger::createResultsFile(const String& filename,
 	};
 	createTableInDB(m_db, "Frame_Info", frameInfoColumns);
 
-	// 7. Question responses
+	// Questions table
 	Columns questionColumns = {
-		{"Session", "text"},
-		{"Question", "text"},
-		{"Response", "text"}
+		{"session", "text"},
+		{"question", "text"},
+		{"response", "text"}
 	};
 	createTableInDB(m_db, "Questions", questionColumns);
 
-	//8. User information
+	// Users table
 	Columns userColumns = {
 		{"subjectID", "text"},
 		{"session", "text"},
 		{"time", "text"},
 		{"cmp360", "real"},
+		{"mouseDegPerMillimeter", "real"},
 		{"mouseDPI", "real"},
 		{"reticleIndex", "int"},
 		{"reticleScaleMin", "real"},
 		{"reticleScaleMax", "real"},
 		{"reticleColorMinScale", "text"},
 		{"reticleColorMaxScale", "text"},
-		{"turnScaleX", "real"},
-		{"turnScaleY", "real"}
+		{"reticleChangeTime", "real"},
+		{"userTurnScaleX", "real"},
+		{"userTurnScaleY", "real"},
+		{"sessTurnScaleX", "real"},
+		{"sessTurnScaleY", "real"},
+		{"sensitivityX", "real"},
+		{"sensitivityY", "real"}
 	};
 	createTableInDB(m_db, "Users", userColumns);
 }
@@ -288,7 +299,7 @@ FPSciLogger::FPSciLogger(const String& filename,
 	const String& subjectID, 
 	const shared_ptr<SessionConfig>& sessConfig, 
 	const String& description 
-	) : m_db(nullptr) 
+	) : m_db(nullptr), m_config(sessConfig->logger)
 {
 	// Reserve some space in these arrays here
 	m_playerActions.reserve(5000);
@@ -326,29 +337,43 @@ void FPSciLogger::flush(bool blockUntilDone)
 	m_queueCV.notify_one();
 }
 
-void FPSciLogger::addTarget(String name, shared_ptr<TargetConfig> config, float refreshRate, int addedFrameLag) {
-	const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
-	const String jumpEnabled = config->jumpEnabled ? "True" : "False";
-	const String modelName = config->modelSpec["filename"];
+// Log target parameters into Target_Types table
+void FPSciLogger::logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets) {
+	Array<RowEntry> rows;
+	for (auto config : targets) {
+		const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
+		const String jumpEnabled = config->jumpEnabled ? "True" : "False";
+		const String modelName = config->modelSpec["filename"];
+		const RowEntry targetTypeRow = {
+			"'" + config->id + "'",
+			"'" + type + "'",
+			"'" + config->destSpace + "'",
+			String(std::to_string(config->size[0])),
+			String(std::to_string(config->size[1])),
+			String(std::to_string(config->eccH[0])),
+			String(std::to_string(config->eccH[1])),
+			String(std::to_string(config->eccV[0])),
+			String(std::to_string(config->eccV[1])),
+			String(std::to_string(config->speed[0])),
+			String(std::to_string(config->speed[1])),
+			String(std::to_string(config->motionChangePeriod[0])),
+			String(std::to_string(config->motionChangePeriod[1])),
+			"'" + jumpEnabled + "'",
+			"'" + modelName + "'"
+		};
+		rows.append(targetTypeRow);
+	}
+	insertRowsIntoDB(m_db, "Target_Types", rows);
+}
+
+void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& config, const String& spawnTime, const float& size, const Point2& spawnEcc) {
 	const RowEntry targetValues = {
 		"'" + name + "'",
 		"'" + config->id + "'",
-		"'" + type + "'",
-		"'" + config->destSpace + "'",
-		String(std::to_string(refreshRate)),
-		String(std::to_string(addedFrameLag)),
-		String(std::to_string(config->size[0])),
-		String(std::to_string(config->size[1])),
-		String(std::to_string(config->eccH[0])),
-		String(std::to_string(config->eccH[1])),
-		String(std::to_string(config->eccV[0])),
-		String(std::to_string(config->eccV[1])),
-		String(std::to_string(config->speed[0])),
-		String(std::to_string(config->speed[1])),
-		String(std::to_string(config->motionChangePeriod[0])),
-		String(std::to_string(config->motionChangePeriod[1])),
-		"'" + jumpEnabled + "'",
-		"'" + modelName + "'"
+		"'" + spawnTime + "'",
+		String(std::to_string(size)),
+		String(std::to_string(spawnEcc.x)),
+		String(std::to_string(spawnEcc.y)),
 	};
 	logTargetInfo(targetValues);
 }
@@ -362,22 +387,33 @@ void FPSciLogger::addQuestion(Question q, String session) {
 	logQuestionResult(rowContents);
 }
 
-void FPSciLogger::logUserConfig(const UserConfig& user, const String session_ref, const String position) {
+void FPSciLogger::logUserConfig(const UserConfig& user, const String& sessId, const Vector2& sessTurnScale) {
+	if (!m_config.logUsers) return;
 	// Collapse Y-inversion into per-user turn scale (no need to complicate the log)
-	float yTurnScale = user.invertY ? -user.turnScale.y : user.turnScale.y;
+	const float userYTurnScale = user.invertY ? -user.turnScale.y : user.turnScale.y;
+	const float cmp360 = 36.f / (float)user.mouseDegPerMm;
+	const Vector2 sensitivity = cmp360 * user.turnScale * sessTurnScale;
+	const String time = genUniqueTimestamp();
+
 	RowEntry row = {
 		"'" + user.id + "'",
-		"'" + session_ref + "'",
-		"'" + position + "'",
-		String(std::to_string(user.cmp360)),
+		"'" + sessId + "'",
+		"'" + time + "'",
+		String(std::to_string(cmp360)),
+		String(std::to_string(user.mouseDegPerMm)),
 		String(std::to_string(user.mouseDPI)),
 		String(std::to_string(user.reticleIndex)),
 		String(std::to_string(user.reticleScale[0])),
 		String(std::to_string(user.reticleScale[1])),
 		"'" + user.reticleColor[0].toString() + "'",
 		"'" + user.reticleColor[1].toString() + "'",
+		String(std::to_string(user.reticleChangeTimeS)),
 		String(std::to_string(user.turnScale.x)),
-		String(std::to_string(yTurnScale))
+		String(std::to_string(userYTurnScale)),
+		String(std::to_string(sessTurnScale.x)),
+		String(std::to_string(sessTurnScale.y)),
+		String(std::to_string(sensitivity.x)),
+		String(std::to_string(sensitivity.y))
 	};
 	m_users.append(row);
 }

@@ -20,7 +20,6 @@ data-files/*.jpg
 data-files/test/userconfig.Any
 # Don't check in any results
 "scripts/event logger/software/Logs"
-scripts/configs/*.Any
 results/
 # This avoids checking-in experiment-specific files
 data-files/sound
@@ -30,5 +29,6 @@ data-files/model
 *.zip
 *.tar
 # Output of the fpsci_packager.py if run from the root
-dist
-README.txt
+/dist
+/README.txt
+/scripts/package/fpsci_packager.bat

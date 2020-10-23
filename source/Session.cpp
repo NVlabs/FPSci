@@ -60,17 +60,17 @@ bool Session::blockComplete() const{
 	return allTrialsComplete;
 }
 
-bool Session::updateBlock(bool updateTargets) {
+bool Session::updateBlock(bool init) {
 	for (int i = 0; i < m_trials.size(); i++) {
-		Array<shared_ptr<TargetConfig>> targets = m_trials[i];
-		if (m_config->logger.enable && updateTargets) {
-			for (int j = 0; j < targets.size(); j++) {
-				const String name = format("%s_%d_%s_%d", m_config->id, i, targets[j]->id, j);
-				m_logger->addTarget(name, targets[j], m_config->render.frameRate, m_config->render.frameDelay);
-			}
+		const Array<shared_ptr<TargetConfig>>& targets = m_trials[i];
+		if (init) { // If this is the first block in the session
+			m_completedTrials.append(0);							// This increments across blocks (unique trial index)
+			m_remainingTrials.append(m_config->trials[i].count);	// This is reset across blocks (tracks progress)
+			m_targetConfigs.append(targets);						// This only needs to be setup once
 		}
-		m_remainingTrials.append(m_config->trials[i].count);
-		m_targetConfigs.append(targets);
+		else { // Update for a new block in the session
+			m_remainingTrials[i] += m_config->trials[i].count;		// Add another set of trials of this type
+		}
 	}
 	return nextCondition();
 }
@@ -88,23 +88,22 @@ void Session::onInit(String filename, String description) {
 	m_camera = m_app->activeCamera();
 
 	m_targetModels = &(m_app->targetModels);
-	m_modelScaleCount = m_app->modelScaleCount;
 
 	// Check for valid session
 	if (m_hasSession) {
 		if (m_config->logger.enable) {
 			UserConfig user = *m_app->currentUser();
 			// Setup the logger and create results file
-			m_logger = FPSciLogger::create(filename, user.id, m_config, description);
-			if (m_config->logger.logUsers) {
-				m_logger->logUserConfig(user, m_config->id, "start");
-			}
+			logger = FPSciLogger::create(filename, user.id, m_config, description);
+			logger->logTargetTypes(m_app->experimentConfig.getSessionTargets(m_config->id));			// Log target info at start of session
+			logger->logUserConfig(user, m_config->id, m_config->player.turnScale);						// Log user info at start of session
+			m_dbFilename = filename.substr(0, filename.length() - 3);
 		}
 
 		runSessionCommands("start");				// Run start of session commands
 
 		// Iterate over the sessions here and add a config for each
-		m_trials = m_app->experimentConfig.getTargetsForSession(m_config->id);
+		m_trials = m_app->experimentConfig.getTargetsByTrial(m_config->id);
 		updateBlock(true);
 	}
 	else {	// Invalid session, move to displaying message
@@ -140,10 +139,9 @@ void Session::initTargetAnimation() {
 	if (currentState == PresentationState::trialTask) {
 		if (m_config->targetView.previewWithRef && m_config->targetView.showRefTarget) {
 			// Activate the preview targets
-			const Color3 activeColor = m_config->targetView.healthColors[0];
 			for (shared_ptr<TargetEntity> target : m_targetArray) {
 				target->setCanHit(true);
-				target->setColor(activeColor);
+				m_app->updateTargetColor(target);
 				m_hittableTargets.append(target);
 			}
 		}
@@ -177,17 +175,22 @@ void Session::initTargetAnimation() {
 void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 	// Iterate through the targets
 	for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
-
-		const String name = format("%s_%d_%s_%d", m_config->id, m_currTrialIdx, m_targetConfigs[m_currTrialIdx][i]->id, i);
 		const Color3 spawnColor = previewMode ? m_config->targetView.previewColor : m_config->targetView.healthColors[0];
 		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
+		const String name = format("%s_%d_%d_%s_%d", m_config->id, m_currTrialIdx, m_completedTrials[m_currTrialIdx], target->id, i);
 
-		const float rot_pitch = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
-		const float rot_yaw = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
+		const float spawn_eccV = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
+		const float spawn_eccH = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
 		const float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
 		bool isWorldSpace = target->destSpace == "world";
 
-		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw - (initialHeadingRadians * 180.0f / (float)pi()), rot_pitch, 0.0f);
+		// Log the target if desired
+		if (m_config->logger.enable) {
+			const String spawnTime = FPSciLogger::genUniqueTimestamp();
+			logger->addTarget(name, target, spawnTime, targetSize, Point2(spawn_eccH, spawn_eccV));
+		}
+
+		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, spawn_eccH - (initialHeadingRadians * 180.0f / (float)pi()), spawn_eccV, 0.0f);
 
 		// Check for case w/ destination array
 		shared_ptr<TargetEntity> t;
@@ -217,9 +220,11 @@ void Session::processResponse()
 
 	const int totalTargets = totalTrialTargets();
 	// Record the trial response into the database
-	recordTrialResponse(m_destroyedTargets, totalTargets); 
+	recordTrialResponse(m_destroyedTargets, totalTargets);
+
+	m_completedTrials[m_currTrialIdx] += 1;
 	if (m_remainingTrials[m_currTrialIdx] > 0) {
-		m_remainingTrials[m_currTrialIdx] -= 1;
+		m_remainingTrials[m_currTrialIdx] -= 1;	
 	}
 
 	// Check for whether all targets have been destroyed
@@ -245,7 +250,7 @@ void Session::updatePresentationState()
 		if (m_config->player.stillBetweenTrials) {
 			m_player->setMoveEnable(false);
 		}
-		if (!(m_app->m_buttonUp && m_config->timing.clickToStart)) {
+		if (!(m_app->buttonUp && m_config->timing.clickToStart)) {
 			newState = PresentationState::trialFeedback;
 		}
 	}
@@ -280,6 +285,9 @@ void Session::updatePresentationState()
 
 			closeTrialProcesses();				// Stop start of trial processes
 			runTrialCommands("end");			// Run the end of trial processes
+
+			// Reset weapon cooldown
+			m_lastFireAt = 0.f;
 		}
 	}
 	else if (currentState == PresentationState::trialFeedback)
@@ -300,11 +308,15 @@ void Session::updatePresentationState()
 							if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
 								m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
 								if (m_config->logger.enable) {
-									m_logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
+									logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
 								}
 								m_currQuestionIdx++;																// Present the next question (if there is one)
 								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
 									m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
+								}
+								else {
+									// Null the dialog pointer when all questions complete
+									m_app->dialog = nullptr;
 								}
 							}
 							else {
@@ -338,11 +350,11 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::sessionFeedback) {
 		if (m_hasSession) {
-			if (stateElapsedTime > m_config->timing.sessionFeedbackDuration && (!m_config->timing.sessionFeedbackRequireClick || !m_app->m_buttonUp)) {
+			if (stateElapsedTime > m_config->timing.sessionFeedbackDuration && (!m_config->timing.sessionFeedbackRequireClick || !m_app->buttonUp)) {
 				newState = PresentationState::complete;
         
 				// Save current user config and status
-				m_app->saveUserConfig();											
+				m_app->saveUserConfig(true);											
 				m_app->saveUserStatus();
         
 				closeSessionProcesses();					// Close the process we started at session start (if there is one)
@@ -414,9 +426,9 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 	if (m_config->logger.logTrialResponse) {
 		// Trials table. Record trial start time, end time, and task completion time.
 		FPSciLogger::TrialValues trialValues = {
-			String(std::to_string(m_currTrialIdx)),
 			"'" + m_config->id + "'",
-			"'" + m_config->description + "'",
+			String(std::to_string(m_currTrialIdx)),
+			String(std::to_string(m_completedTrials[m_currTrialIdx])),
 			format("'Block %d'", m_currBlock),
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
@@ -424,26 +436,21 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 			String(std::to_string(destroyedTargets)),
 			String(std::to_string(totalTargets))
 		};
-		m_logger->logTrial(trialValues);
+		logger->logTrial(trialValues);
 	}
 }
 
 void Session::accumulateTrajectories()
 {
-	if (notNull(m_logger) && m_config->logger.logTargetTrajectories) {
+	if (notNull(logger) && m_config->logger.logTargetTrajectories) {
 		for (shared_ptr<TargetEntity> target : m_targetArray) {
-			if (!target->isLogged()) continue;
-			// recording target trajectories
-			Point3 targetAbsolutePosition = target->frame().translation;
-			Point3 initialSpawnPos = m_camera->frame().translation;
-			Point3 targetPosition = targetAbsolutePosition - initialSpawnPos;
-					   
+			if (!target->isLogged()) continue;					   
 			//// below for 2D direction calculation (azimuth and elevation)
 			//Point3 t = targetPosition.direction();
 			//float az = atan2(-t.z, -t.x) * 180 / pif();
 			//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
-			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), target->name(), targetPosition);
-			m_logger->logTargetLocation(location);
+			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), target->name(), target->frame().translation);
+			logger->logTargetLocation(location);
 		}
 	}
 	// recording view direction trajectories
@@ -452,13 +459,13 @@ void Session::accumulateTrajectories()
 
 void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 {
-	if (notNull(m_logger) && m_config->logger.logPlayerActions) {
+	if (notNull(logger) && m_config->logger.logPlayerActions) {
 		BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 		// recording target trajectories
 		Point2 dir = getViewDirection();
 		Point3 loc = getPlayerLocation();
 		PlayerAction pa = PlayerAction(FPSciLogger::getFileTime(), dir, loc, action, targetName);
-		m_logger->logPlayerAction(pa);
+		logger->logPlayerAction(pa);
 		END_PROFILER_EVENT();
 	}
 	
@@ -467,8 +474,8 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
-	if (notNull(m_logger) && m_config->logger.logFrameInfo) {
-		m_logger->logFrameInfo(FrameInfo(FPSciLogger::getFileTime(), sdt));
+	if (notNull(logger) && m_config->logger.logFrameInfo) {
+		logger->logFrameInfo(FrameInfo(FPSciLogger::getFileTime(), sdt));
 	}
 }
 
@@ -524,6 +531,7 @@ String Session::formatCommand(const String& input) {
 
 	const String loggerComPort = "%loggerComPort";
 	const String syncComPort = "%loggerSyncComPort";
+	const String dbFilename = "%dbFilename";
 
 	while ((foundIdx = (int)formatted.find(delimiter, (size_t)foundIdx)) > -1) {
 		if (!formatted.compare(foundIdx, loggerComPort.length(), loggerComPort)) {
@@ -537,6 +545,12 @@ String Session::formatCommand(const String& input) {
 				throw "Found \"%loggerSyncComPort\" substring in a command, but no \"loggerSyncComPort\" is provided in the config!";
 			}
 			formatted = formatted.substr(0, foundIdx) + m_app->systemConfig.syncComPort + formatted.substr(foundIdx + syncComPort.length());
+		}
+		else if (!formatted.compare(foundIdx, dbFilename.length(), dbFilename)) {
+			if (m_dbFilename.empty()) {
+				throw "No database filename found to support the %dbFilename substring!";
+			}
+			formatted = formatted.substr(0, foundIdx) + m_dbFilename + formatted.substr(foundIdx + dbFilename.length());
 		}
 		else {
 			foundIdx++;
@@ -613,10 +627,11 @@ String Session::getFeedbackMessage() {
 }
 
 void Session::endLogging() {
-	if (m_logger != nullptr) {
-		m_logger->logUserConfig(*m_app->currentUser(), m_config->id, "end");
-		m_logger->flush(false);
-		m_logger.reset();
+	if (logger != nullptr) {
+
+		//m_logger->logUserConfig(*m_app->currentUser(), m_config->id, m_config->player.turnScale);
+		logger->flush(false);
+		logger.reset();
 	}
 }
 
@@ -630,7 +645,7 @@ shared_ptr<TargetEntity> Session::spawnDestTarget(
 	// Create the target
 	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
-	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 
 	const shared_ptr<TargetEntity>& target = TargetEntity::create(config, nameStr, m_scene, (*m_targetModels)[config->id][scaleIndex], position, scaleIndex, paramIdx);
 
@@ -651,7 +666,7 @@ shared_ptr<FlyingEntity> Session::spawnReferenceTarget(
 	const float size,
 	const Color3& color)
 {
-	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 	const shared_ptr<FlyingEntity>& target = FlyingEntity::create("reference", m_scene, (*m_targetModels)["reference"][scaleIndex], CFrame());
 
 	// Setup additional target parameters
@@ -672,7 +687,7 @@ shared_ptr<FlyingEntity> Session::spawnFlyingTarget(
 	const String& name)
 {
 	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
-	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const bool isWorldSpace = config->destSpace == "world";
 
@@ -702,7 +717,7 @@ shared_ptr<JumpingEntity> Session::spawnJumpingTarget(
 	const String& name)
 {
 	const float targetSize = G3D::Random().common().uniform(config->size[0], config->size[1]);
-	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, m_modelScaleCount - 1);
+	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const bool isWorldSpace = config->destSpace == "world";
 
