@@ -63,9 +63,9 @@ void FPSciApp::onInit() {
 	showRenderingStats = false;
 	makeGUI();
 
-	updateMouseSensitivity();									// Update (apply) mouse sensitivity
-	m_userSettingsWindow->updateSessionDropDown();				// Update the session drop down to remove already completed sessions
-	updateSession(m_userSettingsWindow->selectedSession());		// Update session to create results file/start collection
+	updateMouseSensitivity();		// Update (apply) mouse sensitivity
+	const Array<String> sessions = m_userSettingsWindow->updateSessionDropDown();	// Update the session drop down to remove already completed sessions
+	updateSession(sessions[0]);		// Update session to create results file/start collection
 
 	// Set the initial simulation timestep to REAL_TIME. The desired timestep is set later.
 	setFrameDuration(frameDuration(), REAL_TIME);
@@ -1309,7 +1309,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	}
 	
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
-		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::trialFeedback)) {
+		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::trialFeedback) && !m_userSettingsWindow->visible()) {
 			Array<shared_ptr<Entity>> dontHit;
 			dontHit.append(m_explosions);
 			dontHit.append(sess->unhittableTargets());

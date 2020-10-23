@@ -1,12 +1,21 @@
 # Introduction
 The user config is the mechanism by which users are registered and provide their input sensitivity in `FirstPersonScience`.
 
-The high-level `userconfig.Any` file provides the `currentUser` (the default user when launching the application), together with a `users` table that contains per subject mouse DPI and sensitiviy (in cm/360°).
+The high-level `userconfig.Any` file provides the `currentUser` (the default user when launching the application), together with a `users` table that contains per subject mouse DPI and sensitivity (in cm/360°).
 
 The user config is setup to work across multiple experiments (i.e. it does not have any information specific to an `experimentconfig.Any` file contained within in). For per user session ordering see the [`userStatus.Any`](./userStatusReadme.md).
 
 ## File Location
 The `userconfig.Any` file is located in the [`data-files` directory](../data-files/) at the root of the project. If no `userconfig.Any` file is present the application writes a default to `userconfig.Any`. The default user is named `anon` and corresponds to the default `userstatus.Any` file. This config assumes an 800DPI mouse and a 12.75cm/360° mouse sensitivity without mouse inversion.
+
+# User ID Uniqueness
+The `requireUnique` flag is settable at the top of the user configuration file (defaults to `true`). When this flag is set to true, all users will be required to have unique IDs. This is particularly useful when allowing users to enter their own user IDs using the `allowUserAdd` flag in the [user menu configuration](general_config.md#menu-config). Regardless of whether new users can be added in app,  will check for non-duplicate user IDs and throw an exception at startup.
+
+To disable the unique user ID requirement add the following to the top of your user config file:
+
+```
+requireUnique: False;
+```
 
 # User Table
 Each entry in the user table contains the following fields:
@@ -52,7 +61,7 @@ The unit of mouse sensitivity measure selected for the application is `°/mm`. T
 1. It is (easily) related to the  common `cm/360°` measure
 2. It matches the intuition that high value ==> more sensitive (unlike `cmp360`)
 
-This unit is related to `cm/360°` (`cm/360° = 36 / (°/mm)`), since the distance (in mm) reuqired to make one full turn in game is just 360° / `°/mm`. Using this formula, a player can measure the full-turn distance for their game of choice, then transfer the setting into the abstract-fps application's user config.
+This unit is related to `cm/360°` (`cm/360° = 36 / (°/mm)`), since the distance (in mm) required to make one full turn in game is just 360° / `°/mm`. Using this formula, a player can measure the full-turn distance for their game of choice, then transfer the setting into the abstract-fps application's user config.
 
 Though the functionality is deprecated, since previous versions of `FPSci` supported using a `cmp360` variable, you can enter `cmp360` instead of `mouseDegPerMillimeter` in the user config and FPSci will convert it for you. If both `mouseDegPerMillimeter` and `cmp360` are found, then the `mouseDegPerMillimeter` will be used.
 

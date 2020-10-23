@@ -125,6 +125,7 @@ protected:
 
 	GuiDropDownList* m_userDropDown		= nullptr;				///< Dropdown menu for user selection
 	GuiDropDownList* m_sessDropDown		= nullptr;				///< Dropdown menu for session selection
+	GuiLabel* m_newUserFeedback			= nullptr;				///< Feedback field for new user
 
 	shared_ptr<Texture> m_reticlePreviewTexture;				///< Reticle preview texture
 	shared_ptr<Framebuffer> m_reticleBuffer;					///< Reticle preview framebuffer
@@ -132,6 +133,8 @@ protected:
 	int m_ddCurrUserIdx = 0;									///< Current user index
 	int m_ddCurrSessIdx = 0;									///< Current session index
 	int m_lastUserIdx = -1;										///< Previously selected user in the drop-down
+
+	String m_newUser;											///< New user string
 
 	double	m_cmp360;											///< cm/360° setting
 
@@ -146,6 +149,7 @@ protected:
 	void drawUserPane(const MenuConfig& config, UserConfig& user);
 
 	void updateUserPress();
+	void addUserPress();
 	void updateSessionPress();
 
 public:
@@ -166,9 +170,9 @@ public:
 		m_sessDropDown->setSelectedValue(id);
 	}
 
-	String selectedSession() const {
-		if (m_ddCurrSessIdx == -1) return "";
-		return m_sessDropDown->get(m_ddCurrSessIdx);
+	const String selectedSession() const {
+		if (m_ddCurrSessIdx == -1 || m_ddCurrSessIdx >= m_sessDropDown->numElements()) return "";
+		return m_sessDropDown->get(m_ddCurrSessIdx).text();
 	}
 
 	int sessionsForSelectedUser() const {

@@ -339,6 +339,13 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 		m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
 		m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
 	} m_expPane->endRow();
+	if (m_config.allowUserAdd) {
+		m_expPane->beginRow(); {
+			m_expPane->addTextBox("New User", &m_newUser);
+			m_expPane->addButton("+", this, &UserMenu::addUserPress)->setWidth(20.0f);
+			m_newUserFeedback = m_expPane->addLabel("");
+		} m_expPane->endRow();
+	}
 	m_expPane->beginRow(); {
 		m_sessDropDown = m_expPane->addDropDownList("Session", Array<String>({}), &m_ddCurrSessIdx);
 		updateSessionDropDown();
@@ -593,6 +600,50 @@ void UserMenu::updateUserPress() {
 		const String sessId = updateSessionDropDown()[0];
 		m_app->updateSession(sessId);
 	}
+}
+
+void UserMenu::addUserPress() {
+	// Check for unique user name requirement
+	if (m_newUser.empty()) {
+		m_newUserFeedback->setCaption("Empty!");
+		return;
+	}
+	else if (m_users.requireUnique && m_users.getIds().contains(m_newUser)) {
+		m_newUser = "";
+		m_newUserFeedback->setCaption("In use!");
+		return;
+	}
+	m_newUserFeedback->setCaption("");		// Clear the user feedback caption on success
+
+	// Create new user config
+	UserConfig user;
+	user.id = m_newUser;
+	user.mouseDPI = m_users.users.last().mouseDPI;
+	
+	// Add user config to table and save
+	m_users.users.append(user);
+	m_app->saveUserConfig();
+
+	// Create new user status
+	UserSessionStatus status = m_userStatus.userInfo.last();		// Start by coping over last user
+	status.id = m_newUser;											// Update the user ID
+	status.completedSessions.clear();								// Empty any completed sessions from previous user
+	// Inherit default session order (if available)
+	if (m_userStatus.defaultSessionOrder.length() > 0) { status.sessionOrder = m_userStatus.defaultSessionOrder;  }
+	// Randomize if requested
+	if (m_userStatus.randomizeDefaults) { status.sessionOrder.randomize(); }
+	
+	// Add user status, set as current, and save
+	m_userStatus.userInfo.append(status);
+	m_userStatus.currentUser = m_newUser;
+	m_app->saveUserStatus();
+
+	logPrintf("Added new user: %s\n", m_newUser);
+
+	// Add user to dropdown then update the user/session
+	m_userDropDown->append(m_newUser);
+	m_ddCurrUserIdx = m_users.users.length() - 1;
+	updateUserPress();
 }
 
 void UserMenu::updateReticlePreview() {

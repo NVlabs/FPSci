@@ -460,6 +460,7 @@ These flags control the display of the in-game user menu:
 |`showMenuLogo`                     |`bool`     |Show a logo at the top of the menu (currently `materials/FPSciLogo.png`) |
 |`showExperimentSettings`           |`bool`     |Show the options to select user/session                                |
 |`showUserSettings`                 |`bool`     |Show the per-user customization (sensitivity, reticle, etc) options    |
+|`allowUserAdd`                     |`bool`     |Allow users to add new users to the experiment                         |
 |`allowUserSettingsSave`            |`bool`     |Allow the user to save their settings from the menu                    |
 |`allowSensitivityChange`           |`bool`     |Allow the user to change their (cm/360) sensitivity value from the menu|
 |`allowTurnScaleChange`             |`bool`     |Allow the user to change their turn scale from the menu                |
@@ -478,6 +479,7 @@ These flags control the display of the in-game user menu:
 "showMenuLogo": true,                   // Show the logo
 "showExperimentSettings" : true,        // Allow user/session seleciton
 "showUserSettings": true,               // Show the user settings
+"allowUserAdd": false,                  // Don't allow new user add by default
 "allowUserSettingsSave": true,          // Allow the user to save their settings changes
 "allowSensitivityChange": true,         // Allow the user to change the cm/360 sensitivity
 "allowTurnScaleChange": true,           // Allow the user to change their turn scale (see below)
