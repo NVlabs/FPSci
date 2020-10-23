@@ -344,6 +344,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 			m_expPane->addTextBox("New User", &m_newUser);
 			m_expPane->addButton("+", this, &UserMenu::addUserPress)->setWidth(20.0f);
 			m_newUserFeedback = m_expPane->addLabel("");
+			m_newUserFeedback->setWidth(70.f);
 		} m_expPane->endRow();
 	}
 	m_expPane->beginRow(); {
@@ -532,7 +533,6 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 	}
 
 	m_currentUserPane->pack();
-	pack();
 }
 
 Array<String> UserMenu::updateSessionDropDown() {
@@ -671,6 +671,7 @@ void UserMenu::updateReticlePreview() {
 	preview->setSize(m_reticlePreviewSize);
 	preview->zoomToFit();
 	m_reticlePreviewPane->pack();
+	m_currentUserPane->pack();
 }
 
 void UserMenu::updateSessionPress() {
