@@ -259,19 +259,23 @@ void FPSciApp::updateControls(bool firstSession) {
 	// Update the waypoint manager
 	if (startupConfig.waypointEditorMode) { waypointManager->updateControls(); }
 
-	// Setup the player control
+	// Update the player controls
+	if(notNull(m_playerControls)) removeWidget(m_playerControls);
 	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&FPSciApp::exportScene, this), theme);
 	m_playerControls->setVisible(false);
-	this->addWidget(m_playerControls);
+	addWidget(m_playerControls);
 
-	// Setup the render control
+	// Update the render controls
+	if (notNull(m_renderControls)) removeWidget(m_renderControls);
 	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(false);
-	this->addWidget(m_renderControls);
+	addWidget(m_renderControls);
 
+	// Update the weapon controls
+	if (notNull(m_weaponControls)) removeWidget(m_weaponControls);
 	m_weaponControls = WeaponControls::create(sessConfig->weapon, theme);
 	m_weaponControls->setVisible(false);
-	this->addWidget(m_weaponControls);
+	addWidget(m_weaponControls);
 }
 
 void FPSciApp::makeGUI() {
@@ -356,7 +360,7 @@ void FPSciApp::presentQuestion(Question question) {
 }
 
 void FPSciApp::markSessComplete(String sessId) {
-	if (m_pyLogger != nullptr) {
+	if (notNull(m_pyLogger)) {
 		m_pyLogger->mergeLogToDb();
 	}
 	// Add the session id to completed session array and save the user status table
@@ -387,7 +391,7 @@ void FPSciApp::initPlayer() {
 	// Set gravity and camera field of view
 	Vector3 grav = experimentConfig.player.gravity;
 	float FoV = experimentConfig.render.hFoV;
-	if (sessConfig != nullptr) {
+	if (notNull(sessConfig)) {
 		grav = sessConfig->player.gravity;
 		FoV = sessConfig->render.hFoV;
 	}
@@ -437,12 +441,10 @@ void FPSciApp::updateSession(const String& id) {
 	Array<String> ids;
 	experimentConfig.getSessionIds(ids);
 	if (!id.empty() && ids.contains(id)) {
-
 		// Load the session config specified by the id
 		sessConfig = experimentConfig.getSessionConfigById(id);
 		logPrintf("User selected session: %s. Updating now...\n", id);
 		m_userSettingsWindow->setSelectedSession(id);
-
 		// Create the session based on the loaded config
 		sess = Session::create(this, sessConfig);
 	}
@@ -547,11 +549,11 @@ void FPSciApp::updateSession(const String& id) {
 
 void FPSciApp::quitRequest() {
 	// End session logging
-	if (sess != nullptr) {
+	if (notNull(sess)) {
 		sess->endLogging();
 	}
 	// Merge Python log into session log (if logging)
-	if (m_pyLogger != nullptr) {
+	if (notNull(m_pyLogger)) {
 		m_pyLogger->mergeLogToDb(true);
 	}
     setExitCode(0);
