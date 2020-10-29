@@ -495,6 +495,7 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Create a series of colored materials to choose from for target health
+	m_materials.clear();
 	for (int i = 0; i < m_MatTableSize; i++) {
 		float complete = (float)i / m_MatTableSize;
 		Color3 color = sessConfig->targetView.healthColors[0] * complete + sessConfig->targetView.healthColors[1] * (1.0f - complete);
