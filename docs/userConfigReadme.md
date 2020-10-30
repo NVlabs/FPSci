@@ -1,7 +1,7 @@
 # Introduction
 The user config is the mechanism by which users are registered and provide their input sensitivity in `FirstPersonScience`.
 
-The high-level `userconfig.Any` file provides the `currentUser` (the default user when launching the application), together with a `users` table that contains per subject mouse DPI and sensitivity (in cm/360°).
+The high-level `userconfig.Any` file provides the `currentUser` (the default user when launching the application), together with a `users` table that contains per subject mouse DPI and sensitivity (in cm/360°). It also provides a [`defaultUser`](#default-user) to use as a base for new users added in app.
 
 The user config is setup to work across multiple experiments (i.e. it does not have any information specific to an `experimentconfig.Any` file contained within in). For per user session ordering see the [`userStatus.Any`](./userStatusReadme.md).
 
@@ -17,8 +17,28 @@ To disable the unique user ID requirement add the following to the top of your u
 requireUnique: False;
 ```
 
+# Default User Configuration
+The default user is used when adding new users to the application from the in-app user menu. Defaults set up in this user will automatically be applied to any new user that is created (less the `id` field which is unused). Otherwise the `defaultUser` field supports all the same fields as a normal entry in the [user table](#user-table) as documented below.
+
+If unspecified, any field in the `defaultUser` config defaults to the default user config values as provided below.
+
+```
+defaultUser = {                       // Configuration to apply to all newly created users
+  mouseDPI = 800;
+  mouseDegreePerMillimeter = 2.824;
+  turnScale = Vector2(1,1);
+  invertY = false;
+  scopeTurnScale = Vector2(0,0);
+  currentSession = 0;
+  reticleIndex = 39;
+  reticleScale = [1,1];
+  reticleColor = [Color4(1,0,0,1), Color4(1,0,0,1)];
+  reticleChangeTimeS = 0.3;
+};
+```
+
 # User Table
-Each entry in the user table contains the following fields:
+The user table is formatted as an array of user entries. Each entry in the table contains the following fields:
 
 |Field name             |Type     |Description                                                                                          |
 |-----------------------|---------|-----------------------------------------------------------------------------------------------------|
@@ -38,19 +58,21 @@ Each entry in the user table contains the following fields:
 The full specification for the default user is provided below as an example:
 
 ```
-id = "anon";                    // "anon" is the application-wide default user name
-mouseDPI = 800;                 // 800 DPI mouse
-mouseDegPerMillimeter = 2.824;  // 2.824°/mm mouse sensitivity (12.75 cm for full rotation)
-turnScale = Vector2(1,1);       // Don't apply any additional mouse-based turn scaling
-invertY = false;                // Don't invert Y mouse controls
-scopeTurnScale = (0,0);         // Don't modify turn scale when scoped
+users = {
+  id = "anon";                    // "anon" is the application-wide default user name
+  mouseDPI = 800;                 // 800 DPI mouse
+  mouseDegPerMillimeter = 2.824;  // 2.824°/mm mouse sensitivity (12.75 cm for full rotation)
+  turnScale = Vector2(1,1);       // Don't apply any additional mouse-based turn scaling
+  invertY = false;                // Don't invert Y mouse controls
+  scopeTurnScale = (0,0);         // Don't modify turn scale when scoped
 
-currentSession = 0;             // Select the first session by default
+  currentSession = 0;             // Select the first session by default
 
-reticleIndex = 39;          
-reticleScale = {1,1}            // Don't scale the reticle after a shot
-reticleColor = {Color4(1.0, 0.0, 0.0, 1.0), Color4(1.0, 0.0, 0.0, 1.0)};    // Use a green reticle (no color change)
-reticleChangeTimeS = 0.3;       // Doesn't matter since color/size don't chnage
+  reticleIndex = 39;          
+  reticleScale = {1,1}            // Don't scale the reticle after a shot
+  reticleColor = {Color4(1.0, 0.0, 0.0, 1.0), Color4(1.0, 0.0, 0.0, 1.0)};    // Use a green reticle (no color change)
+  reticleChangeTimeS = 0.3;       // Doesn't matter since color/size don't chnage
+};
 ```
 
 ### Sensitivity Measure (°/mm)

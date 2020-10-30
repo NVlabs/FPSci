@@ -616,9 +616,8 @@ void UserMenu::addUserPress() {
 	m_newUserFeedback->setCaption("");		// Clear the user feedback caption on success
 
 	// Create new user config
-	UserConfig user;
+	UserConfig user = m_users.defaultUser;
 	user.id = m_newUser;
-	user.mouseDPI = m_users.users.last().mouseDPI;
 	
 	// Add user config to table and save
 	m_users.users.append(user);
