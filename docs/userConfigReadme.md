@@ -55,24 +55,26 @@ The user table is formatted as an array of user entries. Each entry in the table
 |        |  |     |
 |`cmp360`               |`float`  | **_Deprecated_** - ignored if `mouseDegPerMillimeter` is found. The mouse sensitivity for the user (measured in cm/360°) |
 
-The full specification for the default user is provided below as an example:
+The full specification for the a user with default values is provided below as an example:
 
 ```
-users = {
-  id = "anon";                    // "anon" is the application-wide default user name
-  mouseDPI = 800;                 // 800 DPI mouse
-  mouseDegPerMillimeter = 2.824;  // 2.824°/mm mouse sensitivity (12.75 cm for full rotation)
-  turnScale = Vector2(1,1);       // Don't apply any additional mouse-based turn scaling
-  invertY = false;                // Don't invert Y mouse controls
-  scopeTurnScale = (0,0);         // Don't modify turn scale when scoped
+users = (
+  {
+    id = "anon";                    // "anon" is the application-wide default user name
+    mouseDPI = 800;                 // 800 DPI mouse
+    mouseDegPerMillimeter = 2.824;  // 2.824°/mm mouse sensitivity (12.75 cm for full rotation)
+    turnScale = Vector2(1,1);       // Don't apply any additional mouse-based turn scaling
+    invertY = false;                // Don't invert Y mouse controls
+    scopeTurnScale = (0,0);         // Don't modify turn scale when scoped
 
-  currentSession = 0;             // Select the first session by default
+    currentSession = 0;             // Select the first session by default
 
-  reticleIndex = 39;          
-  reticleScale = {1,1}            // Don't scale the reticle after a shot
-  reticleColor = {Color4(1.0, 0.0, 0.0, 1.0), Color4(1.0, 0.0, 0.0, 1.0)};    // Use a green reticle (no color change)
-  reticleChangeTimeS = 0.3;       // Doesn't matter since color/size don't chnage
-};
+    reticleIndex = 39;        
+    reticleScale = {1,1}            // Don't scale the reticle after a shot
+    reticleColor = {Color4(1.0, 0.0, 0.0, 1.0), Color4(1.0, 0.0, 0.0, 1.0)};    // Use a green reticle (no color change)
+    reticleChangeTimeS = 0.3;       // Doesn't matter since color/size don't chnage
+  },
+);
 ```
 
 ### Sensitivity Measure (°/mm)
