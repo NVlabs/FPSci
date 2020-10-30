@@ -347,11 +347,14 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 			m_newUserFeedback->setWidth(70.f);
 		} m_expPane->endRow();
 	}
+	GuiButton* addBtn;
 	m_expPane->beginRow(); {
 		m_sessDropDown = m_expPane->addDropDownList("Session", Array<String>({}), &m_ddCurrSessIdx);
 		updateSessionDropDown();
-		m_expPane->addButton("Select Session", this, &UserMenu::updateSessionPress);
+		addBtn = m_expPane->addButton("Select Session", this, &UserMenu::updateSessionPress);
 	} m_expPane->endRow();
+	m_sessDropDown->setVisible(m_config.allowSessionChange);
+	addBtn->setVisible(m_config.allowSessionChange);
 
 	// Hide the experiment settings if not requested to be drawn
 	if (!config.showExperimentSettings) { 
