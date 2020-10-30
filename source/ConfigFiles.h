@@ -442,6 +442,7 @@ class UserTable {
 public:
 
 	bool					requireUnique = true;			///< Require users to be unique by ID
+	UserConfig				defaultUser;					///< Default user settings to use for new user
 	Array<UserConfig>		users = {};						///< A list of valid users
 
 	UserTable() {};
@@ -455,6 +456,7 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("requireUnique", requireUnique);
+			reader.getIfPresent("defaultUser", defaultUser);
 			reader.get("users", users, "Issue in the (required) \"users\" array in the user config file!");
 			// Unique user check (if required)
 			if (requireUnique) {
