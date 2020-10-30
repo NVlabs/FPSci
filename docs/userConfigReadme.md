@@ -1,7 +1,7 @@
 # Introduction
 The user config is the mechanism by which users are registered and provide their input sensitivity in `FirstPersonScience`.
 
-The high-level `userconfig.Any` file provides the `currentUser` (the default user when launching the application), together with a `users` table that contains per subject mouse DPI and sensitivity (in cm/360°). It also provides a [`defaultUser`](#default-user) to use as a base for new users added in app.
+The high-level `userconfig.Any` file provides the `currentUser` (the default user when launching the application), together with a `users` table that contains per subject mouse DPI and sensitivity (in cm/360°). It also provides a [`defaultUser`](#default-user-configuration) to use as a base for new users added in app.
 
 The user config is setup to work across multiple experiments (i.e. it does not have any information specific to an `experimentconfig.Any` file contained within in). For per user session ordering see the [`userStatus.Any`](./userStatusReadme.md).
 
