@@ -312,11 +312,11 @@ void Session::updatePresentationState()
 								}
 								m_currQuestionIdx++;																// Present the next question (if there is one)
 								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
+									if(notNull(m_app->dialog)) m_app->removeWidget(m_app->dialog);
 									m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
 								}
 								else {
-									// Null the dialog pointer when all questions complete
-									m_app->dialog = nullptr;
+									m_app->dialog.reset();		// Null the dialog pointer when all questions complete
 								}
 							}
 							else {
