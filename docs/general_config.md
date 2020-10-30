@@ -480,7 +480,7 @@ These flags control the display of the in-game user menu:
 "showMenuLogo": true,                   // Show the logo
 "showExperimentSettings" : true,        // Allow user/session seleciton
 "showUserSettings": true,               // Show the user settings
-"allowSessionChange": true,             // Allow the user to change sessiions using the menu dropdown
+"allowSessionChange": true,             // Allow the user to change sessions using the menu dropdown
 "allowUserAdd": false,                  // Don't allow new user add by default
 "allowUserSettingsSave": true,          // Allow the user to save their settings changes
 "allowSensitivityChange": true,         // Allow the user to change the cm/360 sensitivity
