@@ -1077,6 +1077,12 @@ public:
 			if (!reader.getIfPresent("count", count)) {
 				count = defaultCount;
 			}
+			if(count < 1) {
+				String ids_str = "[";
+				for (auto id : ids) ids_str.append(id + ", ");
+				ids_str = ids_str.substr(0, ids_str.length() - 2); ids_str += "]";
+				throw format("Trial count < 1 not allowed! (%d count for trial with targets: %s)", count, ids_str);
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
