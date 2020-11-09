@@ -512,7 +512,11 @@ void FPSciApp::updateSession(const String& id) {
 	if (!FileSystem::isDirectory(startupConfig.resultsDirPath)) {
 		FileSystem::createDirectory(startupConfig.resultsDirPath);
 	}
-	const String logName = startupConfig.resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+
+	const String logName = sessConfig->logger.logToSingleDb ? 
+		startupConfig.resultsDirPath + experimentConfig.description + "_" + userStatusTable.currentUser :
+		startupConfig.resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+
 	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");

@@ -36,33 +36,142 @@ String FPSciLogger::genFileTimestamp() {
 	return String(timeStr);
 }
 
-void FPSciLogger::createResultsFile(const String& filename, 
+void FPSciLogger::openResultsFile(const String& filename, 
 	const String& subjectID, 
 	const shared_ptr<SessionConfig>& sessConfig, 
 	const String& description)
 {
-	// create a unique file name (can bring this back if desired)
-	String timeStr = genUniqueTimestamp();
+	const String timeStr = genUniqueTimestamp();
+	const bool createNewFile = !FileSystem::exists(filename);
 
-	// create the file
+	// Open the file
 	if (sqlite3_open(filename.c_str(), &m_db)) {
-		// Write an error to the log
-		logPrintf(("Error creating log file: " + filename).c_str());
+		logPrintf(("Error opening log file: " + filename).c_str());					// Write an error to the log
 	}
 
-	// Session description (time and subject ID)
-	Columns sessColumns = {
-		// format: column name, data type, sqlite modifier(s)
-			{ "sessionID", "text", "NOT NULL"},
-			{ "time", "text", "NOT NULL" },
-			{ "subjectID", "text", "NOT NULL" },
-			{ "appendingDescription", "text"}
-	};
-	// add any user-specified parameters as headers
-	for (String name : sessConfig->logger.sessParamsToLog) { sessColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
-	createTableInDB(m_db, "Sessions", sessColumns); // no need of Primary Key for this table.
+	// Create tables if a new log file
+	if (createNewFile) {
+		// Session description (time and subject ID)
+		Columns sessColumns = {
+			// format: column name, data type, sqlite modifier(s)
+				{ "sessionID", "text", "NOT NULL"},
+				{ "time", "text", "NOT NULL" },
+				{ "subjectID", "text", "NOT NULL" },
+				{ "appendingDescription", "text"}
+		};
+		// add any user-specified parameters as headers
+		for (String name : sessConfig->logger.sessParamsToLog) { sessColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
+		createTableInDB(m_db, "Sessions", sessColumns); // no need of Primary Key for this table.
 
-	// populate table
+		// Targets Type table (written once per session)
+		Columns targetTypeColumns = {
+				{ "name", "text" },
+				{ "motion_type", "text"},
+				{ "dest_space", "text"},
+				{ "min_size", "real"},
+				{ "max_size", "real"},
+				{ "min_ecc_h", "real" },
+				{ "min_ecc_v", "real" },
+				{ "max_ecc_h", "real" },
+				{ "max_ecc_v", "real" },
+				{ "min_speed", "real" },
+				{ "max_speed", "real" },
+				{ "min_motion_change_period", "real" },
+				{ "max_motion_change_period", "real" },
+				{ "jump_enabled", "text" },
+				{ "model_file", "text" }
+		};
+		createTableInDB(m_db, "Target_Types", targetTypeColumns); // Primary Key needed for this table.
+
+		// Targets table
+		Columns targetColumns = {
+			{ "name", "text" },
+			{ "target_type_name", "text"},
+			{ "spawn_time", "text"},
+			{ "size", "real"},
+			{ "spawn_ecc_h", "real"},
+			{ "spawn_ecc_v", "real"},
+		};
+		createTableInDB(m_db, "Targets", targetColumns);
+
+		// Trials table
+		Columns trialColumns = {
+				{ "session_id", "text" },
+				{ "trial_id", "integer" },
+				{ "trial_index", "integer"},
+				{ "block_id", "text"},
+				{ "start_time", "text" },
+				{ "end_time", "text" },
+				{ "task_execution_time", "real" },
+				{ "destroyed_targets", "real" },
+				{ "total_targets", "real" }
+		};
+		createTableInDB(m_db, "Trials", trialColumns);
+
+		// Target_Trajectory, only need to create the table.
+		Columns targetTrajectoryColumns = {
+				{ "time", "text" },
+				{ "target_id", "text"},
+				{ "position_x", "real" },
+				{ "position_y", "real" },
+				{ "position_z", "real" },
+		};
+		createTableInDB(m_db, "Target_Trajectory", targetTrajectoryColumns);
+
+		// Player_Action table
+		Columns viewTrajectoryColumns = {
+				{ "time", "text" },
+				{ "position_az", "real" },
+				{ "position_el", "real" },
+				{ "position_x", "real"},
+				{ "position_y", "real"},
+				{ "position_z", "real"},
+				{ "event", "text" },
+				{ "target_id", "text" },
+		};
+		createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
+
+		// Frame_Info table
+		Columns frameInfoColumns = {
+				{"time", "text"},
+				//{"idt", "real"},
+				{"sdt", "real"},
+		};
+		createTableInDB(m_db, "Frame_Info", frameInfoColumns);
+
+		// Questions table
+		Columns questionColumns = {
+			{"session", "text"},
+			{"question", "text"},
+			{"response", "text"}
+		};
+		createTableInDB(m_db, "Questions", questionColumns);
+
+		// Users table
+		Columns userColumns = {
+			{"subjectID", "text"},
+			{"session", "text"},
+			{"time", "text"},
+			{"cmp360", "real"},
+			{"mouseDegPerMillimeter", "real"},
+			{"mouseDPI", "real"},
+			{"reticleIndex", "int"},
+			{"reticleScaleMin", "real"},
+			{"reticleScaleMax", "real"},
+			{"reticleColorMinScale", "text"},
+			{"reticleColorMaxScale", "text"},
+			{"reticleChangeTime", "real"},
+			{"userTurnScaleX", "real"},
+			{"userTurnScaleY", "real"},
+			{"sessTurnScaleX", "real"},
+			{"sessTurnScaleY", "real"},
+			{"sensitivityX", "real"},
+			{"sensitivityY", "real"}
+		};
+		createTableInDB(m_db, "Users", userColumns);
+	}
+
+	// Add the session info to the sessions table
 	RowEntry sessValues = {
 		"'" + sessConfig->id + "'",
 		"'" + timeStr + "'",
@@ -76,112 +185,6 @@ void FPSciLogger::createResultsFile(const String& filename,
 	// add header row
 	insertRowIntoDB(m_db, "Sessions", sessValues);
 
-	// Targets Type table (written once per session)
-	Columns targetTypeColumns = {
-			{ "name", "text" },
-			{ "motion_type", "text"},
-			{ "dest_space", "text"},
-			{ "min_size", "real"},
-			{ "max_size", "real"},
-			{ "min_ecc_h", "real" },
-			{ "min_ecc_v", "real" },
-			{ "max_ecc_h", "real" },
-			{ "max_ecc_v", "real" },
-			{ "min_speed", "real" },
-			{ "max_speed", "real" },
-			{ "min_motion_change_period", "real" },
-			{ "max_motion_change_period", "real" },
-			{ "jump_enabled", "text" },
-			{ "model_file", "text" }
-	};
-	createTableInDB(m_db, "Target_Types", targetTypeColumns); // Primary Key needed for this table.
-
-	// Targets table
-	Columns targetColumns = {
-		{ "name", "text" },
-		{ "target_type_name", "text"},
-		{ "spawn_time", "text"},
-		{ "size", "real"},
-		{ "spawn_ecc_h", "real"},
-		{ "spawn_ecc_v", "real"},
-	};
-	createTableInDB(m_db, "Targets", targetColumns);
-
-	// Trials table
-	Columns trialColumns = {
-			{ "session_id", "text" },
-			{ "trial_id", "integer" },
-			{ "trial_index", "integer"},
-			{ "block_id", "text"},
-			{ "start_time", "text" },
-			{ "end_time", "text" },
-			{ "task_execution_time", "real" },
-			{ "destroyed_targets", "real" },
-			{ "total_targets", "real" }
-	};
-	createTableInDB(m_db, "Trials", trialColumns);
-
-	// Target_Trajectory, only need to create the table.
-	Columns targetTrajectoryColumns = {
-			{ "time", "text" },
-			{ "target_id", "text"},
-			{ "position_x", "real" },
-			{ "position_y", "real" },
-			{ "position_z", "real" },
-	};
-	createTableInDB(m_db, "Target_Trajectory", targetTrajectoryColumns);
-
-	// Player_Action table
-	Columns viewTrajectoryColumns = {
-			{ "time", "text" },
-			{ "position_az", "real" },
-			{ "position_el", "real" },
-			{ "position_x", "real"},
-			{ "position_y", "real"},
-			{ "position_z", "real"},
-			{ "event", "text" },
-			{ "target_id", "text" },
-	};
-	createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
-
-	// Frame_Info table
-	Columns frameInfoColumns = {
-			{"time", "text"},
-			//{"idt", "real"},
-			{"sdt", "real"},
-	};
-	createTableInDB(m_db, "Frame_Info", frameInfoColumns);
-
-	// Questions table
-	Columns questionColumns = {
-		{"session", "text"},
-		{"question", "text"},
-		{"response", "text"}
-	};
-	createTableInDB(m_db, "Questions", questionColumns);
-
-	// Users table
-	Columns userColumns = {
-		{"subjectID", "text"},
-		{"session", "text"},
-		{"time", "text"},
-		{"cmp360", "real"},
-		{"mouseDegPerMillimeter", "real"},
-		{"mouseDPI", "real"},
-		{"reticleIndex", "int"},
-		{"reticleScaleMin", "real"},
-		{"reticleScaleMax", "real"},
-		{"reticleColorMinScale", "text"},
-		{"reticleColorMaxScale", "text"},
-		{"reticleChangeTime", "real"},
-		{"userTurnScaleX", "real"},
-		{"userTurnScaleY", "real"},
-		{"sessTurnScaleX", "real"},
-		{"sessTurnScaleY", "real"},
-		{"sensitivityX", "real"},
-		{"sensitivityY", "real"}
-	};
-	createTableInDB(m_db, "Users", userColumns);
 }
 
 void FPSciLogger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
@@ -306,7 +309,7 @@ FPSciLogger::FPSciLogger(const String& filename,
 	m_targetLocations.reserve(5000);
 	
 	// Create the results file
-	createResultsFile(filename, subjectID,  sessConfig, description);
+	openResultsFile(filename, subjectID,  sessConfig, description);
 
 	// Thread management
 	m_running = true;

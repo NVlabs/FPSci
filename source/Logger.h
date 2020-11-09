@@ -81,7 +81,7 @@ protected:
 	void recordTargetLocations(const Array<TargetLocation>& locations);
 
 	/** Create a results file */
-	void createResultsFile(const String& filename, 
+	void openResultsFile(const String& filename, 
 		const String& subjectID, 
 		const shared_ptr<SessionConfig>& sessConfig, 
 		const String& description);

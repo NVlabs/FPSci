@@ -508,6 +508,7 @@ These flags control whether various information is written to the output databas
 |`logPlayerActions`                 |`bool` | Enable/disable for logging player position, aim , and actions to database (per frame) |
 |`logTrialResponse`                 |`bool` | Enable/disable for logging trial responses to database (per trial)    |
 |`logUsers`                         |`bool` | Enable/disable for logging users to database (per session)            |
+|`logToSingleDb`                    |`bool` | Enable/disable for logging to a unified output database file (named using the experiment description and user ID)  |
 
 ```
 "logEnable" = true,
@@ -516,7 +517,10 @@ These flags control whether various information is written to the output databas
 "logPlayerActions" = true,
 "logTrialResponse" = true,
 "logUsers" = true,
+"logToSingleDb" = false,
 ```
+
+*Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user].db"`. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues.
 
 ## Command Config
 In addition to the programmable behavior above the general config also supports running of arbitrary commands around the FPSci runtime. Note that the "end" commands keep running and there's the potential for orphaned processes if you specify commands that are long running or infinite. The command options include:
