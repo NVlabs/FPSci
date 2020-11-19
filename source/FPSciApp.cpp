@@ -335,14 +335,22 @@ void FPSciApp::showWeaponControls() {
 }
 
 void FPSciApp::presentQuestion(Question question) {
+	currentQuestion = question;					// Store this for processing key-bound presses
+	Array<String> options = question.options;
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
-		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title, true);
+		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
+			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+		}
+		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, true);
 		break;
 	case Question::Type::Entry:
 		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false);
 		break;
 	case Question::Type::Rating:
+		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
+			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i]); }
+		}
 		dialog = RatingDialog::create(question.prompt, question.options, theme, question.title, true);
 		break;
 	default:
@@ -811,6 +819,16 @@ bool FPSciApp::onEvent(const GEvent& event) {
 		else if (keyMap.map["quit"].contains(ksym)) {
 			quitRequest();
 			return true;
+		}
+		else if (notNull(dialog) && !dialog->complete) {		// If we have an open, incomplete dialog, check for key bound question responses
+			// Handle key presses to redirect towards dialog
+			for (int i = 0; i < currentQuestion.optionKeys.length(); i++) {
+				if (currentQuestion.optionKeys[i] == ksym) {
+					dialog->result = currentQuestion.options[i];
+					dialog->complete = true;
+					dialog->setVisible(false);
+				}
+			}
 		}
 		else if (activeCamera() == playerCamera) {
 			// Override 'q', 'z', 'c', and 'e' keys (unused)

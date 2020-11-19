@@ -56,8 +56,8 @@ protected:
 		}
 	}
 
-	SelectionDialog(String prompt, Array<String> options, const shared_ptr<GuiTheme>& theme, String title = "Selection", 
-		bool submitButton = false, int itemsPerRow = 3,
+	SelectionDialog(String prompt, Array<String> options, const shared_ptr<GuiTheme>& theme,
+		String title = "Selection", bool submitButton = false, int itemsPerRow = 3,
 		Point2 size = Point2(400.0f, 400.0f), Point2 pos = Point2(200.0f, 200.0f),	GFont::XAlign promptAlign = GFont::XALIGN_CENTER) :
 		DialogBase(theme, title, pos, size)
 	{
