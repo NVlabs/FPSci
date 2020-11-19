@@ -232,6 +232,7 @@ Questions are configured on a per experiment/session basis using the `questions`
 |`title`                |`String`| The title for the feedback prompt                                                |
 |`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only           |
 |`optionKeys`           |`Array<GKey>`  | An array of `GKey` options in 1:1 correspondence with `options` above. Leave empty for no keybinds. |
+|`fullscreen`           |`bool`  | When set this opens the dialog in "fullscreen" mode, overlaying all of the rendered content |
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
 
