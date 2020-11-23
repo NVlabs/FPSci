@@ -230,9 +230,10 @@ Questions are configured on a per experiment/session basis using the `questions`
 |`type`                 |`String`| The question type (required), can be `"MultipleChoice"`, `Rating`, or (text) `"Entry"`      |
 |`prompt`               |`String`| The question prompt (required), a string to present the user with                |
 |`title`                |`String`| The title for the feedback prompt                                                |
-|`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only           |
-|`optionKeys`           |`Array<GKey>`  | An array of `GKey` options in 1:1 correspondence with `options` above. Leave empty for no keybinds. |
-|`fullscreen`           |`bool`  | When set this opens the dialog in "fullscreen" mode, overlaying all of the rendered content |
+|`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only          |
+|`optionKeys`           |`Array<GKey>`  | An array of `GKey` options in 1:1 correspondence with `options` above. Leave empty for no keybinds. Check [here](keymap.md#gkey-string) for strings to use for `GKey`s. |
+|`fullscreen`           |`bool`  | When set this opens the dialog in "fullscreen" mode, overlaying all of the rendered content (default is `false`) |
+|`showCursor`           |`bool`  | Allows the experiment designer to hide the cursor while responding to this dialog (default is `true`). |
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
 
@@ -246,7 +247,10 @@ The user can specify one or more questions using the `questions` array, as demon
     {
         "type": "MultipleChoice",
         "prompt": "Choose an option!",
-        "options": ["A", "B", "C"]
+        "options": ["1", "2", "3"],
+        "optionKeys" : ["A", "B", "C"],
+        "fullscreen": true,
+        "showCursor" : false,
     }
 ]
 ```

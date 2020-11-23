@@ -362,7 +362,7 @@ void FPSciApp::presentQuestion(Question question) {
 
 	moveToCenter(dialog);
 	addWidget(dialog);
-	setDirectMode(false);
+	setDirectMode(!question.showCursor);
 }
 
 void FPSciApp::markSessComplete(String sessId) {

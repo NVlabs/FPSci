@@ -1108,6 +1108,7 @@ public:
 	String title = "Feedback";
 	String result = "";
 	bool fullscreen = false;
+	bool showCursor = true;
 
 	Question() {};
 
@@ -1142,7 +1143,8 @@ public:
 			reader.get("prompt", prompt, "A \"prompt\" field must be provided with every question!");
 			reader.getIfPresent("title", title);
 			reader.getIfPresent("fullscreen", fullscreen);
-			
+			reader.getIfPresent("showCursor", showCursor);
+
 			// Handle (optional) key binds for options (if provided)
 			if (type == Type::Rating || type == Type::MultipleChoice) {
 				reader.getIfPresent("optionKeys", optionKeys);
