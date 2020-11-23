@@ -9,23 +9,42 @@ FPSci offers a number of different [`.Any` file](./AnyFile.md) configurable para
 "settingsVersion": 1,     // Used for file parsing (do not change unless you are introducing a new any parser)
 ```
 
-## Scene Control
-The `sceneName` parameter allows the user to control the scene in which the application is run. If unspecified, the `sceneName` comes from:
+## Scene Settings
+The `scene` parameter allows the user to specify the (name of the) scene to be used and it's parameters. The scene config allows experiment designers to use existing scenes (from G3D) by setting the `name` field to that of the G3D scene and specifying FPSci-specific infromation within the additional fields. 
 
-1. An inherited experiment-level `sceneName` parameter
-2. The last specified session-level `sceneName` parameter (in time)
-3. The `App::m_defaultScene` field within the source (currently set to `"FPSci Simple Hallway"` which is distributed with the repository)
+The following fields are specified within the `scene` parameter structure:
+
+| Parameter Name    |Units      | Description                                                        |
+|-------------------|-----------|--------------------------------------------------------------------|
+|`name`             |`String`   | The name of the scene to use (note this is not the filename, but rather the `name` field from within the G3D `.scene.Any` file). |
+|`playerCamera`     |`String`   | The name of the camera (from the `.scene.Any` file) to use for the player view. If this string is empty the `defaultCamera` from the G3D scene is used instead. |
+|`resetHeight`      |`float`    | The height at which the player should be respawned when falling (overrides any setting in a `scene.Any` file if specified here).    |
+|`spawnPosition`    |`Point3`   | The location at which the player should be respawned (overrides any setting in a `scene.Any` file if specified here).  |
+|`spawnHeading`     |`float`    | The player heading (in radians) at which the player should be respawned (overrides the `scene.Any` file setting if specified here). |
+
+An example configuration is provided below for reference:
+
+```
+scene = {
+    name = "FPSci Simple Hallway";      // Use the "FPSci Simple Hallway" scene
+    playerCamera = "";                  // Use the default camera from wtihin this scene
+    resetHeight = -5;                   // Reset player position when falling past -5 m
+    spawnPosition = Point3(0,0,0);      // Spawn the player at the origin
+    spawnHeading = 0;                   // Spawn the player at 0 heading
+};
+```
+
+### Scene Name
+If unspecified, the scene `name` field comes from:
+
+1. An inherited experiment-level `name` parameter
+2. The last specified session-level `name` parameter (in time)
+3. The `App::m_defaultSceneName` field within the source (currently set to `"FPSci Simple Hallway"` which is distributed with the repository)
 
 If a scene name is specified at the experiment level it will be applied to all scenes that do not have a `sceneName` specified. If you do not specify a `sceneName` in the experiment config, and do not specify `sceneName` for every session, then session ordering may have an impact on which scene pairs with which session.
 
+The scene name is used to refer to the G3D scene that should be used for the experiment (or session). G3D applications, including FPSci, search for files that end in `.Scene.Any` in a number of locations, including places specified by the `G3D10DATA` environment variable, `data-files` or the directory FPSci was run from as well as all of the above locations with `scene/` added to the path. The set of `.Scene.Any` files found are printed to the `log.txt` on startup including the scene name as well as the path to the `.Scene.Any` files found (search for "Found scenes" in `log.txt`). Additionally, when FPSci is in developer mode, you can see a list of found scene names from the scene drop down GUI. Note that FPSci expects to find a scene name in the experiment config, and not the file name of the `.Scene.Any` file for that scene.
 
-| Parameter Name     |Units   | Description                                                            |
-|--------------------|--------|------------------------------------------------------------------------|
-|`sceneName`         |`String`|The `name` of the (virtual) scene (not necessarily the filename!)       |
-
-```
-"sceneName": "eSports Simple Hallway",              // Default scene
-```
 
 ## Weapon Configuration
 * `weapon` provides a configuration for the weapon used in the experiment (for more info see [the weapon config readme](weaponConfigReadme.md))
@@ -56,7 +75,27 @@ The following settings allow the user to control various timings/durations aroun
 ```
 
 ## Feedback Configuration
-In addition to controlling the duration of displayed feedback messages, this configuration allows the experiment designer to control the messages provided as feedback themselves.
+In addition to the trial/session feedback duration control, the formatting and strings used for feedback are also configurable.
+
+### Feedback Formatting
+The formatting of feedback messages is controllable from general config, included formatting parameters include:
+
+| Parameter Name                    |Units      | Description                                                           |
+|-----------------------------------|-----------|-----------------------------------------------------------------------|
+|`feedbackFontSize`                 |`float`    | The font size to use for the feedback message (scales w/ window)      |
+|`feedbackColor`                    |`Color3`   | The text color to use for the feedback message                        |
+|`feedbackOutlineColor`             |`Color4`   | The text outline color to use for the feedback message                |
+|`feedbackBackgroundColor`          |`Color4`   | The "back plate" color to apply to the feedback message (use clear for no plate) |
+
+```
+feedbackFontSize = 20;                          // Feedback font size of 20
+feedbackColor = Color3(0.648, 1.0, 0);          // Feedback text foreground color
+feedbackOutlineColor = Color4(0,0,0,0);         // Transparent feedback text outline
+feedbackBackgroundColor = Color4(0,0,0,0.5);    // Semi-transparent back plate
+```
+
+### Feedback Messages
+In addition to controlling the duration and formatting of displayed feedback messages, this configuration allows the experiment designer to control the messages provided as feedback themselves.
 
 | Parameter Name                    |Units    | Description                                                        |
 |-----------------------------------|---------|--------------------------------------------------------------------|
@@ -67,6 +106,8 @@ In addition to controlling the duration of displayed feedback messages, this con
 |`blockCompleteFeedback`            |`String` | Message to display when a block is completed                       |
 |`sessionCompleteFeedback`          |`String` | Message to display when a session is completed                     |
 |`allSessionsCompleteFeedback`      |`String` | Message to display when all sessions are completed                 |
+
+Multi-line feedback strings can be provided by inserting a `\n` character in the string at the point at which the line break should occur.
 
 For any/all of the feedback strings provided above, a number of `%`-delimited special strings are supported to allow find-and-replace with certain values. These include:
 
@@ -168,7 +209,7 @@ As part of the general configuration parameters several controls over reporting 
 |`logFrameInfo`         |`bool` | Whether or not to log frame info into the `Frame_Info` table                     |
 |`logPlayerActions`     |`bool` | Whether or not to log player actions into the `Player_Action` table              |
 |`logTrialResponse`     |`bool` | Whether or not to log trial responses into the `Trials` table                    |
-|`sessParamsToLog`      |`Array<String>`| A list of additional parameter names (from the config) to log            |
+|`sessionParametersToLog`      |`Array<String>`| A list of additional parameter names (from the config) to log            |
 
 ```
 "logEnable" : true,
@@ -176,13 +217,13 @@ As part of the general configuration parameters several controls over reporting 
 "logFrameInfo": true,
 "logPlayerActions": true,
 "logTrialResponse": true,
-"sessParamsToLog" : [],
+"sessionParametersToLog" : ["frameRate", "frameDelay"],
 ```
 
 ### Logging Session Parameters
-The `sessParamsToLog` parameter allows the user to provide an additional list of parameter names to log into the `Sessions` table in the output database. This allows users to control their reporting of conditions on a per-session basis. These logging control can (of course) also be specified at the experiment level. For example, if we had a series of sessions over which the player's `moveRate` or the HUD's `showAmmo` value was changing we could add these to the `sessParamsToLog` array by specifying:
+The `sessionParametersToLog` parameter allows the user to provide an additional list of parameter names to log into the `Sessions` table in the output database. This allows users to control their reporting of conditions on a per-session basis. These logging control can (of course) also be specified at the experiment level. For example, if we had a series of sessions over which the player's `moveRate` or the HUD's `showAmmo` value was changing we could add these to the `sessionParametersToLog` array by specifying:
 ```
-"sessParamsToLog" = ["moveRate", "showAmmo"],
+"sessionParametersToLog" = ["moveRate", "showAmmo"],
 ```
 In the top-level of the experiment config file. This allows the experiment designer to tag their sessions w/ relevant/changing parameters as needed for ease of reference later on from the database output file(s).
 
@@ -193,7 +234,7 @@ Questions are configured on a per experiment/session basis using the `questions`
 
 | Parameter Name        | Units  | Description                                                                      |
 |-----------------------|--------|----------------------------------------------------------------------------------|
-|`type`                 |`String`| The question type (required), can be `"MultipleChoice"` or (text) `"Entry"`      |
+|`type`                 |`String`| The question type (required), can be `"MultipleChoice"`, `Rating`, or (text) `"Entry"`      |
 |`prompt`               |`String`| The question prompt (required), a string to present the user with                |
 |`title`                |`String`| The title for the feedback prompt                                                |
 |`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only           |
@@ -215,7 +256,7 @@ The user can specify one or more questions using the `questions` array, as demon
 ]
 ```
 
-Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log.
+Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log. Note that `MultipleChoise` and `Rating` questions include a confirmation button that must be pressed to confirm the selection before proceeding.
 
 ## HUD settings
 | Parameter Name        |Units  | Description                                                                        |
@@ -426,6 +467,8 @@ These flags control the display of the in-game user menu:
 |`showMenuLogo`                     |`bool`     |Show a logo at the top of the menu (currently `materials/FPSciLogo.png`) |
 |`showExperimentSettings`           |`bool`     |Show the options to select user/session                                |
 |`showUserSettings`                 |`bool`     |Show the per-user customization (sensitivity, reticle, etc) options    |
+|`allowSessionChange`               |`bool`     |Allow users to change the session using a user menu dropdown           |
+|`allowUserAdd`                     |`bool`     |Allow users to add new users to the experiment                         |
 |`allowUserSettingsSave`            |`bool`     |Allow the user to save their settings from the menu                    |
 |`allowSensitivityChange`           |`bool`     |Allow the user to change their (cm/360) sensitivity value from the menu|
 |`allowTurnScaleChange`             |`bool`     |Allow the user to change their turn scale from the menu                |
@@ -444,6 +487,8 @@ These flags control the display of the in-game user menu:
 "showMenuLogo": true,                   // Show the logo
 "showExperimentSettings" : true,        // Allow user/session seleciton
 "showUserSettings": true,               // Show the user settings
+"allowSessionChange": true,             // Allow the user to change sessions using the menu dropdown
+"allowUserAdd": false,                  // Don't allow new user add by default
 "allowUserSettingsSave": true,          // Allow the user to save their settings changes
 "allowSensitivityChange": true,         // Allow the user to change the cm/360 sensitivity
 "allowTurnScaleChange": true,           // Allow the user to change their turn scale (see below)
@@ -531,10 +576,11 @@ commandsOnSessionEnd = ( { command = "cmd /c start [webpage URL]", foreground = 
 ### Supported Substrings for Commands
 In addition to the basic commands provided above several replacable substrings are supported in commands. These include:
 
-| Substring         | Description                                                           |
-|-------------------|-----------------------------------------------------------------------|
-|`%loggerComPort`   | The logger COM port (optionally) provided in a general config         |
-|`%loggerSyncComPort`|  The logger sync COM port (optionally) provided in a general config  |
+| Substring             | Description                                                           |
+|-----------------------|-----------------------------------------------------------------------|
+|`%loggerComPort`       | The logger COM port (optionally) provided in a general config         |
+|`%loggerSyncComPort`   |  The logger sync COM port (optionally) provided in a general config   |
+|`%dbFilename`          | The filename of the created db file (less the `.db` extension)        |
 
 Note that if either of these substrings is specified in a command, but empty/not provided in the experiment config file an exception will be thrown.
 

@@ -37,6 +37,7 @@ When `developerMode=true` the following keys/actions are available in addition t
 |`End`      |Move waypoint out in space         |
 |`Insert`   |Move waypoint right in space       |
 |`Delete`   |Move waypoint left in space        |
+|`F5`       |Reload all configs from disk       |
 
 ## Custom Key Mappings
 As an alternative to the standard key mappings provided above the user can change/add buttons to any of these actions using a `keymap.Any` file. If no `keymap.Any` file exists when the application starts it will write out the default.
@@ -69,6 +70,7 @@ This file associates each of the map names outlined below to an array of `GKey` 
 |Move waypoint out in space         |`moveWaypointOut`      |`["End"]`              |
 |Move waypoint right in space       |`moveWaypointRight`    |`["Ins"]`              |
 |Move waypoint left in space        |`moveWaypointLeft`     |`["Del"]`              |
+|Reload config (developer mode)     |`reloadConfigs`        |`["F5"]`               |
 
 ### GKey Strings
 The table below provides some useful macros for mapping `String` --> `GKey`. Whenever you are referring to a "normal" character key, be sure to use upper case letters!

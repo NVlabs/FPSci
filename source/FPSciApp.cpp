@@ -25,36 +25,12 @@ void FPSciApp::onInit() {
 	// Initialize the app
 	GApp::onInit();
 
-	// Load experiment setting from file
-	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfigFilename);
-	experimentConfig.printToLog();
-
-	Array<String> sessionIds;
-	experimentConfig.getSessionIds(sessionIds);
-
-	// Load per user settings from file
-	userTable = UserTable::load(startupConfig.userConfigFilename);
-	userTable.printToLog();
-
-	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load(startupConfig.userStatusFilename);
-	userStatusTable.printToLog();
-	userStatusTable.validate(sessionIds, userTable.getIds());
-	
-	// Get info about the system
-	SystemInfo info = SystemInfo::get();
-	info.printToLog();										// Print system info to log.txt
-
-	// Get system configuration
-	systemConfig = SystemConfig::load(startupConfig.systemConfigFilename);
-	systemConfig.printToLog();			// Print the latency logger config to log.txt								
+	// Load config from files
+	loadConfigs();
+	m_lastSavedUser = *currentUser();			// Copy over the startup user for saves
 
 	// Get the size of the primary display
 	displayRes = OSWindow::primaryDisplaySize();						
-
-	// Load the key binds
-	keyMap = KeyMapping::load(startupConfig.keymapConfigFilename);
-	userInput->setKeyMapping(&keyMap.uiMap);
 
 	// Setup/update waypoint manager
 	waypointManager = WaypointManager::create(this);
@@ -71,7 +47,7 @@ void FPSciApp::onInit() {
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
-	m_weapon = Weapon::create(std::make_shared<WeaponConfig>(experimentConfig.weapon), scene(), activeCamera());
+	m_weapon = Weapon::create(&experimentConfig.weapon, scene(), activeCamera());
 	m_weapon->setHitCallback(std::bind(&FPSciApp::hitTarget, this, std::placeholders::_1));
 	m_weapon->setMissCallback(std::bind(&FPSciApp::missEvent, this));
 
@@ -87,23 +63,55 @@ void FPSciApp::onInit() {
 	showRenderingStats = false;
 	makeGUI();
 
-	updateMouseSensitivity();									// Update (apply) mouse sensitivity
-	m_userSettingsWindow->updateSessionDropDown();				// Update the session drop down to remove already completed sessions
-	updateSession(m_userSettingsWindow->selectedSession());		// Update session to create results file/start collection
+	updateMouseSensitivity();		// Update (apply) mouse sensitivity
+	const Array<String> sessions = m_userSettingsWindow->updateSessionDropDown();	// Update the session drop down to remove already completed sessions
+	updateSession(sessions[0]);		// Update session to create results file/start collection
 
 	// Set the initial simulation timestep to REAL_TIME. The desired timestep is set later.
 	setFrameDuration(frameDuration(), REAL_TIME);
 }
 
+void FPSciApp::toggleUserSettingsMenu() {
+	if (!m_userSettingsWindow->visible()) {
+		openUserSettingsWindow();
+	}
+	else {
+		closeUserSettingsWindow();
+	}
+	// Make sure any change to sensitivity are applied
+	updateMouseSensitivity();
+}
+
 /** Handle the user settings window visibility */
 void FPSciApp::openUserSettingsWindow() {
+	// set focus so buttons properly highlight
+	moveToCenter(m_userSettingsWindow);
     m_userSettingsWindow->setVisible(true);
+	m_widgetManager->setFocusedWidget(m_userSettingsWindow);
 }
 
 /** Handle the user settings window visibility */
 void FPSciApp::closeUserSettingsWindow() {
-
+	if (sessConfig->menu.allowUserSettingsSave) {		// If the user could have saved their settings
+		saveUserConfig(true);							// Save the user config (if it has changed) whenever this window is closed
+	}
 	m_userSettingsWindow->setVisible(false);
+}
+
+void FPSciApp::saveUserConfig(bool onDiff) {
+	// Check for save on diff, without mismatch
+	if (onDiff && m_lastSavedUser == *currentUser()) return;
+	if (sess->logger) {
+		sess->logger->logUserConfig(*currentUser(), sessConfig->id, sessConfig->player.turnScale);
+	}
+	userTable.save(startupConfig.userConfigFilename);
+	m_lastSavedUser = *currentUser();			// Copy over this user
+	logPrintf("User table saved.\n");			// Print message to log
+}
+
+void FPSciApp::saveUserStatus(void) {
+	userStatusTable.save(startupConfig.userStatusFilename);
+	logPrintf("User status saved.\n");
 }
 
 /** Update the mouse mode/sensitivity */
@@ -111,7 +119,8 @@ void FPSciApp::updateMouseSensitivity() {
 	const shared_ptr<UserConfig> user = currentUser();
 	// Converting from mouseDPI (dots/in) and sensitivity (cm/turn) into rad/dot which explains cm->in (2.54) and turn->rad (2*PI) factors
 	// rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
-	const double radiansPerDot = 2.0 * pi() * 2.54 / (user->cmp360 * user->mouseDPI);
+	const double cmp360 = 36.0 / user->mouseDegPerMm;
+	const double radiansPerDot = 2.0 * pi() * 2.54 / (cmp360 * user->mouseDPI);
 	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 
 	// Control player motion using the experiment config parameter
@@ -120,12 +129,44 @@ void FPSciApp::updateMouseSensitivity() {
 		player->m_cameraRadiansPerMouseDot = (float)radiansPerDot;
 		player->turnScale = currentTurnScale();
 	}
+
+	m_userSettingsWindow->updateCmp360();
 }
 
 void FPSciApp::setDirectMode(bool enable) {
 	m_mouseDirectMode = enable;
 	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 	fpm->setMouseMode(enable ? FirstPersonManipulator::MOUSE_DIRECT : FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
+}
+
+void FPSciApp::loadConfigs() {
+	// Load experiment setting from file
+	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfigFilename);
+	experimentConfig.printToLog();
+
+	Array<String> sessionIds;
+	experimentConfig.getSessionIds(sessionIds);
+
+	// Load per user settings from file
+	userTable = UserTable::load(startupConfig.userConfigFilename);
+	userTable.printToLog();
+
+	// Load per experiment user settings from file and make sure they are valid
+	userStatusTable = UserStatusTable::load(startupConfig.userStatusFilename);
+	userStatusTable.printToLog();
+	userStatusTable.validate(sessionIds, userTable.getIds());
+		
+	// Get info about the system
+	SystemInfo info = SystemInfo::get();
+	info.printToLog();										// Print system info to log.txt
+
+	// Get system configuration
+	systemConfig = SystemConfig::load(startupConfig.systemConfigFilename);
+	systemConfig.printToLog();			// Print the latency logger config to log.txt	
+
+	// Load the key binds
+	keyMap = KeyMapping::load(startupConfig.keymapConfigFilename);
+	userInput->setKeyMapping(&keyMap.uiMap);
 }
 
 void FPSciApp::loadModels() {
@@ -187,7 +228,7 @@ void FPSciApp::loadModels() {
 
 		// Create the target/explosion models for this target
 		Array<shared_ptr<ArticulatedModel>> tModels, expModels;
-		for (int i = 0; i <= modelScaleCount; ++i) {
+		for (int i = 0; i <= TARGET_MODEL_SCALE_COUNT; ++i) {
 			const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
 			tSpec.set("scale", scale*default_scale);
 			explosionSpec.set("scale", (20.0 * scale * explosionScales.get(id)));
@@ -212,7 +253,7 @@ void FPSciApp::loadModels() {
 
 void FPSciApp::updateControls(bool firstSession) {
 	// Update the user settings window
-	m_updateUserMenu = true;
+	updateUserMenu = true;
 	if(!firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
 
 	// Update the waypoint manager
@@ -224,7 +265,7 @@ void FPSciApp::updateControls(bool firstSession) {
 	this->addWidget(m_playerControls);
 
 	// Setup the render control
-	m_renderControls = RenderControls::create(*sessConfig, *(currentUser()), renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
+	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(false);
 	this->addWidget(m_renderControls);
 
@@ -234,19 +275,21 @@ void FPSciApp::updateControls(bool firstSession) {
 }
 
 void FPSciApp::makeGUI() {
-	debugWindow->setVisible(startupConfig.developerMode);
-	developerWindow->setVisible(startupConfig.developerMode);
-	developerWindow->cameraControlWindow->setVisible(startupConfig.developerMode);
-	developerWindow->videoRecordDialog->setEnabled(true);
-	developerWindow->videoRecordDialog->setCaptureGui(true);
 
 	theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
+	debugWindow->setVisible(startupConfig.developerMode);
 
-	// Update the scene editor (for new PhysicsScene pointer, initially loaded in GApp)
-	removeWidget(developerWindow->sceneEditorWindow);
-	developerWindow->sceneEditorWindow = SceneEditorWindow::create(this, scene(), theme);
-	developerWindow->sceneEditorWindow->moveTo(developerWindow->cameraControlWindow->rect().x0y1() + Vector2(0, 15));
-	developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
+	if (startupConfig.developerMode) {
+		developerWindow->cameraControlWindow->setVisible(startupConfig.developerMode);
+		developerWindow->videoRecordDialog->setEnabled(true);
+		developerWindow->videoRecordDialog->setCaptureGui(true);
+
+		// Update the scene editor (for new PhysicsScene pointer, initially loaded in GApp)
+		removeWidget(developerWindow->sceneEditorWindow);
+		developerWindow->sceneEditorWindow = SceneEditorWindow::create(this, scene(), theme);
+		developerWindow->sceneEditorWindow->moveTo(developerWindow->cameraControlWindow->rect().x0y1() + Vector2(0, 15));
+		developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
+	}
 
 	// Open sub-window buttons here (menu-style)
 	debugPane->beginRow(); {
@@ -275,7 +318,7 @@ void FPSciApp::makeGUI() {
 void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
-	String filename = Scene::sceneNameToFilename(sessConfig->sceneName);
+	String filename = Scene::sceneNameToFilename(sessConfig->scene.name);
 	scene()->toAny().save(filename);
 }
 
@@ -294,13 +337,13 @@ void FPSciApp::showWeaponControls() {
 void FPSciApp::presentQuestion(Question question) {
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
-		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title);
+		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title, true);
 		break;
 	case Question::Type::Entry:
-		dialog = TextEntryDialog::create(question.prompt, theme, question.title);
+		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false);
 		break;
 	case Question::Type::Rating:
-		dialog = RatingDialog::create(question.prompt, question.options, theme, question.title);
+		dialog = RatingDialog::create(question.prompt, question.options, theme, question.title, true);
 		break;
 	default:
 		throw "Unknown question type!";
@@ -308,7 +351,7 @@ void FPSciApp::presentQuestion(Question question) {
 	}
 
 	moveToCenter(dialog);
-	this->addWidget(dialog);
+	addWidget(dialog);
 	setDirectMode(false);
 }
 
@@ -358,30 +401,41 @@ void FPSciApp::updateShaderBuffers() {
 	}
 }
 
-shared_ptr<PlayerEntity> FPSciApp::updatePlayer() {
-	// Pick between experiment and session settings
+void FPSciApp::initPlayer() {
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
+
+	// Set gravity and camera field of view
 	Vector3 grav = experimentConfig.player.gravity;
 	float FoV = experimentConfig.render.hFoV;
 	if (sessConfig != nullptr) {
 		grav = sessConfig->player.gravity;
 		FoV = sessConfig->render.hFoV;
 	}
-
-	// Get the reset height
-	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
 	pscene->setGravity(grav);
-	float resetHeight = pscene->resetHeight();
-	if (isnan(resetHeight)) {
-		resetHeight = -1e6;
-	}
+	playerCamera->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
 
 	// For now make the player invisible (prevent issues w/ seeing model from inside)
-	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	player->setVisible(false);
-	player->setRespawnHeight(resetHeight);
-	player->setRespawnPosition(player->frame().translation);
 
-	updateMouseSensitivity();
+	// Set the reset height
+	float resetHeight = sessConfig->scene.resetHeight;
+	if (isnan(resetHeight)) {
+		float resetHeight = pscene->resetHeight();
+		if (isnan(resetHeight)) {
+			resetHeight = -1e6;
+		}
+	}
+	player->setRespawnHeight(resetHeight);
+
+	// Set player respawn location
+	Point3 spawnPosition = sessConfig->scene.spawnPosition;
+	if (isnan(spawnPosition.x)) {
+		spawnPosition = player->frame().translation;
+	}
+	player->setRespawnPosition(spawnPosition);
+
+	// Set player values from session config
 	player->moveRate = &sessConfig->player.moveRate;
 	player->moveScale = &sessConfig->player.moveScale;
 	player->axisLock = &sessConfig->player.axisLock;
@@ -391,8 +445,12 @@ shared_ptr<PlayerEntity> FPSciApp::updatePlayer() {
 	player->height = &sessConfig->player.height;
 	player->crouchHeight = &sessConfig->player.crouchHeight;
 
-	playerCamera()->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
-	return player;
+	// Respawn player
+	player->respawn();
+	updateMouseSensitivity();
+
+	// Set initial heading for session
+	sess->initialHeadingRadians = player->heading();
 }
 
 void FPSciApp::updateSession(const String& id) {
@@ -439,21 +497,21 @@ void FPSciApp::updateSession(const String& id) {
 	if (notNull(scene())) sess->clearTargets();
 
 	// Load the experiment scene if we haven't already (target only)
-	if (sessConfig->sceneName.empty()) {
+	if (sessConfig->scene.name.empty()) {
 		// No scene specified, load default scene
 		if (m_loadedScene.empty()) {
-			loadScene(m_defaultScene);
-			m_loadedScene = m_defaultScene;
+			loadScene(m_defaultSceneName);
+			m_loadedScene = m_defaultSceneName;
 		}
 		// Otherwise let the loaded scene persist
 	}
-	else if (sessConfig->sceneName != m_loadedScene) {
-		loadScene(sessConfig->sceneName);
-		m_loadedScene = sessConfig->sceneName;
+	else if (sessConfig->scene.name != m_loadedScene) {
+		loadScene(sessConfig->scene.name);
+		m_loadedScene = sessConfig->scene.name;
 	}
 
 	// Check for play mode specific parameters
-	m_weapon->setConfig(sessConfig->weapon);
+	m_weapon->setConfig(&sessConfig->weapon);
 	m_weapon->setScene(scene());
 	m_weapon->setCamera(activeCamera());
 
@@ -479,8 +537,7 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Player parameters
-	shared_ptr<PlayerEntity> player = updatePlayer();
-	sess->initialHeadingRadians = player->heading();
+	initPlayer();
 
 	// Check for need to start latency logging and if so run the logger now
 	if (!FileSystem::isDirectory(startupConfig.resultsDirPath)) {
@@ -530,22 +587,10 @@ void FPSciApp::quitRequest() {
     setExitCode(0);
 }
 
-void FPSciApp::toggleUserSettingsMenu() {
-	m_userSettingsWindow->toggleVisibliity();
-	if (m_userSettingsWindow->visible()) {
-		// set focus so buttons properly highlight
-		moveToCenter(m_userSettingsWindow);
-		m_widgetManager->setFocusedWidget(m_userSettingsWindow);
-	}
-	// Make sure any change to sensitivity are applied
-	updateMouseSensitivity();
-}
-
 void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
-	
+
 	// Make sure the scene has a "player" entity
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-	//alwaysAssertM(player, "All FPSci scene files must provide a \"PlayerEntity\"!");
 
 	// Add a player if one isn't present in the scene
 	if (isNull(player)) {
@@ -555,20 +600,17 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 	}
 
 	// Set the active camera to the player
-	shared_ptr<Camera> playerCam = playerCamera();
-	// Check for no player cam, but a player, if so make the camera from the player
-	if (isNull(playerCam)) {
-		playerCam = Camera::create("playerCamera");
-		scene()->insert((shared_ptr<Entity>)playerCam);
-	}
-	setActiveCamera(playerCam);
+	const String pcamName = sessConfig->scene.playerCamera;
+	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(sessConfig->scene.playerCamera);
+	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, sessConfig->scene.playerCamera));
+	scene()->insert((shared_ptr<Entity>)playerCamera);
+	setActiveCamera(playerCamera);
 
-	// Update the player entity
-	updatePlayer();
+	initPlayer();
 
 	if (m_weapon) {
 		m_weapon->setScene(scene());
-		m_weapon->setCamera(playerCamera());
+		m_weapon->setCamera(playerCamera);
 	}
 }
 
@@ -603,8 +645,8 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 	}
 
 	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !emergencyTurbo;
-	playerCamera()->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
-	playerCamera()->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
+	playerCamera->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
+	playerCamera->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
 
 	GApp::onGraphics3D(rd, surface);
 
@@ -634,7 +676,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 
 	// Simulate the projectiles
-	m_weapon->simulateProjectiles(sdt, sess->targetArray());
+	m_weapon->simulateProjectiles(sdt, sess->hittableTargets());
 
 	// explosion animation
 	for (int i = 0; i < m_explosions.size(); i++) {
@@ -653,7 +695,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// Move the player
 	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
-	playerCamera()->setFrame(p->getCameraFrame());
+	playerCamera->setFrame(p->getCameraFrame());
 	
 	// Handle developer mode features here
 	if (startupConfig.developerMode) {
@@ -703,6 +745,13 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			} else if (keyMap.map["toggleWeaponWindow"].contains(ksym)) {
 				m_weaponControls->setVisible(!m_weaponControls->visible());
 				foundKey = true;
+			}
+			else if (keyMap.map["reloadConfigs"].contains(ksym)) {
+				loadConfigs();												// (Re)load the configs
+				// Update session from the reloaded configs
+				m_userSettingsWindow->updateSessionDropDown();
+				updateSession(m_userSettingsWindow->selectedSession());
+				// Do not set foundKey = true to allow shader reloading from GApp::onEvent()
 			}
 			// Waypoint editor only keys
 			else if (startupConfig.waypointEditorMode) {
@@ -773,6 +822,16 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			}
 		}
 	}
+	// Handle key strokes explicitly for non-developer mode
+	else {
+		if (event.type == GEventType::KEY_DOWN) {
+			// Remove F8 as it isn't masked by useDeveloperTools = False
+			const Array<GKey> player_masked = { GKey::F8 };
+			if (player_masked.contains(ksym)) {
+				foundKey = true;
+			}
+		}
+	}
 	
 	// Handle normal keypresses
 	if (event.type == GEventType::KEY_DOWN) {
@@ -780,8 +839,12 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			toggleUserSettingsMenu();
 			foundKey = true;
 		}
-		else if (activeCamera() == playerCamera()) {
-			// Override 'q', 'z', 'c', and 'e' keys (unused) 
+		else if (keyMap.map["quit"].contains(ksym)) {
+			quitRequest();
+			return true;
+		}
+		else if (activeCamera() == playerCamera) {
+			// Override 'q', 'z', 'c', and 'e' keys (unused)
 			// THIS IS A PROBLEM IF THESE ARE KEY MAPPED!!!
 			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
 			if (unused.contains(ksym)) {
@@ -795,12 +858,10 @@ bool FPSciApp::onEvent(const GEvent& event) {
 				scene()->typedEntity<PlayerEntity>("player")->setJumpPressed(true);
 				foundKey = true;
 			}
-			else if (keyMap.map["quit"].contains(ksym)) {
-				quitRequest();
-				return true;
-			}
 		}
-		else if ((event.type == GEventType::KEY_UP)) {
+	}
+	else if ((event.type == GEventType::KEY_UP)) {
+		if (activeCamera() == playerCamera) {
 			if (keyMap.map["crouch"].contains(ksym)) {
 				scene()->typedEntity<PlayerEntity>("player")->setCrouched(false);
 				foundKey = true;
@@ -830,6 +891,26 @@ bool FPSciApp::onEvent(const GEvent& event) {
 
 	// Handle super-class events
 	return GApp::onEvent(event);
+}
+
+void FPSciApp::onAfterEvents() {
+	if (updateUserMenu) {
+		// Remove the old settings window
+		removeWidget(m_userSettingsWindow);
+
+		// Re-create the settings window
+		String selSess = m_userSettingsWindow->selectedSession();
+		m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, sessConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
+		m_userSettingsWindow->setSelectedSession(selSess);
+		moveToCenter(m_userSettingsWindow);
+		m_userSettingsWindow->setVisible(m_showUserMenu);
+
+		// Add the new settings window and clear the semaphore
+		addWidget(m_userSettingsWindow);
+		updateUserMenu = false;
+	}
+
+	GApp::onAfterEvents();
 }
 
 void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
@@ -865,7 +946,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 		if (sessConfig->targetView.showCombatText) {
 			Array<int> toRemove;
 			for (int i = 0; i < m_combatTextList.size(); i++) {
-				bool remove = !m_combatTextList[i]->draw(rd, *playerCamera(), *m_framebuffer);
+				bool remove = !m_combatTextList[i]->draw(rd, *playerCamera, *m_framebuffer);
 				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
 			}
 			// Remove the expired elements here
@@ -912,26 +993,6 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 	GApp::onPostProcessHDR3DEffects(rd);
 }
 
-void FPSciApp::onAfterEvents() {
-	if (m_updateUserMenu) {
-		// Remove the old settings window
-		removeWidget(m_userSettingsWindow);
-
-		// Re-create the settings window
-		String selSess = m_userSettingsWindow->selectedSession();
-		m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, sessConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
-		m_userSettingsWindow->setSelectedSession(selSess);
-		moveToCenter(m_userSettingsWindow);
-		m_userSettingsWindow->setVisible(m_showUserMenu);
-
-		// Add the new settings window and clear the semaphore
-		addWidget(m_userSettingsWindow);
-		m_updateUserMenu = false;
-	}
-
-	GApp::onAfterEvents();
-}
-
 void FPSciApp::drawClickIndicator(RenderDevice *rd, String mode) {
 	// Click to photon latency measuring corner box
 	if (sessConfig->clickToPhoton.enabled) {
@@ -952,10 +1013,10 @@ void FPSciApp::drawClickIndicator(RenderDevice *rd, String mode) {
 		// Draw the "active" box
 		Color3 boxColor;
 		if (sessConfig->clickToPhoton.mode == "frameRate") {
-			boxColor = (m_frameToggle) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
-			m_frameToggle = !m_frameToggle;
+			boxColor = (frameToggle) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+			frameToggle = !frameToggle;
 		}
-		else boxColor = (m_buttonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+		else boxColor = (buttonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
 		Draw::rect2D(Rect2D::xywh(boxLeft, boxTop, latencyRect.x, latencyRect.y), rd, boxColor);
 	}
 }
@@ -1006,8 +1067,9 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 
 	// Draw the player health bar
 	if (sessConfig->hud.showPlayerHealthBar) {
+		const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
 		const float health = scene()->typedEntity<PlayerEntity>("player")->health();
-		const Point2 location = Point2(sessConfig->hud.playerHealthBarPos.x, sessConfig->hud.playerHealthBarPos.y + m_debugMenuHeight);
+		const Point2 location = Point2(sessConfig->hud.playerHealthBarPos.x, sessConfig->hud.playerHealthBarPos.y + m_debugMenuHeight) + Point2(guardband, guardband);
 		const Point2 size = sessConfig->hud.playerHealthBarSize;
 		const Point2 border = sessConfig->hud.playerHealthBarBorderSize;
 		const Color4 borderColor = sessConfig->hud.playerHealthBarBorderColor;
@@ -1018,7 +1080,8 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 	}
 	// Draw the ammo indicator
 	if (sessConfig->hud.showAmmo) {
-		Point2 lowerRight = Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height()));
+		const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
+		Point2 lowerRight = Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height())) - Point2(guardband, guardband);
 		hudFont->draw2D(rd,
 			format("%d/%d", sess->remainingAmmo(), sessConfig->weapon.maxAmmo),
 			lowerRight - sessConfig->hud.ammoPosition,
@@ -1075,7 +1138,7 @@ Vector2 FPSciApp::currentTurnScale() {
 	}
 	else {
 		// Otherwise scale the scope turn scalue using the ratio of FoV
-		return playerCamera()->fieldOfViewAngleDegrees() / sessConfig->render.hFoV * baseTurnScale;
+		return playerCamera->fieldOfViewAngleDegrees() / sessConfig->render.hFoV * baseTurnScale;
 	}
 }
 
@@ -1085,7 +1148,7 @@ void FPSciApp::setScopeView(bool scoped) {
 	const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
 	m_weapon->setScoped(scoped);														// Update the weapon state		
 	const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
-	playerCamera()->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
+	playerCamera->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
 
@@ -1104,7 +1167,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	// Check if we need to add combat text for this damage
 	if (sessConfig->targetView.showCombatText) {
 		m_combatTextList.append(FloatingCombatText::create(
-			format("%2.0f", 100 * damage),
+			format("%2.0f", 100.f * damage),
 			m_combatFont,
 			sessConfig->targetView.combatTextSize,
 			sessConfig->targetView.combatTextColor,
@@ -1129,7 +1192,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	else if (target->health() <= 0) {
 		// Position explosion
 		CFrame explosionFrame = target->frame();
-		explosionFrame.rotation = playerCamera()->frame().rotation;
+		explosionFrame.rotation = playerCamera->frame().rotation;
 		// Create the explosion
 		const shared_ptr<VisibleEntity> newExplosion = VisibleEntity::create(
 			format("explosion%d", m_explosionIdx), 
@@ -1167,19 +1230,24 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 		if (respawned) {
 			sess->randomizePosition(target);
 		}
-		BEGIN_PROFILER_EVENT("fire/changeColor");
-		BEGIN_PROFILER_EVENT("fire/clone");
-		shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
-		END_PROFILER_EVENT();
-		BEGIN_PROFILER_EVENT("fire/materialSet");
-		shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health()*m_MatTableSize), m_MatTableSize - 1)];
-		pose->materialTable.set("core/icosahedron_default", mat);
-		END_PROFILER_EVENT();
-		BEGIN_PROFILER_EVENT("fire/setPose");
-		target->setPose(pose);
-		END_PROFILER_EVENT();
-		END_PROFILER_EVENT();
+		// Update the target color based on it's health
+		updateTargetColor(target);
 	}
+}
+
+void FPSciApp::updateTargetColor(const shared_ptr<TargetEntity>& target) {
+	BEGIN_PROFILER_EVENT("updateTargetColor/changeColor");
+	BEGIN_PROFILER_EVENT("updateTargetColor/clone");
+	shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
+	END_PROFILER_EVENT();
+	BEGIN_PROFILER_EVENT("updateTargetColor/materialSet");
+	shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health() * m_MatTableSize), m_MatTableSize - 1)];
+	pose->materialTable.set("core/icosahedron_default", mat);
+	END_PROFILER_EVENT();
+	BEGIN_PROFILER_EVENT("updateTargetColor/setPose");
+	target->setPose(pose);
+	END_PROFILER_EVENT();
+	END_PROFILER_EVENT();
 }
 
 void FPSciApp::missEvent() {
@@ -1197,7 +1265,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	(void)ui;
 
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
-	if (m_mouseDirectMode && activeCamera() == playerCamera() && notNull(player)) {
+	if (m_mouseDirectMode && activeCamera() == playerCamera && notNull(player)) {
 		player->updateFromInput(ui);
 	}
 	else if (notNull(player)) {	// Zero the player velocity and rotation when in the setting menu
@@ -1226,7 +1294,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	for (GKey shootButton : keyMap.map["shoot"]) {
 		// Require release between clicks for non-autoFire modes
 		if (ui->keyReleased(shootButton)) {
-			m_buttonUp = true;
+			buttonUp = true;
 			haveReleased = true;
 			m_weapon->setFiring(false);
 			if (!sessConfig->weapon.autoFire) {
@@ -1258,10 +1326,6 @@ void FPSciApp::onUserInput(UserInput* ui) {
 							if (!sessConfig->weapon.isLaser()) {
 								m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
 							}
-							// Handle logging player miss for hitscanned weapons
-							if (sessConfig->weapon.hitScan && hitDist < finf()) {
-								sess->accumulatePlayerAction(PlayerActionType::Miss);
-							}
 						}
 					}
 					// Avoid accumulating invalid clicks during holds...
@@ -1270,9 +1334,9 @@ void FPSciApp::onUserInput(UserInput* ui) {
 						sess->accumulatePlayerAction(PlayerActionType::Invalid);
 					}
 				}
-			}
-			else {
-				sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
+				else {
+					sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
+				}
 			}
 
 			// Check for developer mode editing here, if so set selected waypoint using the camera
@@ -1281,12 +1345,12 @@ void FPSciApp::onUserInput(UserInput* ui) {
 			}
 
 			haveReleased = false;					// Make it known we are no longer in released state
-			m_buttonUp = false;
+			buttonUp = false;
 		}
 	}
 	
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
-		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::trialFeedback)) {
+		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::trialFeedback) && !m_userSettingsWindow->visible()) {
 			Array<shared_ptr<Entity>> dontHit;
 			dontHit.append(m_explosions);
 			dontHit.append(sess->unhittableTargets());
@@ -1303,7 +1367,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		m_userSettingsWindow->updateReticlePreview();
 	}
 
-	playerCamera()->filmSettings().setSensitivity(sceneBrightness);
+	playerCamera->filmSettings().setSensitivity(sceneBrightness);
     END_PROFILER_EVENT();
 }
 
@@ -1369,7 +1433,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		}
 
 		// Player camera only indicators
-		if (activeCamera() == playerCamera()) {
+		if (activeCamera() == playerCamera) {
 			// Reticle
 			const shared_ptr<UserConfig> user = currentUser();
 			float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleChangeTimeS), 1.0f), 0.0f);
@@ -1379,9 +1443,28 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 
 			// Handle the feedback message
 			String message = sess->getFeedbackMessage();
+			const float centerHeight = rd->viewport().height() * 0.4f;
+			const float scaledFontSize = floor(sessConfig->feedback.fontSize * scale);
 			if (!message.empty()) {
-				outputFont->draw2D(rd, message.c_str(),
-					(Point2(rd->viewport().width()*0.5f, rd->viewport().height()*0.4f)).floor(), floor(20.0f * scale), Color3::yellow(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+				String currLine;
+				Array<String> lines = stringSplit(message, '\n');
+				float vertPos = centerHeight - (scaledFontSize * 1.5f * lines.length()/ 2.0f);
+				// Draw a "back plate"
+				Draw::rect2D(Rect2D::xywh(0.0f, 
+					vertPos - 1.5f * scaledFontSize,
+					rd->viewport().width(), 
+					scaledFontSize * (lines.length()+1) * 1.5f),
+					rd, sessConfig->feedback.backgroundColor);
+				for (String line : lines) {
+					outputFont->draw2D(rd, line.c_str(),
+						(Point2(rd->viewport().width() * 0.5f, vertPos)).floor(),
+						scaledFontSize,
+						sessConfig->feedback.color,
+						sessConfig->feedback.outlineColor,
+						GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
+					);
+					vertPos += scaledFontSize * 1.5f;
+				}
 			}
 		}
 
@@ -1599,7 +1682,7 @@ void FPSciApp::oneFrame() {
         // The debug camera is not in the scene, so we have
         // to explicitly pose it. This actually does nothing, but
         // it allows us to trigger the TAA code.
-		playerCamera()->onPose(m_posed3D);
+		playerCamera->onPose(m_posed3D);
     } m_poseWatch.tock();
     END_PROFILER_EVENT();
 
@@ -1716,6 +1799,8 @@ FPSciApp::Settings::Settings(const StartupConfig& startupConfig, int argc, const
 	window.caption = "First Person Science";
 	window.refreshRate = -1;
 	window.defaultIconFilename = "icon.png";
+
+	useDeveloperTools = startupConfig.developerMode;
 
 	hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
 	hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);

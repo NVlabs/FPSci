@@ -10,6 +10,10 @@ static bool operator!=(Array<T> a1, Array<T> a2) {
 	}
 	return false;
 }
+template <class T>
+static bool operator==(Array<T> a1, Array<T> a2) {
+	return !(a1 != a2);
+}
 
 /** Configure how the application should start */
 class StartupConfig {
@@ -124,6 +128,7 @@ public:
 		map.set("moveWaypointOut", Array<GKey>{ GKey::END });
 		map.set("moveWaypointRight", Array<GKey>{ GKey::INSERT });
 		map.set("moveWaypointLeft", Array<GKey>{ GKey::DELETE });
+		map.set("reloadConfigs", Array<GKey>{GKey::F5});
 		getUiKeyMapping();
 	};
 
@@ -356,7 +361,7 @@ class UserConfig {
 public:
     String			id					= "anon";						///< Subject ID (as recorded in output DB)
     double			mouseDPI			= 800.0;						///< Mouse DPI setting
-    double			cmp360				= 12.75;						///< Mouse sensitivity, reported as centimeters per 360�
+	double			mouseDegPerMm		= 2.824;						///< Mouse sensitivity, reported as degree per mm
 	Vector2			turnScale			= Vector2(1.0f, 1.0f);			///< Turn scale for player, can be used to invert controls in either direction
 	bool			invertY				= false;						///< Extra flag for Y-invert (duplicates turn scale, but very common)
 	Vector2			scopeTurnScale		= Vector2(0.0f, 0.0f);			///< Scoped turn scale (0's imply default scaling)
@@ -374,6 +379,10 @@ public:
 
 	/** Load from Any */
     UserConfig(const Any& any) {
+		// for loading old user configs
+		double cmp360 = 12.75;
+		bool foundMouseDegPerMm = false;
+
         int settingsVersion = 1; // used to allow different version numbers to be loaded differently
         AnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
@@ -381,7 +390,8 @@ public:
         case 1:
             reader.getIfPresent("id", id);
             reader.getIfPresent("mouseDPI", mouseDPI);
-            reader.getIfPresent("cmp360", cmp360);
+            foundMouseDegPerMm = reader.getIfPresent("mouseDegPerMillimeter", mouseDegPerMm);
+			reader.getIfPresent("cmp360", cmp360);
 			reader.getIfPresent("reticleIndex", reticleIndex);
 			reader.getIfPresent("reticleScale", reticleScale);
 			reader.getIfPresent("reticleColor", reticleColor);
@@ -394,6 +404,11 @@ public:
             debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
             break;
         }
+
+		// Set mouseDPmm if not found
+		if (!foundMouseDegPerMm) {
+			mouseDegPerMm = 36.0 / cmp360;
+		}
     }
 	
 	/** Serialize to Any */
@@ -402,7 +417,7 @@ public:
 		Any a(Any::TABLE);
 		a["id"] = id;										// Include subject ID
 		a["mouseDPI"] = mouseDPI;							// Include mouse DPI
-		a["cmp360"] = cmp360;								// Include cm/360
+		a["mouseDegPerMillimeter"] = mouseDegPerMm;						// Include sensitivity
 		if (forceAll || def.reticleIndex != reticleIndex)				a["reticleIndex"] = reticleIndex;
 		if (forceAll || def.reticleScale != reticleScale)				a["reticleScale"] = reticleScale;
 		if (forceAll || def.reticleColor != reticleColor)				a["reticleColor"] = reticleColor;
@@ -412,11 +427,22 @@ public:
 		if (forceAll || def.scopeTurnScale != scopeTurnScale)			a["scopeTurnScale"] = scopeTurnScale;
 		return a;
 	}
+
+	// Define not equal operator for comparison
+	bool operator==(const UserConfig& other) const {
+		bool eq = id == other.id && mouseDegPerMm == other.mouseDegPerMm && reticleIndex == other.reticleIndex &&
+			reticleScale == other.reticleScale && reticleColor == other.reticleColor && reticleChangeTimeS == other.reticleChangeTimeS && 
+			turnScale == other.turnScale && invertY == other.invertY && scopeTurnScale == other.scopeTurnScale;
+		return eq;
+	}
 };
 
 /** Class for loading a user table and getting user info */
 class UserTable {
 public:
+
+	bool					requireUnique = true;			///< Require users to be unique by ID
+	UserConfig				defaultUser;					///< Default user settings to use for new user
 	Array<UserConfig>		users = {};						///< A list of valid users
 
 	UserTable() {};
@@ -429,7 +455,18 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
+			reader.getIfPresent("requireUnique", requireUnique);
+			reader.getIfPresent("defaultUser", defaultUser);
 			reader.get("users", users, "Issue in the (required) \"users\" array in the user config file!");
+			// Unique user check (if required)
+			if (requireUnique) {
+				const Array<String> userIds = getIds();
+				for (String id : userIds) {
+					if (userIds.findIndex(id) != userIds.rfindIndex(id)) {
+						throw "Multiple users with the same ID (\"" + id + "\") specified in the user config file!";
+					}
+				}
+			}
 			if (users.size() == 0) {
 				throw "At least 1 user must be specified in the \"users\" array within the user configuration file!";
 			}
@@ -489,7 +526,7 @@ public:
 	/** Print the user table to the log */
 	void printToLog() {
 		for (UserConfig user : users) {
-			logPrintf("\tUser ID: %s, cmp360 = %f, mouseDPI = %d\n", user.id.c_str(), user.cmp360, user.mouseDPI);
+			logPrintf("\tUser ID: %s, sensitivity = %f deg/mm, mouseDPI = %d\n", user.id.c_str(), user.mouseDegPerMm, user.mouseDPI);
 		}
 	}
 };
@@ -749,6 +786,7 @@ public:
 
 	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
 
+	/** Returns true if firePeriod == 0 and autoFire == true */
 	bool isLaser() {
 		return firePeriod == 0 && autoFire;
 	}
@@ -1333,6 +1371,59 @@ public:
 	}
 };
 
+class SceneConfig {
+public:
+
+	String name;										///< Name of the scene to load
+	String playerCamera;								///< Name of the camera to use for the player
+
+	//float gravity = fnan();							///< Gravity for the PhysicsScene
+	float resetHeight = fnan();							///< Reset height for the PhysicsScene
+
+	Point3 spawnPosition = { fnan(),fnan(), fnan() };	///< Location for player spawn
+	float spawnHeading = fnan();						///< Heading for player spawn
+
+	SceneConfig() {}
+	SceneConfig(const Any& any) {
+		AnyTableReader reader(any);
+		int settingsVersion = 1;
+		reader.getIfPresent("settingsVersion", settingsVersion);
+		switch (settingsVersion) {
+		case 1:
+			reader.getIfPresent("name", name);
+			reader.getIfPresent("playerCamera", playerCamera);
+			//reader.getIfPresent("gravity", gravity);
+			reader.getIfPresent("resetHeight", resetHeight);
+			reader.getIfPresent("spawnPosition", spawnPosition);
+			reader.getIfPresent("spawnHeading", spawnHeading);
+			break;
+		default:
+			throw format("Did not recognize scene config settings version: %d", settingsVersion);
+			break;
+		}
+	}
+
+	Any toAny(const bool forceAll = false) const {
+		Any a(Any::TABLE);
+		SceneConfig def;
+		if (forceAll || def.name != name)					a["name"] = name;
+		if (forceAll || def.playerCamera != playerCamera)   a["playerCamera"] = playerCamera;
+		//if (forceAll || def.gravity != gravity)				a["gravity"] = gravity;
+		if (forceAll || def.resetHeight != resetHeight)		a["resetHeight"] = resetHeight;
+		if (forceAll || def.spawnPosition != spawnPosition) a["spawnPosition"] = spawnPosition;
+		if (forceAll || def.spawnHeading != spawnHeading)   a["spawnHeading"] = spawnHeading;
+		return a;
+	}
+
+	bool operator!=(SceneConfig other) const {
+		return name != other.name ||
+			//gravity != other.gravity ||
+			resetHeight != other.resetHeight ||
+			spawnPosition != other.spawnPosition ||
+			spawnHeading != other.spawnHeading;
+	}
+};
+
 class TargetViewConfig {
 public:
 	// Target color based on health
@@ -1501,7 +1592,7 @@ public:
 	float           pretrialDuration = 0.5f;					///< Time in ready (pre-trial) state in seconds
 	float           maxTrialDuration = 100000.0f;				///< Maximum time spent in any one trial task
 	float           trialFeedbackDuration = 1.0f;				///< Time in the per-trial feedback state in seconds
-	float			sessionFeedbackDuration = 5.0f;				///< Time in the session feedback state in seconds
+	float			sessionFeedbackDuration = 2.0f;				///< Time in the session feedback state in seconds
 	bool			clickToStart = true;						///< Require a click before starting the first session (spawning the reference target)
 	bool			sessionFeedbackRequireClick = false;		///< Require a click to progress from the session feedback?
 
@@ -1548,6 +1639,12 @@ public:
 	String sessComplete = "Session complete! You scored %totalTimeLeftS!";							///< Session complete feedback message
 	String allSessComplete = "All Sessions Complete!";												///< All sessions complete feedback message
 
+	float fontSize = 20.0f;											///< Default font scale/size
+
+	Color4 color = Color3(0.638f, 1.0f, 0.0f);						///< Color to draw the feedback message foreground
+	Color4 outlineColor = Color4::clear();							///< Color to draw the feedback message background
+	Color4 backgroundColor = Color4(0.0f, 0.0f, 0.0f, 0.5f);		///< Background color
+
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
 		case 1:
@@ -1558,6 +1655,10 @@ public:
 			reader.getIfPresent("blockCompleteFeedback", blockComplete);
 			reader.getIfPresent("sessionCompleteFeedback", sessComplete);
 			reader.getIfPresent("allSessionsCompleteFeedback", allSessComplete);
+			reader.getIfPresent("feedbackColor", color);
+			reader.getIfPresent("feedbackOutlineColor", outlineColor);
+			reader.getIfPresent("feedbackFontSize", fontSize);
+			reader.getIfPresent("feedbackBackgroundColor", backgroundColor);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1574,6 +1675,10 @@ public:
 		if (forceAll || def.blockComplete != blockComplete)		a["blockCompleteFeedback"] = blockComplete;
 		if (forceAll || def.sessComplete != sessComplete)		a["sessionCompleteFeedback"] = sessComplete;
 		if (forceAll || def.allSessComplete != allSessComplete) a["allSessionsCompleteFeedback"] = allSessComplete;
+		if (forceAll || def.color != color)						a["feedbackColor"] = color;
+		if (forceAll || def.outlineColor != outlineColor)		a["feedbackOutlineColor"] = outlineColor;
+		if (forceAll || def.fontSize != fontSize)				a["feedbackFontSize"] = fontSize;
+		if (forceAll || def.backgroundColor != backgroundColor) a["feedbackBackgroundColor"] = backgroundColor;
 		return a;
 	}
 };
@@ -1586,10 +1691,10 @@ public:
 	bool logFrameInfo			= true;		///< Log frame info in table?
 	bool logPlayerActions		= true;		///< Log player actions in table?
 	bool logTrialResponse		= true;		///< Log trial response in table?
-	bool logUsers				= true;		///< Log user infomration in table?
+	bool logUsers				= true;		///< Log user information in table?
 
 	// Session parameter logging
-	Array<String> sessParamsToLog;			///< Parameter names to log to the Sessions table of the DB
+	Array<String> sessParamsToLog = {"frameRate", "frameDelay"};			///< Parameter names to log to the Sessions table of the DB
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {
 		switch (settingsVersion) {
@@ -1600,7 +1705,7 @@ public:
 			reader.getIfPresent("logPlayerActions", logPlayerActions);
 			reader.getIfPresent("logTrialResponse", logTrialResponse);
 			reader.getIfPresent("logUsers", logUsers);
-			reader.getIfPresent("sessParamsToLog", sessParamsToLog);
+			reader.getIfPresent("sessionParametersToLog", sessParamsToLog);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1616,7 +1721,7 @@ public:
 		if(forceAll || def.logPlayerActions != logPlayerActions)			a["logPlayerActions"] = logPlayerActions;
 		if(forceAll || def.logTrialResponse != logTrialResponse)			a["logTrialResponse"] = logTrialResponse;
 		if(forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
-		if(forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessParamsToLog"] = sessParamsToLog;
+		if(forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessionParametersToLog"] = sessParamsToLog;
 		return a;
 	}
 };
@@ -1692,6 +1797,8 @@ public:
 	bool showMenuLogo					= true;							///< Show the FPSci logo in the user menu
 	bool showExperimentSettings			= true;							///< Show the experiment settings options (session/user selection)
 	bool showUserSettings				= true;							///< Show the user settings options (master switch)
+	bool allowSessionChange				= true;							///< Allow the user to change the session with the menu drop-down
+	bool allowUserAdd					= false;						///< Allow the user to add a new user to the experiment
 	bool allowUserSettingsSave			= true;							///< Allow the user to save settings changes
 	bool allowSensitivityChange			= true;							///< Allow in-game sensitivity change		
 	
@@ -1715,6 +1822,8 @@ public:
 			reader.getIfPresent("showMenuLogo", showMenuLogo);
 			reader.getIfPresent("showExperimentSettings", showExperimentSettings);
 			reader.getIfPresent("showUserSettings", showUserSettings);
+			reader.getIfPresent("allowSessionChange", allowSessionChange);
+			reader.getIfPresent("allowUserAdd", allowUserAdd);
 			reader.getIfPresent("allowUserSettingsSave", allowUserSettingsSave);
 			reader.getIfPresent("allowSensitivityChange", allowSensitivityChange);
 			reader.getIfPresent("allowTurnScaleChange", allowTurnScaleChange);
@@ -1741,6 +1850,8 @@ public:
 		if (forceAll || def.showMenuLogo != showMenuLogo)									a["showMenuLogo"] = showMenuLogo;
 		if (forceAll || def.showExperimentSettings != showExperimentSettings)				a["showExperimentSettings"] = showExperimentSettings;
 		if (forceAll || def.showUserSettings != showUserSettings)							a["showUserSettings"] = showUserSettings;
+		if (forceAll || def.allowSessionChange != allowSessionChange)						a["allowSessionChange"] = allowSessionChange;
+		if (forceAll || def.allowUserAdd != allowUserAdd)									a["allowUserAdd"] = allowUserAdd;
 		if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)					a["allowUserSettingsSave"] = allowUserSettingsSave;
 		if (forceAll || def.allowSensitivityChange != allowSensitivityChange)				a["allowSensitivityChange"] = allowSensitivityChange;
 		if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)					a["allowTurnScaleChange"] = allowTurnScaleChange;
@@ -1756,14 +1867,19 @@ public:
 		if (forceAll || def.showMenuBetweenSessions != showMenuBetweenSessions)				a["showMenuBetweenSessions"] = showMenuBetweenSessions;
 		return a;
 	}
+
+	bool allowAnyChange() {
+		return allowSensitivityChange && allowTurnScaleChange &&
+			allowReticleChange && allowReticleIdxChange && allowReticleColorChange && allowReticleSizeChange && allowReticleChangeTimeChange;
+	}
 };
 
 class FpsConfig : public ReferenceCountedObject {
 public:
 	int	            settingsVersion = 1;						///< Settings version
-	String          sceneName = "";							    ///< Scene name
 
 	// Sub structures
+	SceneConfig			scene;									///< Scene related config parameters			
 	RenderConfig		render;									///< Render related config parameters
 	PlayerConfig		player;									///< Player related config parameters
 	HudConfig			hud;									///< HUD related config parameters
@@ -1806,7 +1922,7 @@ public:
 		commands.load(reader, settingsVersion);
 		switch (settingsVersion) {
 		case 1:
-			reader.getIfPresent("sceneName", sceneName);
+			reader.getIfPresent("scene", scene);
 			reader.getIfPresent("weapon", weapon);
 			reader.getIfPresent("questions", questionArray);
 			break;
@@ -1814,13 +1930,20 @@ public:
 			debugPrintf("Settings version '%d' not recognized in FpsConfig.\n", settingsVersion);
 			break;
 		}
+
+		// Warning message for deprecated sceneName parameter
+		String sceneName = "";
+		if (reader.getIfPresent("sceneName", sceneName)) {
+			logPrintf("WARNING: deprecated sceneName parameter found. The value will not be used. Switch to the following:\n");
+			logPrintf("    scene = { name = \"%s\"; };\n", sceneName);
+		}
 	}
 
 	Any toAny(const bool forceAll = false) const {
 		Any a(Any::TABLE);
 		FpsConfig def;
 		a["settingsVersion"] = settingsVersion;
-		if(forceAll || def.sceneName != sceneName) a["sceneName"] = sceneName;
+		if(forceAll || def.scene != scene) a["scene"] = scene;
 		a = render.addToAny(a, forceAll);
 		a = player.addToAny(a, forceAll);
 		a = hud.addToAny(a, forceAll);
@@ -2037,11 +2160,13 @@ public:
 		return nullptr;
 	}
 
-	Array<Array<shared_ptr<TargetConfig>>> getTargetsForSession(const String& id) const {
-		return getTargetsForSession(getSessionIndex(id));
+	// Get target configs by trial (not recommended for repeated calls)
+	Array<Array<shared_ptr<TargetConfig>>> getTargetsByTrial(const String& id) const {
+		return getTargetsByTrial(getSessionIndex(id));
 	}
 
-	Array<Array<shared_ptr<TargetConfig>>> getTargetsForSession(int sessionIndex) const {
+	// Get target configs by trial (not recommended for repeated calls)
+	Array<Array<shared_ptr<TargetConfig>>> getTargetsByTrial(int sessionIndex) const {
 		Array<Array<shared_ptr<TargetConfig>>> trials;
 		// Iterate through the trials
 		for (int i = 0; i < sessions[sessionIndex].trials.size(); i++) {
@@ -2053,6 +2178,22 @@ public:
 			trials.append(targets);
 		}
 		return trials;
+	}
+
+	// Get all targets affiliated with a session (not recommended for repeated calls)
+	Array<shared_ptr<TargetConfig>> getSessionTargets(const String& id) {
+		const int idx = getSessionIndex(id);		// Get session index
+		Array<shared_ptr<TargetConfig>> targets;
+		Array<String> loggedIds;
+		for (auto trial : sessions[idx].trials) {
+			for (String id : trial.ids) {
+				if (!loggedIds.contains(id)) {
+					loggedIds.append(id);
+					targets.append(getTargetConfigById(id));
+				}
+			}
+		}
+		return targets;
 	}
 
 	Any toAny(const bool forceAll = false) const {
@@ -2082,7 +2223,7 @@ public:
 	/** Print the experiment config to the log */
 	void printToLog() {
 		logPrintf("\n-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nTrial Feedback Duration = %f\nPretrial Duration = %f\nMax Trial Task Duration = %f\nMax Clicks = %d\n",
-			description.c_str(), sceneName.c_str(), timing.trialFeedbackDuration, timing.pretrialDuration, timing.maxTrialDuration, weapon.maxAmmo);
+			description.c_str(), scene.name.c_str(), timing.trialFeedbackDuration, timing.pretrialDuration, timing.maxTrialDuration, weapon.maxAmmo);
 		// Iterate through sessions and print them
 		for (int i = 0; i < sessions.size(); i++) {
 			SessionConfig sess = sessions[i];

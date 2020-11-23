@@ -59,7 +59,7 @@ protected:
 
 	int										m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
 	String									m_loadedScene = "";
-	String									m_defaultScene = "FPSci Simple Hallway";	// Default scene to load
+	String									m_defaultSceneName = "FPSci Simple Hallway";	// Default scene to load
 
 	shared_ptr<PythonLogger>				m_pyLogger = nullptr;
 
@@ -69,10 +69,10 @@ protected:
 
     shared_ptr<UserMenu>					m_userSettingsWindow;				///< User settings window
 	bool									m_mouseDirectMode = true;			///< Does the mouse currently have control over the view
-	bool									m_updateUserMenu = false;			///< Semaphore to indicate user settings needs update
 	bool									m_showUserMenu = true;				///< Show the user menu after update?
 
 	bool									m_firstSession = true;
+	UserConfig								m_lastSavedUser;					///< Used to track if user has changed since last save
 
 	shared_ptr<PlayerControls>				m_playerControls;					///< Player controls window (developer mode)
 	shared_ptr<RenderControls>				m_renderControls;					///< Render controls window (developer mode)
@@ -92,11 +92,11 @@ protected:
 	/** Called from onInit */
 	void makeGUI();
 	void updateControls(bool firstSession = false);
+	void loadConfigs();
 	virtual void loadModels();
-	shared_ptr<PlayerEntity> updatePlayer();
-
-	/** Get the player camera */
-	shared_ptr<Camera> playerCamera() {  return scene()->typedEntity<Camera>("playerCamera"); }
+	/** Initializes player settings from configs and resets player to initial position 
+		Also updates mouse sensitivity. */
+	void initPlayer();
 
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {
@@ -110,7 +110,7 @@ protected:
 	/** Set the scoped view (and also adjust the turn scale), use setScopeView(!weapon->scoped()) to toggle scope */
 	void setScopeView(bool scoped = true);
 
-	void hitTarget(shared_ptr<TargetEntity>);
+	void hitTarget(shared_ptr<TargetEntity> target);
 	void missEvent();
 
 	virtual void drawHUD(RenderDevice *rd);
@@ -149,15 +149,19 @@ public:
 	shared_ptr<DialogBase>			dialog;							///< Dialog box
 
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
-	const int											modelScaleCount = 30;
 
-	shared_ptr<Session> sess;										///< Pointer to the experiment
+	shared_ptr<Session> sess;					///< Pointer to the experiment
+	shared_ptr<Camera> playerCamera;			///< Pointer to the player camera						
 
-	bool renderFPS = false;				///< Control flag used to draw (or not draw) FPS information to the display	
-	int  displayLagFrames = 0;			///< Count of frames of latency to add
-	float lastSetFrameRate = 0.0f;		///< Last set frame rate
-	const int numReticles = 55;			///< Total count of reticles available to choose from
-	float sceneBrightness = 1.0f;		///< Scene brightness scale factor
+	bool		renderFPS			= false;	///< Control flag used to draw (or not draw) FPS information to the display	
+	int			displayLagFrames	= 0;		///< Count of frames of latency to add
+	float		lastSetFrameRate	= 0.0f;		///< Last set frame rate
+	const int	numReticles			= 55;		///< Total count of reticles available to choose from
+	float		sceneBrightness		= 1.0f;		///< Scene brightness scale factor
+
+	bool		buttonUp			= true;		///< Pass button up to session
+	bool		frameToggle			= false;	///< Simple toggle flag used for frame rate click-to-photon monitoring
+	bool		updateUserMenu		= false;	///< Semaphore to indicate user settings needs update
 
 	Vector2 displayRes;
 
@@ -177,26 +181,20 @@ public:
 	}
 
     /** callbacks for saving user status and config */
-	void saveUserConfig(void) {
-		userTable.save(startupConfig.userConfigFilename);
-		logPrintf("User table saved.\n");			// Print message to log
-	}
-	void saveUserStatus(void) { 
-		userStatusTable.save(startupConfig.userStatusFilename); 
-		logPrintf("User status saved.\n");
-	}
+	void saveUserConfig(bool onDiff);
+	void saveUserConfig() { saveUserConfig(false); }
+	void saveUserStatus(void);
 
 	// Pass throughts to user settings window (for now)
 	Array<String> updateSessionDropDown(void) { return m_userSettingsWindow->updateSessionDropDown(); }
 	shared_ptr<UserConfig> const currentUser(void) {  return userTable.getUserById(userStatusTable.currentUser); }
 
 	void markSessComplete(String id);
-	void updateSessionPress(void);
-	void updateSession(const String& id);
-
+	/** Updates experiment state to the provided session id and updates player parameters (including mouse sensitivity) */
+	virtual void updateSession(const String& id);
 	void updateParameters(int frameDelay, float frameRate);
 	void updateShaderBuffers();
-	
+	void updateTargetColor(const shared_ptr<TargetEntity>& target);
 	void presentQuestion(Question question);
 
     void quitRequest();
@@ -226,8 +224,6 @@ public:
 	virtual void onCleanup() override;
     virtual void oneFrame() override;
 
-	bool							m_buttonUp = true;
-	bool							m_frameToggle = false;		///< Simple toggle flag used for frame rate click-to-photon monitoring
 };
 
 // The "old" way of animation

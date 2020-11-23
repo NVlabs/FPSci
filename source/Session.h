@@ -111,7 +111,9 @@ protected:
 	Scene* m_scene = nullptr;							///< Pointer to the scene
 	
 	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
-	shared_ptr<FPSciLogger> m_logger;					///< Output results logger
+	
+	String m_dbFilename;								///< Filename for output logging (less the .db extension)
+
 	shared_ptr<PlayerEntity> m_player;					///< Player entity
 	shared_ptr<Camera> m_camera;						///< Camera entity
 
@@ -126,7 +128,6 @@ protected:
 
 	// Target management
 	Table<String, Array<shared_ptr<ArticulatedModel>>>* m_targetModels;
-	int m_modelScaleCount;
 	int m_lastUniqueID = 0;									///< Counter for creating unique names for various entities
 	
 	Array<shared_ptr<TargetEntity>> m_targetArray;			///< Array of drawn targets
@@ -137,6 +138,7 @@ protected:
 	int m_currTrialIdx;										///< Current trial
 	int m_currQuestionIdx = -1;								///< Current question index
 	Array<int> m_remainingTrials;							///< Completed flags
+	Array<int> m_completedTrials;								///< Count of completed trials
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
 	// Time-based parameters
@@ -312,6 +314,7 @@ protected:
 
 public:
 	float initialHeadingRadians = 0.0f;
+	shared_ptr<FPSciLogger> logger;					///< Output results logger
 
 	static shared_ptr<Session> create(FPSciApp* app) {
 		return createShared<Session>(app);
@@ -372,7 +375,7 @@ public:
 	void accumulatePlayerAction(PlayerActionType action, String target="");
 	bool canFire();
 
-	bool updateBlock(bool updateTargets = false);
+	bool updateBlock(bool init = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
 	enum PresentationState currentState;			///< Current presentation state

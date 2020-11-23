@@ -16,6 +16,7 @@ Features include:
 * Dynamic brightness (exposure) control
 * Waypoint-based [target path creation](./patheditor.md)
 * Initialization of player position and view direction
+* Dynamic config reload in app via the `reloadConfigs` mapped key
 
 ## Enabling Developer Mode
 As mentioned above, all that needs to be done to enabled developer mode is modifying the `developerMode` field in [`startupconfig.Any`](../data-files/startupconfig.Any) to `True`, then running the application to enter developer mode.

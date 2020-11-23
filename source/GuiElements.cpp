@@ -199,9 +199,9 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 	moveTo(Vector2(440, 300));
 }
 
-RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
+RenderControls::RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
 	const shared_ptr<GuiTheme>& theme, const int maxFrameDelay, const float minFrameRate, const float maxFrameRate, float width, float height) :
-	GuiWindow("Render Controls", theme, Rect2D::xywh(5,5,width,height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
+	GuiWindow("Render Controls", theme, Rect2D::xywh(5,5,width,height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_app(app)
 {
 	// Create the GUI pane
 	GuiPane* pane = GuiWindow::pane();
@@ -220,7 +220,6 @@ RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& dr
 		drawPane->addCheckBox("Show Health", &(config.hud.showPlayerHealthBar));
 	} drawPane->endRow();
 
-	
 	auto framePane = pane->addPane("Frame Rate/Delay");
 	framePane->beginRow(); {
 		framePane->addCheckBox("Show FPS", &drawFps);
@@ -235,62 +234,17 @@ RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& dr
 		c->setWidth(width*0.95f);
 	}framePane->endRow();
 
-
-	auto reticlePane = pane->addPane("Reticle");
-	reticlePane->beginRow(); {
-		auto c = reticlePane->addNumberBox("Reticle", &(user.reticleIndex), "", GuiTheme::LINEAR_SLIDER, 0, numReticles, 1);
-		c->setWidth(width*0.95f);
-	} reticlePane->endRow();
-
-	reticlePane->beginRow(); {
-		auto c = reticlePane->addNumberBox("Reticle Scale Min", &(user.reticleScale[0]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
-		c->setCaptionWidth(120.0f);
-		c->setWidth(width*0.95f);
-	} reticlePane->endRow();
-
-	reticlePane->beginRow(); {
-		auto c = reticlePane->addNumberBox("Reticle Scale Max", &(user.reticleScale[1]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
-		c->setCaptionWidth(120.0f);
-		c->setWidth(width*0.95f);
-	} reticlePane->endRow();
-
-	reticlePane->beginRow(); {
-		auto l = reticlePane->addLabel("Reticle Color Min");
-		l->setWidth(100.0f);
-		auto c = reticlePane->addSlider("R", &(user.reticleColor[0].r), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("G", &(user.reticleColor[0].g), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("B", &(user.reticleColor[0].b), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("A", &(user.reticleColor[0].a), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-	} reticlePane->endRow();
-	reticlePane->beginRow(); {
-		auto l = reticlePane->addLabel("Reticle Color Max");
-		l->setWidth(100.0f);
-		auto c = reticlePane->addSlider("R", &(user.reticleColor[1].r), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("G", &(user.reticleColor[1].g), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("B", &(user.reticleColor[1].b), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-		c = reticlePane->addSlider("A", &(user.reticleColor[1].a), 0.0f, 1.0f);
-		c->setCaptionWidth(10.0f);
-		c->setWidth(80.0f);
-	} reticlePane->endRow();
-	reticlePane->beginRow(); {
-		auto c = reticlePane->addNumberBox("Reticle Change Time", &(user.reticleChangeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
-		c->setCaptionWidth(150.0f);
-		c->setWidth(width*0.95f);
-	} reticlePane->endRow();
+	auto menuPane = pane->addPane("User Menu");
+	menuPane->beginRow(); {
+		m_storedMenuConfig.allowReticleChange = true;
+		m_storedMenuConfig.allowReticleChangeTimeChange = true;
+		m_showFullUserMenuBtn = menuPane->addButton("Show Full User Menu", this, &RenderControls::updateUserMenu);
+		if (config.menu.allowAnyChange()) {
+			// Default setup already allows any change
+			m_showFullUserMenuBtn->setEnabled(false);
+			m_showFullUserMenu = true;
+		}
+	} menuPane->endRow();
 
 	auto otherPane = pane->addPane("Other");
 	otherPane->beginRow();{
@@ -300,6 +254,21 @@ RenderControls::RenderControls(SessionConfig& config, UserConfig& user, bool& dr
 
 	pack();
 	moveTo(Vector2(0, 300));
+}
+
+void RenderControls::updateUserMenu() {
+	MenuConfig tmp = m_app->sessConfig->menu;		// Store current config
+	m_app->sessConfig->menu = m_storedMenuConfig;	// Swap the config w/ the stored version
+	if (!m_showFullUserMenu) {
+		m_showFullUserMenu = true;
+		m_showFullUserMenuBtn->setCaption("Hide Full User Menu");
+	}
+	else {
+		m_showFullUserMenu = false;
+		m_showFullUserMenuBtn->setCaption("Show Full User Menu");
+	}
+	m_storedMenuConfig = tmp;						// Update the stored config
+	m_app->updateUserMenu = true;					// Set the semaphore to update the user menu
 }
 
 WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width, float height) : 
@@ -370,11 +339,22 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 		m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
 		m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
 	} m_expPane->endRow();
+	if (m_config.allowUserAdd) {
+		m_expPane->beginRow(); {
+			m_expPane->addTextBox("New User", &m_newUser);
+			m_expPane->addButton("+", this, &UserMenu::addUserPress)->setWidth(20.0f);
+			m_newUserFeedback = m_expPane->addLabel("");
+			m_newUserFeedback->setWidth(70.f);
+		} m_expPane->endRow();
+	}
+	GuiButton* addBtn;
 	m_expPane->beginRow(); {
 		m_sessDropDown = m_expPane->addDropDownList("Session", Array<String>({}), &m_ddCurrSessIdx);
 		updateSessionDropDown();
-		m_expPane->addButton("Select Session", this, &UserMenu::updateSessionPress);
+		addBtn = m_expPane->addButton("Select Session", this, &UserMenu::updateSessionPress);
 	} m_expPane->endRow();
+	m_sessDropDown->setVisible(m_config.allowSessionChange);
+	addBtn->setVisible(m_config.allowSessionChange);
 
 	// Hide the experiment settings if not requested to be drawn
 	if (!config.showExperimentSettings) { 
@@ -418,39 +398,54 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 	m_currentUserPane->beginRow(); {
 		m_currentUserPane->addLabel(format("Current User: %s", user.id.c_str()))->setHeight(30.0);
 	} m_currentUserPane->endRow();
-	m_currentUserPane->beginRow(); {
-		m_currentUserPane->addLabel(format("Mouse DPI: %f", user.mouseDPI));
-	} m_currentUserPane->endRow();
-	m_currentUserPane->beginRow(); {
-		auto sensitivityNb = m_currentUserPane->addNumberBox("Mouse 360", &(user.cmp360), "cm", GuiTheme::LINEAR_SLIDER, 0.2, 100.0, 0.2);
-		sensitivityNb->setWidth(300.0);
-		sensitivityNb->setEnabled(config.allowSensitivityChange);
-	} m_currentUserPane->endRow();
 
+	const double captionWidth = 70.0;
+	const double unitSize = 50.0;
+	auto sensPane = m_currentUserPane->addPane("Mouse Settings", GuiTheme::ORNATE_PANE_STYLE);
+	sensPane->beginRow(); {
+		auto dpiDisplay = sensPane->addNumberBox("DPI", &user.mouseDPI, "", GuiTheme::NO_SLIDER, 1.0, 100000.0, 1.0);
+		dpiDisplay->setCaptionWidth(captionWidth);
+		dpiDisplay->setWidth(150.0);
+		dpiDisplay->setEnabled(false);
+	} sensPane->endRow();
+	sensPane->beginRow(); {
+		auto sensitivityNb = sensPane->addNumberBox("Sensitivity", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.01, 100.0, 0.01);
+		sensitivityNb->setWidth(300.0);
+		sensitivityNb->setCaptionWidth(captionWidth);
+		sensitivityNb->setUnitsSize(unitSize);
+		sensitivityNb->setEnabled(config.allowSensitivityChange);
+	} sensPane->endRow();
+	sensPane->beginRow(); {
+		auto cmp360Nb = sensPane->addNumberBox("", &m_cmp360, "cm/360°", GuiTheme::NO_SLIDER, 0.0, 3600.0, 0.1);
+		cmp360Nb->setWidth(180.0);
+		cmp360Nb->setCaptionWidth(captionWidth);
+		cmp360Nb->setUnitsSize(unitSize);
+		cmp360Nb->setEnabled(false);
+	} sensPane->endRow();
 	if (config.allowTurnScaleChange) {
 		// X turn scale
 		if (config.xTurnScaleAdjustMode != "None") {
-			m_currentUserPane->beginRow(); {
-				m_currentUserPane->addNumberBox("Turn Scale X", &(user.turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
-			} m_currentUserPane->endRow();
+			sensPane->beginRow(); {
+				sensPane->addNumberBox("Turn Scale X", &(user.turnScale.x), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
+			} sensPane->endRow();
 		}
 		// Y turn scale
 		if (config.yTurnScaleAdjustMode != "None") {
-			m_currentUserPane->beginRow(); {
+			sensPane->beginRow(); {
 				if (config.yTurnScaleAdjustMode == "Slider") {
-					m_currentUserPane->addNumberBox("Turn Scale Y", &(user.turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
+					sensPane->addNumberBox("Turn Scale Y", &(user.turnScale.y), "x", GuiTheme::LINEAR_SLIDER, -10.0f, 10.0f, 0.1f)->setWidth(m_sliderWidth);
 				}
 				else if (config.yTurnScaleAdjustMode == "Invert") {
-					m_currentUserPane->addCheckBox("Invert Y", &(user.invertY));
+					sensPane->addCheckBox("Invert Y", &(user.invertY));
 
 				}
-			} m_currentUserPane->endRow();
+			} sensPane->endRow();
 		}
 	}
 
 	// Reticle configuration
 	if (config.allowReticleChange) {
-		auto reticleControlPane = m_currentUserPane->addPane("Reticle Control");
+		auto reticleControlPane = m_currentUserPane->addPane("Reticle Control", GuiTheme::ORNATE_PANE_STYLE);
 		const float reticleCaptionWidth = 120.f;
 
 		// Reticle index selection
@@ -541,7 +536,6 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 	}
 
 	m_currentUserPane->pack();
-	pack();
 }
 
 Array<String> UserMenu::updateSessionDropDown() {
@@ -611,6 +605,49 @@ void UserMenu::updateUserPress() {
 	}
 }
 
+void UserMenu::addUserPress() {
+	// Check for unique user name requirement
+	if (m_newUser.empty()) {
+		m_newUserFeedback->setCaption("Empty!");
+		return;
+	}
+	else if (m_users.requireUnique && m_users.getIds().contains(m_newUser)) {
+		m_newUser = "";
+		m_newUserFeedback->setCaption("In use!");
+		return;
+	}
+	m_newUserFeedback->setCaption("");		// Clear the user feedback caption on success
+
+	// Create new user config
+	UserConfig user = m_users.defaultUser;
+	user.id = m_newUser;
+	
+	// Add user config to table and save
+	m_users.users.append(user);
+	m_app->saveUserConfig();
+
+	// Create new user status
+	UserSessionStatus status = m_userStatus.userInfo.last();		// Start by coping over last user
+	status.id = m_newUser;											// Update the user ID
+	status.completedSessions.clear();								// Empty any completed sessions from previous user
+	// Inherit default session order (if available)
+	if (m_userStatus.defaultSessionOrder.length() > 0) { status.sessionOrder = m_userStatus.defaultSessionOrder;  }
+	// Randomize if requested
+	if (m_userStatus.randomizeDefaults) { status.sessionOrder.randomize(); }
+	
+	// Add user status, set as current, and save
+	m_userStatus.userInfo.append(status);
+	m_userStatus.currentUser = m_newUser;
+	m_app->saveUserStatus();
+
+	logPrintf("Added new user: %s\n", m_newUser);
+
+	// Add user to dropdown then update the user/session
+	m_userDropDown->append(m_newUser);
+	m_ddCurrUserIdx = m_users.users.length() - 1;
+	updateUserPress();
+}
+
 void UserMenu::updateReticlePreview() {
 	if (!m_reticlePreviewPane) return;
 	// Clear the pane
@@ -636,14 +673,21 @@ void UserMenu::updateReticlePreview() {
 	preview->setSize(m_reticlePreviewSize);
 	preview->zoomToFit();
 	m_reticlePreviewPane->pack();
+	m_currentUserPane->pack();
 }
 
 void UserMenu::updateSessionPress() {
 	m_app->updateSession(selectedSession());
 }
 
+void UserMenu::updateCmp360() {
+	const UserConfig user = m_users.users[m_users.getUserIndex(m_userStatus.currentUser)];
+	m_cmp360 = 36.0/user.mouseDegPerMm;
+}
+
 void UserMenu::setVisible(bool enable) {
 	GuiWindow::setVisible(enable);
-	// Set view control (direct) vs pointer (indirect) based on window visibility
-	m_app->setDirectMode(!enable);
+	if (!m_app->dialog) {					// Don't allow the user menu to hide the mouse when a dialog box is open
+		m_app->setDirectMode(!enable);		// Set view control (direct) vs pointer (indirect) based on window visibility
+	}
 }
