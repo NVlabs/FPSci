@@ -520,7 +520,7 @@ These flags control whether various information is written to the output databas
 "logToSingleDb" = false,
 ```
 
-*Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user].db"`. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues.
+*Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user]_[experiment config hash].db"`. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues. The experiment config hash takez into account only "valid" settings and ignores formatting only changes in the configuration file.
 
 ## Command Config
 In addition to the programmable behavior above the general config also supports running of arbitrary commands around the FPSci runtime. Note that the "end" commands keep running and there's the potential for orphaned processes if you specify commands that are long running or infinite. The command options include:
