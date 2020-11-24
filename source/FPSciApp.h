@@ -61,6 +61,8 @@ protected:
 	String									m_loadedScene = "";
 	String									m_defaultSceneName = "FPSci Simple Hallway";	// Default scene to load
 
+	String									m_expConfigHash;					///< String hash of experiment config file
+
 	shared_ptr<PythonLogger>				m_pyLogger = nullptr;
 
 	/** When m_displayLagFrames > 0, 3D frames are delayed in this queue */
