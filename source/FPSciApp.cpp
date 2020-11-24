@@ -335,15 +335,25 @@ void FPSciApp::showWeaponControls() {
 }
 
 void FPSciApp::presentQuestion(Question question) {
+	currentQuestion = question;						// Store this for processing key-bound presses
+	Array<String> options = question.options;		// Make a copy of the options (to add key binds if necessary)
+	const Rect2D windowRect = window()->clientRect();
+	const Point2 size = question.fullscreen ? Point2(windowRect.width(), windowRect.height()) : Point2(400, 200);
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
-		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title, true);
+		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
+			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+		}
+		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, true, 3, size, !question.fullscreen);
 		break;
 	case Question::Type::Entry:
-		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false);
+		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false, size, !question.fullscreen);
 		break;
 	case Question::Type::Rating:
-		dialog = RatingDialog::create(question.prompt, question.options, theme, question.title, true);
+		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
+			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+		}
+		dialog = RatingDialog::create(question.prompt, options, theme, question.title, true, size, !question.fullscreen);
 		break;
 	default:
 		throw "Unknown question type!";
@@ -352,7 +362,7 @@ void FPSciApp::presentQuestion(Question question) {
 
 	moveToCenter(dialog);
 	addWidget(dialog);
-	setDirectMode(false);
+	setDirectMode(!question.showCursor);
 }
 
 void FPSciApp::markSessComplete(String sessId) {
@@ -812,7 +822,18 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			quitRequest();
 			return true;
 		}
-		else if (activeCamera() == playerCamera) {
+		else if (notNull(dialog) && !dialog->complete) {		// If we have an open, incomplete dialog, check for key bound question responses
+			// Handle key presses to redirect towards dialog
+			for (int i = 0; i < currentQuestion.optionKeys.length(); i++) {
+				if (currentQuestion.optionKeys[i] == ksym) {
+					dialog->result = currentQuestion.options[i];
+					dialog->complete = true;
+					dialog->setVisible(false);
+					foundKey = true;
+				}
+			}
+		}
+		else if (activeCamera() == playerCamera && !foundKey) {
 			// Override 'q', 'z', 'c', and 'e' keys (unused)
 			// THIS IS A PROBLEM IF THESE ARE KEY MAPPED!!!
 			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
