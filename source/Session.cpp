@@ -310,13 +310,12 @@ void Session::updatePresentationState()
 								if (m_config->logger.enable) {
 									logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
 								}
-								m_currQuestionIdx++;																// Present the next question (if there is one)
+								m_currQuestionIdx++;																
 								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
-									m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
+									m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);				// Present the next question (if there is one)
 								}
 								else {
-									// Null the dialog pointer when all questions complete
-									m_app->dialog = nullptr;
+									m_app->dialog.reset();															// Null the dialog pointer when all questions complete
 								}
 							}
 							else {

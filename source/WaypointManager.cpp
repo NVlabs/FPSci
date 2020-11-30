@@ -312,6 +312,7 @@ void WaypointManager::updatePlayerPosition(Point3 pos) {
 void WaypointManager::updateControls(){
 	// Setup the waypoint config/display
 	WaypointDisplayConfig config = WaypointDisplayConfig();
+	if (notNull(m_waypointControls)) m_app->removeWidget(m_waypointControls);
 	m_waypointControls = WaypointDisplay::create(m_app, m_app->theme, config, (shared_ptr<Array<Destination>>)&m_waypoints);
 	m_waypointControls->setVisible(false);
 	m_app->addWidget(m_waypointControls);
