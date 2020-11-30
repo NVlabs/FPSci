@@ -339,6 +339,8 @@ void FPSciApp::showWeaponControls() {
 }
 
 void FPSciApp::presentQuestion(Question question) {
+	if (notNull(dialog)) removeWidget(dialog);		// Remove the current dialog widget (if valid)
+
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
 		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title, true);
