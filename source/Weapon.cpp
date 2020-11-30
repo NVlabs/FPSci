@@ -202,7 +202,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 {
 	static RealTime lastTime;
 	Ray ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
-	const float spread = m_config->fireSpread * 2.f * pif() / 360.f;
+	const float spread = m_config->fireSpreadDegrees * 2.f * pif() / 360.f;
 
 	// Apply random rotation (for fire spread)
 	Matrix3 rotMat = Matrix3::fromEulerAnglesXYZ(0.f,0.f,0.f);
