@@ -198,11 +198,17 @@ shared_ptr<TargetEntity> Weapon::fire(
 	int& targetIdx, 
 	float& hitDist, 
 	Model::HitInfo& hitInfo, 
-	Array<shared_ptr<Entity>>& dontHit)
+	Array<shared_ptr<Entity>>& dontHit,
+	bool dummyShot)
 {
 	static RealTime lastTime;
 	Ray ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
-	const float spread = m_config->fireSpreadDegrees * 2.f * pif() / 360.f;
+	float spread = m_config->fireSpreadDegrees * 2.f * pif() / 360.f;
+
+	// ignore bullet spread on dummy targets
+	if (dummyShot) {
+		spread = 0.f;
+	}
 
 	// Apply random rotation (for fire spread)
 	Matrix3 rotMat = Matrix3::fromEulerAnglesXYZ(0.f,0.f,0.f);

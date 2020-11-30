@@ -1278,7 +1278,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 						float hitDist = finf();
 						int hitIdx = -1;
 
-						shared_ptr<TargetEntity> target = m_weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
+						shared_ptr<TargetEntity> target = m_weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
 						if (isNull(target)) // Miss case
 						{
 							// Play scene hit sound
@@ -1316,7 +1316,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 			Model::HitInfo info;
 			float hitDist = finf();
 			int hitIdx = -1;
-			shared_ptr<TargetEntity> target = m_weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
+			shared_ptr<TargetEntity> target = m_weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
 		}
 	}
 

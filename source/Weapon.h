@@ -107,7 +107,8 @@ public:
 		int& targetIdx,
 		float& hitDist, 
 		Model::HitInfo& hitInfo, 
-		Array<shared_ptr<Entity>>& dontHit);
+		Array<shared_ptr<Entity>>& dontHit,
+		bool dummyShot);
 
 	void onPose(Array<shared_ptr<Surface> >& surface);
 
