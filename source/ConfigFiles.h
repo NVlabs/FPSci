@@ -1077,6 +1077,9 @@ public:
 			if (!reader.getIfPresent("count", count)) {
 				count = defaultCount;
 			}
+			if(count < 1) {
+				throw format("Trial count < 1 not allowed! (%d count for trial with targets: %s)", count, Any(ids).unparse());
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
