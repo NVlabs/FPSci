@@ -442,6 +442,7 @@ class UserTable {
 public:
 
 	bool					requireUnique = true;			///< Require users to be unique by ID
+	UserConfig				defaultUser;					///< Default user settings to use for new user
 	Array<UserConfig>		users = {};						///< A list of valid users
 
 	UserTable() {};
@@ -455,6 +456,7 @@ public:
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("requireUnique", requireUnique);
+			reader.getIfPresent("defaultUser", defaultUser);
 			reader.get("users", users, "Issue in the (required) \"users\" array in the user config file!");
 			// Unique user check (if required)
 			if (requireUnique) {
@@ -1075,6 +1077,9 @@ public:
 			if (!reader.getIfPresent("count", count)) {
 				count = defaultCount;
 			}
+			if(count < 1) {
+				throw format("Trial count < 1 not allowed! (%d count for trial with targets: %s)", count, Any(ids).unparse());
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -1098,11 +1103,15 @@ public:
 		Entry,
 		Rating
 	};
+
 	Type type = Type::None;
 	String prompt = "";
 	Array<String> options;
+	Array<GKey> optionKeys;
 	String title = "Feedback";
 	String result = "";
+	bool fullscreen = false;
+	bool showCursor = true;
 
 	Question() {};
 
@@ -1136,6 +1145,17 @@ public:
 			// Get the question prompt (required) and title (optional)
 			reader.get("prompt", prompt, "A \"prompt\" field must be provided with every question!");
 			reader.getIfPresent("title", title);
+			reader.getIfPresent("fullscreen", fullscreen);
+			reader.getIfPresent("showCursor", showCursor);
+
+			// Handle (optional) key binds for options (if provided)
+			if (type == Type::Rating || type == Type::MultipleChoice) {
+				reader.getIfPresent("optionKeys", optionKeys);
+				// Check length of option keys matches length of options (if provided)
+				if (optionKeys.length() > 0 && optionKeys.length() != options.length()) {
+					throw format("Length of \"optionKeys\" (%d) did not match \"options\" (%d) for question!", optionKeys.length(), options.length());
+				}
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in Question.\n", settingsVersion);
@@ -1786,6 +1806,7 @@ public:
 	bool showMenuLogo					= true;							///< Show the FPSci logo in the user menu
 	bool showExperimentSettings			= true;							///< Show the experiment settings options (session/user selection)
 	bool showUserSettings				= true;							///< Show the user settings options (master switch)
+	bool allowSessionChange				= true;							///< Allow the user to change the session with the menu drop-down
 	bool allowUserAdd					= false;						///< Allow the user to add a new user to the experiment
 	bool allowUserSettingsSave			= true;							///< Allow the user to save settings changes
 	bool allowSensitivityChange			= true;							///< Allow in-game sensitivity change		
@@ -1810,6 +1831,7 @@ public:
 			reader.getIfPresent("showMenuLogo", showMenuLogo);
 			reader.getIfPresent("showExperimentSettings", showExperimentSettings);
 			reader.getIfPresent("showUserSettings", showUserSettings);
+			reader.getIfPresent("allowSessionChange", allowSessionChange);
 			reader.getIfPresent("allowUserAdd", allowUserAdd);
 			reader.getIfPresent("allowUserSettingsSave", allowUserSettingsSave);
 			reader.getIfPresent("allowSensitivityChange", allowSensitivityChange);
@@ -1837,6 +1859,7 @@ public:
 		if (forceAll || def.showMenuLogo != showMenuLogo)									a["showMenuLogo"] = showMenuLogo;
 		if (forceAll || def.showExperimentSettings != showExperimentSettings)				a["showExperimentSettings"] = showExperimentSettings;
 		if (forceAll || def.showUserSettings != showUserSettings)							a["showUserSettings"] = showUserSettings;
+		if (forceAll || def.allowSessionChange != allowSessionChange)						a["allowSessionChange"] = allowSessionChange;
 		if (forceAll || def.allowUserAdd != allowUserAdd)									a["allowUserAdd"] = allowUserAdd;
 		if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)					a["allowUserSettingsSave"] = allowUserSettingsSave;
 		if (forceAll || def.allowSensitivityChange != allowSensitivityChange)				a["allowSensitivityChange"] = allowSensitivityChange;

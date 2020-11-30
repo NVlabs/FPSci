@@ -230,7 +230,10 @@ Questions are configured on a per experiment/session basis using the `questions`
 |`type`                 |`String`| The question type (required), can be `"MultipleChoice"`, `Rating`, or (text) `"Entry"`      |
 |`prompt`               |`String`| The question prompt (required), a string to present the user with                |
 |`title`                |`String`| The title for the feedback prompt                                                |
-|`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only           |
+|`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only          |
+|`optionKeys`           |`Array<GKey>`  | An array of `GKey` options in 1:1 correspondence with `options` above. Leave empty for no keybinds. Check [here](keymap.md#gkey-string) for strings to use for `GKey`s. |
+|`fullscreen`           |`bool`  | When set this opens the dialog in "fullscreen" mode, overlaying all of the rendered content (default is `false`) |
+|`showCursor`           |`bool`  | Allows the experiment designer to hide the cursor while responding to this dialog (default is `true`). Best used with `optionKeys` set otherwise there may be no way to answer the question. Not intended for use with `"Entry"` question types. |
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
 
@@ -244,7 +247,10 @@ The user can specify one or more questions using the `questions` array, as demon
     {
         "type": "MultipleChoice",
         "prompt": "Choose an option!",
-        "options": ["A", "B", "C"]
+        "options": ["1", "2", "3"],
+        "optionKeys" : ["A", "B", "C"],
+        "fullscreen": true,
+        "showCursor" : false,
     }
 ]
 ```
@@ -460,6 +466,7 @@ These flags control the display of the in-game user menu:
 |`showMenuLogo`                     |`bool`     |Show a logo at the top of the menu (currently `materials/FPSciLogo.png`) |
 |`showExperimentSettings`           |`bool`     |Show the options to select user/session                                |
 |`showUserSettings`                 |`bool`     |Show the per-user customization (sensitivity, reticle, etc) options    |
+|`allowSessionChange`               |`bool`     |Allow users to change the session using a user menu dropdown           |
 |`allowUserAdd`                     |`bool`     |Allow users to add new users to the experiment                         |
 |`allowUserSettingsSave`            |`bool`     |Allow the user to save their settings from the menu                    |
 |`allowSensitivityChange`           |`bool`     |Allow the user to change their (cm/360) sensitivity value from the menu|
@@ -479,6 +486,7 @@ These flags control the display of the in-game user menu:
 "showMenuLogo": true,                   // Show the logo
 "showExperimentSettings" : true,        // Allow user/session seleciton
 "showUserSettings": true,               // Show the user settings
+"allowSessionChange": true,             // Allow the user to change sessions using the menu dropdown
 "allowUserAdd": false,                  // Don't allow new user add by default
 "allowUserSettingsSave": true,          // Allow the user to save their settings changes
 "allowSensitivityChange": true,         // Allow the user to change the cm/360 sensitivity

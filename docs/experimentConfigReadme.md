@@ -36,7 +36,7 @@ In addition to these general parameters each session also has a few unique param
     * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided).
     * `trials` is a list of trials referencing the `trials` table above:
         * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
-        * `count` provides the number of trials in this session
+        * `count` provides the number of trials in this session (should always be an integer strictly greater than 0)
 
 #### Session Configuration Example
 An example session configuration snippet is included below:

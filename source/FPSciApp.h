@@ -136,6 +136,7 @@ public:
 	
 	shared_ptr<SessionConfig>		sessConfig = SessionConfig::create();			///< Current session config
 	shared_ptr<DialogBase>			dialog;							///< Dialog box
+	Question						currentQuestion;				///< Currently presented question
 
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
 
