@@ -213,13 +213,13 @@ shared_ptr<TargetEntity> Weapon::fire(
 	// Apply random rotation (for fire spread)
 	Matrix3 rotMat = Matrix3::fromEulerAnglesXYZ(0.f,0.f,0.f);
 	if (m_config->fireSpreadShape == "uniform") {
-		rotMat = Matrix3::fromEulerAnglesXYZ(0, m_rand.uniform(-spread / 2, spread / 2), m_rand.uniform(-spread / 2, spread / 2));
+		rotMat = Matrix3::fromEulerAnglesXYZ(m_rand.uniform(-spread / 2, spread / 2), m_rand.uniform(-spread / 2, spread / 2), 0);
 	}
 	else if (m_config->fireSpreadShape == "gaussian") {
-		rotMat = Matrix3::fromEulerAnglesXYZ(0, m_rand.gaussian(0, spread / 3), m_rand.gaussian(0, spread / 3));
+		rotMat = Matrix3::fromEulerAnglesXYZ(m_rand.gaussian(0, spread / 3), m_rand.gaussian(0, spread / 3), 0);
 	}
-	Vector3 dir = ray.direction() * rotMat;
-	ray.set(ray.origin(), dir);
+	Vector3 dir = Vector3(0.f, 0.f, -1.f) * rotMat;
+	ray.set(ray.origin(), m_camera->frame().rotation * dir);
 
 	// Check for closest hit (in scene, otherwise this ray hits the skybox)
 	float closest = finf();
