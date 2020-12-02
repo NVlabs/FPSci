@@ -96,6 +96,8 @@ protected:
 	RealTime								m_hitDecalTimeRemainingS = 0.f;		///< Remaining duration to show the decal for
 	Array<shared_ptr<VisibleEntity>>		m_currentMissDecals;				///< Pointers to miss decals
 
+	Random									m_rand;
+
 public:
 	static shared_ptr<Weapon> create(WeaponConfig* config, shared_ptr<Scene> scene, shared_ptr<Camera> cam) {
 		return createShared<Weapon>(config, scene, cam);
@@ -105,7 +107,8 @@ public:
 		int& targetIdx,
 		float& hitDist, 
 		Model::HitInfo& hitInfo, 
-		Array<shared_ptr<Entity>>& dontHit);
+		Array<shared_ptr<Entity>>& dontHit,
+		bool dummyShot);
 
 	void onPose(Array<shared_ptr<Surface> >& surface);
 
