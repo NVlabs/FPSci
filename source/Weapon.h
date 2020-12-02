@@ -153,6 +153,7 @@ public:
 
 	void simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntity>>& targets, const Array<shared_ptr<Entity>>& dontHit = {});
 	void drawDecal(const Point3& point, const Vector3& normal, bool hit = false);
+	void clearDecals();
 	void loadDecals();
 	void loadModels();
 

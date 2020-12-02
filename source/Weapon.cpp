@@ -178,10 +178,12 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	decalFrame.lookAt(decalFrame.translation - normal);
 
 	// If we have the maximum amount of decals remove the oldest one
-	if (!hit && m_currentMissDecals.size() == m_config->missDecalCount) {
-		shared_ptr<VisibleEntity> lastDecal = m_currentMissDecals.pop();
-		m_scene->remove(lastDecal);
+	if (!hit) {
+		while (m_currentMissDecals.size() >= m_config->missDecalCount) {
+			m_scene->remove(m_currentMissDecals.pop());
+		}
 	}
+	// Handle hit decal here (only show 1 at a time)
 	else if (hit && notNull(m_hitDecal)) {
 		m_scene->remove(m_hitDecal);
 	}
@@ -196,6 +198,11 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 		m_hitDecal = newDecal;
 		m_hitDecalTimeRemainingS = m_config->hitDecalDurationS;
 	}
+}
+
+void Weapon::clearDecals() {
+	while (m_currentMissDecals.size() > 0) { m_scene->remove(m_currentMissDecals.pop()); }
+	if (notNull(m_hitDecal)) { m_scene->remove(m_hitDecal); }
 }
 
 shared_ptr<TargetEntity> Weapon::fire(

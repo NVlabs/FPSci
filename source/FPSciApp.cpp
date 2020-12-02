@@ -260,21 +260,42 @@ void FPSciApp::updateControls(bool firstSession) {
 	if (startupConfig.waypointEditorMode) { waypointManager->updateControls(); }
 
 	// Update the player controls
-	if(notNull(m_playerControls)) removeWidget(m_playerControls);
+	bool visible = false;
+	Rect2D rect;
+	if (notNull(m_playerControls)) {
+		visible = m_playerControls->visible();
+		rect = m_playerControls->rect();
+		removeWidget(m_playerControls);
+	}
 	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&FPSciApp::exportScene, this), theme);
-	m_playerControls->setVisible(false);
+	m_playerControls->setVisible(visible);
+	if (!rect.isEmpty()) m_playerControls->setRect(rect);
 	addWidget(m_playerControls);
 
 	// Update the render controls
-	if (notNull(m_renderControls)) removeWidget(m_renderControls);
+	visible = false;
+	rect = Rect2D();
+	if (notNull(m_renderControls)) {
+		visible = m_renderControls->visible(); 
+		rect = m_renderControls->rect();
+		removeWidget(m_renderControls);
+	}
 	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
-	m_renderControls->setVisible(false);
+	m_renderControls->setVisible(visible);
+	if (!rect.isEmpty()) m_renderControls->setRect(rect);
 	addWidget(m_renderControls);
 
 	// Update the weapon controls
-	if (notNull(m_weaponControls)) removeWidget(m_weaponControls);
+	visible = false;
+	rect = Rect2D();
+	if (notNull(m_weaponControls)) {
+		visible = m_weaponControls->visible();
+		rect = m_weaponControls->rect();
+		removeWidget(m_weaponControls);
+	}
 	m_weaponControls = WeaponControls::create(sessConfig->weapon, theme);
-	m_weaponControls->setVisible(false);
+	m_weaponControls->setVisible(visible);
+	if (!rect.isEmpty()) m_weaponControls->setRect(rect);
 	addWidget(m_weaponControls);
 }
 
@@ -493,6 +514,7 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Check for play mode specific parameters
+	if (notNull(weapon)) weapon->clearDecals();
 	weapon->setConfig(&sessConfig->weapon);
 	weapon->setScene(scene());
 	weapon->setCamera(activeCamera());

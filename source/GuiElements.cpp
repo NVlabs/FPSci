@@ -277,19 +277,31 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 	// Create the GUI pane
 	GuiPane* pane = GuiWindow::pane();
 
+	const float cbWidth = 110.f;
+	const float nbWidth = 300.f;
+
 	pane->beginRow(); {
 		pane->addNumberBox("Max Ammo", &(config.maxAmmo), "", GuiTheme::NO_SLIDER, 0, 100000, 1);
-		pane->addNumberBox("Fire Period", &(config.firePeriod), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 10.0f, 0.1f);
-		pane->addCheckBox("Autofire", &(config.autoFire));
+	} pane->endRow();
+	pane->beginRow();{
+		pane->addCheckBox("Autofire", &(config.autoFire))->setWidth(cbWidth);
+		auto n = pane->addNumberBox("Fire Period", &(config.firePeriod), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 10.0f, 0.1f);
+		n->setWidth(nbWidth);
 	} pane->endRow();
 	pane->beginRow(); {
-		pane->addCheckBox("Hitscan", &(config.hitScan));
+		pane->addCheckBox("Hitscan", &(config.hitScan))->setWidth(cbWidth);
 		auto n = pane->addNumberBox("Damage", &(config.damagePerSecond), "health/s", GuiTheme::LINEAR_SLIDER, 0.0f, 100.0f, 0.1f);
-		n->setWidth(300.0f);
+		n->setWidth(nbWidth);
 		n->setUnitsSize(50.0f);
 	} pane->endRow();
 	pane->beginRow(); {
-		pane->addNumberBox("Kick Angle", &(config.kickAngle), "deg", GuiTheme::LINEAR_SLIDER, 0.f, 45.f, 0.1f);
+		pane->addCheckBox("Show Decals", &(config.renderDecals))->setWidth(cbWidth);
+		auto n = pane->addNumberBox("Miss Decals", &(config.missDecalCount), "decals", GuiTheme::LINEAR_SLIDER, 0, 1000, 1);
+		n->setWidth(nbWidth);
+		n->setUnitsSize(50.f);
+	} pane->endRow();
+	pane->beginRow(); {
+		pane->addNumberBox("Kick Angle", &(config.kickAngle), "\xB0", GuiTheme::LINEAR_SLIDER, 0.f, 45.f, 0.1f);
 		pane->addNumberBox("Kick Duration", &(config.kickDuration), "s", GuiTheme::LINEAR_SLIDER, 0.f, 2.f, 0.01f);
 	} pane->endRow();
 	pane->beginRow(); {
