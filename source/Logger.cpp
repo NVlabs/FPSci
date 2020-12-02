@@ -54,7 +54,8 @@ void FPSciLogger::openResultsFile(const String& filename,
 		Columns sessColumns = {
 			// format: column name, data type, sqlite modifier(s)
 				{ "sessionID", "text", "NOT NULL"},
-				{ "time", "text", "NOT NULL" },
+				{ "start_time", "text", "NOT NULL" },
+				{ "end_time", "text", "NOT NULL" },
 				{ "subjectID", "text", "NOT NULL" },
 				{ "appendingDescription", "text"},
 				{ "complete", "text"},
@@ -177,6 +178,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 	RowEntry sessValues = {
 		"'" + sessConfig->id + "'",
 		"'" + m_openTimeStr + "'",
+		"'" + m_openTimeStr + "'",
 		"'" + subjectID + "'",
 		"'" + description + "'",
 		"'false'",
@@ -197,7 +199,7 @@ void FPSciLogger::updateSessionEntry(bool complete, int trialCount) {
 	const String completeStr = complete ? "true" : "false";
 	const String trialCountStr = String(std::to_string(trialCount));
 	char* errMsg;
-	String updateQ = "UPDATE Sessions SET complete = '" + completeStr + "', trialsComplete = '" + trialCountStr + "' WHERE time = '" + m_openTimeStr + "'";
+	String updateQ = "UPDATE Sessions SET end_time = '" + genUniqueTimestamp() + "', complete = '" + completeStr + "', trialsComplete = '" + trialCountStr + "' WHERE start_time = '" + m_openTimeStr + "'";
 	int ret = sqlite3_exec(m_db, updateQ.c_str(), 0, 0, &errMsg);
 	if (ret != SQLITE_OK) { logPrintf("Error in UPDATE statement (%s): %s\n", updateQ, errMsg); }
 }
