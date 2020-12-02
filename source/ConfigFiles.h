@@ -440,6 +440,9 @@ public:
 /** Class for loading a user table and getting user info */
 class UserTable {
 public:
+
+	bool					requireUnique = true;			///< Require users to be unique by ID
+	UserConfig				defaultUser;					///< Default user settings to use for new user
 	Array<UserConfig>		users = {};						///< A list of valid users
 
 	UserTable() {};
@@ -452,7 +455,18 @@ public:
 
 		switch (settingsVersion) {
 		case 1:
+			reader.getIfPresent("requireUnique", requireUnique);
+			reader.getIfPresent("defaultUser", defaultUser);
 			reader.get("users", users, "Issue in the (required) \"users\" array in the user config file!");
+			// Unique user check (if required)
+			if (requireUnique) {
+				const Array<String> userIds = getIds();
+				for (String id : userIds) {
+					if (userIds.findIndex(id) != userIds.rfindIndex(id)) {
+						throw "Multiple users with the same ID (\"" + id + "\") specified in the user config file!";
+					}
+				}
+			}
 			if (users.size() == 0) {
 				throw "At least 1 user must be specified in the \"users\" array within the user configuration file!";
 			}
@@ -762,7 +776,8 @@ public:
 	float	hitDecalDurationS = 0.1f;									///< Duration to show the hit decal for (in seconds)
 	float	hitDecalColorMult = 2.0f;									///< "Encoding" field (aka color multiplier) for hit decal
 	
-	float	fireSpread = 0;												///< The spread of the fire
+	float	fireSpreadDegrees = 0;										///< The spread of the fire
+	String  fireSpreadShape = "uniform";								///< The shape of the fire spread distribution
 	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
 	float	damageRollOffDistance = 0;									///< Damage roll of w/ distance
 
@@ -826,7 +841,9 @@ public:
 			reader.getIfPresent("hitDecalDuration", hitDecalDurationS);
 			reader.getIfPresent("hitDecalColorMult", hitDecalColorMult);
 
-			reader.getIfPresent("fireSpread", fireSpread);
+			reader.getIfPresent("fireSpreadDegrees", fireSpreadDegrees);
+			reader.getIfPresent("fireSpreadShape", fireSpreadShape);
+
 			reader.getIfPresent("damageRollOffAim", damageRollOffAim);
 			reader.getIfPresent("damageRollOffDistance", damageRollOffDistance);
 
@@ -875,7 +892,8 @@ public:
 		if (forceAll || def.hitDecalDurationS != hitDecalDurationS)			a["hitDecalDuration"] = hitDecalDurationS;
 		if (forceAll || def.hitDecalColorMult != hitDecalColorMult)			a["hitDecalColorMult"] = hitDecalColorMult;
 
-		if (forceAll || def.fireSpread != fireSpread)						a["fireSpread"] = fireSpread;
+		if (forceAll || def.fireSpreadDegrees != fireSpreadDegrees)			a["fireSpreadDegrees"] = fireSpreadDegrees;
+		if (forceAll || def.fireSpreadShape != fireSpreadShape)				a["fireSpreadShape"] = fireSpreadShape;
 		if (forceAll || def.damageRollOffAim != damageRollOffAim)			a["damageRollOffAim"] = damageRollOffAim;
 		if (forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
 		if (forceAll || def.scopeFoV != scopeFoV)							a["scopeFoV"] = scopeFoV;
@@ -1070,6 +1088,9 @@ public:
 			if (!reader.getIfPresent("count", count)) {
 				count = defaultCount;
 			}
+			if(count < 1) {
+				throw format("Trial count < 1 not allowed! (%d count for trial with targets: %s)", count, Any(ids).unparse());
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -1093,11 +1114,15 @@ public:
 		Entry,
 		Rating
 	};
+
 	Type type = Type::None;
 	String prompt = "";
 	Array<String> options;
+	Array<GKey> optionKeys;
 	String title = "Feedback";
 	String result = "";
+	bool fullscreen = false;
+	bool showCursor = true;
 
 	Question() {};
 
@@ -1131,6 +1156,17 @@ public:
 			// Get the question prompt (required) and title (optional)
 			reader.get("prompt", prompt, "A \"prompt\" field must be provided with every question!");
 			reader.getIfPresent("title", title);
+			reader.getIfPresent("fullscreen", fullscreen);
+			reader.getIfPresent("showCursor", showCursor);
+
+			// Handle (optional) key binds for options (if provided)
+			if (type == Type::Rating || type == Type::MultipleChoice) {
+				reader.getIfPresent("optionKeys", optionKeys);
+				// Check length of option keys matches length of options (if provided)
+				if (optionKeys.length() > 0 && optionKeys.length() != options.length()) {
+					throw format("Length of \"optionKeys\" (%d) did not match \"options\" (%d) for question!", optionKeys.length(), options.length());
+				}
+			}
 			break;
 		default:
 			debugPrintf("Settings version '%d' not recognized in Question.\n", settingsVersion);
@@ -1781,6 +1817,8 @@ public:
 	bool showMenuLogo					= true;							///< Show the FPSci logo in the user menu
 	bool showExperimentSettings			= true;							///< Show the experiment settings options (session/user selection)
 	bool showUserSettings				= true;							///< Show the user settings options (master switch)
+	bool allowSessionChange				= true;							///< Allow the user to change the session with the menu drop-down
+	bool allowUserAdd					= false;						///< Allow the user to add a new user to the experiment
 	bool allowUserSettingsSave			= true;							///< Allow the user to save settings changes
 	bool allowSensitivityChange			= true;							///< Allow in-game sensitivity change		
 	
@@ -1804,6 +1842,8 @@ public:
 			reader.getIfPresent("showMenuLogo", showMenuLogo);
 			reader.getIfPresent("showExperimentSettings", showExperimentSettings);
 			reader.getIfPresent("showUserSettings", showUserSettings);
+			reader.getIfPresent("allowSessionChange", allowSessionChange);
+			reader.getIfPresent("allowUserAdd", allowUserAdd);
 			reader.getIfPresent("allowUserSettingsSave", allowUserSettingsSave);
 			reader.getIfPresent("allowSensitivityChange", allowSensitivityChange);
 			reader.getIfPresent("allowTurnScaleChange", allowTurnScaleChange);
@@ -1830,6 +1870,8 @@ public:
 		if (forceAll || def.showMenuLogo != showMenuLogo)									a["showMenuLogo"] = showMenuLogo;
 		if (forceAll || def.showExperimentSettings != showExperimentSettings)				a["showExperimentSettings"] = showExperimentSettings;
 		if (forceAll || def.showUserSettings != showUserSettings)							a["showUserSettings"] = showUserSettings;
+		if (forceAll || def.allowSessionChange != allowSessionChange)						a["allowSessionChange"] = allowSessionChange;
+		if (forceAll || def.allowUserAdd != allowUserAdd)									a["allowUserAdd"] = allowUserAdd;
 		if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)					a["allowUserSettingsSave"] = allowUserSettingsSave;
 		if (forceAll || def.allowSensitivityChange != allowSensitivityChange)				a["allowSensitivityChange"] = allowSensitivityChange;
 		if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)					a["allowTurnScaleChange"] = allowTurnScaleChange;

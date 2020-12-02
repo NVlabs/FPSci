@@ -271,8 +271,8 @@ void RenderControls::updateUserMenu() {
 	m_app->updateUserMenu = true;					// Set the semaphore to update the user menu
 }
 
-WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width, float height) : 
-	GuiWindow("Weapon Controls", theme, Rect2D::xywh(5, 5, width, height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
+WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width, float height) :
+	GuiWindow("Weapon Controls", theme, Rect2D::xywh(5, 5, width, height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_config(config)
 {
 	// Create the GUI pane
 	GuiPane* pane = GuiWindow::pane();
@@ -283,6 +283,7 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 		pane->addCheckBox("Autofire", &(config.autoFire));
 	} pane->endRow();
 	pane->beginRow(); {
+		pane->addCheckBox("Hitscan", &(config.hitScan));
 		auto n = pane->addNumberBox("Damage", &(config.damagePerSecond), "health/s", GuiTheme::LINEAR_SLIDER, 0.0f, 100.0f, 0.1f);
 		n->setWidth(300.0f);
 		n->setUnitsSize(50.0f);
@@ -290,7 +291,12 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 	pane->beginRow(); {
 		pane->addNumberBox("Kick Angle", &(config.kickAngle), "deg", GuiTheme::LINEAR_SLIDER, 0.f, 45.f, 0.1f);
 		pane->addNumberBox("Kick Duration", &(config.kickDuration), "s", GuiTheme::LINEAR_SLIDER, 0.f, 2.f, 0.01f);
-	}
+	} pane->endRow();
+	pane->beginRow(); {
+		pane->addNumberBox("Fire Spread", &(config.fireSpreadDegrees), "\xB0", GuiTheme::LINEAR_SLIDER, 0.f, 120.f, 0.1f);
+		m_spreadShapeIdx = m_spreadShapes.findIndex(m_config.fireSpreadShape);
+		pane->addDropDownList("Spread Shape", m_spreadShapes, &m_spreadShapeIdx, std::bind(&WeaponControls::updateFireSpreadShape, this));
+	} pane->endRow();
 	//pane->beginRow(); {
 	//	auto c = pane->addLabel("Muzzle offset");
 	//	c->setWidth(100.0f);
@@ -310,6 +316,10 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 
 	pack();
 	moveTo(Vector2(0, 720));
+}
+
+void WeaponControls::updateFireSpreadShape() {
+	m_config.fireSpreadShape = m_spreadShapes[m_spreadShapeIdx];
 }
 
 ////////////////////////
@@ -343,11 +353,22 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 		m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
 		m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
 	} m_expPane->endRow();
+	if (m_config.allowUserAdd) {
+		m_expPane->beginRow(); {
+			m_expPane->addTextBox("New User", &m_newUser);
+			m_expPane->addButton("+", this, &UserMenu::addUserPress)->setWidth(20.0f);
+			m_newUserFeedback = m_expPane->addLabel("");
+			m_newUserFeedback->setWidth(70.f);
+		} m_expPane->endRow();
+	}
+	GuiButton* addBtn;
 	m_expPane->beginRow(); {
 		m_sessDropDown = m_expPane->addDropDownList("Session", Array<String>({}), &m_ddCurrSessIdx);
 		updateSessionDropDown();
-		m_expPane->addButton("Select Session", this, &UserMenu::updateSessionPress);
+		addBtn = m_expPane->addButton("Select Session", this, &UserMenu::updateSessionPress);
 	} m_expPane->endRow();
+	m_sessDropDown->setVisible(m_config.allowSessionChange);
+	addBtn->setVisible(m_config.allowSessionChange);
 
 	// Hide the experiment settings if not requested to be drawn
 	if (!config.showExperimentSettings) { 
@@ -402,14 +423,14 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 		dpiDisplay->setEnabled(false);
 	} sensPane->endRow();
 	sensPane->beginRow(); {
-		auto sensitivityNb = sensPane->addNumberBox("Sensitivity", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.01, 100.0, 0.01);
+		auto sensitivityNb = sensPane->addNumberBox("Sensitivity", &(user.mouseDegPerMm), "\xB0/mm", GuiTheme::LOG_SLIDER, 0.01, 100.0, 0.01);
 		sensitivityNb->setWidth(300.0);
 		sensitivityNb->setCaptionWidth(captionWidth);
 		sensitivityNb->setUnitsSize(unitSize);
 		sensitivityNb->setEnabled(config.allowSensitivityChange);
 	} sensPane->endRow();
 	sensPane->beginRow(); {
-		auto cmp360Nb = sensPane->addNumberBox("", &m_cmp360, "cm/360°", GuiTheme::NO_SLIDER, 0.0, 3600.0, 0.1);
+		auto cmp360Nb = sensPane->addNumberBox("", &m_cmp360, "cm/360\xB0", GuiTheme::NO_SLIDER, 0.0, 3600.0, 0.1);
 		cmp360Nb->setWidth(180.0);
 		cmp360Nb->setCaptionWidth(captionWidth);
 		cmp360Nb->setUnitsSize(unitSize);
@@ -529,7 +550,6 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 	}
 
 	m_currentUserPane->pack();
-	pack();
 }
 
 Array<String> UserMenu::updateSessionDropDown() {
@@ -599,6 +619,49 @@ void UserMenu::updateUserPress() {
 	}
 }
 
+void UserMenu::addUserPress() {
+	// Check for unique user name requirement
+	if (m_newUser.empty()) {
+		m_newUserFeedback->setCaption("Empty!");
+		return;
+	}
+	else if (m_users.requireUnique && m_users.getIds().contains(m_newUser)) {
+		m_newUser = "";
+		m_newUserFeedback->setCaption("In use!");
+		return;
+	}
+	m_newUserFeedback->setCaption("");		// Clear the user feedback caption on success
+
+	// Create new user config
+	UserConfig user = m_users.defaultUser;
+	user.id = m_newUser;
+	
+	// Add user config to table and save
+	m_users.users.append(user);
+	m_app->saveUserConfig();
+
+	// Create new user status
+	UserSessionStatus status = m_userStatus.userInfo.last();		// Start by coping over last user
+	status.id = m_newUser;											// Update the user ID
+	status.completedSessions.clear();								// Empty any completed sessions from previous user
+	// Inherit default session order (if available)
+	if (m_userStatus.defaultSessionOrder.length() > 0) { status.sessionOrder = m_userStatus.defaultSessionOrder;  }
+	// Randomize if requested
+	if (m_userStatus.randomizeDefaults) { status.sessionOrder.randomize(); }
+	
+	// Add user status, set as current, and save
+	m_userStatus.userInfo.append(status);
+	m_userStatus.currentUser = m_newUser;
+	m_app->saveUserStatus();
+
+	logPrintf("Added new user: %s\n", m_newUser);
+
+	// Add user to dropdown then update the user/session
+	m_userDropDown->append(m_newUser);
+	m_ddCurrUserIdx = m_users.users.length() - 1;
+	updateUserPress();
+}
+
 void UserMenu::updateReticlePreview() {
 	if (!m_reticlePreviewPane) return;
 	// Clear the pane
@@ -624,6 +687,7 @@ void UserMenu::updateReticlePreview() {
 	preview->setSize(m_reticlePreviewSize);
 	preview->zoomToFit();
 	m_reticlePreviewPane->pack();
+	m_currentUserPane->pack();
 }
 
 void UserMenu::updateSessionPress() {

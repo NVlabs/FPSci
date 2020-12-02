@@ -63,9 +63,9 @@ void FPSciApp::onInit() {
 	showRenderingStats = false;
 	makeGUI();
 
-	updateMouseSensitivity();									// Update (apply) mouse sensitivity
-	m_userSettingsWindow->updateSessionDropDown();				// Update the session drop down to remove already completed sessions
-	updateSession(m_userSettingsWindow->selectedSession());		// Update session to create results file/start collection
+	updateMouseSensitivity();		// Update (apply) mouse sensitivity
+	const Array<String> sessions = m_userSettingsWindow->updateSessionDropDown();	// Update the session drop down to remove already completed sessions
+	updateSession(sessions[0]);		// Update session to create results file/start collection
 
 	// Set the initial simulation timestep to REAL_TIME. The desired timestep is set later.
 	setFrameDuration(frameDuration(), REAL_TIME);
@@ -259,19 +259,23 @@ void FPSciApp::updateControls(bool firstSession) {
 	// Update the waypoint manager
 	if (startupConfig.waypointEditorMode) { waypointManager->updateControls(); }
 
-	// Setup the player control
+	// Update the player controls
+	if(notNull(m_playerControls)) removeWidget(m_playerControls);
 	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&FPSciApp::exportScene, this), theme);
 	m_playerControls->setVisible(false);
-	this->addWidget(m_playerControls);
+	addWidget(m_playerControls);
 
-	// Setup the render control
+	// Update the render controls
+	if (notNull(m_renderControls)) removeWidget(m_renderControls);
 	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(false);
-	this->addWidget(m_renderControls);
+	addWidget(m_renderControls);
 
+	// Update the weapon controls
+	if (notNull(m_weaponControls)) removeWidget(m_weaponControls);
 	m_weaponControls = WeaponControls::create(sessConfig->weapon, theme);
 	m_weaponControls->setVisible(false);
-	this->addWidget(m_weaponControls);
+	addWidget(m_weaponControls);
 }
 
 void FPSciApp::makeGUI() {
@@ -335,15 +339,26 @@ void FPSciApp::showWeaponControls() {
 }
 
 void FPSciApp::presentQuestion(Question question) {
+	if (notNull(dialog)) removeWidget(dialog);		// Remove the current dialog widget (if valid)
+	currentQuestion = question;						// Store this for processing key-bound presses
+	Array<String> options = question.options;		// Make a copy of the options (to add key binds if necessary)
+	const Rect2D windowRect = window()->clientRect();
+	const Point2 size = question.fullscreen ? Point2(windowRect.width(), windowRect.height()) : Point2(400, 200);
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
-		dialog = SelectionDialog::create(question.prompt, question.options, theme, question.title, true);
+		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
+			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+		}
+		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, true, 3, size, !question.fullscreen);
 		break;
 	case Question::Type::Entry:
-		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false);
+		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false, size, !question.fullscreen);
 		break;
 	case Question::Type::Rating:
-		dialog = RatingDialog::create(question.prompt, question.options, theme, question.title, true);
+		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
+			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+		}
+		dialog = RatingDialog::create(question.prompt, options, theme, question.title, true, size, !question.fullscreen);
 		break;
 	default:
 		throw "Unknown question type!";
@@ -352,11 +367,11 @@ void FPSciApp::presentQuestion(Question question) {
 
 	moveToCenter(dialog);
 	addWidget(dialog);
-	setDirectMode(false);
+	setDirectMode(!question.showCursor);
 }
 
 void FPSciApp::markSessComplete(String sessId) {
-	if (m_pyLogger != nullptr) {
+	if (notNull(m_pyLogger)) {
 		m_pyLogger->mergeLogToDb();
 	}
 	// Add the session id to completed session array and save the user status table
@@ -387,7 +402,7 @@ void FPSciApp::initPlayer() {
 	// Set gravity and camera field of view
 	Vector3 grav = experimentConfig.player.gravity;
 	float FoV = experimentConfig.render.hFoV;
-	if (sessConfig != nullptr) {
+	if (notNull(sessConfig)) {
 		grav = sessConfig->player.gravity;
 		FoV = sessConfig->render.hFoV;
 	}
@@ -437,12 +452,10 @@ void FPSciApp::updateSession(const String& id) {
 	Array<String> ids;
 	experimentConfig.getSessionIds(ids);
 	if (!id.empty() && ids.contains(id)) {
-
 		// Load the session config specified by the id
 		sessConfig = experimentConfig.getSessionConfigById(id);
 		logPrintf("User selected session: %s. Updating now...\n", id);
 		m_userSettingsWindow->setSelectedSession(id);
-
 		// Create the session based on the loaded config
 		sess = Session::create(this, sessConfig);
 	}
@@ -495,6 +508,7 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Create a series of colored materials to choose from for target health
+	m_materials.clear();
 	for (int i = 0; i < m_MatTableSize; i++) {
 		float complete = (float)i / m_MatTableSize;
 		Color3 color = sessConfig->targetView.healthColors[0] * complete + sessConfig->targetView.healthColors[1] * (1.0f - complete);
@@ -546,11 +560,11 @@ void FPSciApp::updateSession(const String& id) {
 
 void FPSciApp::quitRequest() {
 	// End session logging
-	if (sess != nullptr) {
+	if (notNull(sess)) {
 		sess->endLogging();
 	}
 	// Merge Python log into session log (if logging)
-	if (m_pyLogger != nullptr) {
+	if (notNull(m_pyLogger)) {
 		m_pyLogger->mergeLogToDb(true);
 	}
     setExitCode(0);
@@ -645,7 +659,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 
 	// Simulate the projectiles
-	weapon->simulateProjectiles(sdt, sess->targetArray());
+	weapon->simulateProjectiles(sdt, sess->hittableTargets());
 
 	// explosion animation
 	for (int i = 0; i < m_explosions.size(); i++) {
@@ -812,7 +826,18 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			quitRequest();
 			return true;
 		}
-		else if (activeCamera() == playerCamera) {
+		else if (notNull(dialog) && !dialog->complete) {		// If we have an open, incomplete dialog, check for key bound question responses
+			// Handle key presses to redirect towards dialog
+			for (int i = 0; i < currentQuestion.optionKeys.length(); i++) {
+				if (currentQuestion.optionKeys[i] == ksym) {
+					dialog->result = currentQuestion.options[i];
+					dialog->complete = true;
+					dialog->setVisible(false);
+					foundKey = true;
+				}
+			}
+		}
+		else if (activeCamera() == playerCamera && !foundKey) {
 			// Override 'q', 'z', 'c', and 'e' keys (unused)
 			// THIS IS A PROBLEM IF THESE ARE KEY MAPPED!!!
 			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
@@ -1277,7 +1302,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 						float hitDist = finf();
 						int hitIdx = -1;
 
-						shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit);			// Fire the weapon
+						shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
 						if (isNull(target)) // Miss case
 						{
 							// Play scene hit sound
@@ -1308,14 +1333,14 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	}
 	
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
-		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::trialFeedback)) {
+		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::trialFeedback) && !m_userSettingsWindow->visible()) {
 			Array<shared_ptr<Entity>> dontHit;
 			dontHit.append(m_explosions);
 			dontHit.append(sess->unhittableTargets());
 			Model::HitInfo info;
 			float hitDist = finf();
 			int hitIdx = -1;
-			shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon (don't consume ammo)
+			shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
 		}
 	}
 
