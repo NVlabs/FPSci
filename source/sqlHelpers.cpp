@@ -21,7 +21,7 @@ void createTableInDB(sqlite3* db, String tableName, Array<Array<String>> columns
 	char* errmsg;
 	int ret = sqlite3_exec(db, createTableC.c_str(), 0, 0, &errmsg);
 	if (ret != SQLITE_OK) {
-		fprintf(stderr, "Error in CREATE TABLE statement: %s\n", errmsg);
+		logPrintf("Error in CREATE TABLE statement (%s): %s\n", createTableC, errmsg);
 	}
 }
 
@@ -38,7 +38,7 @@ void insertRowIntoDB(sqlite3* db, String tableName, Array<String> values, String
 	char* errmsg;
 	int ret = sqlite3_exec(db, insertC.c_str(), 0, 0, &errmsg);
 	if (ret != SQLITE_OK) {
-		fprintf(stderr, "Error in INSERT INTO statement: %s\n", errmsg);
+		logPrintf("Error in INSERT INTO statement (%s): %s\n", insertC, errmsg);
 	}
 }
 
@@ -64,7 +64,7 @@ void insertRowsIntoDB(sqlite3* db, String tableName, Array<Array<String>> value_
 	char* errmsg;
 	int ret = sqlite3_exec(db, insertC.c_str(), 0, 0, &errmsg);
 	if (ret != SQLITE_OK) {
-		fprintf(stderr, "Error in INSERT INTO statement: %s\n", errmsg);
+		logPrintf("Error in INSERT INTO statement (%s): %s\n", insertC, errmsg);
 	}
 }
 
