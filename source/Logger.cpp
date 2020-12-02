@@ -41,7 +41,6 @@ void FPSciLogger::openResultsFile(const String& filename,
 	const shared_ptr<SessionConfig>& sessConfig, 
 	const String& description)
 {
-	const String timeStr = genUniqueTimestamp();
 	const bool createNewFile = !FileSystem::exists(filename);
 
 	// Open the file
@@ -57,7 +56,9 @@ void FPSciLogger::openResultsFile(const String& filename,
 				{ "sessionID", "text", "NOT NULL"},
 				{ "time", "text", "NOT NULL" },
 				{ "subjectID", "text", "NOT NULL" },
-				{ "appendingDescription", "text"}
+				{ "appendingDescription", "text"},
+				{ "complete", "text"},
+				{ "trialsComplete", "integer" }
 		};
 		// add any user-specified parameters as headers
 		for (String name : sessConfig->logger.sessParamsToLog) { sessColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
@@ -172,12 +173,16 @@ void FPSciLogger::openResultsFile(const String& filename,
 	}
 
 	// Add the session info to the sessions table
+	m_openTimeStr = genUniqueTimestamp();
 	RowEntry sessValues = {
 		"'" + sessConfig->id + "'",
-		"'" + timeStr + "'",
+		"'" + m_openTimeStr + "'",
 		"'" + subjectID + "'",
-		"'" + description + "'"
+		"'" + description + "'",
+		"'false'",
+		"'0'"
 	};
+
 	// Create any table to do lookup here
 	Any a = sessConfig->toAny(true);
 	// Add the looked up values
@@ -185,6 +190,16 @@ void FPSciLogger::openResultsFile(const String& filename,
 	// add header row
 	insertRowIntoDB(m_db, "Sessions", sessValues);
 
+}
+
+void FPSciLogger::updateSessionEntry(bool complete, int trialCount) {
+	if (m_openTimeStr.empty()) return;		// Need an "open" session
+	const String completeStr = complete ? "true" : "false";
+	const String trialCountStr = String(std::to_string(trialCount));
+	char* errMsg;
+	String updateQ = "UPDATE Sessions SET complete = '" + completeStr + "', trialsComplete = '" + trialCountStr + "' WHERE time = '" + m_openTimeStr + "'";
+	int ret = sqlite3_exec(m_db, updateQ.c_str(), 0, 0, &errMsg);
+	if (ret != SQLITE_OK) { logPrintf("Error in UPDATE statement (%s): %s\n", updateQ, errMsg); }
 }
 
 void FPSciLogger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
