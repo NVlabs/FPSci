@@ -4,6 +4,6 @@
 #include <G3D/G3D.h>
 
 
-void createTableInDB(sqlite3* db, String tableName, Array<Array<String>> columns);
-void insertRowIntoDB(sqlite3* db, String tableName, Array<String> values, String colNames = "");
-void insertRowsIntoDB(sqlite3* db, String tableName, Array<Array<String>> valueVector, String colNames = "");
+bool createTableInDB(sqlite3* db, String tableName, Array<Array<String>> columns);
+bool insertRowIntoDB(sqlite3* db, String tableName, Array<String> values, String colNames = "");
+bool insertRowsIntoDB(sqlite3* db, String tableName, Array<Array<String>> valueVector, String colNames = "");
