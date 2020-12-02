@@ -28,7 +28,7 @@ bool createTableInDB(sqlite3* db, String tableName, Array<Array<String>> columns
 
 bool insertRowIntoDB(sqlite3* db, String tableName, Array<String> values, String colNames) {
 	if (values.length() == 0) {
-		logPrintf("Warning inser row with empty values ignored!\n");
+		logPrintf("Warning insert row with empty values ignored!\n");
 		return false;	// Don't attempt to insert for empty values
 	}
 	// Quotes must be added around text-type values (eg. "addQuotes(expVersion)")
