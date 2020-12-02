@@ -289,7 +289,8 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 		n->setUnitsSize(50.0f);
 	} pane->endRow();
 	pane->beginRow(); {
-		pane->addNumberBox("Fire Spread", &(config.fireSpreadDegrees), "\xB0", GuiTheme::LINEAR_SLIDER, 0.f, 40.f, 0.1f);
+		pane->addNumberBox("Fire Spread", &(config.fireSpreadDegrees), "\xB0", GuiTheme::LINEAR_SLIDER, 0.f, 120.f, 0.1f);
+		m_spreadShapeIdx = m_spreadShapes.findIndex(m_config.fireSpreadShape);
 		pane->addDropDownList("Spread Shape", m_spreadShapes, &m_spreadShapeIdx, std::bind(&WeaponControls::updateFireSpreadShape, this));
 	}
 	//pane->beginRow(); {
