@@ -219,13 +219,16 @@ void Session::processResponse()
 	m_taskExecutionTime = m_timer.getTime();
 
 	const int totalTargets = totalTrialTargets();
-	// Record the trial response into the database
-	recordTrialResponse(m_destroyedTargets, totalTargets);
 
+	recordTrialResponse(m_destroyedTargets, totalTargets);					// Record the trial response into the database
+
+	// Update completed/remaining trial state
 	m_completedTrials[m_currTrialIdx] += 1;
 	if (m_remainingTrials[m_currTrialIdx] > 0) {
 		m_remainingTrials[m_currTrialIdx] -= 1;	
 	}
+
+	logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
 
 	// Check for whether all targets have been destroyed
 	if (m_destroyedTargets == totalTargets) {

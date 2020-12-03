@@ -1706,6 +1706,8 @@ public:
 	bool logTrialResponse		= true;		///< Log trial response in table?
 	bool logUsers				= true;		///< Log user information in table?
 
+	bool logToSingleDb			= true;		///< Log all results to a single db file?
+
 	// Session parameter logging
 	Array<String> sessParamsToLog = {"frameRate", "frameDelay"};			///< Parameter names to log to the Sessions table of the DB
 
@@ -1719,6 +1721,7 @@ public:
 			reader.getIfPresent("logTrialResponse", logTrialResponse);
 			reader.getIfPresent("logUsers", logUsers);
 			reader.getIfPresent("sessionParametersToLog", sessParamsToLog);
+			reader.getIfPresent("logToSingleDb", logToSingleDb);
 			break;
 		default:
 			throw format("Did not recognize settings version: %d", settingsVersion);
@@ -1728,13 +1731,14 @@ public:
 
 	Any addToAny(Any a, bool forceAll = false) const {
 		LoggerConfig def;
-		if(forceAll || def.enable != enable)								a["logEnable"] = enable;
-		if(forceAll || def.logTargetTrajectories != logTargetTrajectories)	a["logTargetTrajectories"] = logTargetTrajectories;
-		if(forceAll || def.logFrameInfo != logFrameInfo)					a["logFrameInfo"] = logFrameInfo;
-		if(forceAll || def.logPlayerActions != logPlayerActions)			a["logPlayerActions"] = logPlayerActions;
-		if(forceAll || def.logTrialResponse != logTrialResponse)			a["logTrialResponse"] = logTrialResponse;
-		if(forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
-		if(forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessionParametersToLog"] = sessParamsToLog;
+		if (forceAll || def.enable != enable)								a["logEnable"] = enable;
+		if (forceAll || def.logTargetTrajectories != logTargetTrajectories)	a["logTargetTrajectories"] = logTargetTrajectories;
+		if (forceAll || def.logFrameInfo != logFrameInfo)					a["logFrameInfo"] = logFrameInfo;
+		if (forceAll || def.logPlayerActions != logPlayerActions)			a["logPlayerActions"] = logPlayerActions;
+		if (forceAll || def.logTrialResponse != logTrialResponse)			a["logTrialResponse"] = logTrialResponse;
+		if (forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
+		if (forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessionParametersToLog"] = sessParamsToLog;
+		if (forceAll || def.logToSingleDb != logToSingleDb)					a["logToSingleDb"] = logToSingleDb;
 		return a;
 	}
 };

@@ -144,6 +144,11 @@ void FPSciApp::loadConfigs() {
 	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfigFilename);
 	experimentConfig.printToLog();
 
+	// Get hash for experimentconfig.Any file
+	const size_t hash = HashTrait<String>::hashCode(experimentConfig.toAny().unparse());		// Hash the serialized Any (don't consider formatting)
+	m_expConfigHash = format("%x", hash);														// Store the hash as a hex string
+	logPrintf("Experiment hash: %s\r\n", m_expConfigHash);										// Write to log
+
 	Array<String> sessionIds;
 	experimentConfig.getSessionIds(sessionIds);
 
@@ -526,7 +531,11 @@ void FPSciApp::updateSession(const String& id) {
 	if (!FileSystem::isDirectory(startupConfig.resultsDirPath)) {
 		FileSystem::createDirectory(startupConfig.resultsDirPath);
 	}
-	const String logName = startupConfig.resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+
+	const String logName = sessConfig->logger.logToSingleDb ? 
+		startupConfig.resultsDirPath + experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
+		startupConfig.resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+
 	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
