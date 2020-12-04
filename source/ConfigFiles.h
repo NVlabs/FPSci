@@ -15,20 +15,94 @@ static bool operator==(Array<T> a1, Array<T> a2) {
 	return !(a1 != a2);
 }
 
+class ConfigFiles {
+public: 
+	String name;								///< Name for the experiment
+	String experimentConfigFilename;			///< Experiment configuration filename/path
+	String userConfigFilename;					///< User configuration filename/path
+	String userStatusFilename;					///< User status filename/path
+	String keymapConfigFilename;				///< Keymap configuration filename/path
+	String systemConfigFilename;				///< System configuration filename/path
+	String resultsDirPath;						///< Results directory path
+
+	ConfigFiles() {};
+
+	ConfigFiles(String name, String expConfig, String userConfig, String userStatus, String keymapConfig, String systemConfig, String resultsDir) :
+		name(name), experimentConfigFilename(expConfig), userConfigFilename(userConfig), userStatusFilename(userStatus), 
+		keymapConfigFilename(keymapConfig), systemConfigFilename(systemConfig), resultsDirPath(resultsDir) {};
+
+	static ConfigFiles defaults() { return ConfigFiles("default", "experimentconfig.Any", "userconfig.Any", "userstatus.Any", "keymap.Any", "systemconfig.Any", "./results"); }
+
+	ConfigFiles(const Any& any) {
+		AnyTableReader reader(any);
+
+		reader.get("name", name, "Must provide a name for every entry in the experimentList!");
+
+		reader.getIfPresent("experimentConfigFilename", experimentConfigFilename);
+		checkValidAnyFilename("experimentConfigFilename", experimentConfigFilename);
+
+		reader.getIfPresent("userConfigFilename", userConfigFilename);
+		checkValidAnyFilename("userConfigFilename", userConfigFilename);
+
+		reader.getIfPresent("userStatusFilename", userStatusFilename);
+		checkValidAnyFilename("userStatusFilename", userStatusFilename);
+
+		reader.getIfPresent("keymapConfigFilename", keymapConfigFilename);
+		checkValidAnyFilename("keymapConfigFilename", keymapConfigFilename);
+
+		reader.getIfPresent("systemConfigFilename", systemConfigFilename);
+		checkValidAnyFilename("systemConfigFilename", systemConfigFilename);
+
+		reader.getIfPresent("resultsDirPath", resultsDirPath);
+		resultsDirPath = formatDirPath(resultsDirPath);
+	}
+
+	/** Assert that the filename `path` ends in .any and report `errorName` if it doesn't */
+	static void checkValidAnyFilename(const String& errorName, const String& path) {
+		if (path.empty()) return;	// Allow empty paths (will be replaced)
+		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any", "Config filenames specified in the startup config must end with \".any\"!, check the " + errorName + "!\n");
+	}
+
+	/** Returns the provided path with trailing slashes added if missing */
+	static String formatDirPath(const String& path) {
+		String fpath = path;
+		if (!path.empty() && path.substr(path.length() - 1) != "/") { fpath = path + "/"; }
+		return fpath;
+	}
+
+	Any toAny(const bool forceAll = false) const {
+		Any a(Any::TABLE);
+		a["name"] = name;
+		a["experimentConfigFilename"] = experimentConfigFilename;
+		a["userConfigFilename"] = userConfigFilename;
+		a["userStatusFilename"] = userStatusFilename;
+		a["keymapConfigFilename"] = keymapConfigFilename;
+		a["systemConfigFilename"] = systemConfigFilename;
+		a["resultsDirPath"] = resultsDirPath;
+		return a;
+	}
+
+	void populateEmptyFieldsWithDefaults(const ConfigFiles& def) {
+		if (experimentConfigFilename.empty()) { experimentConfigFilename = def.experimentConfigFilename;  }
+		if (userConfigFilename.empty()) { userConfigFilename = def.userConfigFilename; }
+		if (userStatusFilename.empty()) { userStatusFilename = def.userStatusFilename; }
+		if (keymapConfigFilename.empty()) { keymapConfigFilename = def.keymapConfigFilename; }
+		if (systemConfigFilename.empty()) { systemConfigFilename = def.systemConfigFilename; }
+		if (resultsDirPath.empty()) { resultsDirPath = def.resultsDirPath; }
+	}
+};
+
 /** Configure how the application should start */
 class StartupConfig {
-private:
 public:
 	bool	developerMode = false;								///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
 	bool	waypointEditorMode = false;							///< Sets whether the app is run w/ the waypoint editor available
 	bool	fullscreen = true;									///< Whether the app runs in windowed mode
 	Vector2 windowSize = { 1920, 980 };							///< Window size (when not run in fullscreen)
-	String	experimentConfigFilename = "experimentconfig.Any";	///< Optional path to an experiment config file
-	String	userConfigFilename = "userconfig.Any";				///< Optional path to a user config file
-	String  userStatusFilename = "userstatus.Any";				///< Optional path to a user status file
-	String  keymapConfigFilename = "keymap.Any";				///< Optional path to a keymap config file
-	String  systemConfigFilename = "systemconfig.Any";			///< Optional path to a latency logger config file
-	String	resultsDirPath = "./results/";						///< Optional path to the results directory
+	
+	ConfigFiles defaultExperiment = ConfigFiles::defaults();	///< Setup default list
+	Array<ConfigFiles> experimentList;							///< List of configs (for various experiments)
+	
 	bool	audioEnable = true;									///< Audio on/off
 
 	StartupConfig() {};
@@ -45,18 +119,12 @@ public:
 			reader.getIfPresent("waypointEditorMode", waypointEditorMode);
 			reader.getIfPresent("fullscreen", fullscreen);
 			reader.getIfPresent("windowSize", windowSize);
-            reader.getIfPresent("experimentConfigFilename", experimentConfigFilename);
-			checkValidAnyFilename("experimentConfigFilename", experimentConfigFilename);
-            reader.getIfPresent("userConfigFilename", userConfigFilename);
-			checkValidAnyFilename("userConfigFilename", userConfigFilename);
-			reader.getIfPresent("userStatusFilename", userStatusFilename);
-			checkValidAnyFilename("userStatusFilename", userStatusFilename);
-			reader.getIfPresent("keymapConfigFilename", keymapConfigFilename);
-			checkValidAnyFilename("keymapConfigFilename", keymapConfigFilename);
-			reader.getIfPresent("systemConfigFilename", systemConfigFilename);
-			checkValidAnyFilename("systemConfigFilename", systemConfigFilename);
-			reader.getIfPresent("resultsDirPath", resultsDirPath);
-			resultsDirPath = formatDirPath(resultsDirPath);
+
+			reader.getIfPresent("defaultExperiment", defaultExperiment);
+			reader.getIfPresent("experimentList", experimentList);
+			for (ConfigFiles& files : experimentList) { files.populateEmptyFieldsWithDefaults(defaultExperiment); }
+			if (experimentList.length() == 0) { experimentList.append(defaultExperiment); }
+
             reader.getIfPresent("audioEnable", audioEnable);
             break;
         default:
@@ -72,29 +140,14 @@ public:
         if(forceAll || def.developerMode != developerMode)								a["developerMode"] = developerMode;
 		if(forceAll || def.waypointEditorMode != waypointEditorMode)					a["waypointEditorMode"] = waypointEditorMode;
 		if(forceAll || def.fullscreen != fullscreen)									a["fullscreen"] = fullscreen;
-        if(forceAll || def.experimentConfigFilename != experimentConfigFilename)		a["experimentConfigFilename"] = experimentConfigFilename;
-        if(forceAll || def.userConfigFilename != userConfigFilename)					a["userConfigFilename"] = userConfigFilename;
-		if(forceAll || def.userStatusFilename != userStatusFilename)					a["userStatusFilename"] = userStatusFilename;
-		if(forceAll || def.keymapConfigFilename != keymapConfigFilename)				a["keymapConfigFilename"] = keymapConfigFilename;
-		if(forceAll || def.systemConfigFilename != systemConfigFilename)				a["systemConfigFilename"] = systemConfigFilename;
-		if(forceAll || def.resultsDirPath != resultsDirPath)							a["resultsDirPath"] = resultsDirPath;
         if(forceAll || def.audioEnable != audioEnable)									a["audioEnable"] = audioEnable;
-        return a;
+		a["defaultExperiment"] = defaultExperiment;
+		a["experimentList"] = experimentList;
+		
+		return a;
     }
 
-	/** Assert that the filename `path` ends in .any and report `errorName` if it doesn't */
-	static void checkValidAnyFilename(const String& errorName, const String& path) {
-		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any", "Config filenames specified in the startup config must end with \".any\"!, check the " + errorName + "!\n");
-	}
 
-	/** Returns the provided path with trailing slashes added if missing */
-	static String formatDirPath(const String& path) {
-		String fpath = path;
-		if (!path.empty() && path.substr(path.length() - 1) != "/") {
-			fpath = path + "/";
-		}
-		return fpath;
-	}
 };
 
 /** Key mapping */

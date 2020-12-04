@@ -83,7 +83,9 @@ protected:
 	/** Called from onInit */
 	void makeGUI();
 	void updateControls(bool firstSession = false);
-	void loadConfigs();
+	
+	void loadConfigs(const ConfigFiles& configs);
+
 	virtual void loadModels();
 	/** Initializes player settings from configs and resets player to initial position 
 		Also updates mouse sensitivity. */
@@ -155,7 +157,9 @@ public:
 	bool		frameToggle			= false;	///< Simple toggle flag used for frame rate click-to-photon monitoring
 	bool		updateUserMenu		= false;	///< Semaphore to indicate user settings needs update
 
-	Vector2 displayRes;
+	int			experimentIdx = 0;				///< Index of the current experiment
+
+	Vector2		displayRes;
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
@@ -172,6 +176,12 @@ public:
 		return m_debugMenuHeight;
 	}
 
+	const Array<String> experimentNames() const {
+		Array<String> names;
+		for (auto config : startupConfig.experimentList) { names.append(config.name); }
+		return names;
+	}
+
     /** callbacks for saving user status and config */
 	void saveUserConfig(bool onDiff);
 	void saveUserConfig() { saveUserConfig(false); }
@@ -183,7 +193,7 @@ public:
 
 	void markSessComplete(String id);
 	/** Updates experiment state to the provided session id and updates player parameters (including mouse sensitivity) */
-	virtual void updateSession(const String& id);
+	virtual void updateSession(const String& id, bool forceReload = false);
 	void updateParameters(int frameDelay, float frameRate);
 	void updateTargetColor(const shared_ptr<TargetEntity>& target);
 	void presentQuestion(Question question);
@@ -200,6 +210,9 @@ public:
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
 	
+	/** Initialize an experiment */
+	void initExperiment();
+
 	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
 	virtual void onInit() override;
 	virtual void onAI() override;

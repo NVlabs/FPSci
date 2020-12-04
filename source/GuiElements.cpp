@@ -345,6 +345,15 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	m_ddCurrUserIdx = m_users.getUserIndex(m_userStatus.currentUser);
 	m_expPane = m_parent->addPane("Experiment Settings");
 	m_expPane->setCaptionHeight(40);
+
+	// Only draw experiment selection box in developer mode
+	if (app->startupConfig.developerMode) {
+		m_expPane->beginRow(); {
+			m_expPane->addDropDownList("Experiment", app->experimentNames(), &(app->experimentIdx));
+			m_expPane->addButton("Select Experiment", app, &FPSciApp::initExperiment);
+		} m_expPane->endRow();
+	}
+
 	m_expPane->beginRow(); {
 		m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
 		m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
