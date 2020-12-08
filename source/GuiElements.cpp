@@ -301,7 +301,7 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 		n->setUnitsSize(50.f);
 	} pane->endRow();
 	pane->beginRow(); {
-		pane->addNumberBox("Kick Angle", &(config.kickAngle), "\xB0", GuiTheme::LINEAR_SLIDER, 0.f, 45.f, 0.1f);
+		pane->addNumberBox("Kick Angle", &(config.kickAngleDegrees), "\xB0", GuiTheme::LINEAR_SLIDER, 0.f, 45.f, 0.1f);
 		pane->addNumberBox("Kick Duration", &(config.kickDuration), "s", GuiTheme::LINEAR_SLIDER, 0.f, 2.f, 0.01f);
 	} pane->endRow();
 	pane->beginRow(); {
