@@ -47,9 +47,9 @@ void FPSciApp::onInit() {
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
 
-	m_weapon = Weapon::create(&experimentConfig.weapon, scene(), activeCamera());
-	m_weapon->setHitCallback(std::bind(&FPSciApp::hitTarget, this, std::placeholders::_1));
-	m_weapon->setMissCallback(std::bind(&FPSciApp::missEvent, this));
+	weapon = Weapon::create(&experimentConfig.weapon, scene(), activeCamera());
+	weapon->setHitCallback(std::bind(&FPSciApp::hitTarget, this, std::placeholders::_1));
+	weapon->setMissCallback(std::bind(&FPSciApp::missEvent, this));
 
 	// Load models and set the reticle
 	loadModels();
@@ -177,7 +177,7 @@ void FPSciApp::loadConfigs() {
 void FPSciApp::loadModels() {
 	if ((experimentConfig.weapon.renderModel || startupConfig.developerMode) && !experimentConfig.weapon.modelSpec.filename.empty()) {
 		// Load the model if we (might) need it
-		m_weapon->loadModels();
+		weapon->loadModels();
 	}
 
 	// Add all the unqiue targets to this list
@@ -265,21 +265,42 @@ void FPSciApp::updateControls(bool firstSession) {
 	if (startupConfig.waypointEditorMode) { waypointManager->updateControls(); }
 
 	// Update the player controls
-	if(notNull(m_playerControls)) removeWidget(m_playerControls);
+	bool visible = false;
+	Rect2D rect;
+	if (notNull(m_playerControls)) {
+		visible = m_playerControls->visible();
+		rect = m_playerControls->rect();
+		removeWidget(m_playerControls);
+	}
 	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&FPSciApp::exportScene, this), theme);
-	m_playerControls->setVisible(false);
+	m_playerControls->setVisible(visible);
+	if (!rect.isEmpty()) m_playerControls->setRect(rect);
 	addWidget(m_playerControls);
 
 	// Update the render controls
-	if (notNull(m_renderControls)) removeWidget(m_renderControls);
+	visible = false;
+	rect = Rect2D();
+	if (notNull(m_renderControls)) {
+		visible = m_renderControls->visible(); 
+		rect = m_renderControls->rect();
+		removeWidget(m_renderControls);
+	}
 	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
-	m_renderControls->setVisible(false);
+	m_renderControls->setVisible(visible);
+	if (!rect.isEmpty()) m_renderControls->setRect(rect);
 	addWidget(m_renderControls);
 
 	// Update the weapon controls
-	if (notNull(m_weaponControls)) removeWidget(m_weaponControls);
+	visible = false;
+	rect = Rect2D();
+	if (notNull(m_weaponControls)) {
+		visible = m_weaponControls->visible();
+		rect = m_weaponControls->rect();
+		removeWidget(m_weaponControls);
+	}
 	m_weaponControls = WeaponControls::create(sessConfig->weapon, theme);
-	m_weaponControls->setVisible(false);
+	m_weaponControls->setVisible(visible);
+	if (!rect.isEmpty()) m_weaponControls->setRect(rect);
 	addWidget(m_weaponControls);
 }
 
@@ -498,13 +519,14 @@ void FPSciApp::updateSession(const String& id) {
 	}
 
 	// Check for play mode specific parameters
-	m_weapon->setConfig(&sessConfig->weapon);
-	m_weapon->setScene(scene());
-	m_weapon->setCamera(activeCamera());
+	if (notNull(weapon)) weapon->clearDecals();
+	weapon->setConfig(&sessConfig->weapon);
+	weapon->setScene(scene());
+	weapon->setCamera(activeCamera());
 
 	// Update weapon model (if drawn) and sounds
-	m_weapon->loadModels();
-	m_weapon->loadSounds();
+	weapon->loadModels();
+	weapon->loadSounds();
 	m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
 
 	// Load static HUD textures
@@ -600,9 +622,9 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 
 	initPlayer();
 
-	if (m_weapon) {
-		m_weapon->setScene(scene());
-		m_weapon->setCamera(playerCamera);
+	if (weapon) {
+		weapon->setScene(scene());
+		weapon->setCamera(playerCamera);
 	}
 }
 
@@ -668,7 +690,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 
 	// Simulate the projectiles
-	m_weapon->simulateProjectiles(sdt, sess->hittableTargets());
+	weapon->simulateProjectiles(sdt, sess->hittableTargets());
 
 	// explosion animation
 	for (int i = 0; i < m_explosions.size(); i++) {
@@ -1030,9 +1052,9 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 			Draw::rect2D(
 				Rect2D::xywh(
 					boxLeft,
-					(float)rd->viewport().height() * (float)(sess->weaponCooldownPercent()),
+					(float)rd->viewport().height() * (float)(weapon->cooldownRatio()),
 					(float)rd->viewport().width() * sessConfig->clickToPhoton.size.x,
-					(float)rd->viewport().height() * (float)(1.0 - sess->weaponCooldownPercent())
+					(float)rd->viewport().height() * (float)(1.0 - weapon->cooldownRatio())
 				), rd, Color3::white() * 0.8f
 			);
 		}
@@ -1041,7 +1063,7 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 			const float iRad = sessConfig->hud.cooldownInnerRadius;
 			const float oRad = iRad + sessConfig->hud.cooldownThickness;
 			const int segments = sessConfig->hud.cooldownSubdivisions;
-			int segsToLight = static_cast<int>(ceilf((1 - sess->weaponCooldownPercent())*segments));
+			int segsToLight = static_cast<int>(ceilf((1 - weapon->cooldownRatio())*segments));
 			// Create the segments
 			for (int i = 0; i < segsToLight; i++) {
 				const float inc = static_cast<float>(2 * pi() / segments);
@@ -1076,7 +1098,7 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 		const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
 		Point2 lowerRight = Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height())) - Point2(guardband, guardband);
 		hudFont->draw2D(rd,
-			format("%d/%d", sess->remainingAmmo(), sessConfig->weapon.maxAmmo),
+			format("%d/%d", weapon->remainingAmmo(), sessConfig->weapon.maxAmmo),
 			lowerRight - sessConfig->hud.ammoPosition,
 			sessConfig->hud.ammoSize,
 			sessConfig->hud.ammoColor,
@@ -1123,7 +1145,7 @@ Vector2 FPSciApp::currentTurnScale() {
 	// Apply y-invert here
 	if (user->invertY) baseTurnScale.y = -baseTurnScale.y;
 	// If we're not scoped just return the normal user turn scale
-	if (!m_weapon || !m_weapon->scoped()) return baseTurnScale;
+	if (!weapon || !weapon->scoped()) return baseTurnScale;
 	// Otherwise create scaled turn scale for the scoped state
 	if (user->scopeTurnScale.length() > 0) {
 		// User scoped turn scale specified, don't perform default scaling
@@ -1139,7 +1161,7 @@ void FPSciApp::setScopeView(bool scoped) {
 	// Get player entity and calculate scope FoV
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
 	const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
-	m_weapon->setScoped(scoped);														// Update the weapon state		
+	weapon->setScoped(scoped);														// Update the weapon state		
 	const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
 	playerCamera->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
@@ -1271,7 +1293,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		if (ui->keyPressed(scopeButton)) {
 			// Are we using scope toggling?
 			if (sessConfig->weapon.scopeToggle) {
-				setScopeView(!m_weapon->scoped());
+				setScopeView(!weapon->scoped());
 			}
 			// Otherwise just set scope based on the state of the scope button
 			else {
@@ -1289,7 +1311,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		if (ui->keyReleased(shootButton)) {
 			buttonUp = true;
 			haveReleased = true;
-			m_weapon->setFiring(false);
+			weapon->setFiring(false);
 			if (!sessConfig->weapon.autoFire) {
 				fired = false;
 			}
@@ -1298,13 +1320,12 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		if (ui->keyDown(shootButton)) {
 			if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
 				if (sessConfig->weapon.isLaser()) {	// Start firing here
-					m_weapon->setFiring(true);
+					weapon->setFiring(true);
 				}
 				// check for hit, add graphics, update target state
 				if ((sess->currentState == PresentationState::trialTask) && !m_userSettingsWindow->visible()) {
-					if (sess->canFire()) {
+					if (weapon->canFire()) {
 						fired = true;
-						sess->countShot();						// Count shots
 						Array<shared_ptr<Entity>> dontHit;
 						dontHit.append(m_explosions);
 						dontHit.append(sess->unhittableTargets());
@@ -1312,7 +1333,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 						float hitDist = finf();
 						int hitIdx = -1;
 
-						shared_ptr<TargetEntity> target = m_weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
+						shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
 						if (isNull(target)) // Miss case
 						{
 							// Play scene hit sound
@@ -1350,7 +1371,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 			Model::HitInfo info;
 			float hitDist = finf();
 			int hitIdx = -1;
-			shared_ptr<TargetEntity> target = m_weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
+			shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
 		}
 	}
 
@@ -1369,7 +1390,7 @@ void FPSciApp::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Sur
 
 	typedScene<PhysicsScene>()->poseExceptExcluded(surface, "player");
 
-	if (m_weapon) { m_weapon->onPose(surface); }
+	if (weapon) { weapon->onPose(surface); }
 }
 
 void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
@@ -1427,7 +1448,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		if (activeCamera() == playerCamera) {
 			// Reticle
 			const shared_ptr<UserConfig> user = currentUser();
-			float tscale = max(min(((float)(System::time() - sess->lastFireTime()) / user->reticleChangeTimeS), 1.0f), 0.0f);
+			float tscale = max(min(((float)weapon->timeSinceLastFire() / user->reticleChangeTimeS), 1.0f), 0.0f);
 			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
 			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
 			Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);

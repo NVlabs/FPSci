@@ -80,6 +80,9 @@ protected:
 	Array<shared_ptr<Projectile>>	m_projectiles;						///< Arrray of drawn projectiles
 
 	int								m_lastBulletId = 0;					///< Bullet ID (auto incremented)
+	RealTime						m_lastFireAt;						///< Last fire time
+	int								m_ammo;								///< Remaining ammo
+
 	bool							m_scoped = false;					///< Flag used for scope management
 	bool							m_firing = false;					///< Flag used for auto fire management
 
@@ -102,6 +105,18 @@ public:
 	static shared_ptr<Weapon> create(WeaponConfig* config, shared_ptr<Scene> scene, shared_ptr<Camera> cam) {
 		return createShared<Weapon>(config, scene, cam);
 	};
+
+	RealTime timeSinceLastFire() const { return System::time() - m_lastFireAt; }
+	void resetCooldown() { m_lastFireAt = 0; }
+	bool canFire() const;
+	float cooldownRatio() const;
+
+	int remainingAmmo() const { 
+		if (isNull(m_config)) return 100;
+		return m_ammo; 
+	}
+	int shotsTaken() const { return m_config->maxAmmo - m_ammo; }
+	void reload() { m_ammo = m_config->maxAmmo; }
 
 	shared_ptr<TargetEntity> fire(const Array<shared_ptr<TargetEntity>>& targets,
 		int& targetIdx,
@@ -138,6 +153,7 @@ public:
 
 	void simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntity>>& targets, const Array<shared_ptr<Entity>>& dontHit = {});
 	void drawDecal(const Point3& point, const Vector3& normal, bool hit = false);
+	void clearDecals();
 	void loadDecals();
 	void loadModels();
 

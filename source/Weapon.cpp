@@ -85,8 +85,13 @@ void Weapon::onPose(Array<shared_ptr<Surface> >& surface) {
 		// Update the weapon frame for all of these cases
 		const float yScale = -0.12f;
 		const float zScale = -yScale * 0.5f;
-		const float lookY = m_camera->frame().lookVector().y;
-		m_frame = m_camera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
+		float kick = 0.f;
+		const RealTime timeSinceFire = timeSinceLastFire();
+		if (timeSinceFire < m_config->kickDuration) {
+			kick = m_config->kickAngleDegrees * sinf((float)timeSinceFire / m_config->kickDuration * pif());
+		}
+		const float lookY = m_camera->frame().lookVector().y - 6.f * sin(2 * pif() / 360.0f * kick);
+		m_frame = m_camera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5+kick);
 		// Pose the view model (weapon) for render here
 		if (m_config->renderModel) {
 			const float prevLookY = m_camera->previousFrame().lookVector().y;
@@ -173,10 +178,12 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	decalFrame.lookAt(decalFrame.translation - normal);
 
 	// If we have the maximum amount of decals remove the oldest one
-	if (!hit && m_currentMissDecals.size() == m_config->missDecalCount) {
-		shared_ptr<VisibleEntity> lastDecal = m_currentMissDecals.pop();
-		m_scene->remove(lastDecal);
+	if (!hit) {
+		while (m_currentMissDecals.size() >= m_config->missDecalCount) {
+			m_scene->remove(m_currentMissDecals.pop());
+		}
 	}
+	// Handle hit decal here (only show 1 at a time)
 	else if (hit && notNull(m_hitDecal)) {
 		m_scene->remove(m_hitDecal);
 	}
@@ -193,6 +200,11 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	}
 }
 
+void Weapon::clearDecals() {
+	while (m_currentMissDecals.size() > 0) { m_scene->remove(m_currentMissDecals.pop()); }
+	if (notNull(m_hitDecal)) { m_scene->remove(m_hitDecal); }
+}
+
 shared_ptr<TargetEntity> Weapon::fire(
 	const Array<shared_ptr<TargetEntity>>& targets,
 	int& targetIdx, 
@@ -202,13 +214,14 @@ shared_ptr<TargetEntity> Weapon::fire(
 	bool dummyShot)
 {
 	static RealTime lastTime;
+	m_lastFireAt = System::time();						// Capture the time
+
 	Ray ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
 	float spread = m_config->fireSpreadDegrees * 2.f * pif() / 360.f;
 
 	// ignore bullet spread on dummy targets
-	if (dummyShot) {
-		spread = 0.f;
-	}
+	if (dummyShot) { spread = 0.f; }
+	else { m_ammo -= 1; }
 
 	// Apply random rotation (for fire spread)
 	Matrix3 rotMat = Matrix3::fromEulerAnglesXYZ(0.f,0.f,0.f);
@@ -301,4 +314,14 @@ shared_ptr<TargetEntity> Weapon::fire(
 	END_PROFILER_EVENT();
 
 	return target;
+}
+
+bool Weapon::canFire() const {
+	if (isNull(m_config)) return true;
+	return timeSinceLastFire() > m_config->firePeriod;
+}
+
+float Weapon::cooldownRatio() const {
+	if (isNull(m_config) || m_config->firePeriod == 0.0) return 1.0f;
+	return min((float)timeSinceLastFire() / m_config->firePeriod, 1.0f);
 }
