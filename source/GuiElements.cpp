@@ -350,7 +350,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	if (app->startupConfig.developerMode) {
 		m_expPane->beginRow(); {
 			m_expPane->addDropDownList("Experiment", app->experimentNames(), &(app->experimentIdx));
-			m_expPane->addButton("Select Experiment", app, &FPSciApp::initExperiment);
+			m_expPane->addButton("Select Experiment", this, &UserMenu::updateExperimentPress);
 		} m_expPane->endRow();
 	}
 
@@ -555,6 +555,10 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 	}
 
 	m_currentUserPane->pack();
+}
+
+void UserMenu::updateExperimentPress() {
+	m_app->reinitExperiment = true;				// Set the reinit semamphore to avoid event handling problems
 }
 
 Array<String> UserMenu::updateSessionDropDown() {

@@ -156,6 +156,7 @@ public:
 	bool		buttonUp			= true;		///< Pass button up to session
 	bool		frameToggle			= false;	///< Simple toggle flag used for frame rate click-to-photon monitoring
 	bool		updateUserMenu		= false;	///< Semaphore to indicate user settings needs update
+	bool		reinitExperiment	= false;	///< Semaphore to indicate experiment needs to be reinitialized
 
 	int			experimentIdx = 0;				///< Index of the current experiment
 
