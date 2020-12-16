@@ -31,6 +31,15 @@
 #include "TargetEntity.h"
 #include "PlayerEntity.h"
 #include "Dialogs.h"
+#include "Weapon.h"
+
+Session::Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config), m_weapon(app->weapon) {
+	m_hasSession = notNull(m_config);
+}
+
+Session::Session(FPSciApp* app) : m_app(app), m_weapon(app->weapon) {
+	m_hasSession = false;
+}
 
 bool Session::hasNextCondition() const{
 	for (int count : m_remainingTrials) {
@@ -168,7 +177,7 @@ void Session::initTargetAnimation() {
 	// Reset number of destroyed targets (in the trial)
 	m_destroyedTargets = 0;
 	// Reset shot and hit counters (in the trial)
-	m_shotCount = 0;
+	m_weapon->reload();
 	m_hitCount = 0;
 }
 
@@ -273,7 +282,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::trialTask)
 	{
-		if ((stateElapsedTime > m_config->timing.maxTrialDuration) || (remainingTargets <= 0) || (m_shotCount == m_config->weapon.maxAmmo))
+		if ((stateElapsedTime > m_config->timing.maxTrialDuration) || (remainingTargets <= 0) || (m_weapon->remainingAmmo() == 0))
 		{
 			m_taskEndTime = FPSciLogger::genUniqueTimestamp();
 			processResponse();
@@ -290,7 +299,8 @@ void Session::updatePresentationState()
 			runTrialCommands("end");			// Run the end of trial processes
 
 			// Reset weapon cooldown
-			m_lastFireAt = 0.f;
+			m_weapon->resetCooldown();
+
 		}
 	}
 	else if (currentState == PresentationState::trialFeedback)
@@ -481,30 +491,6 @@ void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 	}
 }
 
-bool Session::canFire() {
-	if (isNull(m_config)) return true;
-	double timeNow = System::time();
-	if ((timeNow - m_lastFireAt) > (m_config->weapon.firePeriod)) {
-		m_lastFireAt = timeNow;
-		return true;
-	}
-	else {
-		return false;
-	}
-}
-
-float Session::weaponCooldownPercent() const {
-	if (isNull(m_config)) return 1.0;
-	if (m_config->weapon.firePeriod == 0.0f) return 1.0;
-	return min((float)(System::time() - m_lastFireAt) / m_config->weapon.firePeriod, 1.0f);
-}
-
-int Session::remainingAmmo() const {
-	if (isNull(m_config)) return 100;
-	return m_config->weapon.maxAmmo - m_shotCount;
-}
-
-
 float Session::getRemainingTrialTime() {
 	if (isNull(m_config)) return 10.0;
 	return m_config->timing.maxTrialDuration - m_timer.getTime();
@@ -614,7 +600,7 @@ String Session::formatFeedback(const String& input) {
 			formatted = formatted.substr(0, foundIdx) + format("%d", m_hitCount) + formatted.substr(foundIdx + trialShotsHit.length());
 		}
 		else if (!formatted.compare(foundIdx, trialTotalShots.length(), trialTotalShots)) {
-			formatted = formatted.substr(0, foundIdx) + format("%d", m_shotCount) + formatted.substr(foundIdx + trialTotalShots.length());
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_weapon->shotsTaken()) + formatted.substr(foundIdx + trialTotalShots.length());
 		}
 		else {
 			// Bump the found index past this character (not a valid substring)

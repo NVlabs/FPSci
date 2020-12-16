@@ -1,0 +1,114 @@
+
+/* -*- c++ -*- */
+{ 
+    entities = { 
+        box = VisibleEntity { 
+            model = "boxModel"; 
+            frame = Vector3(0, 0, 0 ); 
+        }; 
+        
+        camera = Camera {
+            frame = CFrame::fromXYZYPRDegrees(  0.0f,   1.0f,   6.0f,  0.0f,   0,   0.0f);
+        
+            depthOfFieldSettings = DepthOfFieldSettings {
+                model = "NONE";
+                enabled = false;
+            };
+
+            projection = Projection {
+                nearPlaneZ = -0.1;
+                farPlaneZ = -200;
+                fovDirection = "VERTICAL";
+                fovDegrees = 25;
+            };
+        };
+        
+        customCamera = Camera {
+            frame = CFrame::fromXYZYPRDegrees(  0.5f,   1.5f,   4.0f,  0.0f,   0,   0.0f);
+        
+            depthOfFieldSettings = DepthOfFieldSettings {
+                model = "NONE";
+                enabled = false;
+            };
+
+            projection = Projection {
+                nearPlaneZ = -0.1;
+                farPlaneZ = -200;
+                fovDirection = "VERTICAL";
+                fovDegrees = 25;
+            };
+        };
+        
+        
+        
+        light1 = Light { 
+            bulbPower = Power3(60); 
+            shadowsEnabled = true; 
+            frame = CFrame::fromXYZYPRDegrees(0, 1.92, 0, 0, -90, 0 ); 
+            shadowMapSize = Vector2int16(1024, 1024 ); 
+            spotHalfAngleDegrees = 45; 
+            rectangular = true;
+			extent = Vector2(0.75, 0.75);
+            type = "SPOT"; 
+        }; 
+        
+        light2 = Light { 
+            bulbPower = Power3(60); 
+            shadowsEnabled = true; 
+            frame = CFrame::fromXYZYPRDegrees(0, 1.92, 0, 0, 0, 0 ); 
+            shadowMapSize = Vector2int16(1024, 1024 ); 
+            spotHalfAngleDegrees = 45; 
+            rectangular = true; 
+			extent = Vector2(0.75, 0.75);
+            type = "SPOT"; 
+        }; 
+        
+        light3 = Light { 
+            bulbPower = Power3(60); 
+            shadowsEnabled = true; 
+            frame = CFrame::fromXYZYPRDegrees(0, 1.92, 0, 90, 0, 0 ); 
+            shadowMapSize = Vector2int16(1024, 1024 ); 
+            spotHalfAngleDegrees = 45; 
+            rectangular = true; 
+			extent = Vector2(0.75, 0.75);
+            type = "SPOT"; 
+        }; 
+        
+        light4 = Light { 
+            bulbPower = Power3(60); 
+            shadowsEnabled = true; 
+            frame = CFrame::fromXYZYPRDegrees(0, 1.92, 0, -90, 0, 0 ); 
+            shadowMapSize = Vector2int16(1024, 1024 ); 
+            spotHalfAngleDegrees = 45; 
+            rectangular = true; 
+			extent = Vector2(0.75, 0.75);
+            type = "SPOT"; 
+        }; 
+        
+        light5 = Light { 
+            bulbPower = Power3(60); 
+            shadowsEnabled = true; 
+            frame = CFrame::fromXYZYPRDegrees(0, 1.92, 0, 180, 0, 180 ); 
+            shadowMapSize = Vector2int16(1024, 1024 ); 
+			extent = Vector2(0.75, 0.75);
+            spotHalfAngleDegrees = 45; 
+            rectangular = true; 
+            type = "SPOT"; 
+        }; 
+        
+    }; 
+    
+	lightingEnvironment = LightingEnvironment {
+		environmentMap = 0.05; 
+	}; 
+    
+    models = { 
+        boxModel = ArticulatedModel::Specification { 
+            filename = "model/CornellBox/CornellBox.zip/CornellBox-Empty-CO.obj"; 
+        }; 
+        
+    }; 
+    
+    name = "FPSci Test Cornell Box (Empty CO)"; 
+    
+} 

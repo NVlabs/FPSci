@@ -838,6 +838,9 @@ public:
 	bool	scopeToggle = false;										///< Scope toggle behavior
 	//String reticleImage;												///< Reticle image to show for this weapon
 
+	float	kickAngleDegrees = 0.0f;									///< Angle for the weapon to kick when fired
+	float	kickDuration = 0.0f;										///< Kick duration
+
 	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
 
 	/** Returns true if firePeriod == 0 and autoFire == true */
@@ -899,6 +902,8 @@ public:
 
 			reader.getIfPresent("scopeFoV", scopeFoV);
 			reader.getIfPresent("scopeToggle", scopeToggle);
+			reader.getIfPresent("kickAngleDegrees", kickAngleDegrees);
+			reader.getIfPresent("kickDuration", kickDuration);
 
 			//reader.getIfPresent("recticleImage", reticleImage);
 		default:
@@ -946,6 +951,8 @@ public:
 		if (forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
 		if (forceAll || def.scopeFoV != scopeFoV)							a["scopeFoV"] = scopeFoV;
 		if (forceAll || def.scopeToggle != scopeToggle)						a["scopeToggle"] = scopeToggle;
+		if (forceAll || def.kickAngleDegrees != kickAngleDegrees)			a["kickAngleDegrees"] = kickAngleDegrees;
+		if (forceAll || def.kickDuration != kickDuration)					a["kickDuration"] = kickDuration;
 
 		return a;
 	}
