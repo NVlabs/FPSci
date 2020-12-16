@@ -29,6 +29,9 @@
     <None Include="..\data-files\test\systemconfig.Any">
       <Filter>Config Files</Filter>
     </None>
+    <None Include="..\data-files\scene\Test_Cornell_Box.Scene.Any">
+      <Filter>Config Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Config Files">

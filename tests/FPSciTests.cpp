@@ -552,10 +552,10 @@ TEST_F(FPSciTests, TestCameraSelection) {
 
 	SelectSession("defaultCamera");
 	s_app->oneFrame();
-	EXPECT_TRUE(s_app->playerCamera->name() == "defaultCamera");
+	EXPECT_TRUE(s_app->playerCamera->name() == "camera");
 
 	SelectSession("customCamera");
 	s_app->oneFrame();
-	EXPECT_TRUE(s_app->playerCamera->name() == "lionCamera");
+	EXPECT_TRUE(s_app->playerCamera->name() == "customCamera");
 
 }
