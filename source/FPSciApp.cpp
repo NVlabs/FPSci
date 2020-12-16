@@ -520,7 +520,7 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		}
 		// Otherwise let the loaded scene persist
 	}
-	else if (sessConfig->scene != m_loadedScene) {
+	else if (sessConfig->scene != m_loadedScene || forceReload) {
 		loadScene(sessConfig->scene.name);
 		m_loadedScene = sessConfig->scene;
 	}
