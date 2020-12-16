@@ -617,7 +617,6 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 	const String pcamName = sessConfig->scene.playerCamera;
 	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(sessConfig->scene.playerCamera);
 	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, sessConfig->scene.playerCamera));
-	scene()->insert((shared_ptr<Entity>)playerCamera);
 	setActiveCamera(playerCamera);
 
 	initPlayer();
