@@ -507,15 +507,15 @@ void FPSciApp::updateSession(const String& id) {
 	// Load the experiment scene if we haven't already (target only)
 	if (sessConfig->scene.name.empty()) {
 		// No scene specified, load default scene
-		if (m_loadedScene.empty()) {
+		if (m_loadedScene.name.empty()) {
 			loadScene(m_defaultSceneName);
-			m_loadedScene = m_defaultSceneName;
+			m_loadedScene.name = m_defaultSceneName;
 		}
 		// Otherwise let the loaded scene persist
 	}
-	else if (sessConfig->scene.name != m_loadedScene) {
+	else if (sessConfig->scene != m_loadedScene) {
 		loadScene(sessConfig->scene.name);
-		m_loadedScene = sessConfig->scene.name;
+		m_loadedScene = sessConfig->scene;
 	}
 
 	// Check for play mode specific parameters
