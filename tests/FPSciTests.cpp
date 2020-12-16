@@ -546,3 +546,16 @@ TEST_F(FPSciTests, TestTargetSizes) {
 	float targettoolargesize = 8.0f;
 	EXPECT_NEAR(toolargesize, targettoolargesize, targettoolargesize * e);
 }
+
+
+TEST_F(FPSciTests, TestCameraSelection) {
+
+	SelectSession("defaultCamera");
+	s_app->oneFrame();
+	EXPECT_TRUE(s_app->playerCamera->name() == "camera");
+
+	SelectSession("customCamera");
+	s_app->oneFrame();
+	EXPECT_TRUE(s_app->playerCamera->name() == "customCamera");
+
+}

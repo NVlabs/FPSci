@@ -507,15 +507,15 @@ void FPSciApp::updateSession(const String& id) {
 	// Load the experiment scene if we haven't already (target only)
 	if (sessConfig->scene.name.empty()) {
 		// No scene specified, load default scene
-		if (m_loadedScene.empty()) {
+		if (m_loadedScene.name.empty()) {
 			loadScene(m_defaultSceneName);
-			m_loadedScene = m_defaultSceneName;
+			m_loadedScene.name = m_defaultSceneName;
 		}
 		// Otherwise let the loaded scene persist
 	}
-	else if (sessConfig->scene.name != m_loadedScene) {
+	else if (sessConfig->scene != m_loadedScene) {
 		loadScene(sessConfig->scene.name);
-		m_loadedScene = sessConfig->scene.name;
+		m_loadedScene = sessConfig->scene;
 	}
 
 	// Check for play mode specific parameters
@@ -617,7 +617,6 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 	const String pcamName = sessConfig->scene.playerCamera;
 	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(sessConfig->scene.playerCamera);
 	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, sessConfig->scene.playerCamera));
-	scene()->insert((shared_ptr<Entity>)playerCamera);
 	setActiveCamera(playerCamera);
 
 	initPlayer();

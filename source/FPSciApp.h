@@ -56,7 +56,7 @@ protected:
 	RealTime								m_lastJumpTime = 0.0f;				///< Time of last jump
 
 	int										m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
-	String									m_loadedScene = "";
+	SceneConfig								m_loadedScene;						///< Configuration for loaded scene
 	String									m_defaultSceneName = "FPSci Simple Hallway";	// Default scene to load
 
 	String									m_expConfigHash;					///< String hash of experiment config file
