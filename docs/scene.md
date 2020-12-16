@@ -7,8 +7,8 @@ In addition to the base `.scene.any` file, the following fields must/can be prov
 ### Physics
 Two "physics-based" parameters are also provided by the scene file in their own `Physics` header, these are:
 
-* `minHeight` - A height at which the player is respawned (at their spawn location) if the fall below
-* `gravity` - Currently unused...
+* `minHeight` - A height at which the player respawns (at their spawn location) if they fall below
+* `gravity` - Deprecated. Currently ignored...
 
 An example of this configuration (from within the top-level of a `scene.Any` file) is provided below:
 
@@ -38,9 +38,9 @@ player = PlayerEntity {
 ```
 
 ### Player Camera
-The player camera may be specified as with any other camera in a `scene.any` file, but is required to have the name `playerCamera` as it's name to specify it as the camera used for the player view. If no player camera is provided in the scene file, but a `PlayerEntity` is provided, the application creates the player camera from the player entity.
+Any camera specified in the scene can be used as the camera attached to the player. This mapping is done by putting the name of the chosen camera in the [FPSci scene settings](./general_config.md#scene-settings). If no name is specified, the `defaultCamera` will be used.
 
-The player camera is a way to modify camera properties for the player view, excluding the following properties which are overriden in the application:
+The player camera is a way to modify camera properties for the player view, excluding the following properties which are overridden in the application:
 
 * Anti-aliasing
 * Bloom strength

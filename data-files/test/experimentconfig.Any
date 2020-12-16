@@ -44,6 +44,21 @@
                     count = 5;
                 }
             );
+        },
+        {
+            id = "defaultCamera";
+            trials = ( { ids = ( "small"); count = 1; } );
+            scene = {
+                name = "G3D Sponza"; 
+            };
+        },
+        {
+            id = "customCamera";
+            trials = ( { ids = ( "small"); count = 1; } );
+            scene = {
+                name = "G3D Sponza";
+                playerCamera = "lionCamera";
+            };
         }
     );
 
