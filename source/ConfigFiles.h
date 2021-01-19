@@ -812,6 +812,7 @@ public:
 			reader.getIfPresent("autoFire", autoFire);
 			reader.getIfPresent("damagePerSecond", damagePerSecond);
 			reader.getIfPresent("fireSound", fireSound);
+			reader.getIfPresent("fireSoundVol", fireSoundVol);
 			reader.getIfPresent("hitScan", hitScan);
 
 			reader.getIfPresent("renderModel", renderModel);			
@@ -868,6 +869,7 @@ public:
 		if (forceAll || def.autoFire != autoFire)							a["autoFire"] = autoFire;
 		if (forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
 		if (forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
+		if (forceAll || def.fireSoundVol != fireSoundVol)					a["fireSoundVol"] = fireSoundVol;
 		if (forceAll || def.hitScan != hitScan)								a["hitScan"] = hitScan;
 
 		if (forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
