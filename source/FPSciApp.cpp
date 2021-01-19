@@ -1177,6 +1177,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 		damage = sessConfig->weapon.damagePerSecond * sessConfig->weapon.firePeriod;
 	}
 	target->doDamage(damage);
+	target->playHitSound();
 
 	// Check if we need to add combat text for this damage
 	if (sessConfig->targetView.showCombatText) {
@@ -1234,9 +1235,6 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 		sess->accumulatePlayerAction(PlayerActionType::Destroy, target->name());
 	}
 	else {
-		if (!sessConfig->weapon.isLaser()) {
-			target->playHitSound();
-		}
 		// Target 'hit', but still alive.
 		sess->accumulatePlayerAction(PlayerActionType::Hit, target->name());
 	}
