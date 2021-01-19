@@ -16,7 +16,6 @@ mkdir -p dist/shader/GFont/
 mkdir -p dist/shader/GBuffer/
 mkdir -p dist/shader/Film/
 mkdir -p dist/shader/DefaultRenderer/
-mkdir -p dist/shader/DDGIVolume/
 mkdir -p dist/shader/Camera/
 mkdir -p dist/shader/BumpMap/
 mkdir -p dist/shader/ArticulatedModel/
@@ -191,7 +190,6 @@ cp $g3d/G3D10/data-files/shader/Film/Film_bloomExpose.pix dist/shader/Film/
 cp $g3d/G3D10/data-files/shader/Film/Film_FXAA_13_quality.pix dist/shader/Film/
 cp $g3d/G3D10/data-files/shader/DefaultRenderer/DefaultRenderer_deferredShade.pix dist/shader/DefaultRenderer/
 cp $g3d/G3D10/data-files/shader/DefaultRenderer/DefaultRenderer_OIT_writePixel.glsl dist/shader/DefaultRenderer/
-cp $g3d/G3D10/data-files/shader/DDGIVolume/DDGIVolume.glsl dist/shader/DDGIVolume/
 cp $g3d/G3D10/data-files/shader/Camera/Camera.glsl dist/shader/Camera/
 cp $g3d/G3D10/data-files/shader/BumpMap/BumpMap.glsl dist/shader/BumpMap/
 cp $g3d/G3D10/data-files/shader/ArticulatedModel/ArticulatedModel_blitShader.pix dist/shader/ArticulatedModel/
