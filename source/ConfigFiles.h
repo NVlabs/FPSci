@@ -933,7 +933,7 @@ public:
 	float			destroyDecalScale = 1.0;				///< Scale to apply to destroy (relative to target size)
 	RealTime		destroyDecalDuration = 0.1;				///< Destroy decal display duration
 
-	String			hitSound = "sound/18397__inferno__smalllas.wav";	///< Sound to play when target is hit (but not destoyed)
+	String			hitSound = "sound/fpsci_ding_100ms.wav";///< Sound to play when target is hit (but not destoyed)
 	float			hitSoundVol = 1.0f;						///< Hit sound volume
 	String          destroyedSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
 	float           destroyedSoundVol = 10.0f;
