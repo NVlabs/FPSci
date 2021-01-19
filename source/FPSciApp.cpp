@@ -527,7 +527,9 @@ void FPSciApp::updateSession(const String& id) {
 	// Update weapon model (if drawn) and sounds
 	weapon->loadModels();
 	weapon->loadSounds();
-	m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
+	if (!sessConfig->audio.sceneHitSound.empty()) {
+		m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
+	}
 
 	// Load static HUD textures
 	for (StaticHudElement element : sessConfig->hud.staticElements) {
@@ -1334,7 +1336,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 						if (isNull(target)) // Miss case
 						{
 							// Play scene hit sound
-							if (!sessConfig->weapon.isLaser()) {
+							if (notNull(m_sceneHitSound) && !sessConfig->weapon.isLaser()) {
 								m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
 							}
 						}
