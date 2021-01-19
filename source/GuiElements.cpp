@@ -285,12 +285,12 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 	} pane->endRow();
 	pane->beginRow();{
 		pane->addCheckBox("Autofire", &(config.autoFire))->setWidth(cbWidth);
-		auto n = pane->addNumberBox("Fire Period", &(config.firePeriod), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 10.0f, 0.1f);
+		auto n = pane->addNumberBox("Fire Period", &(config.firePeriod), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 10.0f, 0.001f);
 		n->setWidth(nbWidth);
 	} pane->endRow();
 	pane->beginRow(); {
 		pane->addCheckBox("Hitscan", &(config.hitScan))->setWidth(cbWidth);
-		auto n = pane->addNumberBox("Damage", &(config.damagePerSecond), "health/s", GuiTheme::LINEAR_SLIDER, 0.0f, 100.0f, 0.1f);
+		auto n = pane->addNumberBox("Damage", &(config.damagePerSecond), "health/s", GuiTheme::LINEAR_SLIDER, 0.0f, 100.0f, 0.01f);
 		n->setWidth(nbWidth);
 		n->setUnitsSize(50.0f);
 	} pane->endRow();
