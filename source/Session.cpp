@@ -638,8 +638,8 @@ shared_ptr<TargetEntity> Session::spawnDestTarget(
 	const shared_ptr<TargetEntity>& target = TargetEntity::create(config, nameStr, m_scene, (*m_targetModels)[config->id][scaleIndex], position, scaleIndex, paramIdx);
 
 	// Update parameters for the target
-	target->setHitSound(config->hitSound, config->hitSoundVol);
-	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
+	target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
 	target->setFrame(position);
 	target->setColor(color);
 
@@ -686,8 +686,8 @@ shared_ptr<FlyingEntity> Session::spawnFlyingTarget(
 	if (isWorldSpace) {
 		target->setBounds(config->moveBounds);
 	}
-	target->setHitSound(config->hitSound, config->hitSoundVol);
-	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
+	target->setHitSound(config->hitSound, m_app->soundTable,  config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
 	target->setColor(color);
 
 	// Add the target to the scene/target array
@@ -716,8 +716,8 @@ shared_ptr<JumpingEntity> Session::spawnJumpingTarget(
 	if (isWorldSpace) {
 		target->setMoveBounds(config->moveBounds);
 	}
-	target->setHitSound(config->hitSound, config->hitSoundVol);
-	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
+	target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
 	target->setColor(color);
 
 	// Add the target to the scene/target array
