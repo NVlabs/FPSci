@@ -110,6 +110,7 @@ public:
 	void resetCooldown() { m_lastFireAt = 0; }
 	bool canFire() const;
 	float cooldownRatio() const;
+	bool isContinuous() const;
 
 	int remainingAmmo() const { 
 		if (isNull(m_config)) return 100;

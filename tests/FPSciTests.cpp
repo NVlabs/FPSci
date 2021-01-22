@@ -559,3 +559,148 @@ TEST_F(FPSciTests, TestCameraSelection) {
 	EXPECT_TRUE(s_app->playerCamera->name() == "customCamera");
 
 }
+
+
+TEST_F(FPSciTests, TestWeapon60HzContinuous) {
+	// Should be 1 second to kill
+	SelectSession("60HzContinuous");
+	EXPECT_TRUE(s_app->weapon->isContinuous()) << "Weapon should be continuous fire!";
+	s_app->oneFrame();
+	auto spawnedtargets = respawnTargets();
+	ASSERT_EQ(spawnedtargets, 1);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseDown(0);
+	int numFrames = 0;
+	RealTime start = System::time();
+	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+		s_app->oneFrame();
+		numFrames++;
+	}
+	RealTime end = System::time();
+	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
+	s_app->oneFrame();
+	EXPECT_NEAR(end - start, 1, 0.017) << "Failed to be within a frame period of the expected end time!";
+	ASSERT_NEAR(numFrames, 60, 1) << "Wrong number of frames taken.";
+}
+
+TEST_F(FPSciTests, TestWeapon30HzContinuous) {
+	// Should be 1 second to kill
+	SelectSession("30HzContinuous");
+	EXPECT_TRUE(s_app->weapon->isContinuous()) << "Weapon should be continuous fire!";
+	s_app->oneFrame();
+	auto spawnedtargets = respawnTargets();
+	ASSERT_EQ(spawnedtargets, 1);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseDown(0);
+	int numFrames = 0;
+	RealTime start = System::time();
+	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+		s_app->oneFrame();
+		numFrames++;
+	}
+	RealTime end = System::time();
+	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
+	s_app->oneFrame();
+	EXPECT_NEAR(end - start, 1, 0.034) << "Failed to be within a frame of the expected end time!";
+	ASSERT_NEAR(numFrames, 30, 1) << "Wrong number of frames taken.";
+}
+
+TEST_F(FPSciTests, TestWeapon30Hz67ms) {
+	// Should be 1 second to kill
+	SelectSession("30Hz67ms");
+	EXPECT_FALSE(s_app->weapon->isContinuous()) << "Weapon should NOT be continuous fire!";
+	s_app->oneFrame();
+	auto spawnedtargets = respawnTargets();
+	ASSERT_EQ(spawnedtargets, 1);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseDown(0);
+	int numFrames = 0;
+	RealTime start = System::time();
+	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+		s_app->oneFrame();
+		numFrames++;
+	}
+	RealTime end = System::time();
+	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
+	s_app->oneFrame();
+	EXPECT_NEAR(end - start, 1, 0.034) << "Failed to be within a frame of the expected end time!";
+	ASSERT_NEAR(numFrames, 30, 1) << "Wrong number of frames taken.";
+}
+
+TEST_F(FPSciTests, TestWeapon60Hz67ms) {
+	// Should be 1 second to kill
+	SelectSession("60Hz67ms");
+	EXPECT_FALSE(s_app->weapon->isContinuous()) << "Weapon should NOT be continuous fire!";
+	s_app->oneFrame();
+	auto spawnedtargets = respawnTargets();
+	ASSERT_EQ(spawnedtargets, 1);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseDown(0);
+	int numFrames = 0;
+	RealTime start = System::time();
+	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+		s_app->oneFrame();
+		numFrames++;
+	}
+	RealTime end = System::time();
+	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
+	s_app->oneFrame();
+	EXPECT_NEAR(end - start, 1, 0.017) << "Failed to be within a frame of the expected end time!";
+	ASSERT_NEAR(numFrames, 60, 1) << "Wrong number of frames taken.";
+}
+
+TEST_F(FPSciTests, TestWeapon60Hz33ms) {
+	// Should be 1 second to kill
+	SelectSession("60Hz33ms");
+	EXPECT_FALSE(s_app->weapon->isContinuous()) << "Weapon should NOT be continuous fire!";
+	s_app->oneFrame();
+	auto spawnedtargets = respawnTargets();
+	ASSERT_EQ(spawnedtargets, 1);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseDown(0);
+	int numFrames = 0;
+	RealTime start = System::time();
+	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+		s_app->oneFrame();
+		numFrames++;
+	}
+	RealTime end = System::time();
+	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
+	s_app->oneFrame();
+	EXPECT_NEAR(end - start, 1, 0.017) << "Failed to be within a frame of the expected end time!";
+	ASSERT_NEAR(numFrames, 60, 1) << "Wrong number of frames taken.";
+}
+
+TEST_F(FPSciTests, TestWeapon60Hz16ms) {
+	// Should be 1 second to kill
+	SelectSession("60Hz16ms");
+	EXPECT_FALSE(s_app->weapon->isContinuous()) << "Weapon should NOT be continuous fire!";
+	s_app->oneFrame();
+	auto spawnedtargets = respawnTargets();
+	ASSERT_EQ(spawnedtargets, 1);
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseDown(0);
+	int numFrames = 0;
+	RealTime start = System::time();
+	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+		s_app->oneFrame();
+		numFrames++;
+	}
+	RealTime end = System::time();
+	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
+	s_app->oneFrame();
+	EXPECT_NEAR(end - start, 1, 0.017) << "Failed to be within a frame of the expected end time!";
+	ASSERT_NEAR(numFrames, 60, 1) << "Wrong number of frames taken.";
+}

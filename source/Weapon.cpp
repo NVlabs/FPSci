@@ -325,3 +325,7 @@ float Weapon::cooldownRatio() const {
 	if (isNull(m_config) || m_config->firePeriod == 0.0) return 1.0f;
 	return min((float)timeSinceLastFire() / m_config->firePeriod, 1.0f);
 }
+
+bool Weapon::isContinuous() const {
+	return m_config->isLaser();
+}
