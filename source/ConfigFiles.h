@@ -109,6 +109,7 @@ public:
 
 	/** Construct from any here */
     StartupConfig(const Any& any) {
+		bool foundDefault = false;
         int settingsVersion = 1;
         AnyTableReader reader(any);
         reader.getIfPresent("settingsVersion", settingsVersion);
@@ -120,7 +121,27 @@ public:
 			reader.getIfPresent("fullscreen", fullscreen);
 			reader.getIfPresent("windowSize", windowSize);
 
-			reader.getIfPresent("defaultExperiment", defaultExperiment);
+			foundDefault = reader.getIfPresent("defaultExperiment", defaultExperiment);
+			if (!foundDefault) {
+				logPrintf("Warning: no `defaultExperiment` found in `startupConfig.Any`, you may be using an old experiment config.\n");
+				String experimentConfigFilename, userConfigFilename, userStatusFilename, keymapConfigFilename, systemConfigFilename, resultsDirPath;
+				reader.getIfPresent("experimentConfigFilename", experimentConfigFilename);
+				reader.getIfPresent("userConfigFilename", userConfigFilename);
+				reader.getIfPresent("userStatusFilename", userStatusFilename);
+				reader.getIfPresent("keymapConfigFilename", keymapConfigFilename);
+				reader.getIfPresent("systemConfigFilename", systemConfigFilename);
+				reader.getIfPresent("resultsDirPath", resultsDirPath);
+				logPrintf("One possible fix is to use the following in `startupConfig.Any`:\n");
+				logPrintf("    defaultExperiment = {\n");
+				logPrintf("        experimentConfigFilename = \"%s\";\n", experimentConfigFilename);
+				logPrintf("        userConfigFilename = \"%s\";\n", userConfigFilename);
+				logPrintf("        userStatusFilename = \"%s\";\n", userStatusFilename);
+				logPrintf("        keymapConfigFilename = \"%s\";\n", keymapConfigFilename);
+				logPrintf("        systemConfigFilename = \"%s\";\n", systemConfigFilename);
+				logPrintf("        resultsDirPath = \"%s\";\n", resultsDirPath);
+				logPrintf("    }\n");
+			}
+
 			reader.getIfPresent("experimentList", experimentList);
 			for (ConfigFiles& files : experimentList) { files.populateEmptyFieldsWithDefaults(defaultExperiment); }
 			if (experimentList.length() == 0) { experimentList.append(defaultExperiment); }
