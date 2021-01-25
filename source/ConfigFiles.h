@@ -133,13 +133,14 @@ public:
 				reader.getIfPresent("resultsDirPath", resultsDirPath);
 				logPrintf("One possible fix is to use the following in `startupConfig.Any`:\n");
 				logPrintf("    defaultExperiment = {\n");
+				logPrintf("        name = \"default\";\n");
 				logPrintf("        experimentConfigFilename = \"%s\";\n", experimentConfigFilename);
 				logPrintf("        userConfigFilename = \"%s\";\n", userConfigFilename);
 				logPrintf("        userStatusFilename = \"%s\";\n", userStatusFilename);
 				logPrintf("        keymapConfigFilename = \"%s\";\n", keymapConfigFilename);
 				logPrintf("        systemConfigFilename = \"%s\";\n", systemConfigFilename);
 				logPrintf("        resultsDirPath = \"%s\";\n", resultsDirPath);
-				logPrintf("    }\n");
+				logPrintf("    };\n");
 			}
 
 			reader.getIfPresent("experimentList", experimentList);

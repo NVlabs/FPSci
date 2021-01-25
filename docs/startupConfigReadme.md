@@ -24,6 +24,7 @@ The following fields are specified on a per-experiment basis:
 * `keymapConfigFilename` sets the path and file name for a [keymap config file](./keymap.md).
 * `systemConfigFilename` sets the path and file name for a [system config file](systemConfigReadme.md) for controlling latency logger hardware.
 * `resultsDirPath` sets the path to the results directory. If this directory does not exists the application will create it at runtime.
+* `name` is the name identifier for each entry in the `experimentList`.
 
 ## Sample/Default Values
 The default `startup.Any` file is included below (as an example):
@@ -42,4 +43,37 @@ defaultExperiment = {
     systemConfigFilename = "systemconfig.Any";          // Can include a path
     resultsDirPath = "./results/";                      // Change to save results somewhere else
 };
+```
+
+As an example of how to use the `experimentList`, let's say we have 2 experiments that use the same userConfig, keymap, and results, but have their own experimentConfig and userStatus to track progress. The `experimentList` for this example might look something like the following:
+
+```
+{
+    audioEnable = true; 
+    developerMode = true; 
+    fullscreen = false; 
+    waypointEditorMode = false; 
+    defaultExperiment = {
+        name = "default";                                   // Note that `name` is required and "default" is recommended here
+        experimentConfigFilename = "experimentconfig.Any"; 
+        userStatusFilename = "userstatus.Any"; 
+        userConfigFilename = "userconfig.Any"; 
+        resultsDirPath = "./results/"; 
+        systemConfigFilename = "systemconfig.Any"; 
+        keymapConfigFilename = "keymap.Any"; 
+    };
+    experimentList = [
+        { name = "default"; }, // include this if you want the default experiment in the list
+        {
+            name = "experiment1";
+            experimentConfigFilename = "greatExperiment.Any"; 
+            userStatusFilename = "greatUserstatus.Any"; 
+        },
+        {
+            name = "experiment2";
+            experimentConfigFilename = "betterExperiment.Any"; 
+            userStatusFilename = "betterUserstatus.Any"; 
+        },
+    ];
+}
 ```
