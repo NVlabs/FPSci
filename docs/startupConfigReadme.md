@@ -36,6 +36,7 @@ windowSize = Vector2(1920, 980);                    // This sets the default win
 audioEnable = true;                                 // Set false to turn off audio
 
 defaultExperiment = {
+    name = "default";
     experimentConfigFilename = "experimentconfig.Any";  // Can include a path
     userConfigFilename = "userconfig.Any";              // Can include a path
     userStatusFilename = "userstatus.Any";              // Can include a path
@@ -54,7 +55,7 @@ As an example of how to use the `experimentList`, let's say we have 2 experiment
     fullscreen = false; 
     waypointEditorMode = false; 
     defaultExperiment = {
-        name = "default";                                   // Note that `name` is required and "default" is recommended here
+        name = "default";                                   // Note that `name` is required and "default" is useful if using an `experimentList`
         experimentConfigFilename = "experimentconfig.Any"; 
         userStatusFilename = "userstatus.Any"; 
         userConfigFilename = "userconfig.Any"; 
