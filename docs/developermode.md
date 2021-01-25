@@ -5,6 +5,7 @@ During development of `FirstPersonScience` we created a number of utilities for 
 When running in developer mode a number of the otherwise static features of the tool are available for dynamic toggle via an expanded Heads Up Display menu accessible during the normally available pause (Tab) menu.
 
 Features include:
+* Switching between multiple experiments (as specified in the `experimentList` within (startup config)[startupConfigReadme.md])
 * Dynamic control of bullet rendering
 * Dynamic control of HUD rendering
 * Dynamic control of on-screen FPS monitoring

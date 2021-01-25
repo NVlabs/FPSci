@@ -22,18 +22,17 @@ void FPSciApp::onInit() {
 	// Seed random based on the time
 	Random::common().reset(uint32(time(0)));
 
-	// Initialize the app
-	GApp::onInit();
+	GApp::onInit();			// Initialize the G3D application (one time)
+	initExperiment();		// Initialize the experiment
+}
 
+void FPSciApp::initExperiment(){
 	// Load config from files
-	loadConfigs();
+	loadConfigs(startupConfig.experimentList[experimentIdx]);
 	m_lastSavedUser = *currentUser();			// Copy over the startup user for saves
 
 	// Get the size of the primary display
 	displayRes = OSWindow::primaryDisplaySize();						
-
-	// Setup/update waypoint manager
-	waypointManager = WaypointManager::create(this);
 
 	// Setup the display mode
 	setSubmitToDisplayMode(
@@ -42,10 +41,18 @@ void FPSciApp::onInit() {
 		//SubmitToDisplayMode::BALANCE);
 	    //SubmitToDisplayMode::MAXIMIZE_THROUGHPUT);
 
+	// Set the initial simulation timestep to REAL_TIME. The desired timestep is set later.
+	setFrameDuration(frameDuration(), REAL_TIME);
+
+	// Setup/update waypoint manager
+	if (startupConfig.developerMode && startupConfig.waypointEditorMode) {
+		waypointManager = WaypointManager::create(this);
+	}
+
 	// Setup the scene
 	setScene(PhysicsScene::create(m_ambientOcclusion));
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
-	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Create a target
+	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Register the target entity for creation
 
 	weapon = Weapon::create(&experimentConfig.weapon, scene(), activeCamera());
 	weapon->setHitCallback(std::bind(&FPSciApp::hitTarget, this, std::placeholders::_1));
@@ -63,12 +70,9 @@ void FPSciApp::onInit() {
 	showRenderingStats = false;
 	makeGUI();
 
-	updateMouseSensitivity();		// Update (apply) mouse sensitivity
+	updateMouseSensitivity();				// Update (apply) mouse sensitivity
 	const Array<String> sessions = m_userSettingsWindow->updateSessionDropDown();	// Update the session drop down to remove already completed sessions
-	updateSession(sessions[0]);		// Update session to create results file/start collection
-
-	// Set the initial simulation timestep to REAL_TIME. The desired timestep is set later.
-	setFrameDuration(frameDuration(), REAL_TIME);
+	updateSession(sessions[0], true);		// Update session to create results file/start collection
 }
 
 void FPSciApp::toggleUserSettingsMenu() {
@@ -104,13 +108,13 @@ void FPSciApp::saveUserConfig(bool onDiff) {
 	if (sess->logger) {
 		sess->logger->logUserConfig(*currentUser(), sessConfig->id, sessConfig->player.turnScale);
 	}
-	userTable.save(startupConfig.userConfigFilename);
+	userTable.save(startupConfig.experimentList[experimentIdx].userConfigFilename);
 	m_lastSavedUser = *currentUser();			// Copy over this user
 	logPrintf("User table saved.\n");			// Print message to log
 }
 
 void FPSciApp::saveUserStatus(void) {
-	userStatusTable.save(startupConfig.userStatusFilename);
+	userStatusTable.save(startupConfig.experimentList[experimentIdx].userStatusFilename);
 	logPrintf("User status saved.\n");
 }
 
@@ -139,9 +143,9 @@ void FPSciApp::setDirectMode(bool enable) {
 	fpm->setMouseMode(enable ? FirstPersonManipulator::MOUSE_DIRECT : FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
 }
 
-void FPSciApp::loadConfigs() {
+void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	// Load experiment setting from file
-	experimentConfig = ExperimentConfig::load(startupConfig.experimentConfigFilename);
+	experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename);
 	experimentConfig.printToLog();
 
 	// Get hash for experimentconfig.Any file
@@ -153,11 +157,11 @@ void FPSciApp::loadConfigs() {
 	experimentConfig.getSessionIds(sessionIds);
 
 	// Load per user settings from file
-	userTable = UserTable::load(startupConfig.userConfigFilename);
+	userTable = UserTable::load(configs.userConfigFilename);
 	userTable.printToLog();
 
 	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load(startupConfig.userStatusFilename);
+	userStatusTable = UserStatusTable::load(configs.userStatusFilename);
 	userStatusTable.printToLog();
 	userStatusTable.validate(sessionIds, userTable.getIds());
 		
@@ -166,11 +170,11 @@ void FPSciApp::loadConfigs() {
 	info.printToLog();										// Print system info to log.txt
 
 	// Get system configuration
-	systemConfig = SystemConfig::load(startupConfig.systemConfigFilename);
+	systemConfig = SystemConfig::load(configs.systemConfigFilename);
 	systemConfig.printToLog();			// Print the latency logger config to log.txt	
 
 	// Load the key binds
-	keyMap = KeyMapping::load(startupConfig.keymapConfigFilename);
+	keyMap = KeyMapping::load(configs.keymapConfigFilename);
 	userInput->setKeyMapping(&keyMap.uiMap);
 }
 
@@ -245,6 +249,7 @@ void FPSciApp::loadModels() {
 	}
 
 	// Create a series of colored materials to choose from for target health
+	m_materials.clear();
 	for (int i = 0; i < m_MatTableSize; i++) {
 		float complete = (float)i / m_MatTableSize;
 		Color3 color = experimentConfig.targetView.healthColors[0] * complete + experimentConfig.targetView.healthColors[1] * (1.0f - complete);
@@ -322,6 +327,7 @@ void FPSciApp::makeGUI() {
 	}
 
 	// Open sub-window buttons here (menu-style)
+	debugPane->removeAllChildren();
 	debugPane->beginRow(); {
 		debugPane->addButton("Render Controls [1]", this, &FPSciApp::showRenderControls);
 		debugPane->addButton("Player Controls [2]", this, &FPSciApp::showPlayerControls);
@@ -330,6 +336,7 @@ void FPSciApp::makeGUI() {
 	}debugPane->endRow();
 
 	// Create the user settings window
+	if (notNull(m_userSettingsWindow)) { removeWidget(m_userSettingsWindow); }
 	m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, sessConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
 	moveToCenter(m_userSettingsWindow);
 	m_userSettingsWindow->setVisible(true);
@@ -473,7 +480,7 @@ void FPSciApp::initPlayer() {
 	sess->initialHeadingRadians = player->heading();
 }
 
-void FPSciApp::updateSession(const String& id) {
+void FPSciApp::updateSession(const String& id, bool forceReload) {
 	// Check for a valid ID (non-emtpy and 
 	Array<String> ids;
 	experimentConfig.getSessionIds(ids);
@@ -507,13 +514,13 @@ void FPSciApp::updateSession(const String& id) {
 	// Load the experiment scene if we haven't already (target only)
 	if (sessConfig->scene.name.empty()) {
 		// No scene specified, load default scene
-		if (m_loadedScene.name.empty()) {
+		if (m_loadedScene.name.empty() || forceReload) {
 			loadScene(m_defaultSceneName);
 			m_loadedScene.name = m_defaultSceneName;
 		}
 		// Otherwise let the loaded scene persist
 	}
-	else if (sessConfig->scene != m_loadedScene) {
+	else if (sessConfig->scene != m_loadedScene || forceReload) {
 		loadScene(sessConfig->scene.name);
 		m_loadedScene = sessConfig->scene;
 	}
@@ -551,14 +558,16 @@ void FPSciApp::updateSession(const String& id) {
 	// Player parameters
 	initPlayer();
 
+	const String resultsDirPath = startupConfig.experimentList[experimentIdx].resultsDirPath;
+
 	// Check for need to start latency logging and if so run the logger now
-	if (!FileSystem::isDirectory(startupConfig.resultsDirPath)) {
-		FileSystem::createDirectory(startupConfig.resultsDirPath);
+	if (!FileSystem::isDirectory(resultsDirPath)) {
+		FileSystem::createDirectory(resultsDirPath);
 	}
 
 	const String logName = sessConfig->logger.logToSingleDb ? 
-		startupConfig.resultsDirPath + experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
-		startupConfig.resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+		resultsDirPath + experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
+		resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
 
 	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
@@ -762,7 +771,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 				foundKey = true;
 			}
 			else if (keyMap.map["reloadConfigs"].contains(ksym)) {
-				loadConfigs();												// (Re)load the configs
+				loadConfigs(startupConfig.experimentList[experimentIdx]);					// (Re)load the configs
 				// Update session from the reloaded configs
 				m_userSettingsWindow->updateSessionDropDown();
 				updateSession(m_userSettingsWindow->selectedSession());
@@ -928,6 +937,14 @@ void FPSciApp::onAfterEvents() {
 		// Add the new settings window and clear the semaphore
 		addWidget(m_userSettingsWindow);
 		updateUserMenu = false;
+	}
+
+	if (reinitExperiment) {			// Check for experiment reinitialization (developer-mode only)
+		m_widgetManager->clear();
+		addWidget(debugWindow);
+		addWidget(developerWindow);
+		initExperiment();
+		reinitExperiment = false;
 	}
 
 	GApp::onAfterEvents();
@@ -1434,7 +1451,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		}
 
 		// Handle recording indicator
-		if (waypointManager->recordMotion) {
+		if (startupConfig.waypointEditorMode && waypointManager->recordMotion) {
 			Draw::point(Point2(rd->viewport().width()*0.9f - 15.0f, 20.0f+m_debugMenuHeight*scale), rd, Color3::red(), 10.0f);
 			outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f , m_debugMenuHeight*scale), 20.0f, Color3::red());
 		}

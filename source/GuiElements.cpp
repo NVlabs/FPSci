@@ -361,6 +361,15 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	m_ddCurrUserIdx = m_users.getUserIndex(m_userStatus.currentUser);
 	m_expPane = m_parent->addPane("Experiment Settings");
 	m_expPane->setCaptionHeight(40);
+
+	// Only draw experiment selection box in developer mode
+	if (app->startupConfig.developerMode) {
+		m_expPane->beginRow(); {
+			m_expPane->addDropDownList("Experiment", app->experimentNames(), &(app->experimentIdx));
+			m_expPane->addButton("Select Experiment", this, &UserMenu::updateExperimentPress);
+		} m_expPane->endRow();
+	}
+
 	m_expPane->beginRow(); {
 		m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
 		m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
@@ -562,6 +571,10 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 	}
 
 	m_currentUserPane->pack();
+}
+
+void UserMenu::updateExperimentPress() {
+	m_app->reinitExperiment = true;				// Set the reinit semamphore to avoid event handling problems
 }
 
 Array<String> UserMenu::updateSessionDropDown() {
