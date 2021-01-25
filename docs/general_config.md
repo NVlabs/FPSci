@@ -157,7 +157,7 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 |`sceneHitSoundVol`     |ratio  | The volume of the scene hit sound to play                             |
 
 ```
-"sceneHitSound": "sound/18382__inferno__hvylas.wav",
+"sceneHitSound": "sound/fpsci_miss_100ms.wav",
 "sceneHitSoundVol": 1.0f,
 ```
 

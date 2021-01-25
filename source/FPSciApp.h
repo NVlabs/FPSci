@@ -140,6 +140,9 @@ public:
 
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
 
+	/** A table of sounds that targets can use to allow sounds to finish playing after they're destroyed */
+	Table<String, shared_ptr<Sound>>	soundTable;
+
 	shared_ptr<Session> sess;					///< Pointer to the experiment
 	shared_ptr<Camera> playerCamera;			///< Pointer to the player camera						
 	shared_ptr<Weapon> weapon;					///< Current weapon

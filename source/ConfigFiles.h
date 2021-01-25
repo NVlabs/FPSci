@@ -752,8 +752,8 @@ public:
 	float	firePeriod = 0.5;											///< Minimum fire period (set to 0 for laser mode)
 	bool	autoFire = false;											///< Fire repeatedly when mouse is held? (set true for laser mode)
 	float	damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
-	String	fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	///< Sound to play on fire
-	float	fireSoundVol = 0.5f;										///< Volume for fire sound
+	String	fireSound = "sound/fpsci_fire_100ms.wav"; 					///< Sound to play on fire
+	float	fireSoundVol = 1.0f;										///< Volume for fire sound
 	bool	renderModel = false;										///< Render a model for the weapon?
 	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
 
@@ -812,6 +812,7 @@ public:
 			reader.getIfPresent("autoFire", autoFire);
 			reader.getIfPresent("damagePerSecond", damagePerSecond);
 			reader.getIfPresent("fireSound", fireSound);
+			reader.getIfPresent("fireSoundVol", fireSoundVol);
 			reader.getIfPresent("hitScan", hitScan);
 
 			reader.getIfPresent("renderModel", renderModel);			
@@ -868,6 +869,7 @@ public:
 		if (forceAll || def.autoFire != autoFire)							a["autoFire"] = autoFire;
 		if (forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
 		if (forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
+		if (forceAll || def.fireSoundVol != fireSoundVol)					a["fireSoundVol"] = fireSoundVol;
 		if (forceAll || def.hitScan != hitScan)								a["hitScan"] = hitScan;
 
 		if (forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
@@ -933,10 +935,10 @@ public:
 	float			destroyDecalScale = 1.0;				///< Scale to apply to destroy (relative to target size)
 	RealTime		destroyDecalDuration = 0.1;				///< Destroy decal display duration
 
-	String			hitSound = "sound/18397__inferno__smalllas.wav";	///< Sound to play when target is hit (but not destoyed)
+	String			hitSound = "sound/fpsci_ding_100ms.wav";///< Sound to play when target is hit (but not destoyed)
 	float			hitSoundVol = 1.0f;						///< Hit sound volume
-	String          destroyedSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
-	float           destroyedSoundVol = 10.0f;
+	String          destroyedSound = "sound/fpsci_destroy_150ms.wav";		///< Sound to play when target destroyed
+	float           destroyedSoundVol = 1.0f;
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
@@ -1583,7 +1585,7 @@ public:
 class AudioConfig {
 public:
 	// Sounds
-	String			sceneHitSound = "sound/18382__inferno__hvylas.wav";								///< Sound to play when hitting the scene
+	String			sceneHitSound = "sound/fpsci_miss_100ms.wav";								///< Sound to play when hitting the scene
 	float			sceneHitSoundVol = 1.0f;
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {

@@ -527,7 +527,9 @@ void FPSciApp::updateSession(const String& id) {
 	// Update weapon model (if drawn) and sounds
 	weapon->loadModels();
 	weapon->loadSounds();
-	m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
+	if (!sessConfig->audio.sceneHitSound.empty()) {
+		m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
+	}
 
 	// Load static HUD textures
 	for (StaticHudElement element : sessConfig->hud.staticElements) {
@@ -1177,6 +1179,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 		damage = sessConfig->weapon.damagePerSecond * sessConfig->weapon.firePeriod;
 	}
 	target->doDamage(damage);
+	target->playHitSound();
 
 	// Check if we need to add combat text for this damage
 	if (sessConfig->targetView.showCombatText) {
@@ -1234,9 +1237,6 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 		sess->accumulatePlayerAction(PlayerActionType::Destroy, target->name());
 	}
 	else {
-		if (!sessConfig->weapon.isLaser()) {
-			target->playHitSound();
-		}
 		// Target 'hit', but still alive.
 		sess->accumulatePlayerAction(PlayerActionType::Hit, target->name());
 	}
@@ -1336,7 +1336,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 						if (isNull(target)) // Miss case
 						{
 							// Play scene hit sound
-							if (!sessConfig->weapon.isLaser()) {
+							if (notNull(m_sceneHitSound) && !sessConfig->weapon.isLaser()) {
 								m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
 							}
 						}

@@ -33,6 +33,8 @@ results/
 !/data-files/scene/Simple_Hallway.Scene.Any
 # Test scene
 !/data-files/scene/Test_Cornell_Box.Scene.Any
+# FPSci provided audio
+!/data-files/sound/fpsci_*
 # This stuff ignores any packaged outputs
 *.zip
 *.tar
