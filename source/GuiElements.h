@@ -157,6 +157,7 @@ protected:
 	void updateUserPress();
 	void addUserPress();
 	void updateSessionPress();
+	void updateExperimentPress();
 
 public:
 	static shared_ptr<UserMenu> create(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) {

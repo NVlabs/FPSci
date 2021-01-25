@@ -15,26 +15,101 @@ static bool operator==(Array<T> a1, Array<T> a2) {
 	return !(a1 != a2);
 }
 
+class ConfigFiles {
+public: 
+	String name;								///< Name for the experiment
+	String experimentConfigFilename;			///< Experiment configuration filename/path
+	String userConfigFilename;					///< User configuration filename/path
+	String userStatusFilename;					///< User status filename/path
+	String keymapConfigFilename;				///< Keymap configuration filename/path
+	String systemConfigFilename;				///< System configuration filename/path
+	String resultsDirPath;						///< Results directory path
+
+	ConfigFiles() {};
+
+	ConfigFiles(String name, String expConfig, String userConfig, String userStatus, String keymapConfig, String systemConfig, String resultsDir) :
+		name(name), experimentConfigFilename(expConfig), userConfigFilename(userConfig), userStatusFilename(userStatus), 
+		keymapConfigFilename(keymapConfig), systemConfigFilename(systemConfig), resultsDirPath(resultsDir) {};
+
+	static ConfigFiles defaults() { return ConfigFiles("default", "experimentconfig.Any", "userconfig.Any", "userstatus.Any", "keymap.Any", "systemconfig.Any", "./results"); }
+
+	ConfigFiles(const Any& any) {
+		AnyTableReader reader(any);
+
+		reader.get("name", name, "Must provide a name for every entry in the experimentList!");
+
+		reader.getIfPresent("experimentConfigFilename", experimentConfigFilename);
+		checkValidAnyFilename("experimentConfigFilename", experimentConfigFilename);
+
+		reader.getIfPresent("userConfigFilename", userConfigFilename);
+		checkValidAnyFilename("userConfigFilename", userConfigFilename);
+
+		reader.getIfPresent("userStatusFilename", userStatusFilename);
+		checkValidAnyFilename("userStatusFilename", userStatusFilename);
+
+		reader.getIfPresent("keymapConfigFilename", keymapConfigFilename);
+		checkValidAnyFilename("keymapConfigFilename", keymapConfigFilename);
+
+		reader.getIfPresent("systemConfigFilename", systemConfigFilename);
+		checkValidAnyFilename("systemConfigFilename", systemConfigFilename);
+
+		reader.getIfPresent("resultsDirPath", resultsDirPath);
+		resultsDirPath = formatDirPath(resultsDirPath);
+	}
+
+	/** Assert that the filename `path` ends in .any and report `errorName` if it doesn't */
+	static void checkValidAnyFilename(const String& errorName, const String& path) {
+		if (path.empty()) return;	// Allow empty paths (will be replaced)
+		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any", "Config filenames specified in the startup config must end with \".any\"!, check the " + errorName + "!\n");
+	}
+
+	/** Returns the provided path with trailing slashes added if missing */
+	static String formatDirPath(const String& path) {
+		String fpath = path;
+		if (!path.empty() && path.substr(path.length() - 1) != "/") { fpath = path + "/"; }
+		return fpath;
+	}
+
+	Any toAny(const bool forceAll = false) const {
+		Any a(Any::TABLE);
+		a["name"] = name;
+		a["experimentConfigFilename"] = experimentConfigFilename;
+		a["userConfigFilename"] = userConfigFilename;
+		a["userStatusFilename"] = userStatusFilename;
+		a["keymapConfigFilename"] = keymapConfigFilename;
+		a["systemConfigFilename"] = systemConfigFilename;
+		a["resultsDirPath"] = resultsDirPath;
+		return a;
+	}
+
+	void populateEmptyFieldsWithDefaults(const ConfigFiles& def) {
+		if (experimentConfigFilename.empty()) { experimentConfigFilename = def.experimentConfigFilename;  }
+		if (userConfigFilename.empty()) { userConfigFilename = def.userConfigFilename; }
+		if (userStatusFilename.empty()) { userStatusFilename = def.userStatusFilename; }
+		if (keymapConfigFilename.empty()) { keymapConfigFilename = def.keymapConfigFilename; }
+		if (systemConfigFilename.empty()) { systemConfigFilename = def.systemConfigFilename; }
+		if (resultsDirPath.empty()) { resultsDirPath = def.resultsDirPath; }
+	}
+};
+
 /** Configure how the application should start */
 class StartupConfig {
-private:
 public:
 	bool	developerMode = false;								///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
 	bool	waypointEditorMode = false;							///< Sets whether the app is run w/ the waypoint editor available
 	bool	fullscreen = true;									///< Whether the app runs in windowed mode
 	Vector2 windowSize = { 1920, 980 };							///< Window size (when not run in fullscreen)
-	String	experimentConfigFilename = "experimentconfig.Any";	///< Optional path to an experiment config file
-	String	userConfigFilename = "userconfig.Any";				///< Optional path to a user config file
-	String  userStatusFilename = "userstatus.Any";				///< Optional path to a user status file
-	String  keymapConfigFilename = "keymap.Any";				///< Optional path to a keymap config file
-	String  systemConfigFilename = "systemconfig.Any";			///< Optional path to a latency logger config file
-	String	resultsDirPath = "./results/";						///< Optional path to the results directory
+	
+	ConfigFiles defaultExperiment = ConfigFiles::defaults();	///< Setup default list
+	Array<ConfigFiles> experimentList;							///< List of configs (for various experiments)
+	
 	bool	audioEnable = true;									///< Audio on/off
 
 	StartupConfig() {};
 
 	/** Construct from any here */
     StartupConfig(const Any& any) {
+		bool foundDefault = false;
         int settingsVersion = 1;
         AnyTableReader reader(any);
         reader.getIfPresent("settingsVersion", settingsVersion);
@@ -45,18 +120,33 @@ public:
 			reader.getIfPresent("waypointEditorMode", waypointEditorMode);
 			reader.getIfPresent("fullscreen", fullscreen);
 			reader.getIfPresent("windowSize", windowSize);
-            reader.getIfPresent("experimentConfigFilename", experimentConfigFilename);
-			checkValidAnyFilename("experimentConfigFilename", experimentConfigFilename);
-            reader.getIfPresent("userConfigFilename", userConfigFilename);
-			checkValidAnyFilename("userConfigFilename", userConfigFilename);
-			reader.getIfPresent("userStatusFilename", userStatusFilename);
-			checkValidAnyFilename("userStatusFilename", userStatusFilename);
-			reader.getIfPresent("keymapConfigFilename", keymapConfigFilename);
-			checkValidAnyFilename("keymapConfigFilename", keymapConfigFilename);
-			reader.getIfPresent("systemConfigFilename", systemConfigFilename);
-			checkValidAnyFilename("systemConfigFilename", systemConfigFilename);
-			reader.getIfPresent("resultsDirPath", resultsDirPath);
-			resultsDirPath = formatDirPath(resultsDirPath);
+
+			foundDefault = reader.getIfPresent("defaultExperiment", defaultExperiment);
+			if (!foundDefault) {
+				logPrintf("Warning: no `defaultExperiment` found in `startupConfig.Any`, you may be using an old experiment config.\n");
+				String experimentConfigFilename, userConfigFilename, userStatusFilename, keymapConfigFilename, systemConfigFilename, resultsDirPath;
+				reader.getIfPresent("experimentConfigFilename", experimentConfigFilename);
+				reader.getIfPresent("userConfigFilename", userConfigFilename);
+				reader.getIfPresent("userStatusFilename", userStatusFilename);
+				reader.getIfPresent("keymapConfigFilename", keymapConfigFilename);
+				reader.getIfPresent("systemConfigFilename", systemConfigFilename);
+				reader.getIfPresent("resultsDirPath", resultsDirPath);
+				logPrintf("One possible fix is to use the following in `startupConfig.Any`:\n");
+				logPrintf("    defaultExperiment = {\n");
+				logPrintf("        name = \"default\";\n");
+				logPrintf("        experimentConfigFilename = \"%s\";\n", experimentConfigFilename);
+				logPrintf("        userConfigFilename = \"%s\";\n", userConfigFilename);
+				logPrintf("        userStatusFilename = \"%s\";\n", userStatusFilename);
+				logPrintf("        keymapConfigFilename = \"%s\";\n", keymapConfigFilename);
+				logPrintf("        systemConfigFilename = \"%s\";\n", systemConfigFilename);
+				logPrintf("        resultsDirPath = \"%s\";\n", resultsDirPath);
+				logPrintf("    };\n");
+			}
+
+			reader.getIfPresent("experimentList", experimentList);
+			for (ConfigFiles& files : experimentList) { files.populateEmptyFieldsWithDefaults(defaultExperiment); }
+			if (experimentList.length() == 0) { experimentList.append(defaultExperiment); }
+
             reader.getIfPresent("audioEnable", audioEnable);
             break;
         default:
@@ -72,29 +162,14 @@ public:
         if(forceAll || def.developerMode != developerMode)								a["developerMode"] = developerMode;
 		if(forceAll || def.waypointEditorMode != waypointEditorMode)					a["waypointEditorMode"] = waypointEditorMode;
 		if(forceAll || def.fullscreen != fullscreen)									a["fullscreen"] = fullscreen;
-        if(forceAll || def.experimentConfigFilename != experimentConfigFilename)		a["experimentConfigFilename"] = experimentConfigFilename;
-        if(forceAll || def.userConfigFilename != userConfigFilename)					a["userConfigFilename"] = userConfigFilename;
-		if(forceAll || def.userStatusFilename != userStatusFilename)					a["userStatusFilename"] = userStatusFilename;
-		if(forceAll || def.keymapConfigFilename != keymapConfigFilename)				a["keymapConfigFilename"] = keymapConfigFilename;
-		if(forceAll || def.systemConfigFilename != systemConfigFilename)				a["systemConfigFilename"] = systemConfigFilename;
-		if(forceAll || def.resultsDirPath != resultsDirPath)							a["resultsDirPath"] = resultsDirPath;
         if(forceAll || def.audioEnable != audioEnable)									a["audioEnable"] = audioEnable;
-        return a;
+		a["defaultExperiment"] = defaultExperiment;
+		a["experimentList"] = experimentList;
+		
+		return a;
     }
 
-	/** Assert that the filename `path` ends in .any and report `errorName` if it doesn't */
-	static void checkValidAnyFilename(const String& errorName, const String& path) {
-		alwaysAssertM(toLower(path.substr(path.length() - 4)) == ".any", "Config filenames specified in the startup config must end with \".any\"!, check the " + errorName + "!\n");
-	}
 
-	/** Returns the provided path with trailing slashes added if missing */
-	static String formatDirPath(const String& path) {
-		String fpath = path;
-		if (!path.empty() && path.substr(path.length() - 1) != "/") {
-			fpath = path + "/";
-		}
-		return fpath;
-	}
 };
 
 /** Key mapping */
@@ -752,8 +827,8 @@ public:
 	float	firePeriod = 0.5;											///< Minimum fire period (set to 0 for laser mode)
 	bool	autoFire = false;											///< Fire repeatedly when mouse is held? (set true for laser mode)
 	float	damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
-	String	fireSound = "sound/42108__marcuslee__Laser_Wrath_6.wav"; 	///< Sound to play on fire
-	float	fireSoundVol = 0.5f;										///< Volume for fire sound
+	String	fireSound = "sound/fpsci_fire_100ms.wav"; 					///< Sound to play on fire
+	float	fireSoundVol = 1.0f;										///< Volume for fire sound
 	bool	renderModel = false;										///< Render a model for the weapon?
 	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
 
@@ -812,6 +887,7 @@ public:
 			reader.getIfPresent("autoFire", autoFire);
 			reader.getIfPresent("damagePerSecond", damagePerSecond);
 			reader.getIfPresent("fireSound", fireSound);
+			reader.getIfPresent("fireSoundVol", fireSoundVol);
 			reader.getIfPresent("hitScan", hitScan);
 
 			reader.getIfPresent("renderModel", renderModel);			
@@ -868,6 +944,7 @@ public:
 		if (forceAll || def.autoFire != autoFire)							a["autoFire"] = autoFire;
 		if (forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
 		if (forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
+		if (forceAll || def.fireSoundVol != fireSoundVol)					a["fireSoundVol"] = fireSoundVol;
 		if (forceAll || def.hitScan != hitScan)								a["hitScan"] = hitScan;
 
 		if (forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
@@ -933,10 +1010,10 @@ public:
 	float			destroyDecalScale = 1.0;				///< Scale to apply to destroy (relative to target size)
 	RealTime		destroyDecalDuration = 0.1;				///< Destroy decal display duration
 
-	String			hitSound = "sound/18397__inferno__smalllas.wav";	///< Sound to play when target is hit (but not destoyed)
+	String			hitSound = "sound/fpsci_ding_100ms.wav";///< Sound to play when target is hit (but not destoyed)
 	float			hitSoundVol = 1.0f;						///< Hit sound volume
-	String          destroyedSound = "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav";		///< Sound to play when target destroyed
-	float           destroyedSoundVol = 10.0f;
+	String          destroyedSound = "sound/fpsci_destroy_150ms.wav";		///< Sound to play when target destroyed
+	float           destroyedSoundVol = 1.0f;
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
@@ -1583,7 +1660,7 @@ public:
 class AudioConfig {
 public:
 	// Sounds
-	String			sceneHitSound = "sound/18382__inferno__hvylas.wav";								///< Sound to play when hitting the scene
+	String			sceneHitSound = "sound/fpsci_miss_100ms.wav";								///< Sound to play when hitting the scene
 	float			sceneHitSoundVol = 1.0f;
 
 	void load(AnyTableReader reader, int settingsVersion = 1) {

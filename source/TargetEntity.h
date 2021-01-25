@@ -127,18 +127,26 @@ public:
 	void setWorldSpace(bool worldSpace) { m_worldSpace = worldSpace; }
 	void setCanHit(bool active) { m_canHit = active; }
 
-	void setHitSound(const String& hitSoundFilename, float hitSoundVol = 1.0f) {
+	/** Attaches an existing sound from `soundTable` or creates the sound, adds it to `soundTable` and attaches it */
+	void setHitSound(const String& hitSoundFilename, Table<String, shared_ptr<Sound>>& soundTable, float hitSoundVol = 1.0f) {
 		if (hitSoundFilename == "") { m_hitSound = nullptr; }
-		else { 
-			m_hitSound = Sound::create(System::findDataFile(hitSoundFilename)); 
+		else {
+			if (!soundTable.containsKey(hitSoundFilename)) {
+				soundTable.set(hitSoundFilename, Sound::create(System::findDataFile(hitSoundFilename)));
+			}
+			m_hitSound = soundTable[hitSoundFilename];
 			m_hitSoundVol = hitSoundVol;
 		}
 	}
 
-	void setDestoyedSound(const String& destroyedSoundFilename, float destroyedSoundVol = 1.0f){
+	/** Attaches an existing sound from `soundTable` or creates the sound, adds it to `soundTable` and attaches it */
+	void setDestoyedSound(const String& destroyedSoundFilename, Table<String, shared_ptr<Sound>>& soundTable, float destroyedSoundVol = 1.0f){
 		if (destroyedSoundFilename == "") { m_destroyedSound = nullptr;  }
 		else {
-			m_destroyedSound = Sound::create(System::findDataFile(destroyedSoundFilename));
+			if (!soundTable.containsKey(destroyedSoundFilename)) {
+				soundTable.set(destroyedSoundFilename, Sound::create(System::findDataFile(destroyedSoundFilename)));
+			}
+			m_destroyedSound = soundTable[destroyedSoundFilename];
 			m_destroyedSoundVol = destroyedSoundVol;
 		}
 	}

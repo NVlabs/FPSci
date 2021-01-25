@@ -52,8 +52,8 @@ Controls specific to the sound/view model for the weapon are provided below:
 |`kickDuration`         |`float`    | The time over which the weapon kick animates following a shot (in seconds). Recommended to be less than or equal to the `firePeriod`. |
 
 ```
-    "fireSound" : "sound/42108__marcuslee__Laser_Wrath_6.wav"           // This comes w/ G3D
-    "fireSoundVol" : 0.5;       // Play the fire sound at 1/2 volume
+    "fireSound" : "sound/fpsci_fire_100ms.wav"          // This comes w/ FPSci
+    "fireSoundVol" : 1.0;       // Play the fire sound at 1/2 volume
     "renderModel" : false;      // Don't render a weapon model
     "modelSpec" : [];           // No default model spec provided (see the example config below for more info)
     "kickAngleDegrees": 0;      // Weapons don't kick by default
@@ -141,8 +141,8 @@ The config below provides an example for each of the fields above (along with th
 "damagePerSecond": 2.0,     // 2 damage/s * 0.5 s/shot = 1 damage/shot
 "hitScan": false,
 
-"fireSound": "sound/42108__marcuslee__Laser_Wrath_6.wav",       // The sound to fire
-"fireSoundVol": 0.5f,
+"fireSound": "sound/fpsci_fire_100ms.wav",       // The sound to fire
+"fireSoundVol": 1.0f,
 "renderModel": true,        // Default is false,
 "modelSpec": ArticulatedModel::Specification{			        // Default model
 	filename = "model/sniper/sniper.obj";
@@ -171,6 +171,19 @@ The config below provides an example for each of the fields above (along with th
 
 "scopeFoV": 0.0,            // No scope
 "scopeToggle": false,       // Scope in "on-demand" mode (not toggled)
+```
+
+Another example weapon for continuous firing follows below.
+
+```
+fireSound = "sound/fpsci_noise_50ms.wav";
+fireSoundVol = 1.0f;
+firePeriod = 0;
+autoFire = true;
+damagePerSecond = 2.0;
+renderBullets = false;
+renderDecals = false;
+renderMuzzleFlash = false;
 ```
  
 # Weapon Modes and Damage
