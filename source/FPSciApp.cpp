@@ -1335,7 +1335,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		// Handle shoot down (fire) event here
 		if (ui->keyDown(shootButton)) {
 			if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
-				if (sessConfig->weapon.isLaser()) {	// Start firing here
+				if (sessConfig->weapon.isContinuous()) {	// Start firing here
 					weapon->setFiring(true);
 				}
 				// check for hit, add graphics, update target state
@@ -1353,7 +1353,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 						if (isNull(target)) // Miss case
 						{
 							// Play scene hit sound
-							if (notNull(m_sceneHitSound) && !sessConfig->weapon.isLaser()) {
+							if (notNull(m_sceneHitSound) && !sessConfig->weapon.isContinuous()) {
 								m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
 							}
 						}

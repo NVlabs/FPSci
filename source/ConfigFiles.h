@@ -866,7 +866,7 @@ public:
 	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
 
 	/** Returns true if firePeriod == 0 and autoFire == true */
-	bool isLaser() {
+	bool isContinuous() const {
 		return firePeriod == 0 && autoFire;
 	}
 

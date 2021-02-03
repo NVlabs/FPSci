@@ -260,7 +260,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 		bulletStartFrame.lookAt(aimPoint);
 
 		// Non-laser weapon, draw a projectile
-		if (!m_config->isLaser()) {
+		if (!m_config->isContinuous()) {
 			const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastBulletId), m_scene.get(), m_bulletModel, bulletStartFrame);
 			bullet->setShouldBeSaved(false);
 			bullet->setCanCauseCollisions(false);
@@ -306,7 +306,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 	}
 
 	// If we're not in laser mode play the sounce (once) here
-	if (!m_config->isLaser()) {
+	if (!m_config->isContinuous()) {
 		m_fireSound->play(m_config->fireSoundVol);
 		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
 	}
@@ -324,8 +324,4 @@ bool Weapon::canFire() const {
 float Weapon::cooldownRatio() const {
 	if (isNull(m_config) || m_config->firePeriod == 0.0) return 1.0f;
 	return min((float)timeSinceLastFire() / m_config->firePeriod, 1.0f);
-}
-
-bool Weapon::isContinuous() const {
-	return m_config->isLaser();
 }

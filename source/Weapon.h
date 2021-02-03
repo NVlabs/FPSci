@@ -110,7 +110,7 @@ public:
 	void resetCooldown() { m_lastFireAt = 0; }
 	bool canFire() const;
 	float cooldownRatio() const;
-	bool isContinuous() const;
+	const WeaponConfig* config() const { return m_config; }
 
 	int remainingAmmo() const { 
 		if (isNull(m_config)) return 100;
@@ -131,7 +131,7 @@ public:
 	void loadSounds() {
 		// Check for play mode specific parameters
 		if (notNull(m_fireAudio)) { m_fireAudio->stop(); }
-		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->isLaser());
+		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->isContinuous());
 	}
 	
 	void setHitCallback(std::function<void(shared_ptr<TargetEntity>)> callback) { m_hitCallback = callback; }

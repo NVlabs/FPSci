@@ -564,7 +564,7 @@ TEST_F(FPSciTests, TestCameraSelection) {
 TEST_F(FPSciTests, TestWeapon60HzContinuous) {
 	// Should be 1 second to kill
 	SelectSession("60HzContinuous");
-	EXPECT_TRUE(s_app->weapon->isContinuous()) << "Weapon should be continuous fire!";
+	EXPECT_TRUE(s_app->weapon->config()->isContinuous()) << "Weapon should be continuous fire!";
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
@@ -588,7 +588,7 @@ TEST_F(FPSciTests, TestWeapon60HzContinuous) {
 TEST_F(FPSciTests, TestWeapon30HzContinuous) {
 	// Should be 1 second to kill
 	SelectSession("30HzContinuous");
-	EXPECT_TRUE(s_app->weapon->isContinuous()) << "Weapon should be continuous fire!";
+	EXPECT_TRUE(s_app->weapon->config()->isContinuous()) << "Weapon should be continuous fire!";
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
@@ -612,7 +612,7 @@ TEST_F(FPSciTests, TestWeapon30HzContinuous) {
 TEST_F(FPSciTests, TestWeapon30Hz67ms) {
 	// Should be 1 second to kill
 	SelectSession("30Hz67ms");
-	EXPECT_FALSE(s_app->weapon->isContinuous()) << "Weapon should NOT be continuous fire!";
+	EXPECT_FALSE(s_app->weapon->config()->isContinuous()) << "Weapon should NOT be continuous fire!";
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
@@ -636,7 +636,7 @@ TEST_F(FPSciTests, TestWeapon30Hz67ms) {
 TEST_F(FPSciTests, TestWeapon60Hz67ms) {
 	// Should be 1 second to kill
 	SelectSession("60Hz67ms");
-	EXPECT_FALSE(s_app->weapon->isContinuous()) << "Weapon should NOT be continuous fire!";
+	EXPECT_FALSE(s_app->weapon->config()->isContinuous()) << "Weapon should NOT be continuous fire!";
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
@@ -660,7 +660,7 @@ TEST_F(FPSciTests, TestWeapon60Hz67ms) {
 TEST_F(FPSciTests, TestWeapon60Hz33ms) {
 	// Should be 1 second to kill
 	SelectSession("60Hz33ms");
-	EXPECT_FALSE(s_app->weapon->isContinuous()) << "Weapon should NOT be continuous fire!";
+	EXPECT_FALSE(s_app->weapon->config()->isContinuous()) << "Weapon should NOT be continuous fire!";
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
@@ -684,7 +684,7 @@ TEST_F(FPSciTests, TestWeapon60Hz33ms) {
 TEST_F(FPSciTests, TestWeapon60Hz16ms) {
 	// Should be 1 second to kill
 	SelectSession("60Hz16ms");
-	EXPECT_FALSE(s_app->weapon->isContinuous()) << "Weapon should NOT be continuous fire!";
+	EXPECT_FALSE(s_app->weapon->config()->isContinuous()) << "Weapon should NOT be continuous fire!";
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
