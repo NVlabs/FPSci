@@ -69,7 +69,9 @@ public:
 class Weapon : Entity {
 protected:
 	Weapon(WeaponConfig* config, shared_ptr<Scene>& scene, shared_ptr<Camera>& cam) :
-		m_config(config), m_scene(scene), m_camera(cam) {};
+		m_config(config), m_scene(scene), m_camera(cam), m_ammo(config->maxAmmo) {
+		m_lastFireAt = System::time();
+	};
 
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
 	shared_ptr<ArticulatedModel>    m_bulletModel;						///< Model for the "bullet"
@@ -126,6 +128,9 @@ public:
 		Array<shared_ptr<Entity>>& dontHit,
 		bool dummyShot);
 
+	// Saves state to weapon and starts or stops fire audio
+	void setFiring(bool firing);
+
 	void onPose(Array<shared_ptr<Surface> >& surface);
 
 	void loadSounds() {
@@ -141,16 +146,6 @@ public:
 	void setCamera(const shared_ptr<Camera>& cam) { m_camera = cam; }
 	void setScene(const shared_ptr<Scene>& scene) { m_scene = scene; }
 	void setScoped(bool state = true) { m_scoped = state; }
-
-	void setFiring(bool firing = true) {
-		if (firing && !m_firing) {
-			m_fireAudio = m_fireSound->play();
-		}
-		else if (m_firing && !firing && notNull(m_fireAudio)) {
-			m_fireAudio->stop();
-		}
-		m_firing = firing;
-	}
 
 	void simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntity>>& targets, const Array<shared_ptr<Entity>>& dontHit = {});
 	void drawDecal(const Point3& point, const Vector3& normal, bool hit = false);

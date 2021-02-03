@@ -316,6 +316,16 @@ shared_ptr<TargetEntity> Weapon::fire(
 	return target;
 }
 
+void Weapon::setFiring(bool firing = true) {
+	if (firing && !m_firing) {
+		m_fireAudio = m_fireSound->play();
+	}
+	else if (m_firing && !firing && notNull(m_fireAudio)) {
+		m_fireAudio->stop();
+	}
+	m_firing = firing;
+}
+
 bool Weapon::canFire() const {
 	if (isNull(m_config)) return true;
 	return timeSinceLastFire() > m_config->firePeriod;
