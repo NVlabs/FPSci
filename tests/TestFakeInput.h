@@ -88,6 +88,10 @@ public:
 	// Replaces the given app's userInput with a fake one
 	TestFakeInput(std::shared_ptr<GApp> app, double mouseDPI);
 
+	// Disable real input capture, so the user's mouse isn't stuck to the 
+	// window center or interfere with the tests.
+	void defocusOriginalWindow();
+
 	FakeWindow& window() {return *m_fakeWindow;}
 
 	void queueInput(const FakeInputEvent& input);

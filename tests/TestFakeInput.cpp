@@ -235,6 +235,12 @@ TestFakeInput::TestFakeInput(std::shared_ptr<GApp> app, double mouseDPI) : m_app
 	m_app->manageUserInput = false;
 }
 
+void TestFakeInput::defocusOriginalWindow()
+{
+	m_originalUserInput->window()->decInputCaptureCount();
+	m_originalUserInput->window()->decMouseHideCount();
+}
+
 void TestFakeInput::queueInput(const FakeInputEvent & input)
 {
 	m_frameInputs.pushBack(input);

@@ -84,6 +84,7 @@ void FPSciTests::SetUpTestSuiteSafe() {
 
 	// Set up per-frame fake input
 	s_fakeInput = std::make_shared<TestFakeInput>(s_app, s_app->currentUser()->mouseDPI);
+	s_fakeInput->defocusOriginalWindow();
 	s_app->addWidget(s_fakeInput);
 
 	// Prime the app and load the scene
@@ -116,6 +117,7 @@ void FPSciTests::SetUpTestSuiteSafe() {
 
 void FPSciTests::SelectSession(const String& sessionId) {
 	s_app->updateSession(sessionId);
+	s_fakeInput->defocusOriginalWindow();
 
 	// Fire to make the red target appear
 	s_fakeInput->window().injectMouseDown(0);
@@ -289,9 +291,7 @@ TEST_F(FPSciTests, KillTargetFront) {
 
 	// Kill the front target - just fire
 	zeroCameraRotation();
-	s_fakeInput->window().injectMouseDown(0);
-	s_app->oneFrame();
-	s_fakeInput->window().injectMouseUp(0);
+	s_fakeInput->window().injectFire();
 	s_app->oneFrame();
 
 	bool aliveFront, aliveRight;
