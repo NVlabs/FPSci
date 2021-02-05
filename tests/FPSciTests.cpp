@@ -568,16 +568,16 @@ TEST_F(FPSciTests, TestWeapon60HzContinuous) {
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
-	s_app->oneFrame();
+	shared_ptr<TargetEntity> target = s_app->sess->targetArray()[0];
 	s_fakeInput->window().injectMouseDown(0);
 	int numFrames = 0;
 	RealTime start = System::time();
-	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+	while (target->health() > 0.f && System::time() - start < 2.f) {
 		s_app->oneFrame();
 		numFrames++;
 	}
 	RealTime end = System::time();
-	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	EXPECT_LE(target->health(), 0.f) << "Target should be destroyed!";
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
@@ -592,16 +592,16 @@ TEST_F(FPSciTests, TestWeapon30HzContinuous) {
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
-	s_app->oneFrame();
+	shared_ptr<TargetEntity> target = s_app->sess->targetArray()[0];
 	s_fakeInput->window().injectMouseDown(0);
 	int numFrames = 0;
 	RealTime start = System::time();
-	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+	while (target->health() > 0.f && System::time() - start < 2.f) {
 		s_app->oneFrame();
 		numFrames++;
 	}
 	RealTime end = System::time();
-	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	EXPECT_LE(target->health(), 0.f) << "Target should be destroyed!";
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
@@ -616,21 +616,45 @@ TEST_F(FPSciTests, TestWeapon30Hz67ms) {
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
-	s_app->oneFrame();
+	shared_ptr<TargetEntity> target = s_app->sess->targetArray()[0];
 	s_fakeInput->window().injectMouseDown(0);
 	int numFrames = 0;
 	RealTime start = System::time();
-	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+	while (target->health() > 0.f && System::time() - start < 2.f) {
 		s_app->oneFrame();
 		numFrames++;
 	}
 	RealTime end = System::time();
-	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	EXPECT_LE(target->health(), 0.f) << "Target should be destroyed!";
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
-	EXPECT_NEAR(end - start, 1, 0.034) << "Failed to be within a frame of the expected end time!";
-	ASSERT_NEAR(numFrames, 30, 1) << "Wrong number of frames taken.";
+	EXPECT_NEAR(end - start, 1, 0.067) << "Failed to be within a firePeriod of the expected end time!";
+	ASSERT_NEAR(numFrames, 30, 67/33) << "Wrong number of frames taken.";
+}
+
+TEST_F(FPSciTests, TestWeapon60Hz150ms) {
+	// Should be 1 second to kill
+	SelectSession("60Hz150ms");
+	EXPECT_FALSE(s_app->weapon->config()->isContinuous()) << "Weapon should NOT be continuous fire!";
+	s_app->oneFrame();
+	auto spawnedtargets = respawnTargets();
+	ASSERT_EQ(spawnedtargets, 1);
+	shared_ptr<TargetEntity> target = s_app->sess->targetArray()[0];
+	s_fakeInput->window().injectMouseDown(0);
+	int numFrames = 0;
+	RealTime start = System::time();
+	while (target->health() > 0.f && System::time() - start < 2.f) {
+		s_app->oneFrame();
+		numFrames++;
+	}
+	RealTime end = System::time();
+	EXPECT_LE(target->health(), 0.f) << "Target should be destroyed!";
+	s_app->oneFrame();
+	s_fakeInput->window().injectMouseUp(0);
+	s_app->oneFrame();
+	EXPECT_NEAR(end - start, 1, 0.150) << "Failed to be within a firePeriod of the expected end time!";
+	ASSERT_NEAR(numFrames, 60, 150/17) << "Wrong number of frames taken.";
 }
 
 TEST_F(FPSciTests, TestWeapon60Hz67ms) {
@@ -640,21 +664,21 @@ TEST_F(FPSciTests, TestWeapon60Hz67ms) {
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
-	s_app->oneFrame();
+	shared_ptr<TargetEntity> target = s_app->sess->targetArray()[0];
 	s_fakeInput->window().injectMouseDown(0);
 	int numFrames = 0;
 	RealTime start = System::time();
-	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+	while (target->health() > 0.f && System::time() - start < 2.f) {
 		s_app->oneFrame();
 		numFrames++;
 	}
 	RealTime end = System::time();
-	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	EXPECT_LE(target->health(), 0.f) << "Target should be destroyed!";
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
-	EXPECT_NEAR(end - start, 1, 0.017) << "Failed to be within a frame of the expected end time!";
-	ASSERT_NEAR(numFrames, 60, 1) << "Wrong number of frames taken.";
+	EXPECT_NEAR(end - start, 1, 0.067) << "Failed to be within a firePeriod of the expected end time!";
+	ASSERT_NEAR(numFrames, 60, 67/17) << "Wrong number of frames taken.";
 }
 
 TEST_F(FPSciTests, TestWeapon60Hz33ms) {
@@ -664,21 +688,21 @@ TEST_F(FPSciTests, TestWeapon60Hz33ms) {
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
-	s_app->oneFrame();
+	shared_ptr<TargetEntity> target = s_app->sess->targetArray()[0];
 	s_fakeInput->window().injectMouseDown(0);
 	int numFrames = 0;
 	RealTime start = System::time();
-	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+	while (target->health() > 0.f && System::time() - start < 2.f) {
 		s_app->oneFrame();
 		numFrames++;
 	}
 	RealTime end = System::time();
-	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	EXPECT_LE(target->health(), 0.f) << "Target should be destroyed!";
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
-	EXPECT_NEAR(end - start, 1, 0.017) << "Failed to be within a frame of the expected end time!";
-	ASSERT_NEAR(numFrames, 60, 1) << "Wrong number of frames taken.";
+	EXPECT_NEAR(end - start, 1, 0.033) << "Failed to be within a firePeriod of the expected end time!";
+	ASSERT_NEAR(numFrames, 60, 33/17) << "Wrong number of frames taken.";
 }
 
 TEST_F(FPSciTests, TestWeapon60Hz16ms) {

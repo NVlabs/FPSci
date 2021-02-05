@@ -63,7 +63,7 @@
         {
             id = "60HzContinuous";
             frameRate = 60; 
-            trials = ( { ids = ( "front" ); count = 1; } );
+            trials = ( { ids = ( "front" ); count = 2; } );
             weapon = {
                 id = "1sContinuous"; 
                 firePeriod = 0;
@@ -74,7 +74,7 @@
         {
             id = "30HzContinuous";
             frameRate = 30; 
-            trials = ( { ids = ( "front" ); count = 1; } );
+            trials = ( { ids = ( "front" ); count = 2; } );
             weapon = {
                 id = "1sContinuous"; 
                 firePeriod = 0;
@@ -85,7 +85,7 @@
         {
             id = "30Hz67ms";
             frameRate = 30; 
-            trials = ( { ids = ( "front" ); count = 1; } );
+            trials = ( { ids = ( "front" ); count = 2; } );
             weapon = {
                 id = "1s67ms"; 
                 firePeriod = 0.067;
@@ -94,9 +94,20 @@
             }
         },
         {
+            id = "60Hz150ms";
+            frameRate = 60; 
+            trials = ( { ids = ( "front" ); count = 2; } );
+            weapon = {
+                id = "1s150ms"; 
+                firePeriod = 0.150;
+                damagePerSecond = 1;
+                autoFire = true;
+            }
+        },
+        {
             id = "60Hz67ms";
             frameRate = 60; 
-            trials = ( { ids = ( "front" ); count = 1; } );
+            trials = ( { ids = ( "front" ); count = 2; } );
             weapon = {
                 id = "1s67ms"; 
                 firePeriod = 0.067;
@@ -107,7 +118,7 @@
         {
             id = "60Hz33ms";
             frameRate = 60; 
-            trials = ( { ids = ( "front" ); count = 1; } );
+            trials = ( { ids = ( "front" ); count = 2; } );
             weapon = {
                 id = "1s33ms"; 
                 firePeriod = 0.033;
@@ -118,7 +129,7 @@
         {
             id = "60Hz16ms";
             frameRate = 60; 
-            trials = ( { ids = ( "front" ); count = 1; } );
+            trials = ( { ids = ( "front" ); count = 2; } );
             weapon = {
                 id = "1s16ms"; 
                 firePeriod = 0.016;
