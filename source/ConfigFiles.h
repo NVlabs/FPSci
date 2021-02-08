@@ -197,6 +197,7 @@ public:
 		map.set("togglePlayerWindow", Array<GKey>{ (GKey)'2' });
 		map.set("toggleWeaponWindow", Array<GKey>{ (GKey)'3' });
 		map.set("toggleWaypointWindow", Array<GKey>{ (GKey)'4' });
+		map.set("selectWaypoint", Array<GKey>{ GKey::LEFT_MOUSE });
 		map.set("moveWaypointUp", Array<GKey>{ GKey::PAGEUP });
 		map.set("moveWaypointDown", Array<GKey>{ GKey::PAGEDOWN });
 		map.set("moveWaypointIn", Array<GKey>{ GKey::HOME });

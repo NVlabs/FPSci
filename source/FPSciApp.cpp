@@ -1368,14 +1368,15 @@ void FPSciApp::onUserInput(UserInput* ui) {
 					sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
 				}
 			}
-
-			// Check for developer mode editing here, if so set selected waypoint using the camera
-			if (startupConfig.developerMode && startupConfig.waypointEditorMode) {
-				waypointManager->aimSelectWaypoint(activeCamera());
-			}
-
 			haveReleased = false;					// Make it known we are no longer in released state
 			buttonUp = false;
+		}
+	}
+
+	for (GKey selectButton : keyMap.map["selectWaypoint"]) {
+		// Check for developer mode editing here, if so set selected waypoint using the camera
+		if (ui->keyDown(selectButton) && startupConfig.developerMode && startupConfig.waypointEditorMode) {
+			waypointManager->aimSelectWaypoint(activeCamera());
 		}
 	}
 	
