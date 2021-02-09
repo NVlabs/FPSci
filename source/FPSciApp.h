@@ -47,13 +47,19 @@ protected:
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_explosionModels;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
-	Queue<float>							m_frameDurationQueue;				///< Queue for history of frrame times
+	Queue<float>							m_frameDurationQueue;				///< Queue for history of frame times
 
 	/** Used to detect GUI changes to m_reticleIndex */
 	int										m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
 	float									m_debugMenuHeight = 0.0f;			///< Height of the debug menu when in developer mode
 
 	RealTime								m_lastJumpTime = 0.0f;				///< Time of last jump
+public:
+	RealTime								m_lastOnSimulationRealTime = 0.0f;	///< Wall clock time last onSimulation finished
+	SimTime									m_lastOnSimulationSimTime = 0.0f;	///< Simulation time last onSimulation finished
+	SimTime									m_lastOnSimulationIdealSimTime = 0.0f;	///< Ideal simulation time last onSimulation finished
+protected:
+	float									m_currentWeaponDamage = 0.0f;		///< A hack to avoid passing damage through callbacks
 
 	int										m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
 	SceneConfig								m_loadedScene;						///< Configuration for loaded scene
@@ -154,8 +160,11 @@ public:
 	float		lastSetFrameRate	= 0.0f;		///< Last set frame rate
 	const int	numReticles			= 55;		///< Total count of reticles available to choose from
 	float		sceneBrightness		= 1.0f;		///< Scene brightness scale factor
+	
+	bool		shootButtonUp			= true;	///< Tracks shoot button state (used for click indicator)
+	bool		shootButtonJustReleased = false;///< Tracks shoot button state (used for weapon timing)
+	bool		shootButtonJustPressed = false;	///< Tracks shoot button state (used for weapon timing)
 
-	bool		buttonUp			= true;		///< Tracks shoot button state (used for click indicator)
 	bool		frameToggle			= false;	///< Simple toggle flag used for frame rate click-to-photon monitoring
 	bool		updateUserMenu		= false;	///< Semaphore to indicate user settings needs update
 	bool		reinitExperiment	= false;	///< Semaphore to indicate experiment needs to be reinitialized

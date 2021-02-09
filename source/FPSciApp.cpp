@@ -43,6 +43,7 @@ void FPSciApp::initExperiment(){
 
 	// Set the initial simulation timestep to REAL_TIME. The desired timestep is set later.
 	setFrameDuration(frameDuration(), REAL_TIME);
+	m_lastOnSimulationRealTime = System::time();
 
 	// Setup/update waypoint manager
 	if (startupConfig.developerMode && startupConfig.waypointEditorMode) {
@@ -687,7 +688,73 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 
 void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
-	// TODO: Handle weapon firing here based on state from onUserInput()
+	// Set up the shot(s)
+	// TODO: this should eventually probably use sdt instead of rdt
+	RealTime currentRealTime = m_lastOnSimulationRealTime + rdt;
+	bool stateCanFire = sess->currentState == PresentationState::trialTask && !m_userSettingsWindow->visible();
+	// These variables will be used to fire after the various weapon styles populate them below
+	int numShots = 0;
+	float damagePerShot = weapon->damagePerShot();
+	RealTime newLastFireTime = currentRealTime;
+	if (shootButtonJustPressed && stateCanFire && !weapon->canFire(currentRealTime)) {
+		bool wat = weapon->canFire(currentRealTime);
+		debugPrintf("weapon->canFire() = %d", wat);
+		// Invalid click since the weapon isn't ready to fire
+		sess->accumulatePlayerAction(PlayerActionType::Invalid);
+	}
+	else if ((shootButtonJustPressed || !shootButtonUp) && !stateCanFire) {
+		// Non-task state but button pressed
+		sess->accumulatePlayerAction(PlayerActionType::Nontask);
+	}
+	else if (shootButtonJustPressed && !weapon->config()->autoFire && weapon->canFire(currentRealTime) && stateCanFire) {
+		// Discrete weapon fires a single shot with normal damage at the current time
+		numShots = 1;
+	}
+	else if (!weapon->config()->isContinuous() && weapon->config()->autoFire && !shootButtonUp && stateCanFire) {
+		// Autofire weapon should create shots until currentRealTime with normal damage
+		numShots = weapon->numShotsUntil(currentRealTime);
+		newLastFireTime = m_lastOnSimulationRealTime + (float)numShots * weapon->config()->firePeriod;
+	}
+	else if (weapon->config()->isContinuous() && (!shootButtonUp || shootButtonJustReleased) && stateCanFire) {
+		// Continuous weapon should have been firing continuously, but since we do sampled simulation
+		// this approximates continuous fire by releasing a single "megabullet"
+		// with power that matches the elapsed time at the current
+		numShots = 1;
+
+		// If the button was just pressed, assume the duration should begin half way through
+		if (shootButtonJustPressed) {
+			weapon->setLastFireTime(m_lastOnSimulationRealTime + rdt * 0.5f);
+		}
+		// If the shoot button just released, assume the fire ended half way through
+		newLastFireTime = shootButtonJustReleased ? m_lastOnSimulationRealTime + rdt * 0.5f : currentRealTime;
+		RealTime fireDuration = weapon->fireDurationUntil(newLastFireTime);
+		damagePerShot = (float)fireDuration * weapon->config()->damagePerSecond;
+	}
+
+	// Actually shoot here
+	m_currentWeaponDamage = damagePerShot; // pass this to the callback where weapon damage is applied
+	bool shotFired = false;
+	for (int shotId = 0; shotId < numShots; shotId++) {
+		Array<shared_ptr<Entity>> dontHit;
+		dontHit.append(m_explosions);
+		dontHit.append(sess->unhittableTargets());
+		Model::HitInfo info;
+		float hitDist = finf();
+		int hitIdx = -1;
+
+		shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
+		if (isNull(target)) // Miss case
+		{
+			// Play scene hit sound
+			if (!sessConfig->weapon.isContinuous()) {
+				m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
+			}
+		}
+		shotFired = true;
+	}
+	if (shotFired) {
+		weapon->setLastFireTime(newLastFireTime);
+	}
 
 	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
 	sess->onSimulation(rdt, sdt, idt);
@@ -752,6 +819,15 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		// Get the next session for the current user
 		updateSession(userStatusTable.getNextSession());
 	}
+
+	// Update time at which this simulation finished
+	m_lastOnSimulationRealTime = m_lastOnSimulationRealTime + rdt;
+	m_lastOnSimulationSimTime = m_lastOnSimulationSimTime + sdt;
+	m_lastOnSimulationIdealSimTime = m_lastOnSimulationIdealSimTime + idt;
+
+	// Clear button press state
+	shootButtonJustPressed = false;
+	shootButtonJustReleased = false;
 }
 
 bool FPSciApp::onEvent(const GEvent& event) {
@@ -1051,7 +1127,7 @@ void FPSciApp::drawClickIndicator(RenderDevice *rd, String mode) {
 			boxColor = (frameToggle) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
 			frameToggle = !frameToggle;
 		}
-		else boxColor = (buttonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+		else boxColor = (shootButtonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
 		Draw::rect2D(Rect2D::xywh(boxLeft, boxTop, latencyRect.x, latencyRect.y), rd, boxColor);
 	}
 }
@@ -1059,6 +1135,8 @@ void FPSciApp::drawClickIndicator(RenderDevice *rd, String mode) {
 void FPSciApp::drawHUD(RenderDevice *rd) {
 	// Scale is used to position/resize the "score banner" when the window changes size in "windowed" mode (always 1 in fullscreen mode).
 	const Vector2 scale = rd->viewport().wh() / displayRes;
+
+	RealTime now = System::time();
 
 	// Weapon ready status (cooldown indicator)
 	if (sessConfig->hud.renderWeaponStatus) {
@@ -1072,9 +1150,9 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 			Draw::rect2D(
 				Rect2D::xywh(
 					boxLeft,
-					(float)rd->viewport().height() * (float)(weapon->cooldownRatio()),
+					(float)rd->viewport().height() * (float)(weapon->cooldownRatio(now)),
 					(float)rd->viewport().width() * sessConfig->clickToPhoton.size.x,
-					(float)rd->viewport().height() * (float)(1.0 - weapon->cooldownRatio())
+					(float)rd->viewport().height() * (float)(1.0 - weapon->cooldownRatio(now))
 				), rd, Color3::white() * 0.8f
 			);
 		}
@@ -1083,7 +1161,7 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 			const float iRad = sessConfig->hud.cooldownInnerRadius;
 			const float oRad = iRad + sessConfig->hud.cooldownThickness;
 			const int segments = sessConfig->hud.cooldownSubdivisions;
-			int segsToLight = static_cast<int>(ceilf((1 - weapon->cooldownRatio())*segments));
+			int segsToLight = static_cast<int>(ceilf((1 - weapon->cooldownRatio(now))*segments));
 			// Create the segments
 			for (int i = 0; i < segsToLight; i++) {
 				const float inc = static_cast<float>(2 * pi() / segments);
@@ -1189,14 +1267,7 @@ void FPSciApp::setScopeView(bool scoped) {
 
 void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	// Damage the target
-	float damage;
-	if (sessConfig->weapon.firePeriod == 0.0f) {						// Check if we are in "laser" mode hit the target last time
-		float dt = max(previousSimTimeStep(), 0.0f);
-		damage = sessConfig->weapon.damagePerSecond * dt;
-	}
-	else {																// If we're not in "laser" mode then damage/shot is just damage/second * second/shot
-		damage = sessConfig->weapon.damagePerSecond * sessConfig->weapon.firePeriod;
-	}
+	float damage = m_currentWeaponDamage;
 	target->doDamage(damage);
 	target->playHitSound();
 
@@ -1321,45 +1392,19 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		}
 	}
 
-	bool userFired = false;
-	buttonUp = true;
+	// Record button state changes
+	// These will be evaluated and reset on the next onSimulation()
 	for (GKey shootButton : keyMap.map["shoot"]) {
-		if (ui->keyPressed(shootButton))
-			userFired = true;
-		if (ui->keyDown(shootButton))
-			buttonUp = false;
-	}
-	if (sessConfig->weapon.isContinuous()) {
-		weapon->setFiring(!buttonUp);
-	}
-	
-	bool userFiring = userFired || weapon->firing() || (sessConfig->weapon.autoFire && !buttonUp);
-	bool stateCanFire = sess->currentState == PresentationState::trialTask && !m_userSettingsWindow->visible();
-	// Weapon is firing 
-	if (userFiring && stateCanFire && weapon->canFire()) {
-		Array<shared_ptr<Entity>> dontHit;
-		dontHit.append(m_explosions);
-		dontHit.append(sess->unhittableTargets());
-		Model::HitInfo info;
-		float hitDist = finf();
-		int hitIdx = -1;
-
-		shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
-		if (isNull(target)) // Miss case
-		{
-			// Play scene hit sound
-			if (!sessConfig->weapon.isContinuous()) {
-				m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
-			}
+		if (ui->keyReleased(shootButton)) {
+			shootButtonJustReleased = true;
+			shootButtonUp = true;
 		}
-	}
-	else if (userFiring && stateCanFire && !weapon->canFire()) {
-		// Avoid accumulating invalid clicks during holds...
-		// Invalid click since the trial isn't ready for response
-		sess->accumulatePlayerAction(PlayerActionType::Invalid);
-	}
-	else if (userFiring && !stateCanFire) {
-		sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
+		if (ui->keyPressed(shootButton)) {
+			shootButtonJustPressed = true;
+		}
+		if (ui->keyDown(shootButton)) {
+			shootButtonUp = false;
+		}
 	}
 
 	for (GKey selectButton : keyMap.map["selectWaypoint"]) {
@@ -1454,7 +1499,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		if (activeCamera() == playerCamera) {
 			// Reticle
 			const shared_ptr<UserConfig> user = currentUser();
-			float tscale = weapon->cooldownRatio(user->reticleChangeTimeS);
+			float tscale = weapon->cooldownRatio(System::time(), user->reticleChangeTimeS);
 			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
 			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
 			Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);

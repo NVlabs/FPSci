@@ -87,7 +87,7 @@ void Weapon::onPose(Array<shared_ptr<Surface> >& surface) {
 		const float zScale = -yScale * 0.5f;
 		float kick = 0.f;
 		// ratio from start to end of kick from 0 to 1
-		const float kickRatio = cooldownRatio(m_config->kickDuration);
+		const float kickRatio = cooldownRatio(System::time(), m_config->kickDuration);
 		kick = m_config->kickAngleDegrees * sinf(kickRatio * pif());
 		const float lookY = m_camera->frame().lookVector().y - 6.f * sin(2 * pif() / 360.0f * kick);
 		m_frame = m_camera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5+kick);
@@ -217,7 +217,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 	bool dummyShot)
 {
 	static RealTime lastTime;
-	m_lastFireAt = System::time();						// Capture the time
+	m_lastFireTime = System::time();						// Capture the time
 
 	Ray ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
 	float spread = m_config->fireSpreadDegrees * 2.f * pif() / 360.f;
@@ -308,7 +308,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 		}
 	}
 
-	// If we're not in laser mode play the sounce (once) here
+	// If we're not in laser mode play the sound (once) here
 	if (!m_config->isContinuous()) {
 		m_fireSound->play(m_config->fireSoundVol);
 		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
@@ -329,16 +329,32 @@ void Weapon::setFiring(bool firing = true) {
 	m_firing = firing;
 }
 
-bool Weapon::canFire() const {
+void Weapon::setLastFireTime(RealTime lastFireTime) {
+	m_lastFireTime = lastFireTime;
+}
+
+RealTime Weapon::fireDurationUntil(RealTime currentTime) {
+	return currentTime - m_lastFireTime;
+}
+
+int Weapon::numShotsUntil(RealTime currentTime) {
+	return max((int)floorf((float)(currentTime - m_lastFireTime) / m_config->firePeriod), 0);
+}
+
+bool Weapon::canFire(RealTime now) const {
 	if (isNull(m_config)) return true;
-	return (System::time() - m_lastFireAt) > m_config->firePeriod;
+	return (now - m_lastFireTime) > m_config->firePeriod;
 }
 
-float Weapon::cooldownRatio() const {
+float Weapon::cooldownRatio(RealTime now) const {
 	if (isNull(m_config) || m_config->firePeriod == 0.0) return 1.0f;
-	return cooldownRatio(m_config->firePeriod);
+	return cooldownRatio(now, m_config->firePeriod);
 }
 
-float Weapon::cooldownRatio(float duration) const {
-	return clamp((float)(System::time() - m_lastFireAt) / duration, 0.0f, 1.0f);
+float Weapon::cooldownRatio(RealTime now, float duration) const {
+	return clamp((float)(now - m_lastFireTime) / duration, 0.0f, 1.0f);
+}
+
+float Weapon::damagePerShot() const {
+	return m_config->damagePerSecond * m_config->firePeriod;
 }
