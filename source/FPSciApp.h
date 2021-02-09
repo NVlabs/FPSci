@@ -155,7 +155,7 @@ public:
 	const int	numReticles			= 55;		///< Total count of reticles available to choose from
 	float		sceneBrightness		= 1.0f;		///< Scene brightness scale factor
 
-	bool		buttonUp			= true;		///< Pass button up to session
+	bool		buttonUp			= true;		///< Tracks shoot button state (used for click indicator)
 	bool		frameToggle			= false;	///< Simple toggle flag used for frame rate click-to-photon monitoring
 	bool		updateUserMenu		= false;	///< Semaphore to indicate user settings needs update
 	bool		reinitExperiment	= false;	///< Semaphore to indicate experiment needs to be reinitialized

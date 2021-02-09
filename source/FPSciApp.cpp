@@ -687,6 +687,8 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 
 void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
+	// TODO: Handle weapon firing here based on state from onUserInput()
+
 	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
 	sess->onSimulation(rdt, sdt, idt);
 
@@ -1290,10 +1292,8 @@ void FPSciApp::missEvent() {
 /** Handle user input here */
 void FPSciApp::onUserInput(UserInput* ui) {
 	BEGIN_PROFILER_EVENT("onUserInput");
-	static bool haveReleased = false;
-	static bool fired = false;
+
 	GApp::onUserInput(ui);
-	(void)ui;
 
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
 	if (m_mouseDirectMode && activeCamera() == playerCamera && notNull(player)) {
@@ -1321,56 +1321,45 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		}
 	}
 
-	// Handle fire up/down events
+	bool userFired = false;
+	buttonUp = true;
 	for (GKey shootButton : keyMap.map["shoot"]) {
-		// Require release between clicks for non-autoFire modes
-		if (ui->keyReleased(shootButton)) {
-			buttonUp = true;
-			haveReleased = true;
-			weapon->setFiring(false);
-			if (!sessConfig->weapon.autoFire) {
-				fired = false;
-			}
-		}
-		// Handle shoot down (fire) event here
-		if (ui->keyDown(shootButton)) {
-			if (sessConfig->weapon.autoFire || haveReleased) {		// Make sure we are either in autoFire mode or have seen a release of the mouse
-				if (sessConfig->weapon.isContinuous()) {	// Start firing here
-					weapon->setFiring(true);
-				}
-				// check for hit, add graphics, update target state
-				if ((sess->currentState == PresentationState::trialTask) && !m_userSettingsWindow->visible()) {
-					if (weapon->canFire()) {
-						fired = true;
-						Array<shared_ptr<Entity>> dontHit;
-						dontHit.append(m_explosions);
-						dontHit.append(sess->unhittableTargets());
-						Model::HitInfo info;
-						float hitDist = finf();
-						int hitIdx = -1;
-
-						shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
-						if (isNull(target)) // Miss case
-						{
-							// Play scene hit sound
-							if (notNull(m_sceneHitSound) && !sessConfig->weapon.isContinuous()) {
-								m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
-							}
-						}
-					}
-					// Avoid accumulating invalid clicks during holds...
-					else {
-						// Invalid click since the trial isn't ready for response
-						sess->accumulatePlayerAction(PlayerActionType::Invalid);
-					}
-				}
-				else {
-					sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
-				}
-			}
-			haveReleased = false;					// Make it known we are no longer in released state
+		if (ui->keyPressed(shootButton))
+			userFired = true;
+		if (ui->keyDown(shootButton))
 			buttonUp = false;
+	}
+	if (sessConfig->weapon.isContinuous()) {
+		weapon->setFiring(!buttonUp);
+	}
+	
+	bool userFiring = userFired || weapon->firing() || (sessConfig->weapon.autoFire && !buttonUp);
+	bool stateCanFire = sess->currentState == PresentationState::trialTask && !m_userSettingsWindow->visible();
+	// Weapon is firing 
+	if (userFiring && stateCanFire && weapon->canFire()) {
+		Array<shared_ptr<Entity>> dontHit;
+		dontHit.append(m_explosions);
+		dontHit.append(sess->unhittableTargets());
+		Model::HitInfo info;
+		float hitDist = finf();
+		int hitIdx = -1;
+
+		shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
+		if (isNull(target)) // Miss case
+		{
+			// Play scene hit sound
+			if (!sessConfig->weapon.isContinuous()) {
+				m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
+			}
 		}
+	}
+	else if (userFiring && stateCanFire && !weapon->canFire()) {
+		// Avoid accumulating invalid clicks during holds...
+		// Invalid click since the trial isn't ready for response
+		sess->accumulatePlayerAction(PlayerActionType::Invalid);
+	}
+	else if (userFiring && !stateCanFire) {
+		sess->accumulatePlayerAction(PlayerActionType::Nontask); // not happening in task state.
 	}
 
 	for (GKey selectButton : keyMap.map["selectWaypoint"]) {
@@ -1465,7 +1454,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		if (activeCamera() == playerCamera) {
 			// Reticle
 			const shared_ptr<UserConfig> user = currentUser();
-			float tscale = max(min(((float)weapon->timeSinceLastFire() / user->reticleChangeTimeS), 1.0f), 0.0f);
+			float tscale = weapon->cooldownRatio(user->reticleChangeTimeS);
 			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
 			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
 			Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);

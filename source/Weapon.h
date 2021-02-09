@@ -108,10 +108,18 @@ public:
 		return createShared<Weapon>(config, scene, cam);
 	};
 
-	RealTime timeSinceLastFire() const { return System::time() - m_lastFireAt; }
 	void resetCooldown() { m_lastFireAt = 0; }
 	bool canFire() const;
+	/** 
+		Returns a value between 0 and 1 that is the difference between 
+		now and the last fire time over the weapon cooldown period
+	*/
 	float cooldownRatio() const;
+	/** 
+		Returns a value between 0 and 1 that is the difference between 
+		now and the last fire time over the duration
+	*/
+	float cooldownRatio(float duration) const;
 	const WeaponConfig* config() const { return m_config; }
 
 	int remainingAmmo() const { 
@@ -121,6 +129,12 @@ public:
 	int shotsTaken() const { return m_config->maxAmmo - m_ammo; }
 	void reload() { m_ammo = m_config->maxAmmo; }
 
+	/**
+		targets is the list of targets to try to hit
+		Ignore anything in the dontHit list
+		dummyShot controls whether it's a shot at the test target (is this true?)
+		targetIdx, hitDist and hitInfo are all returned along with the targetEntity that was hit
+	*/
 	shared_ptr<TargetEntity> fire(const Array<shared_ptr<TargetEntity>>& targets,
 		int& targetIdx,
 		float& hitDist, 
@@ -128,7 +142,7 @@ public:
 		Array<shared_ptr<Entity>>& dontHit,
 		bool dummyShot);
 
-	// Saves state to weapon and starts or stops fire audio
+	// Saves state to weapon and starts or stops fire audio playback
 	void setFiring(bool firing);
 
 	void onPose(Array<shared_ptr<Surface> >& surface);
