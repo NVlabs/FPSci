@@ -201,7 +201,7 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 
 void Weapon::clearDecals() {
 	while (m_currentMissDecals.size() > 0) {
-		m_scene->remove(m_currentMissDecals.pop());
+		m_currentMissDecals.pop();
 	}
 	if (notNull(m_hitDecal)) {
 		m_scene->remove(m_hitDecal);
@@ -216,9 +216,6 @@ shared_ptr<TargetEntity> Weapon::fire(
 	Array<shared_ptr<Entity>>& dontHit,
 	bool dummyShot)
 {
-	static RealTime lastTime;
-	m_lastFireTime = System::time();						// Capture the time
-
 	Ray ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
 	float spread = m_config->fireSpreadDegrees * 2.f * pif() / 360.f;
 
@@ -308,25 +305,28 @@ shared_ptr<TargetEntity> Weapon::fire(
 		}
 	}
 
-	// If we're not in laser mode play the sound (once) here
-	if (!m_config->isContinuous()) {
-		m_fireSound->play(m_config->fireSoundVol);
-		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
-	}
-
 	END_PROFILER_EVENT();
 
 	return target;
 }
 
-void Weapon::setFiring(bool firing = true) {
-	if (firing && !m_firing) {
-		m_fireAudio = m_fireSound->play();
+void Weapon::playSound(bool shotFired, bool shootButtonUp) {
+	if (m_config->isContinuous()) {
+		if (notNull(m_fireAudio)) {
+			if (shootButtonUp) {
+				m_fireAudio->setPaused(true);
+			}
+			else if (shotFired && m_fireAudio->paused()) {
+				m_fireAudio->setPaused(false);
+			}
+		}
+		else if (shotFired) {
+			m_fireAudio = m_fireSound->play(m_config->fireSoundVol);
+		}
 	}
-	else if (m_firing && !firing && notNull(m_fireAudio)) {
-		m_fireAudio->stop();
+	else if (shotFired) {
+		m_fireSound->play(m_config->fireSoundVol);
 	}
-	m_firing = firing;
 }
 
 void Weapon::setLastFireTime(RealTime lastFireTime) {

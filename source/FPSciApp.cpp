@@ -746,7 +746,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		if (isNull(target)) // Miss case
 		{
 			// Play scene hit sound
-			if (!sessConfig->weapon.isContinuous()) {
+			if (!weapon->config()->isContinuous()) {
 				m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
 			}
 		}
@@ -755,6 +755,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	if (shotFired) {
 		weapon->setLastFireTime(newLastFireTime);
 	}
+	weapon->playSound(shotFired, shootButtonUp);
 
 	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
 	sess->onSimulation(rdt, sdt, idt);
@@ -1136,7 +1137,7 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 	// Scale is used to position/resize the "score banner" when the window changes size in "windowed" mode (always 1 in fullscreen mode).
 	const Vector2 scale = rd->viewport().wh() / displayRes;
 
-	RealTime now = System::time();
+	RealTime now = m_lastOnSimulationRealTime;
 
 	// Weapon ready status (cooldown indicator)
 	if (sessConfig->hud.renderWeaponStatus) {
@@ -1499,7 +1500,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		if (activeCamera() == playerCamera) {
 			// Reticle
 			const shared_ptr<UserConfig> user = currentUser();
-			float tscale = weapon->cooldownRatio(System::time(), user->reticleChangeTimeS);
+			float tscale = weapon->cooldownRatio(m_lastOnSimulationRealTime, user->reticleChangeTimeS);
 			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
 			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
 			Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);

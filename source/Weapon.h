@@ -87,7 +87,6 @@ protected:
 	RealTime						m_lastFireTime;						///< The time of the last fire event up to which time damage has been applied
 
 	bool							m_scoped = false;					///< Flag used for scope management
-	bool							m_firing = false;					///< Flag used for auto fire management
 
 	shared_ptr<Scene>				m_scene;							///< Scene for weapon
 	shared_ptr<Camera>				m_camera;							///< Camera for weapon
@@ -149,8 +148,6 @@ public:
 		Array<shared_ptr<Entity>>& dontHit,
 		bool dummyShot);
 
-	// Saves state to weaponand starts or stops fire audio playback
-	void setFiring(bool firing);
 	// Records provided lastFireTime 
 	void setLastFireTime(RealTime lastFireTime);
 	// Computes duration from last fire time until given currentTime
@@ -165,6 +162,8 @@ public:
 		if (notNull(m_fireAudio)) { m_fireAudio->stop(); }
 		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->isContinuous());
 	}
+	// Plays the sound based on the weapon fire mode
+	void playSound(bool shotFired, bool shootButtonUp);
 	
 	void setHitCallback(std::function<void(shared_ptr<TargetEntity>)> callback) { m_hitCallback = callback; }
 	void setMissCallback(std::function<void(void)> callback) { m_missCallback = callback; }
@@ -181,5 +180,4 @@ public:
 	void loadModels();
 
 	bool scoped() { return m_scoped;  }
-	bool firing() { return m_firing; }
 };
