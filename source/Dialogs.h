@@ -66,7 +66,11 @@ protected:
 		GuiPane *pane = GuiWindow::pane();
 		pane->beginRow(); {
 			auto  promptLabel = pane->addLabel(m_prompt, promptAlign);
-			promptLabel->setWidth(size.x);									// Set the prompt label to full width to center text
+			if (!resize) {
+				promptLabel->setWidth(size.x);									// Set the prompt label to full width to center text
+				promptLabel->setHeight(0.4 * size.y);							// Set the prompt height to center the question
+				promptLabel->setYAlign(GFont::YALIGN_BOTTOM);					// Set the Y-alignment to put the prompt directly above the options (buttons)
+			}
 		} pane->endRow();
 		// Create option buttons
 		int cnt = 0;
@@ -87,6 +91,13 @@ protected:
 			i++;
 			if (++cnt == itemsPerRow) {
 				pane->endRow();
+			}
+		}
+		if (!resize && cnt != itemsPerRow) {		// Horizontal centering for non-resizable window without options not a multiple of items per row
+			pane->endRow();
+			float offsetX = (0.99f * size.x * (itemsPerRow - cnt) / itemsPerRow) / 2.f;
+			for (int i = 1; i < cnt + 1; i++) {
+				m_optionBtns[options.length() - i]->moveBy(offsetX, 0.f);
 			}
 		}
 		if (submitButton) {
