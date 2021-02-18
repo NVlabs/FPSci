@@ -11,7 +11,7 @@
         { 
             completedSessions = ( ); 
             id = "anon"; 
-            sessions = ( "main", "sizes"); 
+            sessions = ( "main", "sizes", "defaultCamera", "customCamera", "60HzContinuous", "30HzContinuous"); 
         } ); 
     
 } 

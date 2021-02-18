@@ -86,10 +86,9 @@ void Weapon::onPose(Array<shared_ptr<Surface> >& surface) {
 		const float yScale = -0.12f;
 		const float zScale = -yScale * 0.5f;
 		float kick = 0.f;
-		const RealTime timeSinceFire = timeSinceLastFire();
-		if (timeSinceFire < m_config->kickDuration) {
-			kick = m_config->kickAngleDegrees * sinf((float)timeSinceFire / m_config->kickDuration * pif());
-		}
+		// ratio from start to end of kick from 0 to 1
+		const float kickRatio = cooldownRatio(System::time(), m_config->kickDuration);
+		kick = m_config->kickAngleDegrees * sinf(kickRatio * pif());
 		const float lookY = m_camera->frame().lookVector().y - 6.f * sin(2 * pif() / 360.0f * kick);
 		m_frame = m_camera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5+kick);
 		// Pose the view model (weapon) for render here
@@ -201,8 +200,12 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 }
 
 void Weapon::clearDecals() {
-	while (m_currentMissDecals.size() > 0) { m_scene->remove(m_currentMissDecals.pop()); }
-	if (notNull(m_hitDecal)) { m_scene->remove(m_hitDecal); }
+	while (m_currentMissDecals.size() > 0) {
+		m_currentMissDecals.pop();
+	}
+	if (notNull(m_hitDecal)) {
+		m_scene->remove(m_hitDecal);
+	}
 }
 
 shared_ptr<TargetEntity> Weapon::fire(
@@ -213,9 +216,6 @@ shared_ptr<TargetEntity> Weapon::fire(
 	Array<shared_ptr<Entity>>& dontHit,
 	bool dummyShot)
 {
-	static RealTime lastTime;
-	m_lastFireAt = System::time();						// Capture the time
-
 	Ray ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
 	float spread = m_config->fireSpreadDegrees * 2.f * pif() / 360.f;
 
@@ -260,7 +260,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 		bulletStartFrame.lookAt(aimPoint);
 
 		// Non-laser weapon, draw a projectile
-		if (!m_config->isLaser()) {
+		if (!m_config->isContinuous()) {
 			const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastBulletId), m_scene.get(), m_bulletModel, bulletStartFrame);
 			bullet->setShouldBeSaved(false);
 			bullet->setCanCauseCollisions(false);
@@ -305,23 +305,56 @@ shared_ptr<TargetEntity> Weapon::fire(
 		}
 	}
 
-	// If we're not in laser mode play the sounce (once) here
-	if (!m_config->isLaser()) {
-		m_fireSound->play(m_config->fireSoundVol);
-		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
-	}
-
 	END_PROFILER_EVENT();
 
 	return target;
 }
 
-bool Weapon::canFire() const {
-	if (isNull(m_config)) return true;
-	return timeSinceLastFire() > m_config->firePeriod;
+void Weapon::playSound(bool shotFired, bool shootButtonUp) {
+	if (m_config->isContinuous()) {
+		if (notNull(m_fireAudio)) {
+			if (shootButtonUp) {
+				m_fireAudio->setPaused(true);
+			}
+			else if (shotFired && m_fireAudio->paused()) {
+				m_fireAudio->setPaused(false);
+			}
+		}
+		else if (shotFired) {
+			m_fireAudio = m_fireSound->play(m_config->fireSoundVol);
+		}
+	}
+	else if (shotFired) {
+		m_fireSound->play(m_config->fireSoundVol);
+	}
 }
 
-float Weapon::cooldownRatio() const {
+void Weapon::setLastFireTime(RealTime lastFireTime) {
+	m_lastFireTime = lastFireTime;
+}
+
+RealTime Weapon::fireDurationUntil(RealTime currentTime) {
+	return currentTime - m_lastFireTime;
+}
+
+int Weapon::numShotsUntil(RealTime currentTime) {
+	return max((int)floorf((float)(currentTime - m_lastFireTime) / m_config->firePeriod), 0);
+}
+
+bool Weapon::canFire(RealTime now) const {
+	if (isNull(m_config)) return true;
+	return (now - m_lastFireTime) > m_config->firePeriod;
+}
+
+float Weapon::cooldownRatio(RealTime now) const {
 	if (isNull(m_config) || m_config->firePeriod == 0.0) return 1.0f;
-	return min((float)timeSinceLastFire() / m_config->firePeriod, 1.0f);
+	return cooldownRatio(now, m_config->firePeriod);
+}
+
+float Weapon::cooldownRatio(RealTime now, float duration) const {
+	return clamp((float)(now - m_lastFireTime) / duration, 0.0f, 1.0f);
+}
+
+float Weapon::damagePerShot() const {
+	return m_config->damagePerSecond * m_config->firePeriod;
 }

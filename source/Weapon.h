@@ -69,7 +69,7 @@ public:
 class Weapon : Entity {
 protected:
 	Weapon(WeaponConfig* config, shared_ptr<Scene>& scene, shared_ptr<Camera>& cam) :
-		m_config(config), m_scene(scene), m_camera(cam) {};
+		m_config(config), m_scene(scene), m_camera(cam), m_ammo(config->maxAmmo) {};
 
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
 	shared_ptr<ArticulatedModel>    m_bulletModel;						///< Model for the "bullet"
@@ -80,17 +80,17 @@ protected:
 	Array<shared_ptr<Projectile>>	m_projectiles;						///< Arrray of drawn projectiles
 
 	int								m_lastBulletId = 0;					///< Bullet ID (auto incremented)
-	RealTime						m_lastFireAt;						///< Last fire time
 	int								m_ammo;								///< Remaining ammo
 
+	RealTime						m_lastFireTime = 0;					///< The time of the last fire event up to which time damage has been applied
+
 	bool							m_scoped = false;					///< Flag used for scope management
-	bool							m_firing = false;					///< Flag used for auto fire management
 
 	shared_ptr<Scene>				m_scene;							///< Scene for weapon
 	shared_ptr<Camera>				m_camera;							///< Camera for weapon
 
-	std::function<void(shared_ptr<TargetEntity>)> m_hitCallback;
-	std::function<void(void)> m_missCallback;
+	std::function<void(shared_ptr<TargetEntity>)> m_hitCallback;		///< This is set to FPSciApp::hitTarget
+	std::function<void(void)> m_missCallback;							///< This is set to FPSciApp::missEvent
 
 	int										m_lastDecalID = 0;
 	shared_ptr<ArticulatedModel>			m_missDecalModel;					///< Model for the miss decal
@@ -106,10 +106,26 @@ public:
 		return createShared<Weapon>(config, scene, cam);
 	};
 
-	RealTime timeSinceLastFire() const { return System::time() - m_lastFireAt; }
-	void resetCooldown() { m_lastFireAt = 0; }
-	bool canFire() const;
-	float cooldownRatio() const;
+	//virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;
+
+	void resetCooldown() { m_lastFireTime = 0; }
+	bool canFire(RealTime now) const;
+	RealTime lastFireTime() { return m_lastFireTime; }
+	/** 
+		Returns a value between 0 and 1 that is the difference between 
+		now and the last fire time over the weapon cooldown period
+	*/
+	float cooldownRatio(RealTime now) const;
+	/** 
+		Returns a value between 0 and 1 that is the difference between 
+		now and the last fire time over the duration
+	*/
+	float cooldownRatio(RealTime now, float duration) const;
+	/**
+		Returns the damage per shot 
+	*/
+	float damagePerShot() const;
+	const WeaponConfig* config() const { return m_config; }
 
 	int remainingAmmo() const { 
 		if (isNull(m_config)) return 100;
@@ -118,6 +134,12 @@ public:
 	int shotsTaken() const { return m_config->maxAmmo - m_ammo; }
 	void reload() { m_ammo = m_config->maxAmmo; }
 
+	/**
+		targets is the list of targets to try to hit
+		Ignore anything in the dontHit list
+		dummyShot controls whether it's a shot at the test target (is this true?)
+		targetIdx, hitDist and hitInfo are all returned along with the targetEntity that was hit
+	*/
 	shared_ptr<TargetEntity> fire(const Array<shared_ptr<TargetEntity>>& targets,
 		int& targetIdx,
 		float& hitDist, 
@@ -125,13 +147,22 @@ public:
 		Array<shared_ptr<Entity>>& dontHit,
 		bool dummyShot);
 
+	// Records provided lastFireTime 
+	void setLastFireTime(RealTime lastFireTime);
+	// Computes duration from last fire time until given currentTime
+	RealTime fireDurationUntil(RealTime currentTime);
+	// Computes an integer number of shots that can happen until given currentTime
+	int numShotsUntil(RealTime currentTime);
+
 	void onPose(Array<shared_ptr<Surface> >& surface);
 
 	void loadSounds() {
 		// Check for play mode specific parameters
 		if (notNull(m_fireAudio)) { m_fireAudio->stop(); }
-		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->isLaser());
+		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->isContinuous());
 	}
+	// Plays the sound based on the weapon fire mode
+	void playSound(bool shotFired, bool shootButtonUp);
 	
 	void setHitCallback(std::function<void(shared_ptr<TargetEntity>)> callback) { m_hitCallback = callback; }
 	void setMissCallback(std::function<void(void)> callback) { m_missCallback = callback; }
@@ -141,16 +172,6 @@ public:
 	void setScene(const shared_ptr<Scene>& scene) { m_scene = scene; }
 	void setScoped(bool state = true) { m_scoped = state; }
 
-	void setFiring(bool firing = true) {
-		if (firing && !m_firing) {
-			m_fireAudio = m_fireSound->play();
-		}
-		else if (m_firing && !firing && notNull(m_fireAudio)) {
-			m_fireAudio->stop();
-		}
-		m_firing = firing;
-	}
-
 	void simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntity>>& targets, const Array<shared_ptr<Entity>>& dontHit = {});
 	void drawDecal(const Point3& point, const Vector3& normal, bool hit = false);
 	void clearDecals();
@@ -158,5 +179,4 @@ public:
 	void loadModels();
 
 	bool scoped() { return m_scoped;  }
-	bool firing() { return m_firing; }
 };

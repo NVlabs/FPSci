@@ -197,6 +197,7 @@ public:
 		map.set("togglePlayerWindow", Array<GKey>{ (GKey)'2' });
 		map.set("toggleWeaponWindow", Array<GKey>{ (GKey)'3' });
 		map.set("toggleWaypointWindow", Array<GKey>{ (GKey)'4' });
+		map.set("selectWaypoint", Array<GKey>{ GKey::LEFT_MOUSE });
 		map.set("moveWaypointUp", Array<GKey>{ GKey::PAGEUP });
 		map.set("moveWaypointDown", Array<GKey>{ GKey::PAGEDOWN });
 		map.set("moveWaypointIn", Array<GKey>{ GKey::HOME });
@@ -866,7 +867,7 @@ public:
 	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
 
 	/** Returns true if firePeriod == 0 and autoFire == true */
-	bool isLaser() {
+	bool isContinuous() const {
 		return firePeriod == 0 && autoFire;
 	}
 

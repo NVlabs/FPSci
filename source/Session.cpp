@@ -262,7 +262,7 @@ void Session::updatePresentationState()
 		if (m_config->player.stillBetweenTrials) {
 			m_player->setMoveEnable(false);
 		}
-		if (!(m_app->buttonUp && m_config->timing.clickToStart)) {
+		if (!(m_app->shootButtonUp && m_config->timing.clickToStart)) {
 			newState = PresentationState::trialFeedback;
 		}
 	}
@@ -362,7 +362,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::sessionFeedback) {
 		if (m_hasSession) {
-			if (stateElapsedTime > m_config->timing.sessionFeedbackDuration && (!m_config->timing.sessionFeedbackRequireClick || !m_app->buttonUp)) {
+			if (stateElapsedTime > m_config->timing.sessionFeedbackDuration && (!m_config->timing.sessionFeedbackRequireClick || !m_app->shootButtonUp)) {
 				newState = PresentationState::complete;
         
 				// Save current user config and status
