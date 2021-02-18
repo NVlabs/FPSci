@@ -68,7 +68,7 @@ protected:
 			auto  promptLabel = pane->addLabel(m_prompt, promptAlign);
 			if (!resize) {
 				promptLabel->setWidth(size.x);									// Set the prompt label to full width to center text
-				promptLabel->setHeight(0.4 * size.y);							// Set the prompt height to center the question
+				promptLabel->setHeight(0.4f * size.y);							// Set the prompt height to center the question
 				promptLabel->setYAlign(GFont::YALIGN_BOTTOM);					// Set the Y-alignment to put the prompt directly above the options (buttons)
 			}
 		} pane->endRow();
