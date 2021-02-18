@@ -92,6 +92,9 @@ void FPSciApp::openUserSettingsWindow() {
 	// set focus so buttons properly highlight
 	moveToCenter(m_userSettingsWindow);
     m_userSettingsWindow->setVisible(true);
+	if (!dialog) {												// Don't allow the user menu to hide the mouse when a dialog box is open
+		setMouseInputMode(MouseInputMode::MOUSE_CURSOR);		// Set mouse mode to cursor to allow pointer-based interaction
+	}
 	m_widgetManager->setFocusedWidget(m_userSettingsWindow);
 }
 
@@ -99,6 +102,9 @@ void FPSciApp::openUserSettingsWindow() {
 void FPSciApp::closeUserSettingsWindow() {
 	if (sessConfig->menu.allowUserSettingsSave) {		// If the user could have saved their settings
 		saveUserConfig(true);							// Save the user config (if it has changed) whenever this window is closed
+	}
+	if (!dialog) {										// Don't allow the user menu to hide the mouse when a dialog box is open
+		setMouseInputMode(MouseInputMode::MOUSE_FPM);	// Set mouse mode to FPM to allow steering the view again
 	}
 	m_userSettingsWindow->setVisible(false);
 }
@@ -138,10 +144,18 @@ void FPSciApp::updateMouseSensitivity() {
 	m_userSettingsWindow->updateCmp360();
 }
 
-void FPSciApp::setDirectMode(bool enable) {
-	m_mouseDirectMode = enable;
+void FPSciApp::setMouseInputMode(MouseInputMode mode) {
 	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
-	fpm->setMouseMode(enable ? FirstPersonManipulator::MOUSE_DIRECT : FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);
+	switch (mode) {
+	case MouseInputMode::MOUSE_CURSOR:
+		fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT_RIGHT_BUTTON);	// Display cursor in right button mode (only holding right mouse rotates view)
+		break;
+	case MouseInputMode::MOUSE_DISABLED:								// Disabled case uses direct mode, but ignores view changes
+	case MouseInputMode::MOUSE_FPM:										// FPM is "direct mode" wherein view is steered by mouse
+		fpm->setMouseMode(FirstPersonManipulator::MOUSE_DIRECT);
+		break;
+	}
+	m_mouseInputMode = mode;
 }
 
 void FPSciApp::loadConfigs(const ConfigFiles& configs) {
@@ -339,9 +353,8 @@ void FPSciApp::makeGUI() {
 	// Create the user settings window
 	if (notNull(m_userSettingsWindow)) { removeWidget(m_userSettingsWindow); }
 	m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, sessConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
-	moveToCenter(m_userSettingsWindow);
-	m_userSettingsWindow->setVisible(true);
 	addWidget(m_userSettingsWindow);
+	openUserSettingsWindow();
 
 	// Setup the debug window
 	debugWindow->pack();
@@ -383,7 +396,7 @@ void FPSciApp::presentQuestion(Question question) {
 		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
 			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
 		}
-		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, true, 3, size, !question.fullscreen);
+		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, question.showCursor, 3, size, !question.fullscreen);
 		break;
 	case Question::Type::Entry:
 		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false, size, !question.fullscreen);
@@ -392,7 +405,7 @@ void FPSciApp::presentQuestion(Question question) {
 		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
 			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
 		}
-		dialog = RatingDialog::create(question.prompt, options, theme, question.title, true, size, !question.fullscreen);
+		dialog = RatingDialog::create(question.prompt, options, theme, question.title, question.showCursor, size, !question.fullscreen);
 		break;
 	default:
 		throw "Unknown question type!";
@@ -401,7 +414,7 @@ void FPSciApp::presentQuestion(Question question) {
 
 	moveToCenter(dialog);
 	addWidget(dialog);
-	setDirectMode(!question.showCursor);
+	setMouseInputMode(question.showCursor ? MouseInputMode::MOUSE_CURSOR : MouseInputMode::MOUSE_DISABLED);
 }
 
 void FPSciApp::markSessComplete(String sessId) {
@@ -1030,6 +1043,7 @@ void FPSciApp::onAfterEvents() {
 		m_userSettingsWindow->setSelectedSession(selSess);
 		moveToCenter(m_userSettingsWindow);
 		m_userSettingsWindow->setVisible(m_showUserMenu);
+		setMouseInputMode(m_showUserMenu ? MouseInputMode::MOUSE_CURSOR : MouseInputMode::MOUSE_FPM);
 
 		// Add the new settings window and clear the semaphore
 		addWidget(m_userSettingsWindow);
@@ -1386,8 +1400,8 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	GApp::onUserInput(ui);
 
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
-	if (m_mouseDirectMode && activeCamera() == playerCamera && notNull(player)) {
-		player->updateFromInput(ui);
+	if (m_mouseInputMode == MouseInputMode::MOUSE_FPM && activeCamera() == playerCamera && notNull(player)) {
+		player->updateFromInput(ui);		// Only update the player if the mouse input mode is FPM and the active camera is the player view camera
 	}
 	else if (notNull(player)) {	// Zero the player velocity and rotation when in the setting menu
 		player->setDesiredOSVelocity(Vector3::zero());

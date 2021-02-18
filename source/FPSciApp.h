@@ -29,6 +29,13 @@ class WaypointManager;
 enum PresentationState { initial, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
 
 class FPSciApp : public GApp {
+public:
+	enum MouseInputMode {					///< Enumerated type for controlling the mouse input mode
+		MOUSE_DISABLED = 0,					/// No mouse interaction
+		MOUSE_CURSOR = 1,					/// Cursor-based interaction
+		MOUSE_FPM = 2,						/// First-person manipulator-based interaction
+	};
+
 protected:
 	static const int						MAX_HISTORY_TIMING_FRAMES = 360;	///< Length of the history queue for m_frameDurationQueue
 	shared_ptr<Sound>						m_sceneHitSound;					///< Sound for target exploding
@@ -74,7 +81,7 @@ protected:
 	int										m_currentDelayBufferIndex = 0;
 
     shared_ptr<UserMenu>					m_userSettingsWindow;				///< User settings window
-	bool									m_mouseDirectMode = true;			///< Does the mouse currently have control over the view
+	MouseInputMode							m_mouseInputMode = MouseInputMode::MOUSE_CURSOR;	///< Does the mouse currently have control over the view
 	bool									m_showUserMenu = true;				///< Show the user menu after update?
 
 	bool									m_firstSession = true;
@@ -218,7 +225,7 @@ public:
 	void closeUserSettingsWindow();
 
 	/** changes the mouse interaction (camera direct vs pointer) */
-	void setDirectMode(bool enable = true);
+	void setMouseInputMode(MouseInputMode mode = MOUSE_FPM);
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
 	
