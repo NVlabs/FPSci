@@ -69,9 +69,7 @@ public:
 class Weapon : Entity {
 protected:
 	Weapon(WeaponConfig* config, shared_ptr<Scene>& scene, shared_ptr<Camera>& cam) :
-		m_config(config), m_scene(scene), m_camera(cam), m_ammo(config->maxAmmo) {
-		m_lastFireTime = System::time();
-	};
+		m_config(config), m_scene(scene), m_camera(cam), m_ammo(config->maxAmmo) {};
 
 	shared_ptr<ArticulatedModel>    m_viewModel;						///< Model for the weapon
 	shared_ptr<ArticulatedModel>    m_bulletModel;						///< Model for the "bullet"
@@ -84,7 +82,7 @@ protected:
 	int								m_lastBulletId = 0;					///< Bullet ID (auto incremented)
 	int								m_ammo;								///< Remaining ammo
 
-	RealTime						m_lastFireTime;						///< The time of the last fire event up to which time damage has been applied
+	RealTime						m_lastFireTime = 0;					///< The time of the last fire event up to which time damage has been applied
 
 	bool							m_scoped = false;					///< Flag used for scope management
 
