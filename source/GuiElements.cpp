@@ -726,7 +726,4 @@ void UserMenu::updateCmp360() {
 
 void UserMenu::setVisible(bool enable) {
 	GuiWindow::setVisible(enable);
-	if (!m_app->dialog) {					// Don't allow the user menu to hide the mouse when a dialog box is open
-		m_app->setDirectMode(!enable);		// Set view control (direct) vs pointer (indirect) based on window visibility
-	}
 }
