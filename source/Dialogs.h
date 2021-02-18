@@ -65,7 +65,8 @@ protected:
 		m_options = options;
 		GuiPane *pane = GuiWindow::pane();
 		pane->beginRow(); {
-			pane->addLabel(m_prompt, promptAlign);
+			auto  promptLabel = pane->addLabel(m_prompt, promptAlign);
+			promptLabel->setWidth(size.x);									// Set the prompt label to full width to center text
 		} pane->endRow();
 		// Create option buttons
 		int cnt = 0;
