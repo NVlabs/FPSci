@@ -43,7 +43,7 @@ void FPSciApp::initExperiment(){
 
 	// Set the initial simulation timestep to REAL_TIME. The desired timestep is set later.
 	setFrameDuration(frameDuration(), REAL_TIME);
-	m_lastOnSimulationRealTime = System::time();
+	m_lastOnSimulationRealTime = 0.0;
 
 	// Setup/update waypoint manager
 	if (startupConfig.developerMode && startupConfig.waypointEditorMode) {
@@ -687,9 +687,16 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 }
 
 void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
-	// Set up the shot(s)
 	// TODO: this should eventually probably use sdt instead of rdt
-	RealTime currentRealTime = m_lastOnSimulationRealTime + rdt;
+	RealTime currentRealTime;
+	if (m_lastOnSimulationRealTime == 0) {
+		m_lastOnSimulationRealTime = System::time();			// Grab the current system time if uninitialized
+		currentRealTime = m_lastOnSimulationRealTime;			// Set this equal to the current system time
+	}
+	else {
+		currentRealTime = m_lastOnSimulationRealTime + rdt;		// Increment the time by the current real time delta
+	}
+
 	bool stateCanFire = sess->currentState == PresentationState::trialTask && !m_userSettingsWindow->visible();
 
 	// These variables will be used to fire after the various weapon styles populate them below
