@@ -581,8 +581,8 @@ TEST_F(FPSciTests, TestWeapon60HzContinuous) {
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
-	EXPECT_NEAR(end - start, 1, 0.017) << "Failed to be within a frame period of the expected end time!";
-	ASSERT_NEAR(numFrames, 60, 1) << "Wrong number of frames taken.";
+	EXPECT_NEAR(end - start, 1, 0.034) << "Failed to be within 2 frame periods of the expected end time!";
+	ASSERT_NEAR(numFrames, 60, 2) << "Wrong number of frames taken.";
 }
 
 TEST_F(FPSciTests, TestWeapon30HzContinuous) {
@@ -605,7 +605,7 @@ TEST_F(FPSciTests, TestWeapon30HzContinuous) {
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
-	EXPECT_NEAR(end - start, 1, 0.034) << "Failed to be within a frame of the expected end time!";
+	EXPECT_NEAR(end - start, 1, 0.067) << "Failed to be within 2 frames of the expected end time!";
 	ASSERT_NEAR(numFrames, 30, 1) << "Wrong number of frames taken.";
 }
 
@@ -701,8 +701,8 @@ TEST_F(FPSciTests, TestWeapon60Hz33ms) {
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
-	EXPECT_NEAR(end - start, 1, 0.033) << "Failed to be within a firePeriod of the expected end time!";
-	ASSERT_NEAR(numFrames, 60, 33/17) << "Wrong number of frames taken.";
+	EXPECT_NEAR(end - start, 1, 0.034) << "Failed to be within a firePeriod of the expected end time!";
+	ASSERT_NEAR(numFrames, 60, 34/17) << "Wrong number of frames taken.";
 }
 
 TEST_F(FPSciTests, TestWeapon60Hz16ms) {
@@ -712,16 +712,16 @@ TEST_F(FPSciTests, TestWeapon60Hz16ms) {
 	s_app->oneFrame();
 	auto spawnedtargets = respawnTargets();
 	ASSERT_EQ(spawnedtargets, 1);
-	s_app->oneFrame();
+	shared_ptr<TargetEntity> target = s_app->sess->targetArray()[0];
 	s_fakeInput->window().injectMouseDown(0);
 	int numFrames = 0;
 	RealTime start = System::time();
-	while (s_app->sess->targetArray().length() > 0 && System::time() - start < 2.f) {
+	while (target->health() > 0.f && System::time() - start < 2.f) {
 		s_app->oneFrame();
 		numFrames++;
 	}
 	RealTime end = System::time();
-	EXPECT_TRUE(s_app->sess->targetArray().length() == 0) << "Target should be destroyed!";
+	EXPECT_LE(target->health(), 0.f) << "Target should be destroyed!";
 	s_app->oneFrame();
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
