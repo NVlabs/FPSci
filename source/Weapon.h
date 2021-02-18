@@ -112,6 +112,7 @@ public:
 
 	void resetCooldown() { m_lastFireTime = 0; }
 	bool canFire(RealTime now) const;
+	RealTime lastFireTime() { return m_lastFireTime; }
 	/** 
 		Returns a value between 0 and 1 that is the difference between 
 		now and the last fire time over the weapon cooldown period

@@ -687,18 +687,17 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 }
 
 void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
-
 	// Set up the shot(s)
 	// TODO: this should eventually probably use sdt instead of rdt
 	RealTime currentRealTime = m_lastOnSimulationRealTime + rdt;
 	bool stateCanFire = sess->currentState == PresentationState::trialTask && !m_userSettingsWindow->visible();
+
 	// These variables will be used to fire after the various weapon styles populate them below
 	int numShots = 0;
 	float damagePerShot = weapon->damagePerShot();
 	RealTime newLastFireTime = currentRealTime;
+
 	if (shootButtonJustPressed && stateCanFire && !weapon->canFire(currentRealTime)) {
-		bool wat = weapon->canFire(currentRealTime);
-		debugPrintf("weapon->canFire() = %d", wat);
 		// Invalid click since the weapon isn't ready to fire
 		sess->accumulatePlayerAction(PlayerActionType::Invalid);
 	}
@@ -709,11 +708,23 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	else if (shootButtonJustPressed && !weapon->config()->autoFire && weapon->canFire(currentRealTime) && stateCanFire) {
 		// Discrete weapon fires a single shot with normal damage at the current time
 		numShots = 1;
+		// These copy the above defaults, but are here for clarity
+		damagePerShot = weapon->damagePerShot();
+		newLastFireTime = currentRealTime;
 	}
-	else if (!weapon->config()->isContinuous() && weapon->config()->autoFire && !shootButtonUp && stateCanFire) {
+	else if (weapon->config()->autoFire && !weapon->config()->isContinuous() && !shootButtonUp && stateCanFire) {
 		// Autofire weapon should create shots until currentRealTime with normal damage
-		numShots = weapon->numShotsUntil(currentRealTime);
-		newLastFireTime = m_lastOnSimulationRealTime + (float)numShots * weapon->config()->firePeriod;
+		if (shootButtonJustPressed) {
+			// If the button was just pressed, fire one bullet half way through
+			weapon->setLastFireTime(m_lastOnSimulationRealTime + rdt * 0.5f);
+			numShots = 1;
+		}
+		// Add on bullets until the frame time
+		int newShots = weapon->numShotsUntil(currentRealTime);
+		numShots += newShots;
+		newLastFireTime = weapon->lastFireTime() + (float)(newShots) * weapon->config()->firePeriod;
+		// This copies the above default, but are here for clarity
+		damagePerShot = weapon->damagePerShot();
 	}
 	else if (weapon->config()->isContinuous() && (!shootButtonUp || shootButtonJustReleased) && stateCanFire) {
 		// Continuous weapon should have been firing continuously, but since we do sampled simulation
