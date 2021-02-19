@@ -1,11 +1,43 @@
 #pragma once
 #include <G3D/G3D.h>
-#include "ConfigFiles.h"
+//#include "ConfigFiles.h"
 #include "UserConfig.h"
 #include "UserStatus.h"
 #include "TargetEntity.h"
+#include "Weapon.h"
 
 class FPSciApp;
+class SessionConfig;
+
+class MenuConfig {
+public:
+	// Menu controls
+	bool showMenuLogo = true;									///< Show the FPSci logo in the user menu
+	bool showExperimentSettings = true;							///< Show the experiment settings options (session/user selection)
+	bool showUserSettings = true;								///< Show the user settings options (master switch)
+	bool allowSessionChange = true;								///< Allow the user to change the session with the menu drop-down
+	bool allowUserAdd = false;									///< Allow the user to add a new user to the experiment
+	bool allowUserSettingsSave = true;							///< Allow the user to save settings changes
+	bool allowSensitivityChange = true;							///< Allow in-game sensitivity change		
+
+	bool allowTurnScaleChange = true;							///< Allow the user to apply X/Y turn scaling
+	String xTurnScaleAdjustMode = "None";						///< X turn scale adjustment mode (can be "None" or "Slider")
+	String yTurnScaleAdjustMode = "Invert";						///< Y turn scale adjustment mode (can be "None", "Invert", or "Slider")
+
+	bool allowReticleChange = false;							///< Allow the user to adjust their crosshair
+	bool allowReticleIdxChange = true;							///< If reticle change is allowed, allow index change
+	bool allowReticleSizeChange = true;							///< If reticle change is allowed, allow size change
+	bool allowReticleColorChange = true;						///< If reticle change is allowed, allow color change
+	bool allowReticleChangeTimeChange = false;					///< Allow the user to change the reticle change time
+	bool showReticlePreview = true;								///< Show a preview of the reticle
+
+	bool showMenuOnStartup = true;								///< Show the user menu on startup?
+	bool showMenuBetweenSessions = true;						///< Show the user menu between session?
+
+	void load(AnyTableReader reader, int settingsVersion = 1);
+	Any addToAny(Any a, const bool forceAll = false) const;
+	bool allowAnyChange() const;
+};
 
 struct WaypointDisplayConfig {
 	// Formatting parameters
@@ -117,6 +149,7 @@ public:
 		return createShared<WeaponControls>(config, theme, width, height);
 	}
 };
+
 
 class UserMenu : public GuiWindow {
 protected:

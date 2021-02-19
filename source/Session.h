@@ -28,7 +28,7 @@
 #pragma once
 
 #include <G3D/G3D.h>
-#include "ConfigFiles.h"
+#include "FpsConfig.h"
 #include <ctime>
 
 class FPSciApp;
@@ -104,6 +104,39 @@ struct PlayerAction {
 		action = playerAction;
 		targetName = name;
 	}
+};
+
+/** Trial count class (optional for alternate TargetConfig/count table lookup) */
+class TrialCount {
+public:
+	Array<String>	ids;			///< Trial ID list
+	int				count = 1;		///< Count of trials to be performed
+	static int		defaultCount;	///< Default count to use
+
+	TrialCount() {};
+	TrialCount(const Array<String>& trialIds, int trialCount) : ids(trialIds), count(trialCount) {};
+	TrialCount(const Any& any);
+
+	Any toAny(const bool forceAll = true) const;
+};
+
+/** Configuration for a session worth of trials */
+class SessionConfig : public FpsConfig {
+public:
+	String				id;								///< Session ID
+	String				description = "Session";		///< String indicating whether session is training or real
+	int					blockCount = 1;					///< Default to just 1 block per session
+	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
+	bool				closeOnComplete = false;		///< Close application on session completed?
+	static FpsConfig	defaultConfig;
+
+	SessionConfig() : FpsConfig(defaultConfig) {}
+	SessionConfig(const Any& any);
+
+	static shared_ptr<SessionConfig> create() { return createShared<SessionConfig>(); }
+	Any toAny(const bool forceAll = false) const;
+	float getTrialsPerBlock(void) const;			// Get the total number of trials in this session
+
 };
 
 class Session : public ReferenceCountedObject {

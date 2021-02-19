@@ -16,6 +16,12 @@
     <Filter Include="Shader Files">
       <UniqueIdentifier>{c542b891-87fe-47ef-b6b0-5e39b70b2f65}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Configuration">
+      <UniqueIdentifier>{ec92ba34-28f3-4980-85fa-be8743595a62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Configuration">
+      <UniqueIdentifier>{70a2b2ee-7798-4eb5-a47c-7f54071be866}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\sqlHelpers.h">
@@ -45,9 +51,6 @@
     <ClInclude Include="..\source\WaypointManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\ConfigFiles.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\Weapon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -60,23 +63,29 @@
     <ClInclude Include="..\source\FPSciApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\StartupConfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\KeyMapping.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FpsConfig.h">
+      <Filter>Header Files\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\StartupConfig.h">
+      <Filter>Header Files\Configuration</Filter>
     </ClInclude>
     <ClInclude Include="..\source\SystemInfo.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Configuration</Filter>
     </ClInclude>
     <ClInclude Include="..\source\SystemConfig.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Configuration</Filter>
     </ClInclude>
     <ClInclude Include="..\source\UserConfig.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Configuration</Filter>
     </ClInclude>
     <ClInclude Include="..\source\UserStatus.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\ExperimentConfig.h">
+      <Filter>Header Files\Configuration</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -110,23 +119,29 @@
     <ClCompile Include="..\source\FPSciApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\StartupConfig.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\source\FpsConfig.cpp">
+      <Filter>Source Files\Configuration</Filter>
     </ClCompile>
     <ClCompile Include="..\source\KeyMapping.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Configuration</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\SystemInfo.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\source\StartupConfig.cpp">
+      <Filter>Source Files\Configuration</Filter>
     </ClCompile>
     <ClCompile Include="..\source\SystemConfig.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\SystemInfo.cpp">
+      <Filter>Source Files\Configuration</Filter>
     </ClCompile>
     <ClCompile Include="..\source\UserConfig.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Configuration</Filter>
     </ClCompile>
     <ClCompile Include="..\source\UserStatus.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\ExperimentConfig.cpp">
+      <Filter>Source Files\Configuration</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
