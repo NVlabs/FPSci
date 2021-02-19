@@ -159,6 +159,7 @@
     <ClInclude Include="..\source\TargetEntity.h" />
     <ClInclude Include="..\source\GuiElements.h" />
     <ClInclude Include="..\source\Dialogs.h" />
+    <ClInclude Include="..\source\UserConfig.h" />
     <ClInclude Include="..\source\WaypointManager.h" />
     <ClInclude Include="..\source\Weapon.h" />
   </ItemGroup>
@@ -175,6 +176,7 @@
     <ClCompile Include="..\source\SystemInfo.cpp" />
     <ClCompile Include="..\source\TargetEntity.cpp" />
     <ClCompile Include="..\source\GuiElements.cpp" />
+    <ClCompile Include="..\source\UserConfig.cpp" />
     <ClCompile Include="..\source\WaypointManager.cpp" />
     <ClCompile Include="..\source\Weapon.cpp" />
   </ItemGroup>

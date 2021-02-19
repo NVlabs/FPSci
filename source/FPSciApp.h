@@ -16,6 +16,7 @@
 #include "KeyMapping.h"
 #include "SystemConfig.h"
 #include "SystemInfo.h"
+#include "UserConfig.h"
 
 #include "TargetEntity.h"
 #include "PlayerEntity.h"

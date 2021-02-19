@@ -2,6 +2,7 @@
 #include <G3D/G3D.h>
 #include "sqlHelpers.h"
 #include "ConfigFiles.h"
+#include "UserConfig.h"
 
 using RowEntry = Array<String>;
 using Columns = Array<Array<String>>;
