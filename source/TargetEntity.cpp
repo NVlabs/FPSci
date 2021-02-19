@@ -1,5 +1,123 @@
 #include "TargetEntity.h"
-#include "ConfigFiles.h"
+
+template <class T>
+static bool operator!=(Array<T> a1, Array<T> a2) {
+	for (int i = 0; i < a1.size(); i++) {
+		if (a1[i] != a2[i]) return true;
+	}
+	return false;
+}
+template <class T>
+static bool operator==(Array<T> a1, Array<T> a2) {
+	return !(a1 != a2);
+}
+
+TargetConfig::TargetConfig(const Any& any) {
+	int settingsVersion = 1;
+	AnyTableReader reader(any);
+	reader.getIfPresent("settingsVersion", settingsVersion);
+
+	switch (settingsVersion) {
+	case 1:
+		reader.get("id", id, "An \"id\" field must be provided for every target config!");
+		//reader.getIfPresent("elevationLocked", elevLocked);
+		reader.getIfPresent("upperHemisphereOnly", upperHemisphereOnly);
+		reader.getIfPresent("logTargetTrajectory", logTargetTrajectory);
+		reader.getIfPresent("distance", distance);
+		reader.getIfPresent("motionChangePeriod", motionChangePeriod);
+		reader.getIfPresent("speed", speed);
+		reader.getIfPresent("visualSize", size);
+		reader.getIfPresent("eccH", eccH);
+		reader.getIfPresent("eccV", eccV);
+		reader.getIfPresent("jumpEnabled", jumpEnabled);
+		reader.getIfPresent("jumpSpeed", jumpSpeed);
+		reader.getIfPresent("jumpPeriod", jumpPeriod);
+		reader.getIfPresent("accelGravity", accelGravity);
+		reader.getIfPresent("modelSpec", modelSpec);
+
+		reader.getIfPresent("destroyDecal", destroyDecal);
+		reader.getIfPresent("destroyDecalScale", destroyDecalScale);
+		reader.getIfPresent("destroyDecalDuration", destroyDecalDuration);
+
+		reader.getIfPresent("destSpace", destSpace);
+		reader.getIfPresent("destinations", destinations);
+		reader.getIfPresent("respawnCount", respawnCount);
+		if (destSpace == "world" && destinations.size() == 0) {
+			reader.get("moveBounds", moveBounds, format("A world-space target must either specify destinations or a movement bounding box. See target: \"%s\"", id));
+			spawnBounds = moveBounds;
+		}
+		else {
+			if (reader.getIfPresent("moveBounds", moveBounds)) {
+				spawnBounds = moveBounds;
+			}
+		}
+		reader.getIfPresent("spawnBounds", spawnBounds);
+		if (destSpace == "world" && destinations.size() == 0 && !moveBounds.contains(spawnBounds)) {
+			String moveBoundStr = format("AABox{%s, %s}", moveBounds.high().toString(), moveBounds.low().toString());
+			String spawnBoundStr = format("AABox{%s, %s}", spawnBounds.high().toString(), spawnBounds.low().toString());
+			throw format("The \"moveBounds\" AABox (=%s) must contain the \"spawnBounds\" AABox (=%s)!", moveBoundStr, spawnBoundStr);
+		}
+		if (reader.getIfPresent("axisLocked", axisLock)) {
+			if (axisLock.size() < 3) {
+				throw format("Must provide 3 fields (X,Y,Z) for axis lock! Only %d provided! See target: \"%s\"", axisLock.size(), id);
+			}
+			else if (axisLock.size() > 3) {
+				logPrintf("Provided axis lock for target \"%s\" has >3 fields, using the first 3...", id);
+			}
+			if (axisLock[0] && axisLock[1] && axisLock[2] && speed[0] != 0.0f && speed[1] != 0.0f) {
+				throw format("Target \"%s\" locks all axes but has non-zero speed!", id);
+			}
+		}
+		reader.getIfPresent("hitSound", hitSound);
+		reader.getIfPresent("hitSoundVol", hitSoundVol);
+		reader.getIfPresent("destroyedSound", destroyedSound);
+		reader.getIfPresent("destroyedSoundVol", destroyedSoundVol);
+		break;
+	default:
+		debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
+		break;
+	}
+}
+
+TargetConfig TargetConfig::load(const String& filename) {
+	return TargetConfig(Any::fromFile(System::findDataFile(filename)));
+}
+
+Any TargetConfig::toAny(const bool forceAll) const {
+	Any a(Any::TABLE);
+	TargetConfig def;
+	a["id"] = id;
+	if (forceAll || !(def.modelSpec == modelSpec))							a["modelSpec"] = modelSpec;
+	if (forceAll || def.destSpace != destSpace)								a["destSpace"] = destSpace;
+	if (forceAll || def.respawnCount != respawnCount)						a["respawnCount"] = respawnCount;
+	if (forceAll || def.size != size)										a["visualSize"] = size;
+	if (forceAll || def.logTargetTrajectory != logTargetTrajectory)			a["logTargetTrajectory"] = logTargetTrajectory;
+	// Destination-based target
+	if (destinations.size() > 0) 											a["destinations"] = destinations;
+	// Parametric target
+	else {
+		if (forceAll || def.upperHemisphereOnly != upperHemisphereOnly)		a["upperHemisphereOnly"] = upperHemisphereOnly;
+		if (forceAll || def.distance != distance)							a["distance"] = distance;
+		if (forceAll || def.motionChangePeriod != motionChangePeriod)		a["motionChangePeriod"] = motionChangePeriod;
+		if (forceAll || def.speed != speed)									a["speed"] = speed;
+		if (forceAll || def.eccH != eccH)									a["eccH"] = eccH;
+		if (forceAll || def.eccV != eccV)									a["eccV"] = eccV;
+		if (forceAll || def.jumpEnabled != jumpEnabled)						a["jumpEnabled"] = jumpEnabled;
+		if (forceAll || def.jumpPeriod != jumpPeriod)						a["jumpPeriod"] = jumpPeriod;
+		if (forceAll || def.accelGravity != accelGravity)					a["accelGravity"] = accelGravity;
+		if (forceAll || def.axisLock != axisLock)							a["axisLocked"] = axisLock;
+	}
+
+	if (forceAll || def.destroyDecal != destroyDecal)						a["destroyDecal"] = destroyDecal;
+	if (forceAll || def.destroyDecalScale != destroyDecalScale)				a["destroyDecalScale"] = destroyDecalScale;
+	if (forceAll || def.destroyDecalDuration != destroyDecalDuration)		a["destroyDecalDuration"] = destroyDecalDuration;
+
+	if (forceAll || def.hitSound != hitSound)								a["hitSound"] = hitSound;
+	if (forceAll || def.hitSoundVol != hitSoundVol)							a["hitSoundVol"] = hitSoundVol;
+	if (forceAll || def.destroyedSound != destroyedSound)					a["destroyedSound"] = destroyedSound;
+	if (forceAll || def.destroyedSoundVol != destroyedSoundVol)				a["destroyedSoundVol"] = destroyedSoundVol;
+	return a;
+};
 
 // Find an arbitrary vector perpendicular to and in equal length as inputV.
 // The sampling distribution is uniform along the circular line, the set of possible candidates of a perpendicular vector.,
