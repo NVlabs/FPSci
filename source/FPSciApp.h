@@ -14,6 +14,7 @@
 #include "ConfigFiles.h"
 #include "StartupConfig.h"
 #include "KeyMapping.h"
+#include "SystemConfig.h"
 #include "SystemInfo.h"
 
 #include "TargetEntity.h"
