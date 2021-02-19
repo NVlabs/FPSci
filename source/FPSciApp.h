@@ -13,6 +13,7 @@
 
 #include "ConfigFiles.h"
 #include "StartupConfig.h"
+#include "KeyMapping.h"
 
 #include "TargetEntity.h"
 #include "PlayerEntity.h"
