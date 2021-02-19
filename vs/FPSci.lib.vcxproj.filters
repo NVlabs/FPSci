@@ -60,6 +60,9 @@
     <ClInclude Include="..\source\FPSciApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\StartupConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\sqlHelpers.cpp">
@@ -90,6 +93,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FPSciApp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\StartupConfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

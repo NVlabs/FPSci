@@ -10,7 +10,10 @@
  */
 #pragma once
 #include <G3D/G3D.h>
+
 #include "ConfigFiles.h"
+#include "StartupConfig.h"
+
 #include "TargetEntity.h"
 #include "PlayerEntity.h"
 #include "GuiElements.h"
