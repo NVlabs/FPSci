@@ -1,5 +1,4 @@
 #include "ExperimentConfig.h"
-#include "FpsConfig.h"
 
 ExperimentConfig::ExperimentConfig(const Any& any) : FpsConfig(any) {
 	AnyTableReader reader(any);
