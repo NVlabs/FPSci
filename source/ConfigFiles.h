@@ -105,6 +105,14 @@ public:
 	
 	bool	audioEnable = true;									///< Audio on/off
 
+	static StartupConfig load(const String& filename) {
+		StartupConfig config;
+		if (!FileSystem::exists(filename)) {
+			config.toAny(true).save(filename);		// If the file doesn't exist create it
+		}
+		return Any::fromFile(filename);				// Load back from the Any file
+	}
+
 	StartupConfig() {};
 
 	/** Construct from any here */
