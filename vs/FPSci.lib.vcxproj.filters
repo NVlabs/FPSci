@@ -75,6 +75,9 @@
     <ClInclude Include="..\source\UserConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\UserStatus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\sqlHelpers.cpp">
@@ -120,6 +123,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\source\UserConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\UserStatus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

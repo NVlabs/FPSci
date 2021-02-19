@@ -17,6 +17,7 @@
 #include "SystemConfig.h"
 #include "SystemInfo.h"
 #include "UserConfig.h"
+#include "UserStatus.h"
 
 #include "TargetEntity.h"
 #include "PlayerEntity.h"

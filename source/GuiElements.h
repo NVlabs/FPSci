@@ -2,6 +2,7 @@
 #include <G3D/G3D.h>
 #include "ConfigFiles.h"
 #include "UserConfig.h"
+#include "UserStatus.h"
 #include "TargetEntity.h"
 
 class FPSciApp;
