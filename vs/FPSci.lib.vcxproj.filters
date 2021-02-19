@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Config Files">
-      <UniqueIdentifier>{650a3750-20f3-4ac3-9338-6652eaca5463}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shader Files">
       <UniqueIdentifier>{c542b891-87fe-47ef-b6b0-5e39b70b2f65}</UniqueIdentifier>
     </Filter>
@@ -102,26 +99,8 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\data-files\experimentconfig.Any">
-      <Filter>Config Files</Filter>
-    </None>
-    <None Include="..\data-files\userconfig.Any">
-      <Filter>Config Files</Filter>
-    </None>
     <None Include="..\data-files\shader\distort.pix">
       <Filter>Shader Files</Filter>
-    </None>
-    <None Include="..\data-files\userstatus.Any">
-      <Filter>Config Files</Filter>
-    </None>
-    <None Include="..\data-files\startupconfig.Any">
-      <Filter>Config Files</Filter>
-    </None>
-    <None Include="..\data-files\keymap.Any">
-      <Filter>Config Files</Filter>
-    </None>
-    <None Include="..\data-files\systemconfig.Any">
-      <Filter>Config Files</Filter>
     </None>
   </ItemGroup>
 </Project>
