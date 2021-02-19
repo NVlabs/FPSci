@@ -154,6 +154,7 @@
     <ClInclude Include="..\source\PythonLogger.h" />
     <ClInclude Include="..\source\sqlHelpers.h" />
     <ClInclude Include="..\source\StartupConfig.h" />
+    <ClInclude Include="..\source\SystemInfo.h" />
     <ClInclude Include="..\source\TargetEntity.h" />
     <ClInclude Include="..\source\GuiElements.h" />
     <ClInclude Include="..\source\Dialogs.h" />
@@ -169,6 +170,7 @@
     <ClCompile Include="..\source\PlayerEntity.cpp" />
     <ClCompile Include="..\source\sqlHelpers.cpp" />
     <ClCompile Include="..\source\StartupConfig.cpp" />
+    <ClCompile Include="..\source\SystemInfo.cpp" />
     <ClCompile Include="..\source\TargetEntity.cpp" />
     <ClCompile Include="..\source\GuiElements.cpp" />
     <ClCompile Include="..\source\WaypointManager.cpp" />
