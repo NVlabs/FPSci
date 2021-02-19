@@ -1,6 +1,6 @@
 #pragma once
 #include <G3D/G3D.h>
-#include "ConfigFiles.h"
+#include "TargetEntity.h"
 
 class Projectile : public VisibleEntity {
 protected:
@@ -64,6 +64,61 @@ public:
 	double remainingTime() { return m_totalTime; }
 	void clearRemainingTime() { m_totalTime = 0.0f; }
 
+};
+
+/** Weapon configuration class */
+class WeaponConfig {
+public:
+	String	id = "default";												///< Id by which to refer to this weapon
+	int		maxAmmo = 10000;											///< Max ammo (clicks) allowed per trial (set large for laser mode)
+	float	firePeriod = 0.5;											///< Minimum fire period (set to 0 for laser mode)
+	bool	autoFire = false;											///< Fire repeatedly when mouse is held? (set true for laser mode)
+	float	damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
+	String	fireSound = "sound/fpsci_fire_100ms.wav"; 					///< Sound to play on fire
+	float	fireSoundVol = 1.0f;										///< Volume for fire sound
+	bool	renderModel = false;										///< Render a model for the weapon?
+	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
+
+	//Vector3	muzzleOffset = Vector3(0, 0, 0);							///< Offset to the muzzle of the weapon model
+	//bool	renderMuzzleFlash = false;									///< Render a muzzle flash when the weapon fires?
+
+	bool	renderBullets = false;										///< Render bullets leaving the weapon
+	float	bulletSpeed = 100.0f;										///< Speed to draw at for rendered rounds (in m/s)
+	float	bulletGravity = 0.0f;										///< Gravity to use for bullets (default is no droop)
+	Vector3 bulletScale = Vector3(0.05f, 0.05f, 2.f);					///< Scale to use on bullet object
+	Color3  bulletColor = Color3(5, 4, 0);								///< Color/power for bullet emissive texture
+	Vector3 bulletOffset = Vector3(0, 0, 0);								///< Offset to start the bullet from (along the look direction)
+
+	bool	renderDecals = true;										///< Render decals when the shots miss?
+	String	missDecal = "bullet-decal-256x256.png";						///< The decal to place where the shot misses
+	String	hitDecal = "";												///< The decal to place where the shot hits
+	int		missDecalCount = 2;											///< Number of miss decals to draw
+	float	missDecalScale = 1.0f;										///< Scale to apply to the miss decal
+	float	hitDecalScale = 1.0f;										///< Scale to apply to the hit decal
+	float	hitDecalDurationS = 0.1f;									///< Duration to show the hit decal for (in seconds)
+	float	hitDecalColorMult = 2.0f;									///< "Encoding" field (aka color multiplier) for hit decal
+
+	float	fireSpreadDegrees = 0;										///< The spread of the fire
+	String  fireSpreadShape = "uniform";								///< The shape of the fire spread distribution
+	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
+	float	damageRollOffDistance = 0;									///< Damage roll of w/ distance
+
+	float	scopeFoV = 0.0f;											///< Field of view when scoped
+	bool	scopeToggle = false;										///< Scope toggle behavior
+	//String reticleImage;												///< Reticle image to show for this weapon
+
+	float	kickAngleDegrees = 0.0f;									///< Angle for the weapon to kick when fired
+	float	kickDuration = 0.0f;										///< Kick duration
+
+	ArticulatedModel::Specification modelSpec;							///< Model to use for the weapon (must be specified when renderModel=true)
+
+	/** Returns true if firePeriod == 0 and autoFire == true */
+	inline bool isContinuous() const { return firePeriod == 0 && autoFire; }
+
+	WeaponConfig() {}
+	WeaponConfig(const Any& any);
+
+	Any toAny(const bool forceAll = false) const;
 };
 
 class Weapon : Entity {
