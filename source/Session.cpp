@@ -106,6 +106,16 @@ float SessionConfig::getTrialsPerBlock(void) const {
 	return count;
 }
 
+Array<String> SessionConfig::getUniqueTargetIds() const {
+	Array<String> ids;
+	for (TrialCount trial : trials) {
+		for (String id : trial.ids) {
+			if (!ids.contains(id)) { ids.append(id); }
+		}
+	}
+	return ids;
+}
+
 Session::Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config), m_weapon(app->weapon) {
 	m_hasSession = notNull(m_config);
 }
@@ -257,7 +267,7 @@ void Session::initTargetAnimation() {
 void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 	// Iterate through the targets
 	for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
-		const Color3 spawnColor = previewMode ? m_config->targetView.previewColor : m_config->targetView.healthColors[0];
+		const Color3 previewColor = m_config->targetView.previewColor;
 		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
 		const String name = format("%s_%d_%d_%s_%d", m_config->id, m_currTrialIdx, m_completedTrials[m_currTrialIdx], target->id, i);
 
@@ -278,17 +288,19 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 		shared_ptr<TargetEntity> t;
 		if (target->destinations.size() > 0) {
 			Point3 offset = isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-			t = spawnDestTarget(target, offset, spawnColor, i, name);
+			t = spawnDestTarget(target, offset, previewColor, i, name);
 		}
 		// Otherwise check if this is a jumping target
 		else if (target->jumpEnabled) {
 			Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-			t = spawnJumpingTarget(target, offset, initialSpawnPos, spawnColor, m_targetDistance, i, name);
+			t = spawnJumpingTarget(target, offset, initialSpawnPos, previewColor, m_targetDistance, i, name);
 		}
 		else {
 			Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-			t = spawnFlyingTarget(target, offset, initialSpawnPos, spawnColor, i, name);
+			t = spawnFlyingTarget(target, offset, initialSpawnPos, previewColor, i, name);
 		}
+
+		if (!previewMode) m_app->updateTargetColor(t);		// If this isn't a preview target update its color now
 
 		// Set whether the target can be hit based on whether we are in preview mode
 		t->setCanHit(!previewMode);

@@ -136,7 +136,7 @@ public:
 	static shared_ptr<SessionConfig> create() { return createShared<SessionConfig>(); }
 	Any toAny(const bool forceAll = false) const;
 	float getTrialsPerBlock(void) const;			// Get the total number of trials in this session
-
+	Array<String> getUniqueTargetIds() const;
 };
 
 class Session : public ReferenceCountedObject {

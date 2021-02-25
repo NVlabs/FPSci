@@ -56,8 +56,7 @@ protected:
 	const int								m_maxExplosions = 20;				///< Maximum number of simultaneous explosions
 		
 	const int								m_MatTableSize = 10;				///< Set this to set # of color "levels"
-	Array<shared_ptr<UniversalMaterial>>	m_materials;						///< This stores the color materials
-
+	Table<String, Array<shared_ptr<UniversalMaterial>>>	m_materials;			///< This stores the color materials
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_explosionModels;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */

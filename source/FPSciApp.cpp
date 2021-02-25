@@ -254,25 +254,30 @@ void FPSciApp::loadModels() {
 		Array<shared_ptr<ArticulatedModel>> tModels, expModels;
 		for (int i = 0; i <= TARGET_MODEL_SCALE_COUNT; ++i) {
 			const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
-			tSpec.set("scale", scale*default_scale);
+			tSpec.set("scale", scale * default_scale);
 			explosionSpec.set("scale", (20.0 * scale * explosionScales.get(id)));
 			tModels.push(ArticulatedModel::create(tSpec));
 			expModels.push(ArticulatedModel::create(explosionSpec));
 		}
 		targetModels.set(id, tModels);
 		m_explosionModels.set(id, expModels);
-	}
 
-	// Create a series of colored materials to choose from for target health
-	m_materials.clear();
-	for (int i = 0; i < m_MatTableSize; i++) {
-		float complete = (float)i / m_MatTableSize;
-		Color3 color = experimentConfig.targetView.healthColors[0] * complete + experimentConfig.targetView.healthColors[1] * (1.0f - complete);
-		UniversalMaterial::Specification materialSpecification;
-		materialSpecification.setLambertian(Texture::Specification(color));
-		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-		m_materials.append(UniversalMaterial::create(materialSpecification));
+		// Create a series of colored materials to choose from for target health
+		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
+		Array<shared_ptr<UniversalMaterial>> targetMaterials;
+		for (int i = 0; i < m_MatTableSize; i++) {
+			float complete = (float)i / m_MatTableSize;
+			Color3 color;
+			if (notNull(tconfig) && tconfig->colors.length() > 0) { 
+				color = tconfig->colors[0] * complete + tconfig->colors[1] * (1.0f - complete); }
+			else { color = experimentConfig.targetView.healthColors[0] * complete + experimentConfig.targetView.healthColors[1] * (1.0f - complete); }
+			UniversalMaterial::Specification materialSpecification;
+			materialSpecification.setLambertian(Texture::Specification(color));
+			materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+			materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+			targetMaterials.append(UniversalMaterial::create(materialSpecification));
+		}
+		m_materials.set(id, targetMaterials);
 	}
 }
 
@@ -557,16 +562,22 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		hudTextures.set(element.filename, Texture::fromFile(System::findDataFile(element.filename)));
 	}
 
-	// Create a series of colored materials to choose from for target health
-	m_materials.clear();
-	for (int i = 0; i < m_MatTableSize; i++) {
-		float complete = (float)i / m_MatTableSize;
-		Color3 color = sessConfig->targetView.healthColors[0] * complete + sessConfig->targetView.healthColors[1] * (1.0f - complete);
-		UniversalMaterial::Specification materialSpecification;
-		materialSpecification.setLambertian(Texture::Specification(color));
-		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-		m_materials.append(UniversalMaterial::create(materialSpecification));
+	// Update colored materials to choose from for target health
+	for (String id : sessConfig->getUniqueTargetIds()) {
+		Array<shared_ptr<UniversalMaterial>> targetMaterials;
+		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
+		for (int i = 0; i < m_MatTableSize; i++) {
+			float complete = (float)i / m_MatTableSize;
+			Color3 color;
+			if (notNull(tconfig) && tconfig->colors.length() > 0) { color = tconfig->colors[0] * complete + tconfig->colors[1] * (1.0f - complete); }
+			else { color = sessConfig->targetView.healthColors[0] * complete + sessConfig->targetView.healthColors[1] * (1.0f - complete); }
+			UniversalMaterial::Specification materialSpecification;
+			materialSpecification.setLambertian(Texture::Specification(color));
+			materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+			materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+			targetMaterials.append(UniversalMaterial::create(materialSpecification));
+		}
+		m_materials.set(id, targetMaterials);
 	}
 
 	// Player parameters
@@ -1378,7 +1389,7 @@ void FPSciApp::updateTargetColor(const shared_ptr<TargetEntity>& target) {
 	shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
 	END_PROFILER_EVENT();
 	BEGIN_PROFILER_EVENT("updateTargetColor/materialSet");
-	shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health() * m_MatTableSize), m_MatTableSize - 1)];
+	shared_ptr<UniversalMaterial> mat = m_materials[target->id()][min((int)(target->health() * m_MatTableSize), m_MatTableSize - 1)];
 	pose->materialTable.set("core/icosahedron_default", mat);
 	END_PROFILER_EVENT();
 	BEGIN_PROFILER_EVENT("updateTargetColor/setPose");
