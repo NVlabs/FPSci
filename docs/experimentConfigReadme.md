@@ -81,7 +81,7 @@ The following configuration is universal to all target types.
 * `id` a short string to refer to this target information
 * `respawnCount` is an integer providing the number of respawns to occur. For non-respawning items use `0` or leave unspecified. A value of `-1` creates a target that respawns infinitely (trial ends when ammo or task time runs out).
 * `visualSize` is a vector indicating the minimum ([0]) and maximum ([1]) visual size for the target (in deg)
-* `colors` is an array of 2 colors (max and min health) which are interpolated between based on target damage (note this setting override the experiment or session-level [`targetHealthColors`](general_config.md#target_rendering) setting). If unspecified the experiment/session level settings are used.
+* `colors` is an array of 2 colors (max and min health) which are interpolated between based on target damage (note this setting override the experiment or session-level [`targetHealthColors`](general_config.md#target-rendering) setting). If unspecified the experiment/session level settings are used.
 * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
 * `hitSound` is a filename for the sound to play when the target is hit but not destroyed.
 * `hitSoundVol` provides the volume (as a float) for the hit sound to be played at (default is `1.0`).
