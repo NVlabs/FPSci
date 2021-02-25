@@ -33,6 +33,79 @@
 #include "Dialogs.h"
 #include "Weapon.h"
 
+TrialCount::TrialCount(const Any& any) {
+	int settingsVersion = 1;
+	AnyTableReader reader(any);
+	reader.getIfPresent("settingsVersion", settingsVersion);
+
+	switch (settingsVersion) {
+	case 1:
+		reader.get("ids", ids, "An \"ids\" field must be provided for each set of trials!");
+		if (!reader.getIfPresent("count", count)) {
+			count = defaultCount;
+		}
+		if (count < 1) {
+			throw format("Trial count < 1 not allowed! (%d count for trial with targets: %s)", count, Any(ids).unparse());
+		}
+		break;
+	default:
+		debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
+		break;
+	}
+}
+
+Any TrialCount::toAny(const bool forceAll) const {
+	Any a(Any::TABLE);
+	a["ids"] = ids;
+	a["count"] = count;
+	return a;
+}
+
+SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig) {
+	TrialCount::defaultCount = timing.defaultTrialCount;
+	AnyTableReader reader(any);
+	switch (settingsVersion) {
+	case 1:
+		// Unique session info
+		reader.get("id", id, "An \"id\" field must be provided for each session!");
+		reader.getIfPresent("description", description);
+		reader.getIfPresent("closeOnComplete", closeOnComplete);
+		reader.getIfPresent("blockCount", blockCount);
+		reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
+		break;
+	default:
+		debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
+		break;
+	}
+}
+
+Any SessionConfig::toAny(const bool forceAll) const {
+	// Get the base any config
+	Any a = FpsConfig::toAny(forceAll);
+	SessionConfig def;
+
+	// Update w/ the session-specific fields
+	a["id"] = id;
+	a["description"] = description;
+	if (forceAll || def.closeOnComplete != closeOnComplete)	a["closeOnComplete"] = closeOnComplete;
+	if (forceAll || def.blockCount != blockCount)				a["blockCount"] = blockCount;
+	a["trials"] = trials;
+	return a;
+}
+
+float SessionConfig::getTrialsPerBlock(void) const {
+	float count = 0.f;
+	for (const TrialCount& tc : trials) {
+		if (count < 0) {
+			return finf();
+		}
+		else {
+			count += tc.count;
+		}
+	}
+	return count;
+}
+
 Session::Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config), m_weapon(app->weapon) {
 	m_hasSession = notNull(m_config);
 }

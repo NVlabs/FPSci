@@ -1,5 +1,113 @@
 #include "Weapon.h"
 
+WeaponConfig::WeaponConfig(const Any& any) {
+	int settingsVersion = 1;
+	AnyTableReader reader(any);
+	reader.getIfPresent("settingsVersion", settingsVersion);
+
+	switch (settingsVersion) {
+	case 1:
+		reader.getIfPresent("id", id);
+
+		reader.getIfPresent("maxAmmo", maxAmmo);
+		reader.getIfPresent("firePeriod", firePeriod);
+		reader.getIfPresent("autoFire", autoFire);
+		reader.getIfPresent("damagePerSecond", damagePerSecond);
+		reader.getIfPresent("fireSound", fireSound);
+		reader.getIfPresent("fireSoundVol", fireSoundVol);
+		reader.getIfPresent("hitScan", hitScan);
+
+		reader.getIfPresent("renderModel", renderModel);
+		if (renderModel) {
+			reader.get("modelSpec", modelSpec, "If \"renderModel\" is set to true within a weapon config then a \"modelSpec\" must be provided!");
+		}
+		else {
+			reader.getIfPresent("modelSpec", modelSpec);
+		}
+
+		//reader.getIfPresent("muzzleOffset", muzzleOffset);
+		//reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
+
+		reader.getIfPresent("renderBullets", renderBullets);
+		reader.getIfPresent("bulletSpeed", bulletSpeed);
+		reader.getIfPresent("bulletGravity", bulletGravity);
+		reader.getIfPresent("bulletScale", bulletScale);
+		reader.getIfPresent("bulletColor", bulletColor);
+		reader.getIfPresent("bulletOffset", bulletOffset);
+
+		reader.getIfPresent("renderDecals", renderDecals);
+		reader.getIfPresent("missDecal", missDecal);
+		reader.getIfPresent("hitDecal", hitDecal);
+		reader.getIfPresent("missDecalCount", missDecalCount);
+		reader.getIfPresent("missDecalScale", missDecalScale);
+		reader.getIfPresent("hitDecalScale", hitDecalScale);
+		reader.getIfPresent("hitDecalDuration", hitDecalDurationS);
+		reader.getIfPresent("hitDecalColorMult", hitDecalColorMult);
+
+		reader.getIfPresent("fireSpreadDegrees", fireSpreadDegrees);
+		reader.getIfPresent("fireSpreadShape", fireSpreadShape);
+
+		reader.getIfPresent("damageRollOffAim", damageRollOffAim);
+		reader.getIfPresent("damageRollOffDistance", damageRollOffDistance);
+
+		reader.getIfPresent("scopeFoV", scopeFoV);
+		reader.getIfPresent("scopeToggle", scopeToggle);
+		reader.getIfPresent("kickAngleDegrees", kickAngleDegrees);
+		reader.getIfPresent("kickDuration", kickDuration);
+
+		//reader.getIfPresent("recticleImage", reticleImage);
+	default:
+		debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
+		break;
+	}
+}
+
+Any WeaponConfig::toAny(const bool forceAll) const {
+	Any a(Any::TABLE);
+	WeaponConfig def;
+	a["id"] = id;
+	if (forceAll || def.maxAmmo != maxAmmo)								a["maxAmmo"] = maxAmmo;
+	if (forceAll || def.firePeriod != firePeriod)						a["firePeriod"] = firePeriod;
+	if (forceAll || def.autoFire != autoFire)							a["autoFire"] = autoFire;
+	if (forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
+	if (forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
+	if (forceAll || def.fireSoundVol != fireSoundVol)					a["fireSoundVol"] = fireSoundVol;
+	if (forceAll || def.hitScan != hitScan)								a["hitScan"] = hitScan;
+
+	if (forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
+	if (forceAll || !(def.modelSpec == modelSpec))						a["modelSpec"] = modelSpec;
+
+	//if (forceAll || def.muzzleOffset != muzzleOffset)					a["muzzleOffset"] = muzzleOffset;
+	//if (forceAll || def.renderMuzzleFlash != renderMuzzleFlash)			a["renderMuzzleFlash"] = renderMuzzleFlash;
+
+	if (forceAll || def.renderBullets != renderBullets)					a["renderBullets"] = renderBullets;
+	if (forceAll || def.bulletSpeed != bulletSpeed)						a["bulletSpeed"] = bulletSpeed;
+	if (forceAll || def.bulletGravity != bulletGravity)					a["bulletGravity"] = bulletGravity;
+	if (forceAll || def.bulletScale != bulletScale)						a["bulletScale"] = bulletScale;
+	if (forceAll || def.bulletColor != bulletColor)						a["bulletColor"] = bulletColor;
+	if (forceAll || def.bulletOffset != bulletOffset)					a["bulletOffset"] = bulletOffset;
+
+	if (forceAll || def.renderDecals != renderDecals)					a["renderDecals"] = renderDecals;
+	if (forceAll || def.missDecal != missDecal)							a["missDecal"] = missDecal;
+	if (forceAll || def.hitDecal != hitDecal)							a["hitDecal"] = hitDecal;
+	if (forceAll || def.missDecalCount != missDecalCount)				a["missDecalCount"] = missDecalCount;
+	if (forceAll || def.missDecalScale != missDecalScale)				a["missDecalScale"] = missDecalScale;
+	if (forceAll || def.hitDecalScale != hitDecalScale)					a["hitDecalScale"] = hitDecalScale;
+	if (forceAll || def.hitDecalDurationS != hitDecalDurationS)			a["hitDecalDuration"] = hitDecalDurationS;
+	if (forceAll || def.hitDecalColorMult != hitDecalColorMult)			a["hitDecalColorMult"] = hitDecalColorMult;
+
+	if (forceAll || def.fireSpreadDegrees != fireSpreadDegrees)			a["fireSpreadDegrees"] = fireSpreadDegrees;
+	if (forceAll || def.fireSpreadShape != fireSpreadShape)				a["fireSpreadShape"] = fireSpreadShape;
+	if (forceAll || def.damageRollOffAim != damageRollOffAim)			a["damageRollOffAim"] = damageRollOffAim;
+	if (forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
+	if (forceAll || def.scopeFoV != scopeFoV)							a["scopeFoV"] = scopeFoV;
+	if (forceAll || def.scopeToggle != scopeToggle)						a["scopeToggle"] = scopeToggle;
+	if (forceAll || def.kickAngleDegrees != kickAngleDegrees)			a["kickAngleDegrees"] = kickAngleDegrees;
+	if (forceAll || def.kickDuration != kickDuration)					a["kickDuration"] = kickDuration;
+
+	return a;
+}
+
 void Weapon::loadDecals() {
 	if (m_config->missDecal.empty()) {
 		m_missDecalModel.reset();

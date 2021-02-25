@@ -145,28 +145,43 @@
   <ItemGroup>
     <ClInclude Include="..\source\FPSciApp.h" />
     <ClInclude Include="..\source\CombatText.h" />
+    <ClInclude Include="..\source\FpsConfig.h" />
+    <ClInclude Include="..\source\KeyMapping.h" />
     <ClInclude Include="..\source\Session.h" />
-    <ClInclude Include="..\source\ConfigFiles.h" />
+    <ClInclude Include="..\source\ExperimentConfig.h" />
     <ClInclude Include="..\source\Logger.h" />
     <ClInclude Include="..\source\PhysicsScene.h" />
     <ClInclude Include="..\source\PlayerEntity.h" />
     <ClInclude Include="..\source\PythonLogger.h" />
     <ClInclude Include="..\source\sqlHelpers.h" />
+    <ClInclude Include="..\source\StartupConfig.h" />
+    <ClInclude Include="..\source\SystemConfig.h" />
+    <ClInclude Include="..\source\SystemInfo.h" />
     <ClInclude Include="..\source\TargetEntity.h" />
     <ClInclude Include="..\source\GuiElements.h" />
     <ClInclude Include="..\source\Dialogs.h" />
+    <ClInclude Include="..\source\UserConfig.h" />
+    <ClInclude Include="..\source\UserStatus.h" />
     <ClInclude Include="..\source\WaypointManager.h" />
     <ClInclude Include="..\source\Weapon.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\source\ExperimentConfig.cpp" />
     <ClCompile Include="..\source\FPSciApp.cpp" />
+    <ClCompile Include="..\source\FpsConfig.cpp" />
+    <ClCompile Include="..\source\KeyMapping.cpp" />
     <ClCompile Include="..\source\Session.cpp" />
     <ClCompile Include="..\source\Logger.cpp" />
     <ClCompile Include="..\source\PhysicsScene.cpp" />
     <ClCompile Include="..\source\PlayerEntity.cpp" />
     <ClCompile Include="..\source\sqlHelpers.cpp" />
+    <ClCompile Include="..\source\StartupConfig.cpp" />
+    <ClCompile Include="..\source\SystemConfig.cpp" />
+    <ClCompile Include="..\source\SystemInfo.cpp" />
     <ClCompile Include="..\source\TargetEntity.cpp" />
     <ClCompile Include="..\source\GuiElements.cpp" />
+    <ClCompile Include="..\source\UserConfig.cpp" />
+    <ClCompile Include="..\source\UserStatus.cpp" />
     <ClCompile Include="..\source\WaypointManager.cpp" />
     <ClCompile Include="..\source\Weapon.cpp" />
   </ItemGroup>
