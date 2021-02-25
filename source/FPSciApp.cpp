@@ -777,7 +777,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		if (isNull(target)) // Miss case
 		{
 			// Play scene hit sound
-			if (!weapon->config()->isContinuous()) {
+			if (!weapon->config()->isContinuous() && notNull(m_sceneHitSound)) {
 				m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
 			}
 		}
