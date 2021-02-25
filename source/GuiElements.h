@@ -142,7 +142,7 @@ protected:
 
 	String m_newUser;											///< New user string
 
-	double	m_cmp360;											///< cm/360� setting
+	double	m_cmp360;											///< cm/360° setting
 
 	const Vector2 m_btnSize = { 100.f, 30.f };					///< Default button size
 	const Vector2 m_reticlePreviewSize = { 150.f, 150.f };		///< Reticle texture preview size
