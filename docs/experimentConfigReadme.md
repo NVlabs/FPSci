@@ -82,9 +82,9 @@ The following configuration is universal to all target types.
 * `respawnCount` is an integer providing the number of respawns to occur. For non-respawning items use `0` or leave unspecified. A value of `-1` creates a target that respawns infinitely (trial ends when ammo or task time runs out).
 * `visualSize` is a vector indicating the minimum ([0]) and maximum ([1]) visual size for the target (in deg)
 * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
-* `hitSound` is a filename for the sound to play when the target is hit but not destroyed.
+* `hitSound` is a filename for the sound to play when the target is hit but not destroyed (for no sound use an empty string).
 * `hitSoundVol` provides the volume (as a float) for the hit sound to be played at (default is `1.0`).
-* `destroyedSound` is a filename for the sound to play when the target is both hit and destroyed.
+* `destroyedSound` is a filename for the sound to play when the target is both hit and destroyed (for no sound use an empty string).
 * `destroyedSoundVol` provides the volume (as a float) for the destroyed sound to be played at (default is `1.0`).
 * `destroyDecal` the decal to show when destroyed
 * `destroyDecalScale` a scale to apply the the destroy decal (may be decal dependent)
