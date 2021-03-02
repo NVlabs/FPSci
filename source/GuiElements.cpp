@@ -334,6 +334,62 @@ void WeaponControls::updateFireSpreadShape() {
 	m_config.fireSpreadShape = m_spreadShapes[m_spreadShapeIdx];
 }
 
+void MenuConfig::load(AnyTableReader reader, int settingsVersion) {
+	switch (settingsVersion) {
+	case 1:
+		reader.getIfPresent("showMenuLogo", showMenuLogo);
+		reader.getIfPresent("showExperimentSettings", showExperimentSettings);
+		reader.getIfPresent("showUserSettings", showUserSettings);
+		reader.getIfPresent("allowSessionChange", allowSessionChange);
+		reader.getIfPresent("allowUserAdd", allowUserAdd);
+		reader.getIfPresent("allowUserSettingsSave", allowUserSettingsSave);
+		reader.getIfPresent("allowSensitivityChange", allowSensitivityChange);
+		reader.getIfPresent("allowTurnScaleChange", allowTurnScaleChange);
+		reader.getIfPresent("xTurnScaleAdjustMode", xTurnScaleAdjustMode);
+		reader.getIfPresent("yTurnScaleAdjustMode", yTurnScaleAdjustMode);
+		reader.getIfPresent("allowReticleChange", allowReticleChange);
+		reader.getIfPresent("allowReticleIdxChange", allowReticleIdxChange);
+		reader.getIfPresent("allowReticleSizeChange", allowReticleSizeChange);
+		reader.getIfPresent("allowReticleColorChange", allowReticleColorChange);
+		reader.getIfPresent("allowReticleChangeTimeChange", allowReticleChangeTimeChange);
+		reader.getIfPresent("showReticlePreview", showReticlePreview);
+		reader.getIfPresent("showMenuOnStartup", showMenuOnStartup);
+		reader.getIfPresent("showMenuBetweenSessions", showMenuBetweenSessions);
+		break;
+	default:
+		throw format("Did not recognize settings version: %d", settingsVersion);
+		break;
+	}
+}
+
+Any MenuConfig::addToAny(Any a, const bool forceAll) const {
+	MenuConfig def;
+	if (forceAll || def.showMenuLogo != showMenuLogo)									a["showMenuLogo"] = showMenuLogo;
+	if (forceAll || def.showExperimentSettings != showExperimentSettings)				a["showExperimentSettings"] = showExperimentSettings;
+	if (forceAll || def.showUserSettings != showUserSettings)							a["showUserSettings"] = showUserSettings;
+	if (forceAll || def.allowSessionChange != allowSessionChange)						a["allowSessionChange"] = allowSessionChange;
+	if (forceAll || def.allowUserAdd != allowUserAdd)									a["allowUserAdd"] = allowUserAdd;
+	if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)					a["allowUserSettingsSave"] = allowUserSettingsSave;
+	if (forceAll || def.allowSensitivityChange != allowSensitivityChange)				a["allowSensitivityChange"] = allowSensitivityChange;
+	if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)					a["allowTurnScaleChange"] = allowTurnScaleChange;
+	if (forceAll || def.xTurnScaleAdjustMode != xTurnScaleAdjustMode)					a["xTurnScaleAdjustMode"] = xTurnScaleAdjustMode;
+	if (forceAll || def.yTurnScaleAdjustMode != yTurnScaleAdjustMode)					a["yTurnScaleAdjustMode"] = yTurnScaleAdjustMode;
+	if (forceAll || def.allowReticleChange != allowReticleChange)						a["allowReticleChange"] = allowReticleChange;
+	if (forceAll || def.allowReticleIdxChange != allowReticleIdxChange)					a["allowReticleIdxChange"] = allowReticleIdxChange;
+	if (forceAll || def.allowReticleSizeChange != allowReticleSizeChange)				a["allowReticleSizeChange"] = allowReticleSizeChange;
+	if (forceAll || def.allowReticleColorChange != allowReticleColorChange)				a["allowReticleColorChange"] = allowReticleColorChange;
+	if (forceAll || def.allowReticleChangeTimeChange != allowReticleChangeTimeChange)	a["allowReticleChangeTimeChange"] = allowReticleChangeTimeChange;
+	if (forceAll || def.showReticlePreview != showReticlePreview)						a["showReticlePreview"] = showReticlePreview;
+	if (forceAll || def.showMenuOnStartup != showMenuOnStartup)							a["showMenuOnStartup"] = showMenuOnStartup;
+	if (forceAll || def.showMenuBetweenSessions != showMenuBetweenSessions)				a["showMenuBetweenSessions"] = showMenuBetweenSessions;
+	return a;
+}
+
+bool MenuConfig::allowAnyChange() const {
+	return allowSensitivityChange && allowTurnScaleChange &&
+		allowReticleChange && allowReticleIdxChange && allowReticleColorChange && allowReticleSizeChange && allowReticleChangeTimeChange;
+}
+
 ////////////////////////
 /// USER MENU
 ///////////////////////
