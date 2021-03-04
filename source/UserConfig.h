@@ -22,7 +22,7 @@ public:
 	UserConfig() {};
 	UserConfig(const Any& any);
 
-	Any toAny(const bool forceAll = true) const;
+	Any toAny(const bool forceAll = false) const;
 	bool operator==(const UserConfig& other) const;
 
 };
@@ -37,7 +37,7 @@ public:
 	UserTable() {};
 	UserTable(const Any& any);
 
-	Any toAny(const bool forceAll = true) const;
+	Any toAny(const bool forceAll = false) const;
 
 	shared_ptr<UserConfig> getUserById(const String& id) const;			// Get a user config based on a user ID
 	static UserTable load(const String& filename);						// Get the user config from file (or create it if it doesn't exist)
