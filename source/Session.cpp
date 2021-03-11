@@ -373,7 +373,9 @@ void Session::updatePresentationState()
 
 			// Reset weapon cooldown
 			m_weapon->resetCooldown();
-
+			if (m_weapon->config()->clearTrialMissDecals) {				// Clear weapon's decals if specified
+				m_weapon->clearDecals(false);
+			}
 		}
 	}
 	else if (currentState == PresentationState::trialFeedback)

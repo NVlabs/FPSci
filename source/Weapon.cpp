@@ -40,6 +40,7 @@ WeaponConfig::WeaponConfig(const Any& any) {
 		reader.getIfPresent("hitDecal", hitDecal);
 		reader.getIfPresent("missDecalCount", missDecalCount);
 		reader.getIfPresent("missDecalScale", missDecalScale);
+		reader.getIfPresent("clearTrialMissDecals", clearTrialMissDecals);
 		reader.getIfPresent("hitDecalScale", hitDecalScale);
 		reader.getIfPresent("hitDecalDuration", hitDecalDurationS);
 		reader.getIfPresent("hitDecalColorMult", hitDecalColorMult);
@@ -92,6 +93,7 @@ Any WeaponConfig::toAny(const bool forceAll) const {
 	if (forceAll || def.hitDecal != hitDecal)							a["hitDecal"] = hitDecal;
 	if (forceAll || def.missDecalCount != missDecalCount)				a["missDecalCount"] = missDecalCount;
 	if (forceAll || def.missDecalScale != missDecalScale)				a["missDecalScale"] = missDecalScale;
+	if (forceAll || def.clearTrialMissDecals != clearTrialMissDecals)	a["clearTrialMissDecals"] = clearTrialMissDecals;
 	if (forceAll || def.hitDecalScale != hitDecalScale)					a["hitDecalScale"] = hitDecalScale;
 	if (forceAll || def.hitDecalDurationS != hitDecalDurationS)			a["hitDecalDuration"] = hitDecalDurationS;
 	if (forceAll || def.hitDecalColorMult != hitDecalColorMult)			a["hitDecalColorMult"] = hitDecalColorMult;
@@ -307,11 +309,11 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	}
 }
 
-void Weapon::clearDecals() {
+void Weapon::clearDecals(bool clearHitDecal) {
 	while (m_currentMissDecals.size() > 0) {
 		m_scene->remove(m_currentMissDecals.pop());
 	}
-	if (notNull(m_hitDecal)) {
+	if (clearHitDecal && notNull(m_hitDecal)) {
 		m_scene->remove(m_hitDecal);
 	}
 }

@@ -94,6 +94,7 @@ public:
 	String	hitDecal = "";												///< The decal to place where the shot hits
 	int		missDecalCount = 2;											///< Number of miss decals to draw
 	float	missDecalScale = 1.0f;										///< Scale to apply to the miss decal
+	bool	clearTrialMissDecals = true;								///< Clear the miss decals after each trial
 	float	hitDecalScale = 1.0f;										///< Scale to apply to the hit decal
 	float	hitDecalDurationS = 0.1f;									///< Duration to show the hit decal for (in seconds)
 	float	hitDecalColorMult = 2.0f;									///< "Encoding" field (aka color multiplier) for hit decal
@@ -229,7 +230,7 @@ public:
 
 	void simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntity>>& targets, const Array<shared_ptr<Entity>>& dontHit = {});
 	void drawDecal(const Point3& point, const Vector3& normal, bool hit = false);
-	void clearDecals();
+	void clearDecals(bool clearHitDecal = true);
 	void loadDecals();
 	void loadModels();
 

@@ -90,6 +90,7 @@ Controls specific to the miss decals drawn in the scene are included below:
 |`missDecal`            |`String`   | The filename of an image to use for miss decals. Can be set to `""` for no decals.
 |`missDecalCount`       |`int`      | The maximum number of miss decals to draw from this weapon (oldest are removed first). Can be set to `0` for no decals.|
 |`missDecalScale`       |`float`    | A scale to apply to the miss decals drawn by this weapon, `1.0` means do not scale                     |
+|`clearTrialMissDecals` |`bool`     | Whether or not to clear miss decals at the end of each trial (automatically cleared at the end of each session). |
 |`hitDecal`             |`String`   | The filename of an image to use for hit decals. Can be set to `""` for no decals.                      |
 |`hitDecalScale`        |`float`    | A scale to apply to the hit decals drawn by this weapon. `1.0` means do not scale.                     |
 |`hitDecalDuration`     |s          | The duration to draw a hit decal for (in seconds).                                                     |
@@ -100,6 +101,7 @@ Controls specific to the miss decals drawn in the scene are included below:
     "missDecal" : "bullet-decal-256x256.png";       // Included in FPSci
     "missDecalCount" : 2;                           // Number of miss decals to draw (at once)
     "missDecalScale" : 1.0;                         // Don't scale the miss decal (1.0x scale)
+    "clearTrialMissDecals": true,                   // Clear miss decals on the end of each trial
     "hitDecalScale" : 1.0;                          // Don't scale the hit decal  (1.0x scale)
     "hitDecalDurationS" : 0.1;                      // Draw the decal for 0.1s
     "hitDecalColorMult" = 2.0;                      // Slightly emissive hit decal
