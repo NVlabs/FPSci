@@ -82,6 +82,14 @@ Controls specific to the projectiles fired by the weapon are included below:
 ```
 
 ## Decal Control
+There are 2 types of weapon decals in FPSci, hit decals and miss decals. Hit decals are drawn on a target at the hit location, while miss decals are drawn to the scene at the point of a miss.
+
+Currently FPSci supports only 1 hit decal being presented at a time, but a configurable amount (`missDecalCount`) of miss decals. Hit decals are removed after a timeout (`hitDecalDuration`) or when a new hit decal is created (whichever happens first). Miss decals are removed based on one of three criteria:
+
+- A new miss decal is created, bringing the total count of miss decals above `missDecalCount`, in this case oldest decal is removed
+- The decal has existed for `missDecalTimeoutS`
+- The current trial ends and `clearTrialMissDecals` is `true`, or the current session ends
+
 Controls specific to the miss decals drawn in the scene are included below:
 
 | Parameter Name        |Units      | Description                                                                                           |
@@ -90,6 +98,7 @@ Controls specific to the miss decals drawn in the scene are included below:
 |`missDecal`            |`String`   | The filename of an image to use for miss decals. Can be set to `""` for no decals.
 |`missDecalCount`       |`int`      | The maximum number of miss decals to draw from this weapon (oldest are removed first). Can be set to `0` for no decals.|
 |`missDecalScale`       |`float`    | A scale to apply to the miss decals drawn by this weapon, `1.0` means do not scale                     |
+|`missDecalTimeoutS`    |s          | The duration to display a miss decal for (in seconds). Use `-1` to set to never timeout.               |
 |`clearTrialMissDecals` |`bool`     | Whether or not to clear miss decals at the end of each trial (automatically cleared at the end of each session). |
 |`hitDecal`             |`String`   | The filename of an image to use for hit decals. Can be set to `""` for no decals.                      |
 |`hitDecalScale`        |`float`    | A scale to apply to the hit decals drawn by this weapon. `1.0` means do not scale.                     |
@@ -101,6 +110,7 @@ Controls specific to the miss decals drawn in the scene are included below:
     "missDecal" : "bullet-decal-256x256.png";       // Included in FPSci
     "missDecalCount" : 2;                           // Number of miss decals to draw (at once)
     "missDecalScale" : 1.0;                         // Don't scale the miss decal (1.0x scale)
+    "missDecalTimeoutS" : -1;                       // Don't clear hit decals until end of trial/session
     "clearTrialMissDecals": true,                   // Clear miss decals on the end of each trial
     "hitDecalScale" : 1.0;                          // Don't scale the hit decal  (1.0x scale)
     "hitDecalDurationS" : 0.1;                      // Draw the decal for 0.1s
