@@ -309,8 +309,7 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 
 void Weapon::clearDecals() {
 	while (m_currentMissDecals.size() > 0) {
-		shared_ptr<VisibleEntity> decal = m_currentMissDecals.pop();
-		m_scene->remove(decal);
+		m_scene->remove(m_currentMissDecals.pop());
 	}
 	if (notNull(m_hitDecal)) {
 		m_scene->remove(m_hitDecal);
