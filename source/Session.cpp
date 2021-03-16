@@ -690,7 +690,7 @@ String Session::getFeedbackMessage() {
 }
 
 void Session::endLogging() {
-	if (logger != nullptr) {
+	if (notNull(logger)) {
 
 		//m_logger->logUserConfig(*m_app->currentUser(), m_config->id, m_config->player.turnScale);
 		logger->flush(false);
