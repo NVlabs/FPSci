@@ -138,7 +138,7 @@ bool StartupConfig::validateExperiments() const {
 		ExperimentConfig experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename);
 		logPrintf("Validating experiment '%s'\n", configs.name);
 		if (!experimentConfig.validate(false)) {
-			logPrintf("Experiment '%s' excluded from the list!\n", configs.name);
+			logPrintf("  Error: experiment '%s' is not valid! (See '%s')\n", configs.name, configs.experimentConfigFilename);
 			valid = false;
 		}
 	}
