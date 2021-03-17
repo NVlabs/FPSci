@@ -23,32 +23,11 @@ void FPSciApp::onInit() {
 	Random::common().reset(uint32(time(0)));
 
 	GApp::onInit();			// Initialize the G3D application (one time)
+	startupConfig.validateExperiments();
 	initExperiment();		// Initialize the experiment
 }
 
 void FPSciApp::initExperiment(){
-	// Validate experiment configs
-	if (startupConfig.experimentList.length() != 1) {
-		// Create list of configs to remove logging to log.txt
-		Array<ConfigFiles*> toRemove;
-		for (auto configs = startupConfig.experimentList.begin(); configs != startupConfig.experimentList.end(); ++configs) {
-			experimentConfig = ExperimentConfig::load(configs->experimentConfigFilename);
-			logPrintf("Validating experiment '%s'\n", configs->name);
-			bool valid = experimentConfig.validate(false);
-			if (!valid) {
-				logPrintf("Experiment '%s' excluded from the list!\n", configs->name);
-				toRemove.append(configs);
-			}
-		}
-		// Actually remove the configs from the list
-		for (auto configs = toRemove.begin(); configs != toRemove.end(); ++configs) {
-			startupConfig.experimentList.remove(*configs);
-		}
-		if (startupConfig.experimentList.length() <= 0) {
-			throw("No valid experiments found in experiment list. Check log.txt for details.");
-		}
-	}
-
 	// Load config from files
 	loadConfigs(startupConfig.experimentList[experimentIdx]);
 	m_lastSavedUser = *currentUser();			// Copy over the startup user for saves
