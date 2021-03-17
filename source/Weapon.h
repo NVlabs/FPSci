@@ -97,7 +97,7 @@ public:
 	float	missDecalTimeoutS = -1;										///< Miss decals don't timeout by default
 	bool	clearTrialMissDecals = true;								///< Clear the miss decals after each trial
 	float	hitDecalScale = 1.0f;										///< Scale to apply to the hit decal
-	float	hitDecalDurationS = 0.1f;									///< Duration to show the hit decal for (in seconds)
+	float	hitDecalTimeoutS = 0.1f;									///< Duration to show the hit decal for (in seconds)
 	float	hitDecalColorMult = 2.0f;									///< "Encoding" field (aka color multiplier) for hit decal
 
 	float	fireSpreadDegrees = 0;										///< The spread of the fire

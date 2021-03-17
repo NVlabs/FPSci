@@ -43,7 +43,7 @@ WeaponConfig::WeaponConfig(const Any& any) {
 		reader.getIfPresent("missDecalTimeoutS", missDecalTimeoutS);
 		reader.getIfPresent("clearTrialMissDecals", clearTrialMissDecals);
 		reader.getIfPresent("hitDecalScale", hitDecalScale);
-		reader.getIfPresent("hitDecalDuration", hitDecalDurationS);
+		reader.getIfPresent("hitDecalTimeoutS", hitDecalTimeoutS);
 		reader.getIfPresent("hitDecalColorMult", hitDecalColorMult);
 
 		reader.getIfPresent("fireSpreadDegrees", fireSpreadDegrees);
@@ -97,7 +97,7 @@ Any WeaponConfig::toAny(const bool forceAll) const {
 	if (forceAll || def.missDecalTimeoutS != missDecalTimeoutS)			a["missDecalTimeoutS"] = missDecalTimeoutS;
 	if (forceAll || def.clearTrialMissDecals != clearTrialMissDecals)	a["clearTrialMissDecals"] = clearTrialMissDecals;
 	if (forceAll || def.hitDecalScale != hitDecalScale)					a["hitDecalScale"] = hitDecalScale;
-	if (forceAll || def.hitDecalDurationS != hitDecalDurationS)			a["hitDecalDuration"] = hitDecalDurationS;
+	if (forceAll || def.hitDecalTimeoutS != hitDecalTimeoutS)			a["hitDecalTimeoutS"] = hitDecalTimeoutS;
 	if (forceAll || def.hitDecalColorMult != hitDecalColorMult)			a["hitDecalColorMult"] = hitDecalColorMult;
 
 	if (forceAll || def.fireSpreadDegrees != fireSpreadDegrees)			a["fireSpreadDegrees"] = fireSpreadDegrees;
@@ -323,7 +323,7 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	}
 	else {
 		m_hitDecal = newDecal;
-		m_hitDecalTimeRemainingS = m_config->hitDecalDurationS;
+		m_hitDecalTimeRemainingS = m_config->hitDecalTimeoutS;
 	}
 }
 
