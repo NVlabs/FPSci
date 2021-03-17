@@ -1,5 +1,5 @@
 # Introduction
-The startup config is the highest level configuration file provided to `FirstPersonScience`. This file specifies the experiment configuration path, as well as the user configuration path and play mode.
+The startup config is the highest level configuration file provided to `FirstPersonScience`. This file specifies the experiment configuration path, as well as the user configuration path and play mode. Unlike other config files that can be reloaded with the `reloadConfigs` keybind (F5 by default) when in developer mode (`developerMode`=`true`), the startup config is only loaded at startup. For this reason, if you make changes to the startup config you must restart to see those changes.
 
 ## File Location
 The `startupconfig.Any` file is located in the [`data-files` directory](../data-files/) in the root of the project. If no `startupconfig.Any` is present at launch the application will create one.
