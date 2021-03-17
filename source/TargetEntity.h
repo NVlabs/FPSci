@@ -221,7 +221,7 @@ public:
 		return m_health <= 0;
 	}
 	
-	bool tryRespawn() {
+	virtual bool tryRespawn() {
 		if (m_respawnCount == 0) {		// Target does not respawn
 			return false;
 		} else if(m_respawnCount > 0){	// Target respawns 
@@ -297,9 +297,8 @@ protected:
 
 public:
 	bool tryRespawn() {
-		TargetEntity::tryRespawn();
-		// clear all destination points
-		m_destinationPoints.fastClear();
+		m_destinationPoints.fastClear();				// clear all destination points
+		return TargetEntity::tryRespawn();
 	}
 
     /** Destinations must be no more than 170 degrees apart to avoid ambiguity in movement direction */
@@ -415,8 +414,8 @@ protected:
 
 public:
 	bool tryRespawn() {
-		TargetEntity::tryRespawn();
 		m_isFirstFrame = true;
+		return TargetEntity::tryRespawn();
 	}
 
 	void setMoveBounds(AABox bounds) { m_moveBounds = bounds; }
