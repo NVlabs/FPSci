@@ -112,7 +112,7 @@ void FPSciApp::closeUserSettingsWindow() {
 void FPSciApp::saveUserConfig(bool onDiff) {
 	// Check for save on diff, without mismatch
 	if (onDiff && m_lastSavedUser == *currentUser()) return;
-	if (sess->logger) {
+	if (notNull(sess->logger)) {
 		sess->logger->logUserConfig(*currentUser(), sessConfig->id, sessConfig->player.turnScale);
 	}
 	userTable.save(startupConfig.experimentList[experimentIdx].userConfigFilename);

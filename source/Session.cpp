@@ -310,7 +310,9 @@ void Session::processResponse()
 		m_remainingTrials[m_currTrialIdx] -= 1;	
 	}
 
-	logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
+	if (notNull(logger)) {
+		logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
+	}
 
 	// Check for whether all targets have been destroyed
 	if (m_destroyedTargets == totalTargets) {
@@ -688,7 +690,7 @@ String Session::getFeedbackMessage() {
 }
 
 void Session::endLogging() {
-	if (logger != nullptr) {
+	if (notNull(logger)) {
 
 		//m_logger->logUserConfig(*m_app->currentUser(), m_config->id, m_config->player.turnScale);
 		logger->flush(false);
