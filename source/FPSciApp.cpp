@@ -23,6 +23,7 @@ void FPSciApp::onInit() {
 	Random::common().reset(uint32(time(0)));
 
 	GApp::onInit();			// Initialize the G3D application (one time)
+	startupConfig.validateExperiments();
 	initExperiment();		// Initialize the experiment
 }
 
@@ -162,6 +163,7 @@ void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	// Load experiment setting from file
 	experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename);
 	experimentConfig.printToLog();
+	experimentConfig.validate(true);
 
 	// Get hash for experimentconfig.Any file
 	const size_t hash = HashTrait<String>::hashCode(experimentConfig.toAny().unparse());		// Hash the serialized Any (don't consider formatting)

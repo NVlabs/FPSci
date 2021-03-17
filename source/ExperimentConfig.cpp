@@ -89,14 +89,16 @@ void ExperimentConfig::init() {
 }
 
 ExperimentConfig ExperimentConfig::load(const String& filename) {
-	// if file not found, build a default
+	ExperimentConfig ex;
 	if (!FileSystem::exists(System::findDataFile(filename, false))) {
-		ExperimentConfig ex = ExperimentConfig();
+		// if file not found, save the default
 		ex.toAny().save(filename);
 		SessionConfig::defaultConfig = (FpsConfig)ex;
-		return ex;
 	}
-	return Any::fromFile(System::findDataFile(filename));
+	else {
+		ex = Any::fromFile(System::findDataFile(filename));
+	}
+	return ex;
 }
 
 void ExperimentConfig::getSessionIds(Array<String>& ids) const {
@@ -150,12 +152,12 @@ Array<Array<shared_ptr<TargetConfig>>> ExperimentConfig::getTargetsByTrial(int s
 	return trials;
 }
 
-Array<shared_ptr<TargetConfig>> ExperimentConfig::getSessionTargets(const String& id) {
+Array<shared_ptr<TargetConfig>> ExperimentConfig::getSessionTargets(const String& id) const {
 	const int idx = getSessionIndex(id);		// Get session index
 	Array<shared_ptr<TargetConfig>> targets;
 	Array<String> loggedIds;
 	for (auto trial : sessions[idx].trials) {
-		for (String id : trial.ids) {
+		for (String& id : trial.ids) {
 			if (!loggedIds.contains(id)) {
 				loggedIds.append(id);
 				targets.append(getTargetConfigById(id));
@@ -163,6 +165,35 @@ Array<shared_ptr<TargetConfig>> ExperimentConfig::getSessionTargets(const String
 		}
 	}
 	return targets;
+}
+
+bool ExperimentConfig::validate(bool throwException) const {
+	bool valid = true;
+	// Build list of valid target ids
+	Array<String> validTargetIds;
+	for (TargetConfig target : targets) { validTargetIds.append(target.id); }
+
+	// Validate session targets against provided experiment target list
+	for (SessionConfig session : sessions) {
+		Array<String> sessionTargetIds;
+		// Build a list of target ids used in this session
+		for (TrialCount trial : session.trials) {
+			for (String id : trial.ids) { if (!sessionTargetIds.contains(id)) sessionTargetIds.append(id); }
+		}
+		// Check each ID against the experiment targets array
+		for (String targetId : sessionTargetIds) {
+			if (!validTargetIds.contains(targetId)) {
+				if (throwException) {
+					throw format("Could not find target ID \"%s\" used in session \"%s\"!", targetId, session.id);
+				}
+				else {
+					logPrintf("  Could not find target ID \"%s\" used in session \"%s\"!\n", targetId, session.id);
+				}
+				valid = false;
+			}
+		}
+	}
+	return valid;
 }
 
 Any ExperimentConfig::toAny(const bool forceAll) const {

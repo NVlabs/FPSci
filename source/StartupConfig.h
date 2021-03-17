@@ -43,5 +43,6 @@ public:
 	StartupConfig(const Any& any);								///< Any constructor
 
 	static StartupConfig load(const String& filename);			///< Load the startup config from file (create if needed)
-	Any toAny(const bool forceAll = true) const;				///< Conver to any
+	Any toAny(const bool forceAll = true) const;				///< Convert to any
+	bool validateExperiments() const;							///< Validate the experiments in the experiment list
 };

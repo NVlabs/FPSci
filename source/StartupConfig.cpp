@@ -1,4 +1,5 @@
 #include "StartupConfig.h"
+#include "ExperimentConfig.h"
 
 ConfigFiles::ConfigFiles(const Any& any) {
 	AnyTableReader reader(any);
@@ -128,4 +129,18 @@ Any StartupConfig::toAny(const bool forceAll) const {
 	a["experimentList"] = experimentList;
 
 	return a;
+}
+
+bool StartupConfig::validateExperiments() const {
+	// Validate experiment configs
+	bool valid = true;
+	for (auto& configs : experimentList) {
+		ExperimentConfig experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename);
+		logPrintf("Validating experiment '%s'\n", configs.name);
+		if (!experimentConfig.validate(false)) {
+			logPrintf("  Error: experiment '%s' is not valid! (See '%s')\n", configs.name, configs.experimentConfigFilename);
+			valid = false;
+		}
+	}
+	return valid;
 }
