@@ -214,7 +214,8 @@ public:
 	void loadSounds() {
 		// Check for play mode specific parameters
 		if (notNull(m_fireAudio)) { m_fireAudio->stop(); }
-		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->isContinuous());
+		if(!m_config->fireSound.empty()) m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->isContinuous());
+		else { m_fireSound = nullptr; }
 	}
 	// Plays the sound based on the weapon fire mode
 	void playSound(bool shotFired, bool shootButtonUp);

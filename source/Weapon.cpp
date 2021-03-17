@@ -428,11 +428,11 @@ void Weapon::playSound(bool shotFired, bool shootButtonUp) {
 				m_fireAudio->setPaused(false);
 			}
 		}
-		else if (shotFired) {
+		else if (shotFired && notNull(m_fireSound)) {
 			m_fireAudio = m_fireSound->play(m_config->fireSoundVol);
 		}
 	}
-	else if (shotFired) {
+	else if (shotFired && notNull(m_fireSound)) {
 		m_fireSound->play(m_config->fireSoundVol);
 	}
 }

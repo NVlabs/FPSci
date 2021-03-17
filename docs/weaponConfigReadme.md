@@ -42,13 +42,13 @@ This file provides information about the weapon to be used in the experiment. De
 ## Sound and View Model
 Controls specific to the sound/view model for the weapon are provided below:
 
-| Parameter Name        |Units      | Description                                                                                           |
-|-----------------------|-----------|-------------------------------------------------------------------------------------------------------|
-|`fireSound`            |file       | The filename/location of the audio clip to use for the weapon firing                                  |
-|`fireSoundVol`         |ratio      | The volume to play the `fireSound` clip with                                                          |
-|`renderModel`          |`bool`     | Whether or not a weapon model is rendered in the first-person view                                    |
-|`modelSpec`            |`ArticulatedModel::Specification` | Any-based specification for the weapon being used                              |
-|`kickAngleDegrees`     |`float`    | The angle (in degrees) the weapon model should kick after fire                                        |
+| Parameter Name        |Units      | Description                                                                                               |
+|-----------------------|-----------|-----------------------------------------------------------------------------------------------------------|
+|`fireSound`            |file       | The filename/location of the audio clip to use for the weapon firing (for no sound use an empty string)   |
+|`fireSoundVol`         |ratio      | The volume to play the `fireSound` clip with                                                              |
+|`renderModel`          |`bool`     | Whether or not a weapon model is rendered in the first-person view                                        |
+|`modelSpec`            |`ArticulatedModel::Specification` | Any-based specification for the weapon being used                                  |
+|`kickAngleDegrees`     |`float`    | The angle (in degrees) the weapon model should kick after fire                                            |
 |`kickDuration`         |`float`    | The time over which the weapon kick animates following a shot (in seconds). Recommended to be less than or equal to the `firePeriod`. |
 
 ```
