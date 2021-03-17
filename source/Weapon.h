@@ -76,6 +76,7 @@ public:
 	float	damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
 	String	fireSound = "sound/fpsci_fire_100ms.wav"; 					///< Sound to play on fire
 	float	fireSoundVol = 1.0f;										///< Volume for fire sound
+	bool	loopFireSound = false;											///< Loop weapon audio (override for auto fire weapons)
 	bool	renderModel = false;										///< Render a model for the weapon?
 	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
 
@@ -114,6 +115,7 @@ public:
 
 	/** Returns true if firePeriod == 0 and autoFire == true */
 	inline bool isContinuous() const { return firePeriod == 0 && autoFire; }
+	inline bool loopAudio() const { return isContinuous() || (loopFireSound && autoFire); }
 
 	WeaponConfig() {}
 	WeaponConfig(const Any& any);
@@ -214,7 +216,7 @@ public:
 	void loadSounds() {
 		// Check for play mode specific parameters
 		if (notNull(m_fireAudio)) { m_fireAudio->stop(); }
-		if(!m_config->fireSound.empty()) m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->isContinuous());
+		if(!m_config->fireSound.empty()) m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->loopAudio());
 		else { m_fireSound = nullptr; }
 	}
 	// Plays the sound based on the weapon fire mode
