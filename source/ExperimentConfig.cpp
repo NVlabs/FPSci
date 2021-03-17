@@ -88,7 +88,7 @@ void ExperimentConfig::init() {
 	}
 }
 
-ExperimentConfig ExperimentConfig::load(const String& filename, bool validate) {
+ExperimentConfig ExperimentConfig::load(const String& filename) {
 	ExperimentConfig ex;
 	if (!FileSystem::exists(System::findDataFile(filename, false))) {
 		// if file not found, save the default
@@ -98,7 +98,6 @@ ExperimentConfig ExperimentConfig::load(const String& filename, bool validate) {
 	else {
 		ex = Any::fromFile(System::findDataFile(filename));
 	}
-	if (validate) { ex.validate(); }
 	return ex;
 }
 
@@ -168,7 +167,8 @@ Array<shared_ptr<TargetConfig>> ExperimentConfig::getSessionTargets(const String
 	return targets;
 }
 
-bool ExperimentConfig::validate(bool exception) const {
+bool ExperimentConfig::validate(bool throwException) const {
+	bool valid = true;
 	// Build list of valid target ids
 	Array<String> validTargetIds;
 	for (TargetConfig target : targets) { validTargetIds.append(target.id); }
@@ -183,12 +183,17 @@ bool ExperimentConfig::validate(bool exception) const {
 		// Check each ID against the experiment targets array
 		for (String targetId : sessionTargetIds) {
 			if (!validTargetIds.contains(targetId)) {
-				if (exception) { throw format("Could not find target ID \"%s\" used in session \"%s\"!", targetId, session.id); }
-				return false;
+				if (throwException) {
+					throw format("Could not find target ID \"%s\" used in session \"%s\"!", targetId, session.id);
+				}
+				else {
+					logPrintf("  Could not find target ID \"%s\" used in session \"%s\"!\n", targetId, session.id);
+				}
+				valid = false;
 			}
 		}
 	}
-	return true;
+	return valid;
 }
 
 Any ExperimentConfig::toAny(const bool forceAll) const {

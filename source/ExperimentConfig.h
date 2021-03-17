@@ -16,7 +16,7 @@ public:
 	ExperimentConfig(const Any& any);
 
 	void init();
-	static ExperimentConfig load(const String& filename, bool validate = true);	// Get the experiment config from file
+	static ExperimentConfig load(const String& filename);	// Get the experiment config from file
 	Any toAny(const bool forceAll = false) const;
 
 	void getSessionIds(Array<String>& ids) const;								// Get an array of session IDs
@@ -28,7 +28,7 @@ public:
 	Array<Array<shared_ptr<TargetConfig>>> getTargetsByTrial(int sessionIndex) const;			// Get target configs by trial (not recommended for repeated calls)
 	Array<shared_ptr<TargetConfig>> getSessionTargets(const String& id) const;					// Get all targets affiliated with a session (not recommended for repeated calls)
 
-	bool validate(bool exception=true) const;									// Validate the session/target configuration
+	bool validate(bool throwException) const;									// Validate the session/target configuration
 
 	void printToLog() const;													// Print the config to the log
 };

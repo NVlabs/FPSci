@@ -27,6 +27,20 @@ void FPSciApp::onInit() {
 }
 
 void FPSciApp::initExperiment(){
+	// Validate experiment configs
+	for (auto configs = startupConfig.experimentList.begin(); configs != startupConfig.experimentList.end(); ++configs) {
+		experimentConfig = ExperimentConfig::load(configs->experimentConfigFilename);
+		logPrintf("Validating experiment '%s'\n", configs->name);
+		bool valid = experimentConfig.validate(false);
+		if (!valid) {
+			logPrintf("Experiment '%s' excluded from the list!\n", configs->name);
+			startupConfig.experimentList.remove(configs);
+		}
+	}
+	if (startupConfig.experimentList.length() <= 0) {
+		throw("No valid experiments found in experiment list. Check log.txt for details.");
+	}
+
 	// Load config from files
 	loadConfigs(startupConfig.experimentList[experimentIdx]);
 	m_lastSavedUser = *currentUser();			// Copy over the startup user for saves
@@ -162,6 +176,7 @@ void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	// Load experiment setting from file
 	experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename);
 	experimentConfig.printToLog();
+	experimentConfig.validate(true);
 
 	// Get hash for experimentconfig.Any file
 	const size_t hash = HashTrait<String>::hashCode(experimentConfig.toAny().unparse());		// Hash the serialized Any (don't consider formatting)
