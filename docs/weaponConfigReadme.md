@@ -46,7 +46,7 @@ Controls specific to the sound/view model for the weapon are provided below:
 |-----------------------|-----------|-----------------------------------------------------------------------------------------------------------|
 |`fireSound`            |file       | The filename/location of the audio clip to use for the weapon firing (for no sound use an empty string)   |
 |`fireSoundVol`         |ratio      | The volume to play the `fireSound` clip with                                                              |
-|`loopFireSound`        |`bool`     | Whether or not to loop the `fireSound` clip for non-continuous weapons (weapon must be auto to apply)     |
+|`fireSoundLoop`        |`bool`     | Whether or not to loop the `fireSound` clip for non-continuous weapons (weapon must be auto to apply)     |
 |`renderModel`          |`bool`     | Whether or not a weapon model is rendered in the first-person view                                        |
 |`modelSpec`            |`ArticulatedModel::Specification` | Any-based specification for the weapon being used                                  |
 |`kickAngleDegrees`     |`float`    | The angle (in degrees) the weapon model should kick after fire                                            |
@@ -55,7 +55,7 @@ Controls specific to the sound/view model for the weapon are provided below:
 ```
     "fireSound" : "sound/fpsci_fire_100ms.wav"          // This comes w/ FPSci
     "fireSoundVol" : 1.0;       // Play the fire sound at 1/2 volume
-    "loopFireSound": false;     // Don't loop fire sound by default
+    "fireSoundLoop": false;     // Don't loop fire sound by default
     "renderModel" : false;      // Don't render a weapon model
     "modelSpec" : [];           // No default model spec provided (see the example config below for more info)
     "kickAngleDegrees": 0;      // Weapons don't kick by default
@@ -145,7 +145,7 @@ The config below provides an example for each of the fields above (along with th
 
 "fireSound": "sound/fpsci_fire_100ms.wav",       // The sound to fire
 "fireSoundVol": 1.0f,
-"loopFireAudio": false,     // Don't loop fire audio  by default
+"fireSoundLoop": false,     // Don't loop fire audio  by default
 "renderModel": true,        // Default is false,
 "modelSpec": ArticulatedModel::Specification{			        // Default model
 	filename = "model/sniper/sniper.obj";

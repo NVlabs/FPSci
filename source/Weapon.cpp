@@ -15,7 +15,7 @@ WeaponConfig::WeaponConfig(const Any& any) {
 		reader.getIfPresent("damagePerSecond", damagePerSecond);
 		reader.getIfPresent("fireSound", fireSound);
 		reader.getIfPresent("fireSoundVol", fireSoundVol);
-		reader.getIfPresent("loopFireSound", loopFireSound);
+		reader.getIfPresent("fireSoundLoop", fireSoundLoop);
 		reader.getIfPresent("hitScan", hitScan);
 
 		reader.getIfPresent("renderModel", renderModel);
@@ -73,7 +73,7 @@ Any WeaponConfig::toAny(const bool forceAll) const {
 	if (forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
 	if (forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
 	if (forceAll || def.fireSoundVol != fireSoundVol)					a["fireSoundVol"] = fireSoundVol;
-	if (forceAll || def.loopFireSound != loopFireSound)					a["loopFireSound"] = loopFireSound;
+	if (forceAll || def.fireSoundLoop != fireSoundLoop)		a["fireSoundLoop"] = fireSoundLoop;
 	if (forceAll || def.hitScan != hitScan)								a["hitScan"] = hitScan;
 
 	if (forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
