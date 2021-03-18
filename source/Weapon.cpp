@@ -421,22 +421,17 @@ shared_ptr<TargetEntity> Weapon::fire(
 }
 
 void Weapon::playSound(bool shotFired, bool shootButtonUp) {
-	if (m_config->loopAudio()) {
-		if (notNull(m_fireAudio)) {
-			if (shootButtonUp) {
-				m_fireAudio->setPaused(true);											// Pause looped audio on mouse up
-			}
-			else if (shotFired && m_fireAudio->paused()) {
-				if (m_config->isContinuous()) m_fireAudio->setPaused(false);			// Handle laser case (can just un-pause)
-				else m_fireAudio = m_fireSound->play(m_config->fireSoundVol);			// For loopFireSound case start a new sound here
-			}
+	if (m_config->loopAudio()){											// Continuous weapon/looped audio
+		if (notNull(m_fireAudio) && shootButtonUp) {					// Sound is playing and mouse is up
+			m_fireAudio->stop();										// Stop looped audio on mouse up
+			m_fireAudio = nullptr;
 		}
-		else if (shotFired && notNull(m_fireSound)) {
-			m_fireAudio = m_fireSound->play(m_config->fireSoundVol);
+		else if (shotFired && isNull(m_fireAudio)) {					// Shots fired and sound isn't playing
+			m_fireAudio = m_fireSound->play(m_config->fireSoundVol);	// Start a new sound
 		}
 	}
-	else if (shotFired && notNull(m_fireSound)) {
-		m_fireSound->play(m_config->fireSoundVol);
+	else if (shotFired && notNull(m_fireSound)) {						// Discrete weapon (no looped audio)
+		m_fireAudio = m_fireSound->play(m_config->fireSoundVol);		// Start a new sound
 	}
 }
 
