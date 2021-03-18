@@ -40,8 +40,10 @@ WeaponConfig::WeaponConfig(const Any& any) {
 		reader.getIfPresent("hitDecal", hitDecal);
 		reader.getIfPresent("missDecalCount", missDecalCount);
 		reader.getIfPresent("missDecalScale", missDecalScale);
+		reader.getIfPresent("missDecalTimeoutS", missDecalTimeoutS);
+		reader.getIfPresent("clearTrialMissDecals", clearTrialMissDecals);
 		reader.getIfPresent("hitDecalScale", hitDecalScale);
-		reader.getIfPresent("hitDecalDuration", hitDecalDurationS);
+		reader.getIfPresent("hitDecalTimeoutS", hitDecalTimeoutS);
 		reader.getIfPresent("hitDecalColorMult", hitDecalColorMult);
 
 		reader.getIfPresent("fireSpreadDegrees", fireSpreadDegrees);
@@ -92,8 +94,10 @@ Any WeaponConfig::toAny(const bool forceAll) const {
 	if (forceAll || def.hitDecal != hitDecal)							a["hitDecal"] = hitDecal;
 	if (forceAll || def.missDecalCount != missDecalCount)				a["missDecalCount"] = missDecalCount;
 	if (forceAll || def.missDecalScale != missDecalScale)				a["missDecalScale"] = missDecalScale;
+	if (forceAll || def.missDecalTimeoutS != missDecalTimeoutS)			a["missDecalTimeoutS"] = missDecalTimeoutS;
+	if (forceAll || def.clearTrialMissDecals != clearTrialMissDecals)	a["clearTrialMissDecals"] = clearTrialMissDecals;
 	if (forceAll || def.hitDecalScale != hitDecalScale)					a["hitDecalScale"] = hitDecalScale;
-	if (forceAll || def.hitDecalDurationS != hitDecalDurationS)			a["hitDecalDuration"] = hitDecalDurationS;
+	if (forceAll || def.hitDecalTimeoutS != hitDecalTimeoutS)			a["hitDecalTimeoutS"] = hitDecalTimeoutS;
 	if (forceAll || def.hitDecalColorMult != hitDecalColorMult)			a["hitDecalColorMult"] = hitDecalColorMult;
 
 	if (forceAll || def.fireSpreadDegrees != fireSpreadDegrees)			a["fireSpreadDegrees"] = fireSpreadDegrees;
@@ -271,6 +275,18 @@ void Weapon::simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntit
 	else {
 		m_hitDecalTimeRemainingS -= sdt;
 	}
+
+	// Handle miss decal removal (timeout)
+	for (int i = 0; i < m_missDecalTimesRemaining.length(); i++) {
+		if (m_missDecalTimesRemaining[i] < 0) continue;					// Skip decals with negative initial timeouts (don't timeout)
+		m_missDecalTimesRemaining[i] -= sdt;
+		if (m_missDecalTimesRemaining[i] <= 0) {
+			m_scene->remove(m_currentMissDecals[i]);
+			m_missDecalTimesRemaining.remove(i);
+			m_currentMissDecals.remove(i);
+			i--;
+		}
+	}
 }
 
 void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
@@ -288,6 +304,7 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	if (!hit) {
 		while (m_currentMissDecals.size() >= m_config->missDecalCount) {
 			m_scene->remove(m_currentMissDecals.pop());
+			m_missDecalTimesRemaining.pop();
 		}
 	}
 	// Handle hit decal here (only show 1 at a time)
@@ -300,18 +317,23 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastDecalID), &(*m_scene), decalModel, decalFrame);
 	newDecal->setCastsShadows(false);
 	m_scene->insert(newDecal);
-	if (!hit) m_currentMissDecals.insert(0, newDecal);	// Add the new decal to the front of the Array (if a miss)
+	if (!hit) {
+		m_currentMissDecals.insert(0, newDecal);	// Add the new decal to the front of the Array (if a miss)
+		m_missDecalTimesRemaining.insert(0, m_config->missDecalTimeoutS);
+	}
 	else {
 		m_hitDecal = newDecal;
-		m_hitDecalTimeRemainingS = m_config->hitDecalDurationS;
+		m_hitDecalTimeRemainingS = m_config->hitDecalTimeoutS;
 	}
 }
 
-void Weapon::clearDecals() {
-	while (m_currentMissDecals.size() > 0) {
-		m_currentMissDecals.pop();
+void Weapon::clearDecals(bool clearHitDecal) {
+	while (m_currentMissDecals.size() > 0) {				// Remove and clear miss decals
+		m_scene->remove(m_currentMissDecals.pop());
 	}
-	if (notNull(m_hitDecal)) {
+	m_missDecalTimesRemaining.clear();						// Clear miss decal timeouts
+
+	if (clearHitDecal && notNull(m_hitDecal)) {				// Clear hit decal (if one is present)
 		m_scene->remove(m_hitDecal);
 	}
 }

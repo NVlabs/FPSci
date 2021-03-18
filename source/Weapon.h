@@ -94,8 +94,10 @@ public:
 	String	hitDecal = "";												///< The decal to place where the shot hits
 	int		missDecalCount = 2;											///< Number of miss decals to draw
 	float	missDecalScale = 1.0f;										///< Scale to apply to the miss decal
+	float	missDecalTimeoutS = -1;										///< Miss decals don't timeout by default
+	bool	clearTrialMissDecals = true;								///< Clear the miss decals after each trial
 	float	hitDecalScale = 1.0f;										///< Scale to apply to the hit decal
-	float	hitDecalDurationS = 0.1f;									///< Duration to show the hit decal for (in seconds)
+	float	hitDecalTimeoutS = 0.1f;									///< Duration to show the hit decal for (in seconds)
 	float	hitDecalColorMult = 2.0f;									///< "Encoding" field (aka color multiplier) for hit decal
 
 	float	fireSpreadDegrees = 0;										///< The spread of the fire
@@ -153,6 +155,7 @@ protected:
 	shared_ptr<VisibleEntity>				m_hitDecal;							///< Pointer to hit decal
 	RealTime								m_hitDecalTimeRemainingS = 0.f;		///< Remaining duration to show the decal for
 	Array<shared_ptr<VisibleEntity>>		m_currentMissDecals;				///< Pointers to miss decals
+	Array<SimTime>							m_missDecalTimesRemaining;				///< Create times for miss decals
 
 	Random									m_rand;
 
@@ -230,7 +233,7 @@ public:
 
 	void simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntity>>& targets, const Array<shared_ptr<Entity>>& dontHit = {});
 	void drawDecal(const Point3& point, const Vector3& normal, bool hit = false);
-	void clearDecals();
+	void clearDecals(bool clearHitDecal = true);
 	void loadDecals();
 	void loadModels();
 
