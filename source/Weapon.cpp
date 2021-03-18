@@ -15,6 +15,7 @@ WeaponConfig::WeaponConfig(const Any& any) {
 		reader.getIfPresent("damagePerSecond", damagePerSecond);
 		reader.getIfPresent("fireSound", fireSound);
 		reader.getIfPresent("fireSoundVol", fireSoundVol);
+		reader.getIfPresent("fireSoundLoop", fireSoundLoop);
 		reader.getIfPresent("hitScan", hitScan);
 
 		reader.getIfPresent("renderModel", renderModel);
@@ -74,6 +75,7 @@ Any WeaponConfig::toAny(const bool forceAll) const {
 	if (forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
 	if (forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
 	if (forceAll || def.fireSoundVol != fireSoundVol)					a["fireSoundVol"] = fireSoundVol;
+	if (forceAll || def.fireSoundLoop != fireSoundLoop)		a["fireSoundLoop"] = fireSoundLoop;
 	if (forceAll || def.hitScan != hitScan)								a["hitScan"] = hitScan;
 
 	if (forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
@@ -441,21 +443,17 @@ shared_ptr<TargetEntity> Weapon::fire(
 }
 
 void Weapon::playSound(bool shotFired, bool shootButtonUp) {
-	if (m_config->isContinuous()) {
-		if (notNull(m_fireAudio)) {
-			if (shootButtonUp) {
-				m_fireAudio->setPaused(true);
-			}
-			else if (shotFired && m_fireAudio->paused()) {
-				m_fireAudio->setPaused(false);
-			}
+	if (m_config->loopAudio()){											// Continuous weapon/looped audio
+		if (notNull(m_fireAudio) && shootButtonUp) {					// Sound is playing and mouse is up
+			m_fireAudio->stop();										// Stop looped audio on mouse up
+			m_fireAudio = nullptr;
 		}
-		else if (shotFired && notNull(m_fireSound)) {
-			m_fireAudio = m_fireSound->play(m_config->fireSoundVol);
+		else if (shotFired && isNull(m_fireAudio)) {					// Shots fired and sound isn't playing
+			m_fireAudio = m_fireSound->play(m_config->fireSoundVol);	// Start a new sound
 		}
 	}
-	else if (shotFired && notNull(m_fireSound)) {
-		m_fireSound->play(m_config->fireSoundVol);
+	else if (shotFired && notNull(m_fireSound)) {						// Discrete weapon (no looped audio)
+		m_fireAudio = m_fireSound->play(m_config->fireSoundVol);		// Start a new sound
 	}
 }
 
