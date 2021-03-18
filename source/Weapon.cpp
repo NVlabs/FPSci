@@ -15,7 +15,7 @@ WeaponConfig::WeaponConfig(const Any& any) {
 		reader.getIfPresent("damagePerSecond", damagePerSecond);
 		reader.getIfPresent("fireSound", fireSound);
 		reader.getIfPresent("fireSoundVol", fireSoundVol);
-		reader.getIfPresent("loopFireSound", loopFireSound);
+		reader.getIfPresent("fireSoundLoop", fireSoundLoop);
 		reader.getIfPresent("hitScan", hitScan);
 
 		reader.getIfPresent("renderModel", renderModel);
@@ -73,7 +73,7 @@ Any WeaponConfig::toAny(const bool forceAll) const {
 	if (forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
 	if (forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
 	if (forceAll || def.fireSoundVol != fireSoundVol)					a["fireSoundVol"] = fireSoundVol;
-	if (forceAll || def.loopFireSound != loopFireSound)					a["loopFireSound"] = loopFireSound;
+	if (forceAll || def.fireSoundLoop != fireSoundLoop)		a["fireSoundLoop"] = fireSoundLoop;
 	if (forceAll || def.hitScan != hitScan)								a["hitScan"] = hitScan;
 
 	if (forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
@@ -428,7 +428,7 @@ void Weapon::playSound(bool shotFired, bool shootButtonUp) {
 			}
 			else if (shotFired && m_fireAudio->paused()) {
 				if (m_config->isContinuous()) m_fireAudio->setPaused(false);			// Handle laser case (can just un-pause)
-				else m_fireAudio = m_fireSound->play(m_config->fireSoundVol);			// For loopFireSound case start a new sound here
+				else m_fireAudio = m_fireSound->play(m_config->fireSoundVol);			// For fireSoundLoop case start a new sound here
 			}
 		}
 		else if (shotFired && notNull(m_fireSound)) {
