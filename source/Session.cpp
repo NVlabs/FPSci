@@ -277,7 +277,7 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 		// Check for case w/ destination array
 		shared_ptr<TargetEntity> t;
 		if (target->destinations.size() > 0) {
-			Point3 offset = isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			Point3 offset = isWorldSpace ? target->destinations[0].position : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 			t = spawnDestTarget(target, offset, spawnColor, i, name);
 		}
 		// Otherwise check if this is a jumping target
