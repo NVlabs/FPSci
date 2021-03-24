@@ -48,17 +48,17 @@ The `Player_Action` table is the primary tool for analyzing player move, aim, an
 ### Questions
 The `Questions` table is intended to quickly capture feedback from questions asked of the user in app using the simple dialog system at the end of a session. It includes the following columns:
 
-* `session`: The session id of the session in which the question was asked
+* `session_id`: The session id of the session in which the question was asked
 * `question`: The text of the question asked of the user
 * `response`: The response provided by the user
 
 ### Sessions
 The `Sessions` table is the highest-level description in the per-session results files. By default the sessions table supports the following columns:
 
-* `sessionID`: The id of this session
+* `session_id`: The id of this session
 * `time`: The (wall clock) time at which the session started/the results file was created
-* `subjectID`: The subject who took part in this session
-* `appendingDescription`: The experiment description appended to the session description (separated by a `/`)
+* `subject_id`: The subject who took part in this session
+* `description`: The experiment description appended to the session description (separated by a `/`)
 
 In addition to the default fields provided above, the user can provide additional parameters (by name) in the [`sessParamsToLog` field](general_config.md#logging_controls) which are added to this table. Any session-level configuration parameter should be supported for logging here.
 
@@ -74,7 +74,7 @@ The `Target_Trajectory` table describes the motion of targets within the session
 ### Target_Types
 The `Target_Types` table is intended to provide high-level parameters for classes of targets spawned within a session. Table columns include:
 
-* `name`: The target type name, corresponding to the name logged in the `target_type_name` column of the [`Targets`](#targets) table. Not unique to individual trials/spawns of targets.
+* `target_type`: The target type name, corresponding to the name logged in the `target_type_name` column of the [`Targets`](#targets) table. Not unique to individual trials/spawns of targets.
 * `motion_type`: The type of the target (can be `waypoint` or `parametrized`)
     * `waypoint` based targets do not use randomized parameters, and instead move between a set of predefined waypoints
     * `parametrized` targets randomize various motion parameters within provided ranges and create new target paths based on these values
@@ -101,8 +101,8 @@ The following columns are only valid for `parametrized` target types. They can/s
 ### Targets
 The `Targets` table is intended to provide additional detailed information about each target that was spawned within a trial. Table columns include:
 
-* `name`: The target name, corresponding to the name logged in the [`Target_Trajectory` table](#target_trajectory) and notably, unique to an individual trial
-* `target_type_name`: The name of the target type, in correspondence with the [`Target_Types`](#target_types) table
+* `target_id`: The target id, corresponding to the id logged in the [`Target_Trajectory` table](#target_trajectory) and notably, unique to an individual trial
+* `target_type`: The name of the target type, in correspondence with the [`Target_Types`](#target_types) table
 * `spawn_time`: The time at which this target spawned (assumed unique to an individual trial)
 * `size`: This records the actual size of the target (useful when randomized in a range for the `parametrized` type)
 
@@ -128,23 +128,24 @@ The `Trials` table provides more detailed feedback on user performance within ea
 ### Users
 The users table provides user-based information for the logged session. The table is logged to once at the start and once at the end of each session to allow those performing data analysis to be aware if user settings changed during the session. The table includes the following columns:
 
-* `subjectID`: The subject ID of the user
-* `session`: The ID of the current session
+* `subject_id`: The subject ID of the user
+* `session_id`: The ID of the current session
 * `time`: Either `start` or ``end` indicating whether this entry was logged at the start or end of the session
 * `cmp360`: The "raw" user mouse sensitivity in cm/360°
-* `mouseDPI`: The user mouse DPI setting reported
-* `reticleIndex`: The index of the reticle the user has selected
-* `reticleScaleMin`: The minimum scale of the reticle (long after a shot)
-* `reticleScaleMax`: The maximum scale of the reticle (shortly after a shot)
-* `reticleColorMinScale`: The reticle color when at the minimum scale (long after a shot)
-* `reticleColorMaxScale`: The reticle color when at the maximum scale (shortly after a shot)
-* `reticleChangeTime`: The time it takes for the reticle to scale/change colors following a shot
-* `userTurnScaleX`: The user provided X turn scale
-* `userTurnScaleY`: The user provided Y turn scale (negative if inverted)
-* `sessTurnScaleX`: The session provided X turn scale (stacks with user turn scale)
-* `sessTurnScaleY`: The session provided Y turn scale (stacks with user turn scale)
-* `sensitivityX`: The composite X sensitivity (`cmp360 * userTurnScaleX * sessTurnScaleX`) in cm/360°
-* `sensitivityY`: The composite Y sensitivity (`cmp360 * userTurnScaleY * sessTurnScaleY`) in cm/360°
+* `mouse_deg_per_mm`: The user mouse sensitivity in degrees of view rotation per millimeter of mouse motion
+* `mouse_dpi`: The user mouse DPI setting reported
+* `reticle_index`: The index of the reticle the user has selected
+* `min_reticle_scale`: The minimum scale of the reticle (long after a shot)
+* `max_reticle_scale`: The maximum scale of the reticle (shortly after a shot)
+* `min_reticle_color`: The reticle color when at the minimum scale (long after a shot)
+* `max_reticle_color`: The reticle color when at the maximum scale (shortly after a shot)
+* `reticle_change_time`: The time it takes for the reticle to scale/change colors following a shot
+* `user_turn_scale_x`: The user provided X turn scale
+* `user_turn_scale_y`: The user provided Y turn scale (negative if inverted)
+* `sess_turn_scale_x`: The session provided X turn scale (stacks with user turn scale)
+* `sess_turn_scale_y`: The session provided Y turn scale (stacks with user turn scale)
+* `sensitivity_x`: The composite X sensitivity (`cmp360 * userTurnScaleX * sessTurnScaleX`) in cm/360°
+* `sensitivity_y`: The composite Y sensitivity (`cmp360 * userTurnScaleY * sessTurnScaleY`) in cm/360°
 
 ## Useful Queries
 FPSci results files can be queried a variety of ways but some common/useful queries are included below for reference:
