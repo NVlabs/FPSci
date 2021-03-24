@@ -85,13 +85,13 @@ void FPSciLogger::initResultsFile(const String& filename,
 void FPSciLogger::createSessionsTable(const shared_ptr<SessionConfig>& sessConfig) {
 
 	String createTableC = "CREATE TABLE IF NOT EXISTS Sessions ( ";
-	createTableC += "sessionID TEXT NOT NULL, ";
+	createTableC += "session_id TEXT NOT NULL, ";
 	createTableC += "start_time TEXT NOT NULL, ";
 	createTableC += "end_time TEXT NOT NULL, ";
-	createTableC += "subjectID TEXT NOT NULL, ";
-	createTableC += "appendingDescription TEXT NOT NULL, ";
+	createTableC += "subject_id TEXT NOT NULL, ";
+	createTableC += "description TEXT NOT NULL, ";
 	createTableC += "complete TEXT NOT NULL, ";
-	createTableC += "trialsComplete TEXT NOT NULL";
+	createTableC += "trials_complete TEXT NOT NULL";
 	for (String name : sessConfig->logger.sessParamsToLog) { 
 		createTableC += ", '" + name + "' TEXT NOT NULL" ; 
 	}
@@ -127,7 +127,7 @@ void FPSciLogger::createSessionsTable(const shared_ptr<SessionConfig>& sessConfi
 void FPSciLogger::createTargetTypeTable() {
 	// Targets Type table (written once per session)
 	Columns targetTypeColumns = {
-		{ "name", "text" },
+		{ "target_type", "text" },
 		{ "motion_type", "text"},
 		{ "dest_space", "text"},
 		{ "min_size", "real"},
@@ -149,8 +149,8 @@ void FPSciLogger::createTargetTypeTable() {
 void FPSciLogger::createTargetsTable() {
 	// Targets table
 	Columns targetColumns = {
-		{ "name", "text" },
-		{ "target_type_name", "text"},
+		{ "target_id", "text" },
+		{ "target_type", "text"},
 		{ "spawn_time", "text"},
 		{ "size", "real"},
 		{ "spawn_ecc_h", "real"},
@@ -216,7 +216,7 @@ void FPSciLogger::createFrameInfoTable() {
 void FPSciLogger::createQuestionsTable() {
 	// Questions table
 	Columns questionColumns = {
-		{"session", "text"},
+		{"session_id", "text"},
 		{"question", "text"},
 		{"response", "text"}
 	};
@@ -226,24 +226,24 @@ void FPSciLogger::createQuestionsTable() {
 void FPSciLogger::createUsersTable() {
 	// Users table
 	Columns userColumns = {
-		{"subjectID", "text"},
-		{"session", "text"},
+		{"subject_id", "text"},
+		{"session_id", "text"},
 		{"time", "text"},
 		{"cmp360", "real"},
-		{"mouseDegPerMillimeter", "real"},
-		{"mouseDPI", "real"},
-		{"reticleIndex", "int"},
-		{"reticleScaleMin", "real"},
-		{"reticleScaleMax", "real"},
-		{"reticleColorMinScale", "text"},
-		{"reticleColorMaxScale", "text"},
-		{"reticleChangeTime", "real"},
-		{"userTurnScaleX", "real"},
-		{"userTurnScaleY", "real"},
-		{"sessTurnScaleX", "real"},
-		{"sessTurnScaleY", "real"},
-		{"sensitivityX", "real"},
-		{"sensitivityY", "real"}
+		{"mouse_deg_per_mm", "real"},
+		{"mouse_dpi", "real"},
+		{"reticle_index", "int"},
+		{"min_reticle_scale", "real"},
+		{"max_reticle_scale", "real"},
+		{"min_reticle_color", "text"},
+		{"max_reticle_color", "text"},
+		{"reticle_change_time", "real"},
+		{"user_turn_scale_x", "real"},
+		{"user_turn_scale_y", "real"},
+		{"sess_turn_scale_x", "real"},
+		{"sess_turn_scale_y", "real"},
+		{"sensitivity_x", "real"},
+		{"sensitivity_y", "real"}
 	};
 	createTableInDB(m_db, "Users", userColumns);
 }
@@ -253,7 +253,7 @@ void FPSciLogger::updateSessionEntry(bool complete, int trialCount) {
 	const String completeStr = complete ? "true" : "false";
 	const String trialCountStr = String(std::to_string(trialCount));
 	char* errMsg;
-	String updateQ = "UPDATE Sessions SET end_time = '" + genUniqueTimestamp() + "', complete = '" + completeStr + "', trialsComplete = '" + trialCountStr + "' WHERE start_time = '" + m_openTimeStr + "'";
+	String updateQ = "UPDATE Sessions SET end_time = '" + genUniqueTimestamp() + "', complete = '" + completeStr + "', trials_complete = '" + trialCountStr + "' WHERE start_time = '" + m_openTimeStr + "'";
 	int ret = sqlite3_exec(m_db, updateQ.c_str(), 0, 0, &errMsg);
 	if (ret != SQLITE_OK) { logPrintf("Error in UPDATE statement (%s): %s\n", updateQ, errMsg); }
 }
