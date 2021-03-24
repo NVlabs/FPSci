@@ -10,7 +10,14 @@
  */
 #pragma once
 #include <G3D/G3D.h>
-#include "ConfigFiles.h"
+
+#include "ExperimentConfig.h"
+#include "StartupConfig.h"
+#include "KeyMapping.h"
+#include "SystemConfig.h"
+#include "SystemInfo.h"
+#include "UserConfig.h"
+#include "UserStatus.h"
 #include "TargetEntity.h"
 #include "PlayerEntity.h"
 #include "GuiElements.h"
@@ -29,14 +36,19 @@ class WaypointManager;
 enum PresentationState { initial, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
 
 class FPSciApp : public GApp {
+public:
+	enum MouseInputMode {					///< Enumerated type for controlling the mouse input mode
+		MOUSE_DISABLED = 0,					/// No mouse interaction
+		MOUSE_CURSOR = 1,					/// Cursor-based interaction
+		MOUSE_FPM = 2,						/// First-person manipulator-based interaction
+	};
+
 protected:
 	static const int						MAX_HISTORY_TIMING_FRAMES = 360;	///< Length of the history queue for m_frameDurationQueue
 	shared_ptr<Sound>						m_sceneHitSound;					///< Sound for target exploding
 
 	shared_ptr<GFont>						m_combatFont;						///< Font used for floating combat text
 	Array<shared_ptr<FloatingCombatText>>	m_combatTextList;					///< Array of existing combat text
-
-	shared_ptr<Weapon>						m_weapon;							///< Current weapon
 
 	Array<shared_ptr<VisibleEntity>>		m_explosions;						///< Model for target destroyed decal
 	Array<RealTime>							m_explosionRemainingTimes;			///< Time for end of explosion
@@ -49,16 +61,22 @@ protected:
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_explosionModels;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
-	Queue<float>							m_frameDurationQueue;				///< Queue for history of frrame times
+	Queue<float>							m_frameDurationQueue;				///< Queue for history of frame times
 
 	/** Used to detect GUI changes to m_reticleIndex */
 	int										m_lastReticleLoaded = -1;			///< Last loaded reticle (used for change detection)
 	float									m_debugMenuHeight = 0.0f;			///< Height of the debug menu when in developer mode
 
 	RealTime								m_lastJumpTime = 0.0f;				///< Time of last jump
+public:
+	RealTime								m_lastOnSimulationRealTime = 0.0f;	///< Wall clock time last onSimulation finished
+	SimTime									m_lastOnSimulationSimTime = 0.0f;	///< Simulation time last onSimulation finished
+	SimTime									m_lastOnSimulationIdealSimTime = 0.0f;	///< Ideal simulation time last onSimulation finished
+protected:
+	float									m_currentWeaponDamage = 0.0f;		///< A hack to avoid passing damage through callbacks
 
 	int										m_lastUniqueID = 0;					///< Counter for creating unique names for various entities
-	String									m_loadedScene = "";
+	SceneConfig								m_loadedScene;						///< Configuration for loaded scene
 	String									m_defaultSceneName = "FPSci Simple Hallway";	// Default scene to load
 
 	String									m_expConfigHash;					///< String hash of experiment config file
@@ -70,7 +88,7 @@ protected:
 	int										m_currentDelayBufferIndex = 0;
 
     shared_ptr<UserMenu>					m_userSettingsWindow;				///< User settings window
-	bool									m_mouseDirectMode = true;			///< Does the mouse currently have control over the view
+	MouseInputMode							m_mouseInputMode = MouseInputMode::MOUSE_CURSOR;	///< Does the mouse currently have control over the view
 	bool									m_showUserMenu = true;				///< Show the user menu after update?
 
 	bool									m_firstSession = true;
@@ -83,7 +101,9 @@ protected:
 	/** Called from onInit */
 	void makeGUI();
 	void updateControls(bool firstSession = false);
-	void loadConfigs();
+	
+	void loadConfigs(const ConfigFiles& configs);
+
 	virtual void loadModels();
 	/** Initializes player settings from configs and resets player to initial position 
 		Also updates mouse sensitivity. */
@@ -142,20 +162,30 @@ public:
 
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
 
+	/** A table of sounds that targets can use to allow sounds to finish playing after they're destroyed */
+	Table<String, shared_ptr<Sound>>	soundTable;
+
 	shared_ptr<Session> sess;					///< Pointer to the experiment
 	shared_ptr<Camera> playerCamera;			///< Pointer to the player camera						
+	shared_ptr<Weapon> weapon;					///< Current weapon
 
 	bool		renderFPS			= false;	///< Control flag used to draw (or not draw) FPS information to the display	
 	int			displayLagFrames	= 0;		///< Count of frames of latency to add
 	float		lastSetFrameRate	= 0.0f;		///< Last set frame rate
 	const int	numReticles			= 55;		///< Total count of reticles available to choose from
 	float		sceneBrightness		= 1.0f;		///< Scene brightness scale factor
+	
+	bool		shootButtonUp			= true;	///< Tracks shoot button state (used for click indicator)
+	bool		shootButtonJustReleased = false;///< Tracks shoot button state (used for weapon timing)
+	bool		shootButtonJustPressed = false;	///< Tracks shoot button state (used for weapon timing)
 
-	bool		buttonUp			= true;		///< Pass button up to session
 	bool		frameToggle			= false;	///< Simple toggle flag used for frame rate click-to-photon monitoring
 	bool		updateUserMenu		= false;	///< Semaphore to indicate user settings needs update
+	bool		reinitExperiment	= false;	///< Semaphore to indicate experiment needs to be reinitialized
 
-	Vector2 displayRes;
+	int			experimentIdx = 0;				///< Index of the current experiment
+
+	Vector2		displayRes;
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
@@ -172,6 +202,12 @@ public:
 		return m_debugMenuHeight;
 	}
 
+	const Array<String> experimentNames() const {
+		Array<String> names;
+		for (auto config : startupConfig.experimentList) { names.append(config.name); }
+		return names;
+	}
+
     /** callbacks for saving user status and config */
 	void saveUserConfig(bool onDiff);
 	void saveUserConfig() { saveUserConfig(false); }
@@ -183,7 +219,7 @@ public:
 
 	void markSessComplete(String id);
 	/** Updates experiment state to the provided session id and updates player parameters (including mouse sensitivity) */
-	virtual void updateSession(const String& id);
+	virtual void updateSession(const String& id, bool forceReload = false);
 	void updateParameters(int frameDelay, float frameRate);
 	void updateTargetColor(const shared_ptr<TargetEntity>& target);
 	void presentQuestion(Question question);
@@ -196,10 +232,13 @@ public:
 	void closeUserSettingsWindow();
 
 	/** changes the mouse interaction (camera direct vs pointer) */
-	void setDirectMode(bool enable = true);
+	void setMouseInputMode(MouseInputMode mode = MOUSE_FPM);
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
 	
+	/** Initialize an experiment */
+	void initExperiment();
+
 	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
 	virtual void onInit() override;
 	virtual void onAI() override;

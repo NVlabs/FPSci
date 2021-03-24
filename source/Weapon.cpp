@@ -1,5 +1,119 @@
 #include "Weapon.h"
 
+WeaponConfig::WeaponConfig(const Any& any) {
+	int settingsVersion = 1;
+	AnyTableReader reader(any);
+	reader.getIfPresent("settingsVersion", settingsVersion);
+
+	switch (settingsVersion) {
+	case 1:
+		reader.getIfPresent("id", id);
+
+		reader.getIfPresent("maxAmmo", maxAmmo);
+		reader.getIfPresent("firePeriod", firePeriod);
+		reader.getIfPresent("autoFire", autoFire);
+		reader.getIfPresent("damagePerSecond", damagePerSecond);
+		reader.getIfPresent("fireSound", fireSound);
+		reader.getIfPresent("fireSoundVol", fireSoundVol);
+		reader.getIfPresent("fireSoundLoop", fireSoundLoop);
+		reader.getIfPresent("hitScan", hitScan);
+
+		reader.getIfPresent("renderModel", renderModel);
+		if (renderModel) {
+			reader.get("modelSpec", modelSpec, "If \"renderModel\" is set to true within a weapon config then a \"modelSpec\" must be provided!");
+		}
+		else {
+			reader.getIfPresent("modelSpec", modelSpec);
+		}
+
+		//reader.getIfPresent("muzzleOffset", muzzleOffset);
+		//reader.getIfPresent("renderMuzzleFlash", renderMuzzleFlash);
+
+		reader.getIfPresent("renderBullets", renderBullets);
+		reader.getIfPresent("bulletSpeed", bulletSpeed);
+		reader.getIfPresent("bulletGravity", bulletGravity);
+		reader.getIfPresent("bulletScale", bulletScale);
+		reader.getIfPresent("bulletColor", bulletColor);
+		reader.getIfPresent("bulletOffset", bulletOffset);
+
+		reader.getIfPresent("renderDecals", renderDecals);
+		reader.getIfPresent("missDecal", missDecal);
+		reader.getIfPresent("hitDecal", hitDecal);
+		reader.getIfPresent("missDecalCount", missDecalCount);
+		reader.getIfPresent("missDecalScale", missDecalScale);
+		reader.getIfPresent("missDecalTimeoutS", missDecalTimeoutS);
+		reader.getIfPresent("clearTrialMissDecals", clearTrialMissDecals);
+		reader.getIfPresent("hitDecalScale", hitDecalScale);
+		reader.getIfPresent("hitDecalTimeoutS", hitDecalTimeoutS);
+		reader.getIfPresent("hitDecalColorMult", hitDecalColorMult);
+
+		reader.getIfPresent("fireSpreadDegrees", fireSpreadDegrees);
+		reader.getIfPresent("fireSpreadShape", fireSpreadShape);
+
+		reader.getIfPresent("damageRollOffAim", damageRollOffAim);
+		reader.getIfPresent("damageRollOffDistance", damageRollOffDistance);
+
+		reader.getIfPresent("scopeFoV", scopeFoV);
+		reader.getIfPresent("scopeToggle", scopeToggle);
+		reader.getIfPresent("kickAngleDegrees", kickAngleDegrees);
+		reader.getIfPresent("kickDuration", kickDuration);
+
+		//reader.getIfPresent("recticleImage", reticleImage);
+	default:
+		debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
+		break;
+	}
+}
+
+Any WeaponConfig::toAny(const bool forceAll) const {
+	Any a(Any::TABLE);
+	WeaponConfig def;
+	a["id"] = id;
+	if (forceAll || def.maxAmmo != maxAmmo)								a["maxAmmo"] = maxAmmo;
+	if (forceAll || def.firePeriod != firePeriod)						a["firePeriod"] = firePeriod;
+	if (forceAll || def.autoFire != autoFire)							a["autoFire"] = autoFire;
+	if (forceAll || def.damagePerSecond != damagePerSecond)				a["damagePerSecond"] = damagePerSecond;
+	if (forceAll || def.fireSound != fireSound)							a["fireSound"] = fireSound;
+	if (forceAll || def.fireSoundVol != fireSoundVol)					a["fireSoundVol"] = fireSoundVol;
+	if (forceAll || def.fireSoundLoop != fireSoundLoop)		a["fireSoundLoop"] = fireSoundLoop;
+	if (forceAll || def.hitScan != hitScan)								a["hitScan"] = hitScan;
+
+	if (forceAll || def.renderModel != renderModel)						a["renderModel"] = renderModel;
+	if (forceAll || !(def.modelSpec == modelSpec))						a["modelSpec"] = modelSpec;
+
+	//if (forceAll || def.muzzleOffset != muzzleOffset)					a["muzzleOffset"] = muzzleOffset;
+	//if (forceAll || def.renderMuzzleFlash != renderMuzzleFlash)			a["renderMuzzleFlash"] = renderMuzzleFlash;
+
+	if (forceAll || def.renderBullets != renderBullets)					a["renderBullets"] = renderBullets;
+	if (forceAll || def.bulletSpeed != bulletSpeed)						a["bulletSpeed"] = bulletSpeed;
+	if (forceAll || def.bulletGravity != bulletGravity)					a["bulletGravity"] = bulletGravity;
+	if (forceAll || def.bulletScale != bulletScale)						a["bulletScale"] = bulletScale;
+	if (forceAll || def.bulletColor != bulletColor)						a["bulletColor"] = bulletColor;
+	if (forceAll || def.bulletOffset != bulletOffset)					a["bulletOffset"] = bulletOffset;
+
+	if (forceAll || def.renderDecals != renderDecals)					a["renderDecals"] = renderDecals;
+	if (forceAll || def.missDecal != missDecal)							a["missDecal"] = missDecal;
+	if (forceAll || def.hitDecal != hitDecal)							a["hitDecal"] = hitDecal;
+	if (forceAll || def.missDecalCount != missDecalCount)				a["missDecalCount"] = missDecalCount;
+	if (forceAll || def.missDecalScale != missDecalScale)				a["missDecalScale"] = missDecalScale;
+	if (forceAll || def.missDecalTimeoutS != missDecalTimeoutS)			a["missDecalTimeoutS"] = missDecalTimeoutS;
+	if (forceAll || def.clearTrialMissDecals != clearTrialMissDecals)	a["clearTrialMissDecals"] = clearTrialMissDecals;
+	if (forceAll || def.hitDecalScale != hitDecalScale)					a["hitDecalScale"] = hitDecalScale;
+	if (forceAll || def.hitDecalTimeoutS != hitDecalTimeoutS)			a["hitDecalTimeoutS"] = hitDecalTimeoutS;
+	if (forceAll || def.hitDecalColorMult != hitDecalColorMult)			a["hitDecalColorMult"] = hitDecalColorMult;
+
+	if (forceAll || def.fireSpreadDegrees != fireSpreadDegrees)			a["fireSpreadDegrees"] = fireSpreadDegrees;
+	if (forceAll || def.fireSpreadShape != fireSpreadShape)				a["fireSpreadShape"] = fireSpreadShape;
+	if (forceAll || def.damageRollOffAim != damageRollOffAim)			a["damageRollOffAim"] = damageRollOffAim;
+	if (forceAll || def.damageRollOffDistance != damageRollOffDistance)	a["damageRollOffDistance"] = damageRollOffDistance;
+	if (forceAll || def.scopeFoV != scopeFoV)							a["scopeFoV"] = scopeFoV;
+	if (forceAll || def.scopeToggle != scopeToggle)						a["scopeToggle"] = scopeToggle;
+	if (forceAll || def.kickAngleDegrees != kickAngleDegrees)			a["kickAngleDegrees"] = kickAngleDegrees;
+	if (forceAll || def.kickDuration != kickDuration)					a["kickDuration"] = kickDuration;
+
+	return a;
+}
+
 void Weapon::loadDecals() {
 	if (m_config->missDecal.empty()) {
 		m_missDecalModel.reset();
@@ -85,8 +199,12 @@ void Weapon::onPose(Array<shared_ptr<Surface> >& surface) {
 		// Update the weapon frame for all of these cases
 		const float yScale = -0.12f;
 		const float zScale = -yScale * 0.5f;
-		const float lookY = m_camera->frame().lookVector().y;
-		m_frame = m_camera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5);
+		float kick = 0.f;
+		// ratio from start to end of kick from 0 to 1
+		const float kickRatio = cooldownRatio(System::time(), m_config->kickDuration);
+		kick = m_config->kickAngleDegrees * sinf(kickRatio * pif());
+		const float lookY = m_camera->frame().lookVector().y - 6.f * sin(2 * pif() / 360.0f * kick);
+		m_frame = m_camera->frame() * CFrame::fromXYZYPRDegrees(0.3f, -0.4f + lookY * yScale, -1.1f + lookY * zScale, 10, 5+kick);
 		// Pose the view model (weapon) for render here
 		if (m_config->renderModel) {
 			const float prevLookY = m_camera->previousFrame().lookVector().y;
@@ -159,6 +277,18 @@ void Weapon::simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntit
 	else {
 		m_hitDecalTimeRemainingS -= sdt;
 	}
+
+	// Handle miss decal removal (timeout)
+	for (int i = 0; i < m_missDecalTimesRemaining.length(); i++) {
+		if (m_missDecalTimesRemaining[i] < 0) continue;					// Skip decals with negative initial timeouts (don't timeout)
+		m_missDecalTimesRemaining[i] -= sdt;
+		if (m_missDecalTimesRemaining[i] <= 0) {
+			m_scene->remove(m_currentMissDecals[i]);
+			m_missDecalTimesRemaining.remove(i);
+			m_currentMissDecals.remove(i);
+			i--;
+		}
+	}
 }
 
 void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
@@ -173,10 +303,13 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	decalFrame.lookAt(decalFrame.translation - normal);
 
 	// If we have the maximum amount of decals remove the oldest one
-	if (!hit && m_currentMissDecals.size() == m_config->missDecalCount) {
-		shared_ptr<VisibleEntity> lastDecal = m_currentMissDecals.pop();
-		m_scene->remove(lastDecal);
+	if (!hit) {
+		while (m_currentMissDecals.size() >= m_config->missDecalCount) {
+			m_scene->remove(m_currentMissDecals.pop());
+			m_missDecalTimesRemaining.pop();
+		}
 	}
+	// Handle hit decal here (only show 1 at a time)
 	else if (hit && notNull(m_hitDecal)) {
 		m_scene->remove(m_hitDecal);
 	}
@@ -186,10 +319,24 @@ void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	const shared_ptr<VisibleEntity>& newDecal = VisibleEntity::create(format("decal%03d", ++m_lastDecalID), &(*m_scene), decalModel, decalFrame);
 	newDecal->setCastsShadows(false);
 	m_scene->insert(newDecal);
-	if (!hit) m_currentMissDecals.insert(0, newDecal);	// Add the new decal to the front of the Array (if a miss)
+	if (!hit) {
+		m_currentMissDecals.insert(0, newDecal);	// Add the new decal to the front of the Array (if a miss)
+		m_missDecalTimesRemaining.insert(0, m_config->missDecalTimeoutS);
+	}
 	else {
 		m_hitDecal = newDecal;
-		m_hitDecalTimeRemainingS = m_config->hitDecalDurationS;
+		m_hitDecalTimeRemainingS = m_config->hitDecalTimeoutS;
+	}
+}
+
+void Weapon::clearDecals(bool clearHitDecal) {
+	while (m_currentMissDecals.size() > 0) {				// Remove and clear miss decals
+		m_scene->remove(m_currentMissDecals.pop());
+	}
+	m_missDecalTimesRemaining.clear();						// Clear miss decal timeouts
+
+	if (clearHitDecal && notNull(m_hitDecal)) {				// Clear hit decal (if one is present)
+		m_scene->remove(m_hitDecal);
 	}
 }
 
@@ -201,14 +348,12 @@ shared_ptr<TargetEntity> Weapon::fire(
 	Array<shared_ptr<Entity>>& dontHit,
 	bool dummyShot)
 {
-	static RealTime lastTime;
 	Ray ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
 	float spread = m_config->fireSpreadDegrees * 2.f * pif() / 360.f;
 
 	// ignore bullet spread on dummy targets
-	if (dummyShot) {
-		spread = 0.f;
-	}
+	if (dummyShot) { spread = 0.f; }
+	else { m_ammo -= 1; }
 
 	// Apply random rotation (for fire spread)
 	Matrix3 rotMat = Matrix3::fromEulerAnglesXYZ(0.f,0.f,0.f);
@@ -247,7 +392,7 @@ shared_ptr<TargetEntity> Weapon::fire(
 		bulletStartFrame.lookAt(aimPoint);
 
 		// Non-laser weapon, draw a projectile
-		if (!m_config->isLaser()) {
+		if (!m_config->isContinuous()) {
 			const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastBulletId), m_scene.get(), m_bulletModel, bulletStartFrame);
 			bullet->setShouldBeSaved(false);
 			bullet->setCanCauseCollisions(false);
@@ -292,13 +437,52 @@ shared_ptr<TargetEntity> Weapon::fire(
 		}
 	}
 
-	// If we're not in laser mode play the sounce (once) here
-	if (!m_config->isLaser()) {
-		m_fireSound->play(m_config->fireSoundVol);
-		//m_fireSound->play(activeCamera()->frame().translation, activeCamera()->frame().lookVector() * 2.0f, 0.5f);
-	}
-
 	END_PROFILER_EVENT();
 
 	return target;
+}
+
+void Weapon::playSound(bool shotFired, bool shootButtonUp) {
+	if (m_config->loopAudio()){											// Continuous weapon/looped audio
+		if (notNull(m_fireAudio) && shootButtonUp) {					// Sound is playing and mouse is up
+			m_fireAudio->stop();										// Stop looped audio on mouse up
+			m_fireAudio = nullptr;
+		}
+		else if (shotFired && isNull(m_fireAudio)) {					// Shots fired and sound isn't playing
+			m_fireAudio = m_fireSound->play(m_config->fireSoundVol);	// Start a new sound
+		}
+	}
+	else if (shotFired && notNull(m_fireSound)) {						// Discrete weapon (no looped audio)
+		m_fireAudio = m_fireSound->play(m_config->fireSoundVol);		// Start a new sound
+	}
+}
+
+void Weapon::setLastFireTime(RealTime lastFireTime) {
+	m_lastFireTime = lastFireTime;
+}
+
+RealTime Weapon::fireDurationUntil(RealTime currentTime) {
+	return currentTime - m_lastFireTime;
+}
+
+int Weapon::numShotsUntil(RealTime currentTime) {
+	return max((int)floorf((float)(currentTime - m_lastFireTime) / m_config->firePeriod), 0);
+}
+
+bool Weapon::canFire(RealTime now) const {
+	if (isNull(m_config)) return true;
+	return (now - m_lastFireTime) > m_config->firePeriod;
+}
+
+float Weapon::cooldownRatio(RealTime now) const {
+	if (isNull(m_config) || m_config->firePeriod == 0.0) return 1.0f;
+	return cooldownRatio(now, m_config->firePeriod);
+}
+
+float Weapon::cooldownRatio(RealTime now, float duration) const {
+	return clamp((float)(now - m_lastFireTime) / duration, 0.0f, 1.0f);
+}
+
+float Weapon::damagePerShot() const {
+	return m_config->damagePerSecond * m_config->firePeriod;
 }

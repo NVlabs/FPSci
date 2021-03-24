@@ -1,9 +1,43 @@
 #pragma once
 #include <G3D/G3D.h>
-#include "ConfigFiles.h"
+//#include "ConfigFiles.h"
+#include "UserConfig.h"
+#include "UserStatus.h"
 #include "TargetEntity.h"
+#include "Weapon.h"
 
 class FPSciApp;
+class SessionConfig;
+
+class MenuConfig {
+public:
+	// Menu controls
+	bool showMenuLogo = true;									///< Show the FPSci logo in the user menu
+	bool showExperimentSettings = true;							///< Show the experiment settings options (session/user selection)
+	bool showUserSettings = true;								///< Show the user settings options (master switch)
+	bool allowSessionChange = true;								///< Allow the user to change the session with the menu drop-down
+	bool allowUserAdd = false;									///< Allow the user to add a new user to the experiment
+	bool allowUserSettingsSave = true;							///< Allow the user to save settings changes
+	bool allowSensitivityChange = true;							///< Allow in-game sensitivity change		
+
+	bool allowTurnScaleChange = true;							///< Allow the user to apply X/Y turn scaling
+	String xTurnScaleAdjustMode = "None";						///< X turn scale adjustment mode (can be "None" or "Slider")
+	String yTurnScaleAdjustMode = "Invert";						///< Y turn scale adjustment mode (can be "None", "Invert", or "Slider")
+
+	bool allowReticleChange = false;							///< Allow the user to adjust their crosshair
+	bool allowReticleIdxChange = true;							///< If reticle change is allowed, allow index change
+	bool allowReticleSizeChange = true;							///< If reticle change is allowed, allow size change
+	bool allowReticleColorChange = true;						///< If reticle change is allowed, allow color change
+	bool allowReticleChangeTimeChange = false;					///< Allow the user to change the reticle change time
+	bool showReticlePreview = true;								///< Show a preview of the reticle
+
+	bool showMenuOnStartup = true;								///< Show the user menu on startup?
+	bool showMenuBetweenSessions = true;						///< Show the user menu between session?
+
+	void load(AnyTableReader reader, int settingsVersion = 1);
+	Any addToAny(Any a, const bool forceAll = false) const;
+	bool allowAnyChange() const;
+};
 
 struct WaypointDisplayConfig {
 	// Formatting parameters
@@ -116,6 +150,7 @@ public:
 	}
 };
 
+
 class UserMenu : public GuiWindow {
 protected:
 	FPSciApp* m_app = nullptr;									///< Store the app here
@@ -142,7 +177,7 @@ protected:
 
 	String m_newUser;											///< New user string
 
-	double	m_cmp360;											///< cm/360° setting
+	double	m_cmp360;											///< cm/360Â° setting
 
 	const Vector2 m_btnSize = { 100.f, 30.f };					///< Default button size
 	const Vector2 m_reticlePreviewSize = { 150.f, 150.f };		///< Reticle texture preview size
@@ -157,6 +192,8 @@ protected:
 	void updateUserPress();
 	void addUserPress();
 	void updateSessionPress();
+	void updateExperimentPress();
+	void resumePress();
 
 public:
 	static shared_ptr<UserMenu> create(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) {
@@ -167,10 +204,6 @@ public:
 	/** Resets session drop down clearing completed sessions and adding any new sessions. */
 	Array<String> updateSessionDropDown();
 	void updateReticlePreview();
-
-	void toggleVisibliity() {
-		setVisible(!visible());
-	}
 
 	void setSelectedSession(const String& id) {
 		m_sessDropDown->setSelectedValue(id);

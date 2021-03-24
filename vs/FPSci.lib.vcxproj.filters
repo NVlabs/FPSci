@@ -13,11 +13,14 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Config Files">
-      <UniqueIdentifier>{650a3750-20f3-4ac3-9338-6652eaca5463}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shader Files">
       <UniqueIdentifier>{c542b891-87fe-47ef-b6b0-5e39b70b2f65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Configuration">
+      <UniqueIdentifier>{ec92ba34-28f3-4980-85fa-be8743595a62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Configuration">
+      <UniqueIdentifier>{70a2b2ee-7798-4eb5-a47c-7f54071be866}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -48,9 +51,6 @@
     <ClInclude Include="..\source\WaypointManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\ConfigFiles.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\Weapon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -62,6 +62,30 @@
     </ClInclude>
     <ClInclude Include="..\source\FPSciApp.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\KeyMapping.h">
+      <Filter>Header Files\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\FpsConfig.h">
+      <Filter>Header Files\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\StartupConfig.h">
+      <Filter>Header Files\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\SystemInfo.h">
+      <Filter>Header Files\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\SystemConfig.h">
+      <Filter>Header Files\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\UserConfig.h">
+      <Filter>Header Files\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\UserStatus.h">
+      <Filter>Header Files\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\ExperimentConfig.h">
+      <Filter>Header Files\Configuration</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -95,6 +119,30 @@
     <ClCompile Include="..\source\FPSciApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\FpsConfig.cpp">
+      <Filter>Source Files\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\KeyMapping.cpp">
+      <Filter>Source Files\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\StartupConfig.cpp">
+      <Filter>Source Files\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\SystemConfig.cpp">
+      <Filter>Source Files\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\SystemInfo.cpp">
+      <Filter>Source Files\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\UserConfig.cpp">
+      <Filter>Source Files\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\UserStatus.cpp">
+      <Filter>Source Files\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\ExperimentConfig.cpp">
+      <Filter>Source Files\Configuration</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resources.rc">
@@ -102,26 +150,8 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\data-files\experimentconfig.Any">
-      <Filter>Config Files</Filter>
-    </None>
-    <None Include="..\data-files\userconfig.Any">
-      <Filter>Config Files</Filter>
-    </None>
     <None Include="..\data-files\shader\distort.pix">
       <Filter>Shader Files</Filter>
-    </None>
-    <None Include="..\data-files\userstatus.Any">
-      <Filter>Config Files</Filter>
-    </None>
-    <None Include="..\data-files\startupconfig.Any">
-      <Filter>Config Files</Filter>
-    </None>
-    <None Include="..\data-files\keymap.Any">
-      <Filter>Config Files</Filter>
-    </None>
-    <None Include="..\data-files\systemconfig.Any">
-      <Filter>Config Files</Filter>
     </None>
   </ItemGroup>
 </Project>

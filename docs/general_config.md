@@ -151,13 +151,13 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 ```
 
 ## Audio Settings
-| Parameter Name        |Units  | Description                                                           |
-|-----------------------|-------|-----------------------------------------------------------------------|
-|`sceneHitSound`        |file   | The sound to play when the scene (not the target) is hit by a weapon  |
-|`sceneHitSoundVol`     |ratio  | The volume of the scene hit sound to play                             |
+| Parameter Name        |Units  | Description                                                                                               |
+|-----------------------|-------|-----------------------------------------------------------------------------------------------------------|
+|`sceneHitSound`        |file   | The sound to play when the scene (not the target) is hit by a weapon (for no sound use an empty string)   |
+|`sceneHitSoundVol`     |ratio  | The volume of the scene hit sound to play                                                                 |
 
 ```
-"sceneHitSound": "sound/18382__inferno__hvylas.wav",
+"sceneHitSound": "sound/fpsci_miss_100ms.wav",
 "sceneHitSoundVol": 1.0f,
 ```
 

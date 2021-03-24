@@ -66,6 +66,7 @@
     <ClInclude Include="..\tests\TestFakeInput.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\data-files\scene\Test_Cornell_Box.Scene.Any" />
     <None Include="..\data-files\test\experimentconfig.Any" />
     <None Include="..\data-files\test\keymap.Any" />
     <None Include="..\data-files\test\startupconfig.Any" />
