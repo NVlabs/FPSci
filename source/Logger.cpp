@@ -370,6 +370,7 @@ void FPSciLogger::logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets)
 			"'" + config->destSpace + "'",
 			String(std::to_string(config->size[0])),
 			String(std::to_string(config->size[1])),
+			String(std::to_string(config->symmetricEcc)),
 			String(std::to_string(config->eccH[0])),
 			String(std::to_string(config->eccH[1])),
 			String(std::to_string(config->eccV[0])),
