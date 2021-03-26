@@ -1124,7 +1124,10 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice *rd) {
             args.setUniform("iMouse", userInput->mouseXY());
             args.setUniform("iFrame", frameNumber);
 			args.setRect(rd->viewport());
-			LAUNCH_SHADER(sessConfig->render.shader, args);
+			if (!m_shaderToyTable.containsKey(sessConfig->render.shader)) {
+				m_shaderToyTable.set(sessConfig->render.shader, G3D::Shader::getShaderFromPattern(sessConfig->render.shader) );
+			}
+			LAUNCH_SHADER_PTR(m_shaderToyTable[sessConfig->render.shader], args);
 			lastTime = iTime;
 		} rd->pop2D();
 
