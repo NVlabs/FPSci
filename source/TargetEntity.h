@@ -54,7 +54,8 @@ public:
 	Array<float>	distance = { 30.0f, 40.0f };			///< Distance to the target
 	Array<float>	motionChangePeriod = { 1.0f, 1.0f };	///< Range of motion change period in seconds
 	Array<float>	speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
-	bool			symmetricEcc = true;					///< Consider eccH and eccV in all 4 directions
+	bool			symmetricEccH = true;					///< Consider eccH in 2 directions (positive and negative horizontal axes)
+	bool			symmetricEccV = true;					///< Consider eccV in 2 directions (positive and negative vertical axes)
 	Array<float>	eccH = { 5.0f, 15.0f };					///< Range of initial horizontal eccentricity
 	Array<float>	eccV = { 0.0f, 2.0f };					///< Range of initial vertical eccentricity
 	Array<float>	size = { 0.2f, 0.2f };					///< Visual size of the target (in degrees)
