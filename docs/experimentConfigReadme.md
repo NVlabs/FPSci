@@ -36,7 +36,7 @@ In addition to these general parameters each session also has a few unique param
     * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided).
     * `trials` is a list of trials referencing the `trials` table above:
         * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
-        * `count` provides the number of trials in this session
+        * `count` provides the number of trials in this session (should always be an integer strictly greater than 0)
 
 #### Session Configuration Example
 An example session configuration snippet is included below:
@@ -82,10 +82,10 @@ The following configuration is universal to all target types.
 * `respawnCount` is an integer providing the number of respawns to occur. For non-respawning items use `0` or leave unspecified. A value of `-1` creates a target that respawns infinitely (trial ends when ammo or task time runs out).
 * `visualSize` is a vector indicating the minimum ([0]) and maximum ([1]) visual size for the target (in deg)
 * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
-* `hitSound` is a filename for the sound to play when the target is hit but not destroyed.
+* `hitSound` is a filename for the sound to play when the target is hit but not destroyed (for no sound use an empty string).
 * `hitSoundVol` provides the volume (as a float) for the hit sound to be played at (default is `1.0`).
-* `destroyedSound` is a filename for the sound to play when the target is both hit and destroyed.
-* `destroyedSoundVol` provides the volume (as a float) for the destroyed sound to be played at (default is `10.0`).
+* `destroyedSound` is a filename for the sound to play when the target is both hit and destroyed (for no sound use an empty string).
+* `destroyedSoundVol` provides the volume (as a float) for the destroyed sound to be played at (default is `1.0`).
 * `destroyDecal` the decal to show when destroyed
 * `destroyDecalScale` a scale to apply the the destroy decal (may be decal dependent)
 * `destroyDecalDuration` is the duration to
@@ -129,10 +129,10 @@ targets = [
         "speed": [1.0, 3.0],                    // 1-3m/s speed
         "eccH" : [5.0, 15.0],                   // 5-15° initial spawn location (horizontal)
         "eccV" : [0.0, 5.0],                    // 0-5° intitial spawn location (vertical)
-        "hitSound" : "sound/18397__inferno__smalllas.wav",      // Sound to play when target hit
+        "hitSound" : "sound/fpsci_ding_100ms.wav",      // Sound to play when target hit
         "hitSoundVol" : 1.0,                    // Volume to play the hit sound at
-        "destroyedSound" : "sound/32882__Alcove_Audio__BobKessler_Metal_Bangs-1.wav", // Sound to play when target destroyed (explosion)
-        "destroyedSoundVol" : 10.0f,            // Volume to play destroyed sound at
+        "destroyedSound" : "sound/fpsci_destroy_150ms.wav", // Sound to play when target destroyed (explosion)
+        "destroyedSoundVol" : 1.0f,             // Volume to play destroyed sound at
         "destroyDecal" : "explosion_01.png",    // Use default explosion decal
         "destroyDecalScale" : 1.0,              // Use default sizing
         "destroyDecalDuration" : 0.1,           // Show the decal for 0.1s (default)

@@ -31,6 +31,88 @@
 #include "TargetEntity.h"
 #include "PlayerEntity.h"
 #include "Dialogs.h"
+#include "Weapon.h"
+
+TrialCount::TrialCount(const Any& any) {
+	int settingsVersion = 1;
+	AnyTableReader reader(any);
+	reader.getIfPresent("settingsVersion", settingsVersion);
+
+	switch (settingsVersion) {
+	case 1:
+		reader.get("ids", ids, "An \"ids\" field must be provided for each set of trials!");
+		if (!reader.getIfPresent("count", count)) {
+			count = defaultCount;
+		}
+		if (count < 1) {
+			throw format("Trial count < 1 not allowed! (%d count for trial with targets: %s)", count, Any(ids).unparse());
+		}
+		break;
+	default:
+		debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
+		break;
+	}
+}
+
+Any TrialCount::toAny(const bool forceAll) const {
+	Any a(Any::TABLE);
+	a["ids"] = ids;
+	a["count"] = count;
+	return a;
+}
+
+SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig) {
+	TrialCount::defaultCount = timing.defaultTrialCount;
+	AnyTableReader reader(any);
+	switch (settingsVersion) {
+	case 1:
+		// Unique session info
+		reader.get("id", id, "An \"id\" field must be provided for each session!");
+		reader.getIfPresent("description", description);
+		reader.getIfPresent("closeOnComplete", closeOnComplete);
+		reader.getIfPresent("blockCount", blockCount);
+		reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
+		break;
+	default:
+		debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
+		break;
+	}
+}
+
+Any SessionConfig::toAny(const bool forceAll) const {
+	// Get the base any config
+	Any a = FpsConfig::toAny(forceAll);
+	SessionConfig def;
+
+	// Update w/ the session-specific fields
+	a["id"] = id;
+	a["description"] = description;
+	if (forceAll || def.closeOnComplete != closeOnComplete)	a["closeOnComplete"] = closeOnComplete;
+	if (forceAll || def.blockCount != blockCount)				a["blockCount"] = blockCount;
+	a["trials"] = trials;
+	return a;
+}
+
+float SessionConfig::getTrialsPerBlock(void) const {
+	float count = 0.f;
+	for (const TrialCount& tc : trials) {
+		if (count < 0) {
+			return finf();
+		}
+		else {
+			count += tc.count;
+		}
+	}
+	return count;
+}
+
+Session::Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config), m_weapon(app->weapon) {
+	m_hasSession = notNull(m_config);
+}
+
+Session::Session(FPSciApp* app) : m_app(app), m_weapon(app->weapon) {
+	m_hasSession = false;
+}
 
 bool Session::hasNextCondition() const{
 	for (int count : m_remainingTrials) {
@@ -168,7 +250,7 @@ void Session::initTargetAnimation() {
 	// Reset number of destroyed targets (in the trial)
 	m_destroyedTargets = 0;
 	// Reset shot and hit counters (in the trial)
-	m_shotCount = 0;
+	m_weapon->reload();
 	m_hitCount = 0;
 }
 
@@ -219,12 +301,17 @@ void Session::processResponse()
 	m_taskExecutionTime = m_timer.getTime();
 
 	const int totalTargets = totalTrialTargets();
-	// Record the trial response into the database
-	recordTrialResponse(m_destroyedTargets, totalTargets);
 
+	recordTrialResponse(m_destroyedTargets, totalTargets);					// Record the trial response into the database
+
+	// Update completed/remaining trial state
 	m_completedTrials[m_currTrialIdx] += 1;
 	if (m_remainingTrials[m_currTrialIdx] > 0) {
 		m_remainingTrials[m_currTrialIdx] -= 1;	
+	}
+
+	if (notNull(logger)) {
+		logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
 	}
 
 	// Check for whether all targets have been destroyed
@@ -250,7 +337,7 @@ void Session::updatePresentationState()
 		if (m_config->player.stillBetweenTrials) {
 			m_player->setMoveEnable(false);
 		}
-		if (!(m_app->buttonUp && m_config->timing.clickToStart)) {
+		if (!(m_app->shootButtonUp && m_config->timing.clickToStart)) {
 			newState = PresentationState::trialFeedback;
 		}
 	}
@@ -270,7 +357,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::trialTask)
 	{
-		if ((stateElapsedTime > m_config->timing.maxTrialDuration) || (remainingTargets <= 0) || (m_shotCount == m_config->weapon.maxAmmo))
+		if ((stateElapsedTime > m_config->timing.maxTrialDuration) || (remainingTargets <= 0) || (m_weapon->remainingAmmo() == 0))
 		{
 			m_taskEndTime = FPSciLogger::genUniqueTimestamp();
 			processResponse();
@@ -287,7 +374,10 @@ void Session::updatePresentationState()
 			runTrialCommands("end");			// Run the end of trial processes
 
 			// Reset weapon cooldown
-			m_lastFireAt = 0.f;
+			m_weapon->resetCooldown();
+			if (m_weapon->config()->clearTrialMissDecals) {				// Clear weapon's decals if specified
+				m_weapon->clearDecals(false);
+			}
 		}
 	}
 	else if (currentState == PresentationState::trialFeedback)
@@ -310,13 +400,12 @@ void Session::updatePresentationState()
 								if (m_config->logger.enable) {
 									logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
 								}
-								m_currQuestionIdx++;																// Present the next question (if there is one)
+								m_currQuestionIdx++;																
 								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
-									m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
+									m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);				// Present the next question (if there is one)
 								}
 								else {
-									// Null the dialog pointer when all questions complete
-									m_app->dialog = nullptr;
+									m_app->dialog.reset();															// Null the dialog pointer when all questions complete
 								}
 							}
 							else {
@@ -350,7 +439,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::sessionFeedback) {
 		if (m_hasSession) {
-			if (stateElapsedTime > m_config->timing.sessionFeedbackDuration && (!m_config->timing.sessionFeedbackRequireClick || !m_app->buttonUp)) {
+			if (stateElapsedTime > m_config->timing.sessionFeedbackDuration && (!m_config->timing.sessionFeedbackRequireClick || !m_app->shootButtonUp)) {
 				newState = PresentationState::complete;
         
 				// Save current user config and status
@@ -479,30 +568,6 @@ void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 	}
 }
 
-bool Session::canFire() {
-	if (isNull(m_config)) return true;
-	double timeNow = System::time();
-	if ((timeNow - m_lastFireAt) > (m_config->weapon.firePeriod)) {
-		m_lastFireAt = timeNow;
-		return true;
-	}
-	else {
-		return false;
-	}
-}
-
-float Session::weaponCooldownPercent() const {
-	if (isNull(m_config)) return 1.0;
-	if (m_config->weapon.firePeriod == 0.0f) return 1.0;
-	return min((float)(System::time() - m_lastFireAt) / m_config->weapon.firePeriod, 1.0f);
-}
-
-int Session::remainingAmmo() const {
-	if (isNull(m_config)) return 100;
-	return m_config->weapon.maxAmmo - m_shotCount;
-}
-
-
 float Session::getRemainingTrialTime() {
 	if (isNull(m_config)) return 10.0;
 	return m_config->timing.maxTrialDuration - m_timer.getTime();
@@ -612,7 +677,7 @@ String Session::formatFeedback(const String& input) {
 			formatted = formatted.substr(0, foundIdx) + format("%d", m_hitCount) + formatted.substr(foundIdx + trialShotsHit.length());
 		}
 		else if (!formatted.compare(foundIdx, trialTotalShots.length(), trialTotalShots)) {
-			formatted = formatted.substr(0, foundIdx) + format("%d", m_shotCount) + formatted.substr(foundIdx + trialTotalShots.length());
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_weapon->shotsTaken()) + formatted.substr(foundIdx + trialTotalShots.length());
 		}
 		else {
 			// Bump the found index past this character (not a valid substring)
@@ -627,7 +692,7 @@ String Session::getFeedbackMessage() {
 }
 
 void Session::endLogging() {
-	if (logger != nullptr) {
+	if (notNull(logger)) {
 
 		//m_logger->logUserConfig(*m_app->currentUser(), m_config->id, m_config->player.turnScale);
 		logger->flush(false);
@@ -650,8 +715,8 @@ shared_ptr<TargetEntity> Session::spawnDestTarget(
 	const shared_ptr<TargetEntity>& target = TargetEntity::create(config, nameStr, m_scene, (*m_targetModels)[config->id][scaleIndex], position, scaleIndex, paramIdx);
 
 	// Update parameters for the target
-	target->setHitSound(config->hitSound, config->hitSoundVol);
-	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
+	target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
 	target->setFrame(position);
 	target->setColor(color);
 
@@ -698,8 +763,8 @@ shared_ptr<FlyingEntity> Session::spawnFlyingTarget(
 	if (isWorldSpace) {
 		target->setBounds(config->moveBounds);
 	}
-	target->setHitSound(config->hitSound, config->hitSoundVol);
-	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
+	target->setHitSound(config->hitSound, m_app->soundTable,  config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
 	target->setColor(color);
 
 	// Add the target to the scene/target array
@@ -728,8 +793,8 @@ shared_ptr<JumpingEntity> Session::spawnJumpingTarget(
 	if (isWorldSpace) {
 		target->setMoveBounds(config->moveBounds);
 	}
-	target->setHitSound(config->hitSound, config->hitSoundVol);
-	target->setDestoyedSound(config->destroyedSound, config->destroyedSoundVol);
+	target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
+	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
 	target->setColor(color);
 
 	// Add the target to the scene/target array

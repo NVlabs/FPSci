@@ -6,14 +6,8 @@
 G3D_START_AT_MAIN();
 
 int main(int argc, const char* argv[]) {
-	if (FileSystem::exists("startupconfig.Any")) {
-		FPSciApp::startupConfig = Any::fromFile("startupconfig.Any");
-	}
-	else {
-		// autogenerate if it wasn't there (force all fields into this any file)
-		FPSciApp::startupConfig.toAny(true).save("startupconfig.Any");
-	}
 
+	FPSciApp::startupConfig = StartupConfig::load("startupconfig.Any");
 
 	{
 		G3DSpecification spec;

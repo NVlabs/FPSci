@@ -1,7 +1,8 @@
 #pragma once
 #include <G3D/G3D.h>
 #include "sqlHelpers.h"
-#include "ConfigFiles.h"
+#include "UserConfig.h"
+#include "Session.h"
 
 using RowEntry = Array<String>;
 using Columns = Array<Array<String>>;
@@ -26,8 +27,9 @@ public:
 protected:
 	sqlite3* m_db = nullptr;						///< The db used for logging
 	
+	String m_openTimeStr;							///< Time string for database creation
+
 	const size_t m_bufferLimit = 1024 * 1024;		///< Flush every this many bytes
-	
 	const LoggerConfig& m_config;					/// Logger configuration
 
 	bool m_running = false;
@@ -81,7 +83,7 @@ protected:
 	void recordTargetLocations(const Array<TargetLocation>& locations);
 
 	/** Create a results file */
-	void createResultsFile(const String& filename, 
+	void openResultsFile(const String& filename, 
 		const String& subjectID, 
 		const shared_ptr<SessionConfig>& sessConfig, 
 		const String& description);
@@ -101,6 +103,8 @@ public:
 	{
 		return createShared<FPSciLogger>(filename, subjectID, sessConfig, description);
 	}
+
+	void updateSessionEntry(bool complete, int trialCount);
 
 	void logFrameInfo(const FrameInfo& frameInfo) { addToQueue(m_frameInfo, frameInfo); }
 	void logPlayerAction(const PlayerAction& playerAction) { addToQueue(m_playerActions, playerAction); }

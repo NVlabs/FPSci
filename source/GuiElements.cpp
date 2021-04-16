@@ -271,21 +271,43 @@ void RenderControls::updateUserMenu() {
 	m_app->updateUserMenu = true;					// Set the semaphore to update the user menu
 }
 
-WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width, float height) : 
-	GuiWindow("Weapon Controls", theme, Rect2D::xywh(5, 5, width, height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
+WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width, float height) :
+	GuiWindow("Weapon Controls", theme, Rect2D::xywh(5, 5, width, height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_config(config)
 {
 	// Create the GUI pane
 	GuiPane* pane = GuiWindow::pane();
 
+	const float cbWidth = 110.f;
+	const float nbWidth = 300.f;
+
 	pane->beginRow(); {
 		pane->addNumberBox("Max Ammo", &(config.maxAmmo), "", GuiTheme::NO_SLIDER, 0, 100000, 1);
-		pane->addNumberBox("Fire Period", &(config.firePeriod), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 10.0f, 0.1f);
-		pane->addCheckBox("Autofire", &(config.autoFire));
+	} pane->endRow();
+	pane->beginRow();{
+		pane->addCheckBox("Autofire", &(config.autoFire))->setWidth(cbWidth);
+		auto n = pane->addNumberBox("Fire Period", &(config.firePeriod), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 10.0f, 0.001f);
+		n->setWidth(nbWidth);
 	} pane->endRow();
 	pane->beginRow(); {
-		auto n = pane->addNumberBox("Damage", &(config.damagePerSecond), "health/s", GuiTheme::LINEAR_SLIDER, 0.0f, 100.0f, 0.1f);
-		n->setWidth(300.0f);
+		pane->addCheckBox("Hitscan", &(config.hitScan))->setWidth(cbWidth);
+		auto n = pane->addNumberBox("Damage", &(config.damagePerSecond), "health/s", GuiTheme::LINEAR_SLIDER, 0.0f, 100.0f, 0.01f);
+		n->setWidth(nbWidth);
 		n->setUnitsSize(50.0f);
+	} pane->endRow();
+	pane->beginRow(); {
+		pane->addCheckBox("Show Decals", &(config.renderDecals))->setWidth(cbWidth);
+		auto n = pane->addNumberBox("Miss Decals", &(config.missDecalCount), "decals", GuiTheme::LINEAR_SLIDER, 0, 1000, 1);
+		n->setWidth(nbWidth);
+		n->setUnitsSize(50.f);
+	} pane->endRow();
+	pane->beginRow(); {
+		pane->addNumberBox("Kick Angle", &(config.kickAngleDegrees), "\xB0", GuiTheme::LINEAR_SLIDER, 0.f, 45.f, 0.1f);
+		pane->addNumberBox("Kick Duration", &(config.kickDuration), "s", GuiTheme::LINEAR_SLIDER, 0.f, 2.f, 0.01f);
+	} pane->endRow();
+	pane->beginRow(); {
+		pane->addNumberBox("Fire Spread", &(config.fireSpreadDegrees), "\xB0", GuiTheme::LINEAR_SLIDER, 0.f, 120.f, 0.1f);
+		m_spreadShapeIdx = m_spreadShapes.findIndex(m_config.fireSpreadShape);
+		pane->addDropDownList("Spread Shape", m_spreadShapes, &m_spreadShapeIdx, std::bind(&WeaponControls::updateFireSpreadShape, this));
 	} pane->endRow();
 	//pane->beginRow(); {
 	//	auto c = pane->addLabel("Muzzle offset");
@@ -306,6 +328,66 @@ WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>&
 
 	pack();
 	moveTo(Vector2(0, 720));
+}
+
+void WeaponControls::updateFireSpreadShape() {
+	m_config.fireSpreadShape = m_spreadShapes[m_spreadShapeIdx];
+}
+
+void MenuConfig::load(AnyTableReader reader, int settingsVersion) {
+	switch (settingsVersion) {
+	case 1:
+		reader.getIfPresent("showMenuLogo", showMenuLogo);
+		reader.getIfPresent("showExperimentSettings", showExperimentSettings);
+		reader.getIfPresent("showUserSettings", showUserSettings);
+		reader.getIfPresent("allowSessionChange", allowSessionChange);
+		reader.getIfPresent("allowUserAdd", allowUserAdd);
+		reader.getIfPresent("allowUserSettingsSave", allowUserSettingsSave);
+		reader.getIfPresent("allowSensitivityChange", allowSensitivityChange);
+		reader.getIfPresent("allowTurnScaleChange", allowTurnScaleChange);
+		reader.getIfPresent("xTurnScaleAdjustMode", xTurnScaleAdjustMode);
+		reader.getIfPresent("yTurnScaleAdjustMode", yTurnScaleAdjustMode);
+		reader.getIfPresent("allowReticleChange", allowReticleChange);
+		reader.getIfPresent("allowReticleIdxChange", allowReticleIdxChange);
+		reader.getIfPresent("allowReticleSizeChange", allowReticleSizeChange);
+		reader.getIfPresent("allowReticleColorChange", allowReticleColorChange);
+		reader.getIfPresent("allowReticleChangeTimeChange", allowReticleChangeTimeChange);
+		reader.getIfPresent("showReticlePreview", showReticlePreview);
+		reader.getIfPresent("showMenuOnStartup", showMenuOnStartup);
+		reader.getIfPresent("showMenuBetweenSessions", showMenuBetweenSessions);
+		break;
+	default:
+		throw format("Did not recognize settings version: %d", settingsVersion);
+		break;
+	}
+}
+
+Any MenuConfig::addToAny(Any a, const bool forceAll) const {
+	MenuConfig def;
+	if (forceAll || def.showMenuLogo != showMenuLogo)									a["showMenuLogo"] = showMenuLogo;
+	if (forceAll || def.showExperimentSettings != showExperimentSettings)				a["showExperimentSettings"] = showExperimentSettings;
+	if (forceAll || def.showUserSettings != showUserSettings)							a["showUserSettings"] = showUserSettings;
+	if (forceAll || def.allowSessionChange != allowSessionChange)						a["allowSessionChange"] = allowSessionChange;
+	if (forceAll || def.allowUserAdd != allowUserAdd)									a["allowUserAdd"] = allowUserAdd;
+	if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)					a["allowUserSettingsSave"] = allowUserSettingsSave;
+	if (forceAll || def.allowSensitivityChange != allowSensitivityChange)				a["allowSensitivityChange"] = allowSensitivityChange;
+	if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)					a["allowTurnScaleChange"] = allowTurnScaleChange;
+	if (forceAll || def.xTurnScaleAdjustMode != xTurnScaleAdjustMode)					a["xTurnScaleAdjustMode"] = xTurnScaleAdjustMode;
+	if (forceAll || def.yTurnScaleAdjustMode != yTurnScaleAdjustMode)					a["yTurnScaleAdjustMode"] = yTurnScaleAdjustMode;
+	if (forceAll || def.allowReticleChange != allowReticleChange)						a["allowReticleChange"] = allowReticleChange;
+	if (forceAll || def.allowReticleIdxChange != allowReticleIdxChange)					a["allowReticleIdxChange"] = allowReticleIdxChange;
+	if (forceAll || def.allowReticleSizeChange != allowReticleSizeChange)				a["allowReticleSizeChange"] = allowReticleSizeChange;
+	if (forceAll || def.allowReticleColorChange != allowReticleColorChange)				a["allowReticleColorChange"] = allowReticleColorChange;
+	if (forceAll || def.allowReticleChangeTimeChange != allowReticleChangeTimeChange)	a["allowReticleChangeTimeChange"] = allowReticleChangeTimeChange;
+	if (forceAll || def.showReticlePreview != showReticlePreview)						a["showReticlePreview"] = showReticlePreview;
+	if (forceAll || def.showMenuOnStartup != showMenuOnStartup)							a["showMenuOnStartup"] = showMenuOnStartup;
+	if (forceAll || def.showMenuBetweenSessions != showMenuBetweenSessions)				a["showMenuBetweenSessions"] = showMenuBetweenSessions;
+	return a;
+}
+
+bool MenuConfig::allowAnyChange() const {
+	return allowSensitivityChange && allowTurnScaleChange &&
+		allowReticleChange && allowReticleIdxChange && allowReticleColorChange && allowReticleSizeChange && allowReticleChangeTimeChange;
 }
 
 ////////////////////////
@@ -335,6 +417,15 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	m_ddCurrUserIdx = m_users.getUserIndex(m_userStatus.currentUser);
 	m_expPane = m_parent->addPane("Experiment Settings");
 	m_expPane->setCaptionHeight(40);
+
+	// Only draw experiment selection box in developer mode
+	if (app->startupConfig.developerMode) {
+		m_expPane->beginRow(); {
+			m_expPane->addDropDownList("Experiment", app->experimentNames(), &(app->experimentIdx));
+			m_expPane->addButton("Select Experiment", this, &UserMenu::updateExperimentPress);
+		} m_expPane->endRow();
+	}
+
 	m_expPane->beginRow(); {
 		m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
 		m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
@@ -375,7 +466,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	m_resumeQuitPane->beginRow(); {
 		const Vector2 resumeQuitBtnSize = { 100.f, 40.f };
 		// Create resume and quit buttons
-		resumeBtn = m_resumeQuitPane->addButton("Resume", this, &UserMenu::toggleVisibliity, GuiTheme::TOOL_BUTTON_STYLE);
+		resumeBtn = m_resumeQuitPane->addButton("Resume", this, &UserMenu::resumePress, GuiTheme::TOOL_BUTTON_STYLE);
 		resumeBtn->setSize(resumeQuitBtnSize);
 		quitBtn = m_resumeQuitPane->addButton("Quit", m_app, &FPSciApp::quitRequest, GuiTheme::TOOL_BUTTON_STYLE);
 		quitBtn->setSize(resumeQuitBtnSize);
@@ -409,14 +500,14 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 		dpiDisplay->setEnabled(false);
 	} sensPane->endRow();
 	sensPane->beginRow(); {
-		auto sensitivityNb = sensPane->addNumberBox("Sensitivity", &(user.mouseDegPerMm), "°/mm", GuiTheme::LOG_SLIDER, 0.01, 100.0, 0.01);
+		auto sensitivityNb = sensPane->addNumberBox("Sensitivity", &(user.mouseDegPerMm), "\xB0/mm", GuiTheme::LOG_SLIDER, 0.01, 100.0, 0.01);
 		sensitivityNb->setWidth(300.0);
 		sensitivityNb->setCaptionWidth(captionWidth);
 		sensitivityNb->setUnitsSize(unitSize);
 		sensitivityNb->setEnabled(config.allowSensitivityChange);
 	} sensPane->endRow();
 	sensPane->beginRow(); {
-		auto cmp360Nb = sensPane->addNumberBox("", &m_cmp360, "cm/360°", GuiTheme::NO_SLIDER, 0.0, 3600.0, 0.1);
+		auto cmp360Nb = sensPane->addNumberBox("", &m_cmp360, "cm/360\xB0", GuiTheme::NO_SLIDER, 0.0, 3600.0, 0.1);
 		cmp360Nb->setWidth(180.0);
 		cmp360Nb->setCaptionWidth(captionWidth);
 		cmp360Nb->setUnitsSize(unitSize);
@@ -536,6 +627,10 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 	}
 
 	m_currentUserPane->pack();
+}
+
+void UserMenu::updateExperimentPress() {
+	m_app->reinitExperiment = true;				// Set the reinit semamphore to avoid event handling problems
 }
 
 Array<String> UserMenu::updateSessionDropDown() {
@@ -687,7 +782,9 @@ void UserMenu::updateCmp360() {
 
 void UserMenu::setVisible(bool enable) {
 	GuiWindow::setVisible(enable);
-	if (!m_app->dialog) {					// Don't allow the user menu to hide the mouse when a dialog box is open
-		m_app->setDirectMode(!enable);		// Set view control (direct) vs pointer (indirect) based on window visibility
-	}
+}
+
+void UserMenu::resumePress() {
+	setVisible(!visible());
+	m_app->setMouseInputMode(visible() ? FPSciApp::MouseInputMode::MOUSE_CURSOR : FPSciApp::MouseInputMode::MOUSE_FPM);
 }

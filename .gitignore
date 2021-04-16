@@ -22,9 +22,19 @@ data-files/test/userconfig.Any
 "scripts/event logger/software/Logs"
 results/
 # This avoids checking-in experiment-specific files
-data-files/sound
-data-files/scene
-data-files/model
+/data-files/sound/*
+/data-files/scene/*
+/data-files/model/*
+# Included models
+!/data-files/model/sniper
+!/data-files/model/target
+# Included scenes
+!/data-files/scene/Medium_Courtyard.Scene.Any
+!/data-files/scene/Simple_Hallway.Scene.Any
+# Test scene
+!/data-files/scene/Test_Cornell_Box.Scene.Any
+# FPSci provided audio
+!/data-files/sound/fpsci_*
 # This stuff ignores any packaged outputs
 *.zip
 *.tar

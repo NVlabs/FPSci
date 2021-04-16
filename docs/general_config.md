@@ -158,13 +158,13 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 ```
 
 ## Audio Settings
-| Parameter Name        |Units  | Description                                                           |
-|-----------------------|-------|-----------------------------------------------------------------------|
-|`sceneHitSound`        |file   | The sound to play when the scene (not the target) is hit by a weapon  |
-|`sceneHitSoundVol`     |ratio  | The volume of the scene hit sound to play                             |
+| Parameter Name        |Units  | Description                                                                                               |
+|-----------------------|-------|-----------------------------------------------------------------------------------------------------------|
+|`sceneHitSound`        |file   | The sound to play when the scene (not the target) is hit by a weapon (for no sound use an empty string)   |
+|`sceneHitSoundVol`     |ratio  | The volume of the scene hit sound to play                                                                 |
 
 ```
-"sceneHitSound": "sound/18382__inferno__hvylas.wav",
+"sceneHitSound": "sound/fpsci_miss_100ms.wav",
 "sceneHitSoundVol": 1.0f,
 ```
 
@@ -237,7 +237,10 @@ Questions are configured on a per experiment/session basis using the `questions`
 |`type`                 |`String`| The question type (required), can be `"MultipleChoice"`, `Rating`, or (text) `"Entry"`      |
 |`prompt`               |`String`| The question prompt (required), a string to present the user with                |
 |`title`                |`String`| The title for the feedback prompt                                                |
-|`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only           |
+|`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only          |
+|`optionKeys`           |`Array<GKey>`  | An array of `GKey` options in 1:1 correspondence with `options` above. Leave empty for no keybinds. Check [here](keymap.md#gkey-string) for strings to use for `GKey`s. |
+|`fullscreen`           |`bool`  | When set this opens the dialog in "fullscreen" mode, overlaying all of the rendered content (default is `false`) |
+|`showCursor`           |`bool`  | Allows the experiment designer to hide the cursor while responding to this dialog (default is `true`). Best used with `optionKeys` set otherwise there may be no way to answer the question. Not intended for use with `"Entry"` question types. |
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
 
@@ -251,7 +254,10 @@ The user can specify one or more questions using the `questions` array, as demon
     {
         "type": "MultipleChoice",
         "prompt": "Choose an option!",
-        "options": ["A", "B", "C"]
+        "options": ["1", "2", "3"],
+        "optionKeys" : ["A", "B", "C"],
+        "fullscreen": true,
+        "showCursor" : false,
     }
 ]
 ```
@@ -515,6 +521,7 @@ These flags control whether various information is written to the output databas
 |`logPlayerActions`                 |`bool` | Enable/disable for logging player position, aim , and actions to database (per frame) |
 |`logTrialResponse`                 |`bool` | Enable/disable for logging trial responses to database (per trial)    |
 |`logUsers`                         |`bool` | Enable/disable for logging users to database (per session)            |
+|`logToSingleDb`                    |`bool` | Enable/disable for logging to a unified output database file (named using the experiment description and user ID)  |
 
 ```
 "logEnable" = true,
@@ -523,7 +530,10 @@ These flags control whether various information is written to the output databas
 "logPlayerActions" = true,
 "logTrialResponse" = true,
 "logUsers" = true,
+"logToSingleDb" = true,
 ```
+
+*Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user]_[experiment config hash].db"`. This hash is printed to the `log.txt` from the run in case it is needed to disambiguate results files. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues. The experiment config hash takes into account only "valid" settings and ignores formatting only changes in the configuration file. Default values are used for the hash for anything that is not specified, so if a default is specified, the hash will match the config where the default was not specified.
 
 ## Command Config
 In addition to the programmable behavior above the general config also supports running of arbitrary commands around the FPSci runtime. Note that the "end" commands keep running and there's the potential for orphaned processes if you specify commands that are long running or infinite. The command options include:

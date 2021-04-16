@@ -25,6 +25,7 @@ When `developerMode=true` the following keys/actions are available in addition t
 
 | Key Name  |Action                             |
 |-----------|-----------------------------------|
+|`L Click`  |Select a waypoint                  |
 |`Q`        |Drop a waypoint                    |
 |`R`        |Record player motion as waypoints  |
 |`1`        |Open the render control window     |
@@ -58,6 +59,7 @@ This file associates each of the map names outlined below to an array of `GKey` 
 |Use a scope                        |`scope`                |`["R Mouse"]`          |
 |Fire the weapon pre-trial          |`dummyShoot`           |`["R Shift"]`          |
 |Quit the application               |`quit`                 |`["Keypad -", "Pause"]`|
+|Select a waypoint                  |`selectWaypoint`       |`["L Mouse"]`          |
 |Drop a waypoint                    |`dropWaypoint`         |`["Q"]`                |
 |Record player motion as waypoints  |`toggleRecording`      |`["R"]`                |
 |Open the render control window     |`toggleRenderWindow`   |`["1"]`                |
