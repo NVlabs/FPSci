@@ -587,7 +587,15 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 
 	// Update shader table
 	m_shaderTable.clear();
-	m_shaderTable.set(sessConfig->render.shader3D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader3D));
+	if (!sessConfig->render.shader3D.empty()) {
+		m_shaderTable.set(sessConfig->render.shader3D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader3D));
+	}
+	if (!sessConfig->render.shader2D.empty()) {
+		m_shaderTable.set(sessConfig->render.shader2D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader2D));
+	}
+	if (!sessConfig->render.shaderComposite.empty()) {
+		m_shaderTable.set(sessConfig->render.shaderComposite, G3D::Shader::getShaderFromPattern(sessConfig->render.shaderComposite));
+	}
 
 	// Load static HUD textures
 	for (StaticHudElement element : sessConfig->hud.staticElements) {
@@ -1616,7 +1624,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 	} rd->pop2D();
 
 	// Handle 2D-only shader here (requires split 2D framebuffer)
-	if (sessConfig->render.shader2D != "") {
+	if (sessConfig->render.shader2D != "" && m_shaderTable.containsKey(sessConfig->render.shader2D)) {
 		if (!sessConfig->render.split2DBuffer) {
 			throw "Cannot warp non-split 2D buffer, use \"shaderComposite\" to warp combined buffer instead!";
 		}
@@ -1635,12 +1643,12 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			args.setUniform("iMouse", userInput->mouseXY());
 			args.setUniform("iFrame", m_frameNumber);
 			args.setRect(rd->viewport());
-			LAUNCH_SHADER(sessConfig->render.shader2D, args);
+			LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shader2D], args);
 			m_last2DTime = iTime;
 		} rd->pop2D();
 
 		// Direct shader output to the display
-		rd->push2D(); {
+		rd->push2D(m_framebuffer); {
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader2DOutput->texture(0), Sampler::buffer());
 		} rd->pop2D();
@@ -1658,7 +1666,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 	}
 
 	//  Handle post-2D composite shader here
-	if (sessConfig->render.shaderComposite != "") {
+	if (sessConfig->render.shaderComposite != "" && m_shaderTable.containsKey(sessConfig->render.shaderComposite)) {
 		BEGIN_PROFILER_EVENT_WITH_HINT("Composite Shader Pass", "Time to run the composite shader pass");
 		// Copy the post-VFX HDR (input) framebuffer
 		//static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
@@ -1674,7 +1682,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			args.setUniform("iMouse", userInput->mouseXY());
 			args.setUniform("iFrame", m_frameNumber);
 			args.setRect(rd->viewport());
-			LAUNCH_SHADER(sessConfig->render.shaderComposite, args);
+			LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shaderComposite], args);
 			m_lastCompositeTime = iTime;
 		} rd->pop2D();
 
