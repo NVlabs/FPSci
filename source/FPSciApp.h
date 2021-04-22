@@ -59,6 +59,8 @@ protected:
 	Array<shared_ptr<UniversalMaterial>>	m_materials;						///< This stores the color materials
 
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_explosionModels;
+	/** table of shaders cached for the 2D shader parameters set per session */
+	Table<String, shared_ptr<G3D::Shader>> m_shaderTable;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
 	Queue<float>							m_frameDurationQueue;				///< Queue for history of frame times

@@ -585,6 +585,10 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
 	}
 
+	// Update shader table
+	m_shaderTable.clear();
+	m_shaderTable.set(sessConfig->render.shader3D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader3D));
+
 	// Load static HUD textures
 	for (StaticHudElement element : sessConfig->hud.staticElements) {
 		hudTextures.set(element.filename, Texture::fromFile(System::findDataFile(element.filename)));
@@ -1150,7 +1154,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 		}
 	}rd->pop2D();
 
-	if (sessConfig->render.shader3D != "") {
+	if (sessConfig->render.shader3D != "" && m_shaderTable.containsKey(sessConfig->render.shader3D)) {
 		BEGIN_PROFILER_EVENT_WITH_HINT("3D Shader Pass", "Time to run the post-3D shader pass");
 		// Copy the post-VFX HDR (input) framebuffer
 		//static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
@@ -1166,7 +1170,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 			args.setUniform("iMouse", userInput->mouseXY());
 			args.setUniform("iFrame", m_frameNumber);
 			args.setRect(rd->viewport());
-			LAUNCH_SHADER(sessConfig->render.shader3D, args);
+			LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shader3D], args);
 			m_lastTime = iTime;
 		} rd->pop2D();
 
