@@ -144,7 +144,7 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 |`split2DBuffer`            |`bool` | Split the 2D element rendering from the 3D
 |`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`), only valid if `split2DBuffer` = `true`! |
 |`shader3D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 3D content (as a `.pix`) |
-|`shdaerComposite`          |file   | The (relative) path/filename of an (optional) shader to run on the composited 2D/3D content (as a `.pix`) |
+|`shaderComposite`          |file   | The (relative) path/filename of an (optional) shader to run on the composited 2D/3D content (as a `.pix`) |
 
 ```
 "horizontalFieldOfView":  103.0,            // Field of view (horizontal) for the user in degrees
