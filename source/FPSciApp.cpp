@@ -1648,7 +1648,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		} rd->pop2D();
 
 		// Direct shader output to the display
-		rd->push2D(m_framebuffer); {
+		rd->push2D(); {
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader2DOutput->texture(0), Sampler::buffer());
 		} rd->pop2D();
