@@ -105,7 +105,8 @@ protected:
 	shared_ptr<Framebuffer>					m_buffer2D;							///< Buffer to use for 2D content (if split)
 	shared_ptr<Framebuffer>					m_shader2DOutput;					///< Buffer to use for 2D shader output (if provided)
 	shared_ptr<Framebuffer>					m_shader3DOutput;					///< Buffer to use for 3D shader output (if provided)
-	shared_ptr<Framebuffer>					m_shaderCompositeOutput;			///< Buffer to use for composite shader output (if provided) 
+	shared_ptr<Framebuffer>					m_bufferComposite;					///< Buffer to use for input to composited shader (if provided)
+	shared_ptr<Framebuffer>					m_shaderCompositeOutput;			///< Buffer to use for composite shader output (if provided)
 	int										m_frameNumber = 0;					///< Frame number (since the start of the session)
 	RealTime								m_startTime;						///< Start time (for the session)
 	RealTime								m_last2DTime, m_last3DTime, m_lastCompositeTime;		///< Times used for iTimeDelta

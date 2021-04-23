@@ -445,23 +445,28 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 }
 
 void FPSciApp::updateShaderBuffers() {
-	// Parameters for update
+	// Parameters for update/resize of buffers
 	const int width = renderDevice->width();
 	const int height = renderDevice->height();
-	const ImageFormat* format = m_framebuffer->texture(0)->format();
+	const ImageFormat* framebufferFormat = m_framebuffer->texture(0)->format();
 
-	// This updates/resizes the buffers
+	// 2D buffers (input and output)
 	if (sessConfig->render.split2DBuffer) {
 		m_buffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", width, height));
+		if (!sessConfig->render.shader2D.empty()) {
+			m_shader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height));
+		}
 	}
-	if (sessConfig->render.shader2D != "") {
-		m_shader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height));
+
+	// 3D shader output (use popped framebuffer as input)
+	if (!sessConfig->render.shader3D.empty()) {
+		m_shader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", width, height, framebufferFormat));
 	}
-	if (sessConfig->render.shader3D != "") {
-		m_shader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", width, height, format));
-	}
-	if (sessConfig->render.shaderComposite != "") {
-		m_shaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", width, height, format));
+
+	// Composite buffer (input and output)
+	if (!sessConfig->render.shaderComposite.empty()) {
+		m_bufferComposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Input", width, height, framebufferFormat));
+		m_shaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", width, height, framebufferFormat));
 	}
 }
 
@@ -736,6 +741,7 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 	if (displayLagFrames > 0) {
 		// Display the delayed frame
 		rd->popState();
+		// Render into the frame buffer or the composite shader input buffer (if provided)
 		rd->push2D(); {
 			// Advance the pointer to the next, which is also the oldest frame
 			m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (displayLagFrames + 1);
@@ -1162,7 +1168,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 		}
 	}rd->pop2D();
 
-	if (sessConfig->render.shader3D != "" && m_shaderTable.containsKey(sessConfig->render.shader3D)) {
+	if (!sessConfig->render.shader3D.empty() && m_shaderTable.containsKey(sessConfig->render.shader3D)) {
 		BEGIN_PROFILER_EVENT_WITH_HINT("3D Shader Pass", "Time to run the post-3D shader pass");
 		// Copy the post-VFX HDR (input) framebuffer
 		//static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
@@ -1183,7 +1189,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 		} rd->pop2D();
 
 		// Copy the shader output buffer into the framebuffer
-		rd->push2D(m_framebuffer); {
+		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_bufferComposite); {
 			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader3DOutput->texture(0), Sampler::buffer());
 		} rd->pop2D();
 		END_PROFILER_EVENT();
@@ -1624,7 +1630,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 	} rd->pop2D();
 
 	// Handle 2D-only shader here (requires split 2D framebuffer)
-	if (sessConfig->render.shader2D != "" && m_shaderTable.containsKey(sessConfig->render.shader2D)) {
+	if (!sessConfig->render.shader2D.empty() && m_shaderTable.containsKey(sessConfig->render.shader2D)) {
 		if (!sessConfig->render.split2DBuffer) {
 			throw "Cannot warp non-split 2D buffer, use \"shaderComposite\" to warp combined buffer instead!";
 		}
@@ -1647,8 +1653,8 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			m_last2DTime = iTime;
 		} rd->pop2D();
 
-		// Direct shader output to the display
-		rd->push2D(); {
+		// Direct shader output to the display or composite shader input (if specified)
+		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_bufferComposite); {
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader2DOutput->texture(0), Sampler::buffer());
 		} rd->pop2D();
@@ -1658,15 +1664,15 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 
 	// Composite the 2D buffer here (if not given a 2D shader)
 	else if (sessConfig->render.split2DBuffer) {
-		// Copy the 2D (split) output buffer into the framebuffer
-		rd->push2D(); {
+		// Copy the 2D (split) output buffer into the framebuffer or composite shader input (if specified)
+		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_bufferComposite); {
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_buffer2D->texture(0), Sampler::buffer());
 		} rd->pop2D();
 	}
 
 	//  Handle post-2D composite shader here
-	if (sessConfig->render.shaderComposite != "" && m_shaderTable.containsKey(sessConfig->render.shaderComposite)) {
+	if (!sessConfig->render.shaderComposite.empty() && m_shaderTable.containsKey(sessConfig->render.shaderComposite)) {
 		BEGIN_PROFILER_EVENT_WITH_HINT("Composite Shader Pass", "Time to run the composite shader pass");
 		// Copy the post-VFX HDR (input) framebuffer
 		//static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
@@ -1675,7 +1681,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		rd->push2D(m_shaderCompositeOutput); {
 			// Setup shadertoy-style args
 			Args args;
-			args.setUniform("iChannel0", m_framebuffer->texture(0), Sampler::video());
+			args.setUniform("iChannel0", m_bufferComposite->texture(0), Sampler::video());
 			const float iTime = float(System::time() - m_startTime);
 			args.setUniform("iTime", iTime);
 			args.setUniform("iTimeDelta", iTime - m_lastCompositeTime);
