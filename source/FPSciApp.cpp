@@ -1170,9 +1170,6 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 
 	if (!sessConfig->render.shader3D.empty() && m_shaderTable.containsKey(sessConfig->render.shader3D)) {
 		BEGIN_PROFILER_EVENT_WITH_HINT("3D Shader Pass", "Time to run the post-3D shader pass");
-		// Copy the post-VFX HDR (input) framebuffer
-		//static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
-		//m_framebuffer->blitTo(rd, input, false, false, false, false, true);
 
 		rd->push2D(m_shader3DOutput); {
 			// Setup shadertoy-style args
@@ -1635,9 +1632,6 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			throw "Cannot warp non-split 2D buffer, use \"shaderComposite\" to warp combined buffer instead!";
 		}
 		BEGIN_PROFILER_EVENT_WITH_HINT("2D Shader Pass", "Time to run the post-2D shader pass");
-		// Copy the post-VFX HDR (input) framebuffer
-		//static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::iChannel0", buffer2D->width(), buffer2D->height(), buffer2D->texture(0)->format()));
-		//buffer2D->blitTo(rd, input, false, false, false, false, true);
 
 		rd->push2D(m_shader2DOutput); {
 			// Setup shadertoy-style args
@@ -1674,9 +1668,11 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 	//  Handle post-2D composite shader here
 	if (!sessConfig->render.shaderComposite.empty() && m_shaderTable.containsKey(sessConfig->render.shaderComposite)) {
 		BEGIN_PROFILER_EVENT_WITH_HINT("Composite Shader Pass", "Time to run the composite shader pass");
-		// Copy the post-VFX HDR (input) framebuffer
-		//static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
-		//m_framebuffer->blitTo(rd, input, false, false, false, false, true);
+
+		// If we haven't run a shader into the composite buffer then blit the framebuffer here now
+		if (sessConfig->render.shader2D.empty() && sessConfig->render.shader3D.empty()) {
+			rd->readFramebuffer()->blitTo(rd, m_bufferComposite, true, false, false, false);
+		}
 
 		rd->push2D(m_shaderCompositeOutput); {
 			// Setup shadertoy-style args
