@@ -451,11 +451,9 @@ void FPSciApp::updateShaderBuffers() {
 	const ImageFormat* framebufferFormat = m_framebuffer->texture(0)->format();
 
 	// 2D buffers (input and output)
-	if (sessConfig->render.split2DBuffer) {
+	if (!sessConfig->render.shader2D.empty()) {
 		m_buffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", width, height, ImageFormat::RGBA8(), Texture::DIM_2D, true));
-		if (!sessConfig->render.shader2D.empty()) {
-			m_shader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height));
-		}
+		m_shader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height));
 	}
 
 	// 3D shader output (use popped framebuffer as input)
@@ -1120,7 +1118,7 @@ void FPSciApp::onAfterEvents() {
 
 void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 	// Put elements that should be delayed along w/ 3D here
-	if (sessConfig->render.split2DBuffer) {
+	if (!sessConfig->render.shader2D.empty()) {
 		// If rendering into a split (offscreen) 2D buffer, then clear it/render to it here
 		m_buffer2D->texture(0)->clear();
 		rd->push2D(m_buffer2D);
@@ -1554,12 +1552,12 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 	}
 
 	// Set render buffer depending on whether we are rendering to a sperate 2D buffer
-	sessConfig->render.split2DBuffer ? rd->push2D(m_buffer2D) : rd->push2D(); {
-		if (sessConfig->render.split2DBuffer) {
-			rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
+	sessConfig->render.shader2D.empty() ? rd->push2D() : rd->push2D(m_buffer2D); {
+		if (sessConfig->render.shader2D.empty()) {
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 		}
 		else {
-			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+			rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
 		}
 		const float scale = rd->viewport().width() / 1920.0f;
 
@@ -1631,9 +1629,6 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 
 	// Handle 2D-only shader here (requires split 2D framebuffer)
 	if (!sessConfig->render.shader2D.empty() && m_shaderTable.containsKey(sessConfig->render.shader2D)) {
-		if (!sessConfig->render.split2DBuffer) {
-			throw "Cannot warp non-split 2D buffer, use \"shaderComposite\" to warp combined buffer instead!";
-		}
 		BEGIN_PROFILER_EVENT_WITH_HINT("2D Shader Pass", "Time to run the post-2D shader pass");
 
 		rd->push2D(m_shader2DOutput); {
@@ -1653,19 +1648,10 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		// Direct shader output to the display or composite shader input (if specified)
 		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_bufferComposite); {
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader2DOutput->texture(0), Sampler::buffer());
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader2DOutput->texture(0), Sampler::video());
 		} rd->pop2D();
 
 		END_PROFILER_EVENT();
-	}
-
-	// Composite the 2D buffer here (if not given a 2D shader)
-	else if (sessConfig->render.split2DBuffer) {
-		// Copy the 2D (split) output buffer into the framebuffer or composite shader input (if specified)
-		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_bufferComposite); {
-			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_buffer2D->texture(0), Sampler::video());
-		} rd->pop2D();
 	}
 
 	//  Handle post-2D composite shader here
