@@ -183,8 +183,8 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 "playerAxisLock": [false, false, false],    // Don't lock player motion in any axis
 "turnScale": Vector2(1.0, 1.0),             // Turn rate scaling
 "playerHeight":  1.5,                       // Normal player height
-"crouchHeight": 0.8,                        // Crouch height
-"jumpVelocity": 3.5,                        // Jump velocity
+"crouchHeight": 1.5,                        // Crouch height (no crouch by default)
+"jumpVelocity": 0.0,                        // Jump velocity (no jump by default)
 "jumpInterval": 0.5,                        // Minimum jump interval
 "jumpTouch": true,                          // Require touch for jump
 "playerGravity": Vector3(0.0, -10.0, 0.0),  // Player gravity
