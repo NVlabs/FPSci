@@ -234,6 +234,7 @@ Questions are configured on a per experiment/session basis using the `questions`
 |`optionKeys`           |`Array<GKey>`  | An array of `GKey` options in 1:1 correspondence with `options` above. Leave empty for no keybinds. Check [here](keymap.md#gkey-string) for strings to use for `GKey`s. |
 |`fullscreen`           |`bool`  | When set this opens the dialog in "fullscreen" mode, overlaying all of the rendered content (default is `false`) |
 |`showCursor`           |`bool`  | Allows the experiment designer to hide the cursor while responding to this dialog (default is `true`). Best used with `optionKeys` set otherwise there may be no way to answer the question. Not intended for use with `"Entry"` question types. |
+|`randomOrder`          |`bool`  | Randomize the option order for `MultipleChoice` and `Rating` questions optionally    |
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
 
@@ -251,6 +252,7 @@ The user can specify one or more questions using the `questions` array, as demon
         "optionKeys" : ["A", "B", "C"],
         "fullscreen": true,
         "showCursor" : false,
+        "randomOrder": false
     }
 ]
 ```

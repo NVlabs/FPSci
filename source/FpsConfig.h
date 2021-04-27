@@ -268,13 +268,14 @@ public:
 	};
 
 	Type type = Type::None;
-	String prompt = "";
-	Array<String> options;
-	Array<GKey> optionKeys;
-	String title = "Feedback";
-	String result = "";
-	bool fullscreen = false;
-	bool showCursor = true;
+	String prompt = "";					///< Text display to prompt the user for a response
+	Array<String> options;				///< List of options provided (if multiple choice)
+	Array<GKey> optionKeys;				///< Keys corresponding to the options provided (if multiple choice/ranking)
+	String title = "Feedback";			///< Title of the window displayed (if not fullscreen)
+	String result = "";					///< Reported result (not specified as configuration)
+	bool fullscreen = false;			///< Show this question as fullscreen?
+	bool showCursor = true;				///< Show cursor during question response window (allow clicking for selection)?
+	bool randomOrder = true;			///< Randomize question response order?
 
 	Question() {};
 	Question(const Any& any);
