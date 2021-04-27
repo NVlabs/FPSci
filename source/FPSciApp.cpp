@@ -1133,8 +1133,6 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 		const float scale = rd->viewport().width() / 1920.0f;
 
-		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-
 		// Draw target health bars
 		if (sessConfig->targetView.showHealthBars) {
 			for (auto const& target : sess->targetArray()) {
