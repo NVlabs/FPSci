@@ -452,7 +452,7 @@ void FPSciApp::updateShaderBuffers() {
 
 	// 2D buffers (input and output)
 	if (sessConfig->render.split2DBuffer) {
-		m_buffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", width, height));
+		m_buffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", width, height, ImageFormat::RGBA8(), Texture::DIM_2D, true));
 		if (!sessConfig->render.shader2D.empty()) {
 			m_shader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height));
 		}
@@ -465,7 +465,7 @@ void FPSciApp::updateShaderBuffers() {
 
 	// Composite buffer (input and output)
 	if (!sessConfig->render.shaderComposite.empty()) {
-		m_bufferComposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Input", width, height, framebufferFormat));
+		m_bufferComposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Input", width, height, framebufferFormat, Texture::DIM_2D, true));
 		m_shaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", width, height, framebufferFormat));
 	}
 }
@@ -1555,7 +1555,12 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 
 	// Set render buffer depending on whether we are rendering to a sperate 2D buffer
 	sessConfig->render.split2DBuffer ? rd->push2D(m_buffer2D) : rd->push2D(); {
-		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+		if (sessConfig->render.split2DBuffer) {
+			rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
+		}
+		else {
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+		}
 		const float scale = rd->viewport().width() / 1920.0f;
 
 		// FPS display (faster than the full stats widget)
@@ -1659,7 +1664,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		// Copy the 2D (split) output buffer into the framebuffer or composite shader input (if specified)
 		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_bufferComposite); {
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_buffer2D->texture(0), Sampler::buffer());
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_buffer2D->texture(0), Sampler::video());
 		} rd->pop2D();
 	}
 
