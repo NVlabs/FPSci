@@ -56,10 +56,15 @@ void RenderConfig::load(AnyTableReader reader, int settingsVersion) {
 	case 1:
 		reader.getIfPresent("frameRate", frameRate);
 		reader.getIfPresent("frameDelay", frameDelay);
+		reader.getIfPresent("horizontalFieldOfView", hFoV);
+
+		reader.getIfPresent("resolution2D", resolution2D);
+		reader.getIfPresent("resolution3D", resolution3D);
+		reader.getIfPresent("resolutionComposite", resolutionComposite);
+
 		reader.getIfPresent("shader2D", shader2D);
 		reader.getIfPresent("shader3D", shader3D);
 		reader.getIfPresent("shaderComposite", shaderComposite);
-		reader.getIfPresent("horizontalFieldOfView", hFoV);
 		break;
 	default:
 		throw format("Did not recognize settings version: %d", settingsVersion);
@@ -72,6 +77,11 @@ Any RenderConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.frameRate != frameRate)					a["frameRate"] = frameRate;
 	if (forceAll || def.frameDelay != frameDelay)				a["frameDelay"] = frameDelay;
 	if (forceAll || def.hFoV != hFoV)							a["horizontalFieldOfView"] = hFoV;
+
+	if (forceAll || def.resolution2D != resolution2D)			a["resolution2D"] = resolution2D;
+	if (forceAll || def.resolution3D != resolution3D)			a["resolution3D"] = resolution3D;
+	if (forceAll || def.resolutionComposite != resolutionComposite)	a["resolutionComposite"] = resolutionComposite;
+
 	if (forceAll || def.shader2D != shader2D)					a["shader2D"] = shader2D;
 	if (forceAll || def.shader3D != shader3D)					a["shader3D"] = shader3D;
 	if (forceAll || def.shaderComposite != shaderComposite)		a["shaderComposite"] = shaderComposite;	

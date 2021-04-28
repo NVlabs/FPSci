@@ -141,6 +141,9 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 |`horizontalFieldOfView`    |°      | The (horizontal) field of view for the user's display, to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)|
 |`frameDelay`               |frames | An (integer) count of frames to delay to control latency           |
 |`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#Frame-Rate-Modes) below.|
+|`resolution2D`             |`Array<int>`| The resolution to render 2D content at (defaults to window resolution)       |
+|`resolution3D`             |`Array<int>`| The resolution to render 3D content at (defaults to window resolution)       |
+|`resolutionComposite`      |`Array<int>`| The resolution to render the composite result at (defaults to window resolution)     |
 |`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`), only valid if `split2DBuffer` = `true`! |
 |`shader3D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 3D content (as a `.pix`) |
 |`shaderComposite`          |file   | The (relative) path/filename of an (optional) shader to run on the composited 2D/3D content (as a `.pix`) |

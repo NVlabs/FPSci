@@ -28,6 +28,11 @@ public:
 	float           frameRate = 1000.0f;						///< Target (goal) frame rate (in Hz)
 	int             frameDelay = 0;								///< Integer frame delay (in frames)
 	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
+	
+	Array<int>		resolution2D = { 0, 0 };					///< Optional 2D buffer resolution
+	Array<int>		resolution3D = { 0, 0 };					///< Optional 3D buffer resolution
+	Array<int>		resolutionComposite = { 0, 0 };				///< Optional composite buffer resolution	
+
 	String			shader2D = "";								///< Option for the filename of a custom shader to run on 2D content only
 	String          shader3D = "";								///< Option for the filename of a custom shader to run on 3D content only
 	String			shaderComposite = "";						///< Option for the filename of a custom shader to run on the (final) composited 2D/3D content	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user

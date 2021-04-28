@@ -4,25 +4,50 @@
 
 void FPSciApp::updateShaderBuffers() {
 	// Parameters for update/resize of buffers
-	const int width = renderDevice->width();
-	const int height = renderDevice->height();
+	int width = renderDevice->width();
+	int height = renderDevice->height();
 	const ImageFormat* framebufferFormat = m_framebuffer->texture(0)->format();
 
-	// 2D buffers (input and output)
-	if (!sessConfig->render.shader2D.empty()) {
+	// 2D buffers (input and output) used when 2D resolution or shader is specified
+	if (!sessConfig->render.shader2D.empty() || sessConfig->render.resolution2D[0] > 0) {
+		if (sessConfig->render.resolution2D[0] > 0) {
+			width = sessConfig->render.resolution2D[0];
+			height = sessConfig->render.resolution2D[0];
+		}
 		m_ldrBuffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", width, height, ImageFormat::RGBA8(), Texture::DIM_2D, true));
 		m_ldrShader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height));
 	}
-
-	// 3D shader output (use popped framebuffer as input)
-	if (!sessConfig->render.shader3D.empty()) {
-		m_hdrShader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", width, height, framebufferFormat));
+	else {
+		m_ldrBuffer2D.reset();
+		m_ldrShader2DOutput.reset();
 	}
 
-	// Composite buffer (input and output)
-	if (!sessConfig->render.shaderComposite.empty()) {
+	// 3D shader output (use popped framebuffer as input) used when 3D resolution or shader is specified
+	if (!sessConfig->render.shader3D.empty() || sessConfig->render.resolution3D[0] > 0) {
+		width = renderDevice->width(); height = renderDevice->height();
+		if (sessConfig->render.resolution3D[0] > 0) {
+			width = sessConfig->render.resolution3D[0];
+			height = sessConfig->render.resolution3D[1];
+		}
+		m_hdrShader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", width, height, framebufferFormat));
+	}
+	else {
+		m_hdrShader3DOutput.reset();
+	}
+
+	// Composite buffer (input and output) used when composite shader or resolution is specified
+	if (!sessConfig->render.shaderComposite.empty() || sessConfig->render.resolutionComposite[0] > 0) {
+		width = renderDevice->width(); height = renderDevice->height();
+		if (sessConfig->render.resolutionComposite[0] > 0) {
+			width = sessConfig->render.resolutionComposite[0];
+			height = sessConfig->render.resolutionComposite[1];
+		}
 		m_ldrBufferComposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Input", width, height, ImageFormat::RGB8(), Texture::DIM_2D, true));
 		m_ldrShaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", width, height, ImageFormat::RGB8()));
+	}
+	else {
+		m_ldrBufferComposite.reset();
+		m_ldrShaderCompositeOutput.reset();
 	}
 }
 
@@ -62,111 +87,126 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 	GApp::onGraphics3D(rd, surface);
 
 	// Draw 2D game elements to be delayed
-	if (!sessConfig->render.shader2D.empty()) {
+	if (notNull(m_ldrBuffer2D)) {
 		// If rendering into a split (offscreen) 2D buffer, then clear it/render to it here
 		m_ldrBuffer2D->texture(0)->clear();
 	}
 
-	sessConfig->render.shader2D.empty() ? rd->push2D() : rd->push2D(m_ldrBuffer2D); {
+	isNull(m_ldrBuffer2D) ? rd->push2D() : rd->push2D(m_ldrBuffer2D); {
 		drawDelayed2DElements(rd);
 	}rd->pop2D();
 
 	popRdStateWithDelay(rd, m_ldrDelayBufferQueue, m_currentDelayBufferIndex, displayLagFrames);
 
 	// Transfer LDR framebuffer to the composite buffer (if used)
-	if (!sessConfig->render.shaderComposite.empty()) {
+	if (m_ldrBufferComposite) {
 		rd->drawFramebuffer()->blitTo(rd, m_ldrBufferComposite, true, true, false, false, true);
 	}
 }
 
 void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
+	if (notNull(m_hdrShader3DOutput)) {
+		if(sessConfig->render.shader3D.empty()) {
+			// No shader specified, just a resize perform pass through into 3D output buffer from framebuffer
+			rd->push2D(m_hdrShader3DOutput); {
+				Draw::rect2D(rd->viewport(), rd, Color3::white(), m_framebuffer->texture(0), Sampler::video());
+			} rd->pop2D();
+		}
+		else {
+			BEGIN_PROFILER_EVENT_WITH_HINT("3D Shader Pass", "Time to run the post-3D shader pass");
 
-	if (!sessConfig->render.shader3D.empty() && m_shaderTable.containsKey(sessConfig->render.shader3D)) {
-		BEGIN_PROFILER_EVENT_WITH_HINT("3D Shader Pass", "Time to run the post-3D shader pass");
+				rd->push2D(m_hdrShader3DOutput); {
+				// Setup shadertoy-style args
+				Args args;
+					args.setUniform("iChannel0", m_framebuffer->texture(0), Sampler::video());
+					const float iTime = float(System::time() - m_startTime);
+					args.setUniform("iTime", iTime);
+					args.setUniform("iTimeDelta", iTime - m_lastTime);
+					args.setUniform("iMouse", userInput->mouseXY());
+				args.setUniform("iFrame", m_frameNumber);
+				args.setRect(rd->viewport());
+				LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shader3D], args);
+				m_lastTime = iTime;
+			} rd->pop2D();
 
-		rd->push2D(m_hdrShader3DOutput); {
-			// Setup shadertoy-style args
-			Args args;
-			args.setUniform("iChannel0", m_framebuffer->texture(0), Sampler::video());
-			const float iTime = float(System::time() - m_startTime);
-			args.setUniform("iTime", iTime);
-			args.setUniform("iTimeDelta", iTime - m_lastTime);
-			args.setUniform("iMouse", userInput->mouseXY());
-			args.setUniform("iFrame", m_frameNumber);
-			args.setRect(rd->viewport());
-			LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shader3D], args);
-			m_lastTime = iTime;
-		} rd->pop2D();
+			END_PROFILER_EVENT();
+		}
 
 		// Resample the shader output buffer into the framebuffer
 		rd->push2D(); {
 			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_hdrShader3DOutput->texture(0), Sampler::video());
 		} rd->pop2D();
-		END_PROFILER_EVENT();
 	}
 
 	GApp::onPostProcessHDR3DEffects(rd);
 }
 
 void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
-	shared_ptr<Framebuffer> target = sessConfig->render.shader2D.empty() ? m_ldrBufferComposite : m_ldrBuffer2D;
+	shared_ptr<Framebuffer> target = isNull(m_ldrBuffer2D) ? m_ldrBufferComposite : m_ldrBuffer2D;
 	// Set render buffer depending on whether we are rendering to a sperate 2D buffer
-	sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(target); {
+	isNull(target) ? rd->push2D() : rd->push2D(target); {
 		draw2DElements(rd);
 	} rd->pop2D();
 
-	// Handle 2D-only shader here (requires split 2D framebuffer)
-	if (!sessConfig->render.shader2D.empty() && m_shaderTable.containsKey(sessConfig->render.shader2D)) {
-		BEGIN_PROFILER_EVENT_WITH_HINT("2D Shader Pass", "Time to run the post-2D shader pass");
-
-		rd->push2D(m_ldrShader2DOutput); {
-			// Setup shadertoy-style args
-			Args args;
-			args.setUniform("iChannel0", m_ldrBuffer2D->texture(0), Sampler::video());
-			const float iTime = float(System::time() - m_startTime);
-			args.setUniform("iTime", iTime);
-			args.setUniform("iTimeDelta", iTime - m_last2DTime);
-			args.setUniform("iMouse", userInput->mouseXY());
-			args.setUniform("iFrame", m_frameNumber);
-			args.setRect(rd->viewport());
-			LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shader2D], args);
-			m_last2DTime = iTime;
-		} rd->pop2D();
+	if(notNull(m_ldrBuffer2D)){
+		if (sessConfig->render.shader2D.empty()) {
+			m_ldrShader2DOutput = m_ldrBuffer2D;		// Redirect output pointer to input (skip shading)
+		}
+		else {
+			BEGIN_PROFILER_EVENT_WITH_HINT("2D Shader Pass", "Time to run the post-2D shader pass");
+			rd->push2D(m_ldrShader2DOutput); {
+				// Setup shadertoy-style args
+				Args args;
+				args.setUniform("iChannel0", m_ldrBuffer2D->texture(0), Sampler::video());
+				const float iTime = float(System::time() - m_startTime);
+				args.setUniform("iTime", iTime);
+				args.setUniform("iTimeDelta", iTime - m_last2DTime);
+				args.setUniform("iMouse", userInput->mouseXY());
+				args.setUniform("iFrame", m_frameNumber);
+				args.setRect(rd->viewport());
+				LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shader2D], args);
+				m_last2DTime = iTime;
+			} rd->pop2D();
+			END_PROFILER_EVENT();
+		}
 
 		// Direct shader output to the display or composite shader input (if specified)
-		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_ldrBufferComposite); {
+		isNull(m_ldrBufferComposite) ? rd->push2D() : rd->push2D(m_ldrBufferComposite); {
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-			//rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
 			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShader2DOutput->texture(0), Sampler::video());
 		} rd->pop2D();
-
-		END_PROFILER_EVENT();
 	}
 
 	//  Handle post-2D composite shader here
-	if (!sessConfig->render.shaderComposite.empty() && m_shaderTable.containsKey(sessConfig->render.shaderComposite)) {
-		BEGIN_PROFILER_EVENT_WITH_HINT("Composite Shader Pass", "Time to run the composite shader pass");
+	if (m_ldrBufferComposite) {
+		if (sessConfig->render.shaderComposite.empty()) {
+			m_ldrShaderCompositeOutput = m_ldrBufferComposite;		// Redirect output pointer to input
+		}
+		else {
+			// Run a composite shader
+			BEGIN_PROFILER_EVENT_WITH_HINT("Composite Shader Pass", "Time to run the composite shader pass");
 
-		rd->push2D(m_ldrShaderCompositeOutput); {
-			// Setup shadertoy-style args
-			Args args;
-			args.setUniform("iChannel0", m_ldrBufferComposite->texture(0), Sampler::video());
-			const float iTime = float(System::time() - m_startTime);
-			args.setUniform("iTime", iTime);
-			args.setUniform("iTimeDelta", iTime - m_lastCompositeTime);
-			args.setUniform("iMouse", userInput->mouseXY());
-			args.setUniform("iFrame", m_frameNumber);
-			args.setRect(rd->viewport());
-			LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shaderComposite], args);
-			m_lastCompositeTime = iTime;
-		} rd->pop2D();
+			rd->push2D(m_ldrShaderCompositeOutput); {
+				// Setup shadertoy-style args
+				Args args;
+				args.setUniform("iChannel0", m_ldrBufferComposite->texture(0), Sampler::video());
+				const float iTime = float(System::time() - m_startTime);
+				args.setUniform("iTime", iTime);
+				args.setUniform("iTimeDelta", iTime - m_lastCompositeTime);
+				args.setUniform("iMouse", userInput->mouseXY());
+				args.setUniform("iFrame", m_frameNumber);
+				args.setRect(rd->viewport());
+				LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shaderComposite], args);
+				m_lastCompositeTime = iTime;
+			} rd->pop2D();
+
+			END_PROFILER_EVENT();
+		}
 
 		// Copy the shader output buffer into the framebuffer
 		rd->push2D(); {
 			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShaderCompositeOutput->texture(0), Sampler::video());
 		} rd->pop2D();
-
-		END_PROFILER_EVENT();
 	}
 
 	// Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
