@@ -2,29 +2,6 @@
 #include "FPSciApp.h"
 #include "WaypointManager.h"
 
-void FPSciApp::onGraphics(RenderDevice* rd, Array<shared_ptr<Surface> >& posed3D, Array<shared_ptr<Surface2D> >& posed2D) {
-	debugAssertGLOk();
-
-	rd->pushState(); {
-		debugAssert(notNull(activeCamera()));
-		rd->setProjectionAndCameraMatrix(activeCamera()->projection(), activeCamera()->frame());
-		debugAssertGLOk();
-		onGraphics3D(rd, posed3D);
-	} rd->popState();
-
-	if (notNull(screenCapture())) {
-		screenCapture()->onAfterGraphics3D(rd);
-	}
-
-	rd->push2D(); {
-		onGraphics2D(rd, posed2D);
-	} rd->pop2D();
-
-	if (notNull(screenCapture())) {
-		screenCapture()->onAfterGraphics2D(rd);
-	}
-}
-
 void FPSciApp::updateShaderBuffers() {
 	// Parameters for update/resize of buffers
 	const int width = renderDevice->width();
@@ -49,23 +26,33 @@ void FPSciApp::updateShaderBuffers() {
 	}
 }
 
+void FPSciApp::onGraphics(RenderDevice* rd, Array<shared_ptr<Surface> >& posed3D, Array<shared_ptr<Surface2D> >& posed2D) {
+	debugAssertGLOk();
+
+	rd->pushState(); {
+		debugAssert(notNull(activeCamera()));
+		rd->setProjectionAndCameraMatrix(activeCamera()->projection(), activeCamera()->frame());
+		debugAssertGLOk();
+		onGraphics3D(rd, posed3D);
+	} rd->popState();
+
+	if (notNull(screenCapture())) {
+		screenCapture()->onAfterGraphics3D(rd);
+	}
+
+	rd->push2D(); {
+		onGraphics2D(rd, posed2D);
+	} rd->pop2D();
+
+	if (notNull(screenCapture())) {
+		screenCapture()->onAfterGraphics2D(rd);
+	}
+}
+
+
 void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
 
-    if (displayLagFrames > 0) {
-		// Need one more frame in the queue than we have frames of delay, to hold the current frame
-		if (m_ldrDelayBufferQueue.size() <= displayLagFrames) {
-			// Allocate new textures
-			for (int i = displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
-				m_ldrDelayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
-			}
-			debugAssert(m_ldrDelayBufferQueue.size() == displayLagFrames + 1);
-		}
-
-		// When the display lag changes, we must be sure to be within range
-		m_currentDelayBufferIndex = min(displayLagFrames, m_currentDelayBufferIndex);
-
-		rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
-	}
+	pushRdStateWithDelay(rd, m_ldrDelayBufferQueue, m_currentDelayBufferIndex, displayLagFrames);
 
 	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !emergencyTurbo;
 	playerCamera->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
@@ -73,16 +60,7 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 
 	GApp::onGraphics3D(rd, surface);
 
-	if (displayLagFrames > 0) {
-		// Display the delayed frame
-		rd->popState();
-		// Render into the frame buffer or the composite shader input buffer (if provided)
-		rd->push2D(); {
-			// Advance the pointer to the next, which is also the oldest frame
-			m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (displayLagFrames + 1);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrDelayBufferQueue[m_currentDelayBufferIndex]->texture(0), Sampler::buffer());
-		} rd->pop2D();
-	}
+	popRdStateWithDelay(rd, m_ldrDelayBufferQueue, m_currentDelayBufferIndex, displayLagFrames);
 }
 
 
@@ -159,6 +137,202 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 	}
 
 	GApp::onPostProcessHDR3DEffects(rd);
+}
+
+
+void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
+	// Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
+	// Track the instantaneous frame duration (no smoothing) in a circular queue
+	if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
+		m_frameDurationQueue.dequeue();
+	}
+	{
+		const float f = rd->stats().frameRate;
+		const float t = 1.0f / f;
+		m_frameDurationQueue.enqueue(t);
+	}
+
+	float recentMin = finf();
+	float recentMax = -finf();
+	for (int i = 0; i < m_frameDurationQueue.length(); ++i) {
+		const float t = m_frameDurationQueue[i];
+		recentMin = min(recentMin, t);
+		recentMax = max(recentMax, t);
+	}
+
+	// Set render buffer depending on whether we are rendering to a sperate 2D buffer
+	sessConfig->render.shader2D.empty() ? rd->push2D() : rd->push2D(m_buffer2D); {
+		if (sessConfig->render.shader2D.empty()) {
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+		}
+		else {
+			rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
+		}
+		const float scale = rd->viewport().width() / 1920.0f;
+
+		// FPS display (faster than the full stats widget)
+		if (renderFPS) {
+			String msg;
+
+			if (window()->settings().refreshRate > 0) {
+				msg = format("%d measured / %d requested fps",
+					iRound(renderDevice->stats().smoothFrameRate),
+					window()->settings().refreshRate);
+			}
+			else {
+				msg = format("%d fps", iRound(renderDevice->stats().smoothFrameRate));
+			}
+
+			msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
+			outputFont->draw2D(rd, msg, Point2(rd->viewport().width() * 0.75f, rd->viewport().height() * 0.05f).floor(), floor(20.0f * scale), Color3::yellow());
+		}
+
+		// Handle recording indicator
+		if (startupConfig.waypointEditorMode && waypointManager->recordMotion) {
+			Draw::point(Point2(rd->viewport().width() * 0.9f - 15.0f, 20.0f + m_debugMenuHeight * scale), rd, Color3::red(), 10.0f);
+			outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f, m_debugMenuHeight * scale), 20.0f, Color3::red());
+		}
+
+		// Click-to-photon mouse event indicator
+		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode != "total") {
+			drawClickIndicator(rd, sessConfig->clickToPhoton.mode);
+		}
+
+		// Player camera only indicators
+		if (activeCamera() == playerCamera) {
+			// Reticle
+			const shared_ptr<UserConfig> user = currentUser();
+			float tscale = weapon->cooldownRatio(m_lastOnSimulationRealTime, user->reticleChangeTimeS);
+			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale) * user->reticleScale[1];
+			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
+			Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f)) * rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
+
+			// Handle the feedback message
+			String message = sess->getFeedbackMessage();
+			const float centerHeight = rd->viewport().height() * 0.4f;
+			const float scaledFontSize = floor(sessConfig->feedback.fontSize * scale);
+			if (!message.empty()) {
+				String currLine;
+				Array<String> lines = stringSplit(message, '\n');
+				float vertPos = centerHeight - (scaledFontSize * 1.5f * lines.length() / 2.0f);
+				// Draw a "back plate"
+				Draw::rect2D(Rect2D::xywh(0.0f,
+					vertPos - 1.5f * scaledFontSize,
+					rd->viewport().width(),
+					scaledFontSize * (lines.length() + 1) * 1.5f),
+					rd, sessConfig->feedback.backgroundColor);
+				for (String line : lines) {
+					outputFont->draw2D(rd, line.c_str(),
+						(Point2(rd->viewport().width() * 0.5f, vertPos)).floor(),
+						scaledFontSize,
+						sessConfig->feedback.color,
+						sessConfig->feedback.outlineColor,
+						GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
+					);
+					vertPos += scaledFontSize * 1.5f;
+				}
+			}
+		}
+
+	} rd->pop2D();
+
+	// Handle 2D-only shader here (requires split 2D framebuffer)
+	if (!sessConfig->render.shader2D.empty() && m_shaderTable.containsKey(sessConfig->render.shader2D)) {
+		BEGIN_PROFILER_EVENT_WITH_HINT("2D Shader Pass", "Time to run the post-2D shader pass");
+
+		rd->push2D(m_shader2DOutput); {
+			// Setup shadertoy-style args
+			Args args;
+			args.setUniform("iChannel0", m_buffer2D->texture(0), Sampler::video());
+			const float iTime = float(System::time() - m_startTime);
+			args.setUniform("iTime", iTime);
+			args.setUniform("iTimeDelta", iTime - m_last2DTime);
+			args.setUniform("iMouse", userInput->mouseXY());
+			args.setUniform("iFrame", m_frameNumber);
+			args.setRect(rd->viewport());
+			LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shader2D], args);
+			m_last2DTime = iTime;
+		} rd->pop2D();
+
+		// Direct shader output to the display or composite shader input (if specified)
+		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_bufferComposite); {
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+			//rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader2DOutput->texture(0), Sampler::video());
+		} rd->pop2D();
+
+		END_PROFILER_EVENT();
+	}
+
+	//  Handle post-2D composite shader here
+	if (!sessConfig->render.shaderComposite.empty() && m_shaderTable.containsKey(sessConfig->render.shaderComposite)) {
+		BEGIN_PROFILER_EVENT_WITH_HINT("Composite Shader Pass", "Time to run the composite shader pass");
+
+		// If we haven't run a shader into the composite buffer then blit the framebuffer here now
+		if (sessConfig->render.shader2D.empty() && sessConfig->render.shader3D.empty()) {
+			rd->readFramebuffer()->blitTo(rd, m_bufferComposite, true, false, false, false);
+		}
+
+		rd->push2D(m_shaderCompositeOutput); {
+			// Setup shadertoy-style args
+			Args args;
+			args.setUniform("iChannel0", m_bufferComposite->texture(0), Sampler::video());
+			const float iTime = float(System::time() - m_startTime);
+			args.setUniform("iTime", iTime);
+			args.setUniform("iTimeDelta", iTime - m_lastCompositeTime);
+			args.setUniform("iMouse", userInput->mouseXY());
+			args.setUniform("iFrame", m_frameNumber);
+			args.setRect(rd->viewport());
+			LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shaderComposite], args);
+			m_lastCompositeTime = iTime;
+		} rd->pop2D();
+
+		// Copy the shader output buffer into the framebuffer
+		rd->push2D(); {
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shaderCompositeOutput->texture(0), Sampler::buffer());
+		} rd->pop2D();
+
+		END_PROFILER_EVENT();
+	}
+
+	// Might not need this on the reaction trial
+	// This is rendering the GUI. Can remove if desired.
+	Surface2D::sortAndRender(rd, posed2D);
+}
+
+
+void FPSciApp::pushRdStateWithDelay(RenderDevice* rd, Array<shared_ptr<Framebuffer>> &delayBufferQueue, int &delayIndex, int lagFrames) {
+
+	if (lagFrames > 0) {
+		// Need one more frame in the queue than we have frames of delay, to hold the current frame
+		if (delayBufferQueue.size() <= lagFrames) {
+			// Allocate new textures
+			for (int i = lagFrames - delayBufferQueue.size(); i >= 0; --i) {
+				delayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", delayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
+			}
+			debugAssert(delayBufferQueue.size() == lagFrames + 1);
+		}
+
+		// When the display lag changes, we must be sure to be within range
+		delayIndex = min(lagFrames, delayIndex);
+
+		rd->pushState(delayBufferQueue[delayIndex]);
+	}
+}
+
+void FPSciApp::popRdStateWithDelay(RenderDevice* rd, const Array<shared_ptr<Framebuffer>> &delayBufferQueue, int& delayIndex, int lagFrames) {
+
+	if (lagFrames > 0) {
+		// Display the delayed frame
+		rd->popState();
+		// Render into the frame buffer or the composite shader input buffer (if provided)
+		rd->push2D(); {
+			// Advance the pointer to the next, which is also the oldest frame
+			delayIndex = (delayIndex + 1) % (lagFrames + 1);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), delayBufferQueue[delayIndex]->texture(0), Sampler::buffer());
+		} rd->pop2D();
+	}
 }
 
 void FPSciApp::drawClickIndicator(RenderDevice *rd, String mode) {
@@ -294,164 +468,3 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 	}
 }
 
-
-void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
-    // Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
-	// Track the instantaneous frame duration (no smoothing) in a circular queue
-	if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
-		m_frameDurationQueue.dequeue();
-	}
-	{
-		const float f = rd->stats().frameRate;
-		const float t = 1.0f / f;
-		m_frameDurationQueue.enqueue(t);
-	}
-
-	float recentMin = finf();
-	float recentMax = -finf();
-	for (int i = 0; i < m_frameDurationQueue.length(); ++i) {
-		const float t = m_frameDurationQueue[i];
-		recentMin = min(recentMin, t);
-		recentMax = max(recentMax, t);
-	}
-
-	// Set render buffer depending on whether we are rendering to a sperate 2D buffer
-	sessConfig->render.shader2D.empty() ? rd->push2D() : rd->push2D(m_buffer2D); {
-		if (sessConfig->render.shader2D.empty()) {
-			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-		}
-		else {
-			rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
-		}
-		const float scale = rd->viewport().width() / 1920.0f;
-
-		// FPS display (faster than the full stats widget)
-		if (renderFPS) {
-			String msg;
-
-			if (window()->settings().refreshRate > 0) {
-				msg = format("%d measured / %d requested fps",
-					iRound(renderDevice->stats().smoothFrameRate),
-					window()->settings().refreshRate);
-			}
-			else {
-				msg = format("%d fps", iRound(renderDevice->stats().smoothFrameRate));
-			}
-
-			msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
-			outputFont->draw2D(rd, msg, Point2(rd->viewport().width()*0.75f, rd->viewport().height()*0.05f).floor(), floor(20.0f*scale), Color3::yellow());
-		}
-
-		// Handle recording indicator
-		if (startupConfig.waypointEditorMode && waypointManager->recordMotion) {
-			Draw::point(Point2(rd->viewport().width()*0.9f - 15.0f, 20.0f+m_debugMenuHeight*scale), rd, Color3::red(), 10.0f);
-			outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f , m_debugMenuHeight*scale), 20.0f, Color3::red());
-		}
-
-		// Click-to-photon mouse event indicator
-		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode != "total") {
-			drawClickIndicator(rd, sessConfig->clickToPhoton.mode);
-		}
-
-		// Player camera only indicators
-		if (activeCamera() == playerCamera) {
-			// Reticle
-			const shared_ptr<UserConfig> user = currentUser();
-			float tscale = weapon->cooldownRatio(m_lastOnSimulationRealTime, user->reticleChangeTimeS);
-			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
-			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
-			Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
-
-			// Handle the feedback message
-			String message = sess->getFeedbackMessage();
-			const float centerHeight = rd->viewport().height() * 0.4f;
-			const float scaledFontSize = floor(sessConfig->feedback.fontSize * scale);
-			if (!message.empty()) {
-				String currLine;
-				Array<String> lines = stringSplit(message, '\n');
-				float vertPos = centerHeight - (scaledFontSize * 1.5f * lines.length()/ 2.0f);
-				// Draw a "back plate"
-				Draw::rect2D(Rect2D::xywh(0.0f, 
-					vertPos - 1.5f * scaledFontSize,
-					rd->viewport().width(), 
-					scaledFontSize * (lines.length()+1) * 1.5f),
-					rd, sessConfig->feedback.backgroundColor);
-				for (String line : lines) {
-					outputFont->draw2D(rd, line.c_str(),
-						(Point2(rd->viewport().width() * 0.5f, vertPos)).floor(),
-						scaledFontSize,
-						sessConfig->feedback.color,
-						sessConfig->feedback.outlineColor,
-						GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
-					);
-					vertPos += scaledFontSize * 1.5f;
-				}
-			}
-		}
-
-	} rd->pop2D();
-
-	// Handle 2D-only shader here (requires split 2D framebuffer)
-	if (!sessConfig->render.shader2D.empty() && m_shaderTable.containsKey(sessConfig->render.shader2D)) {
-		BEGIN_PROFILER_EVENT_WITH_HINT("2D Shader Pass", "Time to run the post-2D shader pass");
-
-		rd->push2D(m_shader2DOutput); {
-			// Setup shadertoy-style args
-			Args args;
-			args.setUniform("iChannel0", m_buffer2D->texture(0), Sampler::video());
-			const float iTime = float(System::time() - m_startTime);
-			args.setUniform("iTime", iTime);
-			args.setUniform("iTimeDelta", iTime - m_last2DTime);
-			args.setUniform("iMouse", userInput->mouseXY());
-			args.setUniform("iFrame", m_frameNumber);
-			args.setRect(rd->viewport());
-			LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shader2D], args);
-			m_last2DTime = iTime;
-		} rd->pop2D();
-
-		// Direct shader output to the display or composite shader input (if specified)
-		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_bufferComposite); {
-			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-			//rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader2DOutput->texture(0), Sampler::video());
-		} rd->pop2D();
-
-		END_PROFILER_EVENT();
-	}
-
-	//  Handle post-2D composite shader here
-	if (!sessConfig->render.shaderComposite.empty() && m_shaderTable.containsKey(sessConfig->render.shaderComposite)) {
-		BEGIN_PROFILER_EVENT_WITH_HINT("Composite Shader Pass", "Time to run the composite shader pass");
-
-		// If we haven't run a shader into the composite buffer then blit the framebuffer here now
-		if (sessConfig->render.shader2D.empty() && sessConfig->render.shader3D.empty()) {
-			rd->readFramebuffer()->blitTo(rd, m_bufferComposite, true, false, false, false);
-		}
-
-		rd->push2D(m_shaderCompositeOutput); {
-			// Setup shadertoy-style args
-			Args args;
-			args.setUniform("iChannel0", m_bufferComposite->texture(0), Sampler::video());
-			const float iTime = float(System::time() - m_startTime);
-			args.setUniform("iTime", iTime);
-			args.setUniform("iTimeDelta", iTime - m_lastCompositeTime);
-			args.setUniform("iMouse", userInput->mouseXY());
-			args.setUniform("iFrame", m_frameNumber);
-			args.setRect(rd->viewport());
-			LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shaderComposite], args);
-			m_lastCompositeTime = iTime;
-		} rd->pop2D();
-
-		// Copy the shader output buffer into the framebuffer
-		rd->push2D(); {
-			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shaderCompositeOutput->texture(0), Sampler::buffer());
-		} rd->pop2D();
-
-		END_PROFILER_EVENT();
-	}
-
-	// Might not need this on the reaction trial
-	// This is rendering the GUI. Can remove if desired.
-	Surface2D::sortAndRender(rd, posed2D);
-}

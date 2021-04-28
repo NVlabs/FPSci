@@ -138,9 +138,6 @@ protected:
 	void hitTarget(shared_ptr<TargetEntity> target);
 	void missEvent();
 
-	virtual void drawHUD(RenderDevice *rd);
-	void drawClickIndicator(RenderDevice *rd, String mode);
-
 public:
 
 	class Settings : public GApp::Settings {
@@ -235,7 +232,6 @@ public:
 	/** Updates experiment state to the provided session id and updates player parameters (including mouse sensitivity) */
 	virtual void updateSession(const String& id, bool forceReload = false);
 	void updateParameters(int frameDelay, float frameRate);
-	void updateShaderBuffers();
 	void updateTargetColor(const shared_ptr<TargetEntity>& target);
 	void presentQuestion(Question question);
 
@@ -254,21 +250,31 @@ public:
 	/** Initialize an experiment */
 	void initExperiment();
 
-	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
 	virtual void onInit() override;
 	virtual void onAI() override;
 	virtual void onNetwork() override;
 	virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
 	virtual void onPose(Array<shared_ptr<Surface> >& posed3D, Array<shared_ptr<Surface2D> >& posed2D) override;
 	virtual void onAfterLoadScene(const Any& any, const String& sceneName) override;
-	virtual void onGraphics(RenderDevice* rd, Array<shared_ptr<Surface> >& posed3D, Array<shared_ptr<Surface2D> >& posed2D) override;
-	virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& surface2D) override;
-	virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) override;
 	virtual bool onEvent(const GEvent& e) override;
 	virtual void onAfterEvents() override;
 	virtual void onUserInput(UserInput* ui) override;
 	virtual void onCleanup() override;
     virtual void oneFrame() override;
+
+	// in FPSciGraphics.cpp
+	virtual void onGraphics(RenderDevice* rd, Array<shared_ptr<Surface> >& posed3D, Array<shared_ptr<Surface2D> >& posed2D) override;
+	virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& surface2D) override;
+	virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) override;
+	virtual void onPostProcessHDR3DEffects(RenderDevice* rd) override;
+
+	void updateShaderBuffers();
+	virtual void drawHUD(RenderDevice* rd);
+	void drawClickIndicator(RenderDevice* rd, String mode);
+	/** calls rd->pushState with the right delayed buffer. Creates buffers if needed */
+	void pushRdStateWithDelay(RenderDevice* rd, Array<shared_ptr<Framebuffer>> &delayBufferQueue, int &delayIndex, int lagFrames = 0);
+	/** calls rd->popState and advances the delayIndex. Copies the latest delay buffer into the current framebuffer */
+	void popRdStateWithDelay(RenderDevice* rd, const Array<shared_ptr<Framebuffer>> &delayBufferQueue, int& delayIndex, int lagFrames = 0);
 
 };
 
