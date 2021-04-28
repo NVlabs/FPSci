@@ -261,6 +261,7 @@ public:
 	virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
 	virtual void onPose(Array<shared_ptr<Surface> >& posed3D, Array<shared_ptr<Surface2D> >& posed2D) override;
 	virtual void onAfterLoadScene(const Any& any, const String& sceneName) override;
+	virtual void onGraphics(RenderDevice* rd, Array<shared_ptr<Surface> >& posed3D, Array<shared_ptr<Surface2D> >& posed2D) override;
 	virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& surface2D) override;
 	virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) override;
 	virtual bool onEvent(const GEvent& e) override;
