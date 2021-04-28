@@ -10,19 +10,19 @@ void FPSciApp::updateShaderBuffers() {
 
 	// 2D buffers (input and output)
 	if (!sessConfig->render.shader2D.empty()) {
-		m_buffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", width, height, ImageFormat::RGBA8(), Texture::DIM_2D, true));
-		m_shader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height));
+		m_ldrBuffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", width, height, ImageFormat::RGBA8(), Texture::DIM_2D, true));
+		m_ldrShader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height));
 	}
 
 	// 3D shader output (use popped framebuffer as input)
 	if (!sessConfig->render.shader3D.empty()) {
-		m_shader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", width, height, framebufferFormat));
+		m_hdrShader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", width, height, framebufferFormat));
 	}
 
 	// Composite buffer (input and output)
 	if (!sessConfig->render.shaderComposite.empty()) {
-		m_bufferComposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Input", width, height, framebufferFormat, Texture::DIM_2D, true));
-		m_shaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", width, height, framebufferFormat));
+		m_ldrBufferComposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Input", width, height, ImageFormat::RGB8(), Texture::DIM_2D, true));
+		m_ldrShaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", width, height, ImageFormat::RGB8()));
 	}
 }
 
@@ -58,19 +58,25 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 	playerCamera->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
 	playerCamera->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
 
+	// Tone mapping from HDR --> LDR happens at the end of this call (after onPostProcessHDR3DEffects() call)
 	GApp::onGraphics3D(rd, surface);
 
 	// Draw 2D game elements to be delayed
 	if (!sessConfig->render.shader2D.empty()) {
 		// If rendering into a split (offscreen) 2D buffer, then clear it/render to it here
-		m_buffer2D->texture(0)->clear();
+		m_ldrBuffer2D->texture(0)->clear();
 	}
 
-	sessConfig->render.shader2D.empty() ? rd->push2D() : rd->push2D(m_buffer2D); {
+	sessConfig->render.shader2D.empty() ? rd->push2D() : rd->push2D(m_ldrBuffer2D); {
 		drawDelayed2DElements(rd);
 	}rd->pop2D();
 
 	popRdStateWithDelay(rd, m_ldrDelayBufferQueue, m_currentDelayBufferIndex, displayLagFrames);
+
+	// Transfer LDR framebuffer to the composite buffer (if used)
+	if (!sessConfig->render.shaderComposite.empty()) {
+		rd->drawFramebuffer()->blitTo(rd, m_ldrBufferComposite, true, true, false, false, true);
+	}
 }
 
 void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
@@ -78,7 +84,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 	if (!sessConfig->render.shader3D.empty() && m_shaderTable.containsKey(sessConfig->render.shader3D)) {
 		BEGIN_PROFILER_EVENT_WITH_HINT("3D Shader Pass", "Time to run the post-3D shader pass");
 
-		rd->push2D(m_shader3DOutput); {
+		rd->push2D(m_hdrShader3DOutput); {
 			// Setup shadertoy-style args
 			Args args;
 			args.setUniform("iChannel0", m_framebuffer->texture(0), Sampler::video());
@@ -92,9 +98,9 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 			m_lastTime = iTime;
 		} rd->pop2D();
 
-		// Copy the shader output buffer into the framebuffer
-		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_bufferComposite); {
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader3DOutput->texture(0), Sampler::buffer());
+		// Resample the shader output buffer into the framebuffer
+		rd->push2D(); {
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_hdrShader3DOutput->texture(0), Sampler::video());
 		} rd->pop2D();
 		END_PROFILER_EVENT();
 	}
@@ -103,8 +109,9 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 }
 
 void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
+	shared_ptr<Framebuffer> target = sessConfig->render.shader2D.empty() ? m_ldrBufferComposite : m_ldrBuffer2D;
 	// Set render buffer depending on whether we are rendering to a sperate 2D buffer
-	sessConfig->render.shader2D.empty() ? rd->push2D() : rd->push2D(m_buffer2D); {
+	sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(target); {
 		draw2DElements(rd);
 	} rd->pop2D();
 
@@ -112,10 +119,10 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 	if (!sessConfig->render.shader2D.empty() && m_shaderTable.containsKey(sessConfig->render.shader2D)) {
 		BEGIN_PROFILER_EVENT_WITH_HINT("2D Shader Pass", "Time to run the post-2D shader pass");
 
-		rd->push2D(m_shader2DOutput); {
+		rd->push2D(m_ldrShader2DOutput); {
 			// Setup shadertoy-style args
 			Args args;
-			args.setUniform("iChannel0", m_buffer2D->texture(0), Sampler::video());
+			args.setUniform("iChannel0", m_ldrBuffer2D->texture(0), Sampler::video());
 			const float iTime = float(System::time() - m_startTime);
 			args.setUniform("iTime", iTime);
 			args.setUniform("iTimeDelta", iTime - m_last2DTime);
@@ -127,10 +134,10 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		} rd->pop2D();
 
 		// Direct shader output to the display or composite shader input (if specified)
-		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_bufferComposite); {
+		sessConfig->render.shaderComposite.empty() ? rd->push2D() : rd->push2D(m_ldrBufferComposite); {
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 			//rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shader2DOutput->texture(0), Sampler::video());
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShader2DOutput->texture(0), Sampler::video());
 		} rd->pop2D();
 
 		END_PROFILER_EVENT();
@@ -140,15 +147,10 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 	if (!sessConfig->render.shaderComposite.empty() && m_shaderTable.containsKey(sessConfig->render.shaderComposite)) {
 		BEGIN_PROFILER_EVENT_WITH_HINT("Composite Shader Pass", "Time to run the composite shader pass");
 
-		// If we haven't run a shader into the composite buffer then blit the framebuffer here now
-		if (sessConfig->render.shader2D.empty() && sessConfig->render.shader3D.empty()) {
-			rd->readFramebuffer()->blitTo(rd, m_bufferComposite, true, false, false, false);
-		}
-
-		rd->push2D(m_shaderCompositeOutput); {
+		rd->push2D(m_ldrShaderCompositeOutput); {
 			// Setup shadertoy-style args
 			Args args;
-			args.setUniform("iChannel0", m_bufferComposite->texture(0), Sampler::video());
+			args.setUniform("iChannel0", m_ldrBufferComposite->texture(0), Sampler::video());
 			const float iTime = float(System::time() - m_startTime);
 			args.setUniform("iTime", iTime);
 			args.setUniform("iTimeDelta", iTime - m_lastCompositeTime);
@@ -161,8 +163,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 
 		// Copy the shader output buffer into the framebuffer
 		rd->push2D(); {
-			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_shaderCompositeOutput->texture(0), Sampler::buffer());
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShaderCompositeOutput->texture(0), Sampler::video());
 		} rd->pop2D();
 
 		END_PROFILER_EVENT();
@@ -207,10 +208,10 @@ void FPSciApp::popRdStateWithDelay(RenderDevice* rd, const Array<shared_ptr<Fram
 
 void FPSciApp::draw2DElements(RenderDevice* rd) {
 	// Put elements that should not be delayed here
+
 	const float scale = rd->viewport().width() / 1920.0f;
-	sessConfig->render.shader2D.empty() ?
-		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA) :
-		rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
+	// Always alpha blend these elements
+	rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 	// FPS display (faster than the full stats widget)
 	updateFPSIndicator(rd);
