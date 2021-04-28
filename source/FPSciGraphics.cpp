@@ -60,57 +60,20 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 
 	GApp::onGraphics3D(rd, surface);
 
-	popRdStateWithDelay(rd, m_ldrDelayBufferQueue, m_currentDelayBufferIndex, displayLagFrames);
-}
-
-
-void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
-	// Put elements that should be delayed along w/ 3D here
+	// Draw 2D game elements to be delayed
 	if (!sessConfig->render.shader2D.empty()) {
 		// If rendering into a split (offscreen) 2D buffer, then clear it/render to it here
 		m_buffer2D->texture(0)->clear();
-		rd->push2D(m_buffer2D);
 	}
-	else {
-		// Otherwise render to the framebuffer
-		rd->push2D();
-	}
-	{
-		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-		const float scale = rd->viewport().width() / 1920.0f;
 
-		// Draw target health bars
-		if (sessConfig->targetView.showHealthBars) {
-			for (auto const& target : sess->targetArray()) {
-				target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
-					sessConfig->targetView.healthBarSize,
-					sessConfig->targetView.healthBarOffset,
-					sessConfig->targetView.healthBarBorderSize,
-					sessConfig->targetView.healthBarColors,
-					sessConfig->targetView.healthBarBorderColor);
-			}
-		}
-
-		// Draw the combat text
-		if (sessConfig->targetView.showCombatText) {
-			Array<int> toRemove;
-			for (int i = 0; i < m_combatTextList.size(); i++) {
-				bool remove = !m_combatTextList[i]->draw(rd, *playerCamera, *m_framebuffer);
-				if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
-			}
-			// Remove the expired elements here
-			m_combatTextList.removeNulls();
-		}
-
-		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode == "total") {
-			drawClickIndicator(rd, "total");
-		}
-
-		// Draw the HUD here
-		if (sessConfig->hud.enable) {
-			drawHUD(rd);
-		}
+	sessConfig->render.shader2D.empty() ? rd->push2D() : rd->push2D(m_buffer2D); {
+		drawDelayed2DElements(rd);
 	}rd->pop2D();
+
+	popRdStateWithDelay(rd, m_ldrDelayBufferQueue, m_currentDelayBufferIndex, displayLagFrames);
+}
+
+void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 
 	if (!sessConfig->render.shader3D.empty() && m_shaderTable.containsKey(sessConfig->render.shader3D)) {
 		BEGIN_PROFILER_EVENT_WITH_HINT("3D Shader Pass", "Time to run the post-3D shader pass");
@@ -139,101 +102,10 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 	GApp::onPostProcessHDR3DEffects(rd);
 }
 
-
 void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
-	// Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
-	// Track the instantaneous frame duration (no smoothing) in a circular queue
-	if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
-		m_frameDurationQueue.dequeue();
-	}
-	{
-		const float f = rd->stats().frameRate;
-		const float t = 1.0f / f;
-		m_frameDurationQueue.enqueue(t);
-	}
-
-	float recentMin = finf();
-	float recentMax = -finf();
-	for (int i = 0; i < m_frameDurationQueue.length(); ++i) {
-		const float t = m_frameDurationQueue[i];
-		recentMin = min(recentMin, t);
-		recentMax = max(recentMax, t);
-	}
-
 	// Set render buffer depending on whether we are rendering to a sperate 2D buffer
 	sessConfig->render.shader2D.empty() ? rd->push2D() : rd->push2D(m_buffer2D); {
-		if (sessConfig->render.shader2D.empty()) {
-			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-		}
-		else {
-			rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
-		}
-		const float scale = rd->viewport().width() / 1920.0f;
-
-		// FPS display (faster than the full stats widget)
-		if (renderFPS) {
-			String msg;
-
-			if (window()->settings().refreshRate > 0) {
-				msg = format("%d measured / %d requested fps",
-					iRound(renderDevice->stats().smoothFrameRate),
-					window()->settings().refreshRate);
-			}
-			else {
-				msg = format("%d fps", iRound(renderDevice->stats().smoothFrameRate));
-			}
-
-			msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
-			outputFont->draw2D(rd, msg, Point2(rd->viewport().width() * 0.75f, rd->viewport().height() * 0.05f).floor(), floor(20.0f * scale), Color3::yellow());
-		}
-
-		// Handle recording indicator
-		if (startupConfig.waypointEditorMode && waypointManager->recordMotion) {
-			Draw::point(Point2(rd->viewport().width() * 0.9f - 15.0f, 20.0f + m_debugMenuHeight * scale), rd, Color3::red(), 10.0f);
-			outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f, m_debugMenuHeight * scale), 20.0f, Color3::red());
-		}
-
-		// Click-to-photon mouse event indicator
-		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode != "total") {
-			drawClickIndicator(rd, sessConfig->clickToPhoton.mode);
-		}
-
-		// Player camera only indicators
-		if (activeCamera() == playerCamera) {
-			// Reticle
-			const shared_ptr<UserConfig> user = currentUser();
-			float tscale = weapon->cooldownRatio(m_lastOnSimulationRealTime, user->reticleChangeTimeS);
-			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale) * user->reticleScale[1];
-			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
-			Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f)) * rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
-
-			// Handle the feedback message
-			String message = sess->getFeedbackMessage();
-			const float centerHeight = rd->viewport().height() * 0.4f;
-			const float scaledFontSize = floor(sessConfig->feedback.fontSize * scale);
-			if (!message.empty()) {
-				String currLine;
-				Array<String> lines = stringSplit(message, '\n');
-				float vertPos = centerHeight - (scaledFontSize * 1.5f * lines.length() / 2.0f);
-				// Draw a "back plate"
-				Draw::rect2D(Rect2D::xywh(0.0f,
-					vertPos - 1.5f * scaledFontSize,
-					rd->viewport().width(),
-					scaledFontSize * (lines.length() + 1) * 1.5f),
-					rd, sessConfig->feedback.backgroundColor);
-				for (String line : lines) {
-					outputFont->draw2D(rd, line.c_str(),
-						(Point2(rd->viewport().width() * 0.5f, vertPos)).floor(),
-						scaledFontSize,
-						sessConfig->feedback.color,
-						sessConfig->feedback.outlineColor,
-						GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
-					);
-					vertPos += scaledFontSize * 1.5f;
-				}
-			}
-		}
-
+		draw2DElements(rd);
 	} rd->pop2D();
 
 	// Handle 2D-only shader here (requires split 2D framebuffer)
@@ -296,11 +168,9 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		END_PROFILER_EVENT();
 	}
 
-	// Might not need this on the reaction trial
-	// This is rendering the GUI. Can remove if desired.
+	// Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
 	Surface2D::sortAndRender(rd, posed2D);
 }
-
 
 void FPSciApp::pushRdStateWithDelay(RenderDevice* rd, Array<shared_ptr<Framebuffer>> &delayBufferQueue, int &delayIndex, int lagFrames) {
 
@@ -335,7 +205,103 @@ void FPSciApp::popRdStateWithDelay(RenderDevice* rd, const Array<shared_ptr<Fram
 	}
 }
 
-void FPSciApp::drawClickIndicator(RenderDevice *rd, String mode) {
+void FPSciApp::draw2DElements(RenderDevice* rd) {
+	// Put elements that should not be delayed here
+	const float scale = rd->viewport().width() / 1920.0f;
+	sessConfig->render.shader2D.empty() ?
+		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA) :
+		rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);
+
+	// FPS display (faster than the full stats widget)
+	updateFPSIndicator(rd);
+
+	// Handle recording indicator
+	if (startupConfig.waypointEditorMode && waypointManager->recordMotion) {
+		Draw::point(Point2(rd->viewport().width() * 0.9f - 15.0f, 20.0f + m_debugMenuHeight * scale), rd, Color3::red(), 10.0f);
+		outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f, m_debugMenuHeight * scale), 20.0f, Color3::red());
+	}
+
+	// Click-to-photon mouse event indicator
+	if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode != "total") {
+		drawClickIndicator(rd, sessConfig->clickToPhoton.mode);
+	}
+
+	// Player camera only indicators
+	if (activeCamera() == playerCamera) {
+		// Reticle
+		const shared_ptr<UserConfig> user = currentUser();
+		float tscale = weapon->cooldownRatio(m_lastOnSimulationRealTime, user->reticleChangeTimeS);
+		float rScale = tscale * user->reticleScale[0] + (1.0f - tscale) * user->reticleScale[1];
+		Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
+		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f)) * rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
+
+		// Handle the feedback message
+		String message = sess->getFeedbackMessage();
+		const float centerHeight = rd->viewport().height() * 0.4f;
+		const float scaledFontSize = floor(sessConfig->feedback.fontSize * scale);
+		if (!message.empty()) {
+			String currLine;
+			Array<String> lines = stringSplit(message, '\n');
+			float vertPos = centerHeight - (scaledFontSize * 1.5f * lines.length() / 2.0f);
+			// Draw a "back plate"
+			Draw::rect2D(Rect2D::xywh(0.0f,
+				vertPos - 1.5f * scaledFontSize,
+				rd->viewport().width(),
+				scaledFontSize * (lines.length() + 1) * 1.5f),
+				rd, sessConfig->feedback.backgroundColor);
+			for (String line : lines) {
+				outputFont->draw2D(rd, line.c_str(),
+					(Point2(rd->viewport().width() * 0.5f, vertPos)).floor(),
+					scaledFontSize,
+					sessConfig->feedback.color,
+					sessConfig->feedback.outlineColor,
+					GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
+				);
+				vertPos += scaledFontSize * 1.5f;
+			}
+		}
+	}
+}
+
+void FPSciApp::drawDelayed2DElements(RenderDevice* rd) {
+	// Put elements that should be delayed along w/ (or independent of) 3D here
+	rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+	const float scale = rd->viewport().width() / 1920.0f;
+
+	// Draw target health bars
+	if (sessConfig->targetView.showHealthBars) {
+		for (auto const& target : sess->targetArray()) {
+			target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
+				sessConfig->targetView.healthBarSize,
+				sessConfig->targetView.healthBarOffset,
+				sessConfig->targetView.healthBarBorderSize,
+				sessConfig->targetView.healthBarColors,
+				sessConfig->targetView.healthBarBorderColor);
+		}
+	}
+
+	// Draw the combat text
+	if (sessConfig->targetView.showCombatText) {
+		Array<int> toRemove;
+		for (int i = 0; i < m_combatTextList.size(); i++) {
+			bool remove = !m_combatTextList[i]->draw(rd, *playerCamera, *m_framebuffer);
+			if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
+		}
+		// Remove the expired elements here
+		m_combatTextList.removeNulls();
+	}
+
+	if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode == "total") {
+		drawClickIndicator(rd, "total");
+	}
+
+	// Draw the HUD here
+	if (sessConfig->hud.enable) {
+		drawHUD(rd);
+	}
+}
+
+void FPSciApp::drawClickIndicator(RenderDevice* rd, String mode) {
 	// Click to photon latency measuring corner box
 	if (sessConfig->clickToPhoton.enabled) {
 		float boxLeft = 0.0f;
@@ -345,7 +311,7 @@ void FPSciApp::drawClickIndicator(RenderDevice *rd, String mode) {
 		if (guardband) {
 			boxLeft += guardband;
 		}
-		float boxTop = rd->viewport().height()*sessConfig->clickToPhoton.vertPos - latencyRect.y / 2;
+		float boxTop = rd->viewport().height() * sessConfig->clickToPhoton.vertPos - latencyRect.y / 2;
 		if (sessConfig->clickToPhoton.mode == "both") {
 			boxTop = (mode == "minimum") ? boxTop - latencyRect.y : boxTop + latencyRect.y;
 		}
@@ -360,6 +326,39 @@ void FPSciApp::drawClickIndicator(RenderDevice *rd, String mode) {
 		}
 		else boxColor = (shootButtonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
 		Draw::rect2D(Rect2D::xywh(boxLeft, boxTop, latencyRect.x, latencyRect.y), rd, boxColor);
+	}
+}
+
+void FPSciApp::updateFPSIndicator(RenderDevice* rd) {
+	// Track the instantaneous frame duration (no smoothing) in a circular queue (regardless of whether we are drawing the indicator)
+	if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
+		m_frameDurationQueue.dequeue();
+	}
+
+	const float f = rd->stats().frameRate;
+	const float t = 1.0f / f;
+	m_frameDurationQueue.enqueue(t);
+
+	float recentMin = finf();
+	float recentMax = -finf();
+	for (int i = 0; i < m_frameDurationQueue.length(); ++i) {
+		const float t = m_frameDurationQueue[i];
+		recentMin = min(recentMin, t);
+		recentMax = max(recentMax, t);
+	}
+
+	if (renderFPS) {
+		// Draw the FPS indicator
+		const float scale = rd->viewport().width() / 1920.0f;
+		String msg;
+		if (window()->settings().refreshRate > 0) {
+			msg = format("%d measured / %d requested fps", iRound(rd->stats().smoothFrameRate), window()->settings().refreshRate);
+		}
+		else {
+			msg = format("%d fps", iRound(rd->stats().smoothFrameRate));
+		}
+		msg += format(" | %.1f min | %.1f avg | %.1f max ms", recentMin * 1000.0f, 1000.0f / rd->stats().smoothFrameRate, 1000.0f * recentMax);
+		outputFont->draw2D(rd, msg, Point2(rd->viewport().width() * 0.75f, rd->viewport().height() * 0.05f).floor(), floor(20.0f * scale), Color3::yellow());
 	}
 }
 

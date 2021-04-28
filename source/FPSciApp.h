@@ -262,15 +262,21 @@ public:
 	virtual void onCleanup() override;
     virtual void oneFrame() override;
 
-	// in FPSciGraphics.cpp
+	// In FPSciGraphics.cpp
 	virtual void onGraphics(RenderDevice* rd, Array<shared_ptr<Surface> >& posed3D, Array<shared_ptr<Surface2D> >& posed2D) override;
 	virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& surface2D) override;
 	virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) override;
 	virtual void onPostProcessHDR3DEffects(RenderDevice* rd) override;
+	
+	void draw2DElements(RenderDevice* rd);						///< Draw the undelayed 2D elements
+	void drawDelayed2DElements(RenderDevice* rd);				///< Draw the delayed 2D elements
 
-	void updateShaderBuffers();
-	virtual void drawHUD(RenderDevice* rd);
-	void drawClickIndicator(RenderDevice* rd, String mode);
+	virtual void drawHUD(RenderDevice* rd);						///< Draw HUD elements
+	void drawClickIndicator(RenderDevice* rd, String mode);		///< Draw the click-to-photon click indicator
+	void updateFPSIndicator(RenderDevice* rd);					///< Update and draw a (custom) frame time indicator (developer mode feature)
+
+	void updateShaderBuffers();									///< Regenerate buffers (for configured shaders)
+
 	/** calls rd->pushState with the right delayed buffer. Creates buffers if needed */
 	void pushRdStateWithDelay(RenderDevice* rd, Array<shared_ptr<Framebuffer>> &delayBufferQueue, int &delayIndex, int lagFrames = 0);
 	/** calls rd->popState and advances the delayIndex. Copies the latest delay buffer into the current framebuffer */
