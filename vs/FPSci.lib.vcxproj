@@ -168,6 +168,7 @@
   <ItemGroup>
     <ClCompile Include="..\source\ExperimentConfig.cpp" />
     <ClCompile Include="..\source\FPSciApp.cpp" />
+    <ClCompile Include="..\source\FPSciGraphics.cpp" />
     <ClCompile Include="..\source\FpsConfig.cpp" />
     <ClCompile Include="..\source\KeyMapping.cpp" />
     <ClCompile Include="..\source\Session.cpp" />
