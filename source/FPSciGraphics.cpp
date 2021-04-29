@@ -12,7 +12,7 @@ void FPSciApp::updateShaderBuffers() {
 	if (!sessConfig->render.shader2D.empty() || sessConfig->render.resolution2D[0] > 0) {
 		if (sessConfig->render.resolution2D[0] > 0) {
 			width = sessConfig->render.resolution2D[0];
-			height = sessConfig->render.resolution2D[0];
+			height = sessConfig->render.resolution2D[1];
 		}
 		m_ldrBuffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", width, height, ImageFormat::RGBA8(), Texture::DIM_2D, true));
 		m_ldrShader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height));
