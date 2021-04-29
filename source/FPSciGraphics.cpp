@@ -262,8 +262,8 @@ void FPSciApp::draw2DElements(RenderDevice* rd, Vector2 resolution) {
 
 	// Handle recording indicator
 	if (startupConfig.waypointEditorMode && waypointManager->recordMotion) {
-		Draw::point(Point2(0.9f * resolution.x - 15.0f, 20.0f + m_debugMenuHeight * scale), rd, Color3::red(), 10.0f);
-		outputFont->draw2D(rd, "Recording Position", Point2(0.9f * resolution.x, m_debugMenuHeight * scale), 20.0f, Color3::red());
+		Draw::point(Point2(0.9f * resolution.x - 15.f * scale, (20.0f + m_debugMenuHeight) * scale), rd, Color3::red(), 10.0f * scale);
+		outputFont->draw2D(rd, "Recording Position", Point2(0.9f * resolution.x, (7.5f + m_debugMenuHeight) * scale), 20.0f * scale, Color3::red());
 	}
 
 	// Click-to-photon mouse event indicator
