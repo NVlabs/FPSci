@@ -220,10 +220,14 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 
 		// Copy the shader output buffer into the framebuffer
 		rd->push2D(); {
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShaderCompositeOutput->texture(0), Sampler::video());
+			// TODO: consider other sampler options here
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShaderCompositeOutput->texture(0), Sampler::buffer());
 		} rd->pop2D();
 	}
 
+	// Non-scaled content is rendered here
+	// Draw the user feedback message (not part of experiment so drawn at native resolution)
+	drawFeedbackMessage(rd);
 	// Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
 	Surface2D::sortAndRender(rd, posed2D);
 }
@@ -286,32 +290,6 @@ void FPSciApp::draw2DElements(RenderDevice* rd, Vector2 resolution) {
 		float rScale = scale * (tscale * user->reticleScale[0] + (1.0f - tscale) * user->reticleScale[1]);
 		Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
 		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f)) * rScale / 2.0f + resolution / 2.0f, rd, rColor, reticleTexture);
-
-		// Handle the feedback message
-		String message = sess->getFeedbackMessage();
-		const float centerHeight = resolution.y * 0.4f;
-		const float scaledFontSize = floor(sessConfig->feedback.fontSize * scale);
-		if (!message.empty()) {
-			String currLine;
-			Array<String> lines = stringSplit(message, '\n');
-			float vertPos = centerHeight - (scaledFontSize * 1.5f * lines.length() / 2.0f);
-			// Draw a "back plate"
-			Draw::rect2D(Rect2D::xywh(0.0f,
-				vertPos - 1.5f * scaledFontSize,
-				resolution.x,
-				scaledFontSize * (lines.length() + 1) * 1.5f),
-				rd, sessConfig->feedback.backgroundColor);
-			for (String line : lines) {
-				outputFont->draw2D(rd, line.c_str(),
-					(Point2(resolution.x * 0.5f, vertPos)).floor(),
-					scaledFontSize,
-					sessConfig->feedback.color,
-					sessConfig->feedback.outlineColor,
-					GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
-				);
-				vertPos += scaledFontSize * 1.5f;
-			}
-		}
 	}
 }
 
@@ -374,6 +352,40 @@ void FPSciApp::drawClickIndicator(RenderDevice* rd, String mode, Vector2 resolut
 		else boxColor = (shootButtonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
 		Draw::rect2D(Rect2D::xywh(boxLeft, boxTop, latencyRect.x, latencyRect.y), rd, boxColor);
 	}
+}
+
+void FPSciApp::drawFeedbackMessage(RenderDevice* rd) {
+	if (activeCamera() != playerCamera) return;		// Only draw on the player camera
+
+	rd->push2D(); {
+		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
+		// Handle the feedback message
+		const float scale = rd->width() / 1920.f;
+		String message = sess->getFeedbackMessage();
+		const float centerHeight = rd->height() * 0.4f;
+		const float scaledFontSize = floor(sessConfig->feedback.fontSize * scale);
+		if (!message.empty()) {
+			String currLine;
+			Array<String> lines = stringSplit(message, '\n');
+			float vertPos = centerHeight - (scaledFontSize * 1.5f * lines.length() / 2.0f);
+			// Draw a "back plate"
+			Draw::rect2D(Rect2D::xywh(0.0f,
+				vertPos - 1.5f * scaledFontSize,
+				(float) rd->width(),
+				scaledFontSize * (lines.length() + 1) * 1.5f),
+				rd, sessConfig->feedback.backgroundColor);
+			for (String line : lines) {
+				outputFont->draw2D(rd, line.c_str(),
+					(Point2(rd->width() * 0.5f, vertPos)).floor(),
+					scaledFontSize,
+					sessConfig->feedback.color,
+					sessConfig->feedback.outlineColor,
+					GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
+				);
+				vertPos += scaledFontSize * 1.5f;
+			}
+		}
+	} rd->pop2D();
 }
 
 void FPSciApp::updateFPSIndicator(RenderDevice* rd, Vector2 resolution) {

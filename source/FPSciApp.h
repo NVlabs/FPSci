@@ -274,6 +274,7 @@ public:
 	virtual void drawHUD(RenderDevice* rd, Vector2 resolution);						///< Draw HUD elements
 	void drawClickIndicator(RenderDevice* rd, String mode, Vector2 resolution);		///< Draw the click-to-photon click indicator
 	void updateFPSIndicator(RenderDevice* rd, Vector2 resolution);					///< Update and draw a (custom) frame time indicator (developer mode feature)
+	void drawFeedbackMessage(RenderDevice* rd);										///< Draw a user feedback message (at full render device resolution)
 
 	void updateShaderBuffers();									///< Regenerate buffers (for configured shaders)
 
