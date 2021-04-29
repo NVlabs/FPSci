@@ -148,7 +148,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 	shared_ptr<Framebuffer> target = isNull(m_ldrBuffer2D) ? m_ldrBufferComposite : m_ldrBuffer2D;
 	// Set render buffer depending on whether we are rendering to a sperate 2D buffer
 	isNull(target) ? rd->push2D() : rd->push2D(target); {
-		target != m_ldrBuffer2D ?
+		target != m_ldrBuffer2D || isNull(target) ?
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA) :		// Drawing into buffer w/ contents
 			rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);							// Drawing into 2D buffer (don't alpha blend)
 		draw2DElements(rd);
