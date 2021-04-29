@@ -523,6 +523,18 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	// Handle buffer setup here
 	updateShaderBuffers();
 
+	// Update shader table
+	m_shaderTable.clear();
+	if (!sessConfig->render.shader3D.empty()) {
+		m_shaderTable.set(sessConfig->render.shader3D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader3D));
+	}
+	if (!sessConfig->render.shader2D.empty()) {
+		m_shaderTable.set(sessConfig->render.shader2D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader2D));
+	}
+	if (!sessConfig->render.shaderComposite.empty()) {
+		m_shaderTable.set(sessConfig->render.shaderComposite, G3D::Shader::getShaderFromPattern(sessConfig->render.shaderComposite));
+	}
+
 	// Update shader parameters
 	m_startTime = System::time();
 	m_last2DTime = m_startTime;
@@ -541,7 +553,7 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (sessConfig->scene.name.empty()) {
 		// No scene specified, load default scene
 		if (m_loadedScene.name.empty() || forceReload) {
-			loadScene(m_defaultSceneName);
+			loadScene(m_defaultSceneName);					// Note: this calls onGraphics()
 			m_loadedScene.name = m_defaultSceneName;
 		}
 		// Otherwise let the loaded scene persist
@@ -562,18 +574,6 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	weapon->loadSounds();
 	if (!sessConfig->audio.sceneHitSound.empty()) {
 		m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
-	}
-
-	// Update shader table
-	m_shaderTable.clear();
-	if (!sessConfig->render.shader3D.empty()) {
-		m_shaderTable.set(sessConfig->render.shader3D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader3D));
-	}
-	if (!sessConfig->render.shader2D.empty()) {
-		m_shaderTable.set(sessConfig->render.shader2D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader2D));
-	}
-	if (!sessConfig->render.shaderComposite.empty()) {
-		m_shaderTable.set(sessConfig->render.shaderComposite, G3D::Shader::getShaderFromPattern(sessConfig->render.shaderComposite));
 	}
 
 	// Load static HUD textures
