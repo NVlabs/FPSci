@@ -87,9 +87,9 @@ public:
 
 	// Player health bar
 	bool            showPlayerHealthBar = false;							///< Display a player health bar?
-	Point2          playerHealthBarSize = Point2(200.0f, 20.0f);			///< Player health bar size (in pixels)
-	Point2          playerHealthBarPos = Point2(10.0f, 10.0f);				///< Player health bar position (in pixels)
-	Point2          playerHealthBarBorderSize = Point2(2.0f, 2.0f);			///< Player health bar border size
+	Vector2         playerHealthBarSize = Vector2(0.1f, 0.02f);				///< Player health bar size (as a ratio of screen size)
+	Point2          playerHealthBarPos = Point2(0.005f, 0.01f);				///< Player health bar position (as a ratio of screen size)
+	Vector2         playerHealthBarBorderSize = Vector2(0.001f, 0.002f);	///< Player health bar border size (as a ratio of screen size)
 	Color4          playerHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Player health bar border color
 	Array<Color4>   playerHealthBarColors = {								///< Player health bar start/end colors
 		Color4(0.0, 1.0, 0.0, 1.0),

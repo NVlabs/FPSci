@@ -32,9 +32,6 @@ void FPSciApp::initExperiment(){
 	loadConfigs(startupConfig.experimentList[experimentIdx]);
 	m_lastSavedUser = *currentUser();			// Copy over the startup user for saves
 
-	// Get the size of the primary display
-	displayRes = OSWindow::primaryDisplaySize();						
-
 	// Setup the display mode
 	setSubmitToDisplayMode(
 		//SubmitToDisplayMode::EXPLICIT);

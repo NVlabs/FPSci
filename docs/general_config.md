@@ -286,17 +286,17 @@ Each question in the array is then asked of the user (via an independent time-se
 | Parameter Name                |Units          | Description                                                                        |
 |-------------------------------|---------------|------------------------------------------------------------------------------------|
 |`showPlayerHealthBar`          |`bool`         | Whether or not a player health bar is drawn to the HUD                             |
-|`playerHealthBarSize`          |`Point2`(px)   | The size of the player health bar                                                  |
-|`playerHealthBarPosition`      |`Point2`(px)   | The position of the player health bar (from the top right of the screen)           |
-|`playerHealthBarBorderSize`    |`Point2`(px)   | The width of the player health bar border                                          |
+|`playerHealthBarSize`          |`Vector2`      | The size of the player health bar (as a ratio of 2D resolution/screen size)        |
+|`playerHealthBarPosition`      |`Point2`       | The position of the player health bar (as a ratio of 2D resolution/screen size from the top right of the screen) |
+|`playerHealthBarBorderSize`    |`Vector2`      | The width of the player health bar border (as a ratio of 2D resolution/screen size)|
 |`playerHealthBarBorderColor`   |`Color4`       | The color of the player health bar border                                          |
 |`playerHealthBarColors`        |[`Color4`, `Color4`] | The max/min health colors for the player health bar as an array of [`max color`, `min color`]. If you are using low alpha values with this field, make sure you consider the alpha value for `playerHealthBarBorderColor` as well.|
 
 ```
 "showPlayerHealthBar":  true,                               // Show the player health bar (default is false)      
-"playerHealthBarSize": Point2(200.0, 20.0),                 // Size of the health bar       
-"playerHealthBarPosition": Point2(74.0, 74.0),              // Position of the bar      
-"playerHealthBarBorderSize": Point2(2.0, 2.0),              // Size of the bar border/background
+"playerHealthBarSize": Vector2(0.1, 0.02),                  // Size of the health bar       
+"playerHealthBarPosition": Point2(0.005, 0.01),             // Position of the bar      
+"playerHealthBarBorderSize": Point2(0.001, 0.002),          // Size of the bar border/background
 "playerHealthBarBorderColor": Color4(0.0,0.0,0.0,1.0),      // Background color w/ alpha
 "playerHealthBarColors": [                                  // Transition player health bar from green --> red
     Color4(0.0, 1.0, 0.0, 1.0),

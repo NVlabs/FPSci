@@ -197,8 +197,6 @@ public:
 
 	int			experimentIdx = 0;				///< Index of the current experiment
 
-	Vector2		displayRes;
-
 	/** Call to change the reticle. */
 	void setReticle(int r);
 	/** Show the player controls */

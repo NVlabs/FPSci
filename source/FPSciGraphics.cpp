@@ -404,7 +404,7 @@ void FPSciApp::updateFPSIndicator(RenderDevice* rd, Vector2 resolution) {
 
 void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 	// Scale is used to position/resize the "score banner" when the window changes size in "windowed" mode (always 1 in fullscreen mode).
-	const Vector2 scale = resolution / displayRes;
+	const Vector2 scale = resolution / (Vector2)OSWindow::primaryDisplayWindowSize();
 
 	RealTime now = m_lastOnSimulationRealTime;
 
@@ -452,9 +452,10 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 	if (sessConfig->hud.showPlayerHealthBar) {
 		//const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
 		const float health = scene()->typedEntity<PlayerEntity>("player")->health();
-		const Point2 location = Point2(sessConfig->hud.playerHealthBarPos.x, sessConfig->hud.playerHealthBarPos.y + m_debugMenuHeight);// +Point2(guardband, guardband);
-		const Point2 size = sessConfig->hud.playerHealthBarSize;
-		const Point2 border = sessConfig->hud.playerHealthBarBorderSize;
+		Point2 location = sessConfig->hud.playerHealthBarPos * resolution;
+		location.y += (m_debugMenuHeight * scale.y);
+		const Point2 size = sessConfig->hud.playerHealthBarSize * resolution;
+		const Vector2 border = sessConfig->hud.playerHealthBarBorderSize * resolution;
 		const Color4 borderColor = sessConfig->hud.playerHealthBarBorderColor;
 		const Color4 color = sessConfig->hud.playerHealthBarColors[1] * (1.0f - health) + sessConfig->hud.playerHealthBarColors[0] * health;
 
