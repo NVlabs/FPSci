@@ -93,6 +93,9 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 	}
 
 	isNull(m_ldrBuffer2D) ? rd->push2D() : rd->push2D(m_ldrBuffer2D); {
+		isNull(m_ldrBuffer2D) ?
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA) :		// Drawing into framebuffer
+			rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);							// Drawing into buffer 2D (don't alpha blend)
 		drawDelayed2DElements(rd);
 	}rd->pop2D();
 
@@ -145,6 +148,9 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 	shared_ptr<Framebuffer> target = isNull(m_ldrBuffer2D) ? m_ldrBufferComposite : m_ldrBuffer2D;
 	// Set render buffer depending on whether we are rendering to a sperate 2D buffer
 	isNull(target) ? rd->push2D() : rd->push2D(target); {
+		target != m_ldrBuffer2D ?
+			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA) :		// Drawing into buffer w/ contents
+			rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);							// Drawing into 2D buffer (don't alpha blend)
 		draw2DElements(rd);
 	} rd->pop2D();
 
@@ -248,10 +254,7 @@ void FPSciApp::popRdStateWithDelay(RenderDevice* rd, const Array<shared_ptr<Fram
 
 void FPSciApp::draw2DElements(RenderDevice* rd) {
 	// Put elements that should not be delayed here
-
 	const float scale = rd->viewport().width() / 1920.0f;
-	// Always alpha blend these elements
-	rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 
 	// FPS display (faster than the full stats widget)
 	updateFPSIndicator(rd);
@@ -306,7 +309,6 @@ void FPSciApp::draw2DElements(RenderDevice* rd) {
 
 void FPSciApp::drawDelayed2DElements(RenderDevice* rd) {
 	// Put elements that should be delayed along w/ (or independent of) 3D here
-	rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
 	const float scale = rd->viewport().width() / 1920.0f;
 
 	// Draw target health bars
