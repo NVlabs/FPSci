@@ -92,11 +92,12 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 		m_ldrBuffer2D->texture(0)->clear();
 	}
 
+	const Vector2 resolution = isNull(m_ldrBuffer2D) ? rd->viewport().wh() : m_ldrBuffer2D->vector2Bounds();
 	isNull(m_ldrBuffer2D) ? rd->push2D() : rd->push2D(m_ldrBuffer2D); {
 		isNull(m_ldrBuffer2D) ?
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA) :		// Drawing into framebuffer
 			rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);							// Drawing into buffer 2D (don't alpha blend)
-		drawDelayed2DElements(rd);
+		drawDelayed2DElements(rd, resolution);
 	}rd->pop2D();
 
 	popRdStateWithDelay(rd, m_ldrDelayBufferQueue, m_currentDelayBufferIndex, displayLagFrames);
@@ -147,11 +148,12 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
 	shared_ptr<Framebuffer> target = isNull(m_ldrBuffer2D) ? m_ldrBufferComposite : m_ldrBuffer2D;
 	// Set render buffer depending on whether we are rendering to a sperate 2D buffer
+	const Vector2 resolution = isNull(target) ? rd->viewport().wh() : target->vector2Bounds();
 	isNull(target) ? rd->push2D() : rd->push2D(target); {
 		target != m_ldrBuffer2D || isNull(target) ?
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA) :		// Drawing into buffer w/ contents
 			rd->setBlendFunc(RenderDevice::BLEND_ONE, RenderDevice::BLEND_ZERO);							// Drawing into 2D buffer (don't alpha blend)
-		draw2DElements(rd);
+		draw2DElements(rd, resolution);
 	} rd->pop2D();
 
 	if(notNull(m_ldrBuffer2D)){
@@ -252,22 +254,21 @@ void FPSciApp::popRdStateWithDelay(RenderDevice* rd, const Array<shared_ptr<Fram
 	}
 }
 
-void FPSciApp::draw2DElements(RenderDevice* rd) {
+void FPSciApp::draw2DElements(RenderDevice* rd, Vector2 resolution) {
 	// Put elements that should not be delayed here
-	const float scale = rd->viewport().width() / 1920.0f;
+	const float scale = resolution.x / 1920.0f;		// Double check on how this scale is used (seems to assume 1920x1080 defaults)	
 
-	// FPS display (faster than the full stats widget)
-	updateFPSIndicator(rd);
+	updateFPSIndicator(rd, resolution);				// FPS display (faster than the full stats widget)
 
 	// Handle recording indicator
 	if (startupConfig.waypointEditorMode && waypointManager->recordMotion) {
-		Draw::point(Point2(rd->viewport().width() * 0.9f - 15.0f, 20.0f + m_debugMenuHeight * scale), rd, Color3::red(), 10.0f);
-		outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f, m_debugMenuHeight * scale), 20.0f, Color3::red());
+		Draw::point(Point2(0.9f * resolution.x - 15.0f, 20.0f + m_debugMenuHeight * scale), rd, Color3::red(), 10.0f);
+		outputFont->draw2D(rd, "Recording Position", Point2(0.9f * resolution.x, m_debugMenuHeight * scale), 20.0f, Color3::red());
 	}
 
 	// Click-to-photon mouse event indicator
 	if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode != "total") {
-		drawClickIndicator(rd, sessConfig->clickToPhoton.mode);
+		drawClickIndicator(rd, sessConfig->clickToPhoton.mode, resolution);
 	}
 
 	// Player camera only indicators
@@ -277,11 +278,11 @@ void FPSciApp::draw2DElements(RenderDevice* rd) {
 		float tscale = weapon->cooldownRatio(m_lastOnSimulationRealTime, user->reticleChangeTimeS);
 		float rScale = tscale * user->reticleScale[0] + (1.0f - tscale) * user->reticleScale[1];
 		Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
-		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f)) * rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
+		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f)) * rScale / 2.0f + resolution / 2.0f, rd, rColor, reticleTexture);
 
 		// Handle the feedback message
 		String message = sess->getFeedbackMessage();
-		const float centerHeight = rd->viewport().height() * 0.4f;
+		const float centerHeight = resolution.y * 0.4f;
 		const float scaledFontSize = floor(sessConfig->feedback.fontSize * scale);
 		if (!message.empty()) {
 			String currLine;
@@ -290,12 +291,12 @@ void FPSciApp::draw2DElements(RenderDevice* rd) {
 			// Draw a "back plate"
 			Draw::rect2D(Rect2D::xywh(0.0f,
 				vertPos - 1.5f * scaledFontSize,
-				rd->viewport().width(),
+				resolution.x,
 				scaledFontSize * (lines.length() + 1) * 1.5f),
 				rd, sessConfig->feedback.backgroundColor);
 			for (String line : lines) {
 				outputFont->draw2D(rd, line.c_str(),
-					(Point2(rd->viewport().width() * 0.5f, vertPos)).floor(),
+					(Point2(resolution.x * 0.5f, vertPos)).floor(),
 					scaledFontSize,
 					sessConfig->feedback.color,
 					sessConfig->feedback.outlineColor,
@@ -307,9 +308,9 @@ void FPSciApp::draw2DElements(RenderDevice* rd) {
 	}
 }
 
-void FPSciApp::drawDelayed2DElements(RenderDevice* rd) {
+void FPSciApp::drawDelayed2DElements(RenderDevice* rd, Vector2 resolution) {
 	// Put elements that should be delayed along w/ (or independent of) 3D here
-	const float scale = rd->viewport().width() / 1920.0f;
+	const float scale = resolution.x / 1920.0f;
 
 	// Draw target health bars
 	if (sessConfig->targetView.showHealthBars) {
@@ -335,31 +336,27 @@ void FPSciApp::drawDelayed2DElements(RenderDevice* rd) {
 	}
 
 	if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode == "total") {
-		drawClickIndicator(rd, "total");
+		drawClickIndicator(rd, "total", resolution);
 	}
 
 	// Draw the HUD here
 	if (sessConfig->hud.enable) {
-		drawHUD(rd);
+		drawHUD(rd, resolution);
 	}
 }
 
-void FPSciApp::drawClickIndicator(RenderDevice* rd, String mode) {
+void FPSciApp::drawClickIndicator(RenderDevice* rd, String mode, Vector2 resolution) {
 	// Click to photon latency measuring corner box
 	if (sessConfig->clickToPhoton.enabled) {
 		float boxLeft = 0.0f;
 		// Paint both sides by the width of latency measuring box.
-		Point2 latencyRect = sessConfig->clickToPhoton.size * Point2((float)rd->viewport().width(), (float)rd->viewport().height());
-		float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
-		if (guardband) {
-			boxLeft += guardband;
-		}
-		float boxTop = rd->viewport().height() * sessConfig->clickToPhoton.vertPos - latencyRect.y / 2;
+		Point2 latencyRect = sessConfig->clickToPhoton.size * resolution;
+		float boxTop = resolution.y * sessConfig->clickToPhoton.vertPos - latencyRect.y / 2;
 		if (sessConfig->clickToPhoton.mode == "both") {
 			boxTop = (mode == "minimum") ? boxTop - latencyRect.y : boxTop + latencyRect.y;
 		}
 		if (sessConfig->clickToPhoton.side == "right") {
-			boxLeft = (float)rd->viewport().width() - (guardband + latencyRect.x);
+			boxLeft = resolution.x - latencyRect.x;
 		}
 		// Draw the "active" box
 		Color3 boxColor;
@@ -372,7 +369,7 @@ void FPSciApp::drawClickIndicator(RenderDevice* rd, String mode) {
 	}
 }
 
-void FPSciApp::updateFPSIndicator(RenderDevice* rd) {
+void FPSciApp::updateFPSIndicator(RenderDevice* rd, Vector2 resolution) {
 	// Track the instantaneous frame duration (no smoothing) in a circular queue (regardless of whether we are drawing the indicator)
 	if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
 		m_frameDurationQueue.dequeue();
@@ -392,22 +389,22 @@ void FPSciApp::updateFPSIndicator(RenderDevice* rd) {
 
 	if (renderFPS) {
 		// Draw the FPS indicator
-		const float scale = rd->viewport().width() / 1920.0f;
+		const float scale = resolution.x / 1920.0f;
 		String msg;
 		if (window()->settings().refreshRate > 0) {
-			msg = format("%d measured / %d requested fps", iRound(rd->stats().smoothFrameRate), window()->settings().refreshRate);
+			msg = format("%d measured | %d requested fps", iRound(rd->stats().smoothFrameRate), window()->settings().refreshRate);
 		}
 		else {
 			msg = format("%d fps", iRound(rd->stats().smoothFrameRate));
 		}
 		msg += format(" | %.1f min | %.1f avg | %.1f max ms", recentMin * 1000.0f, 1000.0f / rd->stats().smoothFrameRate, 1000.0f * recentMax);
-		outputFont->draw2D(rd, msg, Point2(rd->viewport().width() * 0.75f, rd->viewport().height() * 0.05f).floor(), floor(20.0f * scale), Color3::yellow());
+		outputFont->draw2D(rd, msg, Point2(0.75f * resolution.x, 0.05f * resolution.y).floor(), floor(20.0f * scale), Color3::yellow());
 	}
 }
 
-void FPSciApp::drawHUD(RenderDevice *rd) {
+void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 	// Scale is used to position/resize the "score banner" when the window changes size in "windowed" mode (always 1 in fullscreen mode).
-	const Vector2 scale = rd->viewport().wh() / displayRes;
+	const Vector2 scale = resolution / displayRes;
 
 	RealTime now = m_lastOnSimulationRealTime;
 
@@ -415,17 +412,17 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 	if (sessConfig->hud.renderWeaponStatus) {
 		// Draw the "active" cooldown box
 		if (sessConfig->hud.cooldownMode == "box") {
-			float boxLeft = (float)rd->viewport().width() * 0.0f;
+			float boxLeft = 0.0f;
 			if (sessConfig->hud.weaponStatusSide == "right") {
 				// swap side
-				boxLeft = (float)rd->viewport().width() * (1.0f - sessConfig->clickToPhoton.size.x);
+				boxLeft = resolution.x * (1.0f - sessConfig->clickToPhoton.size.x);
 			}
 			Draw::rect2D(
 				Rect2D::xywh(
 					boxLeft,
-					(float)rd->viewport().height() * (float)(weapon->cooldownRatio(now)),
-					(float)rd->viewport().width() * sessConfig->clickToPhoton.size.x,
-					(float)rd->viewport().height() * (float)(1.0 - weapon->cooldownRatio(now))
+					resolution.y * (weapon->cooldownRatio(now)),
+					resolution.x * sessConfig->clickToPhoton.size.x,
+					resolution.y * (1.0f - weapon->cooldownRatio(now))
 				), rd, Color3::white() * 0.8f
 			);
 		}
@@ -439,7 +436,7 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 			for (int i = 0; i < segsToLight; i++) {
 				const float inc = static_cast<float>(2 * pi() / segments);
 				const float theta = -i * inc;
-				Vector2 center = Vector2(rd->viewport().width() / 2.0f, rd->viewport().height() / 2.0f);
+				Vector2 center = resolution / 2.0f;
 				Array<Vector2> verts = {
 					center + Vector2(oRad*sin(theta), -oRad * cos(theta)),
 					center + Vector2(oRad*sin(theta + inc), -oRad * cos(theta + inc)),
@@ -453,9 +450,9 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 
 	// Draw the player health bar
 	if (sessConfig->hud.showPlayerHealthBar) {
-		const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
+		//const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
 		const float health = scene()->typedEntity<PlayerEntity>("player")->health();
-		const Point2 location = Point2(sessConfig->hud.playerHealthBarPos.x, sessConfig->hud.playerHealthBarPos.y + m_debugMenuHeight) + Point2(guardband, guardband);
+		const Point2 location = Point2(sessConfig->hud.playerHealthBarPos.x, sessConfig->hud.playerHealthBarPos.y + m_debugMenuHeight);// +Point2(guardband, guardband);
 		const Point2 size = sessConfig->hud.playerHealthBarSize;
 		const Point2 border = sessConfig->hud.playerHealthBarBorderSize;
 		const Color4 borderColor = sessConfig->hud.playerHealthBarBorderColor;
@@ -466,8 +463,8 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 	}
 	// Draw the ammo indicator
 	if (sessConfig->hud.showAmmo) {
-		const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
-		Point2 lowerRight = Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height())) - Point2(guardband, guardband);
+		//const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
+		Point2 lowerRight = resolution; //Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height())) - Point2(guardband, guardband);
 		hudFont->draw2D(rd,
 			format("%d/%d", weapon->remainingAmmo(), sessConfig->weapon.maxAmmo),
 			lowerRight - sessConfig->hud.ammoPosition,
@@ -481,7 +478,7 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 
 	if (sessConfig->hud.showBanner && !emergencyTurbo) {
 		const shared_ptr<Texture> scoreBannerTexture = hudTextures["scoreBannerBackdrop"];
-		const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->hud.bannerVertVisible*scoreBannerTexture->height() * scale.y + debugMenuHeight());
+		const Point2 hudCenter(resolution.x / 2.0f, sessConfig->hud.bannerVertVisible * scoreBannerTexture->height() * scale.y + debugMenuHeight());
 		Draw::rect2D((scoreBannerTexture->rect2DBounds() * scale - scoreBannerTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), scoreBannerTexture);
 
 		// Create strings for time remaining, progress in sessions, and score
@@ -505,7 +502,7 @@ void FPSciApp::drawHUD(RenderDevice *rd) {
 		if (!hudTextures.containsKey(element.filename)) continue;						// Skip any items we haven't loaded
 		const shared_ptr<Texture> texture = hudTextures[element.filename];				// Get the loaded texture for this element
 		const Vector2 size = element.scale * scale * texture->vector2Bounds();			// Get the final size of the image
-		const Vector2 pos = (element.position * rd->viewport().wh()) - size/2.0;		// Compute position (center image on provided position)
+		const Vector2 pos = (element.position * resolution) - size/2.0;					// Compute position (center image on provided position)
 		Draw::rect2D(Rect2D::xywh(pos, size), rd, Color3::white(), texture);			// Draw the rect
 	}
 }

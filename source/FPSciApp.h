@@ -101,13 +101,14 @@ protected:
 	shared_ptr<WeaponControls>				m_weaponControls;					///< Weapon controls window (developer mode)
 
 
-	// Shader parameters
+	// Shader buffers
 	shared_ptr<Framebuffer>					m_ldrBuffer2D;						///< Buffer to use for 2D content (if split)
 	shared_ptr<Framebuffer>					m_ldrShader2DOutput;				///< Buffer to use for 2D shader output (if provided)
 	shared_ptr<Framebuffer>					m_hdrShader3DOutput;				///< Buffer to use for 3D shader output (if provided)
 	shared_ptr<Framebuffer>					m_ldrBufferComposite;				///< Buffer to use for input to composited shader (if provided)
 	shared_ptr<Framebuffer>					m_ldrShaderCompositeOutput;			///< Buffer to use for composite shader output (if provided)
 
+	// Shader parameters
 	int										m_frameNumber = 0;					///< Frame number (since the start of the session)
 	RealTime								m_startTime;						///< Start time (for the session)
 	RealTime								m_last2DTime, m_last3DTime, m_lastCompositeTime;		///< Times used for iTimeDelta
@@ -268,12 +269,12 @@ public:
 	virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) override;
 	virtual void onPostProcessHDR3DEffects(RenderDevice* rd) override;
 	
-	void draw2DElements(RenderDevice* rd);						///< Draw the undelayed 2D elements
-	void drawDelayed2DElements(RenderDevice* rd);				///< Draw the delayed 2D elements
+	void draw2DElements(RenderDevice* rd, Vector2 resolution);			///< Draw the undelayed 2D elements
+	void drawDelayed2DElements(RenderDevice* rd, Vector2 resolution);	///< Draw the delayed 2D elements
 
-	virtual void drawHUD(RenderDevice* rd);						///< Draw HUD elements
-	void drawClickIndicator(RenderDevice* rd, String mode);		///< Draw the click-to-photon click indicator
-	void updateFPSIndicator(RenderDevice* rd);					///< Update and draw a (custom) frame time indicator (developer mode feature)
+	virtual void drawHUD(RenderDevice* rd, Vector2 resolution);						///< Draw HUD elements
+	void drawClickIndicator(RenderDevice* rd, String mode, Vector2 resolution);		///< Draw the click-to-photon click indicator
+	void updateFPSIndicator(RenderDevice* rd, Vector2 resolution);					///< Update and draw a (custom) frame time indicator (developer mode feature)
 
 	void updateShaderBuffers();									///< Regenerate buffers (for configured shaders)
 
