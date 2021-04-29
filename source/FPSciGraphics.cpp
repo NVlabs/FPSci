@@ -38,6 +38,7 @@ void FPSciApp::updateShaderBuffers() {
 	// Composite buffer (input and output) used when composite shader or resolution is specified
 	if (!sessConfig->render.shaderComposite.empty() || sessConfig->render.resolutionComposite[0] > 0) {
 		width = renderDevice->width(); height = renderDevice->height();
+		m_ldrBufferPrecomposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Fullres", width, height, ImageFormat::RGB8(), Texture::DIM_2D, true));
 		if (sessConfig->render.resolutionComposite[0] > 0) {
 			width = sessConfig->render.resolutionComposite[0];
 			height = sessConfig->render.resolutionComposite[1];
@@ -46,6 +47,7 @@ void FPSciApp::updateShaderBuffers() {
 		m_ldrShaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", width, height, ImageFormat::RGB8()));
 	}
 	else {
+		m_ldrBufferPrecomposite.reset();
 		m_ldrBufferComposite.reset();
 		m_ldrShaderCompositeOutput.reset();
 	}
@@ -104,10 +106,15 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 
 	// Transfer LDR framebuffer to the composite buffer (if used)
 	if (m_ldrBufferComposite) {
-		rd->drawFramebuffer()->blitTo(rd, m_ldrBufferComposite, true, true, false, false, true);
+		// Blit to temporary (resolution matched) precomposite buffer
+		rd->drawFramebuffer()->blitTo(rd, m_ldrBufferPrecomposite, true, true, false, false, true);
+		// Resample the blitted framebuffer onto the (controlled resolution) composite shader input buffer
+		rd->push2D(m_ldrBufferComposite); {
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrBufferPrecomposite->texture(0), Sampler::video());
+		} rd->pop2D();
 	}
 }
-
+ 
 void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 	if (notNull(m_hdrShader3DOutput)) {
 		if(sessConfig->render.shader3D.empty()) {

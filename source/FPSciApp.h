@@ -105,6 +105,7 @@ protected:
 	shared_ptr<Framebuffer>					m_ldrBuffer2D;						///< Buffer to use for 2D content (if split)
 	shared_ptr<Framebuffer>					m_ldrShader2DOutput;				///< Buffer to use for 2D shader output (if provided)
 	shared_ptr<Framebuffer>					m_hdrShader3DOutput;				///< Buffer to use for 3D shader output (if provided)
+	shared_ptr<Framebuffer>					m_ldrBufferPrecomposite;			///< Buffer to blit LDR framebuffer into before converting to composite resolution
 	shared_ptr<Framebuffer>					m_ldrBufferComposite;				///< Buffer to use for input to composited shader (if provided)
 	shared_ptr<Framebuffer>					m_ldrShaderCompositeOutput;			///< Buffer to use for composite shader output (if provided)
 
