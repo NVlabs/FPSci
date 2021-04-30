@@ -72,6 +72,8 @@ void FPSciLogger::openResultsFile(const String& filename,
 				{ "dest_space", "text"},
 				{ "min_size", "real"},
 				{ "max_size", "real"},
+				{ "symmetric_ecc_h", "text" },
+				{ "symmetric_ecc_v", "text" },
 				{ "min_ecc_h", "real" },
 				{ "min_ecc_v", "real" },
 				{ "max_ecc_h", "real" },
@@ -363,6 +365,8 @@ void FPSciLogger::logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets)
 	for (auto config : targets) {
 		const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
 		const String jumpEnabled = config->jumpEnabled ? "True" : "False";
+		const String symmetricEccH = config->symmetricEccH ? "True" : "False";
+		const String symmetricEccV = config->symmetricEccV ? "True" : "False";
 		const String modelName = config->modelSpec["filename"];
 		const RowEntry targetTypeRow = {
 			"'" + config->id + "'",
@@ -370,6 +374,8 @@ void FPSciLogger::logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets)
 			"'" + config->destSpace + "'",
 			String(std::to_string(config->size[0])),
 			String(std::to_string(config->size[1])),
+			"'" + symmetricEccH+ "'",
+			"'" + symmetricEccV + "'",
 			String(std::to_string(config->eccH[0])),
 			String(std::to_string(config->eccH[1])),
 			String(std::to_string(config->eccV[0])),

@@ -96,6 +96,7 @@ The following configuration only applies to player-bound parametric targets.
 
 * `speed` is a vector indictating the minimum ([0]) and maximum ([1]) speeds in angular velocity (in deg/s)
 * `distance` is the distance to this target (in meters)
+* `symmetricEccH/V` When `True` the eccH/V are assumed symmetric about their respective axes and should always be >0. When `False` the eccentricities can be signed, with positive eccentricities indicate values to the left (azim) and up (elev) of the central view direction.
 * `eccH/V` are controls for min ([0])/max([1]) horizontal/vertical eccentricity for target initial position (in deg)
 * `motionChangePeriod` is a vector indicating the minimum ([0]) and maximum ([1]) motion change period allowed (in s)
 * `upperHemisphereOnly` is a boolean flag indicating whether target flies only on the upper hemisphere of player-centric sphere. Only applicable to `FlyingEntity` defined in the "player" space.
@@ -127,6 +128,8 @@ targets = [
         "visualSize" : [0.5, 0.5],              // 0.5m size
         "respawnCount" : 0,                     // Don't respawn
         "speed": [1.0, 3.0],                    // 1-3m/s speed
+        "symmetricEccH" : true;                 // Target will only spawn randomly on any quadrant within specified eccH (between (-)15 to (-)5 or 5 to 15)
+        "symmetricEccV" : true;                 // Target will only spawn randomly on any quadrant within specified eccH (between (-)5 to 0 or 0 to 5)
         "eccH" : [5.0, 15.0],                   // 5-15° initial spawn location (horizontal)
         "eccV" : [0.0, 5.0],                    // 0-5° intitial spawn location (vertical)
         "hitSound" : "sound/fpsci_ding_100ms.wav",      // Sound to play when target hit
