@@ -27,6 +27,8 @@ TargetConfig::TargetConfig(const Any& any) {
 		reader.getIfPresent("motionChangePeriod", motionChangePeriod);
 		reader.getIfPresent("speed", speed);
 		reader.getIfPresent("visualSize", size);
+		reader.getIfPresent("symmetricEccH", symmetricEccH);
+		reader.getIfPresent("symmetricEccV", symmetricEccV);
 		reader.getIfPresent("eccH", eccH);
 		reader.getIfPresent("eccV", eccV);
 		reader.getIfPresent("jumpEnabled", jumpEnabled);
@@ -100,6 +102,8 @@ Any TargetConfig::toAny(const bool forceAll) const {
 		if (forceAll || def.distance != distance)							a["distance"] = distance;
 		if (forceAll || def.motionChangePeriod != motionChangePeriod)		a["motionChangePeriod"] = motionChangePeriod;
 		if (forceAll || def.speed != speed)									a["speed"] = speed;
+		if (forceAll || def.symmetricEccH != symmetricEccH)					a["symmetricEccH"] = symmetricEccH;
+		if (forceAll || def.symmetricEccV != symmetricEccV)					a["symmetricEccV"] = symmetricEccV;
 		if (forceAll || def.eccH != eccH)									a["eccH"] = eccH;
 		if (forceAll || def.eccV != eccV)									a["eccV"] = eccV;
 		if (forceAll || def.jumpEnabled != jumpEnabled)						a["jumpEnabled"] = jumpEnabled;

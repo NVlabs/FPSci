@@ -387,6 +387,7 @@ void FPSciApp::presentQuestion(Question question) {
 	if (notNull(dialog)) removeWidget(dialog);		// Remove the current dialog widget (if valid)
 	currentQuestion = question;						// Store this for processing key-bound presses
 	Array<String> options = question.options;		// Make a copy of the options (to add key binds if necessary)
+	if (question.randomOrder) options.randomize();
 	const Rect2D windowRect = window()->clientRect();
 	const Point2 size = question.fullscreen ? Point2(windowRect.width(), windowRect.height()) : Point2(400, 200);
 	switch (question.type) {

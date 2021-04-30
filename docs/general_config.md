@@ -214,8 +214,8 @@ For more information on G3D `Sampler` options refer to [this reference page](htt
 "playerAxisLock": [false, false, false],    // Don't lock player motion in any axis
 "turnScale": Vector2(1.0, 1.0),             // Turn rate scaling
 "playerHeight":  1.5,                       // Normal player height
-"crouchHeight": 0.8,                        // Crouch height
-"jumpVelocity": 3.5,                        // Jump velocity
+"crouchHeight": 1.5,                        // Crouch height (no crouch by default)
+"jumpVelocity": 0.0,                        // Jump velocity (no jump by default)
 "jumpInterval": 0.5,                        // Minimum jump interval
 "jumpTouch": true,                          // Require touch for jump
 "playerGravity": Vector3(0.0, -10.0, 0.0),  // Player gravity
@@ -265,6 +265,7 @@ Questions are configured on a per experiment/session basis using the `questions`
 |`optionKeys`           |`Array<GKey>`  | An array of `GKey` options in 1:1 correspondence with `options` above. Leave empty for no keybinds. Check [here](keymap.md#gkey-string) for strings to use for `GKey`s. |
 |`fullscreen`           |`bool`  | When set this opens the dialog in "fullscreen" mode, overlaying all of the rendered content (default is `false`) |
 |`showCursor`           |`bool`  | Allows the experiment designer to hide the cursor while responding to this dialog (default is `true`). Best used with `optionKeys` set otherwise there may be no way to answer the question. Not intended for use with `"Entry"` question types. |
+|`randomOrder`          |`bool`  | Randomize the option order for `MultipleChoice` and `Rating` questions optionally    |
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
 
@@ -282,6 +283,7 @@ The user can specify one or more questions using the `questions` array, as demon
         "optionKeys" : ["A", "B", "C"],
         "fullscreen": true,
         "showCursor" : false,
+        "randomOrder": false
     }
 ]
 ```
