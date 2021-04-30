@@ -56,8 +56,24 @@ void RenderConfig::load(AnyTableReader reader, int settingsVersion) {
 	case 1:
 		reader.getIfPresent("frameRate", frameRate);
 		reader.getIfPresent("frameDelay", frameDelay);
-		reader.getIfPresent("shader", shader);
 		reader.getIfPresent("horizontalFieldOfView", hFoV);
+
+		reader.getIfPresent("resolution2D", resolution2D);
+		reader.getIfPresent("resolution3D", resolution3D);
+		reader.getIfPresent("resolutionComposite", resolutionComposite);
+
+		reader.getIfPresent("shader2D", shader2D);
+		reader.getIfPresent("shader3D", shader3D);
+		reader.getIfPresent("shaderComposite", shaderComposite);
+
+		reader.getIfPresent("sampled2D", sampler2D);
+		reader.getIfPresent("sampler2DOutput", sampler2DOutput);
+		reader.getIfPresent("sampler3D", sampler3D);
+		reader.getIfPresent("sampler3DOutput", sampler3DOutput);
+		reader.getIfPresent("samplerPrecomposite", samplerPrecomposite);
+		reader.getIfPresent("samplerComposite", samplerComposite);
+		reader.getIfPresent("samplerFinal", samplerFinal);
+
 		break;
 	default:
 		throw format("Did not recognize settings version: %d", settingsVersion);
@@ -65,12 +81,36 @@ void RenderConfig::load(AnyTableReader reader, int settingsVersion) {
 	}
 }
 
+// Implement equality check for all Any serializable sampler fields (used below)
+static bool operator!=(Sampler s1, Sampler s2) {
+	return s1.interpolateMode != s2.interpolateMode ||
+		s1.xWrapMode != s2.xWrapMode || s1.yWrapMode != s2.yWrapMode ||
+		s1.depthReadMode != s2.depthReadMode || s1.maxAnisotropy != s1.maxAnisotropy ||
+		s1.maxMipMap != s2.maxMipMap || s1.minMipMap != s2.minMipMap || s1.mipBias != s2.mipBias;
+}
+
 Any RenderConfig::addToAny(Any a, bool forceAll) const {
 	RenderConfig def;
-	if (forceAll || def.frameRate != frameRate)		a["frameRate"] = frameRate;
-	if (forceAll || def.frameDelay != frameDelay)	a["frameDelay"] = frameDelay;
-	if (forceAll || def.hFoV != hFoV)				a["horizontalFieldOfView"] = hFoV;
-	if (forceAll || def.shader != shader)			a["shader"] = shader;
+	if (forceAll || def.frameRate != frameRate)					a["frameRate"] = frameRate;
+	if (forceAll || def.frameDelay != frameDelay)				a["frameDelay"] = frameDelay;
+	if (forceAll || def.hFoV != hFoV)							a["horizontalFieldOfView"] = hFoV;
+
+	if (forceAll || def.resolution2D != resolution2D)			a["resolution2D"] = resolution2D;
+	if (forceAll || def.resolution3D != resolution3D)			a["resolution3D"] = resolution3D;
+	if (forceAll || def.resolutionComposite != resolutionComposite)	a["resolutionComposite"] = resolutionComposite;
+
+	if (forceAll || def.shader2D != shader2D)					a["shader2D"] = shader2D;
+	if (forceAll || def.shader3D != shader3D)					a["shader3D"] = shader3D;
+	if (forceAll || def.shaderComposite != shaderComposite)		a["shaderComposite"] = shaderComposite;	
+	
+	if (forceAll || def.sampler2D != sampler2D)					a["sampler2D"] = sampler2D;
+	if (forceAll || def.sampler2DOutput != sampler2DOutput)		a["sampler2DOutput"] = sampler2DOutput;
+	if (forceAll || def.sampler3D != sampler3D)					a["sampler3D"] = sampler3D;
+	if (forceAll || def.sampler3DOutput != sampler3DOutput)		a["sampler3DOutput"] = sampler3DOutput;
+	if (forceAll || def.samplerPrecomposite != samplerPrecomposite)	a["samplerPrecomposite"] = samplerPrecomposite;
+	if (forceAll || def.samplerComposite != samplerComposite)	a["samplerComposite"] = samplerComposite;
+	if (forceAll || def.samplerFinal != samplerFinal)			a["samplerFinal"] = samplerFinal;
+	
 	return a;
 }
 

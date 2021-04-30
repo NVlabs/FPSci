@@ -61,7 +61,7 @@ Any TrialCount::toAny(const bool forceAll) const {
 	return a;
 }
 
-SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig) {
+SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 	TrialCount::defaultCount = timing.defaultTrialCount;
 	AnyTableReader reader(any);
 	switch (settingsVersion) {

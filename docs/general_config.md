@@ -138,16 +138,47 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 ## Rendering Settings
 | Parameter Name            |Units  | Description                                                        |
 |---------------------------|-------|--------------------------------------------------------------------|
-|`horizontalFieldOfView`    |°      |The (horizontal) field of view for the user's display, to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)|
+|`horizontalFieldOfView`    |°      | The (horizontal) field of view for the user's display, to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)|
 |`frameDelay`               |frames | An (integer) count of frames to delay to control latency           |
-|`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#frame-rate-modes) below.|
-|`shader`                   |file    | The (relative) path/filename of an (optional) shader to run (as a `.pix`) |
+|`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#Frame-Rate-Modes) below.|
+|`resolution2D`             |`Array<int>`| The resolution to render 2D content at (defaults to window resolution)       |
+|`resolution3D`             |`Array<int>`| The resolution to render 3D content at (defaults to window resolution)       |
+|`resolutionComposite`      |`Array<int>`| The resolution to render the composite result at (defaults to window resolution)     |
+|`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`), only valid if `split2DBuffer` = `true`! |
+|`shader3D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 3D content (as a `.pix`) |
+|`shaderComposite`          |file   | The (relative) path/filename of an (optional) shader to run on the composited 2D/3D content (as a `.pix`) |
+|`sampler2D`                |`Sampler`  | The sampler for resampling the `iChannel0` input to `shader2D`                       |
+|`sampler2DOutput`          |`Sampler`  | The sampler for resampling the 2D output into the framebuffer/composite input buffer |
+|`sampler3D`                |`Sampler`  | The sampler for resampling the framebuffer into the HDR 3D buffer (`iChannel0` input to the 3D shader) |
+|`sampler3DOutput`          |`Sampler`  | The sampler for resampling the HDR 3D (shader) output buffer back into the framebuffer     |
+|`samplerPrecomposite`      |`Sampler`  | The sampler for resampling the precomposite (framebuffer sized) buffer to composite input buffer  |
+|`samplerComposite`         |`Sampler`  | The sampler for resampling the `iChannel0` input to `shaderComposite`                |
+|`samplerFinal`             |`Sampler`  | The sampler for resampling the composite (shader) output buffer into the final framebuffer for display    |
+
+
+For more information on G3D `Sampler` options refer to [this reference page](https://casual-effects.com/g3d/G3D10/build/manual/class_g3_d_1_1_sampler.html). `Sampler`s can either be specified using predefined constants (i.e. `Sampler::buffer()`) or by specifying fields (i.e. `Sampler::Sampler{interpolateMode = "BILINEAR_MIPMAP", xWrapMode = "TILE"}`)
+
 
 ```
 "horizontalFieldOfView":  103.0,            // Field of view (horizontal) for the user in degrees
 "frameDelay" : 3,                           // Frame delay (in frames)
 "frameRate" : 60,                           // Frame/update rate (in Hz)
-"shader": "[your shader].pix",              // Default is "" or no shader
+
+"resolution2D": [0,0],                      // Use native resolution for 2D by default
+"resolution3D": [0,0],                      // Use native resolution for 3D by default
+"resolutionComposite": [0,0],               // Use native resolution for composite by default
+
+"shader2D": "[your shader].pix",            // Default is "" or no shader
+"shader3D": "[your shader].pix",            // Default is "" or no shader
+"shaderComposite": "[your shader].pix",     // Default is "" or no shader
+
+"sampler2D": Sampler::video(),              // Use video sampler (BILINEAR_NO_MIPMAP interpolation mode, CLAMP wrap mode, and DEPTH_NORMAL depth read mode) by default
+"sampler2DOutput": Sampler::video(),        // Use video sampler by default
+"sampler3D": Sampler::video();              // Use video sampler by default
+"sampler3DOutput": Sampler::video();        // Use video sampler by default
+"samplerPrecomposite": Sampler::video();    // Use video sampler by default
+"samplerComposite": Sampler::video();       // Use video sampler by default
+"samplerFinal": Sampler::video();           // Use video sampler by default
 ```
 
 ## Audio Settings
@@ -280,17 +311,17 @@ Each question in the array is then asked of the user (via an independent time-se
 | Parameter Name                |Units          | Description                                                                        |
 |-------------------------------|---------------|------------------------------------------------------------------------------------|
 |`showPlayerHealthBar`          |`bool`         | Whether or not a player health bar is drawn to the HUD                             |
-|`playerHealthBarSize`          |`Point2`(px)   | The size of the player health bar                                                  |
-|`playerHealthBarPosition`      |`Point2`(px)   | The position of the player health bar (from the top right of the screen)           |
-|`playerHealthBarBorderSize`    |`Point2`(px)   | The width of the player health bar border                                          |
+|`playerHealthBarSize`          |`Vector2`      | The size of the player health bar (as a ratio of 2D resolution/screen size)        |
+|`playerHealthBarPosition`      |`Point2`       | The position of the player health bar (as a ratio of 2D resolution/screen size from the top right of the screen) |
+|`playerHealthBarBorderSize`    |`Vector2`      | The width of the player health bar border (as a ratio of 2D resolution/screen size)|
 |`playerHealthBarBorderColor`   |`Color4`       | The color of the player health bar border                                          |
 |`playerHealthBarColors`        |[`Color4`, `Color4`] | The max/min health colors for the player health bar as an array of [`max color`, `min color`]. If you are using low alpha values with this field, make sure you consider the alpha value for `playerHealthBarBorderColor` as well.|
 
 ```
 "showPlayerHealthBar":  true,                               // Show the player health bar (default is false)      
-"playerHealthBarSize": Point2(200.0, 20.0),                 // Size of the health bar       
-"playerHealthBarPosition": Point2(74.0, 74.0),              // Position of the bar      
-"playerHealthBarBorderSize": Point2(2.0, 2.0),              // Size of the bar border/background
+"playerHealthBarSize": Vector2(0.1, 0.02),                  // Size of the health bar       
+"playerHealthBarPosition": Point2(0.005, 0.01),             // Position of the bar      
+"playerHealthBarBorderSize": Point2(0.001, 0.002),          // Size of the bar border/background
 "playerHealthBarBorderColor": Color4(0.0,0.0,0.0,1.0),      // Background color w/ alpha
 "playerHealthBarColors": [                                  // Transition player health bar from green --> red
     Color4(0.0, 1.0, 0.0, 1.0),

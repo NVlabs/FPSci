@@ -27,8 +27,24 @@ public:
 	// Rendering parameters
 	float           frameRate = 1000.0f;						///< Target (goal) frame rate (in Hz)
 	int             frameDelay = 0;								///< Integer frame delay (in frames)
-	String          shader = "";								///< Option for a custom shader name
 	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
+	
+	Array<int>		resolution2D = { 0, 0 };					///< Optional 2D buffer resolution
+	Array<int>		resolution3D = { 0, 0 };					///< Optional 3D buffer resolution
+	Array<int>		resolutionComposite = { 0, 0 };				///< Optional composite buffer resolution	
+
+	String			shader2D = "";								///< Option for the filename of a custom shader to run on 2D content only
+	String          shader3D = "";								///< Option for the filename of a custom shader to run on 3D content only
+	String			shaderComposite = "";						///< Option for the filename of a custom shader to run on the (final) composited 2D/3D content	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
+	
+	// Samplers only exist between buffers with (possibly) different resolution, all equal sized buffers use Sampler::buffer()
+	Sampler			sampler2D = Sampler::video();				///< Sampler for sampling the shader2D iChannel0 input
+	Sampler			sampler2DOutput = Sampler::video();			///< Sampler for sampling the LDR 2D output into the framebuffer/composite input buffer
+	Sampler			sampler3D = Sampler::video();				///< Sampler for sampling the framebuffer into the HDR 3D buffer (including if using a shader)
+	Sampler			sampler3DOutput = Sampler::video();			///< Sampler for sampling the HDR 3D output buffer back into the framebuffer
+	Sampler			samplerPrecomposite = Sampler::video();		///< Sampler for precomposite (framebuffer blit) to composite input buffer
+	Sampler			samplerComposite = Sampler::video();		///< Sampler for sampling the shaderComposite iChannel0 input
+	Sampler			samplerFinal = Sampler::video();			///< Sampler for sampling composite (shader) output buffer into the final framebuffer
 
 	void load(AnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
@@ -80,9 +96,9 @@ public:
 
 	// Player health bar
 	bool            showPlayerHealthBar = false;							///< Display a player health bar?
-	Point2          playerHealthBarSize = Point2(200.0f, 20.0f);			///< Player health bar size (in pixels)
-	Point2          playerHealthBarPos = Point2(10.0f, 10.0f);				///< Player health bar position (in pixels)
-	Point2          playerHealthBarBorderSize = Point2(2.0f, 2.0f);			///< Player health bar border size
+	Vector2         playerHealthBarSize = Vector2(0.1f, 0.02f);				///< Player health bar size (as a ratio of screen size)
+	Point2          playerHealthBarPos = Point2(0.005f, 0.01f);				///< Player health bar position (as a ratio of screen size)
+	Vector2         playerHealthBarBorderSize = Vector2(0.001f, 0.002f);	///< Player health bar border size (as a ratio of screen size)
 	Color4          playerHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Player health bar border color
 	Array<Color4>   playerHealthBarColors = {								///< Player health bar start/end colors
 		Color4(0.0, 1.0, 0.0, 1.0),
