@@ -156,7 +156,7 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 |`samplerFinal`             |`Sampler`  | The sampler for resampling the composite (shader) output buffer into the final framebuffer for display    |
 
 
-For more information on G3D `Sampler` options refer to [this reference page](https://casual-effects.com/g3d/G3D10/build/manual/class_g3_d_1_1_sampler.html). `Sampler`s can either be specified using predefined constants (i.e. `Sampler::buffer()`) or by specifying fields (i.e. `Sampler::Sampler{interpolateMode = "BILINEAR_MIP_MAP", xWrapMode = "TILE"}`)
+For more information on G3D `Sampler` options refer to [this reference page](https://casual-effects.com/g3d/G3D10/build/manual/class_g3_d_1_1_sampler.html). `Sampler`s can either be specified using predefined constants (i.e. `Sampler::buffer()`) or by specifying fields (i.e. `Sampler::Sampler{interpolateMode = "BILINEAR_MIPMAP", xWrapMode = "TILE"}`)
 
 
 ```
