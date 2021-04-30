@@ -8,7 +8,6 @@
 #include <chrono>
 
 // Storage for configuration static vars
-FpsConfig SessionConfig::defaultConfig;
 int TrialCount::defaultCount;
 Array<String> UserSessionStatus::defaultSessionOrder;
 bool UserSessionStatus::randomizeDefaults;

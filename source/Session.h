@@ -128,10 +128,16 @@ public:
 	int					blockCount = 1;					///< Default to just 1 block per session
 	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
 	bool				closeOnComplete = false;		///< Close application on session completed?
-	static FpsConfig	defaultConfig;
 
-	SessionConfig() : FpsConfig(defaultConfig) {}
+	SessionConfig() : FpsConfig(defaultConfig()) {}
 	SessionConfig(const Any& any);
+
+	// Use a static method to bypass order of declaration for static members (specific to Sampler s_freeList in GLSamplerObect)
+	// Trick from: https://www.cs.technion.ac.il/users/yechiel/c++-faq/static-init-order-on-first-use.html
+	static FpsConfig& defaultConfig() {
+		static FpsConfig def;				// This is NOT freed ever (in our code)
+		return def;
+	}
 
 	static shared_ptr<SessionConfig> create() { return createShared<SessionConfig>(); }
 	Any toAny(const bool forceAll = false) const;
