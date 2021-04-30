@@ -111,11 +111,11 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 
 	// Transfer LDR framebuffer to the composite buffer (if used)
 	if (m_ldrBufferComposite) {
-		// Blit to temporary (resolution matched) precomposite buffer
-		rd->drawFramebuffer()->blitTo(rd, m_ldrBufferPrecomposite, true, true, false, false, true);
-		// Resample the blitted framebuffer onto the (controlled resolution) composite shader input buffer
+		// Copy the current draw framebuffer texture to precomposite buffer (blitTo causes debug error here)
+		rd->copyTextureFromScreen(m_ldrBufferPrecomposite->texture(0), rd->viewport());
+		// Resample the copied framebuffer onto the (controlled resolution) composite shader input buffer
 		rd->push2D(m_ldrBufferComposite); {
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrBufferPrecomposite->texture(0), sessConfig->render.samplerPrecomposite);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrBufferPrecomposite->texture(0), sessConfig->render.samplerPrecomposite, true);
 		} rd->pop2D();
 	}
 }
