@@ -6,7 +6,6 @@ void FPSciApp::updateShaderBuffers() {
 	// Parameters for update/resize of buffers
 	int width = renderDevice->width();
 	int height = renderDevice->height();
-	const ImageFormat* framebufferFormat = m_framebuffer->texture(0)->format();
 
 	// 2D buffers (input and output) used when 2D resolution or shader is specified
 	if (!sessConfig->render.shader2D.empty() || sessConfig->render.resolution2D[0] > 0) {
@@ -14,8 +13,10 @@ void FPSciApp::updateShaderBuffers() {
 			width = sessConfig->render.resolution2D[0];
 			height = sessConfig->render.resolution2D[1];
 		}
-		m_ldrBuffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DBuffer", width, height, ImageFormat::RGBA8(), Texture::DIM_2D, true));
-		m_ldrShader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height));
+		m_ldrBuffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Input", width, height, 
+			ImageFormat::RGBA8(), Texture::DIM_2D, true));
+		m_ldrShader2DOutput = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Output", width, height, 
+			ImageFormat::RGBA8(), Texture::DIM_2D, true));
 	}
 	else {
 		m_ldrBuffer2D.reset();
@@ -24,12 +25,13 @@ void FPSciApp::updateShaderBuffers() {
 
 	// 3D shader output (use popped framebuffer as input) used when 3D resolution or shader is specified
 	if (!sessConfig->render.shader3D.empty() || sessConfig->render.resolution3D[0] > 0) {
-		width = renderDevice->width(); height = renderDevice->height();
+		width = m_framebuffer->width(); height = m_framebuffer->height();
 		if (sessConfig->render.resolution3D[0] > 0) {
 			width = sessConfig->render.resolution3D[0];
 			height = sessConfig->render.resolution3D[1];
 		}
-		m_hdrShader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", width, height, framebufferFormat));
+		m_hdrShader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", width, height, 
+			m_framebuffer->texture(0)->format(), Texture::DIM_2D, true));
 	}
 	else {
 		m_hdrShader3DOutput.reset();
@@ -38,13 +40,16 @@ void FPSciApp::updateShaderBuffers() {
 	// Composite buffer (input and output) used when composite shader or resolution is specified
 	if (!sessConfig->render.shaderComposite.empty() || sessConfig->render.resolutionComposite[0] > 0) {
 		width = renderDevice->width(); height = renderDevice->height();
-		m_ldrBufferPrecomposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Fullres", width, height, ImageFormat::RGB8(), Texture::DIM_2D, true));
+		m_ldrBufferPrecomposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Precomposite", width, height, 
+			ImageFormat::RGB8(), Texture::DIM_2D, true));
 		if (sessConfig->render.resolutionComposite[0] > 0) {
 			width = sessConfig->render.resolutionComposite[0];
 			height = sessConfig->render.resolutionComposite[1];
 		}
-		m_ldrBufferComposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Input", width, height, ImageFormat::RGB8(), Texture::DIM_2D, true));
-		m_ldrShaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", width, height, ImageFormat::RGB8()));
+		m_ldrBufferComposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Input", width, height, 
+			ImageFormat::RGB8(), Texture::DIM_2D, true));
+		m_ldrShaderCompositeOutput = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Output", width, height, 
+			ImageFormat::RGB8(), Texture::DIM_2D, true));
 	}
 	else {
 		m_ldrBufferPrecomposite.reset();
@@ -110,7 +115,7 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 		rd->drawFramebuffer()->blitTo(rd, m_ldrBufferPrecomposite, true, true, false, false, true);
 		// Resample the blitted framebuffer onto the (controlled resolution) composite shader input buffer
 		rd->push2D(m_ldrBufferComposite); {
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrBufferPrecomposite->texture(0), Sampler::video());
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrBufferPrecomposite->texture(0), sessConfig->render.samplerPrecomposite);
 		} rd->pop2D();
 	}
 }
@@ -120,7 +125,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 		if(sessConfig->render.shader3D.empty()) {
 			// No shader specified, just a resize perform pass through into 3D output buffer from framebuffer
 			rd->push2D(m_hdrShader3DOutput); {
-				Draw::rect2D(rd->viewport(), rd, Color3::white(), m_framebuffer->texture(0), Sampler::video());
+				Draw::rect2D(rd->viewport(), rd, Color3::white(), m_framebuffer->texture(0), sessConfig->render.sampler3D);
 			} rd->pop2D();
 		}
 		else {
@@ -129,7 +134,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 				rd->push2D(m_hdrShader3DOutput); {
 				// Setup shadertoy-style args
 				Args args;
-					args.setUniform("iChannel0", m_framebuffer->texture(0), Sampler::video());
+					args.setUniform("iChannel0", m_framebuffer->texture(0), sessConfig->render.sampler3D);
 					const float iTime = float(System::time() - m_startTime);
 					args.setUniform("iTime", iTime);
 					args.setUniform("iTimeDelta", iTime - m_lastTime);
@@ -145,7 +150,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 
 		// Resample the shader output buffer into the framebuffer
 		rd->push2D(); {
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_hdrShader3DOutput->texture(0), Sampler::video());
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_hdrShader3DOutput->texture(0), sessConfig->render.sampler3DOutput);
 		} rd->pop2D();
 	}
 
@@ -172,7 +177,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			rd->push2D(m_ldrShader2DOutput); {
 				// Setup shadertoy-style args
 				Args args;
-				args.setUniform("iChannel0", m_ldrBuffer2D->texture(0), Sampler::video());
+				args.setUniform("iChannel0", m_ldrBuffer2D->texture(0), sessConfig->render.sampler2D);
 				const float iTime = float(System::time() - m_startTime);
 				args.setUniform("iTime", iTime);
 				args.setUniform("iTimeDelta", iTime - m_last2DTime);
@@ -188,7 +193,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		// Direct shader output to the display or composite shader input (if specified)
 		isNull(m_ldrBufferComposite) ? rd->push2D() : rd->push2D(m_ldrBufferComposite); {
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShader2DOutput->texture(0), Sampler::video());
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShader2DOutput->texture(0), sessConfig->render.sampler2DOutput);
 		} rd->pop2D();
 	}
 
@@ -204,7 +209,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			rd->push2D(m_ldrShaderCompositeOutput); {
 				// Setup shadertoy-style args
 				Args args;
-				args.setUniform("iChannel0", m_ldrBufferComposite->texture(0), Sampler::video());
+				args.setUniform("iChannel0", m_ldrBufferComposite->texture(0), sessConfig->render.samplerComposite);
 				const float iTime = float(System::time() - m_startTime);
 				args.setUniform("iTime", iTime);
 				args.setUniform("iTimeDelta", iTime - m_lastCompositeTime);
@@ -220,8 +225,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 
 		// Copy the shader output buffer into the framebuffer
 		rd->push2D(); {
-			// TODO: consider other sampler options here
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShaderCompositeOutput->texture(0), Sampler::buffer());
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShaderCompositeOutput->texture(0), sessConfig->render.samplerFinal);
 		} rd->pop2D();
 	}
 

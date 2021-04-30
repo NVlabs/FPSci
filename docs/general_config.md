@@ -147,15 +147,38 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 |`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`), only valid if `split2DBuffer` = `true`! |
 |`shader3D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 3D content (as a `.pix`) |
 |`shaderComposite`          |file   | The (relative) path/filename of an (optional) shader to run on the composited 2D/3D content (as a `.pix`) |
+|`sampler2D`                |`Sampler`  | The sampler for resampling the `iChannel0` input to `shader2D`                       |
+|`sampler2DOutput`          |`Sampler`  | The sampler for resampling the 2D output into the framebuffer/composite input buffer |
+|`sampler3D`                |`Sampler`  | The sampler for resampling the framebuffer into the HDR 3D buffer (`iChannel0` input to the 3D shader) |
+|`sampler3DOutput`          |`Sampler`  | The sampler for resampling the HDR 3D (shader) output buffer back into the framebuffer     |
+|`samplerPrecomposite`      |`Sampler`  | The sampler for resampling the precomposite (framebuffer sized) buffer to composite input buffer  |
+|`samplerComposite`         |`Sampler`  | The sampler for resampling the `iChannel0` input to `shaderComposite`                |
+|`samplerFinal`             |`Sampler`  | The sampler for resampling the composite (shader) output buffer into the final framebuffer for display    |
+
+
+For more information on G3D `Sampler` options refer to [this reference page](https://casual-effects.com/g3d/G3D10/build/manual/class_g3_d_1_1_sampler.html). `Sampler`s can either be specified using predefined constants (i.e. `Sampler::buffer()`) or by specifying fields (i.e. `Sampler::Sampler{interpolateMode = "BILINEAR_MIP_MAP", xWrapMode = "TILE"}`)
+
 
 ```
 "horizontalFieldOfView":  103.0,            // Field of view (horizontal) for the user in degrees
 "frameDelay" : 3,                           // Frame delay (in frames)
 "frameRate" : 60,                           // Frame/update rate (in Hz)
+
+"resolution2D": [0,0],                      // Use native resolution for 2D by default
+"resolution3D": [0,0],                      // Use native resolution for 3D by default
+"resolutionComposite": [0,0],               // Use native resolution for composite by default
+
 "shader2D": "[your shader].pix",            // Default is "" or no shader
 "shader3D": "[your shader].pix",            // Default is "" or no shader
 "shaderComposite": "[your shader].pix",     // Default is "" or no shader
 
+"sampler2D": Sampler::video(),              // Use video sampler (BILINEAR_NO_MIPMAP interpolation mode, CLAMP wrap mode, and DEPTH_NORMAL depth read mode) by default
+"sampler2DOutput": Sampler::video(),        // Use video sampler by default
+"sampler3D": Sampler::video();              // Use video sampler by default
+"sampler3DOutput": Sampler::video();        // Use video sampler by default
+"samplerPrecomposite": Sampler::video();    // Use video sampler by default
+"samplerComposite": Sampler::video();       // Use video sampler by default
+"samplerFinal": Sampler::video();           // Use video sampler by default
 ```
 
 ## Audio Settings
