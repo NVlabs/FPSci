@@ -54,6 +54,8 @@ public:
 	Array<float>	distance = { 30.0f, 40.0f };			///< Distance to the target
 	Array<float>	motionChangePeriod = { 1.0f, 1.0f };	///< Range of motion change period in seconds
 	Array<float>	speed = { 0.0f, 5.5f };					///< Range of angular velocities for target
+	bool			symmetricEccH = true;					///< Consider eccH in 2 directions (positive and negative horizontal axes)
+	bool			symmetricEccV = true;					///< Consider eccV in 2 directions (positive and negative vertical axes)
 	Array<float>	eccH = { 5.0f, 15.0f };					///< Range of initial horizontal eccentricity
 	Array<float>	eccV = { 0.0f, 2.0f };					///< Range of initial vertical eccentricity
 	Array<float>	size = { 0.2f, 0.2f };					///< Visual size of the target (in degrees)
@@ -224,7 +226,7 @@ public:
 		return m_health <= 0;
 	}
 	
-	bool tryRespawn() {
+	virtual bool tryRespawn() {
 		if (m_respawnCount == 0) {		// Target does not respawn
 			return false;
 		} else if(m_respawnCount > 0){	// Target respawns 
@@ -300,9 +302,8 @@ protected:
 
 public:
 	bool tryRespawn() {
-		TargetEntity::tryRespawn();
-		// clear all destination points
-		m_destinationPoints.fastClear();
+		m_destinationPoints.fastClear();				// clear all destination points
+		return TargetEntity::tryRespawn();
 	}
 
     /** Destinations must be no more than 170 degrees apart to avoid ambiguity in movement direction */
@@ -418,8 +419,8 @@ protected:
 
 public:
 	bool tryRespawn() {
-		TargetEntity::tryRespawn();
 		m_isFirstFrame = true;
+		return TargetEntity::tryRespawn();
 	}
 
 	void setMoveBounds(AABox bounds) { m_moveBounds = bounds; }

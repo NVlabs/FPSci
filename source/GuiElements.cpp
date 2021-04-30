@@ -466,7 +466,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	m_resumeQuitPane->beginRow(); {
 		const Vector2 resumeQuitBtnSize = { 100.f, 40.f };
 		// Create resume and quit buttons
-		resumeBtn = m_resumeQuitPane->addButton("Resume", this, &UserMenu::toggleVisibliity, GuiTheme::TOOL_BUTTON_STYLE);
+		resumeBtn = m_resumeQuitPane->addButton("Resume", this, &UserMenu::resumePress, GuiTheme::TOOL_BUTTON_STYLE);
 		resumeBtn->setSize(resumeQuitBtnSize);
 		quitBtn = m_resumeQuitPane->addButton("Quit", m_app, &FPSciApp::quitRequest, GuiTheme::TOOL_BUTTON_STYLE);
 		quitBtn->setSize(resumeQuitBtnSize);
@@ -782,4 +782,9 @@ void UserMenu::updateCmp360() {
 
 void UserMenu::setVisible(bool enable) {
 	GuiWindow::setVisible(enable);
+}
+
+void UserMenu::resumePress() {
+	setVisible(!visible());
+	m_app->setMouseInputMode(visible() ? FPSciApp::MouseInputMode::MOUSE_CURSOR : FPSciApp::MouseInputMode::MOUSE_FPM);
 }

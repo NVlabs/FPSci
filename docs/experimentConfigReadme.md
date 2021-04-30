@@ -83,9 +83,9 @@ The following configuration is universal to all target types.
 * `visualSize` is a vector indicating the minimum ([0]) and maximum ([1]) visual size for the target (in deg)
 * `colors` is an array of 2 colors (max and min health) which are interpolated between based on target damage (note this setting override the experiment or session-level [`targetHealthColors`](general_config.md#target-rendering) setting). If unspecified the experiment/session level settings are used.
 * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
-* `hitSound` is a filename for the sound to play when the target is hit but not destroyed.
+* `hitSound` is a filename for the sound to play when the target is hit but not destroyed (for no sound use an empty string).
 * `hitSoundVol` provides the volume (as a float) for the hit sound to be played at (default is `1.0`).
-* `destroyedSound` is a filename for the sound to play when the target is both hit and destroyed.
+* `destroyedSound` is a filename for the sound to play when the target is both hit and destroyed (for no sound use an empty string).
 * `destroyedSoundVol` provides the volume (as a float) for the destroyed sound to be played at (default is `1.0`).
 * `destroyDecal` the decal to show when destroyed
 * `destroyDecalScale` a scale to apply the the destroy decal (may be decal dependent)
@@ -97,6 +97,7 @@ The following configuration only applies to player-bound parametric targets.
 
 * `speed` is a vector indictating the minimum ([0]) and maximum ([1]) speeds in angular velocity (in deg/s)
 * `distance` is the distance to this target (in meters)
+* `symmetricEccH/V` When `True` the eccH/V are assumed symmetric about their respective axes and should always be >0. When `False` the eccentricities can be signed, with positive eccentricities indicate values to the left (azim) and up (elev) of the central view direction.
 * `eccH/V` are controls for min ([0])/max([1]) horizontal/vertical eccentricity for target initial position (in deg)
 * `motionChangePeriod` is a vector indicating the minimum ([0]) and maximum ([1]) motion change period allowed (in s)
 * `upperHemisphereOnly` is a boolean flag indicating whether target flies only on the upper hemisphere of player-centric sphere. Only applicable to `FlyingEntity` defined in the "player" space.
@@ -129,6 +130,8 @@ targets = [
         "colors": [Color3(0,1,0), Color3(1,0,0)];   // Green at max health, red at min health
         "respawnCount" : 0,                     // Don't respawn
         "speed": [1.0, 3.0],                    // 1-3m/s speed
+        "symmetricEccH" : true;                 // Target will only spawn randomly on any quadrant within specified eccH (between (-)15 to (-)5 or 5 to 15)
+        "symmetricEccV" : true;                 // Target will only spawn randomly on any quadrant within specified eccH (between (-)5 to 0 or 0 to 5)
         "eccH" : [5.0, 15.0],                   // 5-15° initial spawn location (horizontal)
         "eccV" : [0.0, 5.0],                    // 0-5° intitial spawn location (vertical)
         "hitSound" : "sound/fpsci_ding_100ms.wav",      // Sound to play when target hit

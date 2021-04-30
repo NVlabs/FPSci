@@ -214,8 +214,8 @@ void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
 		target->resetMotionParams();							// Reset the target motion behavior
 	}
 	else {
-		const float rot_pitch = randSign() * Random::common().uniform(config->eccV[0], config->eccV[1]);
-		const float rot_yaw = randSign() * Random::common().uniform(config->eccH[0], config->eccH[1]);
+		const float rot_pitch = (config->symmetricEccV ? randSign() : 1) * Random::common().uniform(config->eccV[0], config->eccV[1]);
+		const float rot_yaw = (config->symmetricEccH ? randSign() : 1) * Random::common().uniform(config->eccH[0], config->eccH[1]);
 		const CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw - 180.0f/(float)pi()*initialHeadingRadians, rot_pitch, 0.0f);
 		loc = f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 	}
@@ -271,8 +271,8 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
 		const String name = format("%s_%d_%d_%s_%d", m_config->id, m_currTrialIdx, m_completedTrials[m_currTrialIdx], target->id, i);
 
-		const float spawn_eccV = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
-		const float spawn_eccH = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
+		const float spawn_eccV = (target->symmetricEccV ? randSign() : 1) * Random::common().uniform(target->eccV[0], target->eccV[1]);
+		const float spawn_eccH = (target->symmetricEccH ? randSign() : 1) * Random::common().uniform(target->eccH[0], target->eccH[1]);
 		const float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
 		bool isWorldSpace = target->destSpace == "world";
 
@@ -287,7 +287,7 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 		// Check for case w/ destination array
 		shared_ptr<TargetEntity> t;
 		if (target->destinations.size() > 0) {
-			Point3 offset = isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			Point3 offset = isWorldSpace ? target->destinations[0].position : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 			t = spawnDestTarget(target, offset, previewColor, i, name);
 		}
 		// Otherwise check if this is a jumping target
@@ -322,7 +322,9 @@ void Session::processResponse()
 		m_remainingTrials[m_currTrialIdx] -= 1;	
 	}
 
-	logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
+	if (notNull(logger)) {
+		logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
+	}
 
 	// Check for whether all targets have been destroyed
 	if (m_destroyedTargets == totalTargets) {
@@ -385,7 +387,9 @@ void Session::updatePresentationState()
 
 			// Reset weapon cooldown
 			m_weapon->resetCooldown();
-
+			if (m_weapon->config()->clearTrialMissDecals) {				// Clear weapon's decals if specified
+				m_weapon->clearDecals(false);
+			}
 		}
 	}
 	else if (currentState == PresentationState::trialFeedback)
@@ -700,7 +704,7 @@ String Session::getFeedbackMessage() {
 }
 
 void Session::endLogging() {
-	if (logger != nullptr) {
+	if (notNull(logger)) {
 
 		//m_logger->logUserConfig(*m_app->currentUser(), m_config->id, m_config->player.turnScale);
 		logger->flush(false);

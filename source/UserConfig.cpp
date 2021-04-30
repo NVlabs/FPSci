@@ -110,8 +110,9 @@ UserTable UserTable::load(const String& filename) {
 
 Any UserTable::toAny(const bool forceAll) const {
 	Any a(Any::TABLE);
-	a["settingsVersion"] = 1;						///< Create a version 1 file
-	a["users"] = users;								///< Include updated subject table
+	a["settingsVersion"] = 1;						// Create a version 1 file
+	if (forceAll || !(defaultUser == UserConfig())) a["defaultUser"] = defaultUser;					// Add default user
+	a["users"] = users;								// Include updated subject table
 	return a;
 }
 

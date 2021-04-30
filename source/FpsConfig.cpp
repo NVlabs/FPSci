@@ -472,6 +472,7 @@ Question::Question(const Any& any) {
 		reader.getIfPresent("title", title);
 		reader.getIfPresent("fullscreen", fullscreen);
 		reader.getIfPresent("showCursor", showCursor);
+		reader.getIfPresent("randomOrder", randomOrder);
 
 		// Handle (optional) key binds for options (if provided)
 		if (type == Type::Rating || type == Type::MultipleChoice) {

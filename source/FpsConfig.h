@@ -40,8 +40,8 @@ public:
 	// View parameters
 	float           moveRate = 0.0f;							///< Player move rate (defaults to no motion)
 	float           height = 1.5f;								///< Height for the player view (in walk mode)
-	float           crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
-	float           jumpVelocity = 3.5f;						///< Jump velocity for the player
+	float           crouchHeight = 1.5f;						///< Height for the player view (during crouch in walk mode)
+	float           jumpVelocity = 0.0f;						///< Jump velocity for the player
 	float           jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
 	bool            jumpTouch = true;							///< Require the player to be touch a surface to jump?
 	Vector3         gravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
@@ -268,13 +268,14 @@ public:
 	};
 
 	Type type = Type::None;
-	String prompt = "";
-	Array<String> options;
-	Array<GKey> optionKeys;
-	String title = "Feedback";
-	String result = "";
-	bool fullscreen = false;
-	bool showCursor = true;
+	String prompt = "";					///< Text display to prompt the user for a response
+	Array<String> options;				///< List of options provided (if multiple choice)
+	Array<GKey> optionKeys;				///< Keys corresponding to the options provided (if multiple choice/ranking)
+	String title = "Feedback";			///< Title of the window displayed (if not fullscreen)
+	String result = "";					///< Reported result (not specified as configuration)
+	bool fullscreen = false;			///< Show this question as fullscreen?
+	bool showCursor = true;				///< Show cursor during question response window (allow clicking for selection)?
+	bool randomOrder = true;			///< Randomize question response order?
 
 	Question() {};
 	Question(const Any& any);

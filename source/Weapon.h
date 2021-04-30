@@ -76,6 +76,7 @@ public:
 	float	damagePerSecond = 2.0f;										///< Damage per second delivered (compute shot damage as damagePerSecond/firePeriod)
 	String	fireSound = "sound/fpsci_fire_100ms.wav"; 					///< Sound to play on fire
 	float	fireSoundVol = 1.0f;										///< Volume for fire sound
+	bool	fireSoundLoop = false;								///< Loop weapon audio (override for auto fire weapons)
 	bool	renderModel = false;										///< Render a model for the weapon?
 	bool	hitScan = true;												///< Is the weapon a projectile or hitscan
 
@@ -94,8 +95,10 @@ public:
 	String	hitDecal = "";												///< The decal to place where the shot hits
 	int		missDecalCount = 2;											///< Number of miss decals to draw
 	float	missDecalScale = 1.0f;										///< Scale to apply to the miss decal
+	float	missDecalTimeoutS = -1;										///< Miss decals don't timeout by default
+	bool	clearTrialMissDecals = true;								///< Clear the miss decals after each trial
 	float	hitDecalScale = 1.0f;										///< Scale to apply to the hit decal
-	float	hitDecalDurationS = 0.1f;									///< Duration to show the hit decal for (in seconds)
+	float	hitDecalTimeoutS = 0.1f;									///< Duration to show the hit decal for (in seconds)
 	float	hitDecalColorMult = 2.0f;									///< "Encoding" field (aka color multiplier) for hit decal
 
 	float	fireSpreadDegrees = 0;										///< The spread of the fire
@@ -114,6 +117,7 @@ public:
 
 	/** Returns true if firePeriod == 0 and autoFire == true */
 	inline bool isContinuous() const { return firePeriod == 0 && autoFire; }
+	inline bool loopAudio() const { return isContinuous() || (fireSoundLoop && autoFire); }
 
 	WeaponConfig() {}
 	WeaponConfig(const Any& any);
@@ -153,6 +157,7 @@ protected:
 	shared_ptr<VisibleEntity>				m_hitDecal;							///< Pointer to hit decal
 	RealTime								m_hitDecalTimeRemainingS = 0.f;		///< Remaining duration to show the decal for
 	Array<shared_ptr<VisibleEntity>>		m_currentMissDecals;				///< Pointers to miss decals
+	Array<SimTime>							m_missDecalTimesRemaining;				///< Create times for miss decals
 
 	Random									m_rand;
 
@@ -214,7 +219,8 @@ public:
 	void loadSounds() {
 		// Check for play mode specific parameters
 		if (notNull(m_fireAudio)) { m_fireAudio->stop(); }
-		m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->isContinuous());
+		if(!m_config->fireSound.empty()) m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->loopAudio());
+		else { m_fireSound = nullptr; }
 	}
 	// Plays the sound based on the weapon fire mode
 	void playSound(bool shotFired, bool shootButtonUp);
@@ -229,7 +235,7 @@ public:
 
 	void simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntity>>& targets, const Array<shared_ptr<Entity>>& dontHit = {});
 	void drawDecal(const Point3& point, const Vector3& normal, bool hit = false);
-	void clearDecals();
+	void clearDecals(bool clearHitDecal = true);
 	void loadDecals();
 	void loadModels();
 

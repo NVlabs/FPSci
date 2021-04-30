@@ -23,6 +23,7 @@ void FPSciApp::onInit() {
 	Random::common().reset(uint32(time(0)));
 
 	GApp::onInit();			// Initialize the G3D application (one time)
+	startupConfig.validateExperiments();
 	initExperiment();		// Initialize the experiment
 }
 
@@ -112,7 +113,7 @@ void FPSciApp::closeUserSettingsWindow() {
 void FPSciApp::saveUserConfig(bool onDiff) {
 	// Check for save on diff, without mismatch
 	if (onDiff && m_lastSavedUser == *currentUser()) return;
-	if (sess->logger) {
+	if (notNull(sess->logger)) {
 		sess->logger->logUserConfig(*currentUser(), sessConfig->id, sessConfig->player.turnScale);
 	}
 	userTable.save(startupConfig.experimentList[experimentIdx].userConfigFilename);
@@ -162,6 +163,7 @@ void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	// Load experiment setting from file
 	experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename);
 	experimentConfig.printToLog();
+	experimentConfig.validate(true);
 
 	// Get hash for experimentconfig.Any file
 	const size_t hash = HashTrait<String>::hashCode(experimentConfig.toAny().unparse());		// Hash the serialized Any (don't consider formatting)
@@ -394,6 +396,7 @@ void FPSciApp::presentQuestion(Question question) {
 	if (notNull(dialog)) removeWidget(dialog);		// Remove the current dialog widget (if valid)
 	currentQuestion = question;						// Store this for processing key-bound presses
 	Array<String> options = question.options;		// Make a copy of the options (to add key binds if necessary)
+	if (question.randomOrder) options.randomize();
 	const Rect2D windowRect = window()->clientRect();
 	const Point2 size = question.fullscreen ? Point2(windowRect.width(), windowRect.height()) : Point2(400, 200);
 	switch (question.type) {
@@ -556,6 +559,10 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (!sessConfig->audio.sceneHitSound.empty()) {
 		m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
 	}
+
+	// Update shader table
+	m_shaderToyTable.clear();
+	m_shaderToyTable.set(sessConfig->render.shader, G3D::Shader::getShaderFromPattern(sessConfig->render.shader));
 
 	// Load static HUD textures
 	for (StaticHudElement element : sessConfig->hud.staticElements) {
@@ -788,7 +795,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		if (isNull(target)) // Miss case
 		{
 			// Play scene hit sound
-			if (!weapon->config()->isContinuous()) {
+			if (!weapon->config()->isContinuous() && notNull(m_sceneHitSound)) {
 				m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
 			}
 		}
@@ -1111,7 +1118,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice *rd) {
 			}
 		}rd->pop2D();
 	}
-	if (sessConfig->render.shader != "") {
+	if (sessConfig->render.shader != "" && m_shaderToyTable.containsKey(sessConfig->render.shader)) {
 		// Copy the post-VFX HDR (input) framebuffer
 		static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
 		m_framebuffer->blitTo(rd, input, false, false, false, false, true);
@@ -1133,7 +1140,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice *rd) {
             args.setUniform("iMouse", userInput->mouseXY());
             args.setUniform("iFrame", frameNumber);
 			args.setRect(rd->viewport());
-			LAUNCH_SHADER(sessConfig->render.shader, args);
+			LAUNCH_SHADER_PTR(m_shaderToyTable[sessConfig->render.shader], args);
 			lastTime = iTime;
 		} rd->pop2D();
 
