@@ -76,6 +76,8 @@ StartupConfig::StartupConfig(const Any& any) {
 	int settingsVersion = 1;
 	AnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
+	Array<String> sampleFilenames;
+	ConfigFiles sampleExperiment;
 
 	switch (settingsVersion) {
 	case 1:
@@ -109,6 +111,24 @@ StartupConfig::StartupConfig(const Any& any) {
 		reader.getIfPresent("experimentList", experimentList);
 		for (ConfigFiles& files : experimentList) { files.populateEmptyFieldsWithDefaults(defaultExperiment); }
 		if (experimentList.length() == 0) { experimentList.append(defaultExperiment); }
+
+		logPrintf("Searching 'samples' directory for sample experiments.\n");
+		FileSystem::getFiles("samples/*.Experiment.Any", sampleFilenames);
+		sampleExperiment.populateEmptyFieldsWithDefaults(defaultExperiment);
+		sampleExperiment.userConfigFilename = format("samples/sample.User.Any");
+		for (String& sampleFile : sampleFilenames) {
+			String name = sampleFile.substr(0, sampleFile.find_first_of('.'));
+			sampleExperiment.experimentConfigFilename = format("samples/%s", sampleFile);
+			sampleExperiment.name = format("[Sample]%s", name);
+			sampleExperiment.userStatusFilename = format("samples/%s.Status.Any", name);
+			if (!FileSystem::exists(sampleExperiment.userStatusFilename)) {
+				logPrintf("Skipping Sample '%s' because user status '%s' doesn't exist\n", name, sampleExperiment.userStatusFilename);
+				continue;
+			}
+			experimentList.append(sampleExperiment);
+			logPrintf("Sample '%s' added to experiment list\n", sampleExperiment.name);
+		}
+		logPrintf("\n");
 
 		reader.getIfPresent("audioEnable", audioEnable);
 		break;
