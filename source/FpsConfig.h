@@ -138,7 +138,7 @@ public:
 class TimingConfig {
 public:
 	// Timing parameters
-	float           pretrialDuration = 0.5f;					///< Time in ready (pre-trial) state in seconds
+	Array<float>    pretrialDuration = { 0.5f, 0.5f };			///< Time in ready (pre-trial) state in seconds
 	float           maxTrialDuration = 100000.0f;				///< Maximum time spent in any one trial task
 	float           trialFeedbackDuration = 1.0f;				///< Time in the per-trial feedback state in seconds
 	float			sessionFeedbackDuration = 2.0f;				///< Time in the session feedback state in seconds

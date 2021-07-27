@@ -209,8 +209,8 @@ Any ExperimentConfig::toAny(const bool forceAll) const {
 }
 
 void ExperimentConfig::printToLog() const{
-	logPrintf("\n-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nTrial Feedback Duration = %f\nPretrial Duration = %f\nMax Trial Task Duration = %f\nMax Clicks = %d\n",
-		description.c_str(), scene.name.c_str(), timing.trialFeedbackDuration, timing.pretrialDuration, timing.maxTrialDuration, weapon.maxAmmo);
+	logPrintf("\n-------------------\nExperiment Config\n-------------------\nappendingDescription = %s\nscene name = %s\nTrial Feedback Duration = %f\nPretrial Duration = [%f, %f]\nMax Trial Task Duration = %f\nMax Clicks = %d\n",
+		description.c_str(), scene.name.c_str(), timing.trialFeedbackDuration, timing.pretrialDuration[0], timing.pretrialDuration[1], timing.maxTrialDuration, weapon.maxAmmo);
 	// Iterate through sessions and print them
 	for (int i = 0; i < sessions.size(); i++) {
 		SessionConfig sess = sessions[i];

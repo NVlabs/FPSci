@@ -12,6 +12,48 @@ static bool operator==(Array<T> a1, Array<T> a2) {
 	return !(a1 != a2);
 }
 
+template <class T>
+static void getArrayFromAny(AnyTableReader reader, const String& name, Array<T>& output) {
+	bool valid = true;
+	T value;
+	try {
+		Array<T> arr;
+		reader.get(name, arr);					// Try to read an array directly
+		if (arr.size() < output.size()) {		// Check for under size (critical)
+			throw format("\"%s\" array of length %d is underspecified (should be of length %d)!", name.c_str(), arr.size(), output.size());
+		}
+		else if (arr.size() != output.size()) {	// Check for over size (warn)
+			logPrintf("WARNING: array specified for \"%s\" is of length %d, but should be %d (using first %d elements)...\n", name.c_str(), arr.size(), output.size(), output.size());
+		}
+		// Copy over array elements
+		for (int i = 0; i < output.size(); i++) {
+			output[i] = arr[i];
+		}
+	}
+	catch(ParseError& e){
+		// Failed to read array, try to duplicate a single value
+		valid = reader.getIfPresent(name, value);
+		if (valid) {
+			for (int i = 0; i < output.size(); i++) {
+				output[i] = value;
+			}
+		}
+	}
+}
+
+template <class T>
+static void arrayToAny(Any& a, const String& name, const Array<T>& arr) {
+	bool allEqual = true;
+	for (int i = 0; i < arr.size(); i++) {
+		if (arr[i] != arr[0]) {
+			allEqual = false;
+			break;
+		}
+	}
+	if (allEqual) a[name] = arr[0];		// If array is constant just write a value
+	else a[name] = arr;					// Otherwise write the array
+}
+
 SceneConfig::SceneConfig(const Any& any) {
 	AnyTableReader reader(any);
 	int settingsVersion = 1;
@@ -255,7 +297,7 @@ Any AudioConfig::addToAny(Any a, bool forceAll) const {
 void TimingConfig::load(AnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
-		reader.getIfPresent("pretrialDuration", pretrialDuration);
+		getArrayFromAny(reader, "pretrialDuration", pretrialDuration);
 		reader.getIfPresent("maxTrialDuration", maxTrialDuration);
 		reader.getIfPresent("trialFeedbackDuration", trialFeedbackDuration);
 		reader.getIfPresent("sessionFeedbackDuration", sessionFeedbackDuration);
@@ -271,7 +313,7 @@ void TimingConfig::load(AnyTableReader reader, int settingsVersion) {
 
 Any TimingConfig::addToAny(Any a, bool forceAll) const {
 	TimingConfig def;
-	if (forceAll || def.pretrialDuration != pretrialDuration)				a["pretrialDuration"] = pretrialDuration;
+	if (forceAll || def.pretrialDuration != pretrialDuration)				arrayToAny(a, "pretrialDuration", pretrialDuration);
 	if (forceAll || def.maxTrialDuration != maxTrialDuration)				a["maxTrialDuration"] = maxTrialDuration;
 	if (forceAll || def.trialFeedbackDuration != trialFeedbackDuration)		a["trialFeedbackDuration"] = trialFeedbackDuration;
 	if (forceAll || def.sessionFeedbackDuration != sessionFeedbackDuration)	a["sessionFeedbackDuration"] = sessionFeedbackDuration;

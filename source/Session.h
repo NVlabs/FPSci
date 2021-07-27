@@ -182,6 +182,7 @@ protected:
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
 	// Time-based parameters
+	float m_pretrialDuration;							///< (Possibly) randomized pretrial duration
 	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial
 	String m_taskStartTime;								///< Recorded task start timestamp							
 	String m_taskEndTime;								///< Recorded task end timestamp

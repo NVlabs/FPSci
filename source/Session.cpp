@@ -131,6 +131,10 @@ bool Session::nextCondition() {
 	if (unrunTrialIdxs.size() == 0) return false;
 	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
 	m_currTrialIdx = unrunTrialIdxs[idx];
+
+	// Produce random in range pretrial duration
+	m_pretrialDuration = Random::common().uniform(m_config->timing.pretrialDuration[0], m_config->timing.pretrialDuration[1]);
+	
 	return true;
 }
 
@@ -343,7 +347,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::pretrial)
 	{
-		if (stateElapsedTime > m_config->timing.pretrialDuration)
+		if (stateElapsedTime > m_pretrialDuration)
 		{
 			newState = PresentationState::trialTask;
 			if (m_config->player.stillBetweenTrials) {
