@@ -1,0 +1,151 @@
+{ 
+    description = "manytargets"; 
+    frameRate = 120; 
+    showHUD = true;
+    renderWeaponStatus = true;
+    cooldownMode = "ring";
+    cooldownColor = Color4(0.7,1.0,0.9,0.75);
+    sessions = ( 
+        { 
+            description = "1 shot"; 
+            id = "1shot"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            weapon = { 
+                id = "1hit"; 
+                firePeriod = 0.3;
+                damagePerSecond = 4;
+                autoFire = false;
+            }; 
+            
+        }, 
+        { 
+            description = "2 shots"; 
+            id = "2shots"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            weapon = { 
+                id = "2hit"; 
+                firePeriod = 0.3;
+                damagePerSecond = 2;
+                autoFire = false;
+            }; 
+            
+        }, 
+        { 
+            description = "3 shots"; 
+            id = "3shots"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            weapon = { 
+                id = "3hit"; 
+                firePeriod = 0.3;
+                damagePerSecond = 1.5;
+                autoFire = false;
+            }; 
+            
+        }, 
+        { 
+            description = "autofire"; 
+            id = "autofire"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            weapon = { 
+                id = "4hit"; 
+                firePeriod = 0.2;
+                damagePerSecond = 1.8;
+                autoFire = true;
+            }; 
+            
+        }, 
+        { 
+            description = "fastfire"; 
+            id = "fastfire"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            renderWeaponStatus = false;
+            sceneHitSoundVol = 0;
+            sceneHitSound = "";
+            weapon = { 
+                id = "fast"; 
+                fireSound = "sound/fpsci_noise_50ms.wav";
+                fireSoundLoop = true;
+                firePeriod = 0;
+                damagePerSecond = 1.1;
+                autoFire = true;
+                missDecalTimeoutS = 3;
+            }; 
+            
+        }, 
+        { 
+            description = "show weapon"; 
+            id = "showweapon"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            weapon = { 
+                id = "show"; 
+                firePeriod = 0.3;
+                damagePerSecond = 1;
+                autoFire = false;
+                renderModel = True;
+                modelSpec = ArticulatedModel::Specification{			        // Default model
+                    filename = "model/sniper/sniper.obj";
+                    preprocess = {
+                        transformGeometry(all(), Matrix4::yawDegrees(90));
+                        transformGeometry(all(), Matrix4::scale(1.2,0.7,0.4));
+                    };
+                    scale = 0.25;
+                },
+            }; 
+            
+        } 
+    ); 
+    
+    settingsVersion = 1; 
+    targets = ( 
+        { 
+            destSpace = "player"; 
+            id = "static"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        }, 
+        { 
+            axisLocked = ( false, false, true ); 
+            destSpace = "player"; 
+            id = "moving"; 
+            motionChangePeriod = ( 0.8, 1.5 ); 
+            speed = ( 7, 10 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        } ); 
+    
+} 
