@@ -1,0 +1,118 @@
+{ 
+    description = "targets"; 
+    frameRate = 120; 
+    showHUD = true;
+    renderWeaponStatus = true;
+    cooldownMode = "ring";
+    cooldownColor = Color4(0.7,1.0,0.9,0.75);
+            
+    weapon = { 
+        id = "1hit"; 
+        firePeriod = 0.3;
+        damagePerSecond = 4;
+        autoFire = false;
+    }; 
+    sessions = ( 
+        { 
+            id = "1target"; 
+            description = "1 target"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            id = "2targets"; 
+            description = "2 targets"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            id = "5targets"; 
+            description = "5 targets"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "static", "static", "static"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            id = "moving"; 
+            description = "moving"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "moving"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            id = "jumping"; 
+            description = "jumping"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "jumping"); 
+                } ); 
+            
+        }, 
+        { 
+            id = "mixedtypes"; 
+            description = "mixed types"; 
+            trials = ( 
+                { 
+                    count = 7; 
+                    ids = ( "static");
+                }, 
+                { 
+                    count = 7; 
+                    ids = ( "moving");
+                }, 
+                { 
+                    count = 6; 
+                    ids = ( "jumping");
+                }, 
+            ); 
+            
+        }, 
+    ); 
+    
+    targets = ( 
+        { 
+            id = "static"; 
+            destSpace = "player"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        }, 
+        { 
+            id = "moving"; 
+            destSpace = "player"; 
+            motionChangePeriod = ( 0.8, 1.5 ); 
+            speed = ( 7, 10 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        }, 
+        { 
+            id = "jumping"; 
+            destSpace = "player"; 
+            jumpEnabled = true; 
+            jumpPeriod = ( 0.5, 1 ); 
+            jumpSpeed = (8,8);
+            accelGravity = (20, 20);
+            motionChangePeriod = ( 0.8, 1.5 ); 
+            speed = ( 10, 10 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        } 
+    ); 
+    
+} 

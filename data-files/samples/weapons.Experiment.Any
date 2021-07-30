@@ -1,0 +1,144 @@
+{ 
+    description = "weaponsample"; 
+    frameRate = 120; 
+    showHUD = true;
+    renderWeaponStatus = true;
+    cooldownMode = "ring";
+    cooldownColor = Color4(0.7,1.0,0.9,0.75);
+    sessions = ( 
+        { 
+            id = "1shot"; 
+            description = "1 shot"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            weapon = { 
+                id = "1hit"; 
+                firePeriod = 0.3;
+                damagePerSecond = 4;
+                autoFire = false;
+            }; 
+            
+        }, 
+        { 
+            id = "2shots"; 
+            description = "2 shots"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            weapon = { 
+                id = "2hit"; 
+                firePeriod = 0.3;
+                damagePerSecond = 2;
+                autoFire = false;
+            }; 
+            
+        }, 
+        { 
+            id = "3shots"; 
+            description = "3 shots"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            weapon = { 
+                id = "3hit"; 
+                firePeriod = 0.3;
+                damagePerSecond = 1.5;
+                autoFire = false;
+            }; 
+            
+        }, 
+        { 
+            id = "autofire"; 
+            description = "autofire"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            weapon = { 
+                id = "4hit"; 
+                firePeriod = 0.2;
+                damagePerSecond = 1.8;
+                autoFire = true;
+            }; 
+            
+        }, 
+        { 
+            id = "fastfire"; 
+            description = "fastfire"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            renderWeaponStatus = false;
+            sceneHitSoundVol = 0;
+            sceneHitSound = "";
+            weapon = { 
+                id = "fast"; 
+                fireSound = "sound/fpsci_noise_50ms.wav";
+                fireSoundLoop = true;
+                firePeriod = 0;
+                damagePerSecond = 1.1;
+                autoFire = true;
+                missDecalTimeoutS = 3;
+            }; 
+            
+        }, 
+        { 
+            id = "showweapon"; 
+            description = "show weapon"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "moving"); 
+                } ); 
+            
+            weapon = { 
+                id = "show"; 
+                firePeriod = 0.3;
+                damagePerSecond = 1;
+                autoFire = false;
+                renderModel = True;
+                modelSpec = ArticulatedModel::Specification{			        // Default model
+                    filename = "model/sniper/sniper.obj";
+                    preprocess = {
+                        transformGeometry(all(), Matrix4::yawDegrees(90));
+                        transformGeometry(all(), Matrix4::scale(1.2,0.7,0.4));
+                    };
+                    scale = 0.25;
+                },
+            }; 
+            
+        } 
+    ); 
+    
+    targets = ( 
+        { 
+            id = "static"; 
+            destSpace = "player"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        }, 
+        { 
+            id = "moving"; 
+            destSpace = "player"; 
+            motionChangePeriod = ( 0.8, 1.5 ); 
+            speed = ( 7, 10 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        } 
+    ); 
+    
+} 
