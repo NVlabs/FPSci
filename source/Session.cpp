@@ -526,6 +526,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 			format("'Block %d'", m_currBlock),
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
+			String(std::to_string(m_pretrialDuration)),
 			String(std::to_string(m_taskExecutionTime)),
 			String(std::to_string(destroyedTargets)),
 			String(std::to_string(totalTargets))
