@@ -106,6 +106,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 				{ "block_id", "text"},
 				{ "start_time", "text" },
 				{ "end_time", "text" },
+				{ "pretrial_duration", "real" },
 				{ "task_execution_time", "real" },
 				{ "destroyed_targets", "real" },
 				{ "total_targets", "real" }

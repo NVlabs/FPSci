@@ -54,25 +54,29 @@ The `weapon` config should be thought of as an atomic type (just like an `int` o
 ## Duration Settings
 The following settings allow the user to control various timings/durations around the session state machine.
 
-| Parameter Name                |Units  | Description                                                        |
-|-------------------------------|-------|--------------------------------------------------------------------|
-|`clickToStart`                 |`bool` |Require the user to click at the start of the session to spawn the first reference target  |
-|`pretrialDuration`             |s      |The time before the start of each trial                             |
-|`maxTrialDuration`             |s      |The maximum time over which the task can occur                      |
-|`trialFeedbackDuration`        |s      |The duration of the feedback window between trials                  |
-|`sessionFeedbackDuration`      |s      |The duration of the feedback window between sessions                |
-|`sessionFeedbackRequireClick`  |`bool` |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
-|`defaultTrialCount`            |`int`  |The value to use for trials with no specified `count` settings      |
+| Parameter Name                |Units              | Description                                                        |
+|-------------------------------|-------------------|--------------------------------------------------------------------|
+|`clickToStart`                 |`bool`             |Require the user to click at the start of the session to spawn the first reference target  |
+|`pretrialDuration`             |s                  |The time before the start of each trial (or the mean of this time if `pretrialDurationRange` is specified    |
+|`pretrialDurationRange`        |`Array<`s`>`       |A [min, max] array over which the pretrial duration will be randomized (according to a truncated exponential distribution) |
+|`maxTrialDuration`             |s                  |The maximum time over which the task can occur                      |
+|`trialFeedbackDuration`        |s                  |The duration of the feedback window between trials                  |
+|`sessionFeedbackDuration`      |s                  |The duration of the feedback window between sessions                |
+|`sessionFeedbackRequireClick`  |`bool`             |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
+|`defaultTrialCount`            |`int`              |The value to use for trials with no specified `count` settings      |
 
 ```
-"clickToStart : true,               // Require a click to start the session
-"pretrialDuration": 0.5,            // Time allocated for preparing for trial
-"maxTrialDuration": 100000.0,       // Maximum duration allowed for completion of the task
-"trialFeedbackDuration": 1.0,       // Time for user feedback between trials
-"sessionFeedbackDuration": 5.0,     // Time for user feedback between sessions
+"clickToStart : true,                       // Require a click to start the session
+"pretrialDuration": 0.5,                    // Time allocated for preparing for trial
+"pretrialDurationRange": [0.5, 0.5]         // Default is a non-randomized pretrial duration of 0.5s (do not need to specify this for non-random ranges)
+"maxTrialDuration": 100000.0,               // Maximum duration allowed for completion of the task
+"trialFeedbackDuration": 1.0,               // Time for user feedback between trials
+"sessionFeedbackDuration": 5.0,             // Time for user feedback between sessions
 "sessionFeedbackRequireClick" : false,      // Don't require a click to move past the scoreboard
 "defaultTrialCount" : 5,
 ```
+
+*Note:* If you are specifying `pretrialDurationRange` to create a truncated exponential range of pretrial duration we *highly* recommend keeping the `pretrialDuration` (i.e. mean value) to less than the mid-point of the `pretrialDurationRange`, skewing the distribution towards the minimum pretrial duration. Skewing this distribution towards the maximum pretrial duration has been demonstrated to produce confounding effects in reaction time studies (makes time at which to react more predictable)!
 
 ## Feedback Configuration
 In addition to the trial/session feedback duration control, the formatting and strings used for feedback are also configurable.
@@ -300,8 +304,8 @@ Each question in the array is then asked of the user (via an independent time-se
 |`hudFont`              |file   | The font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/  data-files/font`). We suggest using a fixed width font (such as `console.fnt`) for HUD elements|
 
 ```
-"showHUD":  true,               // Show the player HUD (banner, ammo, health bar)
-"showBanner":  true,            // Control the banner at the top of the screen (shows time, score, and session % complete)
+"showHUD":  false,              // Show the player HUD (banner, ammo, health bar)
+"showBanner":  false,           // Control the banner at the top of the screen (shows time, score, and session % complete)
 "bannerLargeFontSize": 30.0,    // Large font size to use in the banner (% complete)
 "bannerSmallFontSize": 14.0,    // Small font size to use in the banner (time remaining and score)
 "hudFont": "console.fnt",       // Font to use for the HUD (fixed with highly suggested!)

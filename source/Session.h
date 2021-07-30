@@ -182,6 +182,7 @@ protected:
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
 	// Time-based parameters
+	float m_pretrialDuration;							///< (Possibly) randomized pretrial duration
 	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial
 	String m_taskStartTime;								///< Recorded task start timestamp							
 	String m_taskEndTime;								///< Recorded task end timestamp
@@ -289,6 +290,14 @@ protected:
 		const int paramIdx,
 		const String& name = ""
 	);
+
+	inline float drawTruncatedExp(float lambda, float min, float max) {
+		const float p = Random::common().uniform();
+		const float R = max - min;
+		if (lambda == 0.f) return min + p * R;
+		if (lambda < -88.f) return max;				// This prevents against numerical errors in the expression below
+		return -log(1 - p * (1 - exp(-lambda * R))) / lambda + min;
+	}
 
 	inline Point2 getViewDirection()
 	{   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.

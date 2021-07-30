@@ -131,6 +131,11 @@ bool Session::nextCondition() {
 	if (unrunTrialIdxs.size() == 0) return false;
 	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
 	m_currTrialIdx = unrunTrialIdxs[idx];
+
+	// Produce (potentially random in range) pretrial duration
+	if (isNaN(m_config->timing.pretrialDurationLambda)) m_pretrialDuration = m_config->timing.pretrialDuration;
+	else m_pretrialDuration = drawTruncatedExp(m_config->timing.pretrialDurationLambda, m_config->timing.pretrialDurationRange[0], m_config->timing.pretrialDurationRange[1]);
+	
 	return true;
 }
 
@@ -343,7 +348,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::pretrial)
 	{
-		if (stateElapsedTime > m_config->timing.pretrialDuration)
+		if (stateElapsedTime > m_pretrialDuration)
 		{
 			newState = PresentationState::trialTask;
 			if (m_config->player.stillBetweenTrials) {
@@ -521,6 +526,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 			format("'Block %d'", m_currBlock),
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
+			String(std::to_string(m_pretrialDuration)),
 			String(std::to_string(m_taskExecutionTime)),
 			String(std::to_string(destroyedTargets)),
 			String(std::to_string(totalTargets))
