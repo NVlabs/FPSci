@@ -1,0 +1,129 @@
+{ 
+    description = "targets"; 
+    frameRate = 120; 
+    showHUD = true;
+    renderWeaponStatus = true;
+    cooldownMode = "ring";
+    cooldownColor = Color4(0.7,1.0,0.9,0.75);
+            
+    weapon = { 
+        id = "1hit"; 
+        firePeriod = 0.3;
+        damagePerSecond = 4;
+        autoFire = false;
+    }; 
+    sessions = ( 
+        { 
+            description = "1 target"; 
+            id = "1target"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            description = "2 targets"; 
+            id = "2targets"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            description = "5 targets"; 
+            id = "5targets"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "static", "static", "static", "static", "static"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            description = "moving"; 
+            id = "moving"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "moving"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            description = "jumping"; 
+            id = "jumping"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "jumping"); 
+                } ); 
+            
+        }, 
+        { 
+            description = "mixed types"; 
+            id = "mixedtypes"; 
+            settingsVersion = 1; 
+            trials = ( 
+                { 
+                    count = 7; 
+                    ids = ( "static");
+                }, 
+                { 
+                    count = 7; 
+                    ids = ( "moving");
+                }, 
+                { 
+                    count = 6; 
+                    ids = ( "jumping");
+                }, 
+            ); 
+            
+        }, 
+    ); 
+    
+    settingsVersion = 1; 
+    targets = ( 
+        { 
+            destSpace = "player"; 
+            id = "static"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        }, 
+        { 
+            axisLocked = ( false, false, true ); 
+            destSpace = "player"; 
+            id = "moving"; 
+            motionChangePeriod = ( 0.8, 1.5 ); 
+            speed = ( 7, 10 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        }, 
+        { 
+            destSpace = "player"; 
+            id = "jumping"; 
+            jumpEnabled = true; 
+            jumpPeriod = ( 0.5, 1 ); 
+            jumpSpeed = (8,8);
+            accelGravity = (20, 20);
+            motionChangePeriod = ( 0.8, 1.5 ); 
+            speed = ( 10, 10 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        } ); 
+    
+    weapon = { 
+        id = "default"; 
+    }; 
+    
+} 
