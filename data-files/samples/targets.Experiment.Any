@@ -14,9 +14,8 @@
     }; 
     sessions = ( 
         { 
-            description = "1 target"; 
             id = "1target"; 
-            settingsVersion = 1; 
+            description = "1 target"; 
             trials = ( 
                 { 
                     count = 20; 
@@ -26,9 +25,8 @@
             
         }, 
         { 
-            description = "2 targets"; 
             id = "2targets"; 
-            settingsVersion = 1; 
+            description = "2 targets"; 
             trials = ( 
                 { 
                     count = 20; 
@@ -38,9 +36,8 @@
             
         }, 
         { 
-            description = "5 targets"; 
             id = "5targets"; 
-            settingsVersion = 1; 
+            description = "5 targets"; 
             trials = ( 
                 { 
                     count = 20; 
@@ -50,9 +47,8 @@
             
         }, 
         { 
-            description = "moving"; 
             id = "moving"; 
-            settingsVersion = 1; 
+            description = "moving"; 
             trials = ( 
                 { 
                     count = 20; 
@@ -62,9 +58,8 @@
             
         }, 
         { 
-            description = "jumping"; 
             id = "jumping"; 
-            settingsVersion = 1; 
+            description = "jumping"; 
             trials = ( 
                 { 
                     count = 20; 
@@ -73,9 +68,8 @@
             
         }, 
         { 
-            description = "mixed types"; 
             id = "mixedtypes"; 
-            settingsVersion = 1; 
+            description = "mixed types"; 
             trials = ( 
                 { 
                     count = 7; 
@@ -94,25 +88,23 @@
         }, 
     ); 
     
-    settingsVersion = 1; 
     targets = ( 
         { 
-            destSpace = "player"; 
             id = "static"; 
+            destSpace = "player"; 
             speed = ( 0, 0 ); 
             visualSize = ( 0.05, 0.05 ); 
         }, 
         { 
-            axisLocked = ( false, false, true ); 
-            destSpace = "player"; 
             id = "moving"; 
+            destSpace = "player"; 
             motionChangePeriod = ( 0.8, 1.5 ); 
             speed = ( 7, 10 ); 
             visualSize = ( 0.05, 0.05 ); 
         }, 
         { 
-            destSpace = "player"; 
             id = "jumping"; 
+            destSpace = "player"; 
             jumpEnabled = true; 
             jumpPeriod = ( 0.5, 1 ); 
             jumpSpeed = (8,8);
@@ -120,10 +112,7 @@
             motionChangePeriod = ( 0.8, 1.5 ); 
             speed = ( 10, 10 ); 
             visualSize = ( 0.05, 0.05 ); 
-        } ); 
-    
-    weapon = { 
-        id = "default"; 
-    }; 
+        } 
+    ); 
     
 } 
