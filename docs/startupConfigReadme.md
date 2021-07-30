@@ -26,7 +26,7 @@ The following fields are specified on a per-experiment basis:
 * `resultsDirPath` sets the path to the results directory. If this directory does not exists the application will create it at runtime.
 * `name` is the name identifier for each entry in the `experimentList`.
 
-## Sample/Default Values
+## Default Values
 The default `startup.Any` file is included below (as an example):
 ```
 developerMode = false;                              // Set this to true to enable developer mode (extra windows)
@@ -78,3 +78,9 @@ As an example of how to use the `experimentList`, let's say we have 2 experiment
     ];
 }
 ```
+
+## Sample Experiments
+
+Some sample experiments are provided in the `samples` directory. These experiments are intended to give some examples of types of functionality that may be interesting for experimenters to use in designing new experiments, but are unlikely to be useful experiments on their own. When FPSci starts, it will find each file in the `samples` directory that matches the `*.Experiment.Any` file naming scheme, and include an equivalent `*.Status.Any` as well as the provided `samples/sample.User.Any` as the `userStatusFilename` and will use thos along side the other default values in an [Experiment Specification](#experiment-specification). These specifications will be appended at the end of the `experimentList` provided in the startup config.
+
+If a type of sample that you would like to see is missing, please [open an issue on github](https://github.com/NVlabs/FPSci/issues/new/choose) and describe the type of sample you would like to see.
