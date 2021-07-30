@@ -1,0 +1,11 @@
+{ 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            cmp360 = 20; 
+            id = "Sample User"; 
+            invertY = false; 
+            mouseDPI = 800; 
+        } ); 
+    
+} 
