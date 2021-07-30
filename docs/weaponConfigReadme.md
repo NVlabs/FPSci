@@ -39,6 +39,8 @@ This file provides information about the weapon to be used in the experiment. De
     "fireSpreadShape": "uniform";   // Uniform shape of fire spread distribution by default
 ```
 
+Note that the `firePeriod` and `damagePerSecond` interact to create the amount of damage done per shot to the target. A target has 1.0 health, and will be eliminated once the damage is greater than or equal to that value. When deciding on these values, it's useful to set the `damagePerSecond` slightly higher than the pure multiple to avoid floating point error accumulating to require an additional shot. As an example, if you want 5 shots to kill a target over 1 second, you may be tempted to set the values to `firePeriod = 0.2` and `damagePerSecond = 1.0`, but it's possible that it will take 6 shots and 1.2 seconds to eliminate the target. By setting `damagePerSecond = 1.1`, it will ensure that the target will be killed in 5 shots over 1.0 seconds.
+
 ## Sound and View Model
 Controls specific to the sound/view model for the weapon are provided below:
 
