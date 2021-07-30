@@ -57,7 +57,8 @@ The following settings allow the user to control various timings/durations aroun
 | Parameter Name                |Units              | Description                                                        |
 |-------------------------------|-------------------|--------------------------------------------------------------------|
 |`clickToStart`                 |`bool`             |Require the user to click at the start of the session to spawn the first reference target  |
-|`pretrialDuration`             |s (or `Array<`s`>`)  |The time before the start of each trial (or a randomized range)     |
+|`pretrialDuration`             |s                  |The time before the start of each trial (or the mean of this time if `pretrialDurationRange` is specified    |
+|`pretrialDurationRange`        |`Array<`s`>`       |A [min, max] array over which the pretrial duration will be randomized (according to a truncated exponential distribution) |
 |`maxTrialDuration`             |s                  |The maximum time over which the task can occur                      |
 |`trialFeedbackDuration`        |s                  |The duration of the feedback window between trials                  |
 |`sessionFeedbackDuration`      |s                  |The duration of the feedback window between sessions                |
@@ -67,12 +68,15 @@ The following settings allow the user to control various timings/durations aroun
 ```
 "clickToStart : true,                       // Require a click to start the session
 "pretrialDuration": 0.5,                    // Time allocated for preparing for trial
+"pretrialDurationRange": [0.5, 0.5]         // Default is a non-randomized pretrial duration of 0.5s (do not need to specify this for non-random ranges)
 "maxTrialDuration": 100000.0,               // Maximum duration allowed for completion of the task
 "trialFeedbackDuration": 1.0,               // Time for user feedback between trials
 "sessionFeedbackDuration": 5.0,             // Time for user feedback between sessions
 "sessionFeedbackRequireClick" : false,      // Don't require a click to move past the scoreboard
 "defaultTrialCount" : 5,
 ```
+
+*Note:* If you are specifying `pretrialDurationRange` to create a truncated exponential range of pretrial duration we *highly* recommend keeping the `pretrialDuration` (i.e. mean value) to less than the mid-point of the `pretrialDurationRange`, skewing the distribution towards the minimum pretrial duration. Skewing this distribution towards the maximum pretrial duration has been demonstrated to produce confounding effects in reaction time studies (makes time at which to react more predictable)!
 
 ## Feedback Configuration
 In addition to the trial/session feedback duration control, the formatting and strings used for feedback are also configurable.

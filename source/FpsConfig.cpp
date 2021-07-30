@@ -12,6 +12,7 @@ static bool operator==(Array<T> a1, Array<T> a2) {
 	return !(a1 != a2);
 }
 
+// Currently unused, allows getting scalar or vector from Any
 template <class T>
 static void getArrayFromAny(AnyTableReader reader, const String& name, Array<T>& output) {
 	bool valid = true;
@@ -41,6 +42,7 @@ static void getArrayFromAny(AnyTableReader reader, const String& name, Array<T>&
 	}
 }
 
+// Currently unused, allows writing (single valued) vector as scalar to Any
 template <class T>
 static void arrayToAny(Any& a, const String& name, const Array<T>& arr) {
 	bool allEqual = true;
@@ -52,6 +54,29 @@ static void arrayToAny(Any& a, const String& name, const Array<T>& arr) {
 	}
 	if (allEqual) a[name] = arr[0];		// If array is constant just write a value
 	else a[name] = arr;					// Otherwise write the array
+}
+
+static float tExpLambdaFromMean(float mean, float min, float max, float acceptableErr = 1e-6) {
+	// Estimate lambda value from mean
+	if (mean < min) throw "Error truncated exponential mean cannot be less than minimum!";
+	else if (mean > max) throw "Error truncated exponential mean cannot be greater than maximum!";
+
+	const float R = max - min;
+
+	// Handle trivial cases (identity and uniform distributions)
+	if (abs(mean - (min + R / 2)) < acceptableErr) return 0;
+	else if (mean - min < acceptableErr) return 88.f;
+	else if (max - mean < acceptableErr) return -88.f;
+
+	// Iterative estimation of lambda
+	float lambda = mean < min + R / 2 ? 1.f : -1.f;					// Initial guess (sign of lambda)
+	float mu;
+	for (int i = 0; i < 1000; i++) {							// Iterative estimation (can exit early)
+		mu = 1 / lambda - R / (exp(R * lambda) - 1) + min;		// Calculate mean at this lamba value
+		if (abs(mu - mean) < acceptableErr) break;				// Early exit condition
+		lambda += mu - mean;									// Adjust lambda based on difference of means
+	}
+	return lambda;
 }
 
 SceneConfig::SceneConfig(const Any& any) {
@@ -297,7 +322,26 @@ Any AudioConfig::addToAny(Any a, bool forceAll) const {
 void TimingConfig::load(AnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
-		getArrayFromAny(reader, "pretrialDuration", pretrialDuration);
+		reader.getIfPresent("pretrialDuration", pretrialDuration);
+		// Get pretrialDurationRange if present (indiciates a truncated exponential randomized pretrial duration)
+		if (reader.getIfPresent("pretrialDurationRange", pretrialDurationRange)) {
+			if (pretrialDurationRange.size() < 2) {
+				throw "Must provide 2 values for \"pretrialDurationRange\"!";
+			}
+			else if (pretrialDurationRange[0] > pretrialDurationRange[1]) {
+				throw format("pretrialDurationRange[0] (%.3f) must be less than (or equal to) pretrialDurationRange[1] (%.3f). Please re-order!", 
+					pretrialDurationRange[0], pretrialDurationRange[1]).c_str();
+			}
+			else if (pretrialDurationRange.size() > 2) {
+				logPrintf("WARNING: \"pretrialDurationRange\" should be specified as a 2-element array but has length %d (ignoring last %d values)!",
+					pretrialDurationRange.size(), pretrialDurationRange.size() - 2);
+			}
+			if (pretrialDuration < pretrialDurationRange[0] || pretrialDuration > pretrialDurationRange[1]) {
+				throw format("\"pretrialDuration\" (%.3f) must be within \"pretrialDurationRange\" ([%.3f, %.3f])!",
+					pretrialDuration, pretrialDurationRange[0], pretrialDurationRange[1]).c_str();
+			}
+			pretrialDurationLambda = tExpLambdaFromMean(pretrialDuration, pretrialDurationRange[0], pretrialDurationRange[1]);
+		}
 		reader.getIfPresent("maxTrialDuration", maxTrialDuration);
 		reader.getIfPresent("trialFeedbackDuration", trialFeedbackDuration);
 		reader.getIfPresent("sessionFeedbackDuration", sessionFeedbackDuration);
@@ -313,7 +357,8 @@ void TimingConfig::load(AnyTableReader reader, int settingsVersion) {
 
 Any TimingConfig::addToAny(Any a, bool forceAll) const {
 	TimingConfig def;
-	if (forceAll || def.pretrialDuration != pretrialDuration)				arrayToAny(a, "pretrialDuration", pretrialDuration);
+	if (forceAll || def.pretrialDuration != pretrialDuration)				a["pretrialDuration"] = pretrialDuration;
+	if (forceAll || def.pretrialDurationRange != pretrialDurationRange)		a["pretrialDurationRange"] = pretrialDurationRange;
 	if (forceAll || def.maxTrialDuration != maxTrialDuration)				a["maxTrialDuration"] = maxTrialDuration;
 	if (forceAll || def.trialFeedbackDuration != trialFeedbackDuration)		a["trialFeedbackDuration"] = trialFeedbackDuration;
 	if (forceAll || def.sessionFeedbackDuration != sessionFeedbackDuration)	a["sessionFeedbackDuration"] = sessionFeedbackDuration;

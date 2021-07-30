@@ -291,6 +291,14 @@ protected:
 		const String& name = ""
 	);
 
+	inline float drawTruncatedExp(float lambda, float min, float max) {
+		const float p = Random::common().uniform();
+		const float R = max - min;
+		if (lambda == 0.f) return min + p * R;
+		if (lambda < -88.f) return max;				// This prevents against numerical errors in the expression below
+		return -log(1 - p * (1 - exp(-lambda * R))) / lambda + min;
+	}
+
 	inline Point2 getViewDirection()
 	{   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.
 		Point3 view_cartesian = m_camera->frame().lookVector();

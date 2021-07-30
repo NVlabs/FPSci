@@ -132,8 +132,9 @@ bool Session::nextCondition() {
 	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
 	m_currTrialIdx = unrunTrialIdxs[idx];
 
-	// Produce random in range pretrial duration
-	m_pretrialDuration = Random::common().uniform(m_config->timing.pretrialDuration[0], m_config->timing.pretrialDuration[1]);
+	// Produce (potentially random in range) pretrial duration
+	if (isNaN(m_config->timing.pretrialDurationLambda)) m_pretrialDuration = m_config->timing.pretrialDuration;
+	else m_pretrialDuration = drawTruncatedExp(m_config->timing.pretrialDurationLambda, m_config->timing.pretrialDurationRange[0], m_config->timing.pretrialDurationRange[1]);
 	
 	return true;
 }
