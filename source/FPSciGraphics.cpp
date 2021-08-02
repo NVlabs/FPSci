@@ -506,19 +506,43 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 		Draw::rect2D((scoreBannerTexture->rect2DBounds() * scale - scoreBannerTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), scoreBannerTexture);
 
 		// Create strings for time remaining, progress in sessions, and score
-		float remainingTime = sess->getRemainingTrialTime();
-		float printTime = remainingTime > 0 ? remainingTime : 0.0f;
-		String time_string = format("%0.2f", printTime);
+		float time;
+		if (sessConfig->hud.bannerShowTime == "remaining") {
+			time = sess->getRemainingTrialTime();
+			if (time < 0.f) time = 0.f;
+		}
+		else if (sessConfig->hud.bannerShowTime == "elapsed") {
+			time = sess->getElapsedTrialTime();
+		}
+		String time_string = time < 10000.f ? format("%0.1f", time) : "---";		// Only allow up to 3 digit time strings
+
 		float prog = sess->getProgress();
 		String prog_string = "";
 		if (!isnan(prog)) {
 			prog_string = format("%d", (int)(100.0f*prog)) + "%";
 		}
-		String score_string = format("%d", (int)(10 * sess->getScore()));
 
-		hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale.x, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-		hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale.x * sessConfig->hud.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-		hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		const float score = sess->getScore();
+		String score_string;
+		if (score < 1000) {
+			score_string = format("%d", score);
+		}
+		else if (score > 1000 && score < 1e6) {
+			score_string = format("%dk", (int)(score / 1000.0));
+		}
+		else if (score > 1e6 && score < 1e9) {
+			score_string = format("%dM", (int)(score / 1e6));
+		}
+		else if (score > 1e9) {
+			score_string = format("%dB", (int)(score / 1e9));
+		}
+
+		if (sessConfig->hud.bannerShowTime != "none" && sess->inTask()) {
+			hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale.x, scale.x * sessConfig->hud.bannerSmallFontSize, 
+				Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		}
+		if(sessConfig->hud.bannerShowProgress) hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale.x * sessConfig->hud.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+		if(sessConfig->hud.bannerShowScore) hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 	}
 
 	// Draw any static HUD elements

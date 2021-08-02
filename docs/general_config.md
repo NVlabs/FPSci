@@ -295,13 +295,16 @@ The user can specify one or more questions using the `questions` array, as demon
 Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log. Note that `MultipleChoise` and `Rating` questions include a confirmation button that must be pressed to confirm the selection before proceeding.
 
 ## HUD settings
-| Parameter Name        |Units  | Description                                                                        |
-|-----------------------|-------|------------------------------------------------------------------------------------|
-|`showHUD`              |`bool` | The master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator) |
-|`showBanner`           |`bool` | Whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score)     |
-|`bannerLargeFontSize`  |pt     | The "large" font for the percent complete in the banner
-|`bannerSmallFontSize`  |pt     | The "small" font for the time remaining and score
-|`hudFont`              |file   | The font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/  data-files/font`). We suggest using a fixed width font (such as `console.fnt`) for HUD elements|
+| Parameter Name        |Units      | Description                                                                                                           |
+|-----------------------|-----------|-----------------------------------------------------------------------------------------------------------------------|
+|`showHUD`              |`bool`     | The master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator)|
+|`showBanner`           |`bool`     | Whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score)    |
+|`bannerShowTime`       |`String`   | The mode in which to show time in the banner (can be `"remaining"`, `"elapsed"`, or `"none"`)                         |
+|`bannerShowProgress`   |`bool`     | Whether to show the session progress in the banner                                                                    |
+|`bannerShowScore`      |`bool`     | Whether to show the session score in the banner                                                                       |
+|`bannerLargeFontSize`  |pt         | The "large" font for the percent complete in the banner                                                               |
+|`bannerSmallFontSize`  |pt         | The "small" font for the time remaining and score                                                                     |
+|`hudFont`              |file       | The font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/  data-files/font`). We suggest using a fixed width font (such as `console.fnt`) for HUD elements|
 
 ```
 "showHUD":  false,              // Show the player HUD (banner, ammo, health bar)
