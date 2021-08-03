@@ -522,7 +522,7 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 			prog_string = format("%d", (int)(100.0f*prog)) + "%";
 		}
 
-		const float score = sess->getScore();
+		const double score = sess->getScore();
 		String score_string;
 		if (score < 1000) {
 			score_string = format("%d", score);
