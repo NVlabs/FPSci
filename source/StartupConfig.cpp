@@ -66,7 +66,7 @@ String ConfigFiles::formatDirPath(const String& path) {
 StartupConfig StartupConfig::load(const String& filename) {
 	StartupConfig config;
 	if (!FileSystem::exists(filename)) {
-		config.toAny(true).save(filename);		// If the file doesn't exist create it
+		config.toAny(true).save(filename, true);		// If the file doesn't exist create it
 	}
 	return Any::fromFile(filename);				// Load back from the Any file
 }

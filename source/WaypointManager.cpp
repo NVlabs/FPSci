@@ -170,7 +170,7 @@ void WaypointManager::exportWaypoints(String filename) {
 	t.id = "test";
 	t.destSpace = "world";
 	t.destinations = m_waypoints;
-	t.toAny().save(filename);		// Save the file
+	t.toAny().save(filename, true);		// Save the file
 }
 
 void WaypointManager::exportWaypoints(void) {

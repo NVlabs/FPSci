@@ -31,7 +31,7 @@ public:
 	static UserStatusTable load(const String& filename);
 	Any toAny(const bool forceAll = false) const;
 
-	inline void save(const String& filename) { toAny().save(filename); }
+	inline void save(const String& filename) { toAny().save(filename, true); }
 
 	shared_ptr<UserSessionStatus> getUserStatus(const String& id);			// Get a given user's status from the table by ID
 	String getNextSession(String userId = "");								// Get the next session ID for a given user (by ID)
