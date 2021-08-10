@@ -33,7 +33,7 @@ SystemConfig SystemConfig::load(String filename) {
 	// Create default UserConfig file
 	if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
 		SystemConfig defConfig = SystemConfig();
-		defConfig.toAny().save(filename);						// Save the .any file
+		defConfig.toAny().save(filename, true);						// Save the .any file
 		return defConfig;
 	}
 	return Any::fromFile(System::findDataFile(filename));

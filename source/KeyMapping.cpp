@@ -41,7 +41,7 @@ KeyMapping::KeyMapping(const Any& any) : KeyMapping() {
 KeyMapping KeyMapping::load(const String& filename) {
 	if (!FileSystem::exists(System::findDataFile(filename, false))) {
 		KeyMapping mapping = KeyMapping();
-		mapping.toAny().save(filename);
+		mapping.toAny().save(filename, true);
 		return mapping;
 	}
 	return Any::fromFile(System::findDataFile(filename));

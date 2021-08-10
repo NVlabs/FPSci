@@ -92,7 +92,7 @@ ExperimentConfig ExperimentConfig::load(const String& filename) {
 	ExperimentConfig ex;
 	if (!FileSystem::exists(System::findDataFile(filename, false))) {
 		// if file not found, save the default
-		ex.toAny().save(filename);
+		ex.toAny().save(filename, true);
 		SessionConfig::defaultConfig() = (FpsConfig)ex;
 	}
 	else {
