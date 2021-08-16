@@ -246,6 +246,20 @@ void HudConfig::load(AnyTableReader reader, int settingsVersion) {
 	case 1:
 		reader.getIfPresent("showHUD", enable);
 		reader.getIfPresent("showBanner", showBanner);
+		if (reader.getIfPresent("bannerShowTime", bannerShowTime)) {
+			bannerShowTime = toLower(bannerShowTime);
+			const Array<String> validTimeModes = { "none", "elapsed", "remaining" };
+			if (!validTimeModes.contains(bannerShowTime)) {
+				String errString = format("\"bannerShowTime\" value \"%s\" is invalid, must be specified as one of the valid modes (", bannerShowTime);
+				for (String validTimeMode : validTimeModes) {
+					errString += "\"" + validTimeMode + "\", ";
+				}
+				errString = errString.substr(0, errString.length() - 2) + ")!";
+				throw errString.c_str();
+			}
+		}
+		reader.getIfPresent("bannerShowProgress", bannerShowProgress);
+		reader.getIfPresent("bannerShowScore", bannerShowScore);
 		reader.getIfPresent("hudFont", hudFont);
 		reader.getIfPresent("showPlayerHealthBar", showPlayerHealthBar);
 		reader.getIfPresent("playerHealthBarSize", playerHealthBarSize);
