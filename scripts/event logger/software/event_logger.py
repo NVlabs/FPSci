@@ -90,6 +90,8 @@ if syncer is not None:
         adcFile.flush()
     synced = True
 
+t_offset_s = 0 # Use this to track time offset on wrap around (guaranteed to occur after ~70 mins)
+
 # This is the main loop that handles data aquisition and plotting
 while(True):
     # Shutdown if the plot is closed
@@ -121,8 +123,14 @@ while(True):
         else:                                   # Otherwise this is an event timestamp
             event_type = data                   # Data is just an event string
             
+            timestamp_s += t_offset_s            # Add time offset to the timestamp (unwrap) 
+
+            # Detect and handle time-wrap case
+            if timestamp_s < timeLookup[event_type] - 100: t_offset_s += (pow(2,32)-1)/1e6  # Add the roll-over time
+
             # Check that this event is far enough away from last event of this type (debounce)
             if(timeLookup[event_type] != 0 and (timestamp_s - timeLookup[event_type]) < MIN_EVENT_SPACING_S): continue
+
             # Otherwise make this the last event of its type
             timeLookup[event_type] = timestamp_s
 
