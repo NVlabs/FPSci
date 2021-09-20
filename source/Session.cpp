@@ -123,15 +123,16 @@ bool Session::hasNextCondition() const{
 
 const RealTime Session::targetFrameTime()
 {
-	if (m_config->render.frameTimeArray.size() > 0) {
+	uint arraySize = m_config->render.frameTimeArray.size();
+	if (arraySize > 0) {
 		if (m_config->render.randomFrameTime) {
 			return m_config->render.frameTimeArray.randomElement();
 		}
 		else {
 			static uint targetIdx = 0;
-			RealTime targetTime =  m_config->render.frameTimeArray[targetIdx % m_config->render.frameTimeArray.size()];
+			RealTime targetTime =  m_config->render.frameTimeArray[targetIdx % arraySize];
 			targetIdx += 1;
-			targetIdx = targetIdx % m_config->render.frameTimeArray.size();
+			targetIdx = targetIdx % arraySize;
 			return targetTime;
 		}
 	}
