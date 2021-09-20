@@ -129,9 +129,10 @@ const RealTime Session::targetFrameTime()
 		}
 		else {
 			static uint targetIdx = 0;
-			return m_config->render.frameTimeArray[targetIdx % m_config->render.frameTimeArray.size()];
+			RealTime targetTime =  m_config->render.frameTimeArray[targetIdx % m_config->render.frameTimeArray.size()];
 			targetIdx += 1;
 			targetIdx = targetIdx % m_config->render.frameTimeArray.size();
+			return targetTime;
 		}
 	}
 
