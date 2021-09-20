@@ -1284,6 +1284,9 @@ void FPSciApp::oneFrame() {
 	// Count this frame (for shaders)
 	m_frameNumber++;
 
+	// Target frame time (only call this method once per one frame!)
+	RealTime targetFrameTime = sess->targetFrameTime();
+
     // Wait
     // Note: we might end up spending all of our time inside of
     // RenderDevice::beginFrame.  Waiting here isn't double waiting,
@@ -1299,7 +1302,7 @@ void FPSciApp::oneFrame() {
 
             debugAssert(m_wallClockTargetDuration < finf());
             // Perform wait for target time needed
-            RealTime duration = sess->targetFrameTime();
+            RealTime duration = targetFrameTime;
             if (!window()->hasFocus() && m_lowerFrameRateInBackground) {
                 // Lower frame rate to 4fps
                 duration = 1.0 / 4.0;
@@ -1362,14 +1365,14 @@ void FPSciApp::oneFrame() {
 
             SimTime sdt = m_simTimeStep;
             if (sdt == MATCH_REAL_TIME_TARGET) {
-                sdt = (SimTime)sess->targetFrameTime();
+                sdt = (SimTime)targetFrameTime;
             }
             else if (sdt == REAL_TIME) {
                 sdt = float(timeStep);
             }
             sdt *= m_simTimeScale;
 
-            SimTime idt = (SimTime)sess->targetFrameTime();
+            SimTime idt = (SimTime)targetFrameTime;
 
             onBeforeSimulation(rdt, sdt, idt);
             onSimulation(rdt, sdt, idt);
@@ -1414,7 +1417,7 @@ void FPSciApp::oneFrame() {
 
             debugAssert(m_wallClockTargetDuration < finf());
             // Perform wait for actual time needed
-            RealTime duration = sess->targetFrameTime();
+            RealTime duration = targetFrameTime;
             if (!window()->hasFocus() && m_lowerFrameRateInBackground) {
                 // Lower frame rate to 4fps
                 duration = 1.0 / 4.0;
