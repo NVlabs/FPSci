@@ -123,6 +123,8 @@ void RenderConfig::load(AnyTableReader reader, int settingsVersion) {
 	case 1:
 		reader.getIfPresent("frameRate", frameRate);
 		reader.getIfPresent("frameDelay", frameDelay);
+		reader.getIfPresent("frameTimeArray", frameTimeArray);
+		reader.getIfPresent("randomFrameTime", randomFrameTime);
 		reader.getIfPresent("horizontalFieldOfView", hFoV);
 
 		reader.getIfPresent("resolution2D", resolution2D);

@@ -374,6 +374,8 @@ public:
 	bool nextCondition();
 	bool hasNextCondition() const;
 
+	const RealTime targetFrameTime();
+
 	void endLogging();
 
 	/** randomly returns either +1 or -1 **/	

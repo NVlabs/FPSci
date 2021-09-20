@@ -27,6 +27,8 @@ public:
 	// Rendering parameters
 	float           frameRate = 1000.0f;						///< Target (goal) frame rate (in Hz)
 	int             frameDelay = 0;								///< Integer frame delay (in frames)
+	Array<float>	frameTimeArray = { };						///< Array of target frame times (in seconds)
+	bool			randomFrameTime = false;					///< Whether to choose a sequential or random item from frameTimeArray
 	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
 	
 	Array<int>		resolution2D = { 0, 0 };					///< Optional 2D buffer resolution

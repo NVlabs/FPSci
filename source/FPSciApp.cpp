@@ -1298,8 +1298,8 @@ void FPSciApp::oneFrame() {
             RealTime cumulativeTime = nowAfterLoop - m_lastWaitTime;
 
             debugAssert(m_wallClockTargetDuration < finf());
-            // Perform wait for actual time needed
-            RealTime duration = m_wallClockTargetDuration;
+            // Perform wait for target time needed
+            RealTime duration = sess->targetFrameTime();
             if (!window()->hasFocus() && m_lowerFrameRateInBackground) {
                 // Lower frame rate to 4fps
                 duration = 1.0 / 4.0;

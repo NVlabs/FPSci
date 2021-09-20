@@ -121,6 +121,29 @@ bool Session::hasNextCondition() const{
 	return false;
 }
 
+const RealTime Session::targetFrameTime()
+{
+	if (m_config->render.frameTimeArray.size() == 0) {
+		// The below matches the functionality in FPSciApp::updateParameters()
+		if (m_config->render.frameRate > 0) {
+			return 1.0f / m_config->render.frameRate;
+		}
+		else {
+			return 1.0f / float(m_app->window()->settings().refreshRate);
+		}
+	}
+	else {
+		if (m_config->render.randomFrameTime) {
+			return m_config->render.frameTimeArray.randomElement();
+		}
+		else {
+			static uint targetIdx = 0;
+			return m_config->render.frameTimeArray[targetIdx++ % m_config->render.frameTimeArray.size()];
+		}
+	}
+	return 0.0;
+}
+
 bool Session::nextCondition() {
 	Array<int> unrunTrialIdxs;
 	for (int i = 0; i < m_remainingTrials.size(); i++) {
