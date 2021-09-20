@@ -123,6 +123,8 @@ bool Session::hasNextCondition() const{
 
 const RealTime Session::targetFrameTime()
 {
+	if (!m_hasSession) 	return 1.0f / float(m_app->window()->settings().refreshRate);
+
 	uint arraySize = m_config->render.frameTimeArray.size();
 	if (arraySize > 0) {
 		if (m_config->render.randomFrameTime) {
