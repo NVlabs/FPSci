@@ -56,8 +56,7 @@ protected:
 	const int								m_maxExplosions = 20;				///< Maximum number of simultaneous explosions
 		
 	const int								m_MatTableSize = 10;				///< Set this to set # of color "levels"
-	Array<shared_ptr<UniversalMaterial>>	m_materials;						///< This stores the color materials
-
+	Table<String, Array<shared_ptr<UniversalMaterial>>>	m_materials;			///< This stores the color materials
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_explosionModels;
 	/** table of shaders cached for the 2D shader parameters set per session */
 	Table<String, shared_ptr<G3D::Shader>> m_shaderTable;

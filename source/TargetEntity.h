@@ -79,6 +79,9 @@ public:
 	String          destroyedSound = "sound/fpsci_destroy_150ms.wav";		///< Sound to play when target destroyed
 	float           destroyedSoundVol = 1.0f;
 
+	// Target color based on health
+	Array<Color3>   colors;									///< Target start/end color (based on target health)
+
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
 		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
