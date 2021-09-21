@@ -123,18 +123,23 @@ bool Session::hasNextCondition() const{
 
 const RealTime Session::targetFrameTime()
 {
-	if (!m_hasSession) 	return 1.0f / float(m_app->window()->settings().refreshRate);
+	const RealTime defaultFrameTime = 1.0 / m_app->window()->settings().refreshRate;
+	if (!m_hasSession) return defaultFrameTime;
 
 	uint arraySize = m_config->render.frameTimeArray.size();
 	if (arraySize > 0) {
-		if (m_config->render.randomFrameTime) {
+		if ((m_config->render.frameTimeMode == "taskonly" || m_config->render.frameTimeMode == "restartwithtask") && currentState != PresentationState::trialTask) {
+			// We are in a frame time mode which specifies only to change frame time during the task
+			return 1.0f / m_config->render.frameRate;
+		}
+
+		if (m_config->render.frameTimeRandomize) {
 			return m_config->render.frameTimeArray.randomElement();
 		}
 		else {
-			static uint targetIdx = 0;
-			RealTime targetTime =  m_config->render.frameTimeArray[targetIdx % arraySize];
-			targetIdx += 1;
-			targetIdx = targetIdx % arraySize;
+			RealTime targetTime =  m_config->render.frameTimeArray[m_frameTimeIdx % arraySize];
+			m_frameTimeIdx += 1;
+			m_frameTimeIdx %= arraySize;
 			return targetTime;
 		}
 	}
@@ -143,7 +148,7 @@ const RealTime Session::targetFrameTime()
 	if (m_config->render.frameRate > 0) {
 		return 1.0f / m_config->render.frameRate;
 	}
-	return 1.0f / float(m_app->window()->settings().refreshRate);
+	return defaultFrameTime;
 }
 
 bool Session::nextCondition() {
@@ -516,6 +521,9 @@ void Session::updatePresentationState()
 	{ // handle state transition.
 		m_timer.startTimer();
 		if (newState == PresentationState::trialTask) {
+			if (m_config->render.frameTimeMode == "restartwithtask") {
+				m_frameTimeIdx = 0;		// Reset the frame time index with the task if requested
+			}
 			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
 		}
 		currentState = newState;

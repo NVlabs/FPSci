@@ -119,12 +119,27 @@ bool SceneConfig::operator!=(const SceneConfig& other) const {
 }
 
 void RenderConfig::load(AnyTableReader reader, int settingsVersion) {
+	// List of valid frame time modes for parsing from Any
+	const Array<String> validFrameTimeModes = { "always", "taskonly", "restartwithtask" };
+
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("frameRate", frameRate);
 		reader.getIfPresent("frameDelay", frameDelay);
 		reader.getIfPresent("frameTimeArray", frameTimeArray);
-		reader.getIfPresent("randomFrameTime", randomFrameTime);
+		reader.getIfPresent("frameTimeRandomize", frameTimeRandomize);
+		
+		reader.getIfPresent("frameTimeMode", frameTimeMode);
+		frameTimeMode = toLower(frameTimeMode);	// Convert to lower case
+		if (!validFrameTimeModes.contains(frameTimeMode)) {
+			String errMsg = "Specified \"frameTimeMode\" (\"" + frameTimeMode + "\") is invalid, must be one of: [";
+			for (int i = 0; i < validFrameTimeModes.length(); i++) {
+				errMsg += "\"" + validFrameTimeModes[i] + "\", ";
+			}
+			errMsg = errMsg.substr(0, errMsg.length() - 2) + "]!";
+			throw errMsg;
+		}
+
 		reader.getIfPresent("horizontalFieldOfView", hFoV);
 
 		reader.getIfPresent("resolution2D", resolution2D);
@@ -162,6 +177,9 @@ Any RenderConfig::addToAny(Any a, bool forceAll) const {
 	RenderConfig def;
 	if (forceAll || def.frameRate != frameRate)					a["frameRate"] = frameRate;
 	if (forceAll || def.frameDelay != frameDelay)				a["frameDelay"] = frameDelay;
+	if (forceAll || def.frameTimeArray != frameTimeArray)		a["frameTimeArray"] = frameTimeArray;
+	if (forceAll || def.frameTimeRandomize != frameTimeRandomize) a["frameTimeRandomize"] = frameTimeRandomize;
+	if (forceAll || def.frameTimeMode != frameTimeMode)			a["frameTimeMode"] = frameTimeMode;
 	if (forceAll || def.hFoV != hFoV)							a["horizontalFieldOfView"] = hFoV;
 
 	if (forceAll || def.resolution2D != resolution2D)			a["resolution2D"] = resolution2D;

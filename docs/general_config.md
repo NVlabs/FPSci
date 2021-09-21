@@ -146,7 +146,8 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 |`frameDelay`               |frames | An (integer) count of frames to delay to control latency           |
 |`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#Frame-Rate-Modes) below.|
 |`frameTimeArray`           |`Array<float>`| An array of frame times (in seconds) to use instead of `frameRate` if populated, otherwise ignored. |
-|`randomFrameTime`          |`bool` | Whether to selected items from `frameTimeArray` sequentially, or as a uniform random choice. Ignored if `frameTimeArray` is empty. |
+|`frameTimeRandomize`       |`bool` | Whether to selected items from `frameTimeArray` sequentially, or as a uniform random choice. Ignored if `frameTimeArray` is empty. |
+|`frameTimeMode`            |`String`    | The mode to use for frame time (can be `"always"`, "`taskOnly"`, or `"restartWithTask"`, not case sensitive), see the table in the [Frame Timing Approaches section](#Frame-Timing-Approaches) for more information. |
 |`resolution2D`             |`Array<int>`| The resolution to render 2D content at (defaults to window resolution)       |
 |`resolution3D`             |`Array<int>`| The resolution to render 3D content at (defaults to window resolution)       |
 |`resolutionComposite`      |`Array<int>`| The resolution to render the composite result at (defaults to window resolution)     |
@@ -170,7 +171,8 @@ For more information on G3D `Sampler` options refer to [this reference page](htt
 "frameDelay" : 3,                           // Frame delay (in frames)
 "frameRate" : 60,                           // Frame/update rate (in Hz)
 "frameTimeArray" : [],                      // Array of frame times (in seconds) to use instead of `frameRate` if not empty
-"randomFrameTime" : false,                  // Choose items from `frameTimeArray` in order
+"frameTimeRandomize" : false,               // Choose items from `frameTimeArray` in order
+"frameTimeMode": "always",                  // Always apply the desired frame rate/time pattern
 
 "resolution2D": [0,0],                      // Use native resolution for 2D by default
 "resolution3D": [0,0],                      // Use native resolution for 3D by default
@@ -646,3 +648,17 @@ The `frameRate` parameter in any given session config can be used in 3 different
 * If the `frameRate` parameter is set to a value >> refresh rate of the display (we suggest `8192fps`), then the program runs in "unlocked" mode wherein as many frames as can be drawn are rendered per displayed frame. This is the common mode of operation in many modern games.
 * If the `frameRate` parameter is set close to the refresh rate of the display then the programs runs in "fixed" frame rate mode, wherein the drawn frames are limited to the rate provided
 * If `frameRate = 0` then this indicates "default" mode, wherein the default frame rate settings for the window are applied. This should be equivalent to the "unlocked" mode for most systems. This is the default setting if you do not specify a frame rate in the file.
+
+## Frame Timing Approaches
+The following table details various frame timing approaches that can be configured within FPSci.
+
+|Frame timing approach                                          |`frameTimeMode`    |Result                                         | 
+|---------------------------------------------------------------|-------------------|-----------------------------------------------|
+|Specified using `frameRate` parameter (Empty `frameTimeArray`) |Don't Care         |Always apply the specified `frameRate`         |
+|Ordered timing sequence specified with `frameTimeArray` and `frameTimeRandomize` = `False`     |`always`           |Continuously cycle through the `frameTimeArray` regardless of experiment state, wrap around when complete|
+|                                                               |`taskOnly`         |Only cycle through the `frameTimeArray` during the task state (use specified `frameRate` elsewhere), but do not restart from the beginning of the `frameTimeArray` in each trial|
+|                                                               |`restartWithTask`  |Cycle through the `frameTimeArray` during the task state (use specified `frameRate` eslsewhere) and restart from the beginning of the `frameTimeArray` at the start of each trial|
+|Randomized timing distribution specified with `frameTimeArray` and `frameTimeRandomize` = `True` | `always`     |Always pick a random value from the `frameTimeArray` for frame timing |
+|                                                               |`taskOnly` or `restartWithTask`  |Only pick random values for frame time during the task state (use specified `frameRate` elsewhere) |
+
+Note: To specify just 2 frame rates (one in task and one elsewhere) specify a `frameTimeArray` of length 1 (the desired in-task frame time), set `frameTimeMode` to `"taskOnly"` (or `"restartWithTask"`) and use the `frameRate` parameter to specify the desired frame time in states other than the task.
