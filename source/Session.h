@@ -175,6 +175,7 @@ protected:
 	Array<shared_ptr<TargetEntity>> m_unhittableTargets;	///< Array of targets that can't be hit
 
 
+	int m_frameTimeIdx = 0;									///< Frame time index
 	int m_currTrialIdx;										///< Current trial
 	int m_currQuestionIdx = -1;								///< Current question index
 	Array<int> m_remainingTrials;							///< Completed flags
@@ -373,6 +374,8 @@ public:
 	bool blockComplete() const;
 	bool nextCondition();
 	bool hasNextCondition() const;
+
+	const RealTime targetFrameTime();
 
 	void endLogging();
 
