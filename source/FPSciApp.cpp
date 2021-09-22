@@ -572,6 +572,9 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (!sessConfig->audio.sceneHitSound.empty()) {
 		m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
 	}
+	if (!sessConfig->audio.refTargetHitSound.empty()) {
+		m_refTargetHitSound = Sound::create(System::findDataFile(sessConfig->audio.refTargetHitSound));
+	}
 
 	// Load static HUD textures
 	for (StaticHudElement element : sessConfig->hud.staticElements) {
@@ -1108,6 +1111,9 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	if (target->name() == "reference") {
 		// Handle reference target here
 		sess->destroyTarget(target);
+		if (notNull(m_refTargetHitSound)) {
+			m_refTargetHitSound->play(sessConfig->audio.refTargetHitSoundVol);
+		}
 		destroyedTarget = true;
 		sess->accumulatePlayerAction(PlayerActionType::Nontask, target->name());
 

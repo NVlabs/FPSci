@@ -190,10 +190,15 @@ For more information on G3D `Sampler` options refer to [this reference page](htt
 |-----------------------|-------|-----------------------------------------------------------------------------------------------------------|
 |`sceneHitSound`        |file   | The sound to play when the scene (not the target) is hit by a weapon (for no sound use an empty string)   |
 |`sceneHitSoundVol`     |ratio  | The volume of the scene hit sound to play                                                                 |
+|`referenceTargetHitSound`|file | Sound to play when the reference target is hit (for no sound use an empty string)                         |  
+|`referenceTargetHitSoundVol`|ratio | The volume of the  reference target hit sound to play                                                 |
+
 
 ```
 "sceneHitSound": "sound/fpsci_miss_100ms.wav",
 "sceneHitSoundVol": 1.0f,
+"referenceTargetHitSound" : "",
+"referenceTargetHitSoundVol": 1.0f,
 ```
 
 ## Player Controls

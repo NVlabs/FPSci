@@ -305,6 +305,9 @@ void AudioConfig::load(AnyTableReader reader, int settingsVersion) {
 	case 1:
 		reader.getIfPresent("sceneHitSound", sceneHitSound);
 		reader.getIfPresent("sceneHitSoundVol", sceneHitSoundVol);
+		reader.getIfPresent("referenceTargetHitSound", refTargetHitSound);
+		reader.getIfPresent("referenceTargetHitSoundVol", refTargetHitSoundVol);
+
 		break;
 	default:
 		throw format("Did not recognize settings version: %d", settingsVersion);
@@ -316,6 +319,9 @@ Any AudioConfig::addToAny(Any a, bool forceAll) const {
 	AudioConfig def;
 	if (forceAll || def.sceneHitSound != sceneHitSound)			a["sceneHitSound"] = sceneHitSound;
 	if (forceAll || def.sceneHitSoundVol != sceneHitSoundVol)	a["sceneHitSoundVol"] = sceneHitSoundVol;
+	if (forceAll || def.refTargetHitSound != refTargetHitSound) a["referenceTargetHitSound"] = refTargetHitSound;
+	if (forceAll || def.refTargetHitSoundVol != refTargetHitSoundVol) a["referenceTargetHitSoundVol"] = refTargetHitSoundVol;
+	
 	return a;
 }
 
