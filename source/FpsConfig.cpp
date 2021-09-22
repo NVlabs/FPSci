@@ -246,11 +246,11 @@ void HudConfig::load(AnyTableReader reader, int settingsVersion) {
 	case 1:
 		reader.getIfPresent("showHUD", enable);
 		reader.getIfPresent("showBanner", showBanner);
-		if (reader.getIfPresent("bannerShowTime", bannerShowTime)) {
-			bannerShowTime = toLower(bannerShowTime);
+		if (reader.getIfPresent("bannerTimerMode", bannerTimerMode)) {
+			bannerTimerMode = toLower(bannerTimerMode);
 			const Array<String> validTimeModes = { "none", "elapsed", "remaining" };
-			if (!validTimeModes.contains(bannerShowTime)) {
-				String errString = format("\"bannerShowTime\" value \"%s\" is invalid, must be specified as one of the valid modes (", bannerShowTime);
+			if (!validTimeModes.contains(bannerTimerMode)) {
+				String errString = format("\"bannerShowTime\" value \"%s\" is invalid, must be specified as one of the valid modes (", bannerTimerMode);
 				for (String validTimeMode : validTimeModes) {
 					errString += "\"" + validTimeMode + "\", ";
 				}

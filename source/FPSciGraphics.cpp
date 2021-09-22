@@ -507,11 +507,11 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 
 		// Create strings for time remaining, progress in sessions, and score
 		float time;
-		if (sessConfig->hud.bannerShowTime == "remaining") {
+		if (sessConfig->hud.bannerTimerMode == "remaining") {
 			time = sess->getRemainingTrialTime();
 			if (time < 0.f) time = 0.f;
 		}
-		else if (sessConfig->hud.bannerShowTime == "elapsed") {
+		else if (sessConfig->hud.bannerTimerMode == "elapsed") {
 			time = sess->getElapsedTrialTime();
 		}
 		String time_string = time < 10000.f ? format("%0.1f", time) : "---";		// Only allow up to 3 digit time strings
@@ -537,7 +537,7 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 			score_string = format("%dB", (int)(score / 1e9));
 		}
 
-		if (sessConfig->hud.bannerShowTime != "none" && sess->inTask()) {
+		if (sessConfig->hud.bannerTimerMode != "none" && sess->inTask()) {
 			hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale.x, scale.x * sessConfig->hud.bannerSmallFontSize, 
 				Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 		}

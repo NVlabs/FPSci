@@ -89,7 +89,7 @@ public:
 	// HUD parameters
 	bool            enable = false;											///< Master control for all HUD elements
 	bool            showBanner = false;						                ///< Show the banner display
-	String			bannerShowTime = "remaining";							///< Time to show in the banner ("remaining", "elapsed", or "none")
+	String			bannerTimerMode = "remaining";							///< Time to show in the banner ("remaining", "elapsed", or "none")
 	bool			bannerShowProgress = true;								///< Show progress in banner?
 	bool			bannerShowScore = true;									///< Show score in banner?
 	float           bannerVertVisible = 0.41f;				                ///< Vertical banner visibility

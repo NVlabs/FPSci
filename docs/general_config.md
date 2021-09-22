@@ -299,7 +299,7 @@ Each question in the array is then asked of the user (via an independent time-se
 |-----------------------|-----------|-----------------------------------------------------------------------------------------------------------------------|
 |`showHUD`              |`bool`     | The master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator)|
 |`showBanner`           |`bool`     | Whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score)    |
-|`bannerShowTime`       |`String`   | The mode in which to show time in the banner (can be `"remaining"`, `"elapsed"`, or `"none"`)                         |
+|`bannerTimerMode`      |`String`   | The mode in which to show time in the banner (can be `"remaining"`, `"elapsed"`, or `"none"`)                         |
 |`bannerShowProgress`   |`bool`     | Whether to show the session progress in the banner                                                                    |
 |`bannerShowScore`      |`bool`     | Whether to show the session score in the banner                                                                       |
 |`bannerLargeFontSize`  |pt         | The "large" font for the percent complete in the banner                                                               |
@@ -309,6 +309,9 @@ Each question in the array is then asked of the user (via an independent time-se
 ```
 "showHUD":  false,              // Show the player HUD (banner, ammo, health bar)
 "showBanner":  false,           // Control the banner at the top of the screen (shows time, score, and session % complete)
+"bannerTimerMode": "remaining", // Show remaining time in trial in timer on banner
+"bannerShowProgress": true,     // Show the session progress percentage in the banner
+"bannerShowScore": true,        // Show the session score in the banner
 "bannerLargeFontSize": 30.0,    // Large font size to use in the banner (% complete)
 "bannerSmallFontSize": 14.0,    // Small font size to use in the banner (time remaining and score)
 "hudFont": "console.fnt",       // Font to use for the HUD (fixed with highly suggested!)
