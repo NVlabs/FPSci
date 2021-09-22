@@ -298,7 +298,7 @@ Each question in the array is then asked of the user (via an independent time-se
 | Parameter Name        |Units      | Description                                                                                                           |
 |-----------------------|-----------|-----------------------------------------------------------------------------------------------------------------------|
 |`showHUD`              |`bool`     | The master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator)|
-|`showBanner`           |`bool`     | Whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score)    |
+|`showBanner`           |`bool`     | Whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score) an annotated banner image is provided below for reference.    |
 |`bannerTimerMode`      |`String`   | The mode in which to show time in the banner (can be `"remaining"`, `"elapsed"`, or `"none"`)                         |
 |`bannerShowProgress`   |`bool`     | Whether to show the session progress in the banner                                                                    |
 |`bannerShowScore`      |`bool`     | Whether to show the session score in the banner                                                                       |
@@ -316,6 +316,11 @@ Each question in the array is then asked of the user (via an independent time-se
 "bannerSmallFontSize": 14.0,    // Small font size to use in the banner (time remaining and score)
 "hudFont": "console.fnt",       // Font to use for the HUD (fixed with highly suggested!)
 ```
+
+#### Annotated Banner
+The image below provides an example of the banner with the timer, progress, and score annotated with an overlay.
+
+<img src="./content/annotated_banner.png" width="400">
 
 ### Player Health Bar
 | Parameter Name                |Units          | Description                                                                        |
