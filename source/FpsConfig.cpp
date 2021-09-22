@@ -428,6 +428,7 @@ void TargetViewConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("referenceTargetSize", refTargetSize);
 		reader.getIfPresent("referenceTargetColor", refTargetColor);
 		reader.getIfPresent("showPreviewTargetsWithReference", previewWithRef);
+		reader.getIfPresent("showReferenceTargetMissDecals", showRefDecals);
 		reader.getIfPresent("previewTargetColor", previewColor);
 		break;
 	default:
@@ -458,6 +459,7 @@ Any TargetViewConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.refTargetSize != refTargetSize)					a["referenceTargetSize"] = refTargetSize;
 	if (forceAll || def.refTargetColor != refTargetColor)				a["referenceTargetColor"] = refTargetColor;
 	if (forceAll || def.previewWithRef != previewWithRef)				a["showPreviewTargetsWithReference"] = previewWithRef;
+	if (forceAll || def.showRefDecals != showRefDecals)					a["showReferenceTargetMissDecals"] = showRefDecals;
 	if (forceAll || def.previewColor != previewColor)					a["previewTargetColor"] = previewColor;
 	return a;
 }
