@@ -43,7 +43,7 @@ This is an example block comment
 fieldName = [value],            // This is an example line comment
 ```
 
-### Including Other Any Files
+### Including Other Files
 In addition to the constructs described above, the `.Any` specification allows "inlining" of other `.Any` file contents into the structure through use of a C-style `#include` statement as demonstrated below.
 
 ```
@@ -51,6 +51,12 @@ fieldName = #include("[filename].Any")
 ```
 
 This allows `.Any` files to be modularly constructed from files containing sub-sets of their contents. This construct effectively decouples the `.Any` file structure/organization from the parsed contents of a single file and is _very_ convenient when restructuring `.Any` heirarchy for improved organization/readability.
+
+Note that the target of a `#include` directive need not be a `.Any` file, it can be any content that will be parsed correctly within the Any syntax. For example JSON file can always be included as Any is directly compatible with JSON. Alternatively a CSV file can be included to populate an array as demonstrated below:
+
+```
+"myArray" = (#include("array_contents.csv"))        // Include CSV file as the contents of an array
+```
 
 ### Integration with C++
 In addition to the comments and `#include` statements described above, the `.Any` file specification also supports direct inlining of certain C++ style "instructions" into many of its substructures. As an example refer to the [preprocess field](https://casual-effects.com/g3d/G3D10/build/manual/class_g3_d_1_1_articulated_model_1_1_specification.html#details) in the `ArticulatedModel::Specification` which makes use of `ArticulatedModel::Specification::Instruction`s to allow C++-esque transforms of a model file.

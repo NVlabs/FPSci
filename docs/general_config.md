@@ -662,3 +662,8 @@ The following table details various frame timing approaches that can be configur
 |                                                               |`taskOnly` or `restartWithTask`  |Only pick random values for frame time during the task state (use specified `frameRate` elsewhere) |
 
 Note: To specify just 2 frame rates (one in task and one elsewhere) specify a `frameTimeArray` of length 1 (the desired in-task frame time), set `frameTimeMode` to `"taskOnly"` (or `"restartWithTask"`) and use the `frameRate` parameter to specify the desired frame time in states other than the task.
+
+Additionally, the `frameTimeArray` can be included using a CSV file and the Any `#include` directive as demonstrated below:
+```
+"frameTimeArray" : (#include("my_frame_time_pattern.csv"))
+```
