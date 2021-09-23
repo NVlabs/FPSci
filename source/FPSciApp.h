@@ -106,6 +106,8 @@ protected:
 	void loadConfigs(const ConfigFiles& configs);
 
 	virtual void loadModels();
+	Color3 lerpColor(Array<Color3> colors, float a);
+	
 	/** Initializes player settings from configs and resets player to initial position 
 		Also updates mouse sensitivity. */
 	void initPlayer();

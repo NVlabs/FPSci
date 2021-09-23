@@ -271,8 +271,11 @@ void FPSciApp::loadModels() {
 			float complete = (float)i / m_MatTableSize;
 			Color3 color;
 			if (notNull(tconfig) && tconfig->colors.length() > 0) { 
-				color = tconfig->colors[0] * complete + tconfig->colors[1] * (1.0f - complete); }
-			else { color = experimentConfig.targetView.healthColors[0] * complete + experimentConfig.targetView.healthColors[1] * (1.0f - complete); }
+				color = lerpColor(tconfig->colors, complete); 
+			}
+			else { 
+				color = lerpColor(experimentConfig.targetView.healthColors, complete); 
+			}
 			UniversalMaterial::Specification materialSpecification;
 			materialSpecification.setLambertian(Texture::Specification(color));
 			materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
@@ -280,6 +283,18 @@ void FPSciApp::loadModels() {
 			targetMaterials.append(UniversalMaterial::create(materialSpecification));
 		}
 		m_materials.set(id, targetMaterials);
+	}
+}
+
+Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
+	if (colors.length() == 0) {
+		throw "Cannot interpolate from colors array with length 0!";
+	}
+	else if (colors.length() == 1) {
+		return colors[0];
+	}
+	else {		// For 2 or more colors, just interpolate between the first 2
+		return colors[0] * a + colors[1] * (1.0f - a);
 	}
 }
 
@@ -576,8 +591,12 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		for (int i = 0; i < m_MatTableSize; i++) {
 			float complete = (float)i / m_MatTableSize;
 			Color3 color;
-			if (notNull(tconfig) && tconfig->colors.length() > 0) { color = tconfig->colors[0] * complete + tconfig->colors[1] * (1.0f - complete); }
-			else { color = sessConfig->targetView.healthColors[0] * complete + sessConfig->targetView.healthColors[1] * (1.0f - complete); }
+			if (notNull(tconfig) && tconfig->colors.length() > 0){
+				color = lerpColor(tconfig->colors, complete); 
+			}
+			else { 
+				color = lerpColor(sessConfig->targetView.healthColors, complete); 
+			}
 			UniversalMaterial::Specification materialSpecification;
 			materialSpecification.setLambertian(Texture::Specification(color));
 			materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
