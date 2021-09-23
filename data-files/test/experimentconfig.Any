@@ -24,6 +24,7 @@
         instantKill = true;
         damagePerSecond = 100;
         autoFire = false;
+        fireSoundVol = 0;
     };
 
     sessions = (
@@ -69,6 +70,7 @@
                 firePeriod = 0;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -80,6 +82,7 @@
                 firePeriod = 0;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -91,6 +94,7 @@
                 firePeriod = 0.067;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -102,6 +106,7 @@
                 firePeriod = 0.150;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -113,6 +118,7 @@
                 firePeriod = 0.067;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -124,6 +130,7 @@
                 firePeriod = 0.033;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -135,6 +142,7 @@
                 firePeriod = 0.016;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
 
@@ -158,6 +166,7 @@
             jumpEnabled = false;
             respawnCount = 0;
             axisLocked = [false,true,true];
+            hitSoundVol = 0;
         },
         {
             id = "front";
@@ -176,6 +185,8 @@
             jumpEnabled = false;
             respawnCount = 0;
             axisLocked = [false,true,true];
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "right";
@@ -194,6 +205,8 @@
             jumpEnabled = false;
             respawnCount = 0;
             axisLocked = [false,true,true];
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "small";
@@ -210,6 +223,8 @@
             };
             motionChangePeriod = [ 0.8, 1.5 ];
             jumpEnabled = false;
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "medium";
@@ -226,6 +241,8 @@
             };
             motionChangePeriod = [ 0.8, 1.5 ];
             jumpEnabled = false;
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "large";
@@ -242,6 +259,8 @@
             };
             motionChangePeriod = [ 0.8, 1.5 ];
             jumpEnabled = false;
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "toosmall";
@@ -258,6 +277,8 @@
             };
             motionChangePeriod = [ 0.8, 1.5 ];
             jumpEnabled = false;
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "toolarge";
@@ -274,6 +295,8 @@
             };
             motionChangePeriod = [ 0.8, 1.5 ];
             jumpEnabled = false;
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         }
     );
 }
