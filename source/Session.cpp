@@ -252,9 +252,8 @@ void Session::initTargetAnimation() {
 			spawnTrialTargets(initialSpawnPos, true);		// Spawn all the targets in preview mode
 		}
 
-		if (!m_config->targetView.showRefDecals) {			// If we shouldn't draw decals for reference targets
-			m_weapon->drawsDecals = false;					// Disable drawing decals
-		}
+		// Set weapon decal state to match configuration for reference targets
+		m_weapon->drawsDecals = m_config->targetView.showRefDecals;
 	}
 
 	// Reset number of destroyed targets (in the trial)
