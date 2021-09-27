@@ -52,7 +52,7 @@ fieldName = #include("[filename].Any")
 
 This allows `.Any` files to be modularly constructed from files containing sub-sets of their contents. This construct effectively decouples the `.Any` file structure/organization from the parsed contents of a single file and is _very_ convenient when restructuring `.Any` heirarchy for improved organization/readability.
 
-Note that the target of a `#include` directive need not be a `.Any` file, it can be any content that will be parsed correctly within the Any syntax. For example JSON file can always be included as Any is directly compatible with JSON. Alternatively a CSV file can be included to populate an array as demonstrated below:
+Note that the target of a `#include` directive need not be a `.Any` file, it can be any content that will be parsed correctly within the Any syntax. For example JSON file can always be included as Any syntax is a superset of JSON. Alternatively a CSV file can be included to populate an array as demonstrated below:
 
 ```
 "myArray" = (#include("array_contents.csv"))        // Include CSV file as the contents of an array
