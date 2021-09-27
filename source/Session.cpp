@@ -499,7 +499,7 @@ void Session::updatePresentationState()
 			initTargetAnimation();
 		}
 
-		if (newState == PresentationState::trialTask && m_config->targetView.clearDecalsWithRef) {
+		if (newState == PresentationState::pretrial && m_config->targetView.clearDecalsWithRef) {
 			m_weapon->clearDecals();		// Clear the decals when transitioning into the task state
 		}
 	}
