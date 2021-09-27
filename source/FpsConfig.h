@@ -211,7 +211,8 @@ public:
 	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
 
 	bool			clearDecalsWithRef = false;							///< Clear the decals created from the reference target at the start of the task
-	bool			previewWithRef = false;								///< Show preview of per-trial targets with the reference
+	bool			previewWithRef = false;								///< Show preview of per-trial targets with the reference?
+	bool			showRefDecals = true;								///< Show missed shot decals when shooting at the reference target?
 	Color3			previewColor = Color3(0.5, 0.5, 0.5);				///< Color to show preview targets in
 
 	void load(AnyTableReader reader, int settingsVersion = 1);
