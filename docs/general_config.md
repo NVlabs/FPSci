@@ -432,6 +432,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 |`showReferenceTarget`   |`bool`                | Show a reference target to re-center the view between trials/sessions?             |
 |`referenceTargetColor` |`Color3`               | The color of the "reference" targets spawned between trials                        |
 |`referenceTargetSize`  |m                      | The size of the "reference" targets spawned between trials                         |
+|`clearMissDecalsWithReference`|`bool`              | Clear miss decals when the reference target is destroyed                           |
 |`showPreviewTargetsWithReference` |`bool`      | Show a preview of the trial targets (unhittable) with the reference target. Make these targets hittable once the reference is destroyed |
 |`showReferenceTargetMissDecals`|`bool`         | Show miss decals when the weapon is firing at a reference target?                  |
 |`previewTargetColor`   |`Color3`               | Set the color to draw the preview targets with (before they are active)            |
@@ -444,6 +445,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 "showReferenceTarget": true,                    // Show a reference target between trials
 "referenceTargetColor": Color3(1.0,1.0,1.0),    // Reference target color (return to "0" view direction)
 "referenceTargetSize": 0.01,                    // This is a size in meters
+"clearMissDecalsWithReference" : false,         // Don't clear the miss decals when the reference target is eliminated
 "showPreviewTargetsWithReference" : false,      // Don't show the preview targets with the reference
 "showReferenceTargetMissDecals" : true,         // Show miss decals for reference targets
 "previewTargetColor" = Color3(0.5, 0.5, 0.5),   // Use gray for preview targets (if they are shown)
