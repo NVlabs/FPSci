@@ -290,10 +290,13 @@ Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
 	if (colors.length() == 0) {
 		throw "Cannot interpolate from colors array with length 0!";
 	}
-	else if (colors.length() == 1) {
+	else if (colors.length() == 1 || a >= 1.0f) {
+		// a >= 1.0f indicates we should use the first color in the array 
+		// since above 1.0 would imply negative a negative array index
 		return colors[0];
 	}
-	else {		// For 2 or more colors, just interpolate between the first 2
+	else {
+		// For 2 or more colors, linearly interpolate between the first 2
 		return colors[0] * a + colors[1] * (1.0f - a);
 	}
 }
