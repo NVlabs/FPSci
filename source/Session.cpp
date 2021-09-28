@@ -533,6 +533,15 @@ void Session::updatePresentationState()
 		currentState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
 		if ((newState == PresentationState::trialTask) || (newState == PresentationState::trialFeedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
+			if (newState == PresentationState::trialTask && m_config->timing.maxPretrialAimDisplacement > 0) {
+				// Test for aiming in valid region before spawning task targets
+				Point2 vDir = getViewDirection();
+				float viewDisplacement = sqrtf(powf((vDir.x - (180.0f / pif() * m_config->scene.spawnHeading)), 2.f) + powf(vDir.y, 2.f));
+				if (viewDisplacement > m_config->timing.maxPretrialAimDisplacement) {
+					m_feedbackMessage = formatFeedback(m_config->feedback.aimInvalid);
+					currentState = PresentationState::trialFeedback;		// Jump to feedback state w/ error message
+				}
+			}
 			initTargetAnimation();
 		}
 

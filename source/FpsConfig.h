@@ -156,6 +156,7 @@ public:
 	float			sessionFeedbackDuration = 2.0f;				///< Time in the session feedback state in seconds
 	bool			clickToStart = true;						///< Require a click before starting the first session (spawning the reference target)
 	bool			sessionFeedbackRequireClick = false;		///< Require a click to progress from the session feedback?
+	float			maxPretrialAimDisplacement = 0.0f;			///< Maximum (angular) aim displacement in the pretrial duration in degrees, set to negative value to disable
 
 	// Trial count
 	int             defaultTrialCount = 5;						///< Default trial count
@@ -169,6 +170,7 @@ class FeedbackConfig {
 public:
 	String initialWithRef = "Click to spawn a target, then use shift on red target to begin.";		///< An initial feedback message to show when reference targets are drawn
 	String initialNoRef = "Click to start the session!";											///< An initial feedback message to show when reference targets aren't drawn
+	String aimInvalid = "Invalid trial! Do not displace your aim during the pretrial duration.";	///< Message to display when a trial is invalidated due to pretrial aim displacement
 	String trialSuccess = "%trialTaskTimeMs ms!";													///< Successful trial feedback message
 	String trialFailure = "Failure!";																///< Failed trial feedback message
 	String blockComplete = "Block %lastBlock complete! Starting block %currBlock.";					///< Block complete feedback message

@@ -393,6 +393,7 @@ void TimingConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("clickToStart", clickToStart);
 		reader.getIfPresent("sessionFeedbackRequireClick", sessionFeedbackRequireClick);
 		reader.getIfPresent("defaultTrialCount", defaultTrialCount);
+		reader.getIfPresent("maxPretrialAimDisplacement", maxPretrialAimDisplacement);
 		break;
 	default:
 		throw format("Did not recognize settings version: %d", settingsVersion);
@@ -410,6 +411,7 @@ Any TimingConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.clickToStart != clickToStart)						a["clickToStart"] = clickToStart;
 	if (forceAll || def.sessionFeedbackRequireClick != sessionFeedbackRequireClick) a["sessionFeedbackRequireClick"] = sessionFeedbackRequireClick;
 	if (forceAll || def.defaultTrialCount != defaultTrialCount)				a["defaultTrialCount"] = defaultTrialCount;
+	if (forceAll || def.maxPretrialAimDisplacement != maxPretrialAimDisplacement)	a["maxPretrialAimDisplacement"] = maxPretrialAimDisplacement;
 	return a;
 }
 
@@ -418,6 +420,7 @@ void FeedbackConfig::load(AnyTableReader reader, int settingsVersion) {
 	case 1:
 		reader.getIfPresent("referenceTargetInitialFeedback", initialWithRef);
 		reader.getIfPresent("noReferenceTargetInitialFeedback", initialNoRef);
+		reader.getIfPresent("pretrialAimInvalidFeedback", aimInvalid);
 		reader.getIfPresent("trialSuccessFeedback", trialSuccess);
 		reader.getIfPresent("trialFailureFeedback", trialFailure);
 		reader.getIfPresent("blockCompleteFeedback", blockComplete);
@@ -438,6 +441,7 @@ Any FeedbackConfig::addToAny(Any a, bool forceAll) const {
 	FeedbackConfig def;
 	if (forceAll || def.initialWithRef != initialWithRef)	a["referenceTargetInitialFeedback"] = initialWithRef;
 	if (forceAll || def.initialNoRef != initialNoRef)		a["noReferenceTargetInitialFeedback"] = initialNoRef;
+	if (forceAll || def.aimInvalid != aimInvalid)			a["pretrialAimInvalidFeedback"] = aimInvalid;
 	if (forceAll || def.trialSuccess != trialSuccess)		a["trialSuccessFeedback"] = trialSuccess;
 	if (forceAll || def.trialFailure != trialFailure)		a["trialFailureFeedback"] = trialFailure;
 	if (forceAll || def.blockComplete != blockComplete)		a["blockCompleteFeedback"] = blockComplete;

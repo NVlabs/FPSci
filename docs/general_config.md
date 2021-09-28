@@ -64,6 +64,7 @@ The following settings allow the user to control various timings/durations aroun
 |`sessionFeedbackDuration`      |s                  |The duration of the feedback window between sessions                |
 |`sessionFeedbackRequireClick`  |`bool`             |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
 |`defaultTrialCount`            |`int`              |The value to use for trials with no specified `count` settings      |
+|`maxPretrialAimDisplacement`   |degrees            |The maximum aim displacement (from the 0 direction) allowed during the pretrial duration (larger aim motion results in invalidated trials) |
 
 ```
 "clickToStart : true,                       // Require a click to start the session
@@ -73,7 +74,8 @@ The following settings allow the user to control various timings/durations aroun
 "trialFeedbackDuration": 1.0,               // Time for user feedback between trials
 "sessionFeedbackDuration": 5.0,             // Time for user feedback between sessions
 "sessionFeedbackRequireClick" : false,      // Don't require a click to move past the scoreboard
-"defaultTrialCount" : 5,
+"defaultTrialCount" : 5,                    
+"maxPretrialAimDisplacement" : 0,           // Disable max pretrial aim displacement by default
 ```
 
 *Note:* If you are specifying `pretrialDurationRange` to create a truncated exponential range of pretrial duration we *highly* recommend keeping the `pretrialDuration` (i.e. mean value) to less than the mid-point of the `pretrialDurationRange`, skewing the distribution towards the minimum pretrial duration. Skewing this distribution towards the maximum pretrial duration has been demonstrated to produce confounding effects in reaction time studies (makes time at which to react more predictable)!
@@ -105,6 +107,7 @@ In addition to controlling the duration and formatting of displayed feedback mes
 |-----------------------------------|---------|--------------------------------------------------------------------|
 |`referenceTargetInitialFeedback`   |`String` | The message to display at the start of a session that includes a reference target|
 |`noReferenceTargetInitialFeedback` |`String` | The message to display at the start of a session that doesn't include a reference target|
+|`pretrialAimInvalidFeedback`       |`String` | The message to display when the pretrial aim exceeds the `maxPretrialAimDisplacement` |
 |`trialSuccessFeedback`             |`String` | Message to display when a trial is a success                       |
 |`trialFailureFeedback`             |`String` | Message to display when a trial is a failure                       |
 |`blockCompleteFeedback`            |`String` | Message to display when a block is completed                       |
@@ -132,6 +135,7 @@ Using these custom strings we can implement the following (default) feedback mes
 ```
 referenceTargetInitialFeedback: "Click to spawn a target, then use shift on red target to begin.",
 noReferenceTargetInitialFeedback: "Click to start the session!",
+maxPretrialAimDisplacement: "Invalid trial! Do not displace your aim during the pretrial duration.",
 trialSuccessFeedback: "%trialTaskTimeMs ms!",
 trialFailureFeedback: "Failure!",
 blockCompleteFeedback: "Block %lastBlock complete! Starting block %currBlock.",
