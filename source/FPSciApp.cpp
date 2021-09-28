@@ -112,13 +112,13 @@ void FPSciApp::saveUserConfig(bool onDiff) {
 	if (notNull(sess->logger)) {
 		sess->logger->logUserConfig(*currentUser(), sessConfig->id, sessConfig->player.turnScale);
 	}
-	userTable.save(startupConfig.experimentList[experimentIdx].userConfigFilename);
+	userTable.save(startupConfig.experimentList[experimentIdx].userConfigFilename, startupConfig.jsonOutput);
 	m_lastSavedUser = *currentUser();			// Copy over this user
 	logPrintf("User table saved.\n");			// Print message to log
 }
 
 void FPSciApp::saveUserStatus(void) {
-	userStatusTable.save(startupConfig.experimentList[experimentIdx].userStatusFilename);
+	userStatusTable.save(startupConfig.experimentList[experimentIdx].userStatusFilename, startupConfig.jsonOutput);
 	logPrintf("User status saved.\n");
 }
 
@@ -157,7 +157,7 @@ void FPSciApp::setMouseInputMode(MouseInputMode mode) {
 
 void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	// Load experiment setting from file
-	experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename);
+	experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename, startupConfig.jsonOutput);
 	experimentConfig.printToLog();
 	experimentConfig.validate(true);
 
@@ -170,11 +170,11 @@ void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	experimentConfig.getSessionIds(sessionIds);
 
 	// Load per user settings from file
-	userTable = UserTable::load(configs.userConfigFilename);
+	userTable = UserTable::load(configs.userConfigFilename, startupConfig.jsonOutput);
 	userTable.printToLog();
 
 	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load(configs.userStatusFilename);
+	userStatusTable = UserStatusTable::load(configs.userStatusFilename, startupConfig.jsonOutput);
 	userStatusTable.printToLog();
 	userStatusTable.validate(sessionIds, userTable.getIds());
 		
@@ -183,7 +183,7 @@ void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	info.printToLog();										// Print system info to log.txt
 
 	// Get system configuration
-	systemConfig = SystemConfig::load(configs.systemConfigFilename);
+	systemConfig = SystemConfig::load(configs.systemConfigFilename, startupConfig.jsonOutput);
 	systemConfig.printToLog();			// Print the latency logger config to log.txt	
 
 	// Load the key binds
@@ -368,7 +368,7 @@ void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
 	String filename = Scene::sceneNameToFilename(sessConfig->scene.name);
-	scene()->toAny().save(filename, true);
+	scene()->toAny().save(filename, startupConfig.jsonOutput);
 }
 
 void FPSciApp::showPlayerControls() {

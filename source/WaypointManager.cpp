@@ -165,16 +165,16 @@ void WaypointManager::clearWaypoints(void) {
 	m_waypointControls->setSelected(-1);
 }
 
-void WaypointManager::exportWaypoints(String filename) {
+void WaypointManager::exportWaypoints(String filename, bool saveJSON) {
 	TargetConfig t = TargetConfig();
 	t.id = "test";
 	t.destSpace = "world";
 	t.destinations = m_waypoints;
-	t.toAny().save(filename, true);		// Save the file
+	t.toAny().save(filename, saveJSON);		// Save the file
 }
 
 void WaypointManager::exportWaypoints(void) {
-	exportWaypoints(exportFilename);
+	exportWaypoints(exportFilename, m_app->startupConfig.jsonOutput);
 }
 
 void WaypointManager::setWaypoints(Array<Destination> waypoints) {

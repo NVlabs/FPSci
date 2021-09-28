@@ -54,14 +54,14 @@ UserStatusTable::UserStatusTable(const Any& any) {
 	}
 }
 
-UserStatusTable UserStatusTable::load(const String& filename) {
+UserStatusTable UserStatusTable::load(const String& filename, bool saveJSON) {
 	if (!FileSystem::exists(filename)) {						// if file not found, create a default
 		UserStatusTable defaultStatus = UserStatusTable();		// Create empty status
 		UserSessionStatus user;
 		user.sessionOrder = Array<String>({ "60Hz", "30Hz" });	// Add "default" sessions we add to
 		defaultStatus.userInfo.append(user);					// Add single "default" user
 		defaultStatus.currentUser = user.id;					// Set "default" user as current user
-		defaultStatus.save(filename);							// Save .any file
+		defaultStatus.save(filename, saveJSON);					// Save .any file
 		return defaultStatus;
 	}
 	return Any::fromFile(System::findDataFile(filename));
