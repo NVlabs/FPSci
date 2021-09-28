@@ -572,6 +572,9 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (!sessConfig->audio.sceneHitSound.empty()) {
 		m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
 	}
+	if (!sessConfig->audio.refTargetHitSound.empty()) {
+		m_refTargetHitSound = Sound::create(System::findDataFile(sessConfig->audio.refTargetHitSound));
+	}
 
 	// Load static HUD textures
 	for (StaticHudElement element : sessConfig->hud.staticElements) {
@@ -1108,6 +1111,9 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	if (target->name() == "reference") {
 		// Handle reference target here
 		sess->destroyTarget(target);
+		if (notNull(m_refTargetHitSound)) {
+			m_refTargetHitSound->play(sessConfig->audio.refTargetHitSoundVol);
+		}
 		destroyedTarget = true;
 		sess->accumulatePlayerAction(PlayerActionType::Nontask, target->name());
 
@@ -1239,6 +1245,9 @@ void FPSciApp::onUserInput(UserInput* ui) {
 			float hitDist = finf();
 			int hitIdx = -1;
 			shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
+			if (sessConfig->audio.refTargetPlayFireSound && !sessConfig->weapon.loopAudio()) {		// Only play shot sounds for non-looped weapon audio (continuous/automatic fire not allowed)
+				weapon->playSound(true, false);			// Play audio here for reference target
+			}
 		}
 	}
 

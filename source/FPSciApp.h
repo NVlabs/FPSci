@@ -45,7 +45,8 @@ public:
 
 protected:
 	static const int						MAX_HISTORY_TIMING_FRAMES = 360;	///< Length of the history queue for m_frameDurationQueue
-	shared_ptr<Sound>						m_sceneHitSound;					///< Sound for target exploding
+	shared_ptr<Sound>						m_sceneHitSound;					///< Sound for scene collision
+	shared_ptr<Sound>						m_refTargetHitSound;				///< Sound for hitting the reference target
 
 	shared_ptr<GFont>						m_combatFont;						///< Font used for floating combat text
 	Array<shared_ptr<FloatingCombatText>>	m_combatTextList;					///< Array of existing combat text

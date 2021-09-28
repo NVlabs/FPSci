@@ -201,11 +201,20 @@ The `shader2D`, `shader3D`, and `shaderComposite` shaders are best provided when
 |-----------------------|-------|-----------------------------------------------------------------------------------------------------------|
 |`sceneHitSound`        |file   | The sound to play when the scene (not the target) is hit by a weapon (for no sound use an empty string)   |
 |`sceneHitSoundVol`     |ratio  | The volume of the scene hit sound to play                                                                 |
+|`referenceTargetHitSound`|file | Sound to play when the reference target is hit (for no sound use an empty string)                         |  
+|`referenceTargetHitSoundVol`|ratio | The volume of the  reference target hit sound to play                                                 |
+|`referenceTargetPlayFireSound`|`bool`| Whether to play the weapon's fire sound when presenting the reference target                        |
+
 
 ```
 "sceneHitSound": "sound/fpsci_miss_100ms.wav",
 "sceneHitSoundVol": 1.0f,
+"referenceTargetHitSound" : "",
+"referenceTargetHitSoundVol": 1.0f,
+"referenceTargetPlayFireSound": false,
 ```
+
+Note: The sound played when `referenceTargetPlayFireSound` is set to `true` is the weapon's specified `fireSound` (at its `fireSoundVol`). This audio will only be played when the specified fire sound is not looped (i.e., `fireSoundLoop` is `false` and the weapons's `firedPeriod` is > 0 if `autoFire` is set to `true`).
 
 ## Player Controls
 | Parameter Name     |Units | Description                                                                        |
