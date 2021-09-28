@@ -280,7 +280,7 @@ void FPSciApp::updateControls(bool firstSession) {
 	if(!firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
 
 	// Update the waypoint manager
-	if (startupConfig.waypointEditorMode) { waypointManager->updateControls(); }
+	if (notNull(waypointManager)) { waypointManager->updateControls(); }
 
 	// Update the player controls
 	bool visible = false;
@@ -345,7 +345,7 @@ void FPSciApp::makeGUI() {
 		debugPane->addButton("Render Controls [1]", this, &FPSciApp::showRenderControls);
 		debugPane->addButton("Player Controls [2]", this, &FPSciApp::showPlayerControls);
 		debugPane->addButton("Weapon Controls [3]", this, &FPSciApp::showWeaponControls);
-		if(startupConfig.waypointEditorMode) debugPane->addButton("Waypoint Manager [4]", waypointManager, &WaypointManager::showWaypointWindow);
+		if(notNull(waypointManager)) debugPane->addButton("Waypoint Manager [4]", waypointManager, &WaypointManager::showWaypointWindow);
 	}debugPane->endRow();
 
 	// Create the user settings window
@@ -820,7 +820,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
 		}
 
-		if (startupConfig.waypointEditorMode) {
+		if (notNull(waypointManager)) {
 			// Handle highlighting for selected target
 			waypointManager->updateSelected();
 			// Handle player motion recording here
@@ -874,7 +874,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 				// Do not set foundKey = true to allow shader reloading from GApp::onEvent()
 			}
 			// Waypoint editor only keys
-			else if (startupConfig.waypointEditorMode) {
+			else if (notNull(waypointManager)) {
 				if (keyMap.map["toggleWaypointWindow"].contains(ksym)) {
 					waypointManager->toggleWaypointWindow();
 					foundKey = true;
@@ -914,7 +914,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			}
 		}
 		else if (event.type == GEventType::KEY_UP) {
-			if (startupConfig.waypointEditorMode) {
+			if (notNull(waypointManager)) {
 				if (keyMap.map["moveWaypointUp"].contains(ksym)) {
 					waypointManager->moveMask -= Vector3(0.0f, 1.0f, 0.0f);
 					foundKey = true;
@@ -1225,7 +1225,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 
 	for (GKey selectButton : keyMap.map["selectWaypoint"]) {
 		// Check for developer mode editing here, if so set selected waypoint using the camera
-		if (ui->keyDown(selectButton) && startupConfig.developerMode && startupConfig.waypointEditorMode) {
+		if (ui->keyDown(selectButton) && notNull(waypointManager)) {
 			waypointManager->aimSelectWaypoint(activeCamera());
 		}
 	}
