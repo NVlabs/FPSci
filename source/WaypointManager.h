@@ -9,7 +9,6 @@ class WaypointDisplay;
 class WaypointManager : ReferenceCountedObject {
 private:
 	FPSciApp* m_app = nullptr;
-	Scene* m_scene = nullptr;
 
 	shared_ptr<WaypointDisplay> m_waypointControls;
 
