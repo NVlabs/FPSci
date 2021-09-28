@@ -106,6 +106,7 @@ protected:
 	void loadConfigs(const ConfigFiles& configs);
 
 	virtual void loadModels();
+	Array<shared_ptr<UniversalMaterial>> makeMaterials(shared_ptr<TargetConfig> tconfig);
 	Color3 lerpColor(Array<Color3> colors, float a);
 	
 	/** Initializes player settings from configs and resets player to initial position 

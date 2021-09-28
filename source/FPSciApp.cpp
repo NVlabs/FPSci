@@ -266,24 +266,28 @@ void FPSciApp::loadModels() {
 
 		// Create a series of colored materials to choose from for target health
 		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
-		Array<shared_ptr<UniversalMaterial>> targetMaterials;
-		for (int i = 0; i < m_MatTableSize; i++) {
-			float complete = (float)i / m_MatTableSize;
-			Color3 color;
-			if (notNull(tconfig) && tconfig->colors.length() > 0) { 
-				color = lerpColor(tconfig->colors, complete); 
-			}
-			else { 
-				color = lerpColor(experimentConfig.targetView.healthColors, complete); 
-			}
-			UniversalMaterial::Specification materialSpecification;
-			materialSpecification.setLambertian(Texture::Specification(color));
-			materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-			materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-			targetMaterials.append(UniversalMaterial::create(materialSpecification));
-		}
-		m_materials.set(id, targetMaterials);
+		m_materials.set(id, makeMaterials(tconfig));
 	}
+}
+
+Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetConfig> tconfig) {
+	Array<shared_ptr<UniversalMaterial>> targetMaterials;
+	for (int i = 0; i < m_MatTableSize; i++) {
+		float complete = (float)i / (m_MatTableSize-1);
+		Color3 color;
+		if (notNull(tconfig) && tconfig->colors.length() > 0) {
+			color = lerpColor(tconfig->colors, complete);
+		}
+		else {
+			color = lerpColor(experimentConfig.targetView.healthColors, complete);
+		}
+		UniversalMaterial::Specification materialSpecification;
+		materialSpecification.setLambertian(Texture::Specification(color));
+		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+		targetMaterials.append(UniversalMaterial::create(materialSpecification));
+	}
+	return targetMaterials;
 }
 
 Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
@@ -589,24 +593,8 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 
 	// Update colored materials to choose from for target health
 	for (String id : sessConfig->getUniqueTargetIds()) {
-		Array<shared_ptr<UniversalMaterial>> targetMaterials;
 		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
-		for (int i = 0; i < m_MatTableSize; i++) {
-			float complete = (float)i / m_MatTableSize;
-			Color3 color;
-			if (notNull(tconfig) && tconfig->colors.length() > 0){
-				color = lerpColor(tconfig->colors, complete); 
-			}
-			else { 
-				color = lerpColor(sessConfig->targetView.healthColors, complete); 
-			}
-			UniversalMaterial::Specification materialSpecification;
-			materialSpecification.setLambertian(Texture::Specification(color));
-			materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-			materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-			targetMaterials.append(UniversalMaterial::create(materialSpecification));
-		}
-		m_materials.set(id, targetMaterials);
+		m_materials.set(id, makeMaterials(tconfig));
 	}
 
 	// Player parameters
