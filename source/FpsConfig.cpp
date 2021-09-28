@@ -266,6 +266,20 @@ void HudConfig::load(AnyTableReader reader, int settingsVersion) {
 	case 1:
 		reader.getIfPresent("showHUD", enable);
 		reader.getIfPresent("showBanner", showBanner);
+		if (reader.getIfPresent("bannerTimerMode", bannerTimerMode)) {
+			bannerTimerMode = toLower(bannerTimerMode);
+			const Array<String> validTimeModes = { "none", "elapsed", "remaining" };
+			if (!validTimeModes.contains(bannerTimerMode)) {
+				String errString = format("\"bannerShowTime\" value \"%s\" is invalid, must be specified as one of the valid modes (", bannerTimerMode);
+				for (String validTimeMode : validTimeModes) {
+					errString += "\"" + validTimeMode + "\", ";
+				}
+				errString = errString.substr(0, errString.length() - 2) + ")!";
+				throw errString.c_str();
+			}
+		}
+		reader.getIfPresent("bannerShowProgress", bannerShowProgress);
+		reader.getIfPresent("bannerShowScore", bannerShowScore);
 		reader.getIfPresent("hudFont", hudFont);
 		reader.getIfPresent("showPlayerHealthBar", showPlayerHealthBar);
 		reader.getIfPresent("playerHealthBarSize", playerHealthBarSize);
@@ -297,6 +311,9 @@ Any HudConfig::addToAny(Any a, bool forceAll) const {
 	HudConfig def;
 	if (forceAll || def.enable != enable)											a["showHUD"] = enable;
 	if (forceAll || def.showBanner != showBanner)									a["showBanner"] = showBanner;
+	if (forceAll || def.bannerTimerMode != bannerTimerMode)							a["bannerTimerMode"] = bannerTimerMode;
+	if (forceAll || def.bannerShowProgress != bannerShowProgress)					a["bannerShowProgress"] = bannerShowProgress;
+	if (forceAll || def.bannerShowScore != bannerShowScore)							a["bannerShowScore"] = bannerShowScore;
 	if (forceAll || def.hudFont != hudFont)											a["hudFont"] = hudFont;
 	if (forceAll || def.showPlayerHealthBar != showPlayerHealthBar)					a["showPlayerHealthBar"] = showPlayerHealthBar;
 	if (forceAll || def.playerHealthBarSize != playerHealthBarSize)					a["playerHealthBarSize"] = playerHealthBarSize;

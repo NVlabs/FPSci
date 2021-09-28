@@ -406,9 +406,11 @@ public:
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
 	void clearTargets();
 
+	bool inTask();
+	float getElapsedTrialTime();
 	float getRemainingTrialTime();
 	float getProgress();
-	int getScore();
+	double getScore();
 	String getFeedbackMessage();
 
 	/** queues action with given name to insert into database when trial completes

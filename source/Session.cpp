@@ -615,6 +615,14 @@ void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 	}
 }
 
+bool Session::inTask() {
+	return currentState == PresentationState::trialTask;
+}
+
+float Session::getElapsedTrialTime() {
+	return m_timer.getTime();
+}
+
 float Session::getRemainingTrialTime() {
 	if (isNull(m_config)) return 10.0;
 	return m_config->timing.maxTrialDuration - m_timer.getTime();
@@ -632,8 +640,8 @@ float Session::getProgress() {
 	return fnan();
 }
 
-int Session::getScore() {
-	return (int)(10.0 * m_totalRemainingTime);
+double Session::getScore() {
+	return 100.0 * m_totalRemainingTime;
 }
 
 String Session::formatCommand(const String& input) {
