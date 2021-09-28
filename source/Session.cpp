@@ -121,6 +121,36 @@ bool Session::hasNextCondition() const{
 	return false;
 }
 
+const RealTime Session::targetFrameTime()
+{
+	const RealTime defaultFrameTime = 1.0 / m_app->window()->settings().refreshRate;
+	if (!m_hasSession) return defaultFrameTime;
+
+	uint arraySize = m_config->render.frameTimeArray.size();
+	if (arraySize > 0) {
+		if ((m_config->render.frameTimeMode == "taskonly" || m_config->render.frameTimeMode == "restartwithtask") && currentState != PresentationState::trialTask) {
+			// We are in a frame time mode which specifies only to change frame time during the task
+			return 1.0f / m_config->render.frameRate;
+		}
+
+		if (m_config->render.frameTimeRandomize) {
+			return m_config->render.frameTimeArray.randomElement();
+		}
+		else {
+			RealTime targetTime =  m_config->render.frameTimeArray[m_frameTimeIdx % arraySize];
+			m_frameTimeIdx += 1;
+			m_frameTimeIdx %= arraySize;
+			return targetTime;
+		}
+	}
+
+	// The below matches the functionality in FPSciApp::updateParameters()
+	if (m_config->render.frameRate > 0) {
+		return 1.0f / m_config->render.frameRate;
+	}
+	return defaultFrameTime;
+}
+
 bool Session::nextCondition() {
 	Array<int> unrunTrialIdxs;
 	for (int i = 0; i < m_remainingTrials.size(); i++) {
@@ -495,6 +525,9 @@ void Session::updatePresentationState()
 	{ // handle state transition.
 		m_timer.startTimer();
 		if (newState == PresentationState::trialTask) {
+			if (m_config->render.frameTimeMode == "restartwithtask") {
+				m_frameTimeIdx = 0;		// Reset the frame time index with the task if requested
+			}
 			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
 		}
 		currentState = newState;
