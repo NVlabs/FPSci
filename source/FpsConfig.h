@@ -132,6 +132,7 @@ public:
 	float			sceneHitSoundVol = 1.0f;							///< Volume to play scene hit sound at
 	String			refTargetHitSound = "";								///< Reference target hit sound (filename)
 	float			refTargetHitSoundVol = 1.0f;						///< Volume to play target hit sound at
+	bool			refTargetPlayFireSound = false;						///< Play the weapon's fire sound when shooting at the reference target
 
 	void load(AnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;

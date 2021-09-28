@@ -1245,6 +1245,9 @@ void FPSciApp::onUserInput(UserInput* ui) {
 			float hitDist = finf();
 			int hitIdx = -1;
 			shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
+			if (sessConfig->audio.refTargetPlayFireSound && !sessConfig->weapon.loopAudio()) {		// Only play shot sounds for non-looped weapon audio (continuous/automatic fire not allowed)
+				weapon->playSound(true, false);			// Play audio here for reference target
+			}
 		}
 	}
 

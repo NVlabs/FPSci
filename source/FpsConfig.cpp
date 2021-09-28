@@ -307,6 +307,7 @@ void AudioConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("sceneHitSoundVol", sceneHitSoundVol);
 		reader.getIfPresent("referenceTargetHitSound", refTargetHitSound);
 		reader.getIfPresent("referenceTargetHitSoundVol", refTargetHitSoundVol);
+		reader.getIfPresent("referenceTargetPlayFireSound", refTargetPlayFireSound);
 
 		break;
 	default:
@@ -321,6 +322,7 @@ Any AudioConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.sceneHitSoundVol != sceneHitSoundVol)	a["sceneHitSoundVol"] = sceneHitSoundVol;
 	if (forceAll || def.refTargetHitSound != refTargetHitSound) a["referenceTargetHitSound"] = refTargetHitSound;
 	if (forceAll || def.refTargetHitSoundVol != refTargetHitSoundVol) a["referenceTargetHitSoundVol"] = refTargetHitSoundVol;
+	if (forceAll || def.refTargetPlayFireSound != refTargetPlayFireSound)	a["referenceTargetPlayFireSound"] = refTargetPlayFireSound;
 	
 	return a;
 }
