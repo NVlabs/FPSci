@@ -468,6 +468,9 @@ void FPSciApp::initPlayer() {
 	}
 	player->setRespawnHeight(resetHeight);
 
+	// Update the respawn heading
+	player->setRespawnHeading(sessConfig->scene.spawnHeading);
+
 	// Set player respawn location
 	Point3 spawnPosition = sessConfig->scene.spawnPosition;
 	if (isnan(spawnPosition.x)) {
