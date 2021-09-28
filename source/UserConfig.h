@@ -39,10 +39,10 @@ public:
 
 	Any toAny(const bool forceAll = false) const;
 
-	shared_ptr<UserConfig> getUserById(const String& id) const;			// Get a user config based on a user ID
-	static UserTable load(const String& filename);						// Get the user config from file (or create it if it doesn't exist)
+	shared_ptr<UserConfig> getUserById(const String& id) const;				// Get a user config based on a user ID
+	static UserTable load(const String& filename, bool saveJSON);	// Get the user config from file (or create it if it doesn't exist)
 	
-	inline void save(const String& filename) { toAny().save(filename); }	// Save to Any file
+	inline void save(const String& filename, bool json) { toAny().save(filename, json); }	// Save to Any file
 
 	Array<String> getIds() const;						// Get an array of user IDs
 	int getUserIndex(String userId) const;				// Get the index of the current user from the user table

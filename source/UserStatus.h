@@ -28,10 +28,10 @@ public:
 	UserStatusTable() {}
 	UserStatusTable(const Any& any);
 
-	static UserStatusTable load(const String& filename);
+	static UserStatusTable load(const String& filename, bool saveJSON);
 	Any toAny(const bool forceAll = false) const;
 
-	inline void save(const String& filename) { toAny().save(filename); }
+	inline void save(const String& filename, bool json) { toAny().save(filename, json); }
 
 	shared_ptr<UserSessionStatus> getUserStatus(const String& id);			// Get a given user's status from the table by ID
 	String getNextSession(String userId = "");								// Get the next session ID for a given user (by ID)

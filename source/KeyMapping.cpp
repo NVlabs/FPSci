@@ -38,10 +38,10 @@ KeyMapping::KeyMapping(const Any& any) : KeyMapping() {
 	getUiKeyMapping();
 }
 
-KeyMapping KeyMapping::load(const String& filename) {
+KeyMapping KeyMapping::load(const String& filename, bool saveJSON) {
 	if (!FileSystem::exists(System::findDataFile(filename, false))) {
 		KeyMapping mapping = KeyMapping();
-		mapping.toAny().save(filename);
+		mapping.toAny().save(filename, saveJSON);
 		return mapping;
 	}
 	return Any::fromFile(System::findDataFile(filename));

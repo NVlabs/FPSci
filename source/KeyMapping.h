@@ -10,7 +10,7 @@ public:
 	KeyMapping();								// Default key mapping
 	KeyMapping(const Any& any);					// From any
 
-	static KeyMapping load(const String& filename);			// Load key map from file (or create default if not present)
+	static KeyMapping load(const String& filename, bool saveJSON);			// Load key map from file (or create default if not present)
 	Any toAny(const bool forceAll = true) const;
 	void getUiKeyMapping();									// Update the uiMap
 };

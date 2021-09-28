@@ -88,11 +88,11 @@ void ExperimentConfig::init() {
 	}
 }
 
-ExperimentConfig ExperimentConfig::load(const String& filename) {
+ExperimentConfig ExperimentConfig::load(const String& filename, bool saveJSON) {
 	ExperimentConfig ex;
 	if (!FileSystem::exists(System::findDataFile(filename, false))) {
 		// if file not found, save the default
-		ex.toAny().save(filename);
+		ex.toAny().save(filename, saveJSON);
 		SessionConfig::defaultConfig() = (FpsConfig)ex;
 	}
 	else {
