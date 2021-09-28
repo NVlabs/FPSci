@@ -185,6 +185,11 @@ For more information on G3D `Sampler` options refer to [this reference page](htt
 "samplerFinal": Sampler::video();           // Use video sampler by default
 ```
 
+### Shader Usage
+The `shader2D`, `shader3D`, and `shaderComposite` shaders are best provided when the experiment designer understands a little about the way they are injected into the FPSci rendering pipeline. To this end, we provide the following diagram showing where those shader invocations fit in to the pipeline. The intent is for the `shader2D` shader to operate on the 2D game user interface, the `shader3D` to operate on the screen rendered image of the 3D game world prior to composition with the 2D game user interface, and the `shaderComposite` to run after the 2D and 3D images have been composited just before sending it to the screen. Each of the `samplerX` parameters controls how to sample the input or output of those various stages. Clever use of these parameters can accomplish many things, such as forcing integer scaling instead of the default bilinear, applying view distortion, or distortion correction, or any of many other image-space adjustments.
+
+<img src="./content/fpsci-pipeline.png" width="531px">
+
 ## Audio Settings
 | Parameter Name        |Units  | Description                                                                                               |
 |-----------------------|-------|-----------------------------------------------------------------------------------------------------------|
