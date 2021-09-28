@@ -70,7 +70,7 @@ public:
 	void removeLastWaypoint();
 	void clearWaypoints();
 	void exportWaypoints();
-	void exportWaypoints(String filename, bool saveJSON = true);
+	void exportWaypoints(String filename, bool saveJSON);
 	void setWaypoints(Array<Destination> waypoints);
 	void previewWaypoints();
 	void stopPreview();

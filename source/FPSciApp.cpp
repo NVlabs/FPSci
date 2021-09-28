@@ -112,13 +112,13 @@ void FPSciApp::saveUserConfig(bool onDiff) {
 	if (notNull(sess->logger)) {
 		sess->logger->logUserConfig(*currentUser(), sessConfig->id, sessConfig->player.turnScale);
 	}
-	userTable.save(startupConfig.experimentList[experimentIdx].userConfigFilename, startupConfig.jsonOutput);
+	userTable.save(startupConfig.experimentList[experimentIdx].userConfigFilename, startupConfig.jsonAnyOutput);
 	m_lastSavedUser = *currentUser();			// Copy over this user
 	logPrintf("User table saved.\n");			// Print message to log
 }
 
 void FPSciApp::saveUserStatus(void) {
-	userStatusTable.save(startupConfig.experimentList[experimentIdx].userStatusFilename, startupConfig.jsonOutput);
+	userStatusTable.save(startupConfig.experimentList[experimentIdx].userStatusFilename, startupConfig.jsonAnyOutput);
 	logPrintf("User status saved.\n");
 }
 
@@ -157,7 +157,7 @@ void FPSciApp::setMouseInputMode(MouseInputMode mode) {
 
 void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	// Load experiment setting from file
-	experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename, startupConfig.jsonOutput);
+	experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename, startupConfig.jsonAnyOutput);
 	experimentConfig.printToLog();
 	experimentConfig.validate(true);
 
@@ -170,11 +170,11 @@ void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	experimentConfig.getSessionIds(sessionIds);
 
 	// Load per user settings from file
-	userTable = UserTable::load(configs.userConfigFilename, startupConfig.jsonOutput);
+	userTable = UserTable::load(configs.userConfigFilename, startupConfig.jsonAnyOutput);
 	userTable.printToLog();
 
 	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load(configs.userStatusFilename, startupConfig.jsonOutput);
+	userStatusTable = UserStatusTable::load(configs.userStatusFilename, startupConfig.jsonAnyOutput);
 	userStatusTable.printToLog();
 	userStatusTable.validate(sessionIds, userTable.getIds());
 		
@@ -183,11 +183,11 @@ void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	info.printToLog();										// Print system info to log.txt
 
 	// Get system configuration
-	systemConfig = SystemConfig::load(configs.systemConfigFilename, startupConfig.jsonOutput);
+	systemConfig = SystemConfig::load(configs.systemConfigFilename, startupConfig.jsonAnyOutput);
 	systemConfig.printToLog();			// Print the latency logger config to log.txt	
 
 	// Load the key binds
-	keyMap = KeyMapping::load(configs.keymapConfigFilename);
+	keyMap = KeyMapping::load(configs.keymapConfigFilename, startupConfig.jsonAnyOutput);
 	userInput->setKeyMapping(&keyMap.uiMap);
 }
 
@@ -368,7 +368,7 @@ void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
 	String filename = Scene::sceneNameToFilename(sessConfig->scene.name);
-	scene()->toAny().save(filename, startupConfig.jsonOutput);
+	scene()->toAny().save(filename, startupConfig.jsonAnyOutput);
 }
 
 void FPSciApp::showPlayerControls() {

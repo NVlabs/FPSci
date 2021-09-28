@@ -28,7 +28,7 @@ public:
 	UserStatusTable() {}
 	UserStatusTable(const Any& any);
 
-	static UserStatusTable load(const String& filename, bool saveJSON = true);
+	static UserStatusTable load(const String& filename, bool saveJSON);
 	Any toAny(const bool forceAll = false) const;
 
 	inline void save(const String& filename, bool json) { toAny().save(filename, json); }

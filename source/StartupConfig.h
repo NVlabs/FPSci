@@ -33,7 +33,7 @@ public:
 	bool	waypointEditorMode = false;							///< Sets whether the app is run w/ the waypoint editor available
 	bool	fullscreen = true;									///< Whether the app runs in windowed mode
 	Vector2 windowSize = { 1920, 980 };							///< Window size (when not run in fullscreen)
-	bool	jsonOutput = true;									///< Write all outputs as fully JSON compatible .Any files
+	bool	jsonAnyOutput = true;									///< Write all outputs as fully JSON compatible .Any files
 
 	ConfigFiles defaultExperiment = ConfigFiles::defaults();	///< Setup default list
 	Array<ConfigFiles> experimentList;							///< List of configs (for various experiments)

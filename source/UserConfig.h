@@ -40,7 +40,7 @@ public:
 	Any toAny(const bool forceAll = false) const;
 
 	shared_ptr<UserConfig> getUserById(const String& id) const;				// Get a user config based on a user ID
-	static UserTable load(const String& filename, bool saveJSON = true);	// Get the user config from file (or create it if it doesn't exist)
+	static UserTable load(const String& filename, bool saveJSON);	// Get the user config from file (or create it if it doesn't exist)
 	
 	inline void save(const String& filename, bool json) { toAny().save(filename, json); }	// Save to Any file
 

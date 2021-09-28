@@ -174,7 +174,7 @@ void WaypointManager::exportWaypoints(String filename, bool saveJSON) {
 }
 
 void WaypointManager::exportWaypoints(void) {
-	exportWaypoints(exportFilename, m_app->startupConfig.jsonOutput);
+	exportWaypoints(exportFilename, m_app->startupConfig.jsonAnyOutput);
 }
 
 void WaypointManager::setWaypoints(Array<Destination> waypoints) {
