@@ -1,0 +1,11 @@
+{ 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            id = "Sample User"; 
+            mouseDegPerMillimeter = 1.8;
+            invertY = false; 
+            mouseDPI = 800; 
+        } ); 
+    
+} 

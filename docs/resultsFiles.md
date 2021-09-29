@@ -121,7 +121,8 @@ The `Trials` table provides more detailed feedback on user performance within ea
 * `block_id`: The ID (index) of the current block being performed within the session (repeats trials)
 * `start_time`: The (wall clock) start time of the trial (useful for affiliating player/target actions)
 * `end_time`: The (wall clock) end time of the trial (useful for affiliating player/target actions)
-* `task_execution_time`: The total time spent in the task state within this trial
+* `pretrial_duration`: The pretrial duration (in seconds) for this trial (useful particularly when randomized in range)
+* `task_execution_time`: The total time spent in the task state within this trial (in seconds)
 * `destroyed_targets`: A count of total targets destroyed within this trial
 * `total_targets`: A count of the total targets to be presented in this trial (if an unlimited number of targets has been specified this value is `-1`).
 

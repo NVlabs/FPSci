@@ -165,6 +165,7 @@ public:
 		m_paramIdx = paramIdx;
 		m_scaleIdx = scaleIdx;
 		m_isLogged = isLogged;
+		m_destinations = dests;
 		destinationIdx = 0;
 	}
 

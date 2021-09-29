@@ -5,7 +5,7 @@ ExperimentConfig::ExperimentConfig(const Any& any) : FpsConfig(any) {
 	switch (settingsVersion) {
 	case 1:
 		// Setup the default FPS config based on this
-		SessionConfig::defaultConfig = (FpsConfig)(*this);												// Setup the default configuration here
+		SessionConfig::defaultConfig() = (FpsConfig)(*this);	// Setup the default configuration here
 		// Experiment-specific info
 		reader.getIfPresent("description", description);
 		reader.getIfPresent("closeOnComplete", closeOnComplete);
@@ -88,12 +88,12 @@ void ExperimentConfig::init() {
 	}
 }
 
-ExperimentConfig ExperimentConfig::load(const String& filename) {
+ExperimentConfig ExperimentConfig::load(const String& filename, bool saveJSON) {
 	ExperimentConfig ex;
 	if (!FileSystem::exists(System::findDataFile(filename, false))) {
 		// if file not found, save the default
-		ex.toAny().save(filename);
-		SessionConfig::defaultConfig = (FpsConfig)ex;
+		ex.toAny().save(filename, saveJSON);
+		SessionConfig::defaultConfig() = (FpsConfig)ex;
 	}
 	else {
 		ex = Any::fromFile(System::findDataFile(filename));

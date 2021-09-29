@@ -1,0 +1,12 @@
+{ 
+    currentUser = "Sample User"; 
+    sessions = ( "1shot", "2shots", "3shots", "autofire", "fastfire", "showweapon"); 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            completedSessions = ( ); 
+            id = "Sample User"; 
+            sessions = ( "1shot", "2shots", "3shots", "autofire", "fastfire", "showweapon"); 
+        } ); 
+    
+} 

@@ -9,7 +9,6 @@ class WaypointDisplay;
 class WaypointManager : ReferenceCountedObject {
 private:
 	FPSciApp* m_app = nullptr;
-	Scene* m_scene = nullptr;
 
 	shared_ptr<WaypointDisplay> m_waypointControls;
 
@@ -70,7 +69,7 @@ public:
 	void removeLastWaypoint();
 	void clearWaypoints();
 	void exportWaypoints();
-	void exportWaypoints(String filename);
+	void exportWaypoints(String filename, bool saveJSON);
 	void setWaypoints(Array<Destination> waypoints);
 	void previewWaypoints();
 	void stopPreview();

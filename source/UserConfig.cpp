@@ -97,12 +97,12 @@ UserTable:: UserTable(const Any& any) {
 	}
 }
 
-UserTable UserTable::load(const String& filename) {
+UserTable UserTable::load(const String& filename, bool saveJSON) {
 	// Create default UserConfig file
 	if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
 		UserTable defTable = UserTable();
 		defTable.users.append(UserConfig());			// Append one default user
-		defTable.save(filename);						// Save the .any file
+		defTable.save(filename, saveJSON);				// Save the .any file
 		return defTable;
 	}
 	return Any::fromFile(System::findDataFile(filename));

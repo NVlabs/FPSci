@@ -8,7 +8,7 @@ import sys
 import subprocess
 import psutil
 import datetime
-from datetime import datetime
+from datetime import datetime, timedelta
 from event_logger_interface import EventLoggerInterface, SerialSynchronizer
 
 # COM Port Parameters
@@ -31,7 +31,7 @@ LOG_NAME_TIME_FORMAT = '%y-%m-%d_%H%M%S'
 # Create storage and lookups
 lastM1Time = 0; lastM2Time = 0; lastPdTime = 0; lastSwTime = 0
 timeLookup = {"M1": lastM1Time, "M2": lastM2Time, "PD": lastPdTime, "SW": lastSwTime}
-t_offset_s = (pow(2,32)-1) * 1e-6 # Arduino `micros()` function wraps around after 2^32 - 1 microseconds (~71 minutes)
+t_offset_s = (pow(2,32)-1) * 1e-6 # Arduino `micros()` function wraps around after 2^32 microseconds (~71 minutes)
 num_offsets = 0 # The number of times the Arduino has wrapped around
 
 # Create lookup for event (proper names)
@@ -93,12 +93,28 @@ if syncer is not None:
         adcFile.flush()
     synced = True
 
+# Stuff for tracking the autoclicker
+NUM_CLICKS = 1050
+ctime = datetime.now()
+# Wait before starting
+while ctime + timedelta(seconds=4) > datetime.now():
+    pass
+ctime = datetime.now()
+count = 0
 
 # This is the main loop that handles data aquisition and plotting
 while(True):
     # Shutdown if the plot is closed
     if PLOT_DATA and not psutil.pid_exists(proc.pid): break
     
+    # click for 50 ms
+    if NUM_CLICKS > 0 and ctime + timedelta(milliseconds=330) < datetime.now():
+        ctime = datetime.now()
+        print(f'{NUM_CLICKS} remaining at {ctime}, {count} events since last')
+        hwInterface.click(50)
+        NUM_CLICKS-=1
+        count = 0
+
     # Read the values from the HW interface
     vals = hwInterface.parseLines()             # Get all lines waiting on read from the serial port
     for val in vals:                            # Iterate through the lines to get data from each
@@ -156,3 +172,7 @@ while(True):
             if LOG_ADC_DATA and event_type == 'SW': 
                 adcLogger.writerow([timestamp_s, event_type])
                 adcFile.flush()
+
+    # Counting events
+    if NUM_CLICKS > 0:
+        count += len(vals)

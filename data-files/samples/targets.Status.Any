@@ -1,0 +1,12 @@
+{ 
+    currentUser = "Sample User"; 
+    sessions = ( "1target", "2targets", "5targets", "moving", "jumping", "mixedtypes"); 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            completedSessions = ( ); 
+            id = "Sample User"; 
+            sessions = ( "1target", "2targets", "5targets", "moving", "jumping", "mixedtypes"); 
+        } ); 
+    
+} 

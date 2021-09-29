@@ -162,6 +162,8 @@ protected:
 	Random									m_rand;
 
 public:
+	bool drawsDecals = true;		///< Controls whether or not the weapon draws miss decals
+
 	static shared_ptr<Weapon> create(WeaponConfig* config, shared_ptr<Scene> scene, shared_ptr<Camera> cam) {
 		return createShared<Weapon>(config, scene, cam);
 	};

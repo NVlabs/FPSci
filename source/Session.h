@@ -128,10 +128,16 @@ public:
 	int					blockCount = 1;					///< Default to just 1 block per session
 	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
 	bool				closeOnComplete = false;		///< Close application on session completed?
-	static FpsConfig	defaultConfig;
 
-	SessionConfig() : FpsConfig(defaultConfig) {}
+	SessionConfig() : FpsConfig(defaultConfig()) {}
 	SessionConfig(const Any& any);
+
+	// Use a static method to bypass order of declaration for static members (specific to Sampler s_freeList in GLSamplerObect)
+	// Trick from: https://www.cs.technion.ac.il/users/yechiel/c++-faq/static-init-order-on-first-use.html
+	static FpsConfig& defaultConfig() {
+		static FpsConfig def;				// This is NOT freed ever (in our code)
+		return def;
+	}
 
 	static shared_ptr<SessionConfig> create() { return createShared<SessionConfig>(); }
 	Any toAny(const bool forceAll = false) const;
@@ -169,6 +175,7 @@ protected:
 	Array<shared_ptr<TargetEntity>> m_unhittableTargets;	///< Array of targets that can't be hit
 
 
+	int m_frameTimeIdx = 0;									///< Frame time index
 	int m_currTrialIdx;										///< Current trial
 	int m_currQuestionIdx = -1;								///< Current question index
 	Array<int> m_remainingTrials;							///< Completed flags
@@ -176,6 +183,7 @@ protected:
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
 	// Time-based parameters
+	float m_pretrialDuration;							///< (Possibly) randomized pretrial duration
 	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial
 	String m_taskStartTime;								///< Recorded task start timestamp							
 	String m_taskEndTime;								///< Recorded task end timestamp
@@ -284,6 +292,14 @@ protected:
 		const String& name = ""
 	);
 
+	inline float drawTruncatedExp(float lambda, float min, float max) {
+		const float p = Random::common().uniform();
+		const float R = max - min;
+		if (lambda == 0.f) return min + p * R;
+		if (lambda < -88.f) return max;				// This prevents against numerical errors in the expression below
+		return -log(1 - p * (1 - exp(-lambda * R))) / lambda + min;
+	}
+
 	inline Point2 getViewDirection()
 	{   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.
 		Point3 view_cartesian = m_camera->frame().lookVector();
@@ -359,6 +375,8 @@ public:
 	bool nextCondition();
 	bool hasNextCondition() const;
 
+	const RealTime targetFrameTime();
+
 	void endLogging();
 
 	/** randomly returns either +1 or -1 **/	
@@ -388,9 +406,11 @@ public:
 	/** clear all targets (used when clearing remaining targets at the end of a trial) */
 	void clearTargets();
 
+	bool inTask();
+	float getElapsedTrialTime();
 	float getRemainingTrialTime();
 	float getProgress();
-	int getScore();
+	double getScore();
 	String getFeedbackMessage();
 
 	/** queues action with given name to insert into database when trial completes

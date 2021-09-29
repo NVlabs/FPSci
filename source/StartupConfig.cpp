@@ -66,7 +66,7 @@ String ConfigFiles::formatDirPath(const String& path) {
 StartupConfig StartupConfig::load(const String& filename) {
 	StartupConfig config;
 	if (!FileSystem::exists(filename)) {
-		config.toAny(true).save(filename);		// If the file doesn't exist create it
+		config.toAny(true).save(filename, config.jsonAnyOutput);		// If the file doesn't exist create it
 	}
 	return Any::fromFile(filename);				// Load back from the Any file
 }
@@ -76,6 +76,8 @@ StartupConfig::StartupConfig(const Any& any) {
 	int settingsVersion = 1;
 	AnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
+	Array<String> sampleFilenames;
+	ConfigFiles sampleExperiment;
 
 	switch (settingsVersion) {
 	case 1:
@@ -83,6 +85,7 @@ StartupConfig::StartupConfig(const Any& any) {
 		reader.getIfPresent("waypointEditorMode", waypointEditorMode);
 		reader.getIfPresent("fullscreen", fullscreen);
 		reader.getIfPresent("windowSize", windowSize);
+		reader.getIfPresent("jsonAnyOutput", jsonAnyOutput);
 
 		foundDefault = reader.getIfPresent("defaultExperiment", defaultExperiment);
 		if (!foundDefault) {
@@ -110,6 +113,24 @@ StartupConfig::StartupConfig(const Any& any) {
 		for (ConfigFiles& files : experimentList) { files.populateEmptyFieldsWithDefaults(defaultExperiment); }
 		if (experimentList.length() == 0) { experimentList.append(defaultExperiment); }
 
+		logPrintf("Searching 'samples' directory for sample experiments.\n");
+		FileSystem::getFiles("samples/*.Experiment.Any", sampleFilenames);
+		sampleExperiment.populateEmptyFieldsWithDefaults(defaultExperiment);
+		sampleExperiment.userConfigFilename = format("samples/sample.User.Any");
+		for (String& sampleFile : sampleFilenames) {
+			String name = sampleFile.substr(0, sampleFile.find_first_of('.'));
+			sampleExperiment.experimentConfigFilename = format("samples/%s", sampleFile);
+			sampleExperiment.name = format("[Sample]%s", name);
+			sampleExperiment.userStatusFilename = format("samples/%s.Status.Any", name);
+			if (!FileSystem::exists(sampleExperiment.userStatusFilename)) {
+				logPrintf("Skipping Sample '%s' because user status '%s' doesn't exist\n", name, sampleExperiment.userStatusFilename);
+				continue;
+			}
+			experimentList.append(sampleExperiment);
+			logPrintf("Sample '%s' added to experiment list\n", sampleExperiment.name);
+		}
+		logPrintf("\n");
+
 		reader.getIfPresent("audioEnable", audioEnable);
 		break;
 	default:
@@ -125,6 +146,7 @@ Any StartupConfig::toAny(const bool forceAll) const {
 	if (forceAll || def.waypointEditorMode != waypointEditorMode)					a["waypointEditorMode"] = waypointEditorMode;
 	if (forceAll || def.fullscreen != fullscreen)									a["fullscreen"] = fullscreen;
 	if (forceAll || def.audioEnable != audioEnable)									a["audioEnable"] = audioEnable;
+	if (forceAll || def.jsonAnyOutput != jsonAnyOutput)									a["jsonAnyOutput"] = jsonAnyOutput;
 	a["defaultExperiment"] = defaultExperiment;
 	a["experimentList"] = experimentList;
 
@@ -135,7 +157,7 @@ bool StartupConfig::validateExperiments() const {
 	// Validate experiment configs
 	bool valid = true;
 	for (auto& configs : experimentList) {
-		ExperimentConfig experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename);
+		ExperimentConfig experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename, jsonAnyOutput);
 		logPrintf("Validating experiment '%s'\n", configs.name);
 		if (!experimentConfig.validate(false)) {
 			logPrintf("  Error: experiment '%s' is not valid! (See '%s')\n", configs.name, configs.experimentConfigFilename);

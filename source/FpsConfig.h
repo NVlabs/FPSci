@@ -27,8 +27,28 @@ public:
 	// Rendering parameters
 	float           frameRate = 1000.0f;						///< Target (goal) frame rate (in Hz)
 	int             frameDelay = 0;								///< Integer frame delay (in frames)
-	String          shader = "";								///< Option for a custom shader name
+	Array<float>	frameTimeArray = { };						///< Array of target frame times (in seconds)
+	bool			frameTimeRandomize = false;					///< Whether to choose a sequential or random item from frameTimeArray
+	String			frameTimeMode = "always";					///< Mode to use for frame time selection (can be "always", "taskOnly", or "restartWithTask", case insensitive)
+
 	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
+	
+	Array<int>		resolution2D = { 0, 0 };					///< Optional 2D buffer resolution
+	Array<int>		resolution3D = { 0, 0 };					///< Optional 3D buffer resolution
+	Array<int>		resolutionComposite = { 0, 0 };				///< Optional composite buffer resolution	
+
+	String			shader2D = "";								///< Option for the filename of a custom shader to run on 2D content only
+	String          shader3D = "";								///< Option for the filename of a custom shader to run on 3D content only
+	String			shaderComposite = "";						///< Option for the filename of a custom shader to run on the (final) composited 2D/3D content	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
+	
+	// Samplers only exist between buffers with (possibly) different resolution, all equal sized buffers use Sampler::buffer()
+	Sampler			sampler2D = Sampler::video();				///< Sampler for sampling the shader2D iChannel0 input
+	Sampler			sampler2DOutput = Sampler::video();			///< Sampler for sampling the LDR 2D output into the framebuffer/composite input buffer
+	Sampler			sampler3D = Sampler::video();				///< Sampler for sampling the framebuffer into the HDR 3D buffer (including if using a shader)
+	Sampler			sampler3DOutput = Sampler::video();			///< Sampler for sampling the HDR 3D output buffer back into the framebuffer
+	Sampler			samplerPrecomposite = Sampler::video();		///< Sampler for precomposite (framebuffer blit) to composite input buffer
+	Sampler			samplerComposite = Sampler::video();		///< Sampler for sampling the shaderComposite iChannel0 input
+	Sampler			samplerFinal = Sampler::video();			///< Sampler for sampling composite (shader) output buffer into the final framebuffer
 
 	void load(AnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
@@ -73,6 +93,9 @@ public:
 	// HUD parameters
 	bool            enable = false;											///< Master control for all HUD elements
 	bool            showBanner = false;						                ///< Show the banner display
+	String			bannerTimerMode = "remaining";							///< Time to show in the banner ("remaining", "elapsed", or "none")
+	bool			bannerShowProgress = true;								///< Show progress in banner?
+	bool			bannerShowScore = true;									///< Show score in banner?
 	float           bannerVertVisible = 0.41f;				                ///< Vertical banner visibility
 	float           bannerLargeFontSize = 30.0f;				            ///< Banner percent complete font size
 	float           bannerSmallFontSize = 14.0f;				            ///< Banner detail font size
@@ -80,9 +103,9 @@ public:
 
 	// Player health bar
 	bool            showPlayerHealthBar = false;							///< Display a player health bar?
-	Point2          playerHealthBarSize = Point2(200.0f, 20.0f);			///< Player health bar size (in pixels)
-	Point2          playerHealthBarPos = Point2(10.0f, 10.0f);				///< Player health bar position (in pixels)
-	Point2          playerHealthBarBorderSize = Point2(2.0f, 2.0f);			///< Player health bar border size
+	Vector2         playerHealthBarSize = Vector2(0.1f, 0.02f);				///< Player health bar size (as a ratio of screen size)
+	Point2          playerHealthBarPos = Point2(0.005f, 0.01f);				///< Player health bar position (as a ratio of screen size)
+	Vector2         playerHealthBarBorderSize = Vector2(0.001f, 0.002f);	///< Player health bar border size (as a ratio of screen size)
 	Color4          playerHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Player health bar border color
 	Array<Color4>   playerHealthBarColors = {								///< Player health bar start/end colors
 		Color4(0.0, 1.0, 0.0, 1.0),
@@ -112,8 +135,11 @@ public:
 class AudioConfig {
 public:
 	// Sounds
-	String			sceneHitSound = "sound/fpsci_miss_100ms.wav";								///< Sound to play when hitting the scene
-	float			sceneHitSoundVol = 1.0f;
+	String			sceneHitSound = "sound/fpsci_miss_100ms.wav";		///< Sound to play when hitting the scene
+	float			sceneHitSoundVol = 1.0f;							///< Volume to play scene hit sound at
+	String			refTargetHitSound = "";								///< Reference target hit sound (filename)
+	float			refTargetHitSoundVol = 1.0f;						///< Volume to play target hit sound at
+	bool			refTargetPlayFireSound = false;						///< Play the weapon's fire sound when shooting at the reference target
 
 	void load(AnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
@@ -122,7 +148,9 @@ public:
 class TimingConfig {
 public:
 	// Timing parameters
-	float           pretrialDuration = 0.5f;					///< Time in ready (pre-trial) state in seconds
+	float			pretrialDuration = 0.5f;					///< Time in ready (pre-trial) state in seconds
+	float			pretrialDurationLambda = fnan();			///< Lambda used for pretrial duration truncated exponential randomization
+	Array<float>	pretrialDurationRange = {};					///< Pretrial duration range (if randomized)
 	float           maxTrialDuration = 100000.0f;				///< Maximum time spent in any one trial task
 	float           trialFeedbackDuration = 1.0f;				///< Time in the per-trial feedback state in seconds
 	float			sessionFeedbackDuration = 2.0f;				///< Time in the session feedback state in seconds
@@ -192,7 +220,9 @@ public:
 	float           refTargetSize = 0.05f;								///< Size of the reference target
 	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
 
-	bool			previewWithRef = false;								///< Show preview of per-trial targets with the reference
+	bool			clearDecalsWithRef = false;							///< Clear the decals created from the reference target at the start of the task
+	bool			previewWithRef = false;								///< Show preview of per-trial targets with the reference?
+	bool			showRefDecals = true;								///< Show missed shot decals when shooting at the reference target?
 	Color3			previewColor = Color3(0.5, 0.5, 0.5);				///< Color to show preview targets in
 
 	void load(AnyTableReader reader, int settingsVersion = 1);

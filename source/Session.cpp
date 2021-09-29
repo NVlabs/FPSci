@@ -61,7 +61,7 @@ Any TrialCount::toAny(const bool forceAll) const {
 	return a;
 }
 
-SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig) {
+SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 	TrialCount::defaultCount = timing.defaultTrialCount;
 	AnyTableReader reader(any);
 	switch (settingsVersion) {
@@ -131,6 +131,36 @@ bool Session::hasNextCondition() const{
 	return false;
 }
 
+const RealTime Session::targetFrameTime()
+{
+	const RealTime defaultFrameTime = 1.0 / m_app->window()->settings().refreshRate;
+	if (!m_hasSession) return defaultFrameTime;
+
+	uint arraySize = m_config->render.frameTimeArray.size();
+	if (arraySize > 0) {
+		if ((m_config->render.frameTimeMode == "taskonly" || m_config->render.frameTimeMode == "restartwithtask") && currentState != PresentationState::trialTask) {
+			// We are in a frame time mode which specifies only to change frame time during the task
+			return 1.0f / m_config->render.frameRate;
+		}
+
+		if (m_config->render.frameTimeRandomize) {
+			return m_config->render.frameTimeArray.randomElement();
+		}
+		else {
+			RealTime targetTime =  m_config->render.frameTimeArray[m_frameTimeIdx % arraySize];
+			m_frameTimeIdx += 1;
+			m_frameTimeIdx %= arraySize;
+			return targetTime;
+		}
+	}
+
+	// The below matches the functionality in FPSciApp::updateParameters()
+	if (m_config->render.frameRate > 0) {
+		return 1.0f / m_config->render.frameRate;
+	}
+	return defaultFrameTime;
+}
+
 bool Session::nextCondition() {
 	Array<int> unrunTrialIdxs;
 	for (int i = 0; i < m_remainingTrials.size(); i++) {
@@ -141,6 +171,11 @@ bool Session::nextCondition() {
 	if (unrunTrialIdxs.size() == 0) return false;
 	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
 	m_currTrialIdx = unrunTrialIdxs[idx];
+
+	// Produce (potentially random in range) pretrial duration
+	if (isNaN(m_config->timing.pretrialDurationLambda)) m_pretrialDuration = m_config->timing.pretrialDuration;
+	else m_pretrialDuration = drawTruncatedExp(m_config->timing.pretrialDurationLambda, m_config->timing.pretrialDurationRange[0], m_config->timing.pretrialDurationRange[1]);
+	
 	return true;
 }
 
@@ -239,6 +274,7 @@ void Session::initTargetAnimation() {
 		}
 		else {
 			spawnTrialTargets(initialSpawnPos);			// Spawn all the targets normally
+			m_weapon->drawsDecals = true;				// Enable drawing decals
 		}
 	}
 	else { // State is feedback and we are spawning a reference target
@@ -255,6 +291,9 @@ void Session::initTargetAnimation() {
 		if (m_config->targetView.previewWithRef) {
 			spawnTrialTargets(initialSpawnPos, true);		// Spawn all the targets in preview mode
 		}
+
+		// Set weapon decal state to match configuration for reference targets
+		m_weapon->drawsDecals = m_config->targetView.showRefDecals;
 	}
 
 	// Reset number of destroyed targets (in the trial)
@@ -355,7 +394,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::pretrial)
 	{
-		if (stateElapsedTime > m_config->timing.pretrialDuration)
+		if (stateElapsedTime > m_pretrialDuration)
 		{
 			newState = PresentationState::trialTask;
 			if (m_config->player.stillBetweenTrials) {
@@ -498,12 +537,19 @@ void Session::updatePresentationState()
 	{ // handle state transition.
 		m_timer.startTimer();
 		if (newState == PresentationState::trialTask) {
+			if (m_config->render.frameTimeMode == "restartwithtask") {
+				m_frameTimeIdx = 0;		// Reset the frame time index with the task if requested
+			}
 			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
 		}
 		currentState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
 		if ((newState == PresentationState::trialTask) || (newState == PresentationState::trialFeedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
 			initTargetAnimation();
+		}
+
+		if (newState == PresentationState::pretrial && m_config->targetView.clearDecalsWithRef) {
+			m_weapon->clearDecals();		// Clear the decals when transitioning into the task state
 		}
 	}
 }
@@ -533,6 +579,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 			format("'Block %d'", m_currBlock),
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
+			String(std::to_string(m_pretrialDuration)),
 			String(std::to_string(m_taskExecutionTime)),
 			String(std::to_string(destroyedTargets)),
 			String(std::to_string(totalTargets))
@@ -580,6 +627,14 @@ void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 	}
 }
 
+bool Session::inTask() {
+	return currentState == PresentationState::trialTask;
+}
+
+float Session::getElapsedTrialTime() {
+	return m_timer.getTime();
+}
+
 float Session::getRemainingTrialTime() {
 	if (isNull(m_config)) return 10.0;
 	return m_config->timing.maxTrialDuration - m_timer.getTime();
@@ -597,8 +652,8 @@ float Session::getProgress() {
 	return fnan();
 }
 
-int Session::getScore() {
-	return (int)(10.0 * m_totalRemainingTime);
+double Session::getScore() {
+	return 100.0 * m_totalRemainingTime;
 }
 
 String Session::formatCommand(const String& input) {

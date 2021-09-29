@@ -165,16 +165,16 @@ void WaypointManager::clearWaypoints(void) {
 	m_waypointControls->setSelected(-1);
 }
 
-void WaypointManager::exportWaypoints(String filename) {
+void WaypointManager::exportWaypoints(String filename, bool saveJSON) {
 	TargetConfig t = TargetConfig();
 	t.id = "test";
 	t.destSpace = "world";
 	t.destinations = m_waypoints;
-	t.toAny().save(filename);		// Save the file
+	t.toAny().save(filename, saveJSON);		// Save the file
 }
 
 void WaypointManager::exportWaypoints(void) {
-	exportWaypoints(exportFilename);
+	exportWaypoints(exportFilename, m_app->startupConfig.jsonAnyOutput);
 }
 
 void WaypointManager::setWaypoints(Array<Destination> waypoints) {
@@ -194,20 +194,20 @@ shared_ptr<TargetEntity> WaypointManager::spawnDestTargetPreview(
 	// Create the target
 	const String nameStr = name.empty() ? format("destPreview") : name;
 	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, m_scene, m_app->targetModels[id][scaleIndex], scaleIndex, 0);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(dests, nameStr, m_app->scene().get(), m_app->targetModels[id][scaleIndex], scaleIndex, 0);
 
 	// Setup (additional) target parameters
 	target->setFrame(dests[0].position);
 	target->setColor(color);
 
 	// Add target to array and scene
-	m_scene->insert(target);
+	m_app->scene()->insert(target);
 	return target;
 }
 
 void WaypointManager::destroyPreviewTarget() {
 	if (isNull(m_previewTarget)) return;
-	m_scene->removeEntity(m_previewTarget->name());
+	m_app->scene()->removeEntity(m_previewTarget->name());
 	m_previewTarget.reset();
 }
 
