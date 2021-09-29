@@ -90,7 +90,7 @@ SceneConfig::SceneConfig(const Any& any) {
 		//reader.getIfPresent("gravity", gravity);
 		reader.getIfPresent("resetHeight", resetHeight);
 		reader.getIfPresent("spawnPosition", spawnPosition);
-		reader.getIfPresent("spawnHeading", spawnHeading);
+		reader.getIfPresent("spawnHeading", spawnHeadingDeg);
 		break;
 	default:
 		throw format("Did not recognize scene config settings version: %d", settingsVersion);
@@ -106,7 +106,7 @@ Any SceneConfig::toAny(const bool forceAll) const {
 	//if (forceAll || def.gravity != gravity)				a["gravity"] = gravity;
 	if (forceAll || def.resetHeight != resetHeight)		a["resetHeight"] = resetHeight;
 	if (forceAll || def.spawnPosition != spawnPosition) a["spawnPosition"] = spawnPosition;
-	if (forceAll || def.spawnHeading != spawnHeading)   a["spawnHeading"] = spawnHeading;
+	if (forceAll || def.spawnHeadingDeg != spawnHeadingDeg)   a["spawnHeading"] = spawnHeadingDeg;
 	return a;
 }
 
@@ -115,7 +115,7 @@ bool SceneConfig::operator!=(const SceneConfig& other) const {
 		//gravity != other.gravity ||
 		resetHeight != other.resetHeight ||
 		spawnPosition != other.spawnPosition ||
-		spawnHeading != other.spawnHeading;
+		spawnHeadingDeg != other.spawnHeadingDeg;
 }
 
 void RenderConfig::load(AnyTableReader reader, int settingsVersion) {

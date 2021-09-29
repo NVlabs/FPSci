@@ -13,7 +13,7 @@ public:
 	float resetHeight = fnan();							///< Reset height for the PhysicsScene
 
 	Point3 spawnPosition = { fnan(),fnan(), fnan() };	///< Location for player spawn
-	float spawnHeading = fnan();						///< Heading for player spawn
+	float spawnHeadingDeg = fnan();						///< Heading for player spawn (in degrees)
 
 	SceneConfig() {}
 	SceneConfig(const Any& any);

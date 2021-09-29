@@ -107,7 +107,7 @@ public:
 	void setMoveEnable(bool enabled) { m_motionEnable = enabled; }
 
 	void setRespawnPosition(Point3 pos) { m_respawnPosition = pos; }
-    void setRespawnHeading(float heading) { m_spawnHeadingRadians = heading; }
+    void setRespawnHeadingDegrees(float headingDeg) { m_spawnHeadingRadians = pif() / 180.f * headingDeg; }
 	void setRespawnHeight(float height) { m_respawnHeight = height; }
 
 	void respawn() {
