@@ -36,6 +36,7 @@ class PlayerEntity;
 class TargetEntity;
 class FPSciLogger;
 class Weapon;
+enum PresentationState;
 
 // Simple timer for measuring time offsets
 class Timer
@@ -67,13 +68,15 @@ public:
 struct TargetLocation {
 	FILETIME time;
 	String name = "";
+	PresentationState state;
 	Point3 position = Point3::zero();
 
 	TargetLocation() {};
 
-	TargetLocation(FILETIME t, String targetName, Point3 targetPosition) {
+	TargetLocation(FILETIME t, String targetName, PresentationState trialState, Point3 targetPosition) {
 		time = t;
 		name = targetName;
+		state = trialState;
 		position = targetPosition;
 	}
 };
@@ -81,8 +84,7 @@ struct TargetLocation {
 enum PlayerActionType{
 	None,
 	Aim,
-	Invalid,
-	Nontask,
+	FireCooldown,
 	Miss,
 	Hit,
 	Destroy
@@ -92,16 +94,18 @@ struct PlayerAction {
 	FILETIME			time;
 	Point2				viewDirection = Point2::zero();
 	Point3				position = Point3::zero();
+	PresentationState	state;
 	PlayerActionType	action = PlayerActionType::None;
 	String				targetName = "";
 
 	PlayerAction() {};
 
-	PlayerAction(FILETIME t, Point2 playerViewDirection, Point3 playerPosition, PlayerActionType playerAction, String name) {
+	PlayerAction(FILETIME t, Point2 playerViewDirection, Point3 playerPosition, PresentationState trialState, PlayerActionType playerAction, String name) {
 		time = t;
 		viewDirection = playerViewDirection;
 		position = playerPosition;
 		action = playerAction;
+		state = trialState;
 		targetName = name;
 	}
 };
@@ -420,7 +424,7 @@ public:
 	bool updateBlock(bool init = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
-	enum PresentationState currentState;			///< Current presentation state
+	PresentationState currentState;						///< Current presentation state
 
 	const Array<shared_ptr<TargetEntity>>& targetArray() const {
 		return m_targetArray;

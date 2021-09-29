@@ -711,11 +711,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	if (shootButtonJustPressed && stateCanFire && !weapon->canFire(currentRealTime)) {
 		// Invalid click since the weapon isn't ready to fire
-		sess->accumulatePlayerAction(PlayerActionType::Invalid);
-	}
-	else if ((shootButtonJustPressed || !shootButtonUp) && !stateCanFire) {
-		// Non-task state but button pressed
-		sess->accumulatePlayerAction(PlayerActionType::Nontask);
+		sess->accumulatePlayerAction(PlayerActionType::FireCooldown);
 	}
 	else if (shootButtonJustPressed && !weapon->config()->autoFire && weapon->canFire(currentRealTime) && stateCanFire) {
 		// Discrete weapon fires a single shot with normal damage at the current time
@@ -1118,8 +1114,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 			m_refTargetHitSound->play(sessConfig->audio.refTargetHitSoundVol);
 		}
 		destroyedTarget = true;
-		sess->accumulatePlayerAction(PlayerActionType::Nontask, target->name());
-
+		sess->accumulatePlayerAction(PlayerActionType::Destroy, target->name());
 	}
 	else if (target->health() <= 0) {
 		// Position explosion

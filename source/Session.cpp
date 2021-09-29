@@ -538,6 +538,7 @@ void Session::updatePresentationState()
 				Point2 vDir = getViewDirection();
 				float viewDisplacement = sqrtf(powf((vDir.x - m_config->scene.spawnHeadingDeg), 2.f) + powf(vDir.y, 2.f));
 				if (viewDisplacement > m_config->timing.maxPretrialAimDisplacement) {
+					clearTargets();		// Clear targets (in case preview targets are being shown)
 					m_feedbackMessage = formatFeedback(m_config->feedback.aimInvalid);
 					currentState = PresentationState::trialFeedback;		// Jump to feedback state w/ error message
 				}
@@ -557,11 +558,8 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	updatePresentationState();
 
 	// 2. Record target trajectories, view direction trajectories, and mouse motion.
-	if (currentState == PresentationState::trialTask)
-	{
-		accumulateTrajectories();
-		accumulateFrameInfo(rdt, sdt, idt);
-	}
+	accumulateTrajectories();
+	accumulateFrameInfo(rdt, sdt, idt);
 }
 
 void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
@@ -594,7 +592,7 @@ void Session::accumulateTrajectories()
 			//Point3 t = targetPosition.direction();
 			//float az = atan2(-t.z, -t.x) * 180 / pif();
 			//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
-			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), target->name(), target->frame().translation);
+			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), target->name(), currentState, target->frame().translation);
 			logger->logTargetLocation(location);
 		}
 	}
@@ -609,13 +607,13 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 		// recording target trajectories
 		Point2 dir = getViewDirection();
 		Point3 loc = getPlayerLocation();
-		PlayerAction pa = PlayerAction(FPSciLogger::getFileTime(), dir, loc, action, targetName);
+		PlayerAction pa = PlayerAction(FPSciLogger::getFileTime(), dir, loc, currentState, action, targetName);
 		logger->logPlayerAction(pa);
 		END_PROFILER_EVENT();
 	}
 	
-	// Count hits here
-	if (action == PlayerActionType::Hit || action == PlayerActionType::Destroy) { m_hitCount++; }
+	// Count hits (in task state) here
+	if ((action == PlayerActionType::Hit || action == PlayerActionType::Destroy) && currentState == PresentationState::trialTask) { m_hitCount++; }
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {

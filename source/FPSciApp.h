@@ -34,6 +34,18 @@ class WaypointManager;
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
 enum PresentationState { initial, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
+static String presentationStateToString(const PresentationState& state) {
+	String stateStr = "N/A";
+	switch (state) {
+	case initial: stateStr = "initial"; break;
+	case pretrial: stateStr = "pretrial";  break;
+	case trialTask: stateStr = "trialTask"; break;
+	case trialFeedback: stateStr = "trialFeedback";  break;
+	case sessionFeedback: stateStr = "sessionFeedback";  break;
+	case complete: stateStr = "complete"; break;
+	}
+	return stateStr;
+}
 
 class FPSciApp : public GApp {
 public:
