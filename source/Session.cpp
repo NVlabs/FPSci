@@ -284,6 +284,9 @@ void Session::initTargetAnimation() {
 
 		// Set weapon decal state to match configuration for reference targets
 		m_weapon->drawsDecals = m_config->targetView.showRefDecals;
+	
+		// Clear target logOnChange management
+		m_lastLogTargetLoc.clear();
 	}
 
 	// Reset number of destroyed targets (in the trial)
@@ -587,13 +590,22 @@ void Session::accumulateTrajectories()
 {
 	if (notNull(logger) && m_config->logger.logTargetTrajectories) {
 		for (shared_ptr<TargetEntity> target : m_targetArray) {
-			if (!target->isLogged()) continue;					   
+			if (!target->isLogged()) continue;
+			String name = target->name();
+			Point3 pos = target->frame().translation;
+			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), name, currentState, pos);
+			if (m_config->logger.logOnChange) {
+				// Check for target in logged position table
+				if (m_lastLogTargetLoc.containsKey(name)  && location.noChangeFrom(m_lastLogTargetLoc[name])) {	
+					continue; // Duplicates last logged position/state (don't log)
+				}
+			}
 			//// below for 2D direction calculation (azimuth and elevation)
 			//Point3 t = targetPosition.direction();
 			//float az = atan2(-t.z, -t.x) * 180 / pif();
 			//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
-			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), target->name(), currentState, target->frame().translation);
 			logger->logTargetLocation(location);
+			m_lastLogTargetLoc.set(name, location);					// Update the last logged location
 		}
 	}
 	// recording view direction trajectories
@@ -602,18 +614,25 @@ void Session::accumulateTrajectories()
 
 void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 {
+	// Count hits (in task state) here
+	if ((action == PlayerActionType::Hit || action == PlayerActionType::Destroy) && currentState == PresentationState::trialTask) { m_hitCount++; }
+
+	static PlayerAction lastPA;
+
 	if (notNull(logger) && m_config->logger.logPlayerActions) {
 		BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 		// recording target trajectories
 		Point2 dir = getViewDirection();
 		Point3 loc = getPlayerLocation();
 		PlayerAction pa = PlayerAction(FPSciLogger::getFileTime(), dir, loc, currentState, action, targetName);
+		// Check for log only on change condition
+		if (m_config->logger.logOnChange && pa.noChangeFrom(lastPA)) {
+			return;		// Early exit for (would be) duplicate log entry
+		}
 		logger->logPlayerAction(pa);
+		lastPA = pa;				// Update last logged values
 		END_PROFILER_EVENT();
 	}
-	
-	// Count hits (in task state) here
-	if ((action == PlayerActionType::Hit || action == PlayerActionType::Destroy) && currentState == PresentationState::trialTask) { m_hitCount++; }
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {

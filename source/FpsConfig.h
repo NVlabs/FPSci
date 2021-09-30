@@ -251,14 +251,15 @@ public:
 class LoggerConfig {
 public:
 	// Enable flags for log
-	bool enable = true;		///< High-level logging enable flag (if false no output is created)							
-	bool logTargetTrajectories = true;		///< Log target trajectories in table?
-	bool logFrameInfo = true;		///< Log frame info in table?
+	bool enable = true;					///< High-level logging enable flag (if false no output is created)							
+	bool logTargetTrajectories = true;	///< Log target trajectories in table?
+	bool logFrameInfo = true;			///< Log frame info in table?
 	bool logPlayerActions = true;		///< Log player actions in table?
 	bool logTrialResponse = true;		///< Log trial response in table?
-	bool logUsers = true;		///< Log user information in table?
+	bool logUsers = true;				///< Log user information in table?
+	bool logOnChange = false;			///< Only log to Player_Action/Target_Trajectory table when the player/target position/orientation changes
 
-	bool logToSingleDb = true;		///< Log all results to a single db file?
+	bool logToSingleDb = true;			///< Log all results to a single db file?
 
 	// Session parameter logging
 	Array<String> sessParamsToLog = { "frameRate", "frameDelay" };			///< Parameter names to log to the Sessions table of the DB

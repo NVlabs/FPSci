@@ -590,16 +590,20 @@ These flags control whether various information is written to the output databas
 |`logPlayerActions`                 |`bool` | Enable/disable for logging player position, aim , and actions to database (per frame) |
 |`logTrialResponse`                 |`bool` | Enable/disable for logging trial responses to database (per trial)    |
 |`logUsers`                         |`bool` | Enable/disable for logging users to database (per session)            |
+|`logOnChange`                      |`bool` | Enable/disable for logging values to the `Player_Action` and `Target_Trajectory` tables only when changes occur    |
 |`logToSingleDb`                    |`bool` | Enable/disable for logging to a unified output database file (named using the experiment description and user ID)  |
-
+|`sessParamsToLog`                  |`Array<String>`| A list of other config parameters (by name) that are logged on a per-session basis to the `Sessions` table |
+ 
 ```
-"logEnable" = true,
-"logTargetTrajectories" = true,
-"logFrameInfo" = true,
-"logPlayerActions" = true,
-"logTrialResponse" = true,
-"logUsers" = true,
-"logToSingleDb" = true,
+"logEnable" = true,                     // Enable logging by default
+"logTargetTrajectories" = true,         // Log target trajectories (name, state, position)
+"logFrameInfo" = true,                  // Log per-frame timestamp and delta time
+"logPlayerActions" = true,              // Log player actions (view direction, position, state, event, target)
+"logTrialResponse" = true,              // Log trial results to the Trials table
+"logUsers" = true,                      // Log the users to the Users table
+"logOnChange" = false,                  // Log every frame (do not log only on change)
+"logToSingleDb" = true,                 // Log all sessions affilaited with a given experiment to the same database file
+"sessParamsToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table
 ```
 
 *Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user]_[experiment config hash].db"`. This hash is printed to the `log.txt` from the run in case it is needed to disambiguate results files. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues. The experiment config hash takes into account only "valid" settings and ignores formatting only changes in the configuration file. Default values are used for the hash for anything that is not specified, so if a default is specified, the hash will match the config where the default was not specified.

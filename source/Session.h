@@ -79,6 +79,10 @@ struct TargetLocation {
 		state = trialState;
 		position = targetPosition;
 	}
+
+	inline bool noChangeFrom(const TargetLocation& other) const {
+		return state == other.state && position == other.position;
+	}
 };
 
 enum PlayerActionType{
@@ -107,6 +111,10 @@ struct PlayerAction {
 		action = playerAction;
 		state = trialState;
 		targetName = name;
+	}
+
+	inline bool noChangeFrom(const PlayerAction& other) const {
+		return viewDirection == other.viewDirection && position == other.position && action == other.action && state == other.state && targetName == other.targetName;
 	}
 };
 
@@ -178,6 +186,7 @@ protected:
 	Array<shared_ptr<TargetEntity>> m_hittableTargets;		///< Array of targets that can be hit
 	Array<shared_ptr<TargetEntity>> m_unhittableTargets;	///< Array of targets that can't be hit
 
+	Table<String, TargetLocation> m_lastLogTargetLoc;		///< Last logged target location (used for logOnChange)
 
 	int m_frameTimeIdx = 0;									///< Frame time index
 	int m_currTrialIdx;										///< Current trial
