@@ -602,7 +602,7 @@ These flags control whether various information is written to the output databas
 "logTrialResponse" = true,              // Log trial results to the Trials table
 "logUsers" = true,                      // Log the users to the Users table
 "logOnChange" = false,                  // Log every frame (do not log only on change)
-"logToSingleDb" = true,                 // Log all sessions affilaited with a given experiment to the same database file
+"logToSingleDb" = true,                 // Log all sessions affiliated with a given experiment to the same database file
 "sessParamsToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table
 ```
 
