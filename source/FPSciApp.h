@@ -55,9 +55,7 @@ protected:
 	Array<RealTime>							m_explosionRemainingTimes;			///< Time for end of explosion
 	int										m_explosionIdx = 0;					///< Explosion index
 	const int								m_maxExplosions = 20;				///< Maximum number of simultaneous explosions
-		
-	const int								m_MatTableSize = 10;				///< Set this to set # of color "levels"
-	Table<String, Array<shared_ptr<UniversalMaterial>>>	m_materials;			///< This stores the color materials
+	
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_explosionModels;
 	/** table of shaders cached for the 2D shader parameters set per session */
 	Table<String, shared_ptr<G3D::Shader>> m_shaderTable;
@@ -121,8 +119,6 @@ protected:
 	void loadConfigs(const ConfigFiles& configs);
 
 	virtual void loadModels();
-	Array<shared_ptr<UniversalMaterial>> makeMaterials(shared_ptr<TargetConfig> tconfig);
-	Color3 lerpColor(Array<Color3> colors, float a);
 	
 	/** Initializes player settings from configs and resets player to initial position 
 		Also updates mouse sensitivity. */
@@ -179,7 +175,12 @@ public:
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
 
 	/** A table of sounds that targets can use to allow sounds to finish playing after they're destroyed */
-	Table<String, shared_ptr<Sound>>	soundTable;
+	Table<String, shared_ptr<Sound>>					soundTable;
+	/** A table of materials for models to use */
+	Table<String, Array<shared_ptr<UniversalMaterial>>>	m_materials;
+	const int											m_MatTableSize = 13;	///< Set this to set # of color "levels"
+	Array<shared_ptr<UniversalMaterial>> makeMaterials(shared_ptr<TargetConfig> tconfig);
+	Color3 lerpColor(Array<Color3> colors, float a);
 
 	shared_ptr<Session> sess;					///< Pointer to the experiment
 	shared_ptr<Camera> playerCamera;			///< Pointer to the player camera						
