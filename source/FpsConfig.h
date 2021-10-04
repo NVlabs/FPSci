@@ -156,7 +156,7 @@ public:
 	float			sessionFeedbackDuration = 2.0f;				///< Time in the session feedback state in seconds
 	bool			clickToStart = true;						///< Require a click before starting the first session (spawning the reference target)
 	bool			sessionFeedbackRequireClick = false;		///< Require a click to progress from the session feedback?
-	float			maxPretrialAimDisplacement = 0.0f;			///< Maximum (angular) aim displacement in the pretrial duration in degrees, set to negative value to disable
+	float			maxPretrialAimDisplacement = 180.0f;		///< Maximum (angular) aim displacement in the pretrial duration in degrees, set to negative value to disable
 
 	// Trial count
 	int             defaultTrialCount = 5;						///< Default trial count

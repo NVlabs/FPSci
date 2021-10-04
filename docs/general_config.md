@@ -75,7 +75,7 @@ The following settings allow the user to control various timings/durations aroun
 "sessionFeedbackDuration": 5.0,             // Time for user feedback between sessions
 "sessionFeedbackRequireClick" : false,      // Don't require a click to move past the scoreboard
 "defaultTrialCount" : 5,                    
-"maxPretrialAimDisplacement" : 0,           // Disable max pretrial aim displacement by default
+"maxPretrialAimDisplacement" : 180,         // Disable max pretrial aim displacement by default (allow all motion)
 ```
 
 *Note:* If you are specifying `pretrialDurationRange` to create a truncated exponential range of pretrial duration we *highly* recommend keeping the `pretrialDuration` (i.e. mean value) to less than the mid-point of the `pretrialDurationRange`, skewing the distribution towards the minimum pretrial duration. Skewing this distribution towards the maximum pretrial duration has been demonstrated to produce confounding effects in reaction time studies (makes time at which to react more predictable)!

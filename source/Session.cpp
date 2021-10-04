@@ -536,7 +536,7 @@ void Session::updatePresentationState()
 		currentState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
 		if ((newState == PresentationState::trialTask) || (newState == PresentationState::trialFeedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
-			if (newState == PresentationState::trialTask && m_config->timing.maxPretrialAimDisplacement > 0) {
+			if (newState == PresentationState::trialTask && m_config->timing.maxPretrialAimDisplacement >= 0) {
 				// Test for aiming in valid region before spawning task targets
 				Point2 vDir = getViewDirection();
 				float viewDisplacement = sqrtf(powf((vDir.x - m_player->respawnHeadingDeg()), 2.f) + powf(vDir.y, 2.f));
