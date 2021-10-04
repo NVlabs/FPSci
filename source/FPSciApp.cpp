@@ -469,7 +469,13 @@ void FPSciApp::initPlayer() {
 	player->setRespawnHeight(resetHeight);
 
 	// Update the respawn heading
-	player->setRespawnHeadingDegrees(sessConfig->scene.spawnHeadingDeg);
+	float spawnHeadingDeg = sessConfig->scene.spawnHeadingDeg;
+	if (isnan(sessConfig->scene.spawnHeadingDeg)) {
+		// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
+		Point3 view_dir = playerCamera->frame().lookVector();
+		spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
+	}
+	player->setRespawnHeadingDegrees(spawnHeadingDeg);
 
 	// Set player respawn location
 	Point3 spawnPosition = sessConfig->scene.spawnPosition;
