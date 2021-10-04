@@ -214,6 +214,11 @@ void Session::onInit(String filename, String description) {
 			logger = FPSciLogger::create(filename, user.id, m_config, description);
 			logger->logTargetTypes(m_app->experimentConfig.getSessionTargets(m_config->id));			// Log target info at start of session
 			logger->logUserConfig(user, m_config->id, m_config->player.turnScale);						// Log user info at start of session
+			if (m_config->logger.logSystemInfo) {
+				// Log the system info (per session) if requested
+				SystemInfo info = SystemInfo::get();
+				logger->logSystemInfo(m_config->id, info);
+			}
 			m_dbFilename = filename.substr(0, filename.length() - 3);
 		}
 

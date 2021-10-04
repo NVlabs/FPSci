@@ -257,6 +257,7 @@ public:
 	bool logUsers = true;		///< Log user information in table?
 
 	bool logToSingleDb = true;		///< Log all results to a single db file?
+	bool logSystemInfo = true;		///< Log system information to the results database
 
 	// Session parameter logging
 	Array<String> sessParamsToLog = { "frameRate", "frameDelay" };			///< Parameter names to log to the Sessions table of the DB

@@ -1,4 +1,5 @@
 #include "Logger.h"
+#include "SystemInfo.h"
 #include "Session.h"
 
 // TODO: Replace with the G3D timestamp uses.
@@ -53,7 +54,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 		// Session description (time and subject ID)
 		Columns sessColumns = {
 			// format: column name, data type, sqlite modifier(s)
-				{ "sessionID", "text", "NOT NULL"},
+				{ "session_id", "text", "NOT NULL"},
 				{ "start_time", "text", "NOT NULL" },
 				{ "end_time", "text", "NOT NULL" },
 				{ "subjectID", "text", "NOT NULL" },
@@ -66,7 +67,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 		createTableInDB(m_db, "Sessions", sessColumns); // no need of Primary Key for this table.
 
 		// Targets Type table (written once per session)
-		Columns targetTypeColumns = {
+		const Columns targetTypeColumns = {
 				{ "name", "text" },
 				{ "motion_type", "text"},
 				{ "dest_space", "text"},
@@ -88,7 +89,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 		createTableInDB(m_db, "Target_Types", targetTypeColumns); // Primary Key needed for this table.
 
 		// Targets table
-		Columns targetColumns = {
+		const Columns targetColumns = {
 			{ "name", "text" },
 			{ "target_type_name", "text"},
 			{ "spawn_time", "text"},
@@ -99,7 +100,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 		createTableInDB(m_db, "Targets", targetColumns);
 
 		// Trials table
-		Columns trialColumns = {
+		const Columns trialColumns = {
 				{ "session_id", "text" },
 				{ "trial_id", "integer" },
 				{ "trial_index", "integer"},
@@ -114,7 +115,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 		createTableInDB(m_db, "Trials", trialColumns);
 
 		// Target_Trajectory, only need to create the table.
-		Columns targetTrajectoryColumns = {
+		const Columns targetTrajectoryColumns = {
 				{ "time", "text" },
 				{ "target_id", "text"},
 				{ "position_x", "real" },
@@ -124,7 +125,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 		createTableInDB(m_db, "Target_Trajectory", targetTrajectoryColumns);
 
 		// Player_Action table
-		Columns viewTrajectoryColumns = {
+		const Columns viewTrajectoryColumns = {
 				{ "time", "text" },
 				{ "position_az", "real" },
 				{ "position_el", "real" },
@@ -137,7 +138,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 		createTableInDB(m_db, "Player_Action", viewTrajectoryColumns);
 
 		// Frame_Info table
-		Columns frameInfoColumns = {
+		const Columns frameInfoColumns = {
 				{"time", "text"},
 				//{"idt", "real"},
 				{"sdt", "real"},
@@ -145,17 +146,17 @@ void FPSciLogger::openResultsFile(const String& filename,
 		createTableInDB(m_db, "Frame_Info", frameInfoColumns);
 
 		// Questions table
-		Columns questionColumns = {
-			{"session", "text"},
+		const Columns questionColumns = {
+			{"session_id", "text"},
 			{"question", "text"},
 			{"response", "text"}
 		};
 		createTableInDB(m_db, "Questions", questionColumns);
 
 		// Users table
-		Columns userColumns = {
+		const Columns userColumns = {
 			{"subjectID", "text"},
-			{"session", "text"},
+			{"session_id", "text"},
 			{"time", "text"},
 			{"cmp360", "real"},
 			{"mouseDegPerMillimeter", "real"},
@@ -174,6 +175,14 @@ void FPSciLogger::openResultsFile(const String& filename,
 			{"sensitivityY", "real"}
 		};
 		createTableInDB(m_db, "Users", userColumns);
+
+		const Columns systemInfoColumns = {
+			{"time", "text"},
+			{"session_id", "text"},
+			{"parameter", "text"},
+			{"value", "text"}
+		};
+		createTableInDB(m_db, "System_Info", systemInfoColumns);
 	}
 
 	// Add the session info to the sessions table
@@ -405,16 +414,16 @@ void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& 
 	logTargetInfo(targetValues);
 }
 
-void FPSciLogger::addQuestion(Question q, String session) {
+void FPSciLogger::addQuestion(const Question& q, const String& sessID) {
 	RowEntry rowContents = {
-		"'" + session + "'",
+		"'" + sessID + "'",
 		"'" + q.prompt + "'",
 		"'" + q.result + "'"
 	};
 	logQuestionResult(rowContents);
 }
 
-void FPSciLogger::logUserConfig(const UserConfig& user, const String& sessId, const Vector2& sessTurnScale) {
+void FPSciLogger::logUserConfig(const UserConfig& user, const String& sessID, const Vector2& sessTurnScale) {
 	if (!m_config.logUsers) return;
 	// Collapse Y-inversion into per-user turn scale (no need to complicate the log)
 	const float userYTurnScale = user.invertY ? -user.turnScale.y : user.turnScale.y;
@@ -424,7 +433,7 @@ void FPSciLogger::logUserConfig(const UserConfig& user, const String& sessId, co
 
 	RowEntry row = {
 		"'" + user.id + "'",
-		"'" + sessId + "'",
+		"'" + sessID + "'",
 		"'" + time + "'",
 		String(std::to_string(cmp360)),
 		String(std::to_string(user.mouseDegPerMm)),
@@ -443,6 +452,23 @@ void FPSciLogger::logUserConfig(const UserConfig& user, const String& sessId, co
 		String(std::to_string(sensitivity.y))
 	};
 	m_users.append(row);
+}
+
+void FPSciLogger::logSystemInfo(const String& sessID, const SystemInfo& info) {
+	String time = genUniqueTimestamp();		// Produce a single unique timestamp for this entry
+	Any::AnyTable infoTable = info.toAny().table();
+	Array<RowEntry> rows;
+	// Iterate through entries writing to log
+	for (String paramName : infoTable.getKeys()) {
+		Array<String> row = {
+			"'" + time + "'",
+			"'" + sessID + "'",
+			"'" + paramName + "'",
+			"'" + infoTable[paramName].unparse() + "'"
+		};
+		rows.append(row);
+	}
+	insertRowsIntoDB(m_db, "System_Info", rows);
 }
 
 void FPSciLogger::closeResultsFile() {

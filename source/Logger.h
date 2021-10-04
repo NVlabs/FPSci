@@ -10,6 +10,7 @@ using Columns = Array<Array<String>>;
 struct TargetLocation;
 struct PlayerAction;
 struct FrameInfo;
+class SystemInfo;
 
 template<typename ItemType> static size_t queueBytes(Array<ItemType>& queue)
 {
@@ -115,6 +116,7 @@ public:
 
 	void logUserConfig(const UserConfig& userConfig, const String& sessId, const Vector2& sessTurnScale);
 	void logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets);
+	void logSystemInfo(const String& sessID, const SystemInfo& info);
 
 	/** Wakes up the logging thread and flushes even if the buffer limit is not reached yet. */
 	void flush(bool blockUntilDone);
@@ -129,7 +131,7 @@ public:
 	static String genFileTimestamp();
 
 	/** Record a question and its response */
-	void addQuestion(Question question, String session);
+	void addQuestion(const Question& question, const String& session);
 
 	/** Add a target to an experiment */
 	void addTarget(const String& name, const shared_ptr<TargetConfig>& targetConfig, const String& spawnTime, const float& size, const Point2& spawnEcc);
