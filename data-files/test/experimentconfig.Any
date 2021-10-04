@@ -145,6 +145,11 @@
                 fireSoundVol = 0;
             }
         },
+        {
+            id = "TargetColors";
+            frameRate = 60; 
+            trials = ( { ids = ( "1color", "2colors", "3colors" ); count = 2; } );
+        },
 
     );
 
@@ -297,6 +302,42 @@
             jumpEnabled = false;
             hitSoundVol = 0;
             destroyedSoundVol = 0;
-        }
+        },
+        {
+            id = "1color";
+            colors = [Color3(0, 0, 1)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
+        {
+            id = "2colors";
+            colors = [Color3(0, 1, 0), Color3(1, 0, 0)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
+        {
+            id = "3colors";
+            colors = [Color3(0, 0, 1), Color3(0, 1, 0), Color3(1, 0, 0)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
+        {
+            id = "4colors";
+            colors = [Color3(0, 0, 1), Color3(0, 1, 0), Color3(1, 0, 0), Color3(0, 1, 1)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
+        {
+            id = "5colors";
+            colors = [Color3(0, 0, 1), Color3(0, 1, 0), Color3(1, 0, 0), Color3(0, 1, 1), Color3(1, 1, 0)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
+        {
+            id = "7colors";
+            colors = [Color3(0, 0, 1), Color3(0, 1, 0), Color3(1, 0, 0), Color3(0, 1, 1), Color3(1, 1, 0), Color3(1, 0, 1), Color3(0, 0, 0)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
     );
 }
