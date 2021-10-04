@@ -176,9 +176,11 @@ public:
 
 	/** A table of sounds that targets can use to allow sounds to finish playing after they're destroyed */
 	Table<String, shared_ptr<Sound>>					soundTable;
+
 	/** A table of materials for models to use */
-	Table<String, Array<shared_ptr<UniversalMaterial>>>	m_materials;
-	const int											m_MatTableSize = 13;	///< Set this to set # of color "levels"
+	Table<String, Array<shared_ptr<UniversalMaterial>>>	materials;
+	const int											matTableSize = 13;	///< Set this to set # of color "levels"
+	
 	Array<shared_ptr<UniversalMaterial>> makeMaterials(shared_ptr<TargetConfig> tconfig);
 	Color3 lerpColor(Array<Color3> colors, float a);
 

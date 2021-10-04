@@ -739,7 +739,7 @@ TEST_F(FPSciTests, TestTargetColors) {
 	// Should be 1 second to kill
 	SelectSession("TargetColors");
 	Color4 col;
-	for (auto matkv : s_app->m_materials) {
+	for (auto matkv : s_app->materials) {
 		//// This is the code that prints the test cases that follow below
 		//if (matkv.key == "1color" || matkv.key == "2colors" || matkv.key == "3colors" || matkv.key == "4colors" || matkv.key == "5colors" || matkv.key == "7colors") {
 		//	printf("if (matkv.key == \"%s\") {\n", matkv.key.c_str());

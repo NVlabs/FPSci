@@ -262,14 +262,14 @@ void FPSciApp::loadModels() {
 
 		// Create a series of colored materials to choose from for target health
 		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
-		m_materials.set(id, makeMaterials(tconfig));
+		materials.set(id, makeMaterials(tconfig));
 	}
 }
 
 Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetConfig> tconfig) {
 	Array<shared_ptr<UniversalMaterial>> targetMaterials;
-	for (int i = 0; i < m_MatTableSize; i++) {
-		float complete = (float)i / (m_MatTableSize-1);
+	for (int i = 0; i < matTableSize; i++) {
+		float complete = (float)i / (matTableSize-1);
 		Color3 color;
 		if (notNull(tconfig) && tconfig->colors.length() > 0) {
 			color = lerpColor(tconfig->colors, complete);
@@ -622,7 +622,7 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	// Update colored materials to choose from for target health
 	for (String id : sessConfig->getUniqueTargetIds()) {
 		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
-		m_materials.set(id, makeMaterials(tconfig));
+		materials.set(id, makeMaterials(tconfig));
 	}
 
 	// Player parameters
@@ -1199,7 +1199,7 @@ void FPSciApp::updateTargetColor(const shared_ptr<TargetEntity>& target) {
 	shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
 	END_PROFILER_EVENT();
 	BEGIN_PROFILER_EVENT("updateTargetColor/materialSet");
-	shared_ptr<UniversalMaterial> mat = m_materials[target->id()][min((int)(target->health() * m_MatTableSize), m_MatTableSize - 1)];
+	shared_ptr<UniversalMaterial> mat = materials[target->id()][min((int)(target->health() * matTableSize), matTableSize - 1)];
 	pose->materialTable.set("core/icosahedron_default", mat);
 	END_PROFILER_EVENT();
 	BEGIN_PROFILER_EVENT("updateTargetColor/setPose");
