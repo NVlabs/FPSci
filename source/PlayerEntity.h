@@ -122,7 +122,7 @@ public:
     /** In radians... not used for rendering, use for first-person cameras */
     float headTilt() const { return m_headTilt; }
     float heading() const { return m_headingRadians;  }
-    float respawnHeading() const { return m_spawnHeadingRadians; }
+    float respawnHeadingDeg() const { return m_spawnHeadingRadians * 180 / pif(); }
 
     /** For deserialization from Any / loading from file */
     static shared_ptr<Entity> create 

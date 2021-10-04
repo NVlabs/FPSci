@@ -539,7 +539,7 @@ void Session::updatePresentationState()
 			if (newState == PresentationState::trialTask && m_config->timing.maxPretrialAimDisplacement > 0) {
 				// Test for aiming in valid region before spawning task targets
 				Point2 vDir = getViewDirection();
-				float viewDisplacement = sqrtf(powf((vDir.x - m_config->scene.spawnHeadingDeg), 2.f) + powf(vDir.y, 2.f));
+				float viewDisplacement = sqrtf(powf((vDir.x - m_player->respawnHeadingDeg()), 2.f) + powf(vDir.y, 2.f));
 				if (viewDisplacement > m_config->timing.maxPretrialAimDisplacement) {
 					clearTargets();		// Clear targets (in case preview targets are being shown)
 					m_feedbackMessage = formatFeedback(m_config->feedback.aimInvalid);
