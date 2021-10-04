@@ -296,8 +296,19 @@ Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
 		return colors[0];
 	}
 	else {
-		// For 2 or more colors, linearly interpolate between the first 2
-		return colors[0] * a + colors[1] * (1.0f - a);
+		// For 2 or more colors, linearly interpolate between the N colors.
+		// a comes in the range [0, 1] where 
+		//     0 means to use the last value in colors
+		// and 1 means to use the first value in colors
+		// This means that a = 0 maps to colors[colors.length() - 1]
+		// and a = 1 maps to colors[0]
+		// We need to flip the direction and scale up to the number of elements in the array
+		// a will indicate which two entries to interpolate between (left of .), and how much of each to use (right of .)
+		float interp = (1.0f - a) * (colors.length() - 1);
+		int idx = int(floor(interp));
+		interp = interp - float(idx);
+		Color3 output = colors[idx] * (1.0f - interp) + colors[idx + 1] * interp;
+		return output;
 	}
 }
 
