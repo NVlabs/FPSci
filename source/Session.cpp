@@ -277,6 +277,7 @@ void Session::initTargetAnimation() {
 			m_config->targetView.refTargetColor
 		);
 		m_hittableTargets.append(t);
+		m_lastRefTargetPos = t->frame().translation;		// Save last spawned reference target position
 
 		if (m_config->targetView.previewWithRef) {
 			spawnTrialTargets(initialSpawnPos, true);		// Spawn all the targets in preview mode
@@ -537,9 +538,11 @@ void Session::updatePresentationState()
 		//If we switched to task, call initTargetAnimation to handle new trial
 		if ((newState == PresentationState::trialTask) || (newState == PresentationState::trialFeedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
 			if (newState == PresentationState::trialTask && m_config->timing.maxPretrialAimDisplacement >= 0) {
-				// Test for aiming in valid region before spawning task targets
-				Point2 vDir = getViewDirection();
-				float viewDisplacement = sqrtf(powf((vDir.x - m_player->respawnHeadingDeg()), 2.f) + powf(vDir.y, 2.f));
+				// Test for aiming in valid region before spawning task targets				
+				Vector3 aim = m_camera->frame().lookVector().unit();
+				Vector3 ref = (m_lastRefTargetPos - m_camera->frame().translation).unit();
+				// Get the view displacement as the arccos of view/reference direction dot product (should never exceed 180 deg)
+				float viewDisplacement = 180 / pif() * acosf(aim.dot(ref));
 				if (viewDisplacement > m_config->timing.maxPretrialAimDisplacement) {
 					clearTargets();		// Clear targets (in case preview targets are being shown)
 					m_feedbackMessage = formatFeedback(m_config->feedback.aimInvalid);

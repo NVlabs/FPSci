@@ -187,6 +187,7 @@ protected:
 	Array<shared_ptr<TargetEntity>> m_unhittableTargets;	///< Array of targets that can't be hit
 
 	Table<String, TargetLocation> m_lastLogTargetLoc;		///< Last logged target location (used for logOnChange)
+	Point3 m_lastRefTargetPos;								///< Last reference target location (used for aim invalidation)
 
 	int m_frameTimeIdx = 0;									///< Frame time index
 	int m_currTrialIdx;										///< Current trial
