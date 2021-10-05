@@ -17,8 +17,7 @@
         
 		player = PlayerEntity {
             model = "playerModel";
-            frame = Point3(47.522999, -2.3549, -0.35916	);
-			heading = -1.5707963267948966192313216916398;
+            frame = CFrame::fromXYZYPRDegrees(47.523, -2.3549, -0.35916, -90, 0, 0 ); 
         };
 		
 		camera = Camera {
@@ -82,7 +81,6 @@
                 vignetteTopStrength = 0.5; 
             };
             
-            frame = CFrame::fromXYZYPRDegrees(47.523, -2.3549, -0.35916, 87.025, 3.163, 0 ); 
             mass = 1; 
             motionBlurSettings = MotionBlurSettings { 
                 enabled = false; 
