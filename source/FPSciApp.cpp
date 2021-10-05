@@ -262,6 +262,7 @@ void FPSciApp::loadModels() {
 
 		// Create a series of colored materials to choose from for target health
 		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
+		materials.remove(id);
 		materials.set(id, makeMaterials(tconfig));
 	}
 }
@@ -622,6 +623,7 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	// Update colored materials to choose from for target health
 	for (String id : sessConfig->getUniqueTargetIds()) {
 		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
+		materials.remove(id);
 		materials.set(id, makeMaterials(tconfig));
 	}
 
