@@ -441,7 +441,7 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, simStepDuration());
 }
 
-void FPSciApp::initPlayer() {
+void FPSciApp::initPlayer(bool firstSpawn) {
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
 
@@ -468,12 +468,28 @@ void FPSciApp::initPlayer() {
 	}
 	player->setRespawnHeight(resetHeight);
 
-	// Set player respawn location
-	Point3 spawnPosition = sessConfig->scene.spawnPosition;
-	if (isnan(spawnPosition.x)) {
-		spawnPosition = player->frame().translation;
+	// Update the respawn heading
+	if (isnan(sessConfig->scene.spawnHeadingDeg)) {
+		if (firstSpawn) {	// This is the first spawn in the scene
+			// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
+			Point3 view_dir = playerCamera->frame().lookVector();
+			float spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
+			player->setRespawnHeadingDegrees(spawnHeadingDeg);
+		}
 	}
-	player->setRespawnPosition(spawnPosition);
+	else {	// Respawn heading specified by the scene config
+		player->setRespawnHeadingDegrees(sessConfig->scene.spawnHeadingDeg);
+	}
+
+	// Set player respawn location
+	if (isnan(sessConfig->scene.spawnPosition.x)) {
+		if (firstSpawn) { // This is the first spawn, copy the respawn position from the scene
+			player->setRespawnPosition(player->frame().translation);
+		}
+	}
+	else {	// Respawn position set by scene config
+		player->setRespawnPosition(sessConfig->scene.spawnPosition);
+	}
 
 	// Set player values from session config
 	player->moveRate = &sessConfig->player.moveRate;
@@ -668,7 +684,7 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, sessConfig->scene.playerCamera));
 	setActiveCamera(playerCamera);
 
-	initPlayer();
+	initPlayer(true);		// Initialize the player (first time for this scene)
 
 	if (weapon) {
 		weapon->setScene(scene());
@@ -708,11 +724,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	if (shootButtonJustPressed && stateCanFire && !weapon->canFire(currentRealTime)) {
 		// Invalid click since the weapon isn't ready to fire
-		sess->accumulatePlayerAction(PlayerActionType::Invalid);
-	}
-	else if ((shootButtonJustPressed || !shootButtonUp) && !stateCanFire) {
-		// Non-task state but button pressed
-		sess->accumulatePlayerAction(PlayerActionType::Nontask);
+		sess->accumulatePlayerAction(PlayerActionType::FireCooldown);
 	}
 	else if (shootButtonJustPressed && !weapon->config()->autoFire && weapon->canFire(currentRealTime) && stateCanFire) {
 		// Discrete weapon fires a single shot with normal damage at the current time
@@ -1115,8 +1127,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 			m_refTargetHitSound->play(sessConfig->audio.refTargetHitSoundVol);
 		}
 		destroyedTarget = true;
-		sess->accumulatePlayerAction(PlayerActionType::Nontask, target->name());
-
+		sess->accumulatePlayerAction(PlayerActionType::Destroy, target->name());
 	}
 	else if (target->health() <= 0) {
 		// Position explosion

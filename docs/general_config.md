@@ -20,7 +20,7 @@ The following fields are specified within the `scene` parameter structure:
 |`playerCamera`     |`String`   | The name of the camera (from the `.scene.Any` file) to use for the player view. If this string is empty the `defaultCamera` from the G3D scene is used instead. |
 |`resetHeight`      |`float`    | The height at which the player should be respawned when falling (overrides any setting in a `scene.Any` file if specified here).    |
 |`spawnPosition`    |`Point3`   | The location at which the player should be respawned (overrides any setting in a `scene.Any` file if specified here).  |
-|`spawnHeading`     |`float`    | The player heading (in radians) at which the player should be respawned (overrides the `scene.Any` file setting if specified here). |
+|`spawnHeading`     |degrees    | The player heading (in degrees) at which the player should be respawned (overrides the `scene.Any` file setting if specified here). |
 
 An example configuration is provided below for reference:
 
@@ -64,6 +64,7 @@ The following settings allow the user to control various timings/durations aroun
 |`sessionFeedbackDuration`      |s                  |The duration of the feedback window between sessions                |
 |`sessionFeedbackRequireClick`  |`bool`             |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
 |`defaultTrialCount`            |`int`              |The value to use for trials with no specified `count` settings      |
+|`maxPretrialAimDisplacement`   |degrees            |The maximum aim displacement (from the 0 direction) allowed during the pretrial duration (larger aim motion results in invalidated trials). **Not intended for use with player motion!** |
 
 ```
 "clickToStart : true,                       // Require a click to start the session
@@ -73,7 +74,8 @@ The following settings allow the user to control various timings/durations aroun
 "trialFeedbackDuration": 1.0,               // Time for user feedback between trials
 "sessionFeedbackDuration": 5.0,             // Time for user feedback between sessions
 "sessionFeedbackRequireClick" : false,      // Don't require a click to move past the scoreboard
-"defaultTrialCount" : 5,
+"defaultTrialCount" : 5,                    
+"maxPretrialAimDisplacement" : 180,         // Disable max pretrial aim displacement by default (allow all motion)
 ```
 
 *Note:* If you are specifying `pretrialDurationRange` to create a truncated exponential range of pretrial duration we *highly* recommend keeping the `pretrialDuration` (i.e. mean value) to less than the mid-point of the `pretrialDurationRange`, skewing the distribution towards the minimum pretrial duration. Skewing this distribution towards the maximum pretrial duration has been demonstrated to produce confounding effects in reaction time studies (makes time at which to react more predictable)!
@@ -105,6 +107,7 @@ In addition to controlling the duration and formatting of displayed feedback mes
 |-----------------------------------|---------|--------------------------------------------------------------------|
 |`referenceTargetInitialFeedback`   |`String` | The message to display at the start of a session that includes a reference target|
 |`noReferenceTargetInitialFeedback` |`String` | The message to display at the start of a session that doesn't include a reference target|
+|`pretrialAimInvalidFeedback`       |`String` | The message to display when the pretrial aim exceeds the `maxPretrialAimDisplacement` |
 |`trialSuccessFeedback`             |`String` | Message to display when a trial is a success                       |
 |`trialFailureFeedback`             |`String` | Message to display when a trial is a failure                       |
 |`blockCompleteFeedback`            |`String` | Message to display when a block is completed                       |
@@ -132,6 +135,7 @@ Using these custom strings we can implement the following (default) feedback mes
 ```
 referenceTargetInitialFeedback: "Click to spawn a target, then use shift on red target to begin.",
 noReferenceTargetInitialFeedback: "Click to start the session!",
+maxPretrialAimDisplacement: "Invalid trial! Do not displace your aim during the pretrial duration.",
 trialSuccessFeedback: "%trialTaskTimeMs ms!",
 trialFailureFeedback: "Failure!",
 blockCompleteFeedback: "Block %lastBlock complete! Starting block %currBlock.",
@@ -586,16 +590,20 @@ These flags control whether various information is written to the output databas
 |`logPlayerActions`                 |`bool` | Enable/disable for logging player position, aim , and actions to database (per frame) |
 |`logTrialResponse`                 |`bool` | Enable/disable for logging trial responses to database (per trial)    |
 |`logUsers`                         |`bool` | Enable/disable for logging users to database (per session)            |
+|`logOnChange`                      |`bool` | Enable/disable for logging values to the `Player_Action` and `Target_Trajectory` tables only when changes occur    |
 |`logToSingleDb`                    |`bool` | Enable/disable for logging to a unified output database file (named using the experiment description and user ID)  |
-
+|`sessParamsToLog`                  |`Array<String>`| A list of other config parameters (by name) that are logged on a per-session basis to the `Sessions` table |
+ 
 ```
-"logEnable" = true,
-"logTargetTrajectories" = true,
-"logFrameInfo" = true,
-"logPlayerActions" = true,
-"logTrialResponse" = true,
-"logUsers" = true,
-"logToSingleDb" = true,
+"logEnable" = true,                     // Enable logging by default
+"logTargetTrajectories" = true,         // Log target trajectories (name, state, position)
+"logFrameInfo" = true,                  // Log per-frame timestamp and delta time
+"logPlayerActions" = true,              // Log player actions (view direction, position, state, event, target)
+"logTrialResponse" = true,              // Log trial results to the Trials table
+"logUsers" = true,                      // Log the users to the Users table
+"logOnChange" = false,                  // Log every frame (do not log only on change)
+"logToSingleDb" = true,                 // Log all sessions affiliated with a given experiment to the same database file
+"sessParamsToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table
 ```
 
 *Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user]_[experiment config hash].db"`. This hash is printed to the `log.txt` from the run in case it is needed to disambiguate results files. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues. The experiment config hash takes into account only "valid" settings and ignores formatting only changes in the configuration file. Default values are used for the hash for anything that is not specified, so if a default is specified, the hash will match the config where the default was not specified.

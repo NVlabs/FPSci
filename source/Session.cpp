@@ -241,7 +241,7 @@ void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
 	else {
 		const float rot_pitch = (config->symmetricEccV ? randSign() : 1) * Random::common().uniform(config->eccV[0], config->eccV[1]);
 		const float rot_yaw = (config->symmetricEccH ? randSign() : 1) * Random::common().uniform(config->eccH[0], config->eccH[1]);
-		const CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw - 180.0f/(float)pi()*initialHeadingRadians, rot_pitch, 0.0f);
+		const CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, - 180.0f/(float)pi()*initialHeadingRadians - rot_yaw, rot_pitch, 0.0f);
 		loc = f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 	}
 	target->setFrame(loc);
@@ -277,6 +277,7 @@ void Session::initTargetAnimation() {
 			m_config->targetView.refTargetColor
 		);
 		m_hittableTargets.append(t);
+		m_lastRefTargetPos = t->frame().translation;		// Save last spawned reference target position
 
 		if (m_config->targetView.previewWithRef) {
 			spawnTrialTargets(initialSpawnPos, true);		// Spawn all the targets in preview mode
@@ -284,6 +285,9 @@ void Session::initTargetAnimation() {
 
 		// Set weapon decal state to match configuration for reference targets
 		m_weapon->drawsDecals = m_config->targetView.showRefDecals;
+	
+		// Clear target logOnChange management
+		m_lastLogTargetLoc.clear();
 	}
 
 	// Reset number of destroyed targets (in the trial)
@@ -311,7 +315,7 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 			logger->addTarget(name, target, spawnTime, targetSize, Point2(spawn_eccH, spawn_eccV));
 		}
 
-		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, spawn_eccH - (initialHeadingRadians * 180.0f / (float)pi()), spawn_eccV, 0.0f);
+		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians * 180.0f / pif() - spawn_eccH, spawn_eccV, 0.0f);
 
 		// Check for case w/ destination array
 		shared_ptr<TargetEntity> t;
@@ -533,6 +537,18 @@ void Session::updatePresentationState()
 		currentState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
 		if ((newState == PresentationState::trialTask) || (newState == PresentationState::trialFeedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
+			if (newState == PresentationState::trialTask && m_config->timing.maxPretrialAimDisplacement >= 0) {
+				// Test for aiming in valid region before spawning task targets				
+				Vector3 aim = m_camera->frame().lookVector().unit();
+				Vector3 ref = (m_lastRefTargetPos - m_camera->frame().translation).unit();
+				// Get the view displacement as the arccos of view/reference direction dot product (should never exceed 180 deg)
+				float viewDisplacement = 180 / pif() * acosf(aim.dot(ref));
+				if (viewDisplacement > m_config->timing.maxPretrialAimDisplacement) {
+					clearTargets();		// Clear targets (in case preview targets are being shown)
+					m_feedbackMessage = formatFeedback(m_config->feedback.aimInvalid);
+					currentState = PresentationState::trialFeedback;		// Jump to feedback state w/ error message
+				}
+			}
 			initTargetAnimation();
 		}
 
@@ -548,11 +564,8 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	updatePresentationState();
 
 	// 2. Record target trajectories, view direction trajectories, and mouse motion.
-	if (currentState == PresentationState::trialTask)
-	{
-		accumulateTrajectories();
-		accumulateFrameInfo(rdt, sdt, idt);
-	}
+	accumulateTrajectories();
+	accumulateFrameInfo(rdt, sdt, idt);
 }
 
 void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
@@ -580,13 +593,22 @@ void Session::accumulateTrajectories()
 {
 	if (notNull(logger) && m_config->logger.logTargetTrajectories) {
 		for (shared_ptr<TargetEntity> target : m_targetArray) {
-			if (!target->isLogged()) continue;					   
+			if (!target->isLogged()) continue;
+			String name = target->name();
+			Point3 pos = target->frame().translation;
+			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), name, currentState, pos);
+			if (m_config->logger.logOnChange) {
+				// Check for target in logged position table
+				if (m_lastLogTargetLoc.containsKey(name)  && location.noChangeFrom(m_lastLogTargetLoc[name])) {	
+					continue; // Duplicates last logged position/state (don't log)
+				}
+			}
 			//// below for 2D direction calculation (azimuth and elevation)
 			//Point3 t = targetPosition.direction();
 			//float az = atan2(-t.z, -t.x) * 180 / pif();
 			//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
-			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), target->name(), target->frame().translation);
 			logger->logTargetLocation(location);
+			m_lastLogTargetLoc.set(name, location);					// Update the last logged location
 		}
 	}
 	// recording view direction trajectories
@@ -595,18 +617,25 @@ void Session::accumulateTrajectories()
 
 void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 {
+	// Count hits (in task state) here
+	if ((action == PlayerActionType::Hit || action == PlayerActionType::Destroy) && currentState == PresentationState::trialTask) { m_hitCount++; }
+
+	static PlayerAction lastPA;
+
 	if (notNull(logger) && m_config->logger.logPlayerActions) {
 		BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 		// recording target trajectories
 		Point2 dir = getViewDirection();
 		Point3 loc = getPlayerLocation();
-		PlayerAction pa = PlayerAction(FPSciLogger::getFileTime(), dir, loc, action, targetName);
+		PlayerAction pa = PlayerAction(FPSciLogger::getFileTime(), dir, loc, currentState, action, targetName);
+		// Check for log only on change condition
+		if (m_config->logger.logOnChange && pa.noChangeFrom(lastPA)) {
+			return;		// Early exit for (would be) duplicate log entry
+		}
 		logger->logPlayerAction(pa);
+		lastPA = pa;				// Update last logged values
 		END_PROFILER_EVENT();
 	}
-	
-	// Count hits here
-	if (action == PlayerActionType::Hit || action == PlayerActionType::Destroy) { m_hitCount++; }
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {

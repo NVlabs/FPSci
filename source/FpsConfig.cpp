@@ -90,7 +90,7 @@ SceneConfig::SceneConfig(const Any& any) {
 		//reader.getIfPresent("gravity", gravity);
 		reader.getIfPresent("resetHeight", resetHeight);
 		reader.getIfPresent("spawnPosition", spawnPosition);
-		reader.getIfPresent("spawnHeading", spawnHeading);
+		reader.getIfPresent("spawnHeading", spawnHeadingDeg);
 		break;
 	default:
 		throw format("Did not recognize scene config settings version: %d", settingsVersion);
@@ -106,7 +106,7 @@ Any SceneConfig::toAny(const bool forceAll) const {
 	//if (forceAll || def.gravity != gravity)				a["gravity"] = gravity;
 	if (forceAll || def.resetHeight != resetHeight)		a["resetHeight"] = resetHeight;
 	if (forceAll || def.spawnPosition != spawnPosition) a["spawnPosition"] = spawnPosition;
-	if (forceAll || def.spawnHeading != spawnHeading)   a["spawnHeading"] = spawnHeading;
+	if (forceAll || def.spawnHeadingDeg != spawnHeadingDeg)   a["spawnHeading"] = spawnHeadingDeg;
 	return a;
 }
 
@@ -115,7 +115,7 @@ bool SceneConfig::operator!=(const SceneConfig& other) const {
 		//gravity != other.gravity ||
 		resetHeight != other.resetHeight ||
 		spawnPosition != other.spawnPosition ||
-		spawnHeading != other.spawnHeading;
+		spawnHeadingDeg != other.spawnHeadingDeg;
 }
 
 void RenderConfig::load(AnyTableReader reader, int settingsVersion) {
@@ -393,6 +393,7 @@ void TimingConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("clickToStart", clickToStart);
 		reader.getIfPresent("sessionFeedbackRequireClick", sessionFeedbackRequireClick);
 		reader.getIfPresent("defaultTrialCount", defaultTrialCount);
+		reader.getIfPresent("maxPretrialAimDisplacement", maxPretrialAimDisplacement);
 		break;
 	default:
 		throw format("Did not recognize settings version: %d", settingsVersion);
@@ -410,6 +411,7 @@ Any TimingConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.clickToStart != clickToStart)						a["clickToStart"] = clickToStart;
 	if (forceAll || def.sessionFeedbackRequireClick != sessionFeedbackRequireClick) a["sessionFeedbackRequireClick"] = sessionFeedbackRequireClick;
 	if (forceAll || def.defaultTrialCount != defaultTrialCount)				a["defaultTrialCount"] = defaultTrialCount;
+	if (forceAll || def.maxPretrialAimDisplacement != maxPretrialAimDisplacement)	a["maxPretrialAimDisplacement"] = maxPretrialAimDisplacement;
 	return a;
 }
 
@@ -418,6 +420,7 @@ void FeedbackConfig::load(AnyTableReader reader, int settingsVersion) {
 	case 1:
 		reader.getIfPresent("referenceTargetInitialFeedback", initialWithRef);
 		reader.getIfPresent("noReferenceTargetInitialFeedback", initialNoRef);
+		reader.getIfPresent("pretrialAimInvalidFeedback", aimInvalid);
 		reader.getIfPresent("trialSuccessFeedback", trialSuccess);
 		reader.getIfPresent("trialFailureFeedback", trialFailure);
 		reader.getIfPresent("blockCompleteFeedback", blockComplete);
@@ -438,6 +441,7 @@ Any FeedbackConfig::addToAny(Any a, bool forceAll) const {
 	FeedbackConfig def;
 	if (forceAll || def.initialWithRef != initialWithRef)	a["referenceTargetInitialFeedback"] = initialWithRef;
 	if (forceAll || def.initialNoRef != initialNoRef)		a["noReferenceTargetInitialFeedback"] = initialNoRef;
+	if (forceAll || def.aimInvalid != aimInvalid)			a["pretrialAimInvalidFeedback"] = aimInvalid;
 	if (forceAll || def.trialSuccess != trialSuccess)		a["trialSuccessFeedback"] = trialSuccess;
 	if (forceAll || def.trialFailure != trialFailure)		a["trialFailureFeedback"] = trialFailure;
 	if (forceAll || def.blockComplete != blockComplete)		a["blockCompleteFeedback"] = blockComplete;
@@ -546,6 +550,7 @@ void LoggerConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("logPlayerActions", logPlayerActions);
 		reader.getIfPresent("logTrialResponse", logTrialResponse);
 		reader.getIfPresent("logUsers", logUsers);
+		reader.getIfPresent("logOnChange", logOnChange);
 		reader.getIfPresent("sessionParametersToLog", sessParamsToLog);
 		reader.getIfPresent("logToSingleDb", logToSingleDb);
 		break;
@@ -563,6 +568,7 @@ Any LoggerConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.logPlayerActions != logPlayerActions)			a["logPlayerActions"] = logPlayerActions;
 	if (forceAll || def.logTrialResponse != logTrialResponse)			a["logTrialResponse"] = logTrialResponse;
 	if (forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
+	if (forceAll || def.logOnChange != logOnChange)						a["logOnChange"] = logOnChange;
 	if (forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessionParametersToLog"] = sessParamsToLog;
 	if (forceAll || def.logToSingleDb != logToSingleDb)					a["logToSingleDb"] = logToSingleDb;
 	return a;

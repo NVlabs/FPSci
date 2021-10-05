@@ -36,9 +36,15 @@ The `Player_Action` table is the primary tool for analyzing player move, aim, an
 * `position_x`: The player world position (translation) X coordinate
 * `position_y`: The player world position (translation) Y coordinate
 * `position_z`: The player world position (translation) Z coordinate
+* `state`: The experiment state when the event occurred, possible options include:
+    * `initial`: The start-up state for the experiment
+    * `pretrial`: The state that occurs after destroying the reference target but before spawning task targets
+    * `trialTask`: The state in which the task targets are spawned and eliminated
+    * `trialFeedback`: The state in which feedback is provided and a new reference target is spawned
+    * `sessionFeedback`: The state in which session-level feedback is provided
+    * `complete`: The (full experiment) complete state
 * `event`: The event that occurred at this entry, possible options include:
-    * `invalid`: Occurs when a player fires during the weapon cooldown period during a trial
-    * `non-task`: Occurs when the player fires outside of the trial (including destroying a reference target)
+    * `fireCooldown`: Occurs when a player fires during the weapon cooldown period during a trial (shot is not registered)
     * `aim`: This row records a player aim direction without a fire event occurring
     * `miss`: Occurs when a player fires and misses. When using hit scanned weapons this is at the time of the fire, otherwise it is when the (propagated) projectile intersects geometry that is not a target
     * `hit`: Occurs when a player fires and hits a target during a trial

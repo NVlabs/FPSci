@@ -13,7 +13,7 @@ public:
 	float resetHeight = fnan();							///< Reset height for the PhysicsScene
 
 	Point3 spawnPosition = { fnan(),fnan(), fnan() };	///< Location for player spawn
-	float spawnHeading = fnan();						///< Heading for player spawn
+	float spawnHeadingDeg = fnan();						///< Heading for player spawn (in degrees)
 
 	SceneConfig() {}
 	SceneConfig(const Any& any);
@@ -156,6 +156,7 @@ public:
 	float			sessionFeedbackDuration = 2.0f;				///< Time in the session feedback state in seconds
 	bool			clickToStart = true;						///< Require a click before starting the first session (spawning the reference target)
 	bool			sessionFeedbackRequireClick = false;		///< Require a click to progress from the session feedback?
+	float			maxPretrialAimDisplacement = 180.0f;		///< Maximum (angular) aim displacement in the pretrial duration in degrees, set to negative value to disable
 
 	// Trial count
 	int             defaultTrialCount = 5;						///< Default trial count
@@ -169,6 +170,7 @@ class FeedbackConfig {
 public:
 	String initialWithRef = "Click to spawn a target, then use shift on red target to begin.";		///< An initial feedback message to show when reference targets are drawn
 	String initialNoRef = "Click to start the session!";											///< An initial feedback message to show when reference targets aren't drawn
+	String aimInvalid = "Invalid trial! Do not displace your aim during the pretrial duration.";	///< Message to display when a trial is invalidated due to pretrial aim displacement
 	String trialSuccess = "%trialTaskTimeMs ms!";													///< Successful trial feedback message
 	String trialFailure = "Failure!";																///< Failed trial feedback message
 	String blockComplete = "Block %lastBlock complete! Starting block %currBlock.";					///< Block complete feedback message
@@ -249,14 +251,15 @@ public:
 class LoggerConfig {
 public:
 	// Enable flags for log
-	bool enable = true;		///< High-level logging enable flag (if false no output is created)							
-	bool logTargetTrajectories = true;		///< Log target trajectories in table?
-	bool logFrameInfo = true;		///< Log frame info in table?
+	bool enable = true;					///< High-level logging enable flag (if false no output is created)							
+	bool logTargetTrajectories = true;	///< Log target trajectories in table?
+	bool logFrameInfo = true;			///< Log frame info in table?
 	bool logPlayerActions = true;		///< Log player actions in table?
 	bool logTrialResponse = true;		///< Log trial response in table?
-	bool logUsers = true;		///< Log user information in table?
+	bool logUsers = true;				///< Log user information in table?
+	bool logOnChange = false;			///< Only log to Player_Action/Target_Trajectory table when the player/target position/orientation changes
 
-	bool logToSingleDb = true;		///< Log all results to a single db file?
+	bool logToSingleDb = true;			///< Log all results to a single db file?
 
 	// Session parameter logging
 	Array<String> sessParamsToLog = { "frameRate", "frameDelay" };			///< Parameter names to log to the Sessions table of the DB

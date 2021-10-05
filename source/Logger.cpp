@@ -1,5 +1,6 @@
 #include "Logger.h"
 #include "Session.h"
+#include "FPSciApp.h"
 
 // TODO: Replace with the G3D timestamp uses.
 // utility function for generating a unique timestamp.
@@ -117,6 +118,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 		Columns targetTrajectoryColumns = {
 				{ "time", "text" },
 				{ "target_id", "text"},
+				{ "state", "text"},
 				{ "position_x", "real" },
 				{ "position_y", "real" },
 				{ "position_z", "real" },
@@ -131,6 +133,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 				{ "position_x", "real"},
 				{ "position_y", "real"},
 				{ "position_z", "real"},
+				{ "state", "text"},
 				{ "event", "text" },
 				{ "target_id", "text" },
 		};
@@ -223,15 +226,17 @@ void FPSciLogger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
 void FPSciLogger::recordPlayerActions(const Array<PlayerAction>& actions) {
 	Array<RowEntry> rows;
 	for (PlayerAction action : actions) {
+		String stateStr = presentationStateToString(action.state);
+
 		String actionStr = "";
 		switch (action.action) {
-		case Invalid: actionStr = "invalid"; break;
-		case Nontask: actionStr = "non-task"; break;
+		case FireCooldown: actionStr = "fireCooldown"; break;
 		case Aim: actionStr = "aim"; break;
 		case Miss: actionStr = "miss"; break;
 		case Hit: actionStr = "hit"; break;
 		case Destroy: actionStr = "destroy"; break;
 		}
+
 		Array<String> playerActionValues = {
 		"'" + FPSciLogger::formatFileTime(action.time) + "'",
 		String(std::to_string(action.viewDirection.x)),
@@ -239,6 +244,7 @@ void FPSciLogger::recordPlayerActions(const Array<PlayerAction>& actions) {
 		String(std::to_string(action.position.x)),
 		String(std::to_string(action.position.y)),
 		String(std::to_string(action.position.z)),
+		"'" + stateStr + "'",
 		"'" + actionStr + "'",
 		"'" + action.targetName + "'",
 		};
@@ -250,9 +256,11 @@ void FPSciLogger::recordPlayerActions(const Array<PlayerAction>& actions) {
 void FPSciLogger::recordTargetLocations(const Array<TargetLocation>& locations) {
 	Array<RowEntry> rows;
 	for (const auto& loc : locations) {
+		String stateStr = presentationStateToString(loc.state);
 		Array<String> targetTrajectoryValues = {
 			"'" + FPSciLogger::formatFileTime(loc.time) + "'",
 			"'" + loc.name + "'",
+			"'" + stateStr + "'",
 			String(std::to_string(loc.position.x)),
 			String(std::to_string(loc.position.y)),
 			String(std::to_string(loc.position.z)),
