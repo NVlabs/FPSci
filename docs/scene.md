@@ -22,8 +22,7 @@ Physics = {
 The `PlayerEntity` is specified by the following sub-fields:
 
 * `model` - A model to display for the player (currently not drawn)
-* `frame` - An initial frame for the player (in the scene geometry coordinate units)
-* `heading` - An (independent) initial heading for the player (in radians)
+* `frame` - An initial frame for the player (in the scene geometry coordinate units) can include rotation
 * `collisionSphere` - A `Sphere` to be used as a collision proxy for the player (normally used to specify the radius of the proxy in scene units)
 
 The parameters above allow the scene file to completely contain all scene-dependent information related to player motion. An example from the top-level of a `scene.any` file is provided below:
@@ -32,7 +31,6 @@ The parameters above allow the scene file to completely contain all scene-depend
 player = PlayerEntity {
     model = "playerModel";              // Use the model (specifed below as "playerModel") for the player
     frame = Point3(0, 1.5, 0);          // Initialize the player 1.5m above the origin
-	heading = 0;                        // Player initial rotation of 0 radians
     collisionSphere = Sphere(1.0);      // Use a 1m sphere as the collision proxy
 };
 ```
