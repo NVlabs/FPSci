@@ -455,7 +455,14 @@ void FPSciApp::initPlayer(bool firstSpawn) {
 	pscene->setGravity(grav);
 
 	playerCamera->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
-	playerCamera->setFrame(player->getCameraFrame());
+	if (!isnan(player->frame().translation.x)) {
+		// Copy the player entity frame to the camera here if defined
+		playerCamera->setFrame(player->getCameraFrame());
+	}
+	else {
+		// Copy the player entity frame from the camera
+		player->setFrame(playerCamera->frame());
+	}
 
 	// For now make the player invisible (prevent issues w/ seeing model from inside)
 	player->setVisible(false);
@@ -676,7 +683,8 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 	// Add a player if one isn't present in the scene
 	if (isNull(player)) {
 		logPrintf("WARNING: Didn't find a \"player\" specified in \"%s\"! Adding one at the origin.", sceneName);
-		shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
+		Point3 pos = Point3(fnan(), fnan(), fnan());	// Use nan position when player isn't specified (copy position from camera)
+		shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), pos, nullptr);
 		scene()->insert(newPlayer);
 	}
 
