@@ -64,7 +64,7 @@ The following settings allow the user to control various timings/durations aroun
 |`sessionFeedbackDuration`      |s                  |The duration of the feedback window between sessions                |
 |`sessionFeedbackRequireClick`  |`bool`             |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
 |`defaultTrialCount`            |`int`              |The value to use for trials with no specified `count` settings      |
-|`maxPretrialAimDisplacement`   |degrees            |The maximum aim displacement (from the 0 direction) allowed during the pretrial duration (larger aim motion results in invalidated trials) |
+|`maxPretrialAimDisplacement`   |degrees            |The maximum aim displacement (from the 0 direction) allowed during the pretrial duration (larger aim motion results in invalidated trials). **Not intended for use with player motion!** |
 
 ```
 "clickToStart : true,                       // Require a click to start the session
