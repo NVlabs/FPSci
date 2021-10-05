@@ -455,6 +455,7 @@ Any FeedbackConfig::addToAny(Any a, bool forceAll) const {
 }
 
 void TargetViewConfig::load(AnyTableReader reader, int settingsVersion) {
+	bool gotColors = false;
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("showTargetHealthBars", showHealthBars);
@@ -462,7 +463,10 @@ void TargetViewConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("targetHealthBarOffset", healthBarOffset);
 		reader.getIfPresent("targetHealthBarBorderSize", healthBarBorderSize);
 		reader.getIfPresent("targetHealthBarBorderColor", healthBarBorderColor);
-		reader.getIfPresent("targetHealthColors", healthColors);
+		gotColors = reader.getIfPresent("targetHealthColors", healthColors);
+		if (gotColors && healthColors.length() < 1) {
+			throw "Specified \"healthColors\" doesn't contain at least one Color3!";
+		}
 		reader.getIfPresent("targetHealthBarColors", healthBarColors);
 		reader.getIfPresent("showFloatingCombatText", showCombatText);
 		reader.getIfPresent("floatingCombatTextSize", combatTextSize);

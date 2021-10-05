@@ -74,6 +74,8 @@ TargetConfig::TargetConfig(const Any& any) {
 		reader.getIfPresent("hitSoundVol", hitSoundVol);
 		reader.getIfPresent("destroyedSound", destroyedSound);
 		reader.getIfPresent("destroyedSoundVol", destroyedSoundVol);
+		reader.getIfPresent("colors", colors);
+
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
