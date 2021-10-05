@@ -45,7 +45,7 @@ shared_ptr<Entity> PlayerEntity::create
     // Initialize each base class, which parses its own fields
     playerEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
     playerEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
-    playerEntity->PlayerEntity::init(Vector3::zero(), Sphere(1.0f));
+    playerEntity->PlayerEntity::init(Sphere(1.0f));
  
     return playerEntity;
 }
@@ -53,26 +53,23 @@ shared_ptr<Entity> PlayerEntity::create
 
 void PlayerEntity::init(AnyTableReader& propertyTable) {
    // Get values from Any
-    Vector3 v;
-	float heading = 0.0f;
-    propertyTable.getIfPresent("heading", heading);
-    Sphere s(1.5f);
-    propertyTable.getIfPresent("collisionSphere", s);
+    Sphere collisionSphere(1.5f);
+    propertyTable.getIfPresent("collisionSphere", collisionSphere);
     // Create the player
-    init(v, s, heading);
+    init(collisionSphere);
 }
 
 float PlayerEntity::heightOffset(float height) const {
 	return height - m_collisionProxySphere.radius;
 }
 
-void PlayerEntity::init(const Vector3& velocity, const Sphere& collisionProxy, float heading) {
+void PlayerEntity::init(const Sphere& collisionProxy) {
     m_collisionProxySphere = collisionProxy;
     m_desiredOSVelocity     = Vector3::zero();
     m_desiredYawVelocity    = 0;
     m_desiredPitchVelocity  = 0;
-	m_spawnHeadingRadians   = heading;
-    m_headingRadians        = heading;
+	m_spawnHeadingRadians   = frame().getHeading();
+    m_headingRadians        = frame().getHeading();
     m_headTilt              = 0;
 }
 
@@ -84,7 +81,6 @@ bool PlayerEntity::doDamage(float damage) {
 Any PlayerEntity::toAny(const bool forceAll) const {
     Any a = VisibleEntity::toAny(forceAll);
     a.setName("PlayerEntity");
-    a["heading"] = m_headingRadians;
     a["collisionSphere"] = m_collisionProxySphere;
     return a;
 }

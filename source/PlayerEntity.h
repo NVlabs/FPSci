@@ -38,8 +38,7 @@ protected:
     #pragma clang diagnostic ignored "-Woverloaded-virtual"
 #endif
     void init(AnyTableReader& propertyTable);
-    
-    void init(const Vector3& velocity, const Sphere& collisionSphere, float heading=0);
+    void init(const Sphere& collisionSphere);
 #ifdef G3D_OSX
     #pragma clang diagnostic pop
 #endif
@@ -98,7 +97,9 @@ public:
 
 	const CFrame getCameraFrame() const {
 		CFrame f = frame();
-		f.translation += Point3(0.0f, heightOffset(m_crouched ? *crouchHeight : *height), 0.0f);
+        if (notNull(height)) {
+            f.translation += Point3(0.0f, heightOffset(m_crouched ? *crouchHeight : *height), 0.0f);
+        }
 		return f;
 	}
 
