@@ -368,7 +368,7 @@ void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
 	String filename = Scene::sceneNameToFilename(sessConfig->scene.name);
-	scene()->toAny().save(filename, startupConfig.jsonAnyOutput);
+	scene()->toAny().save(filename);		// Save this w/o JSON format (breaks scene.Any file)
 }
 
 void FPSciApp::showPlayerControls() {
@@ -453,7 +453,9 @@ void FPSciApp::initPlayer(bool firstSpawn) {
 		FoV = sessConfig->render.hFoV;
 	}
 	pscene->setGravity(grav);
+
 	playerCamera->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
+	playerCamera->setFrame(player->getCameraFrame());
 
 	// For now make the player invisible (prevent issues w/ seeing model from inside)
 	player->setVisible(false);
@@ -680,8 +682,8 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 
 	// Set the active camera to the player
 	const String pcamName = sessConfig->scene.playerCamera;
-	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(sessConfig->scene.playerCamera);
-	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, sessConfig->scene.playerCamera));
+	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(pcamName);
+	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, pcamName));
 	setActiveCamera(playerCamera);
 
 	initPlayer(true);		// Initialize the player (first time for this scene)
