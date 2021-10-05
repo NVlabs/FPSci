@@ -136,7 +136,7 @@ protected:
 	virtual void loadModels();
 	/** Initializes player settings from configs and resets player to initial position 
 		Also updates mouse sensitivity. */
-	void initPlayer();
+	void initPlayer(bool firstSpawn = false);
 
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {

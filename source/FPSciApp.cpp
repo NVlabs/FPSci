@@ -441,7 +441,7 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, simStepDuration());
 }
 
-void FPSciApp::initPlayer() {
+void FPSciApp::initPlayer(bool firstSpawn) {
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
 	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
 
@@ -469,20 +469,27 @@ void FPSciApp::initPlayer() {
 	player->setRespawnHeight(resetHeight);
 
 	// Update the respawn heading
-	float spawnHeadingDeg = sessConfig->scene.spawnHeadingDeg;
 	if (isnan(sessConfig->scene.spawnHeadingDeg)) {
-		// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
-		Point3 view_dir = playerCamera->frame().lookVector();
-		spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
+		if (firstSpawn) {	// This is the first spawn in the scene
+			// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
+			Point3 view_dir = playerCamera->frame().lookVector();
+			float spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
+			player->setRespawnHeadingDegrees(spawnHeadingDeg);
+		}
 	}
-	player->setRespawnHeadingDegrees(spawnHeadingDeg);
+	else {	// Respawn heading specified by the scene config
+		player->setRespawnHeadingDegrees(sessConfig->scene.spawnHeadingDeg);
+	}
 
 	// Set player respawn location
-	Point3 spawnPosition = sessConfig->scene.spawnPosition;
-	if (isnan(spawnPosition.x)) {
-		spawnPosition = player->frame().translation;
+	if (isnan(sessConfig->scene.spawnPosition.x)) {
+		if (firstSpawn) { // This is the first spawn, copy the respawn position from the scene
+			player->setRespawnPosition(player->frame().translation);
+		}
 	}
-	player->setRespawnPosition(spawnPosition);
+	else {	// Respawn position set by scene config
+		player->setRespawnPosition(sessConfig->scene.spawnPosition);
+	}
 
 	// Set player values from session config
 	player->moveRate = &sessConfig->player.moveRate;
@@ -677,7 +684,7 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, sessConfig->scene.playerCamera));
 	setActiveCamera(playerCamera);
 
-	initPlayer();
+	initPlayer(true);		// Initialize the player (first time for this scene)
 
 	if (weapon) {
 		weapon->setScene(scene());
