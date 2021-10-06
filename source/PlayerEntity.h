@@ -114,7 +114,8 @@ public:
 	void respawn() {
 		m_frame.translation = m_respawnPosition;
 		m_headingRadians = m_spawnHeadingRadians;
-		m_headTilt = 0.0f;
+		m_headTilt = 0.0f;                              // Reset heading tilt
+        m_inAir = true;                                 // Set in air to let player "fall" if needed
 		setDesiredOSVelocity(Vector3::zero());
 		setDesiredAngularVelocity(0.0f, 0.0f);
 	}
