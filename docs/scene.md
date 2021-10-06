@@ -30,10 +30,14 @@ The parameters above allow the scene file to completely contain all scene-depend
 ```
 player = PlayerEntity {
     model = "playerModel";              // Use the model (specifed below as "playerModel") for the player
-    frame = Point3(0, 1.5, 0);          // Initialize the player 1.5m above the origin
+    frame = CFrame::fromXYZYPRDegrees(0, 1.5, 0, 0, 0, 0);          // Initialize the player 1.5m above the origin
     collisionSphere = Sphere(1.0);      // Use a 1m sphere as the collision proxy
 };
 ```
+
+If no `spawnPosition` or `spawnHeading` is provided as part of the [scene configuration](general_config.md#scene-settings) within the experiment-level configuration, the `frame` from the `PlayerEntity` is used for the default spawn position/heading. 
+
+Note that if a `PlayerEntity` is specified in a scene file its `frame` parameter will override any camera-based fallback. This includes the case where a `PlayerEntity` is specified without a `frame` field (its `frame` will default to the scene origin with 0 heading values).
 
 ### Player Camera
 Any camera specified in the scene can be used as the camera attached to the player. This mapping is done by putting the name of the chosen camera in the [FPSci scene settings](./general_config.md#scene-settings). If no name is specified, the `defaultCamera` will be used.
@@ -44,3 +48,5 @@ The player camera is a way to modify camera properties for the player view, excl
 * Bloom strength
 * Position/Rotation
 * Field of View
+
+If no `spawnPosition` or `spawnHeading` is specified in the experiment-specific configuration *and* no `PlayerEntity` is present in the scene file then the player/default camera's `frame` is used to initialize player position/heading in the scene.

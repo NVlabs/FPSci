@@ -34,6 +34,13 @@ scene = {
 };
 ```
 
+*Note:* The full priority chain for setting heading/position in the scene is as follows:
+
+1. This scene configuration's `spawnPosition` and `spawnHeading` parameters
+2. The [scene.Any file's `PlayerEntity`](scene.md#player-entity) `frame` value (if the `PlayerEntity` is specified)
+3. The specified `playerCamera`'s `frame` (if specified)
+4. The [scene.Any file's `defaultCamera`](scene.md#player-camera) `frame`
+
 ### Scene Name
 If unspecified, the scene `name` field comes from:
 
