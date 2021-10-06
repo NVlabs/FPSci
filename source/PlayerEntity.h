@@ -87,7 +87,7 @@ public:
     bool slideMove(SimTime deltaTime);
 
 	float heightOffset(float height) const;
-
+    float respawnPosHeight()  { return m_respawnPosition.y; }
     bool doDamage(float damage);
 
     /** In world space */

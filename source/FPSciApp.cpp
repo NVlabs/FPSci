@@ -460,10 +460,15 @@ void FPSciApp::initPlayer(bool setSpawnPosition) {
 	}
 	pscene->setGravity(grav);
 
+	String respawnHeightSource;
 	playerCamera->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
 	if (!m_sceneHasPlayerEntity) {		// Scene doesn't have player entity, copy the player entity frame from the camera
+		respawnHeightSource = format("\"%s\" camera in scene.Any file", playerCamera->name());
 		player->setFrame(m_initialCameraFrames[playerCamera->name()]);
 		setSpawnPosition = true;		// Set the player spawn position from the camera
+	}
+	else {
+		respawnHeightSource = "PlayerEntity in scene.Any file";
 	}
 	playerCamera->setFrame(player->getCameraFrame());
 
@@ -471,10 +476,13 @@ void FPSciApp::initPlayer(bool setSpawnPosition) {
 	player->setVisible(false);
 
 	// Set the reset height
+	String resetHeightSource = "scene configuration \"resetHeight\" parameter";
 	float resetHeight = sessConfig->scene.resetHeight;
 	if (isnan(resetHeight)) {
-		float resetHeight = pscene->resetHeight();
+		resetHeightSource = "scene.Any Physics \"minHeight\" field";
+		resetHeight = pscene->resetHeight();
 		if (isnan(resetHeight)) {
+			resetHeightSource = "default value";
 			resetHeight = -1e6;
 		}
 	}
@@ -494,13 +502,21 @@ void FPSciApp::initPlayer(bool setSpawnPosition) {
 	}
 
 	// Set player respawn location
+	float respawnPosHeight = player->respawnPosHeight();	// Report the respawn position height
 	if (isnan(sessConfig->scene.spawnPosition.x)) {
 		if (setSpawnPosition) { // This is the first spawn, copy the respawn position from the scene
 			player->setRespawnPosition(player->frame().translation);
+			respawnPosHeight = player->frame().translation.y;
 		}
 	}
 	else {	// Respawn position set by scene config
 		player->setRespawnPosition(sessConfig->scene.spawnPosition);
+		respawnPosHeight = sessConfig->scene.spawnPosition.y;
+		respawnHeightSource = "scene configuration \"spawnPosition\" parameter";
+	}
+
+	if (respawnPosHeight < resetHeight) {
+		throw format("Invalid respawn height (%f) from %s (< %f specified from %s)!", respawnPosHeight, respawnHeightSource.c_str(), resetHeight, resetHeightSource.c_str());
 	}
 
 	// Set player values from session config
