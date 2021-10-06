@@ -41,6 +41,8 @@ scene = {
 3. The specified `playerCamera`'s `frame` (if specified)
 4. The [scene.Any file's `defaultCamera`](scene.md#player-camera) `frame`
 
+Experiment designers should be careful to avoid setting the player spawn position Y-value lower than the player reset height (specified using either `resetHeight` above, the `minHeight` value in the [scene's `Physics` field](scene.md#physics), or a default value of 1e-6.)
+
 ### Scene Name
 If unspecified, the scene `name` field comes from:
 

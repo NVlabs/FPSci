@@ -39,6 +39,8 @@ If no `spawnPosition` or `spawnHeading` is provided as part of the [scene config
 
 Note that if a `PlayerEntity` is specified in a scene file its `frame` parameter will override any camera-based fallback. This includes the case where a `PlayerEntity` is specified without a `frame` field (its `frame` will default to the scene origin with 0 heading values).
 
+*Note:* If the experiment config does not overwrite these values, a runtime exception will occur if the `frame` Y value for the `PlayerEntity` or (specified/default) camera, if no `PlayerEntity` exists, is less than the `Physics`' `minHeight` parameter (if no `Physics` are specified the default `minHeight` value is 1e-6).
+
 ### Player Camera
 Any camera specified in the scene can be used as the camera attached to the player. This mapping is done by putting the name of the chosen camera in the [FPSci scene settings](./general_config.md#scene-settings). If no name is specified, the `defaultCamera` will be used.
 
