@@ -526,7 +526,7 @@ void FPSciApp::initPlayer(bool firstSpawn) {
 	}
 
 	// Set player respawn location
-	if (isnan(sessConfig->scene.spawnPosition.x)) {
+	if (sessConfig->scene.spawnPosition.isNaN()) {
 		if (firstSpawn) { // This is the first spawn, copy the respawn position from the scene
 			player->setRespawnPosition(player->frame().translation);
 		}
