@@ -113,7 +113,7 @@ Any SceneConfig::toAny(const bool forceAll) const {
 
 bool SceneConfig::operator!=(const SceneConfig& other) const {
 	return name != other.name ||
-		playerCamera != other.playerCamera;
+		playerCamera != other.playerCamera ||
 		//gravity != other.gravity ||
 		(isnan(resetHeight) ? !isnan(other.resetHeight) : resetHeight != other.resetHeight) ||
 		spawnPosition.isNaN() ? !other.spawnPosition.isNaN() : spawnPosition != other.spawnPosition ||				// Assume if any spawn coordinate is nan positions are equal
