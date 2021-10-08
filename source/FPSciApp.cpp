@@ -296,7 +296,12 @@ Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
 		// since above 1.0 would imply negative a negative array index
 		return colors[0];
 	}
-	else {
+	else if (a <= 0.0f) {
+		// Use only the last color in the array
+		return colors[colors.length() - 1];
+	}
+	else
+	{
 		// For 2 or more colors, linearly interpolate between the N colors.
 		// a comes in the range [0, 1] where 
 		//     0 means to use the last value in colors
