@@ -14,7 +14,7 @@ static bool operator==(Array<T> a1, Array<T> a2) {
 
 TargetConfig::TargetConfig(const Any& any) {
 	int settingsVersion = 1;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	switch (settingsVersion) {
@@ -546,7 +546,7 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 shared_ptr<Entity> JumpingEntity::create(
 	const String&                  name,
 	Scene*                         scene,
-	AnyTableReader&                propertyTable,
+	AnyTableReader&				   propertyTable,
 	const ModelTable&              modelTable,
 	const Scene::LoadOptions&      loadOptions)
 {

@@ -12,36 +12,6 @@ static bool operator==(Array<T> a1, Array<T> a2) {
 	return !(a1 != a2);
 }
 
-// Currently unused, allows getting scalar or vector from Any
-template <class T>
-static void getArrayFromAny(AnyTableReader reader, const String& name, Array<T>& output) {
-	bool valid = true;
-	T value;
-	try {
-		Array<T> arr;
-		reader.get(name, arr);					// Try to read an array directly
-		if (arr.size() < output.size()) {		// Check for under size (critical)
-			throw format("\"%s\" array of length %d is underspecified (should be of length %d)!", name.c_str(), arr.size(), output.size());
-		}
-		else if (arr.size() != output.size()) {	// Check for over size (warn)
-			logPrintf("WARNING: array specified for \"%s\" is of length %d, but should be %d (using first %d elements)...\n", name.c_str(), arr.size(), output.size(), output.size());
-		}
-		// Copy over array elements
-		for (int i = 0; i < output.size(); i++) {
-			output[i] = arr[i];
-		}
-	}
-	catch(ParseError& e){
-		// Failed to read array, try to duplicate a single value
-		valid = reader.getIfPresent(name, value);
-		if (valid) {
-			for (int i = 0; i < output.size(); i++) {
-				output[i] = value;
-			}
-		}
-	}
-}
-
 // Currently unused, allows writing (single valued) vector as scalar to Any
 template <class T>
 static void arrayToAny(Any& a, const String& name, const Array<T>& arr) {
@@ -80,7 +50,7 @@ static float tExpLambdaFromMean(float mean, float min, float max, float acceptab
 }
 
 SceneConfig::SceneConfig(const Any& any) {
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	int settingsVersion = 1;
 	reader.getIfPresent("settingsVersion", settingsVersion);
 	switch (settingsVersion) {
@@ -118,7 +88,7 @@ bool SceneConfig::operator!=(const SceneConfig& other) const {
 		spawnHeadingDeg != other.spawnHeadingDeg;
 }
 
-void RenderConfig::load(AnyTableReader reader, int settingsVersion) {
+void RenderConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	// List of valid frame time modes for parsing from Any
 	const Array<String> validFrameTimeModes = { "always", "taskonly", "restartwithtask" };
 
@@ -201,7 +171,7 @@ Any RenderConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void PlayerConfig::load(AnyTableReader reader, int settingsVersion) {
+void PlayerConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("moveRate", moveRate);
@@ -240,7 +210,7 @@ Any PlayerConfig::addToAny(Any a, bool forceAll) const {
 }
 
 StaticHudElement::StaticHudElement(const Any& any) {
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.get("filename", filename, "Must provide filename for all Static HUD elements!");
 	reader.get("position", position, "Must provide position for all static HUD elements");
 	reader.getIfPresent("scale", scale);
@@ -261,7 +231,7 @@ bool StaticHudElement::operator!=(const StaticHudElement& other) const {
 }
 
 
-void HudConfig::load(AnyTableReader reader, int settingsVersion) {
+void HudConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("showHUD", enable);
@@ -337,7 +307,7 @@ Any HudConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void AudioConfig::load(AnyTableReader reader, int settingsVersion) {
+void AudioConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("sceneHitSound", sceneHitSound);
@@ -364,7 +334,7 @@ Any AudioConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void TimingConfig::load(AnyTableReader reader, int settingsVersion) {
+void TimingConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("pretrialDuration", pretrialDuration);
@@ -415,7 +385,7 @@ Any TimingConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void FeedbackConfig::load(AnyTableReader reader, int settingsVersion) {
+void FeedbackConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("referenceTargetInitialFeedback", initialWithRef);
@@ -454,7 +424,7 @@ Any FeedbackConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void TargetViewConfig::load(AnyTableReader reader, int settingsVersion) {
+void TargetViewConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	bool gotColors = false;
 	switch (settingsVersion) {
 	case 1:
@@ -519,7 +489,7 @@ Any TargetViewConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void ClickToPhotonConfig::load(AnyTableReader reader, int settingsVersion) {
+void ClickToPhotonConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("renderClickPhoton", enabled);
@@ -545,7 +515,7 @@ Any ClickToPhotonConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void LoggerConfig::load(AnyTableReader reader, int settingsVersion) {
+void LoggerConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("logEnable", enable);
@@ -580,7 +550,7 @@ Any LoggerConfig::addToAny(Any a, bool forceAll) const {
 
 CommandSpec::CommandSpec(const Any& any) {
 	try {
-		AnyTableReader reader(any);
+		FPSciAnyTableReader reader(any);
 		reader.get("command", cmdStr, "A command string must be specified!");
 		reader.getIfPresent("foreground", foreground);
 		reader.getIfPresent("blocking", blocking);
@@ -604,7 +574,7 @@ Any CommandSpec::toAny(const bool forceAll) const {
 	return a;
 }
 
-void CommandConfig::load(AnyTableReader reader, int settingsVersion) {
+void CommandConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("commandsOnSessionStart", sessionStartCmds);
@@ -628,7 +598,7 @@ Any CommandConfig::addToAny(Any a, const bool forceAll) const {
 
 Question::Question(const Any& any) {
 	int settingsVersion = 1;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	String typeStr;

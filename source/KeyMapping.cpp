@@ -1,4 +1,5 @@
 #include "KeyMapping.h"
+#include "FPSciAnyTableReader.h"
 
 // Default key mapping
 KeyMapping::KeyMapping() {
@@ -31,7 +32,7 @@ KeyMapping::KeyMapping() {
 };
 
 KeyMapping::KeyMapping(const Any& any) : KeyMapping() {
-	AnyTableReader reader = AnyTableReader(any);
+	FPSciAnyTableReader reader(any);
 	for (String actionName : map.getKeys()) {
 		reader.getIfPresent(actionName, map[actionName]);
 	}

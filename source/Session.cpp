@@ -32,10 +32,11 @@
 #include "PlayerEntity.h"
 #include "Dialogs.h"
 #include "Weapon.h"
+#include "FPSciAnyTableReader.h"
 
 TrialCount::TrialCount(const Any& any) {
 	int settingsVersion = 1;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	switch (settingsVersion) {
@@ -63,7 +64,7 @@ Any TrialCount::toAny(const bool forceAll) const {
 
 SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 	TrialCount::defaultCount = timing.defaultTrialCount;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	switch (settingsVersion) {
 	case 1:
 		// Unique session info

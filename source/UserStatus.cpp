@@ -1,8 +1,9 @@
 #include "UserStatus.h"
+#include "FPSciAnyTableReader.h"
 
 UserSessionStatus::UserSessionStatus(const Any& any) {
 	int settingsVersion = 1; // used to allow different version numbers to be loaded differently
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	switch (settingsVersion) {
@@ -35,7 +36,7 @@ Any UserSessionStatus::toAny(const bool forceAll) const {
 
 UserStatusTable::UserStatusTable(const Any& any) {
 	int settingsVersion = 1; // used to allow different version numbers to be loaded differently
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	switch (settingsVersion) {

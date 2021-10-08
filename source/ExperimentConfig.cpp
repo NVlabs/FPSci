@@ -1,7 +1,7 @@
 #include "ExperimentConfig.h"
 
 ExperimentConfig::ExperimentConfig(const Any& any) : FpsConfig(any) {
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	switch (settingsVersion) {
 	case 1:
 		// Setup the default FPS config based on this
