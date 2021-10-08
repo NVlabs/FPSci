@@ -104,18 +104,20 @@ Any SceneConfig::toAny(const bool forceAll) const {
 	if (forceAll || def.name != name)					a["name"] = name;
 	if (forceAll || def.playerCamera != playerCamera)   a["playerCamera"] = playerCamera;
 	//if (forceAll || def.gravity != gravity)				a["gravity"] = gravity;
-	if (forceAll || def.resetHeight != resetHeight)		a["resetHeight"] = resetHeight;
-	if (forceAll || def.spawnPosition != spawnPosition) a["spawnPosition"] = spawnPosition;
-	if (forceAll || def.spawnHeadingDeg != spawnHeadingDeg)   a["spawnHeading"] = spawnHeadingDeg;
+	if (forceAll || !isnan(resetHeight))				a["resetHeight"] = resetHeight;
+	if (forceAll || !spawnPosition.isNaN())				a["spawnPosition"] = spawnPosition;
+	if (forceAll || !isnan(spawnHeadingDeg))			a["spawnHeading"] = spawnHeadingDeg;
+
 	return a;
 }
 
 bool SceneConfig::operator!=(const SceneConfig& other) const {
 	return name != other.name ||
+		playerCamera != other.playerCamera;
 		//gravity != other.gravity ||
-		resetHeight != other.resetHeight ||
-		spawnPosition != other.spawnPosition ||
-		spawnHeadingDeg != other.spawnHeadingDeg;
+		(isnan(resetHeight) ? !isnan(other.resetHeight) : resetHeight != other.resetHeight) ||
+		spawnPosition.isNaN() ? !other.spawnPosition.isNaN() : spawnPosition != other.spawnPosition ||				// Assume if any spawn coordinate is nan positions are equal
+		(isnan(spawnHeadingDeg) ? !isnan(other.spawnHeadingDeg) : spawnHeadingDeg != other.spawnHeadingDeg);
 }
 
 void RenderConfig::load(AnyTableReader reader, int settingsVersion) {
