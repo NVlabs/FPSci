@@ -95,6 +95,120 @@ public:
 		}
 	}
 
+	// Explicitly support arrays for the types above (this doesn't work well with a tempalted solution)
+
+	void get(const String& s, Array<Vector2>& v, const String& errMsg = "") {
+		try {
+			AnyTableReader::get(s, v, errMsg);	// Try normal read approach
+		}
+		catch (ParseError e) {
+			// Attempt to read Vector2, Vector3, Color3, Vector4, Color4 from array
+			const Any anyArray = any()[s];
+			for (int i = 0; i < anyArray.size(); i++) {
+				// Try to get as array
+				Array<float> a;
+				try {
+					anyArray[i].getArray(a);
+					v[i] = Vector2(a[0], a[1]);
+				}
+				catch (ParseError e) {
+					e.message = format("Failed to parse \"%s\" as Array<Vector2> from Any!", s.c_str());
+					throw e;
+				}
+			}
+		}
+	}
+
+	void get(const String& s, Array<Vector3>& v, const String& errMsg = "") {
+		try {
+			AnyTableReader::get(s, v, errMsg);	// Try normal read approach
+		}
+		catch (ParseError e) {
+			// Attempt to read Vector2, Vector3, Color3, Vector4, Color4 from array
+			const Any anyArray = any()[s];
+			for (int i = 0; i < anyArray.size(); i++) {
+				// Try to get as array
+				Array<float> a;
+				try {
+					anyArray[i].getArray(a);
+					v[i] = Vector3(a[0], a[1], a[2]);
+				}
+				catch (ParseError e) {
+					e.message = format("Failed to parse \"%s\" as Array<Vector3> from Any!", s.c_str());
+					throw e;
+				}
+			}
+		}
+	}
+
+	void get(const String& s, Array<Vector4>& v, const String& errMsg = "") {
+		try {
+			AnyTableReader::get(s, v, errMsg);	// Try normal read approach
+		}
+		catch (ParseError e) {
+			// Attempt to read Vector2, Vector3, Color3, Vector4, Color4 from array
+			const Any anyArray = any()[s];
+			for (int i = 0; i < anyArray.size(); i++) {
+				// Try to get as array
+				Array<float> a;
+				try {
+					anyArray[i].getArray(a);
+					v[i] = Vector4(a[0], a[1], a[2], a[3]);
+				}
+				catch (ParseError e) {
+					e.message = format("Failed to parse \"%s\" as Array<Vector4> from Any!", s.c_str());
+					throw e;
+				}
+			}
+		}
+	}
+
+	void get(const String& s, Array<Color3>& arr, const String& errMsg = "") {
+		try {
+			AnyTableReader::get(s, arr, errMsg);	// Try normal read approach
+		}
+		catch (ParseError e) {
+			// Attempt to read Vector2, Vector3, Color3, Vector4, Color4 from array
+			const Any anyArray = any()[s];
+			for (int i = 0; i < anyArray.size(); i++) {
+				// Try to get as array
+				Array<float> v;
+				try {
+					anyArray[i].getArray(v);
+					arr[i] = Color3(v[0], v[1], v[2]);
+				}
+				catch (ParseError e) {
+					e.message = format("Failed to parse \"%s\" as Array<Color3> from Any!", s.c_str()); 
+					throw e;
+				}
+			}
+		}
+	}
+
+	void get(const String& s, Array<Color4>& arr, const String& errMsg = "") {
+		try {
+			AnyTableReader::get(s, arr, errMsg);	// Try normal read approach
+		}
+		catch (ParseError e) {
+			// Attempt to read Vector2, Vector3, Color3, Vector4, Color4 from array
+			const Any anyArray = any()[s];
+			for (int i = 0; i < anyArray.size(); i++) {
+				// Try to get as array
+				Array<float> v;
+				try {
+					anyArray[i].getArray(v);
+					arr[i] = Color4(v[0], v[1], v[2], v[3]);
+				}
+				catch (ParseError e) {
+					e.message = format("Failed to parse \"%s\" as Array<Color4> from Any!", s.c_str());
+					throw e;
+				}
+			}
+		}
+	}
+
+	// Capture generic get(IfPresent) calls here to make sure we call our methods
+
 	// Method required to pass through cases unhandled above
 	template<class ValueType>
 	void get(const String& s, ValueType& v, const String& errMsg = "") {
@@ -112,6 +226,8 @@ public:
 			return false;
 		}
 	}
+
+	// Utility Methods
 
 	// Currently unused, allows getting scalar or vector from Any
 	template <class T>
