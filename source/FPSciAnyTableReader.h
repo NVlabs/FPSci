@@ -19,7 +19,7 @@ public:
 			try {
 				AnyTableReader::get(s, arr);		// We failed to get the Vector2, try to get an array (of length 2) instead
 				if (arr.length() != 2) {
-					e.message = format("\nArray specified for \"%s\" (Vector2) is of length %d (must be of length 2)", s.c_str(), arr.length());
+					e.message = format("\nArray specified for \"%s\" (Vector2) is of length %d (must be of length 2)", s.c_str(), arr.length()) + "\n" + errMsg;
 					throw e;
 				}
 				v.x = arr[0]; v.y = arr[1];
@@ -39,7 +39,7 @@ public:
 			try {
 				AnyTableReader::get(s, arr);		// We failed to get the Vector2, try to get an array (of length 3) instead
 				if (arr.length() != 3) {
-					e.message = format("\nArray specified for \"%s\" (Vector3) is of length %d (must be of length 3)", s.c_str(), arr.length());
+					e.message = format("\nArray specified for \"%s\" (Vector3) is of length %d (must be of length 3)", s.c_str(), arr.length()) + "\n" + errMsg;
 					throw e;
 				}
 				v.x = arr[0]; v.y = arr[1]; v.z = arr[2];
@@ -65,7 +65,7 @@ public:
 			try {
 				AnyTableReader::get(s, arr);		// We failed to get the Vector2, try to get an array (of length 4) instead
 				if (arr.length() != 4) {
-					e.message = format("\nArray specified for \"%s\" (Vector4) is of length %d (must be of length 4)", s.c_str(), arr.length());
+					e.message = format("\nArray specified for \"%s\" (Vector4) is of length %d (must be of length 4)", s.c_str(), arr.length()) + "\n" + errMsg;
 					throw e;
 				}
 				v.x = arr[0]; v.y = arr[1]; v.z = arr[2]; v.w = arr[3];
@@ -89,7 +89,7 @@ public:
 				c.r = v3.x; c.g = v3.y; c.b = v3.z; c.a = 1.f;
 			}
 			catch (ParseError e1) {
-				e.message = format("\nFailed to parse \"%s\" (Color4) as Color or array of length 3 or 4!", s.c_str());
+				e.message = format("\nFailed to parse \"%s\" (Color4) as Color or array of length 3 or 4!", s.c_str()) + "\n" + errMsg;
 				throw e;
 			}
 		}
@@ -112,7 +112,7 @@ public:
 					v[i] = Vector2(a[0], a[1]);
 				}
 				catch (ParseError e) {
-					e.message = format("Failed to parse \"%s\" as Array<Vector2> from Any!", s.c_str());
+					e.message = format("Failed to parse \"%s\" as Array<Vector2> from Any!", s.c_str()) + "\n" + errMsg;
 					throw e;
 				}
 			}
@@ -134,7 +134,7 @@ public:
 					v[i] = Vector3(a[0], a[1], a[2]);
 				}
 				catch (ParseError e) {
-					e.message = format("Failed to parse \"%s\" as Array<Vector3> from Any!", s.c_str());
+					e.message = format("Failed to parse \"%s\" as Array<Vector3> from Any!", s.c_str()) + "\n" + errMsg;
 					throw e;
 				}
 			}
@@ -156,7 +156,7 @@ public:
 					v[i] = Vector4(a[0], a[1], a[2], a[3]);
 				}
 				catch (ParseError e) {
-					e.message = format("Failed to parse \"%s\" as Array<Vector4> from Any!", s.c_str());
+					e.message = format("Failed to parse \"%s\" as Array<Vector4> from Any!", s.c_str()) + "\n" + errMsg;
 					throw e;
 				}
 			}
@@ -178,7 +178,7 @@ public:
 					arr[i] = Color3(v[0], v[1], v[2]);
 				}
 				catch (ParseError e) {
-					e.message = format("Failed to parse \"%s\" as Array<Color3> from Any!", s.c_str()); 
+					e.message = format("Failed to parse \"%s\" as Array<Color3> from Any!", s.c_str()) + "\n" + errMsg;
 					throw e;
 				}
 			}
@@ -200,7 +200,7 @@ public:
 					arr[i] = Color4(v[0], v[1], v[2], v[3]);
 				}
 				catch (ParseError e) {
-					e.message = format("Failed to parse \"%s\" as Array<Color4> from Any!", s.c_str());
+					e.message = format("Failed to parse \"%s\" as Array<Color4> from Any!", s.c_str()) + "\n" + errMsg;
 					throw e;
 				}
 			}
