@@ -1,7 +1,8 @@
 #include "SystemConfig.h"
+#include "FPSciAnyTableReader.h"
 
 SystemConfig::SystemConfig(const Any& any) {
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	int settingsVersion = 1;
 	reader.getIfPresent("settingsVersion", settingsVersion);
 	switch (settingsVersion) {

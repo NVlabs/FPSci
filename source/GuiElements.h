@@ -5,6 +5,7 @@
 #include "UserStatus.h"
 #include "TargetEntity.h"
 #include "Weapon.h"
+#include "FPSciAnyTableReader.h"
 
 class FPSciApp;
 class SessionConfig;
@@ -34,7 +35,7 @@ public:
 	bool showMenuOnStartup = true;								///< Show the user menu on startup?
 	bool showMenuBetweenSessions = true;						///< Show the user menu between session?
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, const bool forceAll = false) const;
 	bool allowAnyChange() const;
 };

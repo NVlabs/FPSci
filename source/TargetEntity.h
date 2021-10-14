@@ -1,5 +1,6 @@
 #pragma once
 #include <G3D/G3D.h>
+#include "FPSciAnyTableReader.h"
 
 struct Destination {
 public:
@@ -18,7 +19,7 @@ public:
 
 	Destination(const Any& any) {
 		int settingsVersion = 1;
-		AnyTableReader reader(any);
+		FPSciAnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
 
 		switch (settingsVersion) {
@@ -322,7 +323,7 @@ public:
     static shared_ptr<Entity> create (
 	const String&					name,
      Scene*                         scene,
-     AnyTableReader&                propertyTable,
+     AnyTableReader&           propertyTable,
      const ModelTable&				modelTable,
      const Scene::LoadOptions&		loadOptions
 	);

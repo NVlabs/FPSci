@@ -1,4 +1,5 @@
 #include "UserConfig.h"
+#include "FPSciAnyTableReader.h"
 
 template <class T>
 static bool operator!=(Array<T> a1, Array<T> a2) {
@@ -18,7 +19,7 @@ UserConfig::UserConfig(const Any& any) {
 	bool foundMouseDegPerMm = false;
 
 	int settingsVersion = 1; // used to allow different version numbers to be loaded differently
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 	switch (settingsVersion) {
 	case 1:
@@ -70,7 +71,7 @@ bool UserConfig::operator==(const UserConfig& other) const {
 
 UserTable:: UserTable(const Any& any) {
 	int settingsVersion = 1;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	switch (settingsVersion) {

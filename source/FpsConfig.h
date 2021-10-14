@@ -2,6 +2,7 @@
 #include <G3D/G3D.h>
 #include "Weapon.h"
 #include "GuiElements.h"
+#include "FPSciAnyTableReader.h"
 
 class SceneConfig {
 public:
@@ -50,7 +51,7 @@ public:
 	Sampler			samplerComposite = Sampler::video();		///< Sampler for sampling the shaderComposite iChannel0 input
 	Sampler			samplerFinal = Sampler::video();			///< Sampler for sampling composite (shader) output buffer into the final framebuffer
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 
 };
@@ -71,7 +72,7 @@ public:
 	bool			stillBetweenTrials = false;					///< Disable player motion between trials?
 	bool			resetPositionPerTrial = false;				///< Reset the player's position on a per trial basis (to scene default)
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -128,7 +129,7 @@ public:
 
 	Array<StaticHudElement> staticElements;										///< A set of static HUD elements to draw
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -141,7 +142,7 @@ public:
 	float			refTargetHitSoundVol = 1.0f;						///< Volume to play target hit sound at
 	bool			refTargetPlayFireSound = false;						///< Play the weapon's fire sound when shooting at the reference target
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -161,7 +162,7 @@ public:
 	// Trial count
 	int             defaultTrialCount = 5;						///< Default trial count
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -183,7 +184,7 @@ public:
 	Color4 outlineColor = Color4::clear();							///< Color to draw the feedback message background
 	Color4 backgroundColor = Color4(0.0f, 0.0f, 0.0f, 0.5f);		///< Background color
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -227,7 +228,7 @@ public:
 	bool			showRefDecals = true;								///< Show missed shot decals when shooting at the reference target?
 	Color3			previewColor = Color3(0.5, 0.5, 0.5);				///< Color to show preview targets in
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -244,7 +245,7 @@ public:
 		Color3::white() * 0.8f
 	};
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -264,7 +265,7 @@ public:
 	// Session parameter logging
 	Array<String> sessParamsToLog = { "frameRate", "frameDelay" };			///< Parameter names to log to the Sessions table of the DB
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -287,7 +288,7 @@ public:
 	Array<CommandSpec> trialStartCmds;						///< Command to run on start of a trial
 	Array<CommandSpec> trialEndCmds;							///< Command to run on end of a trial
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, const bool forceAll = false) const;
 };
 
@@ -347,7 +348,7 @@ public:
 	FpsConfig() {}
 
 	void load(const Any& any) {
-		AnyTableReader reader(any);
+		FPSciAnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
 		render.load(reader, settingsVersion);
 		player.load(reader, settingsVersion);

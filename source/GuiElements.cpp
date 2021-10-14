@@ -334,7 +334,7 @@ void WeaponControls::updateFireSpreadShape() {
 	m_config.fireSpreadShape = m_spreadShapes[m_spreadShapeIdx];
 }
 
-void MenuConfig::load(AnyTableReader reader, int settingsVersion) {
+void MenuConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("showMenuLogo", showMenuLogo);
