@@ -862,10 +862,8 @@ TEST_F(FPSciTests, TestTargetColors) {
 TEST_F(FPSciTests, TestFreshStart) {
 	// Make sure autogenereated config files aren't present from previous runs
 	bool failDelete = false;
-	// Can't delete the experiment config because it was generated for this run at the start, 
-	// and the program will hang with it still open somewhere else
-	//failDelete = remove("test/emptyconfig.Any");
-	//EXPECT_TRUE(failDelete) << "Experiment Config present from previous run!";
+	failDelete = remove("test/emptyconfig.Any");
+	EXPECT_TRUE(failDelete) << "Experiment Config present from previous run!";
 	failDelete = remove("test/emptyuser.Any");
 	EXPECT_TRUE(failDelete) << "User Config present from previous run!";
 	failDelete = remove("test/emptystatus.Any");
