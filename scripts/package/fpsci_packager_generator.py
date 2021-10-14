@@ -30,7 +30,7 @@ secondaryExcludeList = ['experimentconfig.Any', 'startupconfig.Any', 'userconfig
 # secondaryExcludeList = []
 
 # List of paths to search for to merge into the same distribution directory
-basePath = ['data-files', 'game', 'common']
+basePath = ['/data-files/', '/game/', '/common/']
 
 # Distribution path - where the output script will generate the distribution
 distPath = 'dist/'
@@ -108,7 +108,7 @@ if __name__ == '__main__':
                         for path in basePath:
                             dest = filename.find(path)
                             if dest > 0:
-                                dest += len(path) + 1
+                                dest += len(path)
                                 additionalPath = filename[dest:-len(basename)]
                                 # if this file is inside a compressed structure, skip copying it
                                 if additionalPath.find('.pk3') > 0 or additionalPath.find('.zip') > 0:
