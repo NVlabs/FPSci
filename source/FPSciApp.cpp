@@ -22,7 +22,8 @@ void FPSciApp::onInit() {
 	Random::common().reset(uint32(time(0)));
 
 	GApp::onInit();			// Initialize the G3D application (one time)
-	startupConfig.validateExperiments();
+	// TODO: Move validateExperiments() to a developer mode GUI button
+	//startupConfig.validateExperiments();
 	initExperiment();		// Initialize the experiment
 }
 
