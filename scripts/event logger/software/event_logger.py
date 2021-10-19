@@ -31,6 +31,7 @@ LOG_NAME_TIME_FORMAT = '%y-%m-%d_%H%M%S'
 # Create storage and lookups
 lastM1Time = 0; lastM2Time = 0; lastPdTime = 0; lastSwTime = 0
 timeLookup = {"M1": lastM1Time, "M2": lastM2Time, "PD": lastPdTime, "SW": lastSwTime}
+lastADCTime = 0 # The time the last ADC sample was
 t_offset_s = (pow(2,32)-1) * 1e-6 # Arduino `micros()` function wraps around after 2^32 - 1 microseconds (~71 minutes)
 num_offsets = 0 # The number of times the Arduino has wrapped around
 
