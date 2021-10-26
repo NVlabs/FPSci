@@ -155,7 +155,7 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 |`resolution2D`             |`Array<int>`| The resolution to render 2D content at (defaults to window resolution)       |
 |`resolution3D`             |`Array<int>`| The resolution to render 3D content at (defaults to window resolution)       |
 |`resolutionComposite`      |`Array<int>`| The resolution to render the composite result at (defaults to window resolution)     |
-|`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`), only valid if `split2DBuffer` = `true`! |
+|`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`) |
 |`shader3D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 3D content (as a `.pix`) |
 |`shaderComposite`          |file   | The (relative) path/filename of an (optional) shader to run on the composited 2D/3D content (as a `.pix`) |
 |`sampler2D`                |`Sampler`  | The sampler for resampling the `iChannel0` input to `shader2D`                       |
