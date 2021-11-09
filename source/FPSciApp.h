@@ -168,7 +168,6 @@ public:
 	shared_ptr<Texture>             reticleTexture;					///< Texture used for reticle
 	Table<String, shared_ptr<Texture>> hudTextures;					///< Textures used for the HUD
 	shared_ptr<GuiTheme>			theme;	
-	bool                            emergencyTurbo = false;			///< Lower rendering quality to improve performance
 
 	FPSciApp(const GApp::Settings& settings = GApp::Settings());
 

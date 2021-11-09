@@ -348,7 +348,7 @@ void FPSciApp::updateControls(bool firstSession) {
 		rect = m_renderControls->rect();
 		removeWidget(m_renderControls);
 	}
-	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
+	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(visible);
 	if (!rect.isEmpty()) m_renderControls->setRect(rect);
 	addWidget(m_renderControls);
