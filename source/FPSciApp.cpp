@@ -22,7 +22,8 @@ void FPSciApp::onInit() {
 	Random::common().reset(uint32(time(0)));
 
 	GApp::onInit();			// Initialize the G3D application (one time)
-	startupConfig.validateExperiments();
+	// TODO: Move validateExperiments() to a developer mode GUI button
+	//startupConfig.validateExperiments();
 	initExperiment();		// Initialize the experiment
 }
 
@@ -252,25 +253,69 @@ void FPSciApp::loadModels() {
 		Array<shared_ptr<ArticulatedModel>> tModels, expModels;
 		for (int i = 0; i <= TARGET_MODEL_SCALE_COUNT; ++i) {
 			const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
-			tSpec.set("scale", scale*default_scale);
+			tSpec.set("scale", scale * default_scale);
 			explosionSpec.set("scale", (20.0 * scale * explosionScales.get(id)));
 			tModels.push(ArticulatedModel::create(tSpec));
 			expModels.push(ArticulatedModel::create(explosionSpec));
 		}
 		targetModels.set(id, tModels);
 		m_explosionModels.set(id, expModels);
-	}
 
-	// Create a series of colored materials to choose from for target health
-	m_materials.clear();
-	for (int i = 0; i < m_MatTableSize; i++) {
-		float complete = (float)i / m_MatTableSize;
-		Color3 color = experimentConfig.targetView.healthColors[0] * complete + experimentConfig.targetView.healthColors[1] * (1.0f - complete);
+		// Create a series of colored materials to choose from for target health
+		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
+		materials.remove(id);
+		materials.set(id, makeMaterials(tconfig));
+	}
+}
+
+Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetConfig> tconfig) {
+	Array<shared_ptr<UniversalMaterial>> targetMaterials;
+	for (int i = 0; i < matTableSize; i++) {
+		float complete = (float)i / (matTableSize-1);
+		Color3 color;
+		if (notNull(tconfig) && tconfig->colors.length() > 0) {
+			color = lerpColor(tconfig->colors, complete);
+		}
+		else {
+			color = lerpColor(experimentConfig.targetView.healthColors, complete);
+		}
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
 		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
 		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-		m_materials.append(UniversalMaterial::create(materialSpecification));
+		targetMaterials.append(UniversalMaterial::create(materialSpecification));
+	}
+	return targetMaterials;
+}
+
+Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
+	if (colors.length() == 0) {
+		throw "Cannot interpolate from colors array with length 0!";
+	}
+	else if (colors.length() == 1 || a >= 1.0f) {
+		// a >= 1.0f indicates we should use the first color in the array 
+		// since above 1.0 would imply negative a negative array index
+		return colors[0];
+	}
+	else if (a <= 0.0f) {
+		// Use only the last color in the array
+		return colors[colors.length() - 1];
+	}
+	else
+	{
+		// For 2 or more colors, linearly interpolate between the N colors.
+		// a comes in the range [0, 1] where 
+		//     0 means to use the last value in colors
+		// and 1 means to use the first value in colors
+		// This means that a = 0 maps to colors[colors.length() - 1]
+		// and a = 1 maps to colors[0]
+		// We need to flip the direction and scale up to the number of elements in the array
+		// a will indicate which two entries to interpolate between (left of .), and how much of each to use (right of .)
+		float interp = (1.0f - a) * (colors.length() - 1);
+		int idx = int(floor(interp));
+		interp = interp - float(idx);
+		Color3 output = colors[idx] * (1.0f - interp) + colors[idx + 1] * interp;
+		return output;
 	}
 }
 
@@ -303,7 +348,7 @@ void FPSciApp::updateControls(bool firstSession) {
 		rect = m_renderControls->rect();
 		removeWidget(m_renderControls);
 	}
-	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
+	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(visible);
 	if (!rect.isEmpty()) m_renderControls->setRect(rect);
 	addWidget(m_renderControls);
@@ -503,7 +548,7 @@ void FPSciApp::initPlayer(bool setSpawnPosition) {
 
 	// Set player respawn location
 	float respawnPosHeight = player->respawnPosHeight();	// Report the respawn position height
-	if (isnan(sessConfig->scene.spawnPosition.x)) {
+	if (sessConfig->scene.spawnPosition.isNaN()) {
 		if (setSpawnPosition) { // This is the first spawn, copy the respawn position from the scene
 			player->setRespawnPosition(player->frame().translation);
 			respawnPosHeight = player->frame().translation.y;
@@ -628,16 +673,11 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		hudTextures.set(element.filename, Texture::fromFile(System::findDataFile(element.filename)));
 	}
 
-	// Create a series of colored materials to choose from for target health
-	m_materials.clear();
-	for (int i = 0; i < m_MatTableSize; i++) {
-		float complete = (float)i / m_MatTableSize;
-		Color3 color = sessConfig->targetView.healthColors[0] * complete + sessConfig->targetView.healthColors[1] * (1.0f - complete);
-		UniversalMaterial::Specification materialSpecification;
-		materialSpecification.setLambertian(Texture::Specification(color));
-		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-		m_materials.append(UniversalMaterial::create(materialSpecification));
+	// Update colored materials to choose from for target health
+	for (String id : sessConfig->getUniqueTargetIds()) {
+		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
+		materials.remove(id);
+		materials.set(id, makeMaterials(tconfig));
 	}
 
 	const String resultsDirPath = startupConfig.experimentList[experimentIdx].resultsDirPath;
@@ -1206,7 +1246,7 @@ void FPSciApp::updateTargetColor(const shared_ptr<TargetEntity>& target) {
 	shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
 	END_PROFILER_EVENT();
 	BEGIN_PROFILER_EVENT("updateTargetColor/materialSet");
-	shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health() * m_MatTableSize), m_MatTableSize - 1)];
+	shared_ptr<UniversalMaterial> mat = materials[target->id()][min((int)(target->health() * matTableSize), matTableSize - 1)];
 	pose->materialTable.set("core/icosahedron_default", mat);
 	END_PROFILER_EVENT();
 	BEGIN_PROFILER_EVENT("updateTargetColor/setPose");

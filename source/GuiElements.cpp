@@ -199,7 +199,7 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 	moveTo(Vector2(440, 300));
 }
 
-RenderControls::RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
+RenderControls::RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, const int numReticles, float& brightness,
 	const shared_ptr<GuiTheme>& theme, const int maxFrameDelay, const float minFrameRate, const float maxFrameRate, float width, float height) :
 	GuiWindow("Render Controls", theme, Rect2D::xywh(5,5,width,height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_app(app)
 {
@@ -223,7 +223,6 @@ RenderControls::RenderControls(FPSciApp* app, SessionConfig& config, bool& drawF
 	auto framePane = pane->addPane("Frame Rate/Delay");
 	framePane->beginRow(); {
 		framePane->addCheckBox("Show FPS", &drawFps);
-		framePane->addCheckBox("Turbo mode", &turbo);
 	}framePane->endRow();
 	framePane->beginRow(); {
 		auto c = framePane->addNumberBox("Framerate", &(config.render.frameRate), "fps", GuiTheme::LINEAR_SLIDER, minFrameRate, maxFrameRate, 1.0f);
@@ -334,7 +333,7 @@ void WeaponControls::updateFireSpreadShape() {
 	m_config.fireSpreadShape = m_spreadShapes[m_spreadShapeIdx];
 }
 
-void MenuConfig::load(AnyTableReader reader, int settingsVersion) {
+void MenuConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("showMenuLogo", showMenuLogo);

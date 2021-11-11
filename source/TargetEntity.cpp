@@ -14,7 +14,7 @@ static bool operator==(Array<T> a1, Array<T> a2) {
 
 TargetConfig::TargetConfig(const Any& any) {
 	int settingsVersion = 1;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	switch (settingsVersion) {
@@ -74,6 +74,8 @@ TargetConfig::TargetConfig(const Any& any) {
 		reader.getIfPresent("hitSoundVol", hitSoundVol);
 		reader.getIfPresent("destroyedSound", destroyedSound);
 		reader.getIfPresent("destroyedSoundVol", destroyedSoundVol);
+		reader.getIfPresent("colors", colors);
+
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in TargetConfig.\n", settingsVersion);
@@ -219,37 +221,33 @@ void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	if (m_destinations.size() < 2)
 		return;
 
-	if (m_spawnTime == 0) m_spawnTime = absoluteTime;
+	if (m_spawnTime == 0) m_spawnTime = absoluteTime;						// Get a spawn time (if we don't have one already)
 	SimTime time = fmod(absoluteTime-m_spawnTime, getPathTime());			// Compute a local time (modulus the path time)
 	
+	int nextDestIdx = (destinationIdx + 1) % m_destinations.size();			// Get the next destination's index
+
 	// Check if its time to move to the next segment
-	while(time < m_destinations[destinationIdx].time || time >= m_destinations[destinationIdx+1].time) {
-		destinationIdx++;										// Increment the destination index
-		destinationIdx %= m_destinations.size();					// Wrap if time goes over (works well for looped paths)
+	while(time < m_destinations[destinationIdx].time || time >= m_destinations[nextDestIdx].time) {
+		destinationIdx = nextDestIdx;										// Increment the desintation index
+		nextDestIdx = (destinationIdx + 1) % m_destinations.size();			// Update next destination index
 	}
 	
 	// Get the current and next destination index
 	Destination currDest = m_destinations[destinationIdx];
-	Destination nextDest = m_destinations[(destinationIdx + 1) % m_destinations.size()];
+	Destination nextDest = m_destinations[nextDestIdx];
 
 	// Compute the position by interpolating
-	float duration = nextDest.time - currDest.time;			// Get the total time for this "step
-	duration = max(duration, 0.0f);							// In "wrap" case immediately teleport back to start (0 duration step)
-	
-	float prog = 1.0f;										// By default make the "full step"
+	float duration = nextDest.time - currDest.time;			// Get the total time for this "step"
+	float prog = 0.0f;										// Use no progress for the "wrap" case (duration < 0 above)
 	if (duration > 0.0f) {
-		// Handle time "wrap" case here
-		if (nextDest.time < time) {
-			time -= getPathTime();							// Fix the "wrap" math for prog below
-		}
-		prog = (nextDest.time - time) / duration;			// Get the ratio of time in this step completed
+		prog = 1 - ((nextDest.time - time) / duration);		// Get the ratio of time in this step completed
 	}
 	
-	Point3 delta = currDest.position - nextDest.position; 	// Get the delta vector to move along
+	Point3 delta = nextDest.position - currDest.position; 	// Get the delta vector to move along
 	setFrame((prog*delta) + currDest.position + m_offset);	// Set the new positions
 
-	// Set changed time if it moved
-	if (delta != Point3(0.f, 0.f, 0.f) && m_offset != Vector3(0.f, 0.f, 0.f)) {
+	// Set changed time if target moved
+	if (delta != Point3(0.f, 0.f, 0.f)) {
 		m_lastChangeTime = System::time();
 	}
 
@@ -548,7 +546,7 @@ void FlyingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 shared_ptr<Entity> JumpingEntity::create(
 	const String&                  name,
 	Scene*                         scene,
-	AnyTableReader&                propertyTable,
+	AnyTableReader&				   propertyTable,
 	const ModelTable&              modelTable,
 	const Scene::LoadOptions&      loadOptions)
 {

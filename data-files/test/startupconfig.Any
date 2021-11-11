@@ -13,4 +13,16 @@
 		keymapConfigFilename = "test/keymap.Any";
 		systemConfigFilename = "test/systemconfig.Any";
 	};
+	
+    experimentList = [
+        { name = "default"; },
+		{
+			name = "freshStartExperiment";
+			experimentConfigFilename = "test/emptyconfig.Any";
+			userConfigFilename = "test/emptyuser.Any";
+			userStatusFilename = "test/emptystatus.Any";
+			keymapConfigFilename = "test/emptykeymap.Any";
+			systemConfigFilename = "test/emptysystem.Any";
+		},
+	];
 }

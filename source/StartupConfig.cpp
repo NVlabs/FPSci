@@ -1,8 +1,9 @@
 #include "StartupConfig.h"
 #include "ExperimentConfig.h"
+#include "FPSciAnyTableReader.h"
 
 ConfigFiles::ConfigFiles(const Any& any) {
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 
 	reader.get("name", name, "Must provide a name for every entry in the experimentList!");
 
@@ -74,7 +75,7 @@ StartupConfig StartupConfig::load(const String& filename) {
 StartupConfig::StartupConfig(const Any& any) {
 	bool foundDefault = false;
 	int settingsVersion = 1;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 	Array<String> sampleFilenames;
 	ConfigFiles sampleExperiment;
