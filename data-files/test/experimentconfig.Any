@@ -2,7 +2,7 @@
     settingsVersion = 1; 
     
     description = "TestExperiment";
-    scene = { name = "G3D Simple Cornell Box (Empty CO)"; };
+    scene = { name = "FPSci Test Cornell Box (Empty CO)"; };
 
     frameDelay = 0;
     frameRate = 60;
@@ -49,15 +49,11 @@
         {
             id = "defaultCamera";
             trials = ( { ids = ( "small"); count = 1; } );
-            scene = {
-                name = "FPSci Test Cornell Box (Empty CO)"; 
-            };
         },
         {
             id = "customCamera";
             trials = ( { ids = ( "small"); count = 1; } );
             scene = {
-                name = "FPSci Test Cornell Box (Empty CO)";
                 playerCamera = "customCamera";
             };
         },

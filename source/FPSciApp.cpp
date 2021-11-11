@@ -413,7 +413,7 @@ void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
 	String filename = Scene::sceneNameToFilename(sessConfig->scene.name);
-	scene()->toAny().save(filename, startupConfig.jsonAnyOutput);
+	scene()->toAny().save(filename);		// Save this w/o JSON format (breaks scene.Any file)
 }
 
 void FPSciApp::showPlayerControls() {
@@ -486,9 +486,15 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, simStepDuration());
 }
 
-void FPSciApp::initPlayer(bool firstSpawn) {
-	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+void FPSciApp::initPlayer(bool setSpawnPosition) {
 	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");	// Get player from the scene
+
+	// Update the player camera
+	const String pcamName = sessConfig->scene.playerCamera;
+	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(pcamName);
+	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, pcamName));
+	setActiveCamera(playerCamera);
 
 	// Set gravity and camera field of view
 	Vector3 grav = experimentConfig.player.gravity;
@@ -498,16 +504,30 @@ void FPSciApp::initPlayer(bool firstSpawn) {
 		FoV = sessConfig->render.hFoV;
 	}
 	pscene->setGravity(grav);
+
+	String respawnHeightSource;
 	playerCamera->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
+	if (!m_sceneHasPlayerEntity) {		// Scene doesn't have player entity, copy the player entity frame from the camera
+		respawnHeightSource = format("\"%s\" camera in scene.Any file", playerCamera->name());
+		player->setFrame(m_initialCameraFrames[playerCamera->name()]);
+		setSpawnPosition = true;		// Set the player spawn position from the camera
+	}
+	else {
+		respawnHeightSource = "PlayerEntity in scene.Any file";
+	}
+	playerCamera->setFrame(player->getCameraFrame());
 
 	// For now make the player invisible (prevent issues w/ seeing model from inside)
 	player->setVisible(false);
 
 	// Set the reset height
+	String resetHeightSource = "scene configuration \"resetHeight\" parameter";
 	float resetHeight = sessConfig->scene.resetHeight;
 	if (isnan(resetHeight)) {
-		float resetHeight = pscene->resetHeight();
+		resetHeightSource = "scene.Any Physics \"minHeight\" field";
+		resetHeight = pscene->resetHeight();
 		if (isnan(resetHeight)) {
+			resetHeightSource = "default value";
 			resetHeight = -1e6;
 		}
 	}
@@ -515,7 +535,7 @@ void FPSciApp::initPlayer(bool firstSpawn) {
 
 	// Update the respawn heading
 	if (isnan(sessConfig->scene.spawnHeadingDeg)) {
-		if (firstSpawn) {	// This is the first spawn in the scene
+		if (setSpawnPosition) {	// This is the first spawn in the scene
 			// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
 			Point3 view_dir = playerCamera->frame().lookVector();
 			float spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
@@ -527,13 +547,21 @@ void FPSciApp::initPlayer(bool firstSpawn) {
 	}
 
 	// Set player respawn location
+	float respawnPosHeight = player->respawnPosHeight();	// Report the respawn position height
 	if (sessConfig->scene.spawnPosition.isNaN()) {
-		if (firstSpawn) { // This is the first spawn, copy the respawn position from the scene
+		if (setSpawnPosition) { // This is the first spawn, copy the respawn position from the scene
 			player->setRespawnPosition(player->frame().translation);
+			respawnPosHeight = player->frame().translation.y;
 		}
 	}
 	else {	// Respawn position set by scene config
 		player->setRespawnPosition(sessConfig->scene.spawnPosition);
+		respawnPosHeight = sessConfig->scene.spawnPosition.y;
+		respawnHeightSource = "scene configuration \"spawnPosition\" parameter";
+	}
+
+	if (respawnPosHeight < resetHeight) {
+		throw format("Invalid respawn height (%f) from %s (< %f specified from %s)!", respawnPosHeight, respawnHeightSource.c_str(), resetHeight, resetHeightSource.c_str());
 	}
 
 	// Set player values from session config
@@ -621,6 +649,9 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		m_loadedScene = sessConfig->scene;
 	}
 
+	// Player parameters
+	initPlayer();
+
 	// Check for play mode specific parameters
 	if (notNull(weapon)) weapon->clearDecals();
 	weapon->setConfig(&sessConfig->weapon);
@@ -648,9 +679,6 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		materials.remove(id);
 		materials.set(id, makeMaterials(tconfig));
 	}
-
-	// Player parameters
-	initPlayer();
 
 	const String resultsDirPath = startupConfig.experimentList[experimentIdx].resultsDirPath;
 
@@ -710,19 +738,19 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 
 	// Make sure the scene has a "player" entity
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-
-	// Add a player if one isn't present in the scene
-	if (isNull(player)) {
+	m_sceneHasPlayerEntity = notNull(player);
+	if (!m_sceneHasPlayerEntity) {		// Add a player if one isn't present in the scene
 		logPrintf("WARNING: Didn't find a \"player\" specified in \"%s\"! Adding one at the origin.", sceneName);
 		shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
 		scene()->insert(newPlayer);
 	}
 
-	// Set the active camera to the player
-	const String pcamName = sessConfig->scene.playerCamera;
-	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(sessConfig->scene.playerCamera);
-	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, sessConfig->scene.playerCamera));
-	setActiveCamera(playerCamera);
+	// Build lookup of initial camera positions here
+	Array<shared_ptr<Camera>> camArray;
+	scene()->getTypedEntityArray<Camera>(camArray);
+	for (shared_ptr<Camera> cam : camArray) {
+		m_initialCameraFrames.set(cam->name(), cam->frame());
+	}
 
 	initPlayer(true);		// Initialize the player (first time for this scene)
 

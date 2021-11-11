@@ -34,6 +34,17 @@ scene = {
 };
 ```
 
+*Note:* The full priority chain for setting heading/position in the scene is as follows:
+
+1. This scene configuration's `spawnPosition` and `spawnHeading` parameters
+2. The [scene.Any file's `PlayerEntity`](scene.md#player-entity) `frame` value (if the `PlayerEntity` is specified)
+3. The specified `playerCamera`'s `frame` (if specified)
+4. The [scene.Any file's `defaultCamera`](scene.md#player-camera) `frame`
+
+Experiment designers should be careful to avoid setting the player spawn position Y-value lower than the player reset height (specified using either `resetHeight` above, the `minHeight` value in the [scene's `Physics` field](scene.md#physics), or a default value of 1e-6). A runtime exception will occur if this requirement is violated.
+
+One practical configuration would be to specify a set of cameras in the `scene.Any` file without specifying a `PlayerEntity` in that file, then in the experiment config use a line like `scene = { playerCamera = "cameraName"; };` to specify the use of a specific camera (named `cameraName` in this example). This would allow for different sessions to change the spawn location within the same scene.
+
 ### Scene Name
 If unspecified, the scene `name` field comes from:
 

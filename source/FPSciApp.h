@@ -103,8 +103,11 @@ protected:
 	MouseInputMode							m_mouseInputMode = MouseInputMode::MOUSE_CURSOR;	///< Does the mouse currently have control over the view
 	bool									m_showUserMenu = true;				///< Show the user menu after update?
 
-	bool									m_firstSession = true;
+	bool									m_firstSession = true;				///< Flag indicating that this is the first session run
 	UserConfig								m_lastSavedUser;					///< Used to track if user has changed since last save
+
+	bool									m_sceneHasPlayerEntity = false;		///< Flag indicating whether loaded scene has a PlayerEntity specified
+	Table<String, CFrame>					m_initialCameraFrames;				///< Initial frames for all cameras in the scene
 
 	shared_ptr<PlayerControls>				m_playerControls;					///< Player controls window (developer mode)
 	shared_ptr<RenderControls>				m_renderControls;					///< Render controls window (developer mode)

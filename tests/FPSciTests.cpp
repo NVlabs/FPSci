@@ -552,11 +552,11 @@ TEST_F(FPSciTests, TestCameraSelection) {
 
 	SelectSession("defaultCamera");
 	s_app->oneFrame();
-	EXPECT_TRUE(s_app->playerCamera->name() == "camera");
+	EXPECT_TRUE(s_app->playerCamera->name() == "camera") << "Camera name was " << s_app->playerCamera->name().c_str();
 
 	SelectSession("customCamera");
 	s_app->oneFrame();
-	EXPECT_TRUE(s_app->playerCamera->name() == "customCamera");
+	EXPECT_TRUE(s_app->playerCamera->name() == "customCamera") << "Camera name was " << s_app->playerCamera->name().c_str();
 
 }
 
