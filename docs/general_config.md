@@ -305,6 +305,7 @@ Questions are configured on a per experiment/session basis using the `questions`
 |`fullscreen`           |`bool`  | When set this opens the dialog in "fullscreen" mode, overlaying all of the rendered content (default is `false`) |
 |`showCursor`           |`bool`  | Allows the experiment designer to hide the cursor while responding to this dialog (default is `true`). Best used with `optionKeys` set otherwise there may be no way to answer the question. Not intended for use with `"Entry"` question types. |
 |`randomOrder`          |`bool`  | Randomize the option order for `MultipleChoice` and `Rating` questions optionally    |
+|`optionsPerRow`        |`int`   | The number of options to display per row (for `MultipleChoice` questions only)   |
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
 
@@ -322,12 +323,18 @@ The user can specify one or more questions using the `questions` array, as demon
         "optionKeys" : ["A", "B", "C"],
         "fullscreen": true,
         "showCursor" : false,
-        "randomOrder": false
+        "randomOrder": true,
+        "optionsPerRow": 3
     }
 ]
 ```
 
 Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log. Note that `MultipleChoise` and `Rating` questions include a confirmation button that must be pressed to confirm the selection before proceeding.
+
+There are 2 primary differences between questions with `type` of `MultipleChoice` and `Rating`. These are:
+
+1. `MultipleChoice` questions can specify an `optionsPerRow` field to control layout (otherwise defaults to 3). `Rating` questions always use a single row of responses (`optionsPerRow` = total # of options)
+2. `MultipleChoice` questions default to `randomOrder` = `true` (randomize option order) whereas `Rating` questions default to the provided option ordering
 
 ## HUD settings
 | Parameter Name        |Units      | Description                                                                                                           |
