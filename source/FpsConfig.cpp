@@ -630,7 +630,17 @@ Question::Question(const Any& any) {
 		reader.getIfPresent("title", title);
 		reader.getIfPresent("fullscreen", fullscreen);
 		reader.getIfPresent("showCursor", showCursor);
-		reader.getIfPresent("randomOrder", randomOrder);
+		if (!reader.getIfPresent("randomOrder", randomOrder)) {
+			if (type == Type::Rating) {
+				randomOrder = false;		// Default to non-random order for rating questions
+			}
+		}
+		if (reader.getIfPresent("optionsPerRow", optionsPerRow)) {
+			if (type == Type::Rating) {		
+				// Ratings will ignore the optionsPerRow (always uses 1 row)
+				logPrintf("WARNING: Specified \"optionsPerRow\" parameter is ignored when using a \"Rating\" type question. If you'd like to change the layout look into using a \"MultipleChoice\" question instead!");
+			}
+		}
 
 		// Handle (optional) key binds for options (if provided)
 		if (type == Type::Rating || type == Type::MultipleChoice) {

@@ -440,7 +440,7 @@ void FPSciApp::presentQuestion(Question question) {
 		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
 			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
 		}
-		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, question.showCursor, 3, size, !question.fullscreen);
+		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, question.showCursor, question.optionsPerRow, size, !question.fullscreen);
 		break;
 	case Question::Type::Entry:
 		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false, size, !question.fullscreen);

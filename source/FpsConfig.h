@@ -310,6 +310,7 @@ public:
 	bool fullscreen = false;			///< Show this question as fullscreen?
 	bool showCursor = true;				///< Show cursor during question response window (allow clicking for selection)?
 	bool randomOrder = true;			///< Randomize question response order?
+	int optionsPerRow = 3;				///< Number of options per row (defaults to 3 for multiple choice, # of options for ratings)
 
 	Question() {};
 	Question(const Any& any);
