@@ -621,8 +621,12 @@ Question::Question(const Any& any) {
 			type = Type::Rating;
 			reader.get("options", options, "An \"options\" Array must be specified with \"Rating\" style questions!");
 		}
+		else if (!typeStr.compare("DropDown")) {
+			type = Type::DropDown;
+			reader.get("options", options, "An \"options\" Array must be specified with \"DropDown\" style questions!");
+		}
 		else {
-			throw format("Unrecognized question \"type\" String \"%s\". Valid options are \"MultipleChoice\" or \"Entry\"", typeStr);
+			throw format("Unrecognized question \"type\" String \"%s\". Valid options are \"MultipleChoice\", \"Rating\", \"DropDown\", or \"Entry\"", typeStr);
 		}
 
 		// Get the question prompt (required) and title (optional)
@@ -631,8 +635,8 @@ Question::Question(const Any& any) {
 		reader.getIfPresent("fullscreen", fullscreen);
 		reader.getIfPresent("showCursor", showCursor);
 		if (!reader.getIfPresent("randomOrder", randomOrder)) {
-			if (type == Type::Rating) {
-				randomOrder = false;		// Default to non-random order for rating questions
+			if (type == Type::MultipleChoice) {
+				randomOrder = true;		// Default to random order for multiple choice questions
 			}
 		}
 		if (reader.getIfPresent("optionsPerRow", optionsPerRow)) {

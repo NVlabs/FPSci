@@ -5,7 +5,7 @@
 class DialogBase : public GuiWindow {
 protected:
 	String m_prompt;
-	DialogBase(const shared_ptr<GuiTheme> theme, String title = "Dialog", Point2 pos = Point2(200.f, 200.0f), Point2 size = Point2(400.0f, 200.0f)) :
+	DialogBase(const shared_ptr<GuiTheme> theme, const String& title = "Dialog", Point2 pos = Point2(200.f, 200.0f), Point2 size = Point2(400.0f, 200.0f)) :
 		GuiWindow(title, theme, Rect2D::xywh(pos, size), GuiTheme::MENU_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE) {};
 public:
 	String result = "";
@@ -56,8 +56,8 @@ protected:
 		}
 	}
 
-	SelectionDialog(String prompt, Array<String> options, const shared_ptr<GuiTheme>& theme,
-		String title = "Selection", bool submitButton = false, int itemsPerRow = 3,
+	SelectionDialog(const String& prompt, const Array<String>& options, const shared_ptr<GuiTheme>& theme,
+		const String& title = "Selection", bool submitButton = false, int itemsPerRow = 3,
 		Point2 size = Point2(400.0f, 400.0f), bool resize = true, Point2 pos = Point2(200.0f, 200.0f),	GFont::XAlign promptAlign = GFont::XALIGN_CENTER) :
 		DialogBase(theme, title, pos, size)
 	{
@@ -76,7 +76,7 @@ protected:
 		int cnt = 0;
 		int i = 0;
 		const int rows = options.length() / itemsPerRow;
-		for (String option : options) {
+		for (const String& option : options) {
 			cnt %= itemsPerRow;
 			if (cnt == 0) {
 				pane->beginRow();
@@ -121,8 +121,8 @@ protected:
 	};
 
 public:
-	static shared_ptr<SelectionDialog> create(String prompt, Array<String> options, const shared_ptr<GuiTheme> theme,
-		String title = "Selection", bool submitBtn = false, int itemsPerRow = 3, Point2 size = Point2(400.0f, 200.0f), bool resize = true, Point2 position = Point2(200.0f, 200.0f))
+	static shared_ptr<SelectionDialog> create(const String& prompt, const Array<String>& options, const shared_ptr<GuiTheme> theme,
+		const String& title = "Selection", bool submitBtn = false, int itemsPerRow = 3, Point2 size = Point2(400.0f, 200.0f), bool resize = true, Point2 position = Point2(200.0f, 200.0f))
 	{
 		return createShared<SelectionDialog>(prompt, options, theme, title, submitBtn, itemsPerRow,  size, resize, position);
 	}
@@ -130,20 +130,20 @@ public:
 
 class YesNoDialog : public SelectionDialog {
 protected:
-	YesNoDialog(String question, const shared_ptr<GuiTheme> theme, String title = "Dialog", bool submitBtn=false) :
+	YesNoDialog(const String& question, const shared_ptr<GuiTheme> theme, const String& title = "Dialog", bool submitBtn=false) :
 		SelectionDialog(question, Array<String>{"Yes", "No"}, theme, title, submitBtn) {};
 public:
-	static shared_ptr<YesNoDialog> create(String question, const shared_ptr<GuiTheme> theme, String title="Dialog", bool submitBtn=false){ 
+	static shared_ptr<YesNoDialog> create(const String& question, const shared_ptr<GuiTheme> theme, const String& title="Dialog", bool submitBtn=false){ 
 		return createShared<YesNoDialog>(question, theme, title, submitBtn);
 	}
 };
 
 class YesNoCancelDialog : public SelectionDialog {
 protected:
-	YesNoCancelDialog(String question, const shared_ptr<GuiTheme> theme, String title = "Dialog", bool submitBtn=false) :
+	YesNoCancelDialog(const String& question, const shared_ptr<GuiTheme> theme, const String& title = "Dialog", bool submitBtn=false) :
 		SelectionDialog(question, Array<String>{"Yes", "No", "Cancel"}, theme, title, submitBtn) {};
 public:
-	static shared_ptr<YesNoCancelDialog> create(String question, const shared_ptr<GuiTheme> theme, String title = "Dialog", bool submitBtn=false) {
+	static shared_ptr<YesNoCancelDialog> create(const String& question, const shared_ptr<GuiTheme> theme, const String& title = "Dialog", bool submitBtn=false) {
 		return createShared<YesNoCancelDialog>(question, theme, title, submitBtn);
 	}
 };
@@ -165,7 +165,7 @@ protected:
 		}
 	}
 
-	TextEntryDialog(String prompt, const shared_ptr<GuiTheme> theme, String title = "Dialog", bool allowEmpty = true,
+	TextEntryDialog(const String& prompt, const shared_ptr<GuiTheme> theme, const String& title = "Dialog", bool allowEmpty = true,
 		Point2 size = Point2(400.0f, 200.0f), bool resize=true, Point2 position = Point2(200.0f, 200.0f)) :
 		DialogBase(theme, title, position, size) 
 	{
@@ -196,8 +196,8 @@ protected:
 		if (resize) { pack(); }
 	}
 public:
-	static shared_ptr<TextEntryDialog> create(String prompt, const shared_ptr<GuiTheme> theme, 
-		String title = "Dialog", bool allowEmpty=true, Point2 size = Point2(400.0f, 300.0f), bool resize=true, Point2 position = Point2(200.0f, 200.0f))
+	static shared_ptr<TextEntryDialog> create(const String& prompt, const shared_ptr<GuiTheme> theme, 
+		const String& title = "Dialog", bool allowEmpty=true, Point2 size = Point2(400.0f, 300.0f), bool resize=true, Point2 position = Point2(200.0f, 200.0f))
 	{
 		return createShared<TextEntryDialog>(prompt, theme, title, allowEmpty, size, resize, position);
 	}
@@ -205,13 +205,54 @@ public:
 
 class RatingDialog : public SelectionDialog {
 protected:
-	RatingDialog(String prompt, Array<String> levels, const shared_ptr<GuiTheme> theme,
-		String title = "Dialog", bool submitBtn=false, Point2 size = Point2(400.0f, 200.0f), bool resize=true, Point2 position = Point2(200.0f, 200.0f)) :
+	RatingDialog(const String& prompt, const Array<String>& levels, const shared_ptr<GuiTheme> theme,
+		const String& title = "Dialog", bool submitBtn=false, Point2 size = Point2(400.0f, 200.0f), bool resize=true, Point2 position = Point2(200.0f, 200.0f)) :
 		SelectionDialog(prompt, levels, theme, title, submitBtn, levels.size(), size, resize, position, GFont::XALIGN_LEFT) {}
 public:
-	static shared_ptr<RatingDialog> create(String prompt, Array<String> levels, const shared_ptr<GuiTheme> theme,
-		String title = "Dialog", bool submitBtn=false, Point2 size = Point2(400.0f, 200.0f), bool resize=true, Point2 position = Point2(200.0f, 200.0f))
+	static shared_ptr<RatingDialog> create(const String& prompt, const Array<String>& levels, const shared_ptr<GuiTheme> theme,
+		const String& title = "Dialog", bool submitBtn=false, Point2 size = Point2(400.0f, 200.0f), bool resize=true, Point2 position = Point2(200.0f, 200.0f))
 	{
 		return createShared<RatingDialog>(prompt, levels, theme, title, submitBtn, size, resize, position);
 	}
+};
+
+class DropDownDialog : public DialogBase {
+protected:
+	int m_selIdx = 0;				// Default to first index
+	GuiDropDownList* m_dropDown;	// Drop down selection list
+	
+	void submitCallback() {
+		complete = true;
+		setVisible(false);
+	}
+
+	DropDownDialog(const String& prompt, const Array<String>& options, const shared_ptr<GuiTheme> theme, const String& title = "Dialog", 
+		Point2 size = Point2(400.f, 200.f), bool resize=true, Point2 position = Point2(200.f, 200.f)) : DialogBase(theme, title, position, size) 
+	{
+		m_prompt = prompt;
+		GuiPane* pane = GuiWindow::pane();
+
+		pane->beginRow(); {
+			auto l = pane->addLabel(m_prompt);
+			l->setSize(0.99f * size[0], 50.0f);
+		} pane->endRow();
+		pane->beginRow(); {
+			m_dropDown = pane->addDropDownList("", options, &m_selIdx);
+			m_dropDown->setSize(0.99f * size[0], size[1] - 150.0f);
+		} pane->endRow();
+		pane->beginRow(); {
+			auto b = pane->addButton("Submit", std::bind(&DropDownDialog::submitCallback, this));
+			b->setSize(0.99f * size[0], 50.0f);
+		} pane->endRow();
+
+		if (resize) pack();
+
+	}
+public:
+	static shared_ptr<DropDownDialog> create(const String& prompt, const Array<String>& options, const shared_ptr<GuiTheme> theme, const String& title = "Dialog",
+		Point2 size = Point2(400.f, 200.f), bool resize = true, Point2 position = Point2(200.f, 200.f))
+	{
+		return createShared<DropDownDialog>(prompt, options, theme, title, size, resize, position);
+	}
+
 };

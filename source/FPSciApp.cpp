@@ -451,6 +451,9 @@ void FPSciApp::presentQuestion(Question question) {
 		}
 		dialog = RatingDialog::create(question.prompt, options, theme, question.title, question.showCursor, size, !question.fullscreen);
 		break;
+	case Question::Type::DropDown:
+		dialog = DropDownDialog::create(question.prompt, options, theme, question.title, size, !question.fullscreen);
+		break;
 	default:
 		throw "Unknown question type!";
 		break;

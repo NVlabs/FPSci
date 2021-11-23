@@ -297,7 +297,7 @@ Questions are configured on a per experiment/session basis using the `questions`
 
 | Parameter Name        | Units  | Description                                                                      |
 |-----------------------|--------|----------------------------------------------------------------------------------|
-|`type`                 |`String`| The question type (required), can be `"MultipleChoice"`, `Rating`, or (text) `"Entry"`      |
+|`type`                 |`String`| The question type (required), can be `"MultipleChoice"`, `Rating`, `DropDown` or (text) `"Entry"`      |
 |`prompt`               |`String`| The question prompt (required), a string to present the user with                |
 |`title`                |`String`| The title for the feedback prompt                                                |
 |`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only          |
@@ -329,7 +329,7 @@ The user can specify one or more questions using the `questions` array, as demon
 ]
 ```
 
-Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log. Note that `MultipleChoise` and `Rating` questions include a confirmation button that must be pressed to confirm the selection before proceeding.
+Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log. Note that `MultipleChoice` and `Rating` questions include a confirmation button that must be pressed to confirm the selection before proceeding. `DropDown` questions use the same approach with a drop-down menu instead of button-based selection, note `DropDown` questions can be fullscreen but currently still require use of the cursor (`optionsKeys` are ignored).
 
 There are 2 primary differences between questions with `type` of `MultipleChoice` and `Rating`. These are:
 
