@@ -306,6 +306,10 @@ Questions are configured on a per experiment/session basis using the `questions`
 |`showCursor`           |`bool`  | Allows the experiment designer to hide the cursor while responding to this dialog (default is `true`). Best used with `optionKeys` set otherwise there may be no way to answer the question. Not intended for use with `"Entry"` question types. |
 |`randomOrder`          |`bool`  | Randomize the option order for `MultipleChoice` and `Rating` questions optionally    |
 |`optionsPerRow`        |`int`   | The number of options to display per row (for `MultipleChoice` questions only)   |
+|`fontSize`             |`float` | Set the base font size for all elements in the question                          |
+|`promptFontSize`       |`float` | The font size for the prompt text (overrides `fontSize`)                         |
+|`optionFontSize`       |`float` | The font size for the presented options (overrides `fontSize`), does not impact `DropDown` or `Entry` questions |
+|`buttonFontSize`       |`float` | The font size for the question clear/submit buttons if present (overrides `fontSize`)     |
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
 
@@ -314,7 +318,8 @@ The user can specify one or more questions using the `questions` array, as demon
     {
         "type": "Entry",
         "prompt": "Write some text!",
-        "title": "Example text entry"
+        "title": "Example text entry",
+        "fontSize": -1                  // This is the default value for all font sizes (corresponds to 12pt font)
     },
     {
         "type": "MultipleChoice",
@@ -324,7 +329,11 @@ The user can specify one or more questions using the `questions` array, as demon
         "fullscreen": true,
         "showCursor" : false,
         "randomOrder": true,
-        "optionsPerRow": 3
+        "optionsPerRow": 3,
+
+        "promptFontSize" = 12,          // Default for all fonts
+        "optionFontSize" = 20,          // Demonstration of using different size
+        "buttonFontSize" = 16
     }
 ]
 ```

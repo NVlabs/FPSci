@@ -312,6 +312,9 @@ public:
 	bool showCursor = true;				///< Show cursor during question response window (allow clicking for selection)?
 	bool randomOrder = false;			///< Randomize question response order?
 	int optionsPerRow = 3;				///< Number of options per row (defaults to 3 for multiple choice, # of options for ratings)
+	float promptFontSize = -1.f;		///< Font size for prompt text
+	float optionFontSize = -1.f;		///< Font size for question entry/options
+	float buttonFontSize = -1.f;		///< Font size for submit/cancel buttons
 
 	Question() {};
 	Question(const Any& any);

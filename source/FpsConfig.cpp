@@ -654,6 +654,18 @@ Question::Question(const Any& any) {
 				throw format("Length of \"optionKeys\" (%d) did not match \"options\" (%d) for question!", optionKeys.length(), options.length());
 			}
 		}
+
+		// Get font sizes for elements
+		float baseFontSize;
+		if (reader.getIfPresent("fontSize", baseFontSize)) {
+			promptFontSize = baseFontSize;
+			optionFontSize = baseFontSize;
+			buttonFontSize = baseFontSize;
+		}
+		reader.getIfPresent("promptFontSize", promptFontSize);
+		reader.getIfPresent("optionFontSize", optionFontSize);
+		reader.getIfPresent("buttonFontSize", buttonFontSize);
+
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in Question.\n", settingsVersion);
