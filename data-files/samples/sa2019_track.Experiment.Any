@@ -35,6 +35,9 @@
       autoFire = true;
       damagePerSecond = 1.0;
       maxAmmo = 3600;
+      // This is a more pleasant sound to play for rapid fire weapons
+      fireSound = "sound/fpsci_noise_50ms.wav";
+      fireSoundLoop = true;
     };
 
   // UI settings.
