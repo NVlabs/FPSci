@@ -1,18 +1,19 @@
 // Sample of the 'TRACK' task as in Spjut et al. 2019.
+// See https://research.nvidia.com/publication/2019-11_Latency-of-30
 // Use this to design your own experiment if you want to use similar tasks/conditions.
 // Refresh rate and latency to be configured by users for their specific environment.
 // Latency indicator is enabled by default for latency measurement.
 
 {
-  // global settings.
+    // global settings.
     showMenuBetweenSessions = False;
     logToSingleDb = False;
     clearMissDecalsWithReference = True;
     showReferenceTargetMissDecals = False;
 
     scene = {
-      spawnPostiion = Point3(46.08, -2.2, 0);
-      spawnHeading = -90;
+        spawnPostiion = Point3(46.08, -2.2, 0);
+        spawnHeading = -90;
     };
 
     feedbackDuration = 0.0, // Time allocated for providing user feedback
@@ -20,7 +21,7 @@
     maxTrialDuration = 6.0, // Maximum duration allowed for completion of the task
     referenceTargetSize = 0.02;
 
-  // feedback settings.
+    // feedback settings.
     trialFeedbackDuration = 0.0;
     referenceTargetInitialFeedback = "Begin Experiment.";
     sessionFeedbackDuration = 5.0;
@@ -28,26 +29,26 @@
     allSessionsCompleteFeedback = "All Sessions Complete! Thank you for participating in this experiment.";
     blockCompleteFeedback = "Block %lastBlock of %totalBlocks completed. Your score so far is %totalTimeLeftS.\nStarting Block %currBlock.";
     
-  // weapon settings.
+    // weapon settings.
     weapon = {
-      id = "laser";
-      firePeriod = 0.0;
-      autoFire = true;
-      damagePerSecond = 1.0;
-      maxAmmo = 3600;
-      // This is a more pleasant sound to play for rapid fire weapons
-      fireSound = "sound/fpsci_noise_50ms.wav";
-      fireSoundLoop = true;
+        id = "laser";
+        firePeriod = 0.0;
+        autoFire = true;
+        damagePerSecond = 1.0;
+        maxAmmo = 3600;
+        // This is a more pleasant sound to play for rapid fire weapons
+        fireSound = "sound/fpsci_noise_50ms.wav";
+        fireSoundLoop = true;
     };
 
-  // UI settings.
+    // UI settings.
     showHUD = False;
     renderWeaponStatus = True;
     cooldownMode = "ring";
     cooldownInnerRadius = 40.0;
     cooldownColor = Color4(1.0,1.0,1.0,0.8);
     
-  // LDAT settings.
+    // LDAT settings.
     renderClickPhoton = True;
     clickPhotonSide = "left";
     clickPhotonSize = Point2(0.05,0.095);
@@ -57,146 +58,146 @@
         Color3(0.8,0.8,0.8)
     ];
     
-  // session settings.
-  sessions = (
+    // session settings.
+    sessions = (
 
-    {
+        {
 
-      id = "60hz_0delay",
+            id = "60hz_0delay",
 
-      frameRate = 60,
+            frameRate = 60,
 
-      frameDelay = 0,
+            frameDelay = 0,
 
-      blockCount = 10,
-      trials = [
-        {ids = ["straight_fly"], count = 2},
-        {ids = ["stray_fly_easy"], count = 5},
-        {ids = ["strafe_jump"], count = 5}
-      ],
-    },
+            blockCount = 10,
+            trials = [
+                {ids = ["straight_fly"], count = 2},
+                {ids = ["stray_fly_easy"], count = 5},
+                {ids = ["strafe_jump"], count = 5}
+            ],
+        },
 
-    {
+        {
 
-      id = "60hz_2delay",
+            id = "60hz_2delay",
 
-      frameRate = 60,
+            frameRate = 60,
 
-      frameDelay = 2,
+            frameDelay = 2,
 
-      blockCount = 10,
-      trials = [
-        {ids = ["straight_fly"], count = 2},
-        {ids = ["stray_fly_easy"], count = 5},
-        {ids = ["strafe_jump"], count = 5}
-      ],
-    },
+            blockCount = 10,
+            trials = [
+                {ids = ["straight_fly"], count = 2},
+                {ids = ["stray_fly_easy"], count = 5},
+                {ids = ["strafe_jump"], count = 5}
+            ],
+        },
 
-    {
+        {
 
-      id = "120hz_0delay",
+            id = "120hz_0delay",
 
-      frameRate = 120,
+            frameRate = 120,
 
-      frameDelay = 0,
+            frameDelay = 0,
 
-      blockCount = 10,
-      trials = [
-        {ids = ["straight_fly"], count = 2},
-        {ids = ["stray_fly_easy"], count = 5},
-        {ids = ["strafe_jump"], count = 5}
-      ],
-    },
+            blockCount = 10,
+            trials = [
+                {ids = ["straight_fly"], count = 2},
+                {ids = ["stray_fly_easy"], count = 5},
+                {ids = ["strafe_jump"], count = 5}
+            ],
+        },
 
-    {
+        {
 
-      id = "120hz_4delay",
+            id = "120hz_4delay",
 
-      frameRate = 120,
+            frameRate = 120,
 
-      frameDelay = 4,
+            frameDelay = 4,
 
-      blockCount = 10,
-      trials = [
-        {ids = ["straight_fly"], count = 2},
-        {ids = ["stray_fly_easy"], count = 5},
-        {ids = ["strafe_jump"], count = 5}
-      ],
-    },
+            blockCount = 10,
+            trials = [
+                {ids = ["straight_fly"], count = 2},
+                {ids = ["stray_fly_easy"], count = 5},
+                {ids = ["strafe_jump"], count = 5}
+            ],
+        },
 
-    {
+        {
 
-      id = "240hz_0delay",
+            id = "240hz_0delay",
 
-      frameRate = 240,
+            frameRate = 240,
 
-      frameDelay = 0,
+            frameDelay = 0,
 
-      blockCount = 10,
-      trials = [
-        {ids = ["straight_fly"], count = 2},
-        {ids = ["stray_fly_easy"], count = 5},
-        {ids = ["strafe_jump"], count = 5}
-      ],
-    },
+            blockCount = 10,
+            trials = [
+                {ids = ["straight_fly"], count = 2},
+                {ids = ["stray_fly_easy"], count = 5},
+                {ids = ["strafe_jump"], count = 5}
+            ],
+        },
 
-    {
+        {
 
-      id = "240hz_8delay",
+            id = "240hz_8delay",
 
-      frameRate = 240,
+            frameRate = 240,
 
-      frameDelay = 8,
+            frameDelay = 8,
 
-      blockCount = 10,
-      trials = [
-        {ids = ["straight_fly"], count = 2},
-        {ids = ["stray_fly_easy"], count = 5},
-        {ids = ["strafe_jump"], count = 5}
-      ],
-    },
+            blockCount = 10,
+            trials = [
+                {ids = ["straight_fly"], count = 2},
+                {ids = ["stray_fly_easy"], count = 5},
+                {ids = ["strafe_jump"], count = 5}
+            ],
+        },
 
-  );
+    );
 
-  // target settings.
-  targets = (
-    {
-      "id": "straight_fly",
-      "destSpace": "player",
-      "elevationLocked": false,
-      "speed": [ 10, 20 ],
-      "visualSize": [ 0.034, 0.034 ],
-      "eccH": [ 5.0, 15.0 ],
-      "eccV": [ 0.0, 1.0 ],
-      "motionChangePeriod": [ 1000000, 1000000 ],
-      "jumpEnabled": false
-    },
-    {
-      "id": "stray_fly_easy",
-      "destSpace": "player",
-      "elevationLocked": false,
-      "speed": [ 10, 20 ],
-      "visualSize": [ 0.034, 0.034 ],
-      "eccH": [ 5.0, 15.0 ],
-      "eccV": [ 0.0, 1.0 ],
-      "motionChangePeriod": [ 1.0, 1.2 ],
-      "jumpEnabled": false
-    },
-    {
-      "id": "strafe_jump",
-      "destSpace": "player",
-      "elevationLocked": true,
-      "speed": [ 10, 20 ],
-      "visualSize": [ 0.034, 0.034 ],
-      "eccH": [ 5.0, 15.0 ],
-      "eccV": [ 0.0, 1.0 ],
-      "motionChangePeriod": [ 1.0, 1.2 ],
-      "jumpEnabled": true,
-      "distance": [ 13, 15],
-      "jumpPeriod": [ 0.3, 0.6 ],
-      "jumpSpeed": [7, 7],
-      "accelGravity": [20, 20]
-    },
-  );
+    // target settings.
+    targets = (
+        {
+            "id": "straight_fly",
+            "destSpace": "player",
+            "elevationLocked": false,
+            "speed": [ 10, 20 ],
+            "visualSize": [ 0.034, 0.034 ],
+            "eccH": [ 5.0, 15.0 ],
+            "eccV": [ 0.0, 1.0 ],
+            "motionChangePeriod": [ 1000000, 1000000 ],
+            "jumpEnabled": false
+        },
+        {
+            "id": "stray_fly_easy",
+            "destSpace": "player",
+            "elevationLocked": false,
+            "speed": [ 10, 20 ],
+            "visualSize": [ 0.034, 0.034 ],
+            "eccH": [ 5.0, 15.0 ],
+            "eccV": [ 0.0, 1.0 ],
+            "motionChangePeriod": [ 1.0, 1.2 ],
+            "jumpEnabled": false
+        },
+        {
+            "id": "strafe_jump",
+            "destSpace": "player",
+            "elevationLocked": true,
+            "speed": [ 10, 20 ],
+            "visualSize": [ 0.034, 0.034 ],
+            "eccH": [ 5.0, 15.0 ],
+            "eccV": [ 0.0, 1.0 ],
+            "motionChangePeriod": [ 1.0, 1.2 ],
+            "jumpEnabled": true,
+            "distance": [ 13, 15],
+            "jumpPeriod": [ 0.3, 0.6 ],
+            "jumpSpeed": [7, 7],
+            "accelGravity": [20, 20]
+        },
+    );
 
 }
