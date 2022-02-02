@@ -298,7 +298,8 @@ public:
 		None,
 		MultipleChoice,
 		Entry,
-		Rating
+		Rating,
+		DropDown
 	};
 
 	Type type = Type::None;
@@ -309,7 +310,11 @@ public:
 	String result = "";					///< Reported result (not specified as configuration)
 	bool fullscreen = false;			///< Show this question as fullscreen?
 	bool showCursor = true;				///< Show cursor during question response window (allow clicking for selection)?
-	bool randomOrder = true;			///< Randomize question response order?
+	bool randomOrder = false;			///< Randomize question response order?
+	int optionsPerRow = 3;				///< Number of options per row (defaults to 3 for multiple choice, # of options for ratings)
+	float promptFontSize = -1.f;		///< Font size for prompt text
+	float optionFontSize = -1.f;		///< Font size for question entry/options
+	float buttonFontSize = -1.f;		///< Font size for submit/cancel buttons
 
 	Question() {};
 	Question(const Any& any);

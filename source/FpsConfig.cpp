@@ -621,8 +621,12 @@ Question::Question(const Any& any) {
 			type = Type::Rating;
 			reader.get("options", options, "An \"options\" Array must be specified with \"Rating\" style questions!");
 		}
+		else if (!typeStr.compare("DropDown")) {
+			type = Type::DropDown;
+			reader.get("options", options, "An \"options\" Array must be specified with \"DropDown\" style questions!");
+		}
 		else {
-			throw format("Unrecognized question \"type\" String \"%s\". Valid options are \"MultipleChoice\" or \"Entry\"", typeStr);
+			throw format("Unrecognized question \"type\" String \"%s\". Valid options are \"MultipleChoice\", \"Rating\", \"DropDown\", or \"Entry\"", typeStr);
 		}
 
 		// Get the question prompt (required) and title (optional)
@@ -630,7 +634,17 @@ Question::Question(const Any& any) {
 		reader.getIfPresent("title", title);
 		reader.getIfPresent("fullscreen", fullscreen);
 		reader.getIfPresent("showCursor", showCursor);
-		reader.getIfPresent("randomOrder", randomOrder);
+		if (!reader.getIfPresent("randomOrder", randomOrder)) {
+			if (type == Type::MultipleChoice) {
+				randomOrder = true;		// Default to random order for multiple choice questions
+			}
+		}
+		if (reader.getIfPresent("optionsPerRow", optionsPerRow)) {
+			if (type == Type::Rating) {		
+				// Ratings will ignore the optionsPerRow (always uses 1 row)
+				logPrintf("WARNING: Specified \"optionsPerRow\" parameter is ignored when using a \"Rating\" type question. If you'd like to change the layout look into using a \"MultipleChoice\" question instead!");
+			}
+		}
 
 		// Handle (optional) key binds for options (if provided)
 		if (type == Type::Rating || type == Type::MultipleChoice) {
@@ -640,6 +654,18 @@ Question::Question(const Any& any) {
 				throw format("Length of \"optionKeys\" (%d) did not match \"options\" (%d) for question!", optionKeys.length(), options.length());
 			}
 		}
+
+		// Get font sizes for elements
+		float baseFontSize;
+		if (reader.getIfPresent("fontSize", baseFontSize)) {
+			promptFontSize = baseFontSize;
+			optionFontSize = baseFontSize;
+			buttonFontSize = baseFontSize;
+		}
+		reader.getIfPresent("promptFontSize", promptFontSize);
+		reader.getIfPresent("optionFontSize", optionFontSize);
+		reader.getIfPresent("buttonFontSize", buttonFontSize);
+
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in Question.\n", settingsVersion);
