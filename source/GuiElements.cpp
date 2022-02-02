@@ -420,8 +420,9 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	// Only draw experiment selection box in developer mode
 	if (app->startupConfig.developerMode) {
 		m_expPane->beginRow(); {
-			m_expPane->addDropDownList("Experiment", app->experimentNames(), &(app->experimentIdx));
-			m_expPane->addButton("Select Experiment", this, &UserMenu::updateExperimentPress);
+			std::function<void()> callback = std::bind(&UserMenu::updateExperimentPress, this);
+			m_expPane->addDropDownList("Experiment", app->experimentNames(), &(app->experimentIdx), callback);
+			//m_expPane->addButton("Select Experiment", this, &UserMenu::updateExperimentPress);
 		} m_expPane->endRow();
 	}
 
