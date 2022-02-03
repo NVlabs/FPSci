@@ -5,14 +5,15 @@
 // Latency indicator is enabled by default for latency measurement.
 
 {
-    // global settings.
+    // global settings
     showMenuBetweenSessions = False;
     logToSingleDb = False;
     clearMissDecalsWithReference = True;
     showReferenceTargetMissDecals = False;
 
     scene = {
-        spawnPostiion = Point3(46.08, -2.2, 0);
+        name = "FPSci Simple Hallway";
+        spawnPosition = Point3(46.08, -2.2, 0);
         spawnHeading = -90;
     };
 
@@ -21,7 +22,7 @@
     maxTrialDuration = 5.0, // Maximum duration allowed for completion of the task
     referenceTargetSize = 0.02;
 
-    // feedback settings.
+    // feedback settings
     trialFeedbackDuration = 0.0;
     referenceTargetInitialFeedback = "Use left shift key to clear the reference targets (red) and left mouse click to clear test targets (green).";
     sessionFeedbackDuration = 5.0;
@@ -30,7 +31,7 @@
     blockCompleteFeedback = "Block %lastBlock of %totalBlocks completed. Your score so far is %totalTimeLeftS.\nStarting Block %currBlock.";
     weapon = "pistol",
     
-    // weapon settings.
+    // weapon settings
     weapon = {
         id = "pistol";
         firePeriod = 0.5;
@@ -39,14 +40,14 @@
         maxAmmo = 3600;
     };
 
-    // UI settings.
+    // UI settings
     showHUD = True;
     renderWeaponStatus = True;
     cooldownMode = "ring";
     cooldownInnerRadius = 40.0;
     cooldownColor = Color4(1.0,1.0,1.0,0.8);
     
-    // LDAT settings.
+    // LDAT settings
     renderClickPhoton = True;
     clickPhotonSide = "left";
     clickPhotonSize = Point2(0.1,0.2);
@@ -56,120 +57,89 @@
         Color3(0.8,0.8,0.8)
     ];
     
-    // session settings.
+    // session settings
     sessions = (
-
         {
-
-        id = "60hz_0delay",
-
-        frameRate = 60,
-
-        frameDelay = 0,
-
-        blockCount = 10,
-        trials = [
-            {ids = ["static"], count = 3},
-            {ids = ["straight_fly"], count = 3},
-            {ids = ["stray_fly_easy"], count = 4},
-            {ids = ["stray_fly_hard"], count = 4},
-            {ids = ["strafe_jump"], count = 8}
-        ]
+            id = "60hz_0delay",
+            frameRate = 60,
+            frameDelay = 0,
+            blockCount = 10,
+            trials = [
+                {ids = ["static"], count = 3},
+                {ids = ["straight_fly"], count = 3},
+                {ids = ["stray_fly_easy"], count = 4},
+                {ids = ["stray_fly_hard"], count = 4},
+                {ids = ["strafe_jump"], count = 8}
+            ]
         },
-
         {
-
-        id = "60hz_2delay",
-
-        frameRate = 60,
-
-        frameDelay = 2,
-
-        blockCount = 10,
-        trials = [
-            {ids = ["static"], count = 3},
-            {ids = ["straight_fly"], count = 3},
-            {ids = ["stray_fly_easy"], count = 4},
-            {ids = ["stray_fly_hard"], count = 4},
-            {ids = ["strafe_jump"], count = 8}
-        ]
+            id = "60hz_2delay",
+            frameRate = 60,
+            frameDelay = 2,
+            blockCount = 10,
+            trials = [
+                {ids = ["static"], count = 3},
+                {ids = ["straight_fly"], count = 3},
+                {ids = ["stray_fly_easy"], count = 4},
+                {ids = ["stray_fly_hard"], count = 4},
+                {ids = ["strafe_jump"], count = 8}
+            ]
         },
-
         {
-
-        id = "120hz_0delay",
-
-        frameRate = 120,
-
-        frameDelay = 0,
-
-        blockCount = 10,
-        trials = [
-            {ids = ["static"], count = 3},
-            {ids = ["straight_fly"], count = 3},
-            {ids = ["stray_fly_easy"], count = 4},
-            {ids = ["stray_fly_hard"], count = 4},
-            {ids = ["strafe_jump"], count = 8}
-        ]
+            id = "120hz_0delay",
+            frameRate = 120,
+            frameDelay = 0,
+            blockCount = 10,
+            trials = [
+                {ids = ["static"], count = 3},
+                {ids = ["straight_fly"], count = 3},
+                {ids = ["stray_fly_easy"], count = 4},
+                {ids = ["stray_fly_hard"], count = 4},
+                {ids = ["strafe_jump"], count = 8}
+            ]
         },
-
         {
-
-        id = "120hz_4delay",
-
-        frameRate = 120,
-
-        frameDelay = 4,
-
-        blockCount = 10,
-        trials = [
-            {ids = ["static"], count = 3},
-            {ids = ["straight_fly"], count = 3},
-            {ids = ["stray_fly_easy"], count = 4},
-            {ids = ["stray_fly_hard"], count = 4},
-            {ids = ["strafe_jump"], count = 8}
-        ]
+            id = "120hz_4delay",
+            frameRate = 120,
+            frameDelay = 4,
+            blockCount = 10,
+            trials = [
+                {ids = ["static"], count = 3},
+                {ids = ["straight_fly"], count = 3},
+                {ids = ["stray_fly_easy"], count = 4},
+                {ids = ["stray_fly_hard"], count = 4},
+                {ids = ["strafe_jump"], count = 8}
+            ]
         },
-
         {
-
-        id = "240hz_0delay",
-
-        frameRate = 240,
-
-        frameDelay = 0,
-
-        blockCount = 10,
-        trials = [
-            {ids = ["static"], count = 3},
-            {ids = ["straight_fly"], count = 3},
-            {ids = ["stray_fly_easy"], count = 4},
-            {ids = ["stray_fly_hard"], count = 4},
-            {ids = ["strafe_jump"], count = 8}
-        ]
+            id = "240hz_0delay",
+            frameRate = 240,
+            frameDelay = 0,
+            blockCount = 10,
+            trials = [
+                {ids = ["static"], count = 3},
+                {ids = ["straight_fly"], count = 3},
+                {ids = ["stray_fly_easy"], count = 4},
+                {ids = ["stray_fly_hard"], count = 4},
+                {ids = ["strafe_jump"], count = 8}
+            ]
         },
-
         {
-
-        id = "240hz_8delay",
-
-        frameRate = 240,
-
-        frameDelay = 8,
-
-        blockCount = 10,
-        trials = [
-            {ids = ["static"], count = 3},
-            {ids = ["straight_fly"], count = 3},
-            {ids = ["stray_fly_easy"], count = 4},
-            {ids = ["stray_fly_hard"], count = 4},
-            {ids = ["strafe_jump"], count = 8}
-        ]
+            id = "240hz_8delay",
+            frameRate = 240,
+            frameDelay = 8,
+            blockCount = 10,
+            trials = [
+                {ids = ["static"], count = 3},
+                {ids = ["straight_fly"], count = 3},
+                {ids = ["stray_fly_easy"], count = 4},
+                {ids = ["stray_fly_hard"], count = 4},
+                {ids = ["strafe_jump"], count = 8}
+            ]
         },
-
     );
 
-    // target settings.
+    // target settings
     targets = (
         {
             "id": "static",

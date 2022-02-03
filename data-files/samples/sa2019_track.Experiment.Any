@@ -5,14 +5,15 @@
 // Latency indicator is enabled by default for latency measurement.
 
 {
-    // global settings.
+    // global settings
     showMenuBetweenSessions = False;
     logToSingleDb = False;
     clearMissDecalsWithReference = True;
     showReferenceTargetMissDecals = False;
 
     scene = {
-        spawnPostiion = Point3(46.08, -2.2, 0);
+        name = "FPSci Simple Hallway";
+        spawnPosition = Point3(46.08, -2.2, 0);
         spawnHeading = -90;
     };
 
@@ -29,7 +30,7 @@
     allSessionsCompleteFeedback = "All Sessions Complete! Thank you for participating in this experiment.";
     blockCompleteFeedback = "Block %lastBlock of %totalBlocks completed. Your score so far is %totalTimeLeftS.\nStarting Block %currBlock.";
     
-    // weapon settings.
+    // weapon settings
     weapon = {
         id = "laser";
         firePeriod = 0.0;
@@ -41,14 +42,14 @@
         fireSoundLoop = true;
     };
 
-    // UI settings.
+    // UI settings
     showHUD = False;
     renderWeaponStatus = True;
     cooldownMode = "ring";
     cooldownInnerRadius = 40.0;
     cooldownColor = Color4(1.0,1.0,1.0,0.8);
     
-    // LDAT settings.
+    // LDAT settings
     renderClickPhoton = True;
     clickPhotonSide = "left";
     clickPhotonSize = Point2(0.05,0.095);
@@ -58,17 +59,12 @@
         Color3(0.8,0.8,0.8)
     ];
     
-    // session settings.
+    // session settings
     sessions = (
-
         {
-
             id = "60hz_0delay",
-
             frameRate = 60,
-
             frameDelay = 0,
-
             blockCount = 10,
             trials = [
                 {ids = ["straight_fly"], count = 2},
@@ -76,15 +72,10 @@
                 {ids = ["strafe_jump"], count = 5}
             ],
         },
-
         {
-
             id = "60hz_2delay",
-
             frameRate = 60,
-
             frameDelay = 2,
-
             blockCount = 10,
             trials = [
                 {ids = ["straight_fly"], count = 2},
@@ -92,15 +83,10 @@
                 {ids = ["strafe_jump"], count = 5}
             ],
         },
-
         {
-
             id = "120hz_0delay",
-
             frameRate = 120,
-
             frameDelay = 0,
-
             blockCount = 10,
             trials = [
                 {ids = ["straight_fly"], count = 2},
@@ -108,15 +94,10 @@
                 {ids = ["strafe_jump"], count = 5}
             ],
         },
-
         {
-
             id = "120hz_4delay",
-
             frameRate = 120,
-
             frameDelay = 4,
-
             blockCount = 10,
             trials = [
                 {ids = ["straight_fly"], count = 2},
@@ -124,15 +105,10 @@
                 {ids = ["strafe_jump"], count = 5}
             ],
         },
-
         {
-
             id = "240hz_0delay",
-
             frameRate = 240,
-
             frameDelay = 0,
-
             blockCount = 10,
             trials = [
                 {ids = ["straight_fly"], count = 2},
@@ -142,13 +118,9 @@
         },
 
         {
-
             id = "240hz_8delay",
-
             frameRate = 240,
-
             frameDelay = 8,
-
             blockCount = 10,
             trials = [
                 {ids = ["straight_fly"], count = 2},
@@ -159,7 +131,7 @@
 
     );
 
-    // target settings.
+    // target settings
     targets = (
         {
             "id": "straight_fly",
