@@ -17,9 +17,9 @@
         spawnHeading = -90;
     };
 
-    feedbackDuration = 0.0, // Time allocated for providing user feedback
-    pretrialDuration = 0.25, // Time allocated for preparing for trial
-    maxTrialDuration = 5.0, // Maximum duration allowed for completion of the task
+    feedbackDuration = 0.0; // Time allocated for providing user feedback
+    pretrialDuration = 0.25; // Time allocated for preparing for trial
+    maxTrialDuration = 5.0; // Maximum duration allowed for completion of the task
     referenceTargetSize = 0.02;
 
     // feedback settings
@@ -35,7 +35,7 @@
     weapon = {
         id = "pistol";
         firePeriod = 0.5;
-        autoFire = false;
+        autoFire = False;
         damagePerSecond = 2.0;
         maxAmmo = 3600;
     };
@@ -50,155 +50,155 @@
     // LDAT settings
     renderClickPhoton = True;
     clickPhotonSide = "left";
-    clickPhotonSize = Point2(0.1,0.2);
+    clickPhotonSize = Point2(0.05,0.095);
     clickPhotonVertPos = 0.5;
-    clickPhotonColors = [
+    clickPhotonColors = (
         Color3(0.2,0.2,0.2),
         Color3(0.8,0.8,0.8)
-    ];
+    );
     
     // session settings
     sessions = (
         {
-            id = "60hz_0delay",
-            frameRate = 60,
-            frameDelay = 0,
-            blockCount = 10,
-            trials = [
-                {ids = ["static"], count = 3},
-                {ids = ["straight_fly"], count = 3},
-                {ids = ["stray_fly_easy"], count = 4},
-                {ids = ["stray_fly_hard"], count = 4},
-                {ids = ["strafe_jump"], count = 8}
-            ]
+            id = "60hz_0delay";
+            frameRate = 60;
+            frameDelay = 0;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
         },
         {
-            id = "60hz_2delay",
-            frameRate = 60,
-            frameDelay = 2,
-            blockCount = 10,
-            trials = [
-                {ids = ["static"], count = 3},
-                {ids = ["straight_fly"], count = 3},
-                {ids = ["stray_fly_easy"], count = 4},
-                {ids = ["stray_fly_hard"], count = 4},
-                {ids = ["strafe_jump"], count = 8}
-            ]
+            id = "60hz_2delay";
+            frameRate = 60;
+            frameDelay = 2;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
         },
         {
-            id = "120hz_0delay",
-            frameRate = 120,
-            frameDelay = 0,
-            blockCount = 10,
-            trials = [
-                {ids = ["static"], count = 3},
-                {ids = ["straight_fly"], count = 3},
-                {ids = ["stray_fly_easy"], count = 4},
-                {ids = ["stray_fly_hard"], count = 4},
-                {ids = ["strafe_jump"], count = 8}
-            ]
+            id = "120hz_0delay";
+            frameRate = 120;
+            frameDelay = 0;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
         },
         {
-            id = "120hz_4delay",
-            frameRate = 120,
-            frameDelay = 4,
-            blockCount = 10,
-            trials = [
-                {ids = ["static"], count = 3},
-                {ids = ["straight_fly"], count = 3},
-                {ids = ["stray_fly_easy"], count = 4},
-                {ids = ["stray_fly_hard"], count = 4},
-                {ids = ["strafe_jump"], count = 8}
-            ]
+            id = "120hz_4delay";
+            frameRate = 120;
+            frameDelay = 4;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
         },
         {
-            id = "240hz_0delay",
-            frameRate = 240,
-            frameDelay = 0,
-            blockCount = 10,
-            trials = [
-                {ids = ["static"], count = 3},
-                {ids = ["straight_fly"], count = 3},
-                {ids = ["stray_fly_easy"], count = 4},
-                {ids = ["stray_fly_hard"], count = 4},
-                {ids = ["strafe_jump"], count = 8}
-            ]
+            id = "240hz_0delay";
+            frameRate = 240;
+            frameDelay = 0;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
         },
         {
-            id = "240hz_8delay",
-            frameRate = 240,
-            frameDelay = 8,
-            blockCount = 10,
-            trials = [
-                {ids = ["static"], count = 3},
-                {ids = ["straight_fly"], count = 3},
-                {ids = ["stray_fly_easy"], count = 4},
-                {ids = ["stray_fly_hard"], count = 4},
-                {ids = ["strafe_jump"], count = 8}
-            ]
+            id = "240hz_8delay";
+            frameRate = 240;
+            frameDelay = 8;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
         },
     );
 
     // target settings
     targets = (
         {
-            "id": "static",
-            "destSpace": "player",
-            "elevationLocked": false,
-            "speed": [ 0, 0 ],
-            "visualSize": [ 0.02, 0.02 ],
-            "eccH": [ 5.0, 15.0 ],
-            "eccV": [ 0.0, 1.0 ],
-            "motionChangePeriod": [ 1000000, 1000000 ],
-            "jumpEnabled": false
+            id = "static";
+            destSpace = "player";
+            elevationLocked = False;
+            speed = ( 0, 0 );
+            visualSize = ( 0.02, 0.02 );
+            eccH = ( 5.0, 15.0 );
+            eccV = ( 0.0, 1.0 );
+            motionChangePeriod = ( 1000000, 1000000 );
+            jumpEnabled = False;
         },
         {
-            "id": "straight_fly",
-            "destSpace": "player",
-            "elevationLocked": false,
-            "speed": [ 8, 15 ],
-            "visualSize": [ 0.02, 0.02 ],
-            "eccH": [ 5.0, 15.0 ],
-            "eccV": [ 0.0, 1.0 ],
-            "motionChangePeriod": [ 1000000, 1000000 ],
-            "jumpEnabled": false
+            id = "straight_fly";
+            destSpace = "player";
+            elevationLocked = False;
+            speed = ( 8, 15 );
+            visualSize = ( 0.02, 0.02 );
+            eccH = ( 5.0, 15.0 );
+            eccV = ( 0.0, 1.0 );
+            motionChangePeriod = ( 1000000, 1000000 );
+            jumpEnabled = False;
         },
         {
-            "id": "stray_fly_hard",
-            "destSpace": "player",
-            "elevationLocked": false,
-            "speed": [ 8, 15 ],
-            "visualSize": [ 0.02, 0.02 ],
-            "eccH": [ 5.0, 15.0 ],
-            "eccV": [ 0.0, 1.0 ],
-            "motionChangePeriod": [ 0.5, 0.6 ],
-            "jumpEnabled": false
+            id = "stray_fly_hard";
+            destSpace = "player";
+            elevationLocked = False;
+            speed = ( 8, 15 );
+            visualSize = ( 0.02, 0.02 );
+            eccH = ( 5.0, 15.0 );
+            eccV = ( 0.0, 1.0 );
+            motionChangePeriod = ( 0.5, 0.6 );
+            jumpEnabled = False;
         },
         {
-            "id": "stray_fly_easy",
-            "destSpace": "player",
-            "elevationLocked": false,
-            "speed": [ 8, 15 ],
-            "visualSize": [ 0.02, 0.02 ],
-            "eccH": [ 5.0, 15.0 ],
-            "eccV": [ 0.0, 1.0 ],
-            "motionChangePeriod": [ 1.0, 1.2 ],
-            "jumpEnabled": false
+            id = "stray_fly_easy";
+            destSpace = "player";
+            elevationLocked = False;
+            speed = ( 8, 15 );
+            visualSize = ( 0.02, 0.02 );
+            eccH = ( 5.0, 15.0 );
+            eccV = ( 0.0, 1.0 );
+            motionChangePeriod = ( 1.0, 1.2 );
+            jumpEnabled = False;
         },
         {
-            "id": "strafe_jump",
-            "destSpace": "player",
-            "elevationLocked": true,
-            "speed": [ 8, 15 ],
-            "visualSize": [ 0.02, 0.02 ],
-            "eccH": [ 5.0, 15.0 ],
-            "eccV": [ 0.0, 1.0 ],
-            "motionChangePeriod": [ 0.2, 0.8 ],
-            "jumpEnabled": true,
-            "distance": [ 20, 25],
-            "jumpPeriod": [ 0.3, 0.8 ],
-            "jumpSpeed": [7, 7],
-            "accelGravity": [20, 20]
+            id = "strafe_jump";
+            destSpace = "player";
+            elevationLocked = true;
+            speed = ( 8, 15 );
+            visualSize = ( 0.02, 0.02 );
+            eccH = ( 5.0, 15.0 );
+            eccV = ( 0.0, 1.0 );
+            motionChangePeriod = ( 0.2, 0.8 );
+            jumpEnabled = true;
+            distance = ( 20, 25);
+            jumpPeriod = ( 0.3, 0.8 );
+            jumpSpeed = (7, 7);
+            accelGravity = (20, 20);
         },
     );
 

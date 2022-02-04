@@ -4,6 +4,7 @@
         { 
             id = "Sample User"; 
             mouseDegPerMillimeter = 1.8;
+            reticleScale = (0.5, 0.5);
             invertY = false; 
             mouseDPI = 800; 
         } ); 
