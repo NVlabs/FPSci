@@ -59,7 +59,7 @@ void FPSciApp::initExperiment(){
 
 	// Load models and set the reticle
 	loadModels();
-	setReticle(currentUser()->reticleIndex);
+	setReticle(reticleConfig.index);
 
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
@@ -604,6 +604,13 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		sessConfig = SessionConfig::create();
 		sess = Session::create(this);
 	}
+
+	// Update reticle
+	reticleConfig.index = sessConfig->reticle.indexSpecified ? sessConfig->reticle.index : currentUser()->reticle.index;
+	reticleConfig.scale = sessConfig->reticle.scaleSpecified ? sessConfig->reticle.scale : currentUser()->reticle.scale;
+	reticleConfig.color = sessConfig->reticle.colorSpecified ? sessConfig->reticle.color : currentUser()->reticle.color;
+	reticleConfig.changeTimeS = sessConfig->reticle.changeTimeSpecified ? sessConfig->reticle.changeTimeS : currentUser()->reticle.changeTimeS;
+	setReticle(reticleConfig.index);
 
 	// Update the controls for this session
 	updateControls(m_firstSession);				// If first session consider showing the menu
@@ -1335,10 +1342,12 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		}
 	}
 
-	if (m_lastReticleLoaded != currentUser()->reticleIndex || m_userSettingsWindow->visible()) {
+	if (m_lastReticleLoaded != currentUser()->reticle.index || m_userSettingsWindow->visible()) {
 		// Slider was used to change the reticle
-		setReticle(currentUser()->reticleIndex);
-		m_userSettingsWindow->updateReticlePreview();
+		if (!sessConfig->reticle.indexSpecified) {		// Only allow reticle change if it isn't specified in experiment config
+			setReticle(currentUser()->reticle.index);
+			m_userSettingsWindow->updateReticlePreview();
+		}
 	}
 
 	playerCamera->filmSettings().setSensitivity(sceneBrightness);
