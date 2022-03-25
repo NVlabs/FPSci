@@ -218,8 +218,10 @@ void TargetEntity::setDestinations(const Array<Destination> destinationArray) {
 
 void TargetEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	// Check whether we have any destinations yet...
-	if (m_destinations.size() < 2)
+	if (m_destinations.size() < 2) {
+		setFrame(m_destinations[0].position + m_offset);
 		return;
+	}
 
 	if (m_spawnTime == 0) m_spawnTime = absoluteTime;						// Get a spawn time (if we don't have one already)
 	SimTime time = fmod(absoluteTime-m_spawnTime, getPathTime());			// Compute a local time (modulus the path time)
