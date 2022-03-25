@@ -331,7 +331,7 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 		// Check for case w/ destination array
 		shared_ptr<TargetEntity> t;
 		if (target->destinations.size() > 0) {
-			Point3 offset = isWorldSpace ? target->destinations[0].position : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			Point3 offset = isWorldSpace ? Point3(0.f, 0.f, 0.f) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 			t = spawnDestTarget(target, offset, previewColor, i, name);
 		}
 		// Otherwise check if this is a jumping target
@@ -799,7 +799,7 @@ void Session::endLogging() {
 
 shared_ptr<TargetEntity> Session::spawnDestTarget(
 	shared_ptr<TargetConfig> config,
-	const Point3& position,
+	const Point3& offset,
 	const Color3& color,
 	const int paramIdx,
 	const String& name)
@@ -809,12 +809,11 @@ shared_ptr<TargetEntity> Session::spawnDestTarget(
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(config, nameStr, m_scene, (*m_targetModels)[config->id][scaleIndex], position, scaleIndex, paramIdx);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(config, nameStr, m_scene, (*m_targetModels)[config->id][scaleIndex], offset, scaleIndex, paramIdx);
 
 	// Update parameters for the target
 	target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
-	target->setFrame(position);
 	target->setColor(color);
 
 	// Add target to array and scene
