@@ -452,6 +452,7 @@ void TargetViewConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("showReferenceTarget", showRefTarget);
 		reader.getIfPresent("referenceTargetSize", refTargetSize);
 		reader.getIfPresent("referenceTargetColor", refTargetColor);
+		reader.getIfPresent("referenceTargetModelSpec", refTargetModelSpec);
 		reader.getIfPresent("clearMissDecalsWithReference", clearDecalsWithRef);
 		reader.getIfPresent("showPreviewTargetsWithReference", previewWithRef);
 		reader.getIfPresent("showReferenceTargetMissDecals", showRefDecals);
