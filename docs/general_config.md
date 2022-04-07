@@ -313,6 +313,8 @@ Questions are configured on a per experiment/session basis using the `questions`
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
 
+Note that when using `randomOrder` the options key bindings specified in `optionKeys` remains static (i.e. while ordering of presented options will change the keypress used to enter any given option will remain constant between the `options` and `optionKeys` array).
+
 ```
 "questions" : [
     {
