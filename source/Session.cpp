@@ -366,6 +366,7 @@ void Session::processResponse()
 		m_remainingTrials[m_currTrialIdx] -= 1;	
 	}
 
+	// This update is only used for completed trials
 	if (notNull(logger)) {
 		logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
 	}
@@ -454,7 +455,7 @@ void Session::updatePresentationState()
 							if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
 								m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
 								if (m_config->logger.enable) {
-									logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
+									logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id, m_app->dialog);	// Log the question and its answer
 								}
 								m_currQuestionIdx++;																
 								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
@@ -470,6 +471,10 @@ void Session::updatePresentationState()
 						}
 					}
 					else {
+						// Write final session timestamp to log
+						if (notNull(logger) && m_config->logger.enable) {
+							logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
+						}
 						if (m_config->logger.enable) {
 							endLogging();
 						}

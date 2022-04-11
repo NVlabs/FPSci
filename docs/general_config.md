@@ -347,6 +347,8 @@ There are 2 primary differences between questions with `type` of `MultipleChoice
 1. `MultipleChoice` questions can specify an `optionsPerRow` field to control layout (otherwise defaults to 3). `Rating` questions always use a single row of responses (`optionsPerRow` = total # of options)
 2. `MultipleChoice` questions default to `randomOrder` = `true` (randomize option order) whereas `Rating` questions default to the provided option ordering
 
+Questions are recorded in the results database along with a timestamp, the question prompt, a `responseArray` indicating available options and the `response` the user provided. If multiple choice, a `keyArray` is included with `optionKeys` values (as specified) and the `presentedResponses` array provides the response/key pairs in the order they were presented to the user for that question, which is particularly helpful when the order is randomized.
+
 ## HUD settings
 | Parameter Name        |Units      | Description                                                                                                           |
 |-----------------------|-----------|-----------------------------------------------------------------------------------------------------------------------|

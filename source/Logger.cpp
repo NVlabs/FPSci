@@ -149,8 +149,12 @@ void FPSciLogger::openResultsFile(const String& filename,
 
 		// Questions table
 		Columns questionColumns = {
+			{"time", "text"},
 			{"session", "text"},
 			{"question", "text"},
+			{"responseArray", "text"},
+			{"keyArray", "text"},
+			{"presentedResponses", "text"},
 			{"response", "text"}
 		};
 		createTableInDB(m_db, "Questions", questionColumns);
@@ -413,10 +417,21 @@ void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& 
 	logTargetInfo(targetValues);
 }
 
-void FPSciLogger::addQuestion(Question q, String session) {
+void FPSciLogger::addQuestion(Question q, String session, const shared_ptr<DialogBase>& dialog) {
+	const String time = genUniqueTimestamp();
+	const String optStr = Any(q.options).unparse();
+	const String keyStr = Any(q.optionKeys).unparse();
+	String orderStr = "";
+	if (q.type == Question::Type::MultipleChoice || q.type == Question::Type::Rating) {
+		orderStr = Any(dynamic_pointer_cast<SelectionDialog>(dialog)->options()).unparse();
+	}
 	RowEntry rowContents = {
+		"'" + time + "'",
 		"'" + session + "'",
 		"'" + q.prompt + "'",
+		"'" + optStr + "'",
+		"'" + keyStr + "'",
+		"'" + orderStr + "'",
 		"'" + q.result + "'"
 	};
 	logQuestionResult(rowContents);

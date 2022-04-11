@@ -54,8 +54,12 @@ The `Player_Action` table is the primary tool for analyzing player move, aim, an
 ### Questions
 The `Questions` table is intended to quickly capture feedback from questions asked of the user in app using the simple dialog system at the end of a session. It includes the following columns:
 
+* `time`: The (wall clock) time at which the question was answered
 * `session`: The session id of the session in which the question was asked
 * `question`: The text of the question asked of the user
+* `responseArray`: A string of the list of available responses for this question, e.g. `( "One", "Two" )`.
+* `keyArray`: A string of the list of keys bound to responses for questions that use this, e.g. `( "A", "B" )`.
+* `presentedResponses`: For `MultipleChoice` and `Rating` questions, this is a string of the list that was presented to the user in the order the user saw it (including randomization), e.g. `( "Two (B)", "One (A)" )`.
 * `response`: The response provided by the user
 
 ### Sessions

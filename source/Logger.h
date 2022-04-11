@@ -3,6 +3,7 @@
 #include "sqlHelpers.h"
 #include "UserConfig.h"
 #include "Session.h"
+#include "Dialogs.h"
 
 using RowEntry = Array<String>;
 using Columns = Array<Array<String>>;
@@ -129,7 +130,7 @@ public:
 	static String genFileTimestamp();
 
 	/** Record a question and its response */
-	void addQuestion(Question question, String session);
+	void addQuestion(Question question, String session, const shared_ptr<DialogBase>& dialog);
 
 	/** Add a target to an experiment */
 	void addTarget(const String& name, const shared_ptr<TargetConfig>& targetConfig, const String& spawnTime, const float& size, const Point2& spawnEcc);
