@@ -456,7 +456,14 @@ void FPSciApp::presentQuestion(Question question) {
 		break;
 	case Question::Type::Rating:
 		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
-			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+			for (int i = 0; i < options.length(); i++) { 
+				// Find the correct index for this option (order might be randomized)
+				int keyIdx;
+				for (keyIdx = 0; keyIdx < question.options.length(); keyIdx++) {
+					if (options[i] == question.options[keyIdx]) break;
+				}
+				options[i] += format(" (%s)", question.optionKeys[keyIdx].toString()); 
+			}
 		}
 		dialog = RatingDialog::create(question.prompt, options, theme, question.title, question.showCursor, size, !question.fullscreen,
 			question.promptFontSize, question.optionFontSize, question.buttonFontSize);
