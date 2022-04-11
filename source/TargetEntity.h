@@ -82,6 +82,8 @@ public:
 
 	// Target color based on health
 	Array<Color3>   colors;									///< Target start/end color (based on target health)
+	Color4			gloss;									///< Target gloss (alpha is F0, see docs)
+	bool			hasGloss = false;						///< Target has gloss specified
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/target.obj";
@@ -170,11 +172,11 @@ public:
 		destinationIdx = 0;
 	}
 
-	void setColor(const Color3& color) {
+	void setColor(const Color3& color, const Color4& glossy = Color4()) {
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
 		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+		materialSpecification.setGlossy(Texture::Specification(glossy));						// Used to be Color4(0.4f, 0.2f, 0.1f, 0.8f)
 
 		const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
 		amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));

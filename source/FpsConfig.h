@@ -196,6 +196,8 @@ public:
 		Color3(1.0, 0.0, 0.0)
 	};
 
+	Color4 gloss;		///< Target glossyness (alpha is F0 or minimum reflectivity, see G3D docs)
+
 	// Target health bars
 	bool            showHealthBars = false;									///< Display a target health bar?
 	Point2          healthBarSize = Point2(100.0f, 10.0f);					///< Health bar size (in pixels)
