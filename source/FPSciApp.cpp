@@ -280,10 +280,18 @@ Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetCo
 		else {
 			color = lerpColor(experimentConfig.targetView.healthColors, complete);
 		}
+		Color4 gloss;
+		if (notNull(tconfig) && tconfig->hasGloss) {
+			gloss = tconfig->gloss;
+		}
+		else {
+			gloss = experimentConfig.targetView.gloss;
+		}
+
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
 		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+		materialSpecification.setGlossy(Texture::Specification(gloss));					// Used to be Color4(0.4f, 0.2f, 0.1f, 0.8f)
 		targetMaterials.append(UniversalMaterial::create(materialSpecification));
 	}
 	return targetMaterials;

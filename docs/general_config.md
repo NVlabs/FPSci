@@ -493,6 +493,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 | Parameter Name        |Units                  | Description                                                                        |
 |-----------------------|-----------------------|------------------------------------------------------------------------------------|
 |`targetHealthColors`   |[`Color3`, `Color3`]   | The max/min health colors for the target as an array of [`max color`, `min color`], if you do not want the target to change color as its health drops, set these values both to the same color                                              |
+|`targetGloss`          |`Color4`               | The target glossy (reflection) value, first 3 channels are RGB w/ alpha representing minimum reflection (F0). Set all channels to 0 or do not specify to disable glossy reflections. This sets the glossy color for the reference target in addition to trial targets       |
 |`showReferenceTarget`   |`bool`                | Show a reference target to re-center the view between trials/sessions?             |
 |`referenceTargetColor` |`Color3`               | The color of the "reference" targets spawned between trials                        |
 |`referenceTargetSize`  |m                      | The size of the "reference" targets spawned between trials                         |
@@ -526,6 +527,7 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 "showPreviewTargetsWithReference" : false,      // Don't show the preview targets with the reference
 "showReferenceTargetMissDecals" : true,         // Show miss decals for reference targets
 "previewTargetColor" = Color3(0.5, 0.5, 0.5),   // Use gray for preview targets (if they are shown)
+"targetGloss" = Color4(0.4f, 0.2f, 0.1f, 0.8f), // Use the target gloss behavior from FPSci v22.02.01 and earlier
 ```
 
 ### Target Health Bars

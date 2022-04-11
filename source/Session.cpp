@@ -815,7 +815,9 @@ shared_ptr<TargetEntity> Session::spawnDestTarget(
 	target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
 	target->setFrame(position);
-	target->setColor(color);
+
+	Color4 gloss = config->hasGloss ? config->gloss : m_app->experimentConfig.targetView.gloss;
+	target->setColor(color, gloss);
 
 	// Add target to array and scene
 	insertTarget(target);
@@ -840,7 +842,7 @@ shared_ptr<FlyingEntity> Session::spawnReferenceTarget(
 
 	// Setup additional target parameters
 	target->setFrame(position);
-	target->setColor(color);
+	target->setColor(color, m_app->experimentConfig.targetView.gloss);
 
 	// Add target to array and scene
 	insertTarget(target);
@@ -869,7 +871,9 @@ shared_ptr<FlyingEntity> Session::spawnFlyingTarget(
 	}
 	target->setHitSound(config->hitSound, m_app->soundTable,  config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
-	target->setColor(color);
+
+	Color4 gloss = config->hasGloss ? config->gloss : m_app->experimentConfig.targetView.gloss;
+	target->setColor(color, gloss);
 
 	// Add the target to the scene/target array
 	insertTarget(target);
@@ -899,7 +903,9 @@ shared_ptr<JumpingEntity> Session::spawnJumpingTarget(
 	}
 	target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
-	target->setColor(color);
+
+	Color4 gloss = config->hasGloss ? config->gloss : m_app->experimentConfig.targetView.gloss;
+	target->setColor(color, gloss);
 
 	// Add the target to the scene/target array
 	insertTarget(target);
