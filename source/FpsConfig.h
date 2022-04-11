@@ -226,7 +226,7 @@ public:
 	float           refTargetSize = 0.05f;								///< Size of the reference target
 	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
 	Any refTargetModelSpec = PARSE_ANY(ArticulatedModel::Specification{	///< Basic model spec for reference target
-		filename = "model/target/target.obj";
+		filename = "model/target/low_poly_sphere.obj";
 		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
 					allowVertexMerging = true;
 					forceComputeNormals = false;
