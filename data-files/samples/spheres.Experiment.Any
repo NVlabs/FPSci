@@ -1,0 +1,113 @@
+{ 
+    description = "spheres"; 
+    frameRate = 120; 
+    showHUD = true;
+    renderWeaponStatus = true;
+    cooldownMode = "ring";
+    cooldownColor = Color4(0.7,1.0,0.9,0.75);
+            
+    weapon = { 
+        id = "1hit"; 
+        firePeriod = 0.3;
+        damagePerSecond = 4;
+        autoFire = false;
+    }; 
+    sessions = ( 
+        { 
+            id = "icosohedron"; 
+            description = "icosohedron"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "ico"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            id = "lowpoly"; 
+            description = "low polygon"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "low"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            id = "midpoly"; 
+            description = "mid polygon"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "mid", "mid"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            id = "highpoly"; 
+            description = "high polygon"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "high", "high"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            id = "mixedtypes"; 
+            description = "mixed types"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "ico", "low", "mid", "high");
+                }, 
+            ); 
+            
+        }, 
+    ); 
+    
+    targets = ( 
+        { 
+            id = "ico"; 
+            destSpace = "player"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+            modelSpec = ArticulatedModel::Specification{
+                filename = "model/target/target.obj";
+            };
+        }, 
+        { 
+            id = "low"; 
+            destSpace = "player"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+            modelSpec = ArticulatedModel::Specification{
+                filename = "model/target/low_poly_sphere.obj";
+            };
+        }, 
+        { 
+            id = "mid"; 
+            destSpace = "player"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+            modelSpec = ArticulatedModel::Specification{
+                filename = "model/target/mid_poly_sphere.obj";
+            };
+        }, 
+        { 
+            id = "high"; 
+            destSpace = "player"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+            // if you want to use the high polygon model, get it from here https://drive.google.com/file/d/1LvJaJUD3k7DR0taZYZ_9Y0PNVQDMdShM/view?usp=sharing
+            // modelSpec = ArticulatedModel::Specification{
+            //     filename = "model/target/high_poly_sphere.obj";
+            // };
+        }, 
+    ); 
+    
+} 

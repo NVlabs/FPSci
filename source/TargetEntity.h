@@ -86,7 +86,7 @@ public:
 	bool			hasGloss = false;						///< Target has gloss specified
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
-		filename = "model/target/target.obj";
+		filename = "model/target/low_poly_sphere.obj";
 		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
 					allowVertexMerging = true;
 					forceComputeNormals = false;
