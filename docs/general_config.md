@@ -509,17 +509,17 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 "referenceTargetColor": Color3(1.0,1.0,1.0),    // Reference target color (return to "0" view direction)
 "referenceTargetSize": 0.01,                    // This is a size in meters
 "referenceTargetModelSpec" : ArticulatedModel::Specification{	    // Basic model spec for reference target
-		filename = "model/target/target.obj";
-		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
-			allowVertexMerging = true;
-			forceComputeNormals = false;
-			forceComputeTangents = false;
-			forceVertexMerging = true;
-			maxEdgeLength = inf;
-			maxNormalWeldAngleDegrees = 0;
-			maxSmoothAngleDegrees = 0;
+    filename = "model/target/target.obj";
+    cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
+        allowVertexMerging = true;
+        forceComputeNormals = false;
+        forceComputeTangents = false;
+        forceVertexMerging = true;
+        maxEdgeLength = inf;
+        maxNormalWeldAngleDegrees = 0;
+        maxSmoothAngleDegrees = 0;
     };
-}
+},
 "clearMissDecalsWithReference" : false,         // Don't clear the miss decals when the reference target is eliminated
 "showPreviewTargetsWithReference" : false,      // Don't show the preview targets with the reference
 "showReferenceTargetMissDecals" : true,         // Show miss decals for reference targets
