@@ -347,6 +347,8 @@ There are 2 primary differences between questions with `type` of `MultipleChoice
 1. `MultipleChoice` questions can specify an `optionsPerRow` field to control layout (otherwise defaults to 3). `Rating` questions always use a single row of responses (`optionsPerRow` = total # of options)
 2. `MultipleChoice` questions default to `randomOrder` = `true` (randomize option order) whereas `Rating` questions default to the provided option ordering
 
+Questions are recorded in the results database along with a timestamp, the question prompt, a `responseArray` indicating available options and the `response` the user provided. If multiple choice, a `keyArray` is included with `optionKeys` values (as specified) and the `presentedResponses` array provides the response/key pairs in the order they were presented to the user for that question, which is particularly helpful when the order is randomized.
+
 ## HUD settings
 | Parameter Name        |Units      | Description                                                                                                           |
 |-----------------------|-----------|-----------------------------------------------------------------------------------------------------------------------|
@@ -369,8 +371,6 @@ There are 2 primary differences between questions with `type` of `MultipleChoice
 "bannerSmallFontSize": 14.0,    // Small font size to use in the banner (time remaining and score)
 "hudFont": "console.fnt",       // Font to use for the HUD (fixed with highly suggested!)
 ```
-
-Questions will be recorded in the database along with a timestamp, the question text itself, a `responseArray` inidicating the available response options and the `response` the user provided. If it's multiple choice, a `keyArray` will also be included with values if specified and the `presentedResponses` will show the response/key pairs in the order they were presented to the user for that question, which is particularly helpful when the order is randomized.
 
 #### Annotated Banner
 The image below provides an example of the banner with the timer, progress, and score annotated with an overlay.
