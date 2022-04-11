@@ -162,6 +162,9 @@ targets = [
             ...
             {"t": 10.2, "xyz": Vector3(10.1, 1.01, -100.3)}
         },
+        modelSpec = ArticulatedModel::Specification{
+            filename = "model/target/sphere.obj";
+        },
     },
     #include("example_target.Any"),             // Example of including an external .Any file
 ],

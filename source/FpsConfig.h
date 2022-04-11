@@ -222,6 +222,18 @@ public:
 	bool			showRefTarget = true;								///< Show the reference target?
 	float           refTargetSize = 0.05f;								///< Size of the reference target
 	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
+	Any refTargetModelSpec = PARSE_ANY(ArticulatedModel::Specification{	///< Basic model spec for reference target
+		filename = "model/target/target.obj";
+		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
+					allowVertexMerging = true;
+					forceComputeNormals = false;
+					forceComputeTangents = false;
+					forceVertexMerging = true;
+					maxEdgeLength = inf;
+					maxNormalWeldAngleDegrees = 0;
+					maxSmoothAngleDegrees = 0;
+		};
+	});
 
 	bool			clearDecalsWithRef = false;							///< Clear the decals created from the reference target at the start of the task
 	bool			previewWithRef = false;								///< Show preview of per-trial targets with the reference?

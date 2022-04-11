@@ -829,7 +829,14 @@ shared_ptr<FlyingEntity> Session::spawnReferenceTarget(
 	const Color3& color)
 {
 	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
-	const shared_ptr<FlyingEntity>& target = FlyingEntity::create("reference", m_scene, (*m_targetModels)["reference"][scaleIndex], CFrame());
+
+	String refId = m_config->id + "_reference";
+	if (isNull(m_targetModels->getPointer(refId))) {
+		// This session doesn't have a custom reference target
+		refId = "reference";
+	}
+
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create("reference", m_scene, (*m_targetModels)[refId][scaleIndex], CFrame());
 
 	// Setup additional target parameters
 	target->setFrame(position);

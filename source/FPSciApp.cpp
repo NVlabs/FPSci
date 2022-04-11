@@ -207,19 +207,20 @@ void FPSciApp::loadModels() {
 		explosionsToBuild.set(target.id, target.destroyDecal);
 		explosionScales.set(target.id, target.destroyDecalScale);
 	}
-	// Append the basic model automatically (used for reference targets for now)
-	targetsToBuild.set("reference", PARSE_ANY(ArticulatedModel::Specification{
-		filename = "model/target/target.obj";
-		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
-					allowVertexMerging = true;
-					forceComputeNormals = false;
-					forceComputeTangents = false;
-					forceVertexMerging = true;
-					maxEdgeLength = inf;
-					maxNormalWeldAngleDegrees = 0;
-					maxSmoothAngleDegrees = 0;
-		};
-	}));
+
+	// Append reference target model(s)
+	Any& defaultRefTarget = experimentConfig.targetView.refTargetModelSpec;
+	for (SessionConfig& sess : experimentConfig.sessions) {
+		if (sess.targetView.refTargetModelSpec != defaultRefTarget) {
+			// This is a custom reference target model
+			String id = sess.id + "_reference";
+			targetsToBuild.set(id, sess.targetView.refTargetModelSpec);
+			explosionsToBuild.set(id, "explosion_01.png");
+			explosionScales.set(id, 1.0);
+		}
+	}
+	// Add default reference
+	targetsToBuild.set("reference", defaultRefTarget);
 	explosionsToBuild.set("reference", "explosion_01.png");
 	explosionScales.set("reference", 1.0);
 
