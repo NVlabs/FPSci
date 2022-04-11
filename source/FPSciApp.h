@@ -168,7 +168,10 @@ public:
 	shared_ptr<GFont>               outputFont;						///< Font used for output
 	shared_ptr<GFont>               hudFont;						///< Font used in HUD
 	Array<shared_ptr<GFont>>		floatingCombatText;				///< Floating combat text array
+
+	ReticleConfig					reticleConfig;					///< Config for the active reticle
 	shared_ptr<Texture>             reticleTexture;					///< Texture used for reticle
+	
 	Table<String, shared_ptr<Texture>> hudTextures;					///< Textures used for the HUD
 	shared_ptr<GuiTheme>			theme;	
 

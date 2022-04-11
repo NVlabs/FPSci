@@ -2,6 +2,7 @@
 #include <G3D/G3D.h>
 #include "Weapon.h"
 #include "GuiElements.h"
+#include "UserConfig.h"
 #include "FPSciAnyTableReader.h"
 
 class SceneConfig {
@@ -343,6 +344,7 @@ public:
 	RenderConfig		render;									///< Render related config parameters
 	PlayerConfig		player;									///< Player related config parameters
 	HudConfig			hud;									///< HUD related config parameters
+	ReticleConfig		reticle;								///< Reticle config
 	AudioConfig			audio;									///< Audio related config parameters
 	TimingConfig		timing;									///< Timing related config parameters
 	FeedbackConfig		feedback;								///< Feedback message config parameters
@@ -372,6 +374,7 @@ public:
 		render.load(reader, settingsVersion);
 		player.load(reader, settingsVersion);
 		hud.load(reader, settingsVersion);
+		reticle.load(reader, settingsVersion);
 		targetView.load(reader, settingsVersion);
 		clickToPhoton.load(reader, settingsVersion);
 		audio.load(reader, settingsVersion);
@@ -407,6 +410,7 @@ public:
 		a = render.addToAny(a, forceAll);
 		a = player.addToAny(a, forceAll);
 		a = hud.addToAny(a, forceAll);
+		a = reticle.addToAny(a, forceAll);
 		a = targetView.addToAny(a, forceAll);
 		a = clickToPhoton.addToAny(a, forceAll);
 		a = audio.addToAny(a, forceAll);

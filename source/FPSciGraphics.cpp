@@ -285,10 +285,9 @@ void FPSciApp::draw2DElements(RenderDevice* rd, Vector2 resolution) {
 	// Player camera only indicators
 	if (activeCamera() == playerCamera) {
 		// Reticle
-		const shared_ptr<UserConfig> user = currentUser();
-		float tscale = weapon->cooldownRatio(m_lastOnSimulationRealTime, user->reticleChangeTimeS);
-		float rScale = scale * (tscale * user->reticleScale[0] + (1.0f - tscale) * user->reticleScale[1]);
-		Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
+		float tscale = weapon->cooldownRatio(m_lastOnSimulationRealTime, reticleConfig.changeTimeS);
+		float rScale = scale * (tscale * reticleConfig.scale[0] + (1.0f - tscale) * reticleConfig.scale[1]);
+		Color4 rColor = reticleConfig.color[1] * (1.0f - tscale) + reticleConfig.color[0] * tscale;
 		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f)) * rScale / 2.0f + resolution / 2.0f, rd, rColor, reticleTexture);
 	}
 }

@@ -45,15 +45,15 @@ The user table is formatted as an array of user entries. Each entry in the table
 |`id`                   |`String` |A quick ID used to identify the user                                                                 |
 |`mouseDPI`             |`float`  |The mouse DPI used for the player (used for sensitivity adjustment)                                  |
 |`mouseDegPerMillimeter`|`float`  |The mouse sensitivity for the user (measured in °/mm)                                                |
-|`reticleIndex`         |`int`    |Refers to which reticle this user prefers (if not required for the study)                            |
-|`reticleScale`         |`float`  |Provides a range of reticle sizes over which to set the scale as an `Array` w/ 2 elements (min, max) | 
-|`reticleColor`         |`Color4` |Provides a range of colors over which to set the reticle color as an `Array` w/ 2 elements (min, max)|
-|`reticleChangeTime`    |`float`  |Provides the time (in seconds) for the reticle to change color and/or size following a shot          |
 |`invertY`              |`bool`   |A quick flag for inverting the Y view (as opposed to setting the y-value for `turnScale` to -1)      |
 |`turnScale`            |`Vector2(float)`|Provides a per-player view rotation/mouse sensitivity scale, designed to compound with the experiment/session-level `turnScale`.|
 |`scopeTurnScale`       |`Vector2(float)`|Provides an (optional) additional turn scale to apply when scoped. If this value is `Vector2(0,0)` (or unspecified) then a "default" scaling of the ratio of FoV (scoped vs unscoped) is used to scale mouse sensitivity |
 |        |  |     |
 |`cmp360`               |`float`  | **_Deprecated_** - ignored if `mouseDegPerMillimeter` is found. The mouse sensitivity for the user (measured in cm/360°) |
+|`reticleIndex`         |`int`           |Refers to which reticle this user prefers (if not required for the study)                            |
+|`reticleScale`         |`Array<float>`  |Provides a range of reticle sizes over which to set the scale as an `Array` w/ 2 elements (min, max) | 
+|`reticleColor`         |`Array<Color4>` |Provides a range of colors over which to set the reticle color as an `Array` w/ 2 elements (min, max)|
+|`reticleChangeTime`    |`float`         |Provides the time (in seconds) for the reticle to change color and/or size following a shot          |
 
 The full specification for the a user with default values is provided below as an example:
 

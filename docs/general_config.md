@@ -416,6 +416,18 @@ The image below provides an example of the banner with the timer, progress, and 
 "ammoOutlineColor": Color4(0.0,0.0,0.0,1.0),        // Set the outline/background color for the ammo indicator
 ```
 
+### Reticle
+In addition to being able to be specified on a per-user basis, the experiment/session level configuration can provide reticle configuration using the same parameters. When these parameters are specified at an experiment or session level they override any value provided using user configuration. See the [selecting a reticle section](userConfigReadme.md#selecting-a-reticle) for more information.
+
+| Parameter Name        |Units           | Description                                                                                         |
+|-----------------------|----------------|-----------------------------------------------------------------------------------------------------|
+|`reticleIndex`         |`int`           |Refers to which reticle this user prefers (if not required for the study)                            |
+|`reticleScale`         |`Array<float>`  |Provides a range of reticle sizes over which to set the scale as an `Array` w/ 2 elements (min, max) | 
+|`reticleColor`         |`Array<Color4>` |Provides a range of colors over which to set the reticle color as an `Array` w/ 2 elements (min, max)|
+|`reticleChangeTime`    |`float`         |Provides the time (in seconds) for the reticle to change color and/or size following a shot          |
+
+Note that when these values are specified at the experiment or session level the `allowReticleChange` property of the [menu configuration](#menu-config) should be set to `false` as user changes to the reticle will not apply.
+
 ### Weapon Cooldown
 | Parameter Name        |Units| Description                                                                             |
 |-----------------------|-----|-----------------------------------------------------------------------------------------|
