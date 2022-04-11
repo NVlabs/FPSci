@@ -9,7 +9,7 @@ If you are ever running into persistent issues with FPSci throwing exceptions/fa
 ## Setting up the Config Files
 To start out with we don't have any of the required configuration files we will need for our experiment. This results in the app loading with the "All Sessions Complete!" message displayed on the screen. In addition the only user present is `anon`, a default user that we will want to change to be able to track individual performance.
 
-### Experiment Configuraion
+### Experiment Configuration
 Generally speaking, when starting a new experiment design, it makes sense to start from the [`experimentconfig.Any` file](experimentConfigReadme.md). This file contains both the experiment-wide application parameters and the configurations for sessions and targets/trials within these sessions.
 
 There are 2 ways to get started on an `experimentconfig.Any` file. You can either start writing a file from scratch, or run the application the first time to produce the default `experimentconfig.Any` and edit from here.

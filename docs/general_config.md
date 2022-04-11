@@ -166,7 +166,7 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 |`resolution2D`             |`Array<int>`| The resolution to render 2D content at (defaults to window resolution)       |
 |`resolution3D`             |`Array<int>`| The resolution to render 3D content at (defaults to window resolution)       |
 |`resolutionComposite`      |`Array<int>`| The resolution to render the composite result at (defaults to window resolution)     |
-|`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`), only valid if `split2DBuffer` = `true`! |
+|`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`) |
 |`shader3D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 3D content (as a `.pix`) |
 |`shaderComposite`          |file   | The (relative) path/filename of an (optional) shader to run on the composited 2D/3D content (as a `.pix`) |
 |`sampler2D`                |`Sampler`  | The sampler for resampling the `iChannel0` input to `shader2D`                       |
@@ -650,7 +650,7 @@ These flags control whether various information is written to the output databas
 |`logUsers`                         |`bool` | Enable/disable for logging users to database (per session)            |
 |`logOnChange`                      |`bool` | Enable/disable for logging values to the `Player_Action` and `Target_Trajectory` tables only when changes occur    |
 |`logToSingleDb`                    |`bool` | Enable/disable for logging to a unified output database file (named using the experiment description and user ID)  |
-|`sessParamsToLog`                  |`Array<String>`| A list of other config parameters (by name) that are logged on a per-session basis to the `Sessions` table |
+|`sessionParametersToLog`           |`Array<String>`| A list of other config parameters (by name) that are logged on a per-session basis to the `Sessions` table |
  
 ```
 "logEnable" = true,                     // Enable logging by default
@@ -661,7 +661,7 @@ These flags control whether various information is written to the output databas
 "logUsers" = true,                      // Log the users to the Users table
 "logOnChange" = false,                  // Log every frame (do not log only on change)
 "logToSingleDb" = true,                 // Log all sessions affiliated with a given experiment to the same database file
-"sessParamsToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table
+"sessionParametersToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table
 ```
 
 *Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user]_[experiment config hash].db"`. This hash is printed to the `log.txt` from the run in case it is needed to disambiguate results files. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues. The experiment config hash takes into account only "valid" settings and ignores formatting only changes in the configuration file. Default values are used for the hash for anything that is not specified, so if a default is specified, the hash will match the config where the default was not specified.
