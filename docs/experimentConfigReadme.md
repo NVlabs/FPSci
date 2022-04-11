@@ -171,6 +171,54 @@ targets = [
 ],
 ```
 
+#### Target model notes
+
+Target models can get quite large in file size when they're highly detailed. As a result, we only include a handful of different model files with the FPSci repo and binary distributions. We have made a high quality sphere model available that you can [download from google drive here](https://drive.google.com/file/d/1LvJaJUD3k7DR0taZYZ_9Y0PNVQDMdShM/view?usp=sharing). Once you get that file (named `high_poly_sphere.obj`), you can place it in the `data-files/model/target/` directory or the `FPSci/model/target/` directory if using a binary distribution. We recommend scripting the download of this type of file if you are building an automated experiment build on FPSci. These files can then be used by targets as follows:
+
+```
+targets = ( 
+    { 
+        id = "ico"; 
+        destSpace = "player"; 
+        speed = ( 0, 0 ); 
+        visualSize = ( 0.05, 0.05 ); 
+        modelSpec = ArticulatedModel::Specification{
+            filename = "model/target/target.obj";
+        };
+    }, 
+    { 
+        id = "low"; 
+        destSpace = "player"; 
+        speed = ( 0, 0 ); 
+        visualSize = ( 0.05, 0.05 ); 
+        modelSpec = ArticulatedModel::Specification{
+            filename = "model/target/low_poly_sphere.obj";
+        };
+    }, 
+    { 
+        id = "mid"; 
+        destSpace = "player"; 
+        speed = ( 0, 0 ); 
+        visualSize = ( 0.05, 0.05 ); 
+        modelSpec = ArticulatedModel::Specification{
+            filename = "model/target/mid_poly_sphere.obj";
+        };
+    }, 
+    { 
+        // This one only works if you download the file from https://drive.google.com/file/d/1LvJaJUD3k7DR0taZYZ_9Y0PNVQDMdShM/view?usp=sharing
+        id = "high"; 
+        destSpace = "player"; 
+        speed = ( 0, 0 ); 
+        visualSize = ( 0.05, 0.05 ); 
+        modelSpec = ArticulatedModel::Specification{
+            filename = "model/target/high_poly_sphere.obj";
+        };
+    }, 
+);
+```
+
+The above examples are borrowed from the Spheres experiment sample that is provided with FPSci. Feel free to try that out if you want to compare the target shapes in game.
+
 ## Target Paths (Using Destinations)
 The `destinations` array within the target object overrides much of the default motion behavior in the target motion controls. Once a destinations array (including more than 2 destiantions) is specified all other motion parameters are considered unused. Once a `destinations` array is specified only the following fields from the [target configuration](#target-configuration) apply:
 
