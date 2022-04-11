@@ -149,8 +149,11 @@ void FPSciLogger::openResultsFile(const String& filename,
 
 		// Questions table
 		Columns questionColumns = {
+			{"time", "text"},
 			{"session", "text"},
 			{"question", "text"},
+			{"responseArray", "text"},
+			{"keyArray", "text"},
 			{"response", "text"}
 		};
 		createTableInDB(m_db, "Questions", questionColumns);
@@ -414,9 +417,15 @@ void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& 
 }
 
 void FPSciLogger::addQuestion(Question q, String session) {
+	const String time = genUniqueTimestamp();
+	const String optStr = Any(q.options).unparse();
+	const String keyStr = Any(q.optionKeys).unparse();
 	RowEntry rowContents = {
+		"'" + time + "'",
 		"'" + session + "'",
 		"'" + q.prompt + "'",
+		"'" + optStr + "'",
+		"'" + keyStr + "'",
 		"'" + q.result + "'"
 	};
 	logQuestionResult(rowContents);
