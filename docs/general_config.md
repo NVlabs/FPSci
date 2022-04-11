@@ -370,6 +370,8 @@ There are 2 primary differences between questions with `type` of `MultipleChoice
 "hudFont": "console.fnt",       // Font to use for the HUD (fixed with highly suggested!)
 ```
 
+Questions will be recorded in the database along with a timestamp, the question text itself, a `responseArray` inidicating the available response options and the `response` the user provided. If it's multiple choice, a `keyArray` will also be included with values if specified and the `presentedResponses` will show the response/key pairs in the order they were presented to the user for that question, which is particularly helpful when the order is randomized.
+
 #### Annotated Banner
 The image below provides an example of the banner with the timer, progress, and score annotated with an overlay.
 
