@@ -313,6 +313,8 @@ Questions are configured on a per experiment/session basis using the `questions`
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
 
+Note that when using `randomOrder` the options key bindings specified in `optionKeys` remains static (i.e. while ordering of presented options will change the keypress used to enter any given option will remain constant between the `options` and `optionKeys` array).
+
 ```
 "questions" : [
     {
@@ -344,6 +346,8 @@ There are 2 primary differences between questions with `type` of `MultipleChoice
 
 1. `MultipleChoice` questions can specify an `optionsPerRow` field to control layout (otherwise defaults to 3). `Rating` questions always use a single row of responses (`optionsPerRow` = total # of options)
 2. `MultipleChoice` questions default to `randomOrder` = `true` (randomize option order) whereas `Rating` questions default to the provided option ordering
+
+Questions are recorded in the results database along with a timestamp, the question prompt, a `responseArray` indicating available options and the `response` the user provided. If multiple choice, a `keyArray` is included with `optionKeys` values (as specified) and the `presentedResponses` array provides the response/key pairs in the order they were presented to the user for that question, which is particularly helpful when the order is randomized.
 
 ## HUD settings
 | Parameter Name        |Units      | Description                                                                                                           |
@@ -491,9 +495,11 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 | Parameter Name        |Units                  | Description                                                                        |
 |-----------------------|-----------------------|------------------------------------------------------------------------------------|
 |`targetHealthColors`   |[`Color3`, `Color3`]   | The max/min health colors for the target as an array of [`max color`, `min color`], if you do not want the target to change color as its health drops, set these values both to the same color                                              |
+|`targetGloss`          |`Color4`               | The target glossy (reflection) value, first 3 channels are RGB w/ alpha representing minimum reflection (F0). Set all channels to 0 or do not specify to disable glossy reflections. This sets the glossy color for the reference target in addition to trial targets       |
 |`showReferenceTarget`   |`bool`                | Show a reference target to re-center the view between trials/sessions?             |
 |`referenceTargetColor` |`Color3`               | The color of the "reference" targets spawned between trials                        |
 |`referenceTargetSize`  |m                      | The size of the "reference" targets spawned between trials                         |
+|`referenceTargetModelSpec`|`ArticulatedModel::Specification`| The model specification of the "reference" targets spawned between trials |
 |`clearMissDecalsWithReference`|`bool`              | Clear miss decals when the reference target is destroyed                           |
 |`showPreviewTargetsWithReference` |`bool`      | Show a preview of the trial targets (unhittable) with the reference target. Make these targets hittable once the reference is destroyed |
 |`showReferenceTargetMissDecals`|`bool`         | Show miss decals when the weapon is firing at a reference target?                  |
@@ -507,10 +513,23 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 "showReferenceTarget": true,                    // Show a reference target between trials
 "referenceTargetColor": Color3(1.0,1.0,1.0),    // Reference target color (return to "0" view direction)
 "referenceTargetSize": 0.01,                    // This is a size in meters
+"referenceTargetModelSpec" : ArticulatedModel::Specification{	    // Basic model spec for reference target
+    filename = "model/target/target.obj";
+    cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
+        allowVertexMerging = true;
+        forceComputeNormals = false;
+        forceComputeTangents = false;
+        forceVertexMerging = true;
+        maxEdgeLength = inf;
+        maxNormalWeldAngleDegrees = 0;
+        maxSmoothAngleDegrees = 0;
+    };
+},
 "clearMissDecalsWithReference" : false,         // Don't clear the miss decals when the reference target is eliminated
 "showPreviewTargetsWithReference" : false,      // Don't show the preview targets with the reference
 "showReferenceTargetMissDecals" : true,         // Show miss decals for reference targets
 "previewTargetColor" = Color3(0.5, 0.5, 0.5),   // Use gray for preview targets (if they are shown)
+"targetGloss" = Color4(0.4f, 0.2f, 0.1f, 0.8f), // Use the target gloss behavior from FPSci v22.02.01 and earlier
 ```
 
 ### Target Health Bars

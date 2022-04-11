@@ -439,6 +439,7 @@ void TargetViewConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		if (gotColors && healthColors.length() < 1) {
 			throw "Specified \"healthColors\" doesn't contain at least one Color3!";
 		}
+		reader.getIfPresent("targetGloss", gloss);
 		reader.getIfPresent("targetHealthBarColors", healthBarColors);
 		reader.getIfPresent("showFloatingCombatText", showCombatText);
 		reader.getIfPresent("floatingCombatTextSize", combatTextSize);
@@ -452,6 +453,7 @@ void TargetViewConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("showReferenceTarget", showRefTarget);
 		reader.getIfPresent("referenceTargetSize", refTargetSize);
 		reader.getIfPresent("referenceTargetColor", refTargetColor);
+		reader.getIfPresent("referenceTargetModelSpec", refTargetModelSpec);
 		reader.getIfPresent("clearMissDecalsWithReference", clearDecalsWithRef);
 		reader.getIfPresent("showPreviewTargetsWithReference", previewWithRef);
 		reader.getIfPresent("showReferenceTargetMissDecals", showRefDecals);

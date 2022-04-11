@@ -366,6 +366,7 @@ void Session::processResponse()
 		m_remainingTrials[m_currTrialIdx] -= 1;	
 	}
 
+	// This update is only used for completed trials
 	if (notNull(logger)) {
 		logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
 	}
@@ -454,7 +455,7 @@ void Session::updatePresentationState()
 							if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
 								m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
 								if (m_config->logger.enable) {
-									logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
+									logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id, m_app->dialog);	// Log the question and its answer
 								}
 								m_currQuestionIdx++;																
 								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
@@ -470,6 +471,10 @@ void Session::updatePresentationState()
 						}
 					}
 					else {
+						// Write final session timestamp to log
+						if (notNull(logger) && m_config->logger.enable) {
+							logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
+						}
 						if (m_config->logger.enable) {
 							endLogging();
 						}
@@ -814,7 +819,9 @@ shared_ptr<TargetEntity> Session::spawnDestTarget(
 	// Update parameters for the target
 	target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
-	target->setColor(color);
+
+	Color4 gloss = config->hasGloss ? config->gloss : m_app->experimentConfig.targetView.gloss;
+	target->setColor(color, gloss);
 
 	// Add target to array and scene
 	insertTarget(target);
@@ -828,11 +835,18 @@ shared_ptr<FlyingEntity> Session::spawnReferenceTarget(
 	const Color3& color)
 {
 	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
-	const shared_ptr<FlyingEntity>& target = FlyingEntity::create("reference", m_scene, (*m_targetModels)["reference"][scaleIndex], CFrame());
+
+	String refId = m_config->id + "_reference";
+	if (isNull(m_targetModels->getPointer(refId))) {
+		// This session doesn't have a custom reference target
+		refId = "reference";
+	}
+
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create("reference", m_scene, (*m_targetModels)[refId][scaleIndex], CFrame());
 
 	// Setup additional target parameters
 	target->setFrame(position);
-	target->setColor(color);
+	target->setColor(color, m_app->experimentConfig.targetView.gloss);
 
 	// Add target to array and scene
 	insertTarget(target);
@@ -861,7 +875,9 @@ shared_ptr<FlyingEntity> Session::spawnFlyingTarget(
 	}
 	target->setHitSound(config->hitSound, m_app->soundTable,  config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
-	target->setColor(color);
+
+	Color4 gloss = config->hasGloss ? config->gloss : m_app->experimentConfig.targetView.gloss;
+	target->setColor(color, gloss);
 
 	// Add the target to the scene/target array
 	insertTarget(target);
@@ -891,7 +907,9 @@ shared_ptr<JumpingEntity> Session::spawnJumpingTarget(
 	}
 	target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
-	target->setColor(color);
+
+	Color4 gloss = config->hasGloss ? config->gloss : m_app->experimentConfig.targetView.gloss;
+	target->setColor(color, gloss);
 
 	// Add the target to the scene/target array
 	insertTarget(target);

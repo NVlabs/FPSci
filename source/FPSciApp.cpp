@@ -207,19 +207,20 @@ void FPSciApp::loadModels() {
 		explosionsToBuild.set(target.id, target.destroyDecal);
 		explosionScales.set(target.id, target.destroyDecalScale);
 	}
-	// Append the basic model automatically (used for reference targets for now)
-	targetsToBuild.set("reference", PARSE_ANY(ArticulatedModel::Specification{
-		filename = "model/target/target.obj";
-		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
-					allowVertexMerging = true;
-					forceComputeNormals = false;
-					forceComputeTangents = false;
-					forceVertexMerging = true;
-					maxEdgeLength = inf;
-					maxNormalWeldAngleDegrees = 0;
-					maxSmoothAngleDegrees = 0;
-		};
-	}));
+
+	// Append reference target model(s)
+	Any& defaultRefTarget = experimentConfig.targetView.refTargetModelSpec;
+	for (SessionConfig& sess : experimentConfig.sessions) {
+		if (sess.targetView.refTargetModelSpec != defaultRefTarget) {
+			// This is a custom reference target model
+			String id = sess.id + "_reference";
+			targetsToBuild.set(id, sess.targetView.refTargetModelSpec);
+			explosionsToBuild.set(id, "explosion_01.png");
+			explosionScales.set(id, 1.0);
+		}
+	}
+	// Add default reference
+	targetsToBuild.set("reference", defaultRefTarget);
 	explosionsToBuild.set("reference", "explosion_01.png");
 	explosionScales.set("reference", 1.0);
 
@@ -279,10 +280,18 @@ Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetCo
 		else {
 			color = lerpColor(experimentConfig.targetView.healthColors, complete);
 		}
+		Color4 gloss;
+		if (notNull(tconfig) && tconfig->hasGloss) {
+			gloss = tconfig->gloss;
+		}
+		else {
+			gloss = experimentConfig.targetView.gloss;
+		}
+
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
 		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+		materialSpecification.setGlossy(Texture::Specification(gloss));					// Used to be Color4(0.4f, 0.2f, 0.1f, 0.8f)
 		targetMaterials.append(UniversalMaterial::create(materialSpecification));
 	}
 	return targetMaterials;
@@ -438,7 +447,14 @@ void FPSciApp::presentQuestion(Question question) {
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
 		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
-			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+			for (int i = 0; i < options.length(); i++) { 
+				// Find the correct index for this option (order might be randomized)
+				int keyIdx;
+				for (keyIdx = 0; keyIdx < question.options.length(); keyIdx++) {
+					if (options[i] == question.options[keyIdx]) break;
+				}
+				options[i] += format(" (%s)", question.optionKeys[keyIdx].toString()); 
+			}
 		}
 		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, question.showCursor, question.optionsPerRow, size, !question.fullscreen,
 			question.promptFontSize, question.optionFontSize, question.buttonFontSize);
@@ -448,7 +464,14 @@ void FPSciApp::presentQuestion(Question question) {
 		break;
 	case Question::Type::Rating:
 		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
-			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+			for (int i = 0; i < options.length(); i++) { 
+				// Find the correct index for this option (order might be randomized)
+				int keyIdx;
+				for (keyIdx = 0; keyIdx < question.options.length(); keyIdx++) {
+					if (options[i] == question.options[keyIdx]) break;
+				}
+				options[i] += format(" (%s)", question.optionKeys[keyIdx].toString()); 
+			}
 		}
 		dialog = RatingDialog::create(question.prompt, options, theme, question.title, question.showCursor, size, !question.fullscreen,
 			question.promptFontSize, question.optionFontSize, question.buttonFontSize);

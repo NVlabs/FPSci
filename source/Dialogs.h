@@ -129,6 +129,7 @@ public:
 	{
 		return createShared<SelectionDialog>(prompt, options, theme, title, submitBtn, itemsPerRow, size, resize, promptFontSize, optionFontSize, buttonFontSize, position);
 	}
+	const Array<String>& options() const { return m_options; }
 };
 
 class YesNoDialog : public SelectionDialog {
@@ -226,12 +227,12 @@ public:
 
 class DropDownDialog : public DialogBase {
 protected:
-	int m_selIdx = 0;				// Default to first index
 	GuiDropDownList* m_dropDown;	// Drop down selection list
 	
 	void submitCallback() {
 		complete = true;
 		setVisible(false);
+		result = m_dropDown->selectedValue();
 	}
 
 	DropDownDialog(const String& prompt, const Array<String>& options, const shared_ptr<GuiTheme> theme, const String& title = "Dialog", 
@@ -247,7 +248,7 @@ protected:
 			l->setSize(0.99f * size[0], 50.0f);
 		} pane->endRow();
 		pane->beginRow(); {
-			m_dropDown = pane->addDropDownList("", options, &m_selIdx);
+			m_dropDown = pane->addDropDownList("", options);
 			m_dropDown->setSize(0.99f * size[0], size[1] - 150.0f);
 		} pane->endRow();
 		pane->beginRow(); {
