@@ -275,7 +275,7 @@ protected:
 
 	shared_ptr<TargetEntity> spawnDestTarget(
 		shared_ptr<TargetConfig> config,
-		const Point3& position,
+		const Point3& offset,
 		const Color3& color,
 		const int paramIdx,
 		const String& name = "");

@@ -232,6 +232,15 @@ bool WaypointManager::loadWaypoints(String filename) {
 	if (t.destinations.size() > 0) {
 		setWaypoints(t.destinations);
 	}
+
+	if (t.destSpace == "player") {
+		CFrame f = m_app->playerCamera->frame();
+		Point3 offset = f.pointToWorldSpace(Point3(0, 0, -1.0f));		// The -1 here matches the session m_targetDistance value
+		// Adjust player space target destinations for preview
+		for (Destination& d : m_waypoints) {
+			d.position += offset;	// Add current camera frame as offset
+		}
+	}
 	return true;
 }
 
