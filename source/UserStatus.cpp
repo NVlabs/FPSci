@@ -47,6 +47,7 @@ UserStatusTable::UserStatusTable(const Any& any) {
 		reader.getIfPresent("randomizeSessionOrder", randomizeDefaults);
 		UserSessionStatus::randomizeDefaults = randomizeDefaults;					// Set whether default session order is randomized
 		reader.get("users", userInfo, "Issue in the (required) \"users\" array from the user status file!");
+		reader.getIfPresent(completedLogFilename, "completedLogFilename");
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in UserStatus.\n", settingsVersion);

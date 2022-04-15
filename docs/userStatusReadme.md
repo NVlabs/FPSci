@@ -12,12 +12,12 @@ The top-level user status table contains the following fields:
 * `allowRepeat` determines whether or not to (strictly) sequence the trials, allowing for repeats
 * `randomizeSessionOrder` determines whether or not individual users are assigned randomized orderings from the (default) `sessions` array (defined below)
 * `sessions` is the default sessions list for any user in the file that does not have a sessions list specified
+* `completedLogFilename` is the (optional) filename to use to store the completed session log (formatted as a CSV with `user id, session id` format). If unspecified the completed log filename will be `[user status filename].sessions.csv`.
 
 Each entry in the user table contains the following fields:
 
 * `id` a quick ID used to identify the user
 * `sessions` a list of sessions to be completed, in order
-* `completedSessions` a list of sessions completed by any given user
 
 The `sessions` list above can be used to control session ordering (this is an ordered list). If random ordering is desired a quick script can be written to read all users from the `userconfig.Any` file and write a new sequence of sessions for each user present. Alternatively the top-level `sessions` list can be used to specify a single ordering for all participants:
 
