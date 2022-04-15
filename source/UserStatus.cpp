@@ -30,7 +30,6 @@ Any UserSessionStatus::toAny(const bool forceAll) const {
 	Any a(Any::TABLE);
 	a["id"] = id;									// populate id
 	a["sessions"] = sessionOrder;					// populate session order
-	a["completedSessions"] = completedSessions; 	// Include updated subject table
 	return a;
 }
 
@@ -56,16 +55,46 @@ UserStatusTable::UserStatusTable(const Any& any) {
 }
 
 UserStatusTable UserStatusTable::load(const String& filename, bool saveJSON) {
+	UserStatusTable status;
 	if (!FileSystem::exists(filename)) {						// if file not found, create a default
-		UserStatusTable defaultStatus = UserStatusTable();		// Create empty status
 		UserSessionStatus user;
 		user.sessionOrder = Array<String>({ "60Hz", "30Hz" });	// Add "default" sessions we add to
-		defaultStatus.userInfo.append(user);					// Add single "default" user
-		defaultStatus.currentUser = user.id;					// Set "default" user as current user
-		defaultStatus.save(filename, saveJSON);					// Save .any file
-		return defaultStatus;
+		status.userInfo.append(user);							// Add single "default" user
+		status.currentUser = user.id;							// Set "default" user as current user
+		status.save(filename, saveJSON);						// Save .any file
 	}
-	return Any::fromFile(System::findDataFile(filename));
+	else status = Any::fromFile(filename);
+
+	// Populate completed session log name if missing (use user status filename as base)
+	if (status.completedLogFilename.empty()) {
+		status.completedLogFilename = filename.substr(0, filename.find_last_of('.')) + ".sessions.csv";
+	}
+
+	// Load into completedSessions
+	if (FileSystem::exists(status.completedLogFilename)) {
+		std::ifstream log;
+		log.open(status.completedLogFilename.c_str());
+		std::string line;
+		while (std::getline(log, line)) {
+			size_t commaIdx = line.find(',');
+			String userID = String(line).substr(0, commaIdx);
+			String sessID = String(line).substr(commaIdx + 1, line.length() - commaIdx - 1);
+			for (UserSessionStatus& info : status.userInfo) {
+				if (!info.id.compare(userID)) { 
+					info.completedSessions.append(sessID); 
+				}
+			}
+		}
+		log.close();
+	}
+
+	// Open for writing
+	status.completedLog.open(status.completedLogFilename.c_str(), std::ios_base::app);
+	if (!status.completedLog.is_open()) {
+		logPrintf("Failed to open user completed session log!");
+	}
+
+	return status;
 }
 
 Any UserStatusTable::toAny(const bool forceAll) const {
@@ -81,7 +110,7 @@ Any UserStatusTable::toAny(const bool forceAll) const {
 }
 
 shared_ptr<UserSessionStatus> UserStatusTable::getUserStatus(const String& id) {
-	for (UserSessionStatus user : userInfo) {
+	for (UserSessionStatus& user : userInfo) {
 		if (!user.id.compare(id)) return std::make_shared<UserSessionStatus>(user);
 	}
 	return nullptr;
@@ -112,11 +141,16 @@ String UserStatusTable::getNextSession(String userId) {
 }
 
 void UserStatusTable::addCompletedSession(const String& userId, const String& sessId) {
+	// Update the user info
 	for (int i = 0; i < userInfo.length(); i++) {
 		if (!userInfo[i].id.compare(userId)) {
 			userInfo[i].completedSessions.append(sessId);
 		}
 	}
+
+	// Log the completed session to the session log
+	completedLog << userId.c_str() << "," << sessId.c_str() << "\n";
+	completedLog.flush();
 }
 
 void UserStatusTable::validate(const Array<String>& sessions, const Array<String>& users) {
