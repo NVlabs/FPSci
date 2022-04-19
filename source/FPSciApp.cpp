@@ -722,10 +722,15 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		FileSystem::createDirectory(resultsDirPath);
 	}
 
-	const String logName = sessConfig->logger.logToSingleDb ? 
-		resultsDirPath + experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
-		resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+	// Create and check log file name
+	const String logFilename = sessConfig->logger.logToSingleDb ? 
+		experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
+		id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+	if (!FilePath::isLegalFilename(logFilename + ".db")) {
+		throw "Results filename \"" + logFilename + ".db\" is not valid! Make sure experiment description and username do not include any illegal characters (e.g. '.', '\\', '/', '*')";
+	}
 
+	const String logPath = resultsDirPath + logFilename;
 	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
@@ -738,18 +743,18 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 			m_pyLogger->mergeLogToDb();
 		}
 		// Run a new logger if we need to (include the mode to run in here...)
-		m_pyLogger->run(logName, sessConfig->clickToPhoton.mode);
+		m_pyLogger->run(logPath, sessConfig->clickToPhoton.mode);
 	}
 
 	// Initialize the experiment (this creates the results file)
-	sess->onInit(logName+".db", experimentConfig.description + "/" + sessConfig->description);
+	sess->onInit(logPath +".db", experimentConfig.description + "/" + sessConfig->description);
 
 	// Don't create a results file for a user w/ no sessions left
 	if (m_userSettingsWindow->sessionsForSelectedUser() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
 	}
 	else {
-		logPrintf("Created results file: %s.db\n", logName.c_str());
+		logPrintf("Created results file: %s.db\n", logPath.c_str());
 	}
 
 	if (m_firstSession) {
