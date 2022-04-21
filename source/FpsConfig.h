@@ -333,6 +333,8 @@ public:
 
 	Question() {};
 	Question(const Any& any);
+
+	Any toAny(const bool forceAll = false) const;
 };
 
 class FpsConfig : public ReferenceCountedObject {
@@ -419,6 +421,7 @@ public:
 		a = logger.addToAny(a, forceAll);
 		a = menu.addToAny(a, forceAll);
 		a = commands.addToAny(a, forceAll);
+		a["questions"] = questionArray;
 		a["weapon"] = weapon.toAny(forceAll);
 		return a;
 	}

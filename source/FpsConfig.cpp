@@ -674,3 +674,57 @@ Question::Question(const Any& any) {
 		break;
 	}
 }
+
+Any Question::toAny(const bool forceAll) const {
+	Any a(Any::TABLE);
+	Question def;
+
+	// Type serialization
+	String typeStr;
+	switch (type) {
+	case MultipleChoice:
+		typeStr = "MultipleChoice";
+		break;
+	case Entry:
+		typeStr = "Entry";
+		break;
+	case Rating:
+		typeStr = "Rating";
+		break;
+	case DropDown:
+		typeStr = "DropDown";
+		break;
+	default:
+		typeStr = "None";
+		break;
+	}
+
+	if (forceAll || def.type != type) a["type"] = typeStr;
+	if (forceAll || def.prompt != prompt) a["prompt"] = prompt;
+	if (forceAll || def.title != title)	a["title"] = title;
+	if (forceAll || def.fullscreen != fullscreen) a["fullscreen"] = fullscreen;
+	if (forceAll || def.showCursor != showCursor) a["showCursor"] = showCursor;
+	if (forceAll || def.optionsPerRow != optionsPerRow) a["optionsPerRow"] = optionsPerRow;
+
+	// Default is different for multiple choice here
+	if (forceAll || (type == MultipleChoice && !randomOrder) || (type != MultipleChoice && randomOrder)) a["randomOrder"] = randomOrder;
+
+	if (type != Entry) {
+		a["options"] = options;
+	}
+	if (type == Rating || type == MultipleChoice) {
+		a["optionKeys"] = optionKeys;
+	}
+
+	// Font sizing
+	if (forceAll || (promptFontSize == optionFontSize && optionFontSize == buttonFontSize && buttonFontSize != def.buttonFontSize)) {
+		a["fontSize"] = promptFontSize;
+	}
+	else {
+		if (forceAll || def.promptFontSize != promptFontSize) a["promptFontSize"] = promptFontSize;
+		if (forceAll || def.optionFontSize != optionFontSize) a["optionFontSize"] = optionFontSize;
+		if (forceAll || def.buttonFontSize != buttonFontSize) a["buttonFontSize"] = buttonFontSize;
+	}
+
+	return a;
+}
