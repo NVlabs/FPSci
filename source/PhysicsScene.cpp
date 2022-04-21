@@ -1,5 +1,6 @@
 #include "PhysicsScene.h"
 #include "PlayerEntity.h"
+#include "FPSciAnyTableReader.h"
 
 shared_ptr<PhysicsScene> PhysicsScene::create(const shared_ptr<AmbientOcclusion>& ao) {
     return createShared<PhysicsScene>(ao);
@@ -28,7 +29,7 @@ Any PhysicsScene::load(const String& sceneName, const LoadOptions& loadOptions) 
 
     if ( resultAny.containsKey("Physics") ) {
         const Any& physics = resultAny["Physics"];
-        AnyTableReader physicsTable(physics);
+        FPSciAnyTableReader physicsTable(physics);
         physicsTable.getIfPresent("gravity", m_gravity);
 		physicsTable.getIfPresent("minHeight", m_resetHeight);
     }

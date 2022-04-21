@@ -1,0 +1,12 @@
+{ 
+    currentUser = "Sample User"; 
+    sessions = ( "mixedtypes", "icosohedron", "lowpoly", "midpoly", "highpoly"); 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            completedSessions = ( ); 
+            id = "Sample User"; 
+            sessions = ( "mixedtypes", "icosohedron", "lowpoly", "midpoly", "highpoly"); 
+        } ); 
+    
+} 

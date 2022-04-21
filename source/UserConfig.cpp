@@ -1,4 +1,5 @@
 #include "UserConfig.h"
+#include "FPSciAnyTableReader.h"
 
 template <class T>
 static bool operator!=(Array<T> a1, Array<T> a2) {
@@ -12,13 +13,35 @@ static bool operator==(Array<T> a1, Array<T> a2) {
 	return !(a1 != a2);
 }
 
+void ReticleConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
+	switch (settingsVersion) {
+	case 1:
+		if (reader.getIfPresent("reticleIndex", index)) indexSpecified = true;
+		if (reader.getIfPresent("reticleScale", scale)) scaleSpecified = true;
+		if (reader.getIfPresent("reticleColor", color)) colorSpecified = true;
+		if (reader.getIfPresent("reticleChangeTime", changeTimeS)) changeTimeSpecified = true;
+		break;
+	default:
+		throw format("Did not recognize settings version: %d", settingsVersion);
+	}
+}
+
+Any ReticleConfig::addToAny(Any a, bool forceAll) const {
+	ReticleConfig def;
+	if (forceAll || def.index != index)				a["reticleIndex"] = index;
+	if (forceAll || def.scale != scale)				a["reticleScale"] = scale;
+	if (forceAll || def.color != color)				a["reticleColor"] = color;
+	if (forceAll || def.changeTimeS != changeTimeS)	a["reticleChangeTime"] = changeTimeS;
+	return a;
+}
+
 UserConfig::UserConfig(const Any& any) {
 	// for loading old user configs
 	double cmp360 = 12.75;
 	bool foundMouseDegPerMm = false;
 
 	int settingsVersion = 1; // used to allow different version numbers to be loaded differently
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 	switch (settingsVersion) {
 	case 1:
@@ -26,13 +49,10 @@ UserConfig::UserConfig(const Any& any) {
 		reader.getIfPresent("mouseDPI", mouseDPI);
 		foundMouseDegPerMm = reader.getIfPresent("mouseDegPerMillimeter", mouseDegPerMm);
 		reader.getIfPresent("cmp360", cmp360);
-		reader.getIfPresent("reticleIndex", reticleIndex);
-		reader.getIfPresent("reticleScale", reticleScale);
-		reader.getIfPresent("reticleColor", reticleColor);
-		reader.getIfPresent("reticleChangeTime", reticleChangeTimeS);
 		reader.getIfPresent("turnScale", turnScale);
 		reader.getIfPresent("invertY", invertY);
 		reader.getIfPresent("scopeTurnScale", scopeTurnScale);
+		reticle.load(reader, settingsVersion);
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in UserConfig.\n", settingsVersion);
@@ -50,27 +70,26 @@ Any UserConfig::toAny(const bool forceAll) const {
 	Any a(Any::TABLE);
 	a["id"] = id;										// Include subject ID
 	a["mouseDPI"] = mouseDPI;							// Include mouse DPI
-	a["mouseDegPerMillimeter"] = mouseDegPerMm;						// Include sensitivity
-	if (forceAll || def.reticleIndex != reticleIndex)				a["reticleIndex"] = reticleIndex;
-	if (forceAll || def.reticleScale != reticleScale)				a["reticleScale"] = reticleScale;
-	if (forceAll || def.reticleColor != reticleColor)				a["reticleColor"] = reticleColor;
-	if (forceAll || def.reticleChangeTimeS != reticleChangeTimeS)	a["reticleChangeTime"] = reticleChangeTimeS;
+	a["mouseDegPerMillimeter"] = mouseDegPerMm;		    // Include sensitivity
 	if (forceAll || def.turnScale != turnScale)						a["turnScale"] = turnScale;
 	if (forceAll || def.invertY != invertY)							a["invertY"] = invertY;
 	if (forceAll || def.scopeTurnScale != scopeTurnScale)			a["scopeTurnScale"] = scopeTurnScale;
+	a = reticle.addToAny(a);
 	return a;
 }
 
+static bool operator==(ReticleConfig r1, ReticleConfig r2) {
+	return r1.index == r2.index && r1.scale == r2.scale && r1.color == r2.color && r1.changeTimeS == r2.changeTimeS;
+}
 bool UserConfig::operator==(const UserConfig& other) const {
-	bool eq = id == other.id && mouseDegPerMm == other.mouseDegPerMm && reticleIndex == other.reticleIndex &&
-		reticleScale == other.reticleScale && reticleColor == other.reticleColor && reticleChangeTimeS == other.reticleChangeTimeS &&
+	bool eq = id == other.id && mouseDegPerMm == other.mouseDegPerMm && reticle == other.reticle &&
 		turnScale == other.turnScale && invertY == other.invertY && scopeTurnScale == other.scopeTurnScale;
 	return eq;
 }
 
 UserTable:: UserTable(const Any& any) {
 	int settingsVersion = 1;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	switch (settingsVersion) {
@@ -97,12 +116,12 @@ UserTable:: UserTable(const Any& any) {
 	}
 }
 
-UserTable UserTable::load(const String& filename) {
+UserTable UserTable::load(const String& filename, bool saveJSON) {
 	// Create default UserConfig file
 	if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
 		UserTable defTable = UserTable();
 		defTable.users.append(UserConfig());			// Append one default user
-		defTable.save(filename);						// Save the .any file
+		defTable.save(filename, saveJSON);				// Save the .any file
 		return defTable;
 	}
 	return Any::fromFile(System::findDataFile(filename));

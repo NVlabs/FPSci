@@ -1,0 +1,20 @@
+{ 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            id = "Sample User"; 
+            mouseDegPerMillimeter = 1.8;
+            invertY = false; 
+            mouseDPI = 800; 
+        },
+        { 
+            id = "sa2019_sampleuser"; 
+            mouseDegPerMillimeter = 1.8;
+            reticleScale = (0.5, 0.5);
+            reticleColor = [Color4(0,1,0,1), Color4(0,1,0,1)];
+            invertY = false; 
+            mouseDPI = 800; 
+        },
+    ); 
+    
+} 

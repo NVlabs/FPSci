@@ -1,7 +1,8 @@
 #include "SystemConfig.h"
+#include "FPSciAnyTableReader.h"
 
 SystemConfig::SystemConfig(const Any& any) {
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	int settingsVersion = 1;
 	reader.getIfPresent("settingsVersion", settingsVersion);
 	switch (settingsVersion) {
@@ -28,12 +29,12 @@ SystemConfig::SystemConfig(const Any& any) {
 	}
 }
 
-SystemConfig SystemConfig::load(String filename) {
+SystemConfig SystemConfig::load(String filename, bool saveJSON) {
 	if (filename.empty()) { filename = "systemconfig.Any"; }
 	// Create default UserConfig file
 	if (!FileSystem::exists(System::findDataFile(filename, false))) { // if file not found, generate a default user config table
 		SystemConfig defConfig = SystemConfig();
-		defConfig.toAny().save(filename);						// Save the .any file
+		defConfig.toAny().save(filename, saveJSON);						// Save the .any file
 		return defConfig;
 	}
 	return Any::fromFile(System::findDataFile(filename));

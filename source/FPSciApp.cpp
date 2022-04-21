@@ -8,7 +8,6 @@
 #include <chrono>
 
 // Storage for configuration static vars
-FpsConfig SessionConfig::defaultConfig;
 int TrialCount::defaultCount;
 Array<String> UserSessionStatus::defaultSessionOrder;
 bool UserSessionStatus::randomizeDefaults;
@@ -23,7 +22,8 @@ void FPSciApp::onInit() {
 	Random::common().reset(uint32(time(0)));
 
 	GApp::onInit();			// Initialize the G3D application (one time)
-	startupConfig.validateExperiments();
+	// TODO: Move validateExperiments() to a developer mode GUI button
+	//startupConfig.validateExperiments();
 	initExperiment();		// Initialize the experiment
 }
 
@@ -31,9 +31,6 @@ void FPSciApp::initExperiment(){
 	// Load config from files
 	loadConfigs(startupConfig.experimentList[experimentIdx]);
 	m_lastSavedUser = *currentUser();			// Copy over the startup user for saves
-
-	// Get the size of the primary display
-	displayRes = OSWindow::primaryDisplaySize();						
 
 	// Setup the display mode
 	setSubmitToDisplayMode(
@@ -62,7 +59,7 @@ void FPSciApp::initExperiment(){
 
 	// Load models and set the reticle
 	loadModels();
-	setReticle(currentUser()->reticleIndex);
+	setReticle(reticleConfig.index);
 
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
@@ -116,13 +113,13 @@ void FPSciApp::saveUserConfig(bool onDiff) {
 	if (notNull(sess->logger)) {
 		sess->logger->logUserConfig(*currentUser(), sessConfig->id, sessConfig->player.turnScale);
 	}
-	userTable.save(startupConfig.experimentList[experimentIdx].userConfigFilename);
+	userTable.save(startupConfig.experimentList[experimentIdx].userConfigFilename, startupConfig.jsonAnyOutput);
 	m_lastSavedUser = *currentUser();			// Copy over this user
 	logPrintf("User table saved.\n");			// Print message to log
 }
 
 void FPSciApp::saveUserStatus(void) {
-	userStatusTable.save(startupConfig.experimentList[experimentIdx].userStatusFilename);
+	userStatusTable.save(startupConfig.experimentList[experimentIdx].userStatusFilename, startupConfig.jsonAnyOutput);
 	logPrintf("User status saved.\n");
 }
 
@@ -161,7 +158,7 @@ void FPSciApp::setMouseInputMode(MouseInputMode mode) {
 
 void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	// Load experiment setting from file
-	experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename);
+	experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename, startupConfig.jsonAnyOutput);
 	experimentConfig.printToLog();
 	experimentConfig.validate(true);
 
@@ -174,11 +171,11 @@ void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	experimentConfig.getSessionIds(sessionIds);
 
 	// Load per user settings from file
-	userTable = UserTable::load(configs.userConfigFilename);
+	userTable = UserTable::load(configs.userConfigFilename, startupConfig.jsonAnyOutput);
 	userTable.printToLog();
 
 	// Load per experiment user settings from file and make sure they are valid
-	userStatusTable = UserStatusTable::load(configs.userStatusFilename);
+	userStatusTable = UserStatusTable::load(configs.userStatusFilename, startupConfig.jsonAnyOutput);
 	userStatusTable.printToLog();
 	userStatusTable.validate(sessionIds, userTable.getIds());
 		
@@ -187,11 +184,11 @@ void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	info.printToLog();										// Print system info to log.txt
 
 	// Get system configuration
-	systemConfig = SystemConfig::load(configs.systemConfigFilename);
+	systemConfig = SystemConfig::load(configs.systemConfigFilename, startupConfig.jsonAnyOutput);
 	systemConfig.printToLog();			// Print the latency logger config to log.txt	
 
 	// Load the key binds
-	keyMap = KeyMapping::load(configs.keymapConfigFilename);
+	keyMap = KeyMapping::load(configs.keymapConfigFilename, startupConfig.jsonAnyOutput);
 	userInput->setKeyMapping(&keyMap.uiMap);
 }
 
@@ -210,19 +207,20 @@ void FPSciApp::loadModels() {
 		explosionsToBuild.set(target.id, target.destroyDecal);
 		explosionScales.set(target.id, target.destroyDecalScale);
 	}
-	// Append the basic model automatically (used for reference targets for now)
-	targetsToBuild.set("reference", PARSE_ANY(ArticulatedModel::Specification{
-		filename = "model/target/target.obj";
-		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
-					allowVertexMerging = true;
-					forceComputeNormals = false;
-					forceComputeTangents = false;
-					forceVertexMerging = true;
-					maxEdgeLength = inf;
-					maxNormalWeldAngleDegrees = 0;
-					maxSmoothAngleDegrees = 0;
-		};
-	}));
+
+	// Append reference target model(s)
+	Any& defaultRefTarget = experimentConfig.targetView.refTargetModelSpec;
+	for (SessionConfig& sess : experimentConfig.sessions) {
+		if (sess.targetView.refTargetModelSpec != defaultRefTarget) {
+			// This is a custom reference target model
+			String id = sess.id + "_reference";
+			targetsToBuild.set(id, sess.targetView.refTargetModelSpec);
+			explosionsToBuild.set(id, "explosion_01.png");
+			explosionScales.set(id, 1.0);
+		}
+	}
+	// Add default reference
+	targetsToBuild.set("reference", defaultRefTarget);
 	explosionsToBuild.set("reference", "explosion_01.png");
 	explosionScales.set("reference", 1.0);
 
@@ -256,25 +254,77 @@ void FPSciApp::loadModels() {
 		Array<shared_ptr<ArticulatedModel>> tModels, expModels;
 		for (int i = 0; i <= TARGET_MODEL_SCALE_COUNT; ++i) {
 			const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
-			tSpec.set("scale", scale*default_scale);
+			tSpec.set("scale", scale * default_scale);
 			explosionSpec.set("scale", (20.0 * scale * explosionScales.get(id)));
 			tModels.push(ArticulatedModel::create(tSpec));
 			expModels.push(ArticulatedModel::create(explosionSpec));
 		}
 		targetModels.set(id, tModels);
 		m_explosionModels.set(id, expModels);
-	}
 
-	// Create a series of colored materials to choose from for target health
-	m_materials.clear();
-	for (int i = 0; i < m_MatTableSize; i++) {
-		float complete = (float)i / m_MatTableSize;
-		Color3 color = experimentConfig.targetView.healthColors[0] * complete + experimentConfig.targetView.healthColors[1] * (1.0f - complete);
+		// Create a series of colored materials to choose from for target health
+		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
+		materials.remove(id);
+		materials.set(id, makeMaterials(tconfig));
+	}
+}
+
+Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetConfig> tconfig) {
+	Array<shared_ptr<UniversalMaterial>> targetMaterials;
+	for (int i = 0; i < matTableSize; i++) {
+		float complete = (float)i / (matTableSize-1);
+		Color3 color;
+		if (notNull(tconfig) && tconfig->colors.length() > 0) {
+			color = lerpColor(tconfig->colors, complete);
+		}
+		else {
+			color = lerpColor(experimentConfig.targetView.healthColors, complete);
+		}
+		Color4 gloss;
+		if (notNull(tconfig) && tconfig->hasGloss) {
+			gloss = tconfig->gloss;
+		}
+		else {
+			gloss = experimentConfig.targetView.gloss;
+		}
+
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
 		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-		m_materials.append(UniversalMaterial::create(materialSpecification));
+		materialSpecification.setGlossy(Texture::Specification(gloss));					// Used to be Color4(0.4f, 0.2f, 0.1f, 0.8f)
+		targetMaterials.append(UniversalMaterial::create(materialSpecification));
+	}
+	return targetMaterials;
+}
+
+Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
+	if (colors.length() == 0) {
+		throw "Cannot interpolate from colors array with length 0!";
+	}
+	else if (colors.length() == 1 || a >= 1.0f) {
+		// a >= 1.0f indicates we should use the first color in the array 
+		// since above 1.0 would imply negative a negative array index
+		return colors[0];
+	}
+	else if (a <= 0.0f) {
+		// Use only the last color in the array
+		return colors[colors.length() - 1];
+	}
+	else
+	{
+		// For 2 or more colors, linearly interpolate between the N colors.
+		// a comes in the range [0, 1] where 
+		//     0 means to use the last value in colors
+		// and 1 means to use the first value in colors
+		// This means that a = 0 maps to colors[colors.length() - 1]
+		// and a = 1 maps to colors[0]
+		// We need to flip the direction and scale up to the number of elements in the array
+		// a will indicate which two entries to interpolate between (left of .), and how much of each to use (right of .)
+		float interp = (1.0f - a) * (colors.length() - 1);
+		int idx = int(floor(interp));
+		interp = interp - float(idx);
+		Color3 output = colors[idx] * (1.0f - interp) + colors[idx + 1] * interp;
+		return output;
 	}
 }
 
@@ -284,7 +334,7 @@ void FPSciApp::updateControls(bool firstSession) {
 	if(!firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
 
 	// Update the waypoint manager
-	if (startupConfig.waypointEditorMode) { waypointManager->updateControls(); }
+	if (notNull(waypointManager)) { waypointManager->updateControls(); }
 
 	// Update the player controls
 	bool visible = false;
@@ -307,7 +357,7 @@ void FPSciApp::updateControls(bool firstSession) {
 		rect = m_renderControls->rect();
 		removeWidget(m_renderControls);
 	}
-	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
+	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(visible);
 	if (!rect.isEmpty()) m_renderControls->setRect(rect);
 	addWidget(m_renderControls);
@@ -349,7 +399,7 @@ void FPSciApp::makeGUI() {
 		debugPane->addButton("Render Controls [1]", this, &FPSciApp::showRenderControls);
 		debugPane->addButton("Player Controls [2]", this, &FPSciApp::showPlayerControls);
 		debugPane->addButton("Weapon Controls [3]", this, &FPSciApp::showWeaponControls);
-		if(startupConfig.waypointEditorMode) debugPane->addButton("Waypoint Manager [4]", waypointManager, &WaypointManager::showWaypointWindow);
+		if(notNull(waypointManager)) debugPane->addButton("Waypoint Manager [4]", waypointManager, &WaypointManager::showWaypointWindow);
 	}debugPane->endRow();
 
 	// Create the user settings window
@@ -372,7 +422,7 @@ void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
 	String filename = Scene::sceneNameToFilename(sessConfig->scene.name);
-	scene()->toAny().save(filename);
+	scene()->toAny().save(filename);		// Save this w/o JSON format (breaks scene.Any file)
 }
 
 void FPSciApp::showPlayerControls() {
@@ -391,23 +441,43 @@ void FPSciApp::presentQuestion(Question question) {
 	if (notNull(dialog)) removeWidget(dialog);		// Remove the current dialog widget (if valid)
 	currentQuestion = question;						// Store this for processing key-bound presses
 	Array<String> options = question.options;		// Make a copy of the options (to add key binds if necessary)
+	if (question.randomOrder) options.randomize();
 	const Rect2D windowRect = window()->clientRect();
 	const Point2 size = question.fullscreen ? Point2(windowRect.width(), windowRect.height()) : Point2(400, 200);
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
 		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
-			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+			for (int i = 0; i < options.length(); i++) { 
+				// Find the correct index for this option (order might be randomized)
+				int keyIdx;
+				for (keyIdx = 0; keyIdx < question.options.length(); keyIdx++) {
+					if (options[i] == question.options[keyIdx]) break;
+				}
+				options[i] += format(" (%s)", question.optionKeys[keyIdx].toString()); 
+			}
 		}
-		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, question.showCursor, 3, size, !question.fullscreen);
+		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, question.showCursor, question.optionsPerRow, size, !question.fullscreen,
+			question.promptFontSize, question.optionFontSize, question.buttonFontSize);
 		break;
 	case Question::Type::Entry:
-		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false, size, !question.fullscreen);
+		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false, size, !question.fullscreen, question.promptFontSize, question.buttonFontSize);
 		break;
 	case Question::Type::Rating:
 		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
-			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+			for (int i = 0; i < options.length(); i++) { 
+				// Find the correct index for this option (order might be randomized)
+				int keyIdx;
+				for (keyIdx = 0; keyIdx < question.options.length(); keyIdx++) {
+					if (options[i] == question.options[keyIdx]) break;
+				}
+				options[i] += format(" (%s)", question.optionKeys[keyIdx].toString()); 
+			}
 		}
-		dialog = RatingDialog::create(question.prompt, options, theme, question.title, question.showCursor, size, !question.fullscreen);
+		dialog = RatingDialog::create(question.prompt, options, theme, question.title, question.showCursor, size, !question.fullscreen,
+			question.promptFontSize, question.optionFontSize, question.buttonFontSize);
+		break;
+	case Question::Type::DropDown:
+		dialog = DropDownDialog::create(question.prompt, options, theme, question.title, size, !question.fullscreen, question.promptFontSize, question.buttonFontSize);
 		break;
 	default:
 		throw "Unknown question type!";
@@ -444,9 +514,15 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, simStepDuration());
 }
 
-void FPSciApp::initPlayer() {
-	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+void FPSciApp::initPlayer(bool setSpawnPosition) {
 	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");	// Get player from the scene
+
+	// Update the player camera
+	const String pcamName = sessConfig->scene.playerCamera;
+	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(pcamName);
+	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, pcamName));
+	setActiveCamera(playerCamera);
 
 	// Set gravity and camera field of view
 	Vector3 grav = experimentConfig.player.gravity;
@@ -456,27 +532,65 @@ void FPSciApp::initPlayer() {
 		FoV = sessConfig->render.hFoV;
 	}
 	pscene->setGravity(grav);
+
+	String respawnHeightSource;
 	playerCamera->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
+	if (!m_sceneHasPlayerEntity) {		// Scene doesn't have player entity, copy the player entity frame from the camera
+		respawnHeightSource = format("\"%s\" camera in scene.Any file", playerCamera->name());
+		player->setFrame(m_initialCameraFrames[playerCamera->name()]);
+		setSpawnPosition = true;		// Set the player spawn position from the camera
+	}
+	else {
+		respawnHeightSource = "PlayerEntity in scene.Any file";
+	}
+	playerCamera->setFrame(player->getCameraFrame());
 
 	// For now make the player invisible (prevent issues w/ seeing model from inside)
 	player->setVisible(false);
 
 	// Set the reset height
+	String resetHeightSource = "scene configuration \"resetHeight\" parameter";
 	float resetHeight = sessConfig->scene.resetHeight;
 	if (isnan(resetHeight)) {
-		float resetHeight = pscene->resetHeight();
+		resetHeightSource = "scene.Any Physics \"minHeight\" field";
+		resetHeight = pscene->resetHeight();
 		if (isnan(resetHeight)) {
+			resetHeightSource = "default value";
 			resetHeight = -1e6;
 		}
 	}
 	player->setRespawnHeight(resetHeight);
 
-	// Set player respawn location
-	Point3 spawnPosition = sessConfig->scene.spawnPosition;
-	if (isnan(spawnPosition.x)) {
-		spawnPosition = player->frame().translation;
+	// Update the respawn heading
+	if (isnan(sessConfig->scene.spawnHeadingDeg)) {
+		if (setSpawnPosition) {	// This is the first spawn in the scene
+			// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
+			Point3 view_dir = playerCamera->frame().lookVector();
+			float spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
+			player->setRespawnHeadingDegrees(spawnHeadingDeg);
+		}
 	}
-	player->setRespawnPosition(spawnPosition);
+	else {	// Respawn heading specified by the scene config
+		player->setRespawnHeadingDegrees(sessConfig->scene.spawnHeadingDeg);
+	}
+
+	// Set player respawn location
+	float respawnPosHeight = player->respawnPosHeight();	// Report the respawn position height
+	if (sessConfig->scene.spawnPosition.isNaN()) {
+		if (setSpawnPosition) { // This is the first spawn, copy the respawn position from the scene
+			player->setRespawnPosition(player->frame().translation);
+			respawnPosHeight = player->frame().translation.y;
+		}
+	}
+	else {	// Respawn position set by scene config
+		player->setRespawnPosition(sessConfig->scene.spawnPosition);
+		respawnPosHeight = sessConfig->scene.spawnPosition.y;
+		respawnHeightSource = "scene configuration \"spawnPosition\" parameter";
+	}
+
+	if (respawnPosHeight < resetHeight) {
+		throw format("Invalid respawn height (%f) from %s (< %f specified from %s)!", respawnPosHeight, respawnHeightSource.c_str(), resetHeight, resetHeightSource.c_str());
+	}
 
 	// Set player values from session config
 	player->moveRate = &sessConfig->player.moveRate;
@@ -514,11 +628,40 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		sess = Session::create(this);
 	}
 
+	// Update reticle
+	reticleConfig.index = sessConfig->reticle.indexSpecified ? sessConfig->reticle.index : currentUser()->reticle.index;
+	reticleConfig.scale = sessConfig->reticle.scaleSpecified ? sessConfig->reticle.scale : currentUser()->reticle.scale;
+	reticleConfig.color = sessConfig->reticle.colorSpecified ? sessConfig->reticle.color : currentUser()->reticle.color;
+	reticleConfig.changeTimeS = sessConfig->reticle.changeTimeSpecified ? sessConfig->reticle.changeTimeS : currentUser()->reticle.changeTimeS;
+	setReticle(reticleConfig.index);
+
 	// Update the controls for this session
 	updateControls(m_firstSession);				// If first session consider showing the menu
 
 	// Update the frame rate/delay
 	updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
+
+	// Handle buffer setup here
+	updateShaderBuffers();
+
+	// Update shader table
+	m_shaderTable.clear();
+	if (!sessConfig->render.shader3D.empty()) {
+		m_shaderTable.set(sessConfig->render.shader3D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader3D));
+	}
+	if (!sessConfig->render.shader2D.empty()) {
+		m_shaderTable.set(sessConfig->render.shader2D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader2D));
+	}
+	if (!sessConfig->render.shaderComposite.empty()) {
+		m_shaderTable.set(sessConfig->render.shaderComposite, G3D::Shader::getShaderFromPattern(sessConfig->render.shaderComposite));
+	}
+
+	// Update shader parameters
+	m_startTime = System::time();
+	m_last2DTime = m_startTime;
+	m_last3DTime = m_startTime;
+	m_lastCompositeTime = m_startTime;
+	m_frameNumber = 0;
 
 	// Load (session dependent) fonts
 	hudFont = GFont::fromFile(System::findDataFile(sessConfig->hud.hudFont));
@@ -531,7 +674,7 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (sessConfig->scene.name.empty()) {
 		// No scene specified, load default scene
 		if (m_loadedScene.name.empty() || forceReload) {
-			loadScene(m_defaultSceneName);
+			loadScene(m_defaultSceneName);					// Note: this calls onGraphics()
 			m_loadedScene.name = m_defaultSceneName;
 		}
 		// Otherwise let the loaded scene persist
@@ -540,6 +683,9 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		loadScene(sessConfig->scene.name);
 		m_loadedScene = sessConfig->scene;
 	}
+
+	// Player parameters
+	initPlayer();
 
 	// Check for play mode specific parameters
 	if (notNull(weapon)) weapon->clearDecals();
@@ -553,26 +699,21 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (!sessConfig->audio.sceneHitSound.empty()) {
 		m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
 	}
+	if (!sessConfig->audio.refTargetHitSound.empty()) {
+		m_refTargetHitSound = Sound::create(System::findDataFile(sessConfig->audio.refTargetHitSound));
+	}
 
 	// Load static HUD textures
 	for (StaticHudElement element : sessConfig->hud.staticElements) {
 		hudTextures.set(element.filename, Texture::fromFile(System::findDataFile(element.filename)));
 	}
 
-	// Create a series of colored materials to choose from for target health
-	m_materials.clear();
-	for (int i = 0; i < m_MatTableSize; i++) {
-		float complete = (float)i / m_MatTableSize;
-		Color3 color = sessConfig->targetView.healthColors[0] * complete + sessConfig->targetView.healthColors[1] * (1.0f - complete);
-		UniversalMaterial::Specification materialSpecification;
-		materialSpecification.setLambertian(Texture::Specification(color));
-		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-		m_materials.append(UniversalMaterial::create(materialSpecification));
+	// Update colored materials to choose from for target health
+	for (String id : sessConfig->getUniqueTargetIds()) {
+		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
+		materials.remove(id);
+		materials.set(id, makeMaterials(tconfig));
 	}
-
-	// Player parameters
-	initPlayer();
 
 	const String resultsDirPath = startupConfig.experimentList[experimentIdx].resultsDirPath;
 
@@ -632,21 +773,21 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 
 	// Make sure the scene has a "player" entity
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-
-	// Add a player if one isn't present in the scene
-	if (isNull(player)) {
+	m_sceneHasPlayerEntity = notNull(player);
+	if (!m_sceneHasPlayerEntity) {		// Add a player if one isn't present in the scene
 		logPrintf("WARNING: Didn't find a \"player\" specified in \"%s\"! Adding one at the origin.", sceneName);
 		shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
 		scene()->insert(newPlayer);
 	}
 
-	// Set the active camera to the player
-	const String pcamName = sessConfig->scene.playerCamera;
-	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(sessConfig->scene.playerCamera);
-	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, sessConfig->scene.playerCamera));
-	setActiveCamera(playerCamera);
+	// Build lookup of initial camera positions here
+	Array<shared_ptr<Camera>> camArray;
+	scene()->getTypedEntityArray<Camera>(camArray);
+	for (shared_ptr<Camera> cam : camArray) {
+		m_initialCameraFrames.set(cam->name(), cam->frame());
+	}
 
-	initPlayer();
+	initPlayer(true);		// Initialize the player (first time for this scene)
 
 	if (weapon) {
 		weapon->setScene(scene());
@@ -665,41 +806,6 @@ void FPSciApp::onNetwork() {
 	// Poll net messages here
 }
 
-
-void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) {
-
-    if (displayLagFrames > 0) {
-		// Need one more frame in the queue than we have frames of delay, to hold the current frame
-		if (m_ldrDelayBufferQueue.size() <= displayLagFrames) {
-			// Allocate new textures
-			for (int i = displayLagFrames - m_ldrDelayBufferQueue.size(); i >= 0; --i) {
-				m_ldrDelayBufferQueue.push(Framebuffer::create(Texture::createEmpty(format("Delay buffer %d", m_ldrDelayBufferQueue.size()), rd->width(), rd->height(), ImageFormat::RGB8())));
-			}
-			debugAssert(m_ldrDelayBufferQueue.size() == displayLagFrames + 1);
-		}
-
-		// When the display lag changes, we must be sure to be within range
-		m_currentDelayBufferIndex = min(displayLagFrames, m_currentDelayBufferIndex);
-
-		rd->pushState(m_ldrDelayBufferQueue[m_currentDelayBufferIndex]);
-	}
-
-	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !emergencyTurbo;
-	playerCamera->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
-	playerCamera->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
-
-	GApp::onGraphics3D(rd, surface);
-
-	if (displayLagFrames > 0) {
-		// Display the delayed frame
-		rd->popState();
-		rd->push2D(); {
-			// Advance the pointer to the next, which is also the oldest frame
-			m_currentDelayBufferIndex = (m_currentDelayBufferIndex + 1) % (displayLagFrames + 1);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrDelayBufferQueue[m_currentDelayBufferIndex]->texture(0), Sampler::buffer());
-		} rd->pop2D();
-	}
-}
 
 void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// TODO: this should eventually probably use sdt instead of rdt
@@ -721,11 +827,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	if (shootButtonJustPressed && stateCanFire && !weapon->canFire(currentRealTime)) {
 		// Invalid click since the weapon isn't ready to fire
-		sess->accumulatePlayerAction(PlayerActionType::Invalid);
-	}
-	else if ((shootButtonJustPressed || !shootButtonUp) && !stateCanFire) {
-		// Non-task state but button pressed
-		sess->accumulatePlayerAction(PlayerActionType::Nontask);
+		sess->accumulatePlayerAction(PlayerActionType::FireCooldown);
 	}
 	else if (shootButtonJustPressed && !weapon->config()->autoFire && weapon->canFire(currentRealTime) && stateCanFire) {
 		// Discrete weapon fires a single shot with normal damage at the current time
@@ -836,7 +938,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
 		}
 
-		if (startupConfig.waypointEditorMode) {
+		if (notNull(waypointManager)) {
 			// Handle highlighting for selected target
 			waypointManager->updateSelected();
 			// Handle player motion recording here
@@ -890,7 +992,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 				// Do not set foundKey = true to allow shader reloading from GApp::onEvent()
 			}
 			// Waypoint editor only keys
-			else if (startupConfig.waypointEditorMode) {
+			else if (notNull(waypointManager)) {
 				if (keyMap.map["toggleWaypointWindow"].contains(ksym)) {
 					waypointManager->toggleWaypointWindow();
 					foundKey = true;
@@ -930,7 +1032,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 			}
 		}
 		else if (event.type == GEventType::KEY_UP) {
-			if (startupConfig.waypointEditorMode) {
+			if (notNull(waypointManager)) {
 				if (keyMap.map["moveWaypointUp"].contains(ksym)) {
 					waypointManager->moveMask -= Vector3(0.0f, 1.0f, 0.0f);
 					foundKey = true;
@@ -1030,6 +1132,12 @@ bool FPSciApp::onEvent(const GEvent& event) {
 		return true;
 	}
 
+	// Handle resize event here
+	if (event.type == GEventType::VIDEO_RESIZE) {
+		// Resize the shader buffers here
+		updateShaderBuffers();
+	}
+
 	// Handle super-class events
 	return GApp::onEvent(event);
 }
@@ -1061,215 +1169,6 @@ void FPSciApp::onAfterEvents() {
 	}
 
 	GApp::onAfterEvents();
-}
-
-void FPSciApp::onPostProcessHDR3DEffects(RenderDevice *rd) {
-	if (activeCamera() == playerCamera) {
-		// Put elements that should be delayed along w/ 3D here
-		rd->push2D(); {
-			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-
-			// Draw target health bars
-			if (sessConfig->targetView.showHealthBars) {
-				for (auto const& target : sess->targetArray()) {
-					target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
-						sessConfig->targetView.healthBarSize,
-						sessConfig->targetView.healthBarOffset,
-						sessConfig->targetView.healthBarBorderSize,
-						sessConfig->targetView.healthBarColors,
-						sessConfig->targetView.healthBarBorderColor);
-				}
-			}
-
-			// Draw the combat text
-			if (sessConfig->targetView.showCombatText) {
-				Array<int> toRemove;
-				for (int i = 0; i < m_combatTextList.size(); i++) {
-					bool remove = !m_combatTextList[i]->draw(rd, *playerCamera, *m_framebuffer);
-					if (remove) m_combatTextList[i] = nullptr;		// Null pointers to remove
-				}
-				// Remove the expired elements here
-				m_combatTextList.removeNulls();
-			}
-
-			if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode == "total") {
-				drawClickIndicator(rd, "total");
-			}
-
-			// Draw the HUD here
-			if (sessConfig->hud.enable) {
-				drawHUD(rd);
-			}
-		}rd->pop2D();
-	}
-	if (sessConfig->render.shader != "") {
-		// Copy the post-VFX HDR (input) framebuffer
-		static shared_ptr<Framebuffer> input = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::iChannel0", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
-		m_framebuffer->blitTo(rd, input, false, false, false, false, true);
-
-		// Output buffer
-		static shared_ptr<Framebuffer> output = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", m_framebuffer->width(), m_framebuffer->height(), m_framebuffer->texture(0)->format()));
-		static int frameNumber = 0;
-		static RealTime startTime = System::time();
-		static RealTime lastTime = startTime;
-
-		rd->push2D(output); {
-
-			// Setup shadertoy-style args
-			Args args;
-			args.setUniform("iChannel0", input->texture(0), Sampler::video());
-            const float iTime = float(System::time() - startTime);
-            args.setUniform("iTime", iTime);
-            args.setUniform("iTimeDelta", iTime - lastTime);
-            args.setUniform("iMouse", userInput->mouseXY());
-            args.setUniform("iFrame", frameNumber);
-			args.setRect(rd->viewport());
-			LAUNCH_SHADER(sessConfig->render.shader, args);
-			lastTime = iTime;
-		} rd->pop2D();
-
-        ++frameNumber;
-		
-		// Copy the shader output buffer into the framebuffer
-		rd->push2D(m_framebuffer); {
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), output->texture(0), Sampler::buffer());   
-		} rd->pop2D();  
-	}
-
-	GApp::onPostProcessHDR3DEffects(rd);
-}
-
-void FPSciApp::drawClickIndicator(RenderDevice *rd, String mode) {
-	// Click to photon latency measuring corner box
-	if (sessConfig->clickToPhoton.enabled) {
-		float boxLeft = 0.0f;
-		// Paint both sides by the width of latency measuring box.
-		Point2 latencyRect = sessConfig->clickToPhoton.size * Point2((float)rd->viewport().width(), (float)rd->viewport().height());
-		float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
-		if (guardband) {
-			boxLeft += guardband;
-		}
-		float boxTop = rd->viewport().height()*sessConfig->clickToPhoton.vertPos - latencyRect.y / 2;
-		if (sessConfig->clickToPhoton.mode == "both") {
-			boxTop = (mode == "minimum") ? boxTop - latencyRect.y : boxTop + latencyRect.y;
-		}
-		if (sessConfig->clickToPhoton.side == "right") {
-			boxLeft = (float)rd->viewport().width() - (guardband + latencyRect.x);
-		}
-		// Draw the "active" box
-		Color3 boxColor;
-		if (sessConfig->clickToPhoton.mode == "frameRate") {
-			boxColor = (frameToggle) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
-			frameToggle = !frameToggle;
-		}
-		else boxColor = (shootButtonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
-		Draw::rect2D(Rect2D::xywh(boxLeft, boxTop, latencyRect.x, latencyRect.y), rd, boxColor);
-	}
-}
-
-void FPSciApp::drawHUD(RenderDevice *rd) {
-	// Scale is used to position/resize the "score banner" when the window changes size in "windowed" mode (always 1 in fullscreen mode).
-	const Vector2 scale = rd->viewport().wh() / displayRes;
-
-	RealTime now = m_lastOnSimulationRealTime;
-
-	// Weapon ready status (cooldown indicator)
-	if (sessConfig->hud.renderWeaponStatus) {
-		// Draw the "active" cooldown box
-		if (sessConfig->hud.cooldownMode == "box") {
-			float boxLeft = (float)rd->viewport().width() * 0.0f;
-			if (sessConfig->hud.weaponStatusSide == "right") {
-				// swap side
-				boxLeft = (float)rd->viewport().width() * (1.0f - sessConfig->clickToPhoton.size.x);
-			}
-			Draw::rect2D(
-				Rect2D::xywh(
-					boxLeft,
-					(float)rd->viewport().height() * (float)(weapon->cooldownRatio(now)),
-					(float)rd->viewport().width() * sessConfig->clickToPhoton.size.x,
-					(float)rd->viewport().height() * (float)(1.0 - weapon->cooldownRatio(now))
-				), rd, Color3::white() * 0.8f
-			);
-		}
-		else if (sessConfig->hud.cooldownMode == "ring") {
-			// Draw cooldown "ring" instead of box
-			const float iRad = sessConfig->hud.cooldownInnerRadius;
-			const float oRad = iRad + sessConfig->hud.cooldownThickness;
-			const int segments = sessConfig->hud.cooldownSubdivisions;
-			int segsToLight = static_cast<int>(ceilf((1 - weapon->cooldownRatio(now))*segments));
-			// Create the segments
-			for (int i = 0; i < segsToLight; i++) {
-				const float inc = static_cast<float>(2 * pi() / segments);
-				const float theta = -i * inc;
-				Vector2 center = Vector2(rd->viewport().width() / 2.0f, rd->viewport().height() / 2.0f);
-				Array<Vector2> verts = {
-					center + Vector2(oRad*sin(theta), -oRad * cos(theta)),
-					center + Vector2(oRad*sin(theta + inc), -oRad * cos(theta + inc)),
-					center + Vector2(iRad*sin(theta + inc), -iRad * cos(theta + inc)),
-					center + Vector2(iRad*sin(theta), -iRad * cos(theta))
-				};
-				Draw::poly2D(verts, rd, sessConfig->hud.cooldownColor);
-			}
-		}
-	}
-
-	// Draw the player health bar
-	if (sessConfig->hud.showPlayerHealthBar) {
-		const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
-		const float health = scene()->typedEntity<PlayerEntity>("player")->health();
-		const Point2 location = Point2(sessConfig->hud.playerHealthBarPos.x, sessConfig->hud.playerHealthBarPos.y + m_debugMenuHeight) + Point2(guardband, guardband);
-		const Point2 size = sessConfig->hud.playerHealthBarSize;
-		const Point2 border = sessConfig->hud.playerHealthBarBorderSize;
-		const Color4 borderColor = sessConfig->hud.playerHealthBarBorderColor;
-		const Color4 color = sessConfig->hud.playerHealthBarColors[1] * (1.0f - health) + sessConfig->hud.playerHealthBarColors[0] * health;
-
-		Draw::rect2D(Rect2D::xywh(location - border, size + border + border), rd, borderColor);
-		Draw::rect2D(Rect2D::xywh(location, size*Point2(health, 1.0f)), rd, color);
-	}
-	// Draw the ammo indicator
-	if (sessConfig->hud.showAmmo) {
-		const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
-		Point2 lowerRight = Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height())) - Point2(guardband, guardband);
-		hudFont->draw2D(rd,
-			format("%d/%d", weapon->remainingAmmo(), sessConfig->weapon.maxAmmo),
-			lowerRight - sessConfig->hud.ammoPosition,
-			sessConfig->hud.ammoSize,
-			sessConfig->hud.ammoColor,
-			sessConfig->hud.ammoOutlineColor,
-			GFont::XALIGN_RIGHT,
-			GFont::YALIGN_BOTTOM
-		);
-	}
-
-	if (sessConfig->hud.showBanner && !emergencyTurbo) {
-		const shared_ptr<Texture> scoreBannerTexture = hudTextures["scoreBannerBackdrop"];
-		const Point2 hudCenter(rd->viewport().width() / 2.0f, sessConfig->hud.bannerVertVisible*scoreBannerTexture->height() * scale.y + debugMenuHeight());
-		Draw::rect2D((scoreBannerTexture->rect2DBounds() * scale - scoreBannerTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), scoreBannerTexture);
-
-		// Create strings for time remaining, progress in sessions, and score
-		float remainingTime = sess->getRemainingTrialTime();
-		float printTime = remainingTime > 0 ? remainingTime : 0.0f;
-		String time_string = format("%0.2f", printTime);
-		float prog = sess->getProgress();
-		String prog_string = "";
-		if (!isnan(prog)) {
-			prog_string = format("%d", (int)(100.0f*prog)) + "%";
-		}
-		String score_string = format("%d", (int)(10 * sess->getScore()));
-
-		hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale.x, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-		hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale.x * sessConfig->hud.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-		hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
-	}
-
-	// Draw any static HUD elements
-	for (StaticHudElement element : sessConfig->hud.staticElements) {
-		if (!hudTextures.containsKey(element.filename)) continue;						// Skip any items we haven't loaded
-		const shared_ptr<Texture> texture = hudTextures[element.filename];				// Get the loaded texture for this element
-		const Vector2 size = element.scale * scale * texture->vector2Bounds();			// Get the final size of the image
-		const Vector2 pos = (element.position * rd->viewport().wh()) - size/2.0;		// Compute position (center image on provided position)
-		Draw::rect2D(Rect2D::xywh(pos, size), rd, Color3::white(), texture);			// Draw the rect
-	}
 }
 
 Vector2 FPSciApp::currentTurnScale() {
@@ -1327,9 +1226,11 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	if (target->name() == "reference") {
 		// Handle reference target here
 		sess->destroyTarget(target);
+		if (notNull(m_refTargetHitSound)) {
+			m_refTargetHitSound->play(sessConfig->audio.refTargetHitSoundVol);
+		}
 		destroyedTarget = true;
-		sess->accumulatePlayerAction(PlayerActionType::Nontask, target->name());
-
+		sess->accumulatePlayerAction(PlayerActionType::Destroy, target->name());
 	}
 	else if (target->health() <= 0) {
 		// Position explosion
@@ -1380,7 +1281,7 @@ void FPSciApp::updateTargetColor(const shared_ptr<TargetEntity>& target) {
 	shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
 	END_PROFILER_EVENT();
 	BEGIN_PROFILER_EVENT("updateTargetColor/materialSet");
-	shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health() * m_MatTableSize), m_MatTableSize - 1)];
+	shared_ptr<UniversalMaterial> mat = materials[target->id()][min((int)(target->health() * matTableSize), matTableSize - 1)];
 	pose->materialTable.set("core/icosahedron_default", mat);
 	END_PROFILER_EVENT();
 	BEGIN_PROFILER_EVENT("updateTargetColor/setPose");
@@ -1444,7 +1345,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 
 	for (GKey selectButton : keyMap.map["selectWaypoint"]) {
 		// Check for developer mode editing here, if so set selected waypoint using the camera
-		if (ui->keyDown(selectButton) && startupConfig.developerMode && startupConfig.waypointEditorMode) {
+		if (ui->keyDown(selectButton) && notNull(waypointManager)) {
 			waypointManager->aimSelectWaypoint(activeCamera());
 		}
 	}
@@ -1458,13 +1359,18 @@ void FPSciApp::onUserInput(UserInput* ui) {
 			float hitDist = finf();
 			int hitIdx = -1;
 			shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
+			if (sessConfig->audio.refTargetPlayFireSound && !sessConfig->weapon.loopAudio()) {		// Only play shot sounds for non-looped weapon audio (continuous/automatic fire not allowed)
+				weapon->playSound(true, false);			// Play audio here for reference target
+			}
 		}
 	}
 
-	if (m_lastReticleLoaded != currentUser()->reticleIndex || m_userSettingsWindow->visible()) {
+	if (m_lastReticleLoaded != currentUser()->reticle.index || m_userSettingsWindow->visible()) {
 		// Slider was used to change the reticle
-		setReticle(currentUser()->reticleIndex);
-		m_userSettingsWindow->updateReticlePreview();
+		if (!sessConfig->reticle.indexSpecified) {		// Only allow reticle change if it isn't specified in experiment config
+			setReticle(currentUser()->reticle.index);
+			m_userSettingsWindow->updateReticlePreview();
+		}
 	}
 
 	playerCamera->filmSettings().setSensitivity(sceneBrightness);
@@ -1477,100 +1383,6 @@ void FPSciApp::onPose(Array<shared_ptr<Surface> >& surface, Array<shared_ptr<Sur
 	typedScene<PhysicsScene>()->poseExceptExcluded(surface, "player");
 
 	if (weapon) { weapon->onPose(surface); }
-}
-
-void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& posed2D) {
-    // Render 2D objects like Widgets.  These do not receive tone mapping or gamma correction.
-	// Track the instantaneous frame duration (no smoothing) in a circular queue
-	if (m_frameDurationQueue.length() > MAX_HISTORY_TIMING_FRAMES) {
-		m_frameDurationQueue.dequeue();
-	}
-	{
-		const float f = rd->stats().frameRate;
-		const float t = 1.0f / f;
-		m_frameDurationQueue.enqueue(t);
-	}
-
-	float recentMin = finf();
-	float recentMax = -finf();
-	for (int i = 0; i < m_frameDurationQueue.length(); ++i) {
-		const float t = m_frameDurationQueue[i];
-		recentMin = min(recentMin, t);
-		recentMax = max(recentMax, t);
-	}
-
-	rd->push2D(); {
-		const float scale = rd->viewport().width() / displayRes.x;
-		rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-
-		// FPS display (faster than the full stats widget)
-		if (renderFPS) {
-			String msg;
-
-			if (window()->settings().refreshRate > 0) {
-				msg = format("%d measured / %d requested fps",
-					iRound(renderDevice->stats().smoothFrameRate),
-					window()->settings().refreshRate);
-			}
-			else {
-				msg = format("%d fps", iRound(renderDevice->stats().smoothFrameRate));
-			}
-
-			msg += format(" | %.1f min/%.1f avg/%.1f max ms", recentMin * 1000.0f, 1000.0f / renderDevice->stats().smoothFrameRate, 1000.0f * recentMax);
-			outputFont->draw2D(rd, msg, Point2(rd->viewport().width()*0.75f, rd->viewport().height()*0.05f).floor(), floor(20.0f*scale), Color3::yellow());
-		}
-
-		// Handle recording indicator
-		if (startupConfig.waypointEditorMode && waypointManager->recordMotion) {
-			Draw::point(Point2(rd->viewport().width()*0.9f - 15.0f, 20.0f+m_debugMenuHeight*scale), rd, Color3::red(), 10.0f);
-			outputFont->draw2D(rd, "Recording Position", Point2(rd->viewport().width() - 200.0f , m_debugMenuHeight*scale), 20.0f, Color3::red());
-		}
-
-		if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode != "total") {
-			drawClickIndicator(rd, sessConfig->clickToPhoton.mode);
-		}
-
-		// Player camera only indicators
-		if (activeCamera() == playerCamera) {
-			// Reticle
-			const shared_ptr<UserConfig> user = currentUser();
-			float tscale = weapon->cooldownRatio(m_lastOnSimulationRealTime, user->reticleChangeTimeS);
-			float rScale = tscale * user->reticleScale[0] + (1.0f - tscale)*user->reticleScale[1];
-			Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
-			Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f))*rScale / 2.0f + rd->viewport().wh() / 2.0f, rd, rColor, reticleTexture);
-
-			// Handle the feedback message
-			String message = sess->getFeedbackMessage();
-			const float centerHeight = rd->viewport().height() * 0.4f;
-			const float scaledFontSize = floor(sessConfig->feedback.fontSize * scale);
-			if (!message.empty()) {
-				String currLine;
-				Array<String> lines = stringSplit(message, '\n');
-				float vertPos = centerHeight - (scaledFontSize * 1.5f * lines.length()/ 2.0f);
-				// Draw a "back plate"
-				Draw::rect2D(Rect2D::xywh(0.0f, 
-					vertPos - 1.5f * scaledFontSize,
-					rd->viewport().width(), 
-					scaledFontSize * (lines.length()+1) * 1.5f),
-					rd, sessConfig->feedback.backgroundColor);
-				for (String line : lines) {
-					outputFont->draw2D(rd, line.c_str(),
-						(Point2(rd->viewport().width() * 0.5f, vertPos)).floor(),
-						scaledFontSize,
-						sessConfig->feedback.color,
-						sessConfig->feedback.outlineColor,
-						GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
-					);
-					vertPos += scaledFontSize * 1.5f;
-				}
-			}
-		}
-
-	} rd->pop2D();
-
-	// Might not need this on the reaction trial
-	// This is rendering the GUI. Can remove if desired.
-	Surface2D::sortAndRender(rd, posed2D);
 }
 
 /** Set the currently reticle by index */
@@ -1594,6 +1406,11 @@ void FPSciApp::onCleanup() {
 
 /** Overridden (optimized) oneFrame() function to improve latency */
 void FPSciApp::oneFrame() {
+	// Count this frame (for shaders)
+	m_frameNumber++;
+
+	// Target frame time (only call this method once per one frame!)
+	RealTime targetFrameTime = sess->targetFrameTime();
 
     // Wait
     // Note: we might end up spending all of our time inside of
@@ -1609,8 +1426,8 @@ void FPSciApp::oneFrame() {
             RealTime cumulativeTime = nowAfterLoop - m_lastWaitTime;
 
             debugAssert(m_wallClockTargetDuration < finf());
-            // Perform wait for actual time needed
-            RealTime duration = m_wallClockTargetDuration;
+            // Perform wait for target time needed
+            RealTime duration = targetFrameTime;
             if (!window()->hasFocus() && m_lowerFrameRateInBackground) {
                 // Lower frame rate to 4fps
                 duration = 1.0 / 4.0;
@@ -1673,14 +1490,14 @@ void FPSciApp::oneFrame() {
 
             SimTime sdt = m_simTimeStep;
             if (sdt == MATCH_REAL_TIME_TARGET) {
-                sdt = m_wallClockTargetDuration;
+                sdt = (SimTime)targetFrameTime;
             }
             else if (sdt == REAL_TIME) {
                 sdt = float(timeStep);
             }
             sdt *= m_simTimeScale;
 
-            SimTime idt = m_wallClockTargetDuration;
+            SimTime idt = (SimTime)targetFrameTime;
 
             onBeforeSimulation(rdt, sdt, idt);
             onSimulation(rdt, sdt, idt);
@@ -1725,7 +1542,7 @@ void FPSciApp::oneFrame() {
 
             debugAssert(m_wallClockTargetDuration < finf());
             // Perform wait for actual time needed
-            RealTime duration = m_wallClockTargetDuration;
+            RealTime duration = targetFrameTime;
             if (!window()->hasFocus() && m_lowerFrameRateInBackground) {
                 // Lower frame rate to 4fps
                 duration = 1.0 / 4.0;

@@ -20,7 +20,7 @@ The following fields are specified within the `scene` parameter structure:
 |`playerCamera`     |`String`   | The name of the camera (from the `.scene.Any` file) to use for the player view. If this string is empty the `defaultCamera` from the G3D scene is used instead. |
 |`resetHeight`      |`float`    | The height at which the player should be respawned when falling (overrides any setting in a `scene.Any` file if specified here).    |
 |`spawnPosition`    |`Point3`   | The location at which the player should be respawned (overrides any setting in a `scene.Any` file if specified here).  |
-|`spawnHeading`     |`float`    | The player heading (in radians) at which the player should be respawned (overrides the `scene.Any` file setting if specified here). |
+|`spawnHeading`     |degrees    | The player heading (in degrees) at which the player should be respawned (overrides the `scene.Any` file setting if specified here). |
 
 An example configuration is provided below for reference:
 
@@ -33,6 +33,17 @@ scene = {
     spawnHeading = 0;                   // Spawn the player at 0 heading
 };
 ```
+
+*Note:* The full priority chain for setting heading/position in the scene is as follows:
+
+1. This scene configuration's `spawnPosition` and `spawnHeading` parameters
+2. The [scene.Any file's `PlayerEntity`](scene.md#player-entity) `frame` value (if the `PlayerEntity` is specified)
+3. The specified `playerCamera`'s `frame` (if specified)
+4. The [scene.Any file's `defaultCamera`](scene.md#player-camera) `frame`
+
+Experiment designers should be careful to avoid setting the player spawn position Y-value lower than the player reset height (specified using either `resetHeight` above, the `minHeight` value in the [scene's `Physics` field](scene.md#physics), or a default value of 1e-6). A runtime exception will occur if this requirement is violated.
+
+One practical configuration would be to specify a set of cameras in the `scene.Any` file without specifying a `PlayerEntity` in that file, then in the experiment config use a line like `scene = { playerCamera = "cameraName"; };` to specify the use of a specific camera (named `cameraName` in this example). This would allow for different sessions to change the spawn location within the same scene.
 
 ### Scene Name
 If unspecified, the scene `name` field comes from:
@@ -54,25 +65,31 @@ The `weapon` config should be thought of as an atomic type (just like an `int` o
 ## Duration Settings
 The following settings allow the user to control various timings/durations around the session state machine.
 
-| Parameter Name                |Units  | Description                                                        |
-|-------------------------------|-------|--------------------------------------------------------------------|
-|`clickToStart`                 |`bool` |Require the user to click at the start of the session to spawn the first reference target  |
-|`pretrialDuration`             |s      |The time before the start of each trial                             |
-|`maxTrialDuration`             |s      |The maximum time over which the task can occur                      |
-|`trialFeedbackDuration`        |s      |The duration of the feedback window between trials                  |
-|`sessionFeedbackDuration`      |s      |The duration of the feedback window between sessions                |
-|`sessionFeedbackRequireClick`  |`bool` |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
-|`defaultTrialCount`            |`int`  |The value to use for trials with no specified `count` settings      |
+| Parameter Name                |Units              | Description                                                        |
+|-------------------------------|-------------------|--------------------------------------------------------------------|
+|`clickToStart`                 |`bool`             |Require the user to click at the start of the session to spawn the first reference target  |
+|`pretrialDuration`             |s                  |The time before the start of each trial (or the mean of this time if `pretrialDurationRange` is specified    |
+|`pretrialDurationRange`        |`Array<`s`>`       |A [min, max] array over which the pretrial duration will be randomized (according to a truncated exponential distribution) |
+|`maxTrialDuration`             |s                  |The maximum time over which the task can occur                      |
+|`trialFeedbackDuration`        |s                  |The duration of the feedback window between trials                  |
+|`sessionFeedbackDuration`      |s                  |The duration of the feedback window between sessions                |
+|`sessionFeedbackRequireClick`  |`bool`             |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
+|`defaultTrialCount`            |`int`              |The value to use for trials with no specified `count` settings      |
+|`maxPretrialAimDisplacement`   |degrees            |The maximum aim displacement (from the 0 direction) allowed during the pretrial duration (larger aim motion results in invalidated trials). **Not intended for use with player motion!** |
 
 ```
-"clickToStart : true,               // Require a click to start the session
-"pretrialDuration": 0.5,            // Time allocated for preparing for trial
-"maxTrialDuration": 100000.0,       // Maximum duration allowed for completion of the task
-"trialFeedbackDuration": 1.0,       // Time for user feedback between trials
-"sessionFeedbackDuration": 5.0,     // Time for user feedback between sessions
+"clickToStart : true,                       // Require a click to start the session
+"pretrialDuration": 0.5,                    // Time allocated for preparing for trial
+"pretrialDurationRange": [0.5, 0.5]         // Default is a non-randomized pretrial duration of 0.5s (do not need to specify this for non-random ranges)
+"maxTrialDuration": 100000.0,               // Maximum duration allowed for completion of the task
+"trialFeedbackDuration": 1.0,               // Time for user feedback between trials
+"sessionFeedbackDuration": 5.0,             // Time for user feedback between sessions
 "sessionFeedbackRequireClick" : false,      // Don't require a click to move past the scoreboard
-"defaultTrialCount" : 5,
+"defaultTrialCount" : 5,                    
+"maxPretrialAimDisplacement" : 180,         // Disable max pretrial aim displacement by default (allow all motion)
 ```
+
+*Note:* If you are specifying `pretrialDurationRange` to create a truncated exponential range of pretrial duration we *highly* recommend keeping the `pretrialDuration` (i.e. mean value) to less than the mid-point of the `pretrialDurationRange`, skewing the distribution towards the minimum pretrial duration. Skewing this distribution towards the maximum pretrial duration has been demonstrated to produce confounding effects in reaction time studies (makes time at which to react more predictable)!
 
 ## Feedback Configuration
 In addition to the trial/session feedback duration control, the formatting and strings used for feedback are also configurable.
@@ -101,6 +118,7 @@ In addition to controlling the duration and formatting of displayed feedback mes
 |-----------------------------------|---------|--------------------------------------------------------------------|
 |`referenceTargetInitialFeedback`   |`String` | The message to display at the start of a session that includes a reference target|
 |`noReferenceTargetInitialFeedback` |`String` | The message to display at the start of a session that doesn't include a reference target|
+|`pretrialAimInvalidFeedback`       |`String` | The message to display when the pretrial aim exceeds the `maxPretrialAimDisplacement` |
 |`trialSuccessFeedback`             |`String` | Message to display when a trial is a success                       |
 |`trialFailureFeedback`             |`String` | Message to display when a trial is a failure                       |
 |`blockCompleteFeedback`            |`String` | Message to display when a block is completed                       |
@@ -128,6 +146,7 @@ Using these custom strings we can implement the following (default) feedback mes
 ```
 referenceTargetInitialFeedback: "Click to spawn a target, then use shift on red target to begin.",
 noReferenceTargetInitialFeedback: "Click to start the session!",
+maxPretrialAimDisplacement: "Invalid trial! Do not displace your aim during the pretrial duration.",
 trialSuccessFeedback: "%trialTaskTimeMs ms!",
 trialFailureFeedback: "Failure!",
 blockCompleteFeedback: "Block %lastBlock complete! Starting block %currBlock.",
@@ -138,28 +157,79 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 ## Rendering Settings
 | Parameter Name            |Units  | Description                                                        |
 |---------------------------|-------|--------------------------------------------------------------------|
-|`horizontalFieldOfView`    |°      |The (horizontal) field of view for the user's display, to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)|
+|`horizontalFieldOfView`    |°      | The (horizontal) field of view for the user's display, to get the vertical FoV multiply this by `1 / your display's aspect ratio` (9/16 for common FHD, or 1920x1080)|
 |`frameDelay`               |frames | An (integer) count of frames to delay to control latency           |
-|`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#frame-rate-modes) below.|
-|`shader`                   |file    | The (relative) path/filename of an (optional) shader to run (as a `.pix`) |
+|`frameRate`                |fps/Hz | The (target) frame rate of the display (constant for a given session) for more info see the [Frame Rate Modes section](#Frame-Rate-Modes) below.|
+|`frameTimeArray`           |`Array<float>`| An array of frame times (in seconds) to use instead of `frameRate` if populated, otherwise ignored. |
+|`frameTimeRandomize`       |`bool` | Whether to selected items from `frameTimeArray` sequentially, or as a uniform random choice. Ignored if `frameTimeArray` is empty. |
+|`frameTimeMode`            |`String`    | The mode to use for frame time (can be `"always"`, "`taskOnly"`, or `"restartWithTask"`, not case sensitive), see the table in the [Frame Timing Approaches section](#Frame-Timing-Approaches) for more information. |
+|`resolution2D`             |`Array<int>`| The resolution to render 2D content at (defaults to window resolution)       |
+|`resolution3D`             |`Array<int>`| The resolution to render 3D content at (defaults to window resolution)       |
+|`resolutionComposite`      |`Array<int>`| The resolution to render the composite result at (defaults to window resolution)     |
+|`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`) |
+|`shader3D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 3D content (as a `.pix`) |
+|`shaderComposite`          |file   | The (relative) path/filename of an (optional) shader to run on the composited 2D/3D content (as a `.pix`) |
+|`sampler2D`                |`Sampler`  | The sampler for resampling the `iChannel0` input to `shader2D`                       |
+|`sampler2DOutput`          |`Sampler`  | The sampler for resampling the 2D output into the framebuffer/composite input buffer |
+|`sampler3D`                |`Sampler`  | The sampler for resampling the framebuffer into the HDR 3D buffer (`iChannel0` input to the 3D shader) |
+|`sampler3DOutput`          |`Sampler`  | The sampler for resampling the HDR 3D (shader) output buffer back into the framebuffer     |
+|`samplerPrecomposite`      |`Sampler`  | The sampler for resampling the precomposite (framebuffer sized) buffer to composite input buffer  |
+|`samplerComposite`         |`Sampler`  | The sampler for resampling the `iChannel0` input to `shaderComposite`                |
+|`samplerFinal`             |`Sampler`  | The sampler for resampling the composite (shader) output buffer into the final framebuffer for display    |
+
+
+For more information on G3D `Sampler` options refer to [this reference page](https://casual-effects.com/g3d/G3D10/build/manual/class_g3_d_1_1_sampler.html). `Sampler`s can either be specified using predefined constants (i.e. `Sampler::buffer()`) or by specifying fields (i.e. `Sampler::Sampler{interpolateMode = "BILINEAR_MIPMAP", xWrapMode = "TILE"}`)
+
 
 ```
 "horizontalFieldOfView":  103.0,            // Field of view (horizontal) for the user in degrees
 "frameDelay" : 3,                           // Frame delay (in frames)
 "frameRate" : 60,                           // Frame/update rate (in Hz)
-"shader": "[your shader].pix",              // Default is "" or no shader
+"frameTimeArray" : [],                      // Array of frame times (in seconds) to use instead of `frameRate` if not empty
+"frameTimeRandomize" : false,               // Choose items from `frameTimeArray` in order
+"frameTimeMode": "always",                  // Always apply the desired frame rate/time pattern
+
+"resolution2D": [0,0],                      // Use native resolution for 2D by default
+"resolution3D": [0,0],                      // Use native resolution for 3D by default
+"resolutionComposite": [0,0],               // Use native resolution for composite by default
+
+"shader2D": "[your shader].pix",            // Default is "" or no shader
+"shader3D": "[your shader].pix",            // Default is "" or no shader
+"shaderComposite": "[your shader].pix",     // Default is "" or no shader
+
+"sampler2D": Sampler::video(),              // Use video sampler (BILINEAR_NO_MIPMAP interpolation mode, CLAMP wrap mode, and DEPTH_NORMAL depth read mode) by default
+"sampler2DOutput": Sampler::video(),        // Use video sampler by default
+"sampler3D": Sampler::video();              // Use video sampler by default
+"sampler3DOutput": Sampler::video();        // Use video sampler by default
+"samplerPrecomposite": Sampler::video();    // Use video sampler by default
+"samplerComposite": Sampler::video();       // Use video sampler by default
+"samplerFinal": Sampler::video();           // Use video sampler by default
 ```
+
+### Shader Usage
+The `shader2D`, `shader3D`, and `shaderComposite` shaders are best provided when the experiment designer understands a little about the way they are injected into the FPSci rendering pipeline. To this end, we provide the following diagram showing where those shader invocations fit in to the pipeline. The intent is for the `shader2D` shader to operate on the 2D game user interface, the `shader3D` to operate on the screen rendered image of the 3D game world prior to composition with the 2D game user interface, and the `shaderComposite` to run after the 2D and 3D images have been composited just before sending it to the screen. Each of the `samplerX` parameters controls how to sample the input or output of those various stages. Clever use of these parameters can accomplish many things, such as forcing integer scaling instead of the default bilinear, applying view distortion, or distortion correction, or any of many other image-space adjustments.
+
+<img src="./content/fpsci-pipeline.png" width="531px">
 
 ## Audio Settings
 | Parameter Name        |Units  | Description                                                                                               |
 |-----------------------|-------|-----------------------------------------------------------------------------------------------------------|
 |`sceneHitSound`        |file   | The sound to play when the scene (not the target) is hit by a weapon (for no sound use an empty string)   |
 |`sceneHitSoundVol`     |ratio  | The volume of the scene hit sound to play                                                                 |
+|`referenceTargetHitSound`|file | Sound to play when the reference target is hit (for no sound use an empty string)                         |  
+|`referenceTargetHitSoundVol`|ratio | The volume of the  reference target hit sound to play                                                 |
+|`referenceTargetPlayFireSound`|`bool`| Whether to play the weapon's fire sound when presenting the reference target                        |
+
 
 ```
 "sceneHitSound": "sound/fpsci_miss_100ms.wav",
 "sceneHitSoundVol": 1.0f,
+"referenceTargetHitSound" : "",
+"referenceTargetHitSoundVol": 1.0f,
+"referenceTargetPlayFireSound": false,
 ```
+
+Note: The sound played when `referenceTargetPlayFireSound` is set to `true` is the weapon's specified `fireSound` (at its `fireSoundVol`). This audio will only be played when the specified fire sound is not looped (i.e., `fireSoundLoop` is `false` and the weapons's `firedPeriod` is > 0 if `autoFire` is set to `true`).
 
 ## Player Controls
 | Parameter Name     |Units | Description                                                                        |
@@ -183,8 +253,8 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 "playerAxisLock": [false, false, false],    // Don't lock player motion in any axis
 "turnScale": Vector2(1.0, 1.0),             // Turn rate scaling
 "playerHeight":  1.5,                       // Normal player height
-"crouchHeight": 0.8,                        // Crouch height
-"jumpVelocity": 3.5,                        // Jump velocity
+"crouchHeight": 1.5,                        // Crouch height (no crouch by default)
+"jumpVelocity": 0.0,                        // Jump velocity (no jump by default)
 "jumpInterval": 0.5,                        // Minimum jump interval
 "jumpTouch": true,                          // Require touch for jump
 "playerGravity": Vector3(0.0, -10.0, 0.0),  // Player gravity
@@ -227,22 +297,31 @@ Questions are configured on a per experiment/session basis using the `questions`
 
 | Parameter Name        | Units  | Description                                                                      |
 |-----------------------|--------|----------------------------------------------------------------------------------|
-|`type`                 |`String`| The question type (required), can be `"MultipleChoice"`, `Rating`, or (text) `"Entry"`      |
+|`type`                 |`String`| The question type (required), can be `"MultipleChoice"`, `Rating`, `DropDown` or (text) `"Entry"`      |
 |`prompt`               |`String`| The question prompt (required), a string to present the user with                |
 |`title`                |`String`| The title for the feedback prompt                                                |
 |`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only          |
 |`optionKeys`           |`Array<GKey>`  | An array of `GKey` options in 1:1 correspondence with `options` above. Leave empty for no keybinds. Check [here](keymap.md#gkey-string) for strings to use for `GKey`s. |
 |`fullscreen`           |`bool`  | When set this opens the dialog in "fullscreen" mode, overlaying all of the rendered content (default is `false`) |
 |`showCursor`           |`bool`  | Allows the experiment designer to hide the cursor while responding to this dialog (default is `true`). Best used with `optionKeys` set otherwise there may be no way to answer the question. Not intended for use with `"Entry"` question types. |
+|`randomOrder`          |`bool`  | Randomize the option order for `MultipleChoice` and `Rating` questions optionally    |
+|`optionsPerRow`        |`int`   | The number of options to display per row (for `MultipleChoice` questions only)   |
+|`fontSize`             |`float` | Set the base font size for all elements in the question                          |
+|`promptFontSize`       |`float` | The font size for the prompt text (overrides `fontSize`)                         |
+|`optionFontSize`       |`float` | The font size for the presented options (overrides `fontSize`), does not impact `DropDown` or `Entry` questions |
+|`buttonFontSize`       |`float` | The font size for the question clear/submit buttons if present (overrides `fontSize`)     |
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
+
+Note that when using `randomOrder` the options key bindings specified in `optionKeys` remains static (i.e. while ordering of presented options will change the keypress used to enter any given option will remain constant between the `options` and `optionKeys` array).
 
 ```
 "questions" : [
     {
         "type": "Entry",
         "prompt": "Write some text!",
-        "title": "Example text entry"
+        "title": "Example text entry",
+        "fontSize": -1                  // This is the default value for all font sizes (corresponds to 12pt font)
     },
     {
         "type": "MultipleChoice",
@@ -251,44 +330,68 @@ The user can specify one or more questions using the `questions` array, as demon
         "optionKeys" : ["A", "B", "C"],
         "fullscreen": true,
         "showCursor" : false,
+        "randomOrder": true,
+        "optionsPerRow": 3,
+
+        "promptFontSize" = 12,          // Default for all fonts
+        "optionFontSize" = 20,          // Demonstration of using different size
+        "buttonFontSize" = 16
     }
 ]
 ```
 
-Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log. Note that `MultipleChoise` and `Rating` questions include a confirmation button that must be pressed to confirm the selection before proceeding.
+Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log. Note that `MultipleChoice` and `Rating` questions include a confirmation button that must be pressed to confirm the selection before proceeding. `DropDown` questions use the same approach with a drop-down menu instead of button-based selection, note `DropDown` questions can be fullscreen but currently still require use of the cursor (`optionsKeys` are ignored).
+
+There are 2 primary differences between questions with `type` of `MultipleChoice` and `Rating`. These are:
+
+1. `MultipleChoice` questions can specify an `optionsPerRow` field to control layout (otherwise defaults to 3). `Rating` questions always use a single row of responses (`optionsPerRow` = total # of options)
+2. `MultipleChoice` questions default to `randomOrder` = `true` (randomize option order) whereas `Rating` questions default to the provided option ordering
+
+Questions are recorded in the results database along with a timestamp, the question prompt, a `responseArray` indicating available options and the `response` the user provided. If multiple choice, a `keyArray` is included with `optionKeys` values (as specified) and the `presentedResponses` array provides the response/key pairs in the order they were presented to the user for that question, which is particularly helpful when the order is randomized.
 
 ## HUD settings
-| Parameter Name        |Units  | Description                                                                        |
-|-----------------------|-------|------------------------------------------------------------------------------------|
-|`showHUD`              |`bool` | The master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator) |
-|`showBanner`           |`bool` | Whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score)     |
-|`bannerLargeFontSize`  |pt     | The "large" font for the percent complete in the banner
-|`bannerSmallFontSize`  |pt     | The "small" font for the time remaining and score
-|`hudFont`              |file   | The font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/  data-files/font`). We suggest using a fixed width font (such as `console.fnt`) for HUD elements|
+| Parameter Name        |Units      | Description                                                                                                           |
+|-----------------------|-----------|-----------------------------------------------------------------------------------------------------------------------|
+|`showHUD`              |`bool`     | The master control for whether or not HUD elements are displayed (score banner, player health bar, and ammo indicator)|
+|`showBanner`           |`bool`     | Whether or not the score banner is displayed (currently w/ time remaining, percent of session complete, and score) an annotated banner image is provided below for reference.    |
+|`bannerTimerMode`      |`String`   | The mode in which to show time in the banner (can be `"remaining"`, `"elapsed"`, or `"none"`)                         |
+|`bannerShowProgress`   |`bool`     | Whether to show the session progress in the banner                                                                    |
+|`bannerShowScore`      |`bool`     | Whether to show the session score in the banner                                                                       |
+|`bannerLargeFontSize`  |pt         | The "large" font for the percent complete in the banner                                                               |
+|`bannerSmallFontSize`  |pt         | The "small" font for the time remaining and score                                                                     |
+|`hudFont`              |file       | The font to use (as a `.fnt` file) for the HUD (for available fonts check `%g3d%/data10/common/font` or `%g3d%/G3D10/  data-files/font`). We suggest using a fixed width font (such as `console.fnt`) for HUD elements|
 
 ```
-"showHUD":  true,               // Show the player HUD (banner, ammo, health bar)
-"showBanner":  true,            // Control the banner at the top of the screen (shows time, score, and session % complete)
+"showHUD":  false,              // Show the player HUD (banner, ammo, health bar)
+"showBanner":  false,           // Control the banner at the top of the screen (shows time, score, and session % complete)
+"bannerTimerMode": "remaining", // Show remaining time in trial in timer on banner
+"bannerShowProgress": true,     // Show the session progress percentage in the banner
+"bannerShowScore": true,        // Show the session score in the banner
 "bannerLargeFontSize": 30.0,    // Large font size to use in the banner (% complete)
 "bannerSmallFontSize": 14.0,    // Small font size to use in the banner (time remaining and score)
 "hudFont": "console.fnt",       // Font to use for the HUD (fixed with highly suggested!)
 ```
 
+#### Annotated Banner
+The image below provides an example of the banner with the timer, progress, and score annotated with an overlay.
+
+<img src="./content/annotated_banner.png" width="400">
+
 ### Player Health Bar
 | Parameter Name                |Units          | Description                                                                        |
 |-------------------------------|---------------|------------------------------------------------------------------------------------|
 |`showPlayerHealthBar`          |`bool`         | Whether or not a player health bar is drawn to the HUD                             |
-|`playerHealthBarSize`          |`Point2`(px)   | The size of the player health bar                                                  |
-|`playerHealthBarPosition`      |`Point2`(px)   | The position of the player health bar (from the top right of the screen)           |
-|`playerHealthBarBorderSize`    |`Point2`(px)   | The width of the player health bar border                                          |
+|`playerHealthBarSize`          |`Vector2`      | The size of the player health bar (as a ratio of 2D resolution/screen size)        |
+|`playerHealthBarPosition`      |`Point2`       | The position of the player health bar (as a ratio of 2D resolution/screen size from the top right of the screen) |
+|`playerHealthBarBorderSize`    |`Vector2`      | The width of the player health bar border (as a ratio of 2D resolution/screen size)|
 |`playerHealthBarBorderColor`   |`Color4`       | The color of the player health bar border                                          |
 |`playerHealthBarColors`        |[`Color4`, `Color4`] | The max/min health colors for the player health bar as an array of [`max color`, `min color`]. If you are using low alpha values with this field, make sure you consider the alpha value for `playerHealthBarBorderColor` as well.|
 
 ```
 "showPlayerHealthBar":  true,                               // Show the player health bar (default is false)      
-"playerHealthBarSize": Point2(200.0, 20.0),                 // Size of the health bar       
-"playerHealthBarPosition": Point2(74.0, 74.0),              // Position of the bar      
-"playerHealthBarBorderSize": Point2(2.0, 2.0),              // Size of the bar border/background
+"playerHealthBarSize": Vector2(0.1, 0.02),                  // Size of the health bar       
+"playerHealthBarPosition": Point2(0.005, 0.01),             // Position of the bar      
+"playerHealthBarBorderSize": Point2(0.001, 0.002),          // Size of the bar border/background
 "playerHealthBarBorderColor": Color4(0.0,0.0,0.0,1.0),      // Background color w/ alpha
 "playerHealthBarColors": [                                  // Transition player health bar from green --> red
     Color4(0.0, 1.0, 0.0, 1.0),
@@ -312,6 +415,18 @@ Each question in the array is then asked of the user (via an independent time-se
 "ammoColor": Color4(1.0,1.0,1.0,1.0),               // Set the ammo indicator to white
 "ammoOutlineColor": Color4(0.0,0.0,0.0,1.0),        // Set the outline/background color for the ammo indicator
 ```
+
+### Reticle
+In addition to being able to be specified on a per-user basis, the experiment/session level configuration can provide reticle configuration using the same parameters. When these parameters are specified at an experiment or session level they override any value provided using user configuration. See the [selecting a reticle section](userConfigReadme.md#selecting-a-reticle) for more information.
+
+| Parameter Name        |Units           | Description                                                                                         |
+|-----------------------|----------------|-----------------------------------------------------------------------------------------------------|
+|`reticleIndex`         |`int`           |Refers to which reticle this user prefers (if not required for the study)                            |
+|`reticleScale`         |`Array<float>`  |Provides a range of reticle sizes over which to set the scale as an `Array` w/ 2 elements (min, max) | 
+|`reticleColor`         |`Array<Color4>` |Provides a range of colors over which to set the reticle color as an `Array` w/ 2 elements (min, max)|
+|`reticleChangeTime`    |`float`         |Provides the time (in seconds) for the reticle to change color and/or size following a shot          |
+
+Note that when these values are specified at the experiment or session level the `allowReticleChange` property of the [menu configuration](#menu-config) should be set to `false` as user changes to the reticle will not apply.
 
 ### Weapon Cooldown
 | Parameter Name        |Units| Description                                                                             |
@@ -392,10 +507,14 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 | Parameter Name        |Units                  | Description                                                                        |
 |-----------------------|-----------------------|------------------------------------------------------------------------------------|
 |`targetHealthColors`   |[`Color3`, `Color3`]   | The max/min health colors for the target as an array of [`max color`, `min color`], if you do not want the target to change color as its health drops, set these values both to the same color                                              |
+|`targetGloss`          |`Color4`               | The target glossy (reflection) value, first 3 channels are RGB w/ alpha representing minimum reflection (F0). Set all channels to 0 or do not specify to disable glossy reflections. This sets the glossy color for the reference target in addition to trial targets       |
 |`showReferenceTarget`   |`bool`                | Show a reference target to re-center the view between trials/sessions?             |
 |`referenceTargetColor` |`Color3`               | The color of the "reference" targets spawned between trials                        |
 |`referenceTargetSize`  |m                      | The size of the "reference" targets spawned between trials                         |
+|`referenceTargetModelSpec`|`ArticulatedModel::Specification`| The model specification of the "reference" targets spawned between trials |
+|`clearMissDecalsWithReference`|`bool`              | Clear miss decals when the reference target is destroyed                           |
 |`showPreviewTargetsWithReference` |`bool`      | Show a preview of the trial targets (unhittable) with the reference target. Make these targets hittable once the reference is destroyed |
+|`showReferenceTargetMissDecals`|`bool`         | Show miss decals when the weapon is firing at a reference target?                  |
 |`previewTargetColor`   |`Color3`               | Set the color to draw the preview targets with (before they are active)            |
 
 ```
@@ -406,8 +525,23 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 "showReferenceTarget": true,                    // Show a reference target between trials
 "referenceTargetColor": Color3(1.0,1.0,1.0),    // Reference target color (return to "0" view direction)
 "referenceTargetSize": 0.01,                    // This is a size in meters
+"referenceTargetModelSpec" : ArticulatedModel::Specification{	    // Basic model spec for reference target
+    filename = "model/target/target.obj";
+    cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
+        allowVertexMerging = true;
+        forceComputeNormals = false;
+        forceComputeTangents = false;
+        forceVertexMerging = true;
+        maxEdgeLength = inf;
+        maxNormalWeldAngleDegrees = 0;
+        maxSmoothAngleDegrees = 0;
+    };
+},
+"clearMissDecalsWithReference" : false,         // Don't clear the miss decals when the reference target is eliminated
 "showPreviewTargetsWithReference" : false,      // Don't show the preview targets with the reference
+"showReferenceTargetMissDecals" : true,         // Show miss decals for reference targets
 "previewTargetColor" = Color3(0.5, 0.5, 0.5),   // Use gray for preview targets (if they are shown)
+"targetGloss" = Color4(0.4f, 0.2f, 0.1f, 0.8f), // Use the target gloss behavior from FPSci v22.02.01 and earlier
 ```
 
 ### Target Health Bars
@@ -514,16 +648,20 @@ These flags control whether various information is written to the output databas
 |`logPlayerActions`                 |`bool` | Enable/disable for logging player position, aim , and actions to database (per frame) |
 |`logTrialResponse`                 |`bool` | Enable/disable for logging trial responses to database (per trial)    |
 |`logUsers`                         |`bool` | Enable/disable for logging users to database (per session)            |
+|`logOnChange`                      |`bool` | Enable/disable for logging values to the `Player_Action` and `Target_Trajectory` tables only when changes occur    |
 |`logToSingleDb`                    |`bool` | Enable/disable for logging to a unified output database file (named using the experiment description and user ID)  |
-
+|`sessionParametersToLog`           |`Array<String>`| A list of other config parameters (by name) that are logged on a per-session basis to the `Sessions` table |
+ 
 ```
-"logEnable" = true,
-"logTargetTrajectories" = true,
-"logFrameInfo" = true,
-"logPlayerActions" = true,
-"logTrialResponse" = true,
-"logUsers" = true,
-"logToSingleDb" = true,
+"logEnable" = true,                     // Enable logging by default
+"logTargetTrajectories" = true,         // Log target trajectories (name, state, position)
+"logFrameInfo" = true,                  // Log per-frame timestamp and delta time
+"logPlayerActions" = true,              // Log player actions (view direction, position, state, event, target)
+"logTrialResponse" = true,              // Log trial results to the Trials table
+"logUsers" = true,                      // Log the users to the Users table
+"logOnChange" = false,                  // Log every frame (do not log only on change)
+"logToSingleDb" = true,                 // Log all sessions affiliated with a given experiment to the same database file
+"sessionParametersToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table
 ```
 
 *Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user]_[experiment config hash].db"`. This hash is printed to the `log.txt` from the run in case it is needed to disambiguate results files. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues. The experiment config hash takes into account only "valid" settings and ignores formatting only changes in the configuration file. Default values are used for the hash for anything that is not specified, so if a default is specified, the hash will match the config where the default was not specified.
@@ -605,3 +743,22 @@ The `frameRate` parameter in any given session config can be used in 3 different
 * If the `frameRate` parameter is set to a value >> refresh rate of the display (we suggest `8192fps`), then the program runs in "unlocked" mode wherein as many frames as can be drawn are rendered per displayed frame. This is the common mode of operation in many modern games.
 * If the `frameRate` parameter is set close to the refresh rate of the display then the programs runs in "fixed" frame rate mode, wherein the drawn frames are limited to the rate provided
 * If `frameRate = 0` then this indicates "default" mode, wherein the default frame rate settings for the window are applied. This should be equivalent to the "unlocked" mode for most systems. This is the default setting if you do not specify a frame rate in the file.
+
+## Frame Timing Approaches
+The following table details various frame timing approaches that can be configured within FPSci.
+
+|Frame timing approach                                          |`frameTimeMode`    |Result                                         | 
+|---------------------------------------------------------------|-------------------|-----------------------------------------------|
+|Specified using `frameRate` parameter (Empty `frameTimeArray`) |Don't Care         |Always apply the specified `frameRate`         |
+|Ordered timing sequence specified with `frameTimeArray` and `frameTimeRandomize` = `False`     |`always`           |Continuously cycle through the `frameTimeArray` regardless of experiment state, wrap around when complete|
+|                                                               |`taskOnly`         |Only cycle through the `frameTimeArray` during the task state (use specified `frameRate` elsewhere), but do not restart from the beginning of the `frameTimeArray` in each trial|
+|                                                               |`restartWithTask`  |Cycle through the `frameTimeArray` during the task state (use specified `frameRate` eslsewhere) and restart from the beginning of the `frameTimeArray` at the start of each trial|
+|Randomized timing distribution specified with `frameTimeArray` and `frameTimeRandomize` = `True` | `always`     |Always pick a random value from the `frameTimeArray` for frame timing |
+|                                                               |`taskOnly` or `restartWithTask`  |Only pick random values for frame time during the task state (use specified `frameRate` elsewhere) |
+
+Note: To specify just 2 frame rates (one in task and one elsewhere) specify a `frameTimeArray` of length 1 (the desired in-task frame time), set `frameTimeMode` to `"taskOnly"` (or `"restartWithTask"`) and use the `frameRate` parameter to specify the desired frame time in states other than the task.
+
+Additionally, the `frameTimeArray` can be included using a CSV file and the Any `#include` directive as demonstrated below:
+```
+"frameTimeArray" : (#include("my_frame_time_pattern.csv"))
+```

@@ -12,8 +12,45 @@ static bool operator==(Array<T> a1, Array<T> a2) {
 	return !(a1 != a2);
 }
 
+// Currently unused, allows writing (single valued) vector as scalar to Any
+template <class T>
+static void arrayToAny(Any& a, const String& name, const Array<T>& arr) {
+	bool allEqual = true;
+	for (int i = 0; i < arr.size(); i++) {
+		if (arr[i] != arr[0]) {
+			allEqual = false;
+			break;
+		}
+	}
+	if (allEqual) a[name] = arr[0];		// If array is constant just write a value
+	else a[name] = arr;					// Otherwise write the array
+}
+
+static float tExpLambdaFromMean(float mean, float min, float max, float acceptableErr = 1e-6) {
+	// Estimate lambda value from mean
+	if (mean < min) throw "Error truncated exponential mean cannot be less than minimum!";
+	else if (mean > max) throw "Error truncated exponential mean cannot be greater than maximum!";
+
+	const float R = max - min;
+
+	// Handle trivial cases (identity and uniform distributions)
+	if (abs(mean - (min + R / 2)) < acceptableErr) return 0;
+	else if (mean - min < acceptableErr) return 88.f;
+	else if (max - mean < acceptableErr) return -88.f;
+
+	// Iterative estimation of lambda
+	float lambda = mean < min + R / 2 ? 1.f : -1.f;					// Initial guess (sign of lambda)
+	float mu;
+	for (int i = 0; i < 1000; i++) {							// Iterative estimation (can exit early)
+		mu = 1 / lambda - R / (exp(R * lambda) - 1) + min;		// Calculate mean at this lamba value
+		if (abs(mu - mean) < acceptableErr) break;				// Early exit condition
+		lambda += mu - mean;									// Adjust lambda based on difference of means
+	}
+	return lambda;
+}
+
 SceneConfig::SceneConfig(const Any& any) {
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	int settingsVersion = 1;
 	reader.getIfPresent("settingsVersion", settingsVersion);
 	switch (settingsVersion) {
@@ -23,7 +60,7 @@ SceneConfig::SceneConfig(const Any& any) {
 		//reader.getIfPresent("gravity", gravity);
 		reader.getIfPresent("resetHeight", resetHeight);
 		reader.getIfPresent("spawnPosition", spawnPosition);
-		reader.getIfPresent("spawnHeading", spawnHeading);
+		reader.getIfPresent("spawnHeading", spawnHeadingDeg);
 		break;
 	default:
 		throw format("Did not recognize scene config settings version: %d", settingsVersion);
@@ -37,27 +74,62 @@ Any SceneConfig::toAny(const bool forceAll) const {
 	if (forceAll || def.name != name)					a["name"] = name;
 	if (forceAll || def.playerCamera != playerCamera)   a["playerCamera"] = playerCamera;
 	//if (forceAll || def.gravity != gravity)				a["gravity"] = gravity;
-	if (forceAll || def.resetHeight != resetHeight)		a["resetHeight"] = resetHeight;
-	if (forceAll || def.spawnPosition != spawnPosition) a["spawnPosition"] = spawnPosition;
-	if (forceAll || def.spawnHeading != spawnHeading)   a["spawnHeading"] = spawnHeading;
+	if (forceAll || !isnan(resetHeight))				a["resetHeight"] = resetHeight;
+	if (forceAll || !spawnPosition.isNaN())				a["spawnPosition"] = spawnPosition;
+	if (forceAll || !isnan(spawnHeadingDeg))			a["spawnHeading"] = spawnHeadingDeg;
+
 	return a;
 }
 
 bool SceneConfig::operator!=(const SceneConfig& other) const {
 	return name != other.name ||
+		playerCamera != other.playerCamera ||
 		//gravity != other.gravity ||
-		resetHeight != other.resetHeight ||
-		spawnPosition != other.spawnPosition ||
-		spawnHeading != other.spawnHeading;
+		(isnan(resetHeight) ? !isnan(other.resetHeight) : resetHeight != other.resetHeight) ||
+		spawnPosition.isNaN() ? !other.spawnPosition.isNaN() : spawnPosition != other.spawnPosition ||				// Assume if any spawn coordinate is nan positions are equal
+		(isnan(spawnHeadingDeg) ? !isnan(other.spawnHeadingDeg) : spawnHeadingDeg != other.spawnHeadingDeg);
 }
 
-void RenderConfig::load(AnyTableReader reader, int settingsVersion) {
+void RenderConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
+	// List of valid frame time modes for parsing from Any
+	const Array<String> validFrameTimeModes = { "always", "taskonly", "restartwithtask" };
+
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("frameRate", frameRate);
 		reader.getIfPresent("frameDelay", frameDelay);
-		reader.getIfPresent("shader", shader);
+		reader.getIfPresent("frameTimeArray", frameTimeArray);
+		reader.getIfPresent("frameTimeRandomize", frameTimeRandomize);
+		
+		reader.getIfPresent("frameTimeMode", frameTimeMode);
+		frameTimeMode = toLower(frameTimeMode);	// Convert to lower case
+		if (!validFrameTimeModes.contains(frameTimeMode)) {
+			String errMsg = "Specified \"frameTimeMode\" (\"" + frameTimeMode + "\") is invalid, must be one of: [";
+			for (int i = 0; i < validFrameTimeModes.length(); i++) {
+				errMsg += "\"" + validFrameTimeModes[i] + "\", ";
+			}
+			errMsg = errMsg.substr(0, errMsg.length() - 2) + "]!";
+			throw errMsg;
+		}
+
 		reader.getIfPresent("horizontalFieldOfView", hFoV);
+
+		reader.getIfPresent("resolution2D", resolution2D);
+		reader.getIfPresent("resolution3D", resolution3D);
+		reader.getIfPresent("resolutionComposite", resolutionComposite);
+
+		reader.getIfPresent("shader2D", shader2D);
+		reader.getIfPresent("shader3D", shader3D);
+		reader.getIfPresent("shaderComposite", shaderComposite);
+
+		reader.getIfPresent("sampled2D", sampler2D);
+		reader.getIfPresent("sampler2DOutput", sampler2DOutput);
+		reader.getIfPresent("sampler3D", sampler3D);
+		reader.getIfPresent("sampler3DOutput", sampler3DOutput);
+		reader.getIfPresent("samplerPrecomposite", samplerPrecomposite);
+		reader.getIfPresent("samplerComposite", samplerComposite);
+		reader.getIfPresent("samplerFinal", samplerFinal);
+
 		break;
 	default:
 		throw format("Did not recognize settings version: %d", settingsVersion);
@@ -65,16 +137,43 @@ void RenderConfig::load(AnyTableReader reader, int settingsVersion) {
 	}
 }
 
+// Implement equality check for all Any serializable sampler fields (used below)
+static bool operator!=(Sampler s1, Sampler s2) {
+	return s1.interpolateMode != s2.interpolateMode ||
+		s1.xWrapMode != s2.xWrapMode || s1.yWrapMode != s2.yWrapMode ||
+		s1.depthReadMode != s2.depthReadMode || s1.maxAnisotropy != s1.maxAnisotropy ||
+		s1.maxMipMap != s2.maxMipMap || s1.minMipMap != s2.minMipMap || s1.mipBias != s2.mipBias;
+}
+
 Any RenderConfig::addToAny(Any a, bool forceAll) const {
 	RenderConfig def;
-	if (forceAll || def.frameRate != frameRate)		a["frameRate"] = frameRate;
-	if (forceAll || def.frameDelay != frameDelay)	a["frameDelay"] = frameDelay;
-	if (forceAll || def.hFoV != hFoV)				a["horizontalFieldOfView"] = hFoV;
-	if (forceAll || def.shader != shader)			a["shader"] = shader;
+	if (forceAll || def.frameRate != frameRate)					a["frameRate"] = frameRate;
+	if (forceAll || def.frameDelay != frameDelay)				a["frameDelay"] = frameDelay;
+	if (forceAll || def.frameTimeArray != frameTimeArray)		a["frameTimeArray"] = frameTimeArray;
+	if (forceAll || def.frameTimeRandomize != frameTimeRandomize) a["frameTimeRandomize"] = frameTimeRandomize;
+	if (forceAll || def.frameTimeMode != frameTimeMode)			a["frameTimeMode"] = frameTimeMode;
+	if (forceAll || def.hFoV != hFoV)							a["horizontalFieldOfView"] = hFoV;
+
+	if (forceAll || def.resolution2D != resolution2D)			a["resolution2D"] = resolution2D;
+	if (forceAll || def.resolution3D != resolution3D)			a["resolution3D"] = resolution3D;
+	if (forceAll || def.resolutionComposite != resolutionComposite)	a["resolutionComposite"] = resolutionComposite;
+
+	if (forceAll || def.shader2D != shader2D)					a["shader2D"] = shader2D;
+	if (forceAll || def.shader3D != shader3D)					a["shader3D"] = shader3D;
+	if (forceAll || def.shaderComposite != shaderComposite)		a["shaderComposite"] = shaderComposite;	
+	
+	if (forceAll || def.sampler2D != sampler2D)					a["sampler2D"] = sampler2D;
+	if (forceAll || def.sampler2DOutput != sampler2DOutput)		a["sampler2DOutput"] = sampler2DOutput;
+	if (forceAll || def.sampler3D != sampler3D)					a["sampler3D"] = sampler3D;
+	if (forceAll || def.sampler3DOutput != sampler3DOutput)		a["sampler3DOutput"] = sampler3DOutput;
+	if (forceAll || def.samplerPrecomposite != samplerPrecomposite)	a["samplerPrecomposite"] = samplerPrecomposite;
+	if (forceAll || def.samplerComposite != samplerComposite)	a["samplerComposite"] = samplerComposite;
+	if (forceAll || def.samplerFinal != samplerFinal)			a["samplerFinal"] = samplerFinal;
+	
 	return a;
 }
 
-void PlayerConfig::load(AnyTableReader reader, int settingsVersion) {
+void PlayerConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("moveRate", moveRate);
@@ -113,7 +212,7 @@ Any PlayerConfig::addToAny(Any a, bool forceAll) const {
 }
 
 StaticHudElement::StaticHudElement(const Any& any) {
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.get("filename", filename, "Must provide filename for all Static HUD elements!");
 	reader.get("position", position, "Must provide position for all static HUD elements");
 	reader.getIfPresent("scale", scale);
@@ -134,11 +233,25 @@ bool StaticHudElement::operator!=(const StaticHudElement& other) const {
 }
 
 
-void HudConfig::load(AnyTableReader reader, int settingsVersion) {
+void HudConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("showHUD", enable);
 		reader.getIfPresent("showBanner", showBanner);
+		if (reader.getIfPresent("bannerTimerMode", bannerTimerMode)) {
+			bannerTimerMode = toLower(bannerTimerMode);
+			const Array<String> validTimeModes = { "none", "elapsed", "remaining" };
+			if (!validTimeModes.contains(bannerTimerMode)) {
+				String errString = format("\"bannerShowTime\" value \"%s\" is invalid, must be specified as one of the valid modes (", bannerTimerMode);
+				for (String validTimeMode : validTimeModes) {
+					errString += "\"" + validTimeMode + "\", ";
+				}
+				errString = errString.substr(0, errString.length() - 2) + ")!";
+				throw errString.c_str();
+			}
+		}
+		reader.getIfPresent("bannerShowProgress", bannerShowProgress);
+		reader.getIfPresent("bannerShowScore", bannerShowScore);
 		reader.getIfPresent("hudFont", hudFont);
 		reader.getIfPresent("showPlayerHealthBar", showPlayerHealthBar);
 		reader.getIfPresent("playerHealthBarSize", playerHealthBarSize);
@@ -170,6 +283,9 @@ Any HudConfig::addToAny(Any a, bool forceAll) const {
 	HudConfig def;
 	if (forceAll || def.enable != enable)											a["showHUD"] = enable;
 	if (forceAll || def.showBanner != showBanner)									a["showBanner"] = showBanner;
+	if (forceAll || def.bannerTimerMode != bannerTimerMode)							a["bannerTimerMode"] = bannerTimerMode;
+	if (forceAll || def.bannerShowProgress != bannerShowProgress)					a["bannerShowProgress"] = bannerShowProgress;
+	if (forceAll || def.bannerShowScore != bannerShowScore)							a["bannerShowScore"] = bannerShowScore;
 	if (forceAll || def.hudFont != hudFont)											a["hudFont"] = hudFont;
 	if (forceAll || def.showPlayerHealthBar != showPlayerHealthBar)					a["showPlayerHealthBar"] = showPlayerHealthBar;
 	if (forceAll || def.playerHealthBarSize != playerHealthBarSize)					a["playerHealthBarSize"] = playerHealthBarSize;
@@ -193,11 +309,15 @@ Any HudConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void AudioConfig::load(AnyTableReader reader, int settingsVersion) {
+void AudioConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("sceneHitSound", sceneHitSound);
 		reader.getIfPresent("sceneHitSoundVol", sceneHitSoundVol);
+		reader.getIfPresent("referenceTargetHitSound", refTargetHitSound);
+		reader.getIfPresent("referenceTargetHitSoundVol", refTargetHitSoundVol);
+		reader.getIfPresent("referenceTargetPlayFireSound", refTargetPlayFireSound);
+
 		break;
 	default:
 		throw format("Did not recognize settings version: %d", settingsVersion);
@@ -209,19 +329,43 @@ Any AudioConfig::addToAny(Any a, bool forceAll) const {
 	AudioConfig def;
 	if (forceAll || def.sceneHitSound != sceneHitSound)			a["sceneHitSound"] = sceneHitSound;
 	if (forceAll || def.sceneHitSoundVol != sceneHitSoundVol)	a["sceneHitSoundVol"] = sceneHitSoundVol;
+	if (forceAll || def.refTargetHitSound != refTargetHitSound) a["referenceTargetHitSound"] = refTargetHitSound;
+	if (forceAll || def.refTargetHitSoundVol != refTargetHitSoundVol) a["referenceTargetHitSoundVol"] = refTargetHitSoundVol;
+	if (forceAll || def.refTargetPlayFireSound != refTargetPlayFireSound)	a["referenceTargetPlayFireSound"] = refTargetPlayFireSound;
+	
 	return a;
 }
 
-void TimingConfig::load(AnyTableReader reader, int settingsVersion) {
+void TimingConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("pretrialDuration", pretrialDuration);
+		// Get pretrialDurationRange if present (indiciates a truncated exponential randomized pretrial duration)
+		if (reader.getIfPresent("pretrialDurationRange", pretrialDurationRange)) {
+			if (pretrialDurationRange.size() < 2) {
+				throw "Must provide 2 values for \"pretrialDurationRange\"!";
+			}
+			else if (pretrialDurationRange[0] > pretrialDurationRange[1]) {
+				throw format("pretrialDurationRange[0] (%.3f) must be less than (or equal to) pretrialDurationRange[1] (%.3f). Please re-order!", 
+					pretrialDurationRange[0], pretrialDurationRange[1]).c_str();
+			}
+			else if (pretrialDurationRange.size() > 2) {
+				logPrintf("WARNING: \"pretrialDurationRange\" should be specified as a 2-element array but has length %d (ignoring last %d values)!",
+					pretrialDurationRange.size(), pretrialDurationRange.size() - 2);
+			}
+			if (pretrialDuration < pretrialDurationRange[0] || pretrialDuration > pretrialDurationRange[1]) {
+				throw format("\"pretrialDuration\" (%.3f) must be within \"pretrialDurationRange\" ([%.3f, %.3f])!",
+					pretrialDuration, pretrialDurationRange[0], pretrialDurationRange[1]).c_str();
+			}
+			pretrialDurationLambda = tExpLambdaFromMean(pretrialDuration, pretrialDurationRange[0], pretrialDurationRange[1]);
+		}
 		reader.getIfPresent("maxTrialDuration", maxTrialDuration);
 		reader.getIfPresent("trialFeedbackDuration", trialFeedbackDuration);
 		reader.getIfPresent("sessionFeedbackDuration", sessionFeedbackDuration);
 		reader.getIfPresent("clickToStart", clickToStart);
 		reader.getIfPresent("sessionFeedbackRequireClick", sessionFeedbackRequireClick);
 		reader.getIfPresent("defaultTrialCount", defaultTrialCount);
+		reader.getIfPresent("maxPretrialAimDisplacement", maxPretrialAimDisplacement);
 		break;
 	default:
 		throw format("Did not recognize settings version: %d", settingsVersion);
@@ -232,20 +376,23 @@ void TimingConfig::load(AnyTableReader reader, int settingsVersion) {
 Any TimingConfig::addToAny(Any a, bool forceAll) const {
 	TimingConfig def;
 	if (forceAll || def.pretrialDuration != pretrialDuration)				a["pretrialDuration"] = pretrialDuration;
+	if (forceAll || def.pretrialDurationRange != pretrialDurationRange)		a["pretrialDurationRange"] = pretrialDurationRange;
 	if (forceAll || def.maxTrialDuration != maxTrialDuration)				a["maxTrialDuration"] = maxTrialDuration;
 	if (forceAll || def.trialFeedbackDuration != trialFeedbackDuration)		a["trialFeedbackDuration"] = trialFeedbackDuration;
 	if (forceAll || def.sessionFeedbackDuration != sessionFeedbackDuration)	a["sessionFeedbackDuration"] = sessionFeedbackDuration;
 	if (forceAll || def.clickToStart != clickToStart)						a["clickToStart"] = clickToStart;
 	if (forceAll || def.sessionFeedbackRequireClick != sessionFeedbackRequireClick) a["sessionFeedbackRequireClick"] = sessionFeedbackRequireClick;
 	if (forceAll || def.defaultTrialCount != defaultTrialCount)				a["defaultTrialCount"] = defaultTrialCount;
+	if (forceAll || def.maxPretrialAimDisplacement != maxPretrialAimDisplacement)	a["maxPretrialAimDisplacement"] = maxPretrialAimDisplacement;
 	return a;
 }
 
-void FeedbackConfig::load(AnyTableReader reader, int settingsVersion) {
+void FeedbackConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("referenceTargetInitialFeedback", initialWithRef);
 		reader.getIfPresent("noReferenceTargetInitialFeedback", initialNoRef);
+		reader.getIfPresent("pretrialAimInvalidFeedback", aimInvalid);
 		reader.getIfPresent("trialSuccessFeedback", trialSuccess);
 		reader.getIfPresent("trialFailureFeedback", trialFailure);
 		reader.getIfPresent("blockCompleteFeedback", blockComplete);
@@ -266,6 +413,7 @@ Any FeedbackConfig::addToAny(Any a, bool forceAll) const {
 	FeedbackConfig def;
 	if (forceAll || def.initialWithRef != initialWithRef)	a["referenceTargetInitialFeedback"] = initialWithRef;
 	if (forceAll || def.initialNoRef != initialNoRef)		a["noReferenceTargetInitialFeedback"] = initialNoRef;
+	if (forceAll || def.aimInvalid != aimInvalid)			a["pretrialAimInvalidFeedback"] = aimInvalid;
 	if (forceAll || def.trialSuccess != trialSuccess)		a["trialSuccessFeedback"] = trialSuccess;
 	if (forceAll || def.trialFailure != trialFailure)		a["trialFailureFeedback"] = trialFailure;
 	if (forceAll || def.blockComplete != blockComplete)		a["blockCompleteFeedback"] = blockComplete;
@@ -278,7 +426,8 @@ Any FeedbackConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void TargetViewConfig::load(AnyTableReader reader, int settingsVersion) {
+void TargetViewConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
+	bool gotColors = false;
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("showTargetHealthBars", showHealthBars);
@@ -286,7 +435,11 @@ void TargetViewConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("targetHealthBarOffset", healthBarOffset);
 		reader.getIfPresent("targetHealthBarBorderSize", healthBarBorderSize);
 		reader.getIfPresent("targetHealthBarBorderColor", healthBarBorderColor);
-		reader.getIfPresent("targetHealthColors", healthColors);
+		gotColors = reader.getIfPresent("targetHealthColors", healthColors);
+		if (gotColors && healthColors.length() < 1) {
+			throw "Specified \"healthColors\" doesn't contain at least one Color3!";
+		}
+		reader.getIfPresent("targetGloss", gloss);
 		reader.getIfPresent("targetHealthBarColors", healthBarColors);
 		reader.getIfPresent("showFloatingCombatText", showCombatText);
 		reader.getIfPresent("floatingCombatTextSize", combatTextSize);
@@ -300,7 +453,10 @@ void TargetViewConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("showReferenceTarget", showRefTarget);
 		reader.getIfPresent("referenceTargetSize", refTargetSize);
 		reader.getIfPresent("referenceTargetColor", refTargetColor);
+		reader.getIfPresent("referenceTargetModelSpec", refTargetModelSpec);
+		reader.getIfPresent("clearMissDecalsWithReference", clearDecalsWithRef);
 		reader.getIfPresent("showPreviewTargetsWithReference", previewWithRef);
+		reader.getIfPresent("showReferenceTargetMissDecals", showRefDecals);
 		reader.getIfPresent("previewTargetColor", previewColor);
 		break;
 	default:
@@ -330,12 +486,14 @@ Any TargetViewConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.showRefTarget != showRefTarget)					a["showRefTarget"] = showRefTarget;
 	if (forceAll || def.refTargetSize != refTargetSize)					a["referenceTargetSize"] = refTargetSize;
 	if (forceAll || def.refTargetColor != refTargetColor)				a["referenceTargetColor"] = refTargetColor;
+	if (forceAll || def.clearDecalsWithRef != clearDecalsWithRef)		a["clearMissDecalsWithReference"] = clearDecalsWithRef;
 	if (forceAll || def.previewWithRef != previewWithRef)				a["showPreviewTargetsWithReference"] = previewWithRef;
+	if (forceAll || def.showRefDecals != showRefDecals)					a["showReferenceTargetMissDecals"] = showRefDecals;
 	if (forceAll || def.previewColor != previewColor)					a["previewTargetColor"] = previewColor;
 	return a;
 }
 
-void ClickToPhotonConfig::load(AnyTableReader reader, int settingsVersion) {
+void ClickToPhotonConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("renderClickPhoton", enabled);
@@ -361,7 +519,7 @@ Any ClickToPhotonConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void LoggerConfig::load(AnyTableReader reader, int settingsVersion) {
+void LoggerConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("logEnable", enable);
@@ -370,6 +528,7 @@ void LoggerConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("logPlayerActions", logPlayerActions);
 		reader.getIfPresent("logTrialResponse", logTrialResponse);
 		reader.getIfPresent("logUsers", logUsers);
+		reader.getIfPresent("logOnChange", logOnChange);
 		reader.getIfPresent("sessionParametersToLog", sessParamsToLog);
 		reader.getIfPresent("logToSingleDb", logToSingleDb);
 		break;
@@ -387,6 +546,7 @@ Any LoggerConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.logPlayerActions != logPlayerActions)			a["logPlayerActions"] = logPlayerActions;
 	if (forceAll || def.logTrialResponse != logTrialResponse)			a["logTrialResponse"] = logTrialResponse;
 	if (forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
+	if (forceAll || def.logOnChange != logOnChange)						a["logOnChange"] = logOnChange;
 	if (forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessionParametersToLog"] = sessParamsToLog;
 	if (forceAll || def.logToSingleDb != logToSingleDb)					a["logToSingleDb"] = logToSingleDb;
 	return a;
@@ -394,7 +554,7 @@ Any LoggerConfig::addToAny(Any a, bool forceAll) const {
 
 CommandSpec::CommandSpec(const Any& any) {
 	try {
-		AnyTableReader reader(any);
+		FPSciAnyTableReader reader(any);
 		reader.get("command", cmdStr, "A command string must be specified!");
 		reader.getIfPresent("foreground", foreground);
 		reader.getIfPresent("blocking", blocking);
@@ -418,7 +578,7 @@ Any CommandSpec::toAny(const bool forceAll) const {
 	return a;
 }
 
-void CommandConfig::load(AnyTableReader reader, int settingsVersion) {
+void CommandConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("commandsOnSessionStart", sessionStartCmds);
@@ -442,7 +602,7 @@ Any CommandConfig::addToAny(Any a, const bool forceAll) const {
 
 Question::Question(const Any& any) {
 	int settingsVersion = 1;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	String typeStr;
@@ -463,8 +623,12 @@ Question::Question(const Any& any) {
 			type = Type::Rating;
 			reader.get("options", options, "An \"options\" Array must be specified with \"Rating\" style questions!");
 		}
+		else if (!typeStr.compare("DropDown")) {
+			type = Type::DropDown;
+			reader.get("options", options, "An \"options\" Array must be specified with \"DropDown\" style questions!");
+		}
 		else {
-			throw format("Unrecognized question \"type\" String \"%s\". Valid options are \"MultipleChoice\" or \"Entry\"", typeStr);
+			throw format("Unrecognized question \"type\" String \"%s\". Valid options are \"MultipleChoice\", \"Rating\", \"DropDown\", or \"Entry\"", typeStr);
 		}
 
 		// Get the question prompt (required) and title (optional)
@@ -472,6 +636,17 @@ Question::Question(const Any& any) {
 		reader.getIfPresent("title", title);
 		reader.getIfPresent("fullscreen", fullscreen);
 		reader.getIfPresent("showCursor", showCursor);
+		if (!reader.getIfPresent("randomOrder", randomOrder)) {
+			if (type == Type::MultipleChoice) {
+				randomOrder = true;		// Default to random order for multiple choice questions
+			}
+		}
+		if (reader.getIfPresent("optionsPerRow", optionsPerRow)) {
+			if (type == Type::Rating) {		
+				// Ratings will ignore the optionsPerRow (always uses 1 row)
+				logPrintf("WARNING: Specified \"optionsPerRow\" parameter is ignored when using a \"Rating\" type question. If you'd like to change the layout look into using a \"MultipleChoice\" question instead!");
+			}
+		}
 
 		// Handle (optional) key binds for options (if provided)
 		if (type == Type::Rating || type == Type::MultipleChoice) {
@@ -481,6 +656,18 @@ Question::Question(const Any& any) {
 				throw format("Length of \"optionKeys\" (%d) did not match \"options\" (%d) for question!", optionKeys.length(), options.length());
 			}
 		}
+
+		// Get font sizes for elements
+		float baseFontSize;
+		if (reader.getIfPresent("fontSize", baseFontSize)) {
+			promptFontSize = baseFontSize;
+			optionFontSize = baseFontSize;
+			buttonFontSize = baseFontSize;
+		}
+		reader.getIfPresent("promptFontSize", promptFontSize);
+		reader.getIfPresent("optionFontSize", optionFontSize);
+		reader.getIfPresent("buttonFontSize", buttonFontSize);
+
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in Question.\n", settingsVersion);

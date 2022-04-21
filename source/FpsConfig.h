@@ -2,6 +2,8 @@
 #include <G3D/G3D.h>
 #include "Weapon.h"
 #include "GuiElements.h"
+#include "UserConfig.h"
+#include "FPSciAnyTableReader.h"
 
 class SceneConfig {
 public:
@@ -13,7 +15,7 @@ public:
 	float resetHeight = fnan();							///< Reset height for the PhysicsScene
 
 	Point3 spawnPosition = { fnan(),fnan(), fnan() };	///< Location for player spawn
-	float spawnHeading = fnan();						///< Heading for player spawn
+	float spawnHeadingDeg = fnan();						///< Heading for player spawn (in degrees)
 
 	SceneConfig() {}
 	SceneConfig(const Any& any);
@@ -27,10 +29,30 @@ public:
 	// Rendering parameters
 	float           frameRate = 1000.0f;						///< Target (goal) frame rate (in Hz)
 	int             frameDelay = 0;								///< Integer frame delay (in frames)
-	String          shader = "";								///< Option for a custom shader name
-	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
+	Array<float>	frameTimeArray = { };						///< Array of target frame times (in seconds)
+	bool			frameTimeRandomize = false;					///< Whether to choose a sequential or random item from frameTimeArray
+	String			frameTimeMode = "always";					///< Mode to use for frame time selection (can be "always", "taskOnly", or "restartWithTask", case insensitive)
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
+	
+	Array<int>		resolution2D = { 0, 0 };					///< Optional 2D buffer resolution
+	Array<int>		resolution3D = { 0, 0 };					///< Optional 3D buffer resolution
+	Array<int>		resolutionComposite = { 0, 0 };				///< Optional composite buffer resolution	
+
+	String			shader2D = "";								///< Option for the filename of a custom shader to run on 2D content only
+	String          shader3D = "";								///< Option for the filename of a custom shader to run on 3D content only
+	String			shaderComposite = "";						///< Option for the filename of a custom shader to run on the (final) composited 2D/3D content	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
+	
+	// Samplers only exist between buffers with (possibly) different resolution, all equal sized buffers use Sampler::buffer()
+	Sampler			sampler2D = Sampler::video();				///< Sampler for sampling the shader2D iChannel0 input
+	Sampler			sampler2DOutput = Sampler::video();			///< Sampler for sampling the LDR 2D output into the framebuffer/composite input buffer
+	Sampler			sampler3D = Sampler::video();				///< Sampler for sampling the framebuffer into the HDR 3D buffer (including if using a shader)
+	Sampler			sampler3DOutput = Sampler::video();			///< Sampler for sampling the HDR 3D output buffer back into the framebuffer
+	Sampler			samplerPrecomposite = Sampler::video();		///< Sampler for precomposite (framebuffer blit) to composite input buffer
+	Sampler			samplerComposite = Sampler::video();		///< Sampler for sampling the shaderComposite iChannel0 input
+	Sampler			samplerFinal = Sampler::video();			///< Sampler for sampling composite (shader) output buffer into the final framebuffer
+
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 
 };
@@ -40,8 +62,8 @@ public:
 	// View parameters
 	float           moveRate = 0.0f;							///< Player move rate (defaults to no motion)
 	float           height = 1.5f;								///< Height for the player view (in walk mode)
-	float           crouchHeight = 0.8f;						///< Height for the player view (during crouch in walk mode)
-	float           jumpVelocity = 3.5f;						///< Jump velocity for the player
+	float           crouchHeight = 1.5f;						///< Height for the player view (during crouch in walk mode)
+	float           jumpVelocity = 0.0f;						///< Jump velocity for the player
 	float           jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
 	bool            jumpTouch = true;							///< Require the player to be touch a surface to jump?
 	Vector3         gravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
@@ -51,7 +73,7 @@ public:
 	bool			stillBetweenTrials = false;					///< Disable player motion between trials?
 	bool			resetPositionPerTrial = false;				///< Reset the player's position on a per trial basis (to scene default)
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -73,6 +95,9 @@ public:
 	// HUD parameters
 	bool            enable = false;											///< Master control for all HUD elements
 	bool            showBanner = false;						                ///< Show the banner display
+	String			bannerTimerMode = "remaining";							///< Time to show in the banner ("remaining", "elapsed", or "none")
+	bool			bannerShowProgress = true;								///< Show progress in banner?
+	bool			bannerShowScore = true;									///< Show score in banner?
 	float           bannerVertVisible = 0.41f;				                ///< Vertical banner visibility
 	float           bannerLargeFontSize = 30.0f;				            ///< Banner percent complete font size
 	float           bannerSmallFontSize = 14.0f;				            ///< Banner detail font size
@@ -80,9 +105,9 @@ public:
 
 	// Player health bar
 	bool            showPlayerHealthBar = false;							///< Display a player health bar?
-	Point2          playerHealthBarSize = Point2(200.0f, 20.0f);			///< Player health bar size (in pixels)
-	Point2          playerHealthBarPos = Point2(10.0f, 10.0f);				///< Player health bar position (in pixels)
-	Point2          playerHealthBarBorderSize = Point2(2.0f, 2.0f);			///< Player health bar border size
+	Vector2         playerHealthBarSize = Vector2(0.1f, 0.02f);				///< Player health bar size (as a ratio of screen size)
+	Point2          playerHealthBarPos = Point2(0.005f, 0.01f);				///< Player health bar position (as a ratio of screen size)
+	Vector2         playerHealthBarBorderSize = Vector2(0.001f, 0.002f);	///< Player health bar border size (as a ratio of screen size)
 	Color4          playerHealthBarBorderColor = Color4(0.0f, 0.0f, 0.0f, 1.0f);		///< Player health bar border color
 	Array<Color4>   playerHealthBarColors = {								///< Player health bar start/end colors
 		Color4(0.0, 1.0, 0.0, 1.0),
@@ -105,34 +130,40 @@ public:
 
 	Array<StaticHudElement> staticElements;										///< A set of static HUD elements to draw
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
 class AudioConfig {
 public:
 	// Sounds
-	String			sceneHitSound = "sound/fpsci_miss_100ms.wav";								///< Sound to play when hitting the scene
-	float			sceneHitSoundVol = 1.0f;
+	String			sceneHitSound = "sound/fpsci_miss_100ms.wav";		///< Sound to play when hitting the scene
+	float			sceneHitSoundVol = 1.0f;							///< Volume to play scene hit sound at
+	String			refTargetHitSound = "";								///< Reference target hit sound (filename)
+	float			refTargetHitSoundVol = 1.0f;						///< Volume to play target hit sound at
+	bool			refTargetPlayFireSound = false;						///< Play the weapon's fire sound when shooting at the reference target
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
 class TimingConfig {
 public:
 	// Timing parameters
-	float           pretrialDuration = 0.5f;					///< Time in ready (pre-trial) state in seconds
+	float			pretrialDuration = 0.5f;					///< Time in ready (pre-trial) state in seconds
+	float			pretrialDurationLambda = fnan();			///< Lambda used for pretrial duration truncated exponential randomization
+	Array<float>	pretrialDurationRange = {};					///< Pretrial duration range (if randomized)
 	float           maxTrialDuration = 100000.0f;				///< Maximum time spent in any one trial task
 	float           trialFeedbackDuration = 1.0f;				///< Time in the per-trial feedback state in seconds
 	float			sessionFeedbackDuration = 2.0f;				///< Time in the session feedback state in seconds
 	bool			clickToStart = true;						///< Require a click before starting the first session (spawning the reference target)
 	bool			sessionFeedbackRequireClick = false;		///< Require a click to progress from the session feedback?
+	float			maxPretrialAimDisplacement = 180.0f;		///< Maximum (angular) aim displacement in the pretrial duration in degrees, set to negative value to disable
 
 	// Trial count
 	int             defaultTrialCount = 5;						///< Default trial count
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -141,6 +172,7 @@ class FeedbackConfig {
 public:
 	String initialWithRef = "Click to spawn a target, then use shift on red target to begin.";		///< An initial feedback message to show when reference targets are drawn
 	String initialNoRef = "Click to start the session!";											///< An initial feedback message to show when reference targets aren't drawn
+	String aimInvalid = "Invalid trial! Do not displace your aim during the pretrial duration.";	///< Message to display when a trial is invalidated due to pretrial aim displacement
 	String trialSuccess = "%trialTaskTimeMs ms!";													///< Successful trial feedback message
 	String trialFailure = "Failure!";																///< Failed trial feedback message
 	String blockComplete = "Block %lastBlock complete! Starting block %currBlock.";					///< Block complete feedback message
@@ -153,7 +185,7 @@ public:
 	Color4 outlineColor = Color4::clear();							///< Color to draw the feedback message background
 	Color4 backgroundColor = Color4(0.0f, 0.0f, 0.0f, 0.5f);		///< Background color
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -164,6 +196,8 @@ public:
 		Color3(0.0, 1.0, 0.0),
 		Color3(1.0, 0.0, 0.0)
 	};
+
+	Color4 gloss;		///< Target glossyness (alpha is F0 or minimum reflectivity, see G3D docs)
 
 	// Target health bars
 	bool            showHealthBars = false;									///< Display a target health bar?
@@ -191,11 +225,25 @@ public:
 	bool			showRefTarget = true;								///< Show the reference target?
 	float           refTargetSize = 0.05f;								///< Size of the reference target
 	Color3          refTargetColor = Color3(1.0, 0.0, 0.0);				///< Default reference target color
+	Any refTargetModelSpec = PARSE_ANY(ArticulatedModel::Specification{	///< Basic model spec for reference target
+		filename = "model/target/low_poly_sphere.obj";
+		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
+					allowVertexMerging = true;
+					forceComputeNormals = false;
+					forceComputeTangents = false;
+					forceVertexMerging = true;
+					maxEdgeLength = inf;
+					maxNormalWeldAngleDegrees = 0;
+					maxSmoothAngleDegrees = 0;
+		};
+	});
 
-	bool			previewWithRef = false;								///< Show preview of per-trial targets with the reference
+	bool			clearDecalsWithRef = false;							///< Clear the decals created from the reference target at the start of the task
+	bool			previewWithRef = false;								///< Show preview of per-trial targets with the reference?
+	bool			showRefDecals = true;								///< Show missed shot decals when shooting at the reference target?
 	Color3			previewColor = Color3(0.5, 0.5, 0.5);				///< Color to show preview targets in
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -212,26 +260,27 @@ public:
 		Color3::white() * 0.8f
 	};
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
 class LoggerConfig {
 public:
 	// Enable flags for log
-	bool enable = true;		///< High-level logging enable flag (if false no output is created)							
-	bool logTargetTrajectories = true;		///< Log target trajectories in table?
-	bool logFrameInfo = true;		///< Log frame info in table?
+	bool enable = true;					///< High-level logging enable flag (if false no output is created)							
+	bool logTargetTrajectories = true;	///< Log target trajectories in table?
+	bool logFrameInfo = true;			///< Log frame info in table?
 	bool logPlayerActions = true;		///< Log player actions in table?
 	bool logTrialResponse = true;		///< Log trial response in table?
-	bool logUsers = true;		///< Log user information in table?
+	bool logUsers = true;				///< Log user information in table?
+	bool logOnChange = false;			///< Only log to Player_Action/Target_Trajectory table when the player/target position/orientation changes
 
-	bool logToSingleDb = true;		///< Log all results to a single db file?
+	bool logToSingleDb = true;			///< Log all results to a single db file?
 
 	// Session parameter logging
 	Array<String> sessParamsToLog = { "frameRate", "frameDelay" };			///< Parameter names to log to the Sessions table of the DB
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
 };
 
@@ -254,7 +303,7 @@ public:
 	Array<CommandSpec> trialStartCmds;						///< Command to run on start of a trial
 	Array<CommandSpec> trialEndCmds;							///< Command to run on end of a trial
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, const bool forceAll = false) const;
 };
 
@@ -264,17 +313,23 @@ public:
 		None,
 		MultipleChoice,
 		Entry,
-		Rating
+		Rating,
+		DropDown
 	};
 
 	Type type = Type::None;
-	String prompt = "";
-	Array<String> options;
-	Array<GKey> optionKeys;
-	String title = "Feedback";
-	String result = "";
-	bool fullscreen = false;
-	bool showCursor = true;
+	String prompt = "";					///< Text display to prompt the user for a response
+	Array<String> options;				///< List of options provided (if multiple choice)
+	Array<GKey> optionKeys;				///< Keys corresponding to the options provided (if multiple choice/ranking)
+	String title = "Feedback";			///< Title of the window displayed (if not fullscreen)
+	String result = "";					///< Reported result (not specified as configuration)
+	bool fullscreen = false;			///< Show this question as fullscreen?
+	bool showCursor = true;				///< Show cursor during question response window (allow clicking for selection)?
+	bool randomOrder = false;			///< Randomize question response order?
+	int optionsPerRow = 3;				///< Number of options per row (defaults to 3 for multiple choice, # of options for ratings)
+	float promptFontSize = -1.f;		///< Font size for prompt text
+	float optionFontSize = -1.f;		///< Font size for question entry/options
+	float buttonFontSize = -1.f;		///< Font size for submit/cancel buttons
 
 	Question() {};
 	Question(const Any& any);
@@ -289,6 +344,7 @@ public:
 	RenderConfig		render;									///< Render related config parameters
 	PlayerConfig		player;									///< Player related config parameters
 	HudConfig			hud;									///< HUD related config parameters
+	ReticleConfig		reticle;								///< Reticle config
 	AudioConfig			audio;									///< Audio related config parameters
 	TimingConfig		timing;									///< Timing related config parameters
 	FeedbackConfig		feedback;								///< Feedback message config parameters
@@ -313,11 +369,12 @@ public:
 	FpsConfig() {}
 
 	void load(const Any& any) {
-		AnyTableReader reader(any);
+		FPSciAnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
 		render.load(reader, settingsVersion);
 		player.load(reader, settingsVersion);
 		hud.load(reader, settingsVersion);
+		reticle.load(reader, settingsVersion);
 		targetView.load(reader, settingsVersion);
 		clickToPhoton.load(reader, settingsVersion);
 		audio.load(reader, settingsVersion);
@@ -353,6 +410,7 @@ public:
 		a = render.addToAny(a, forceAll);
 		a = player.addToAny(a, forceAll);
 		a = hud.addToAny(a, forceAll);
+		a = reticle.addToAny(a, forceAll);
 		a = targetView.addToAny(a, forceAll);
 		a = clickToPhoton.addToAny(a, forceAll);
 		a = audio.addToAny(a, forceAll);

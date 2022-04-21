@@ -34,6 +34,18 @@ class WaypointManager;
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
 enum PresentationState { initial, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
+static String presentationStateToString(const PresentationState& state) {
+	String stateStr = "N/A";
+	switch (state) {
+	case initial: stateStr = "initial"; break;
+	case pretrial: stateStr = "pretrial";  break;
+	case trialTask: stateStr = "trialTask"; break;
+	case trialFeedback: stateStr = "trialFeedback";  break;
+	case sessionFeedback: stateStr = "sessionFeedback";  break;
+	case complete: stateStr = "complete"; break;
+	}
+	return stateStr;
+}
 
 class FPSciApp : public GApp {
 public:
@@ -45,7 +57,8 @@ public:
 
 protected:
 	static const int						MAX_HISTORY_TIMING_FRAMES = 360;	///< Length of the history queue for m_frameDurationQueue
-	shared_ptr<Sound>						m_sceneHitSound;					///< Sound for target exploding
+	shared_ptr<Sound>						m_sceneHitSound;					///< Sound for scene collision
+	shared_ptr<Sound>						m_refTargetHitSound;				///< Sound for hitting the reference target
 
 	shared_ptr<GFont>						m_combatFont;						///< Font used for floating combat text
 	Array<shared_ptr<FloatingCombatText>>	m_combatTextList;					///< Array of existing combat text
@@ -54,11 +67,10 @@ protected:
 	Array<RealTime>							m_explosionRemainingTimes;			///< Time for end of explosion
 	int										m_explosionIdx = 0;					///< Explosion index
 	const int								m_maxExplosions = 20;				///< Maximum number of simultaneous explosions
-		
-	const int								m_MatTableSize = 10;				///< Set this to set # of color "levels"
-	Array<shared_ptr<UniversalMaterial>>	m_materials;						///< This stores the color materials
-
+	
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_explosionModels;
+	/** table of shaders cached for the 2D shader parameters set per session */
+	Table<String, shared_ptr<G3D::Shader>> m_shaderTable;
 
 	/** Used for visualizing history of frame times. Temporary, awaiting a G3D built-in that does this directly with a texture. */
 	Queue<float>							m_frameDurationQueue;				///< Queue for history of frame times
@@ -91,12 +103,29 @@ protected:
 	MouseInputMode							m_mouseInputMode = MouseInputMode::MOUSE_CURSOR;	///< Does the mouse currently have control over the view
 	bool									m_showUserMenu = true;				///< Show the user menu after update?
 
-	bool									m_firstSession = true;
+	bool									m_firstSession = true;				///< Flag indicating that this is the first session run
 	UserConfig								m_lastSavedUser;					///< Used to track if user has changed since last save
+
+	bool									m_sceneHasPlayerEntity = false;		///< Flag indicating whether loaded scene has a PlayerEntity specified
+	Table<String, CFrame>					m_initialCameraFrames;				///< Initial frames for all cameras in the scene
 
 	shared_ptr<PlayerControls>				m_playerControls;					///< Player controls window (developer mode)
 	shared_ptr<RenderControls>				m_renderControls;					///< Render controls window (developer mode)
 	shared_ptr<WeaponControls>				m_weaponControls;					///< Weapon controls window (developer mode)
+
+
+	// Shader buffers
+	shared_ptr<Framebuffer>					m_ldrBuffer2D;						///< Buffer to use for 2D content (if split)
+	shared_ptr<Framebuffer>					m_ldrShader2DOutput;				///< Buffer to use for 2D shader output (if provided)
+	shared_ptr<Framebuffer>					m_hdrShader3DOutput;				///< Buffer to use for 3D shader output (if provided)
+	shared_ptr<Framebuffer>					m_ldrBufferPrecomposite;			///< Buffer to blit LDR framebuffer into before converting to composite resolution
+	shared_ptr<Framebuffer>					m_ldrBufferComposite;				///< Buffer to use for input to composited shader (if provided)
+	shared_ptr<Framebuffer>					m_ldrShaderCompositeOutput;			///< Buffer to use for composite shader output (if provided)
+
+	// Shader parameters
+	int										m_frameNumber = 0;					///< Frame number (since the start of the session)
+	RealTime								m_startTime;						///< Start time (for the session)
+	RealTime								m_last2DTime, m_last3DTime, m_lastCompositeTime;		///< Times used for iTimeDelta
 
 	/** Called from onInit */
 	void makeGUI();
@@ -105,9 +134,10 @@ protected:
 	void loadConfigs(const ConfigFiles& configs);
 
 	virtual void loadModels();
+	
 	/** Initializes player settings from configs and resets player to initial position 
 		Also updates mouse sensitivity. */
-	void initPlayer();
+	void initPlayer(bool firstSpawn = false);
 
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {
@@ -124,9 +154,6 @@ protected:
 	void hitTarget(shared_ptr<TargetEntity> target);
 	void missEvent();
 
-	virtual void drawHUD(RenderDevice *rd);
-	void drawClickIndicator(RenderDevice *rd, String mode);
-
 public:
 
 	class Settings : public GApp::Settings {
@@ -141,10 +168,12 @@ public:
 	shared_ptr<GFont>               outputFont;						///< Font used for output
 	shared_ptr<GFont>               hudFont;						///< Font used in HUD
 	Array<shared_ptr<GFont>>		floatingCombatText;				///< Floating combat text array
+
+	ReticleConfig					reticleConfig;					///< Config for the active reticle
 	shared_ptr<Texture>             reticleTexture;					///< Texture used for reticle
+	
 	Table<String, shared_ptr<Texture>> hudTextures;					///< Textures used for the HUD
 	shared_ptr<GuiTheme>			theme;	
-	bool                            emergencyTurbo = false;			///< Lower rendering quality to improve performance
 
 	FPSciApp(const GApp::Settings& settings = GApp::Settings());
 
@@ -163,7 +192,14 @@ public:
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
 
 	/** A table of sounds that targets can use to allow sounds to finish playing after they're destroyed */
-	Table<String, shared_ptr<Sound>>	soundTable;
+	Table<String, shared_ptr<Sound>>					soundTable;
+
+	/** A table of materials for models to use */
+	Table<String, Array<shared_ptr<UniversalMaterial>>>	materials;
+	const int											matTableSize = 13;	///< Set this to set # of color "levels"
+	
+	Array<shared_ptr<UniversalMaterial>> makeMaterials(shared_ptr<TargetConfig> tconfig);
+	Color3 lerpColor(Array<Color3> colors, float a);
 
 	shared_ptr<Session> sess;					///< Pointer to the experiment
 	shared_ptr<Camera> playerCamera;			///< Pointer to the player camera						
@@ -184,8 +220,6 @@ public:
 	bool		reinitExperiment	= false;	///< Semaphore to indicate experiment needs to be reinitialized
 
 	int			experimentIdx = 0;				///< Index of the current experiment
-
-	Vector2		displayRes;
 
 	/** Call to change the reticle. */
 	void setReticle(int r);
@@ -239,20 +273,38 @@ public:
 	/** Initialize an experiment */
 	void initExperiment();
 
-	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
 	virtual void onInit() override;
 	virtual void onAI() override;
 	virtual void onNetwork() override;
 	virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
 	virtual void onPose(Array<shared_ptr<Surface> >& posed3D, Array<shared_ptr<Surface2D> >& posed2D) override;
 	virtual void onAfterLoadScene(const Any& any, const String& sceneName) override;
-	virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& surface2D) override;
-	virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) override;
 	virtual bool onEvent(const GEvent& e) override;
 	virtual void onAfterEvents() override;
 	virtual void onUserInput(UserInput* ui) override;
 	virtual void onCleanup() override;
     virtual void oneFrame() override;
+
+	// In FPSciGraphics.cpp
+	virtual void onGraphics(RenderDevice* rd, Array<shared_ptr<Surface> >& posed3D, Array<shared_ptr<Surface2D> >& posed2D) override;
+	virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D> >& surface2D) override;
+	virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface) override;
+	virtual void onPostProcessHDR3DEffects(RenderDevice* rd) override;
+	
+	void draw2DElements(RenderDevice* rd, Vector2 resolution);			///< Draw the undelayed 2D elements
+	void drawDelayed2DElements(RenderDevice* rd, Vector2 resolution);	///< Draw the delayed 2D elements
+
+	virtual void drawHUD(RenderDevice* rd, Vector2 resolution);						///< Draw HUD elements
+	void drawClickIndicator(RenderDevice* rd, String mode, Vector2 resolution);		///< Draw the click-to-photon click indicator
+	void updateFPSIndicator(RenderDevice* rd, Vector2 resolution);					///< Update and draw a (custom) frame time indicator (developer mode feature)
+	void drawFeedbackMessage(RenderDevice* rd);										///< Draw a user feedback message (at full render device resolution)
+
+	void updateShaderBuffers();									///< Regenerate buffers (for configured shaders)
+
+	/** calls rd->pushState with the right delayed buffer. Creates buffers if needed */
+	void pushRdStateWithDelay(RenderDevice* rd, Array<shared_ptr<Framebuffer>> &delayBufferQueue, int &delayIndex, int lagFrames = 0);
+	/** calls rd->popState and advances the delayIndex. Copies the latest delay buffer into the current framebuffer */
+	void popRdStateWithDelay(RenderDevice* rd, const Array<shared_ptr<Framebuffer>> &delayBufferQueue, int& delayIndex, int lagFrames = 0);
 
 };
 

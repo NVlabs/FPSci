@@ -1,4 +1,5 @@
 #include "KeyMapping.h"
+#include "FPSciAnyTableReader.h"
 
 // Default key mapping
 KeyMapping::KeyMapping() {
@@ -31,17 +32,17 @@ KeyMapping::KeyMapping() {
 };
 
 KeyMapping::KeyMapping(const Any& any) : KeyMapping() {
-	AnyTableReader reader = AnyTableReader(any);
+	FPSciAnyTableReader reader(any);
 	for (String actionName : map.getKeys()) {
 		reader.getIfPresent(actionName, map[actionName]);
 	}
 	getUiKeyMapping();
 }
 
-KeyMapping KeyMapping::load(const String& filename) {
+KeyMapping KeyMapping::load(const String& filename, bool saveJSON) {
 	if (!FileSystem::exists(System::findDataFile(filename, false))) {
 		KeyMapping mapping = KeyMapping();
-		mapping.toAny().save(filename);
+		mapping.toAny().save(filename, saveJSON);
 		return mapping;
 	}
 	return Any::fromFile(System::findDataFile(filename));

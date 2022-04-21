@@ -31,6 +31,9 @@ LOG_NAME_TIME_FORMAT = '%y-%m-%d_%H%M%S'
 # Create storage and lookups
 lastM1Time = 0; lastM2Time = 0; lastPdTime = 0; lastSwTime = 0
 timeLookup = {"M1": lastM1Time, "M2": lastM2Time, "PD": lastPdTime, "SW": lastSwTime}
+lastADCTime = 0 # The time the last ADC sample was
+t_offset_s = (pow(2,32)-1) * 1e-6 # Arduino `micros()` function wraps around after 2^32 - 1 microseconds (~71 minutes)
+num_offsets = 0 # The number of times the Arduino has wrapped around
 
 # Create lookup for event (proper names)
 nameLookup = {
@@ -78,6 +81,7 @@ hwInterface.flush()
 # If plotting open the plotter tool in another thread here
 if PLOT_DATA and LOG_ADC_DATA: proc = subprocess.Popen('python event_plotter.py \"{0}\" \"{1}\"'.format(eventFname, adcFname))
 elif PLOT_DATA: proc = subprocess.Popen('python event_plotter.py \"{0}\"'.format(eventFname))
+hwInterface.set_adc_report(LOG_ADC_DATA)
 # Create intro sync here (used to align data to wallclock later)
 synced  = False
 if syncer is not None:
@@ -89,6 +93,7 @@ if syncer is not None:
         adcLogger.writerow([time.strftime(IN_LOG_TIME_FORMAT), "SW sync"])
         adcFile.flush()
     synced = True
+
 
 # This is the main loop that handles data aquisition and plotting
 while(True):
@@ -114,15 +119,29 @@ while(True):
                 adcFile.flush()
             synced = True
 
+        # Update arduino-reported time stamp for tracked wrap around count
+        timestamp_s += num_offsets * t_offset_s
+
         if type(data) is int:                   # Check for ADC data in the message
+            # Handle timestamp wrap around case for ADC events
+            if timestamp_s < lastADCTime - 100:
+                num_offsets += 1
+                timestamp_s += t_offset_s
+            lastADCTime = timestamp_s
             if LOG_ADC_DATA: 
                 adcLogger.writerow([timestamp_s, data])
                 adcFile.flush()
         else:                                   # Otherwise this is an event timestamp
             event_type = data                   # Data is just an event string
             
+            # Handle timestamp wrap around case for non-ADC events
+            if timestamp_s < timeLookup[event_type] - 100:
+                num_offsets += 1
+                timestamp_s += t_offset_s
+
             # Check that this event is far enough away from last event of this type (debounce)
             if(timeLookup[event_type] != 0 and (timestamp_s - timeLookup[event_type]) < MIN_EVENT_SPACING_S): continue
+
             # Otherwise make this the last event of its type
             timeLookup[event_type] = timestamp_s
 

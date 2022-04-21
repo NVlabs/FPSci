@@ -14,6 +14,7 @@ The following fields are valid for a startupconfig.Any file:
 * `defaultExperiment` controls the default set of files to use for the experiment, these values are inherited by any unspecified values from experiments in the `experimentList` (see below)
 * `experimentList` optionally specifies a list of experiments that can be selected from in developer mode, if none is provided a single experiment that matches the `defaultExperiment` specification is used
 * `audioEnable` turns on or off audio
+* `jsonAnyOutput` writes all config outputs as JSON-format .Any files
 
 ## Experiment Specification
 The following fields are specified on a per-experiment basis:
@@ -26,7 +27,7 @@ The following fields are specified on a per-experiment basis:
 * `resultsDirPath` sets the path to the results directory. If this directory does not exists the application will create it at runtime.
 * `name` is the name identifier for each entry in the `experimentList`.
 
-## Sample/Default Values
+## Default Values
 The default `startup.Any` file is included below (as an example):
 ```
 developerMode = false;                              // Set this to true to enable developer mode (extra windows)
@@ -34,6 +35,7 @@ waypointEditorMode = false;                         // Set this to true to enabl
 fullscreen = true;                                  // Set this to false to run in windowed mode
 windowSize = Vector2(1920, 980);                    // This sets the default window size (when running with fullscreen = false)
 audioEnable = true;                                 // Set false to turn off audio
+jsonAnyOutput = true;                               // Write JSON compatible Any config files by default
 
 defaultExperiment = {
     name = "default";
@@ -78,3 +80,13 @@ As an example of how to use the `experimentList`, let's say we have 2 experiment
     ];
 }
 ```
+
+## Sample Experiments
+
+FPSci samples are only viewable in game when `developerMode` is set to `True`.
+
+Some sample experiments are provided in the `samples` directory. These experiments are intended to give some examples of types of functionality that may be interesting for experimenters to use in designing new experiments, but are unlikely to be useful experiments on their own. When FPSci starts, it will find each file in the `samples` directory that matches the `*.Experiment.Any` file naming scheme, and include an equivalent `*.Status.Any` as well as the provided `samples/sample.User.Any` as the `userStatusFilename` and will use those along side the other default values in an [Experiment Specification](#experiment-specification). These specifications will be appended at the end of the `experimentList` provided in the startup config.
+
+If a type of sample that you would like to see is missing, please [open an issue on github](https://github.com/NVlabs/FPSci/issues/new/choose) and describe the type of sample you would like to see.
+
+If you would like to contribute new samples, then please open a pull request that adds the new samples to the `data-files/samples/` directory and includes some explanation of what the sample adds in your pull request.

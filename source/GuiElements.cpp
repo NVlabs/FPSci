@@ -199,7 +199,7 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 	moveTo(Vector2(440, 300));
 }
 
-RenderControls::RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
+RenderControls::RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, const int numReticles, float& brightness,
 	const shared_ptr<GuiTheme>& theme, const int maxFrameDelay, const float minFrameRate, const float maxFrameRate, float width, float height) :
 	GuiWindow("Render Controls", theme, Rect2D::xywh(5,5,width,height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_app(app)
 {
@@ -223,7 +223,6 @@ RenderControls::RenderControls(FPSciApp* app, SessionConfig& config, bool& drawF
 	auto framePane = pane->addPane("Frame Rate/Delay");
 	framePane->beginRow(); {
 		framePane->addCheckBox("Show FPS", &drawFps);
-		framePane->addCheckBox("Turbo mode", &turbo);
 	}framePane->endRow();
 	framePane->beginRow(); {
 		auto c = framePane->addNumberBox("Framerate", &(config.render.frameRate), "fps", GuiTheme::LINEAR_SLIDER, minFrameRate, maxFrameRate, 1.0f);
@@ -334,7 +333,7 @@ void WeaponControls::updateFireSpreadShape() {
 	m_config.fireSpreadShape = m_spreadShapes[m_spreadShapeIdx];
 }
 
-void MenuConfig::load(AnyTableReader reader, int settingsVersion) {
+void MenuConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("showMenuLogo", showMenuLogo);
@@ -542,7 +541,7 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 		// Reticle index selection
 		if (config.allowReticleIdxChange) {
 			reticleControlPane->beginRow(); {
-				auto c = reticleControlPane->addNumberBox("Reticle", &(user.reticleIndex), "", GuiTheme::LINEAR_SLIDER, 0, m_app->numReticles, 1);
+				auto c = reticleControlPane->addNumberBox("Reticle", &(user.reticle.index), "", GuiTheme::LINEAR_SLIDER, 0, m_app->numReticles, 1);
 				c->setCaptionWidth(reticleCaptionWidth);
 				c->setWidth(m_sliderWidth);
 			} reticleControlPane->endRow();
@@ -551,13 +550,13 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 		// Reticle size selection
 		if (config.allowReticleSizeChange) {
 			reticleControlPane->beginRow(); {
-				auto c = reticleControlPane->addNumberBox("Reticle Scale Min", &(user.reticleScale[0]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
+				auto c = reticleControlPane->addNumberBox("Reticle Scale Min", &(user.reticle.scale[0]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
 				c->setCaptionWidth(reticleCaptionWidth);
 				c->setWidth(m_sliderWidth);
 			} reticleControlPane->endRow();
 
 			reticleControlPane->beginRow(); {
-				auto c = reticleControlPane->addNumberBox("Reticle Scale Max", &(user.reticleScale[1]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
+				auto c = reticleControlPane->addNumberBox("Reticle Scale Max", &(user.reticle.scale[1]), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 3.0f, 0.01f);
 				c->setCaptionWidth(reticleCaptionWidth);
 				c->setWidth(m_sliderWidth);
 			} reticleControlPane->endRow();
@@ -568,43 +567,43 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 			const float rgbCaptionWidth = 10.f;
 			reticleControlPane->beginRow(); {
 				reticleControlPane->addLabel("Reticle Color Min")->setWidth(120.f);
-				auto r = reticleControlPane->addSlider("R", &(user.reticleColor[0].r), 0.0f, 1.0f);
+				auto r = reticleControlPane->addSlider("R", &(user.reticle.color[0].r), 0.0f, 1.0f);
 				r->setCaptionWidth(rgbCaptionWidth);
 				r->setWidth(m_rgbSliderWidth);
-				auto g = reticleControlPane->addSlider("G", &(user.reticleColor[0].g), 0.0f, 1.0f);
+				auto g = reticleControlPane->addSlider("G", &(user.reticle.color[0].g), 0.0f, 1.0f);
 				g->setCaptionWidth(rgbCaptionWidth);
 				g->setWidth(m_rgbSliderWidth);
 				g->moveRightOf(r, rgbCaptionWidth);
-				auto b = reticleControlPane->addSlider("B", &(user.reticleColor[0].b), 0.0f, 1.0f);
+				auto b = reticleControlPane->addSlider("B", &(user.reticle.color[0].b), 0.0f, 1.0f);
 				b->setCaptionWidth(rgbCaptionWidth);
 				b->setWidth(m_rgbSliderWidth);
 				b->moveRightOf(g, rgbCaptionWidth);
-				auto a = reticleControlPane->addSlider("A", &(user.reticleColor[0].a), 0.0f, 1.0f);
+				auto a = reticleControlPane->addSlider("A", &(user.reticle.color[0].a), 0.0f, 1.0f);
 				a->setCaptionWidth(rgbCaptionWidth);
 				a->setWidth(m_rgbSliderWidth);
 				a->moveRightOf(b, rgbCaptionWidth);
 			} reticleControlPane->endRow();
 			reticleControlPane->beginRow(); {
 				reticleControlPane->addLabel("Reticle Color Max")->setWidth(120.f);
-				auto r = reticleControlPane->addSlider("R", &(user.reticleColor[1].r), 0.0f, 1.0f);
+				auto r = reticleControlPane->addSlider("R", &(user.reticle.color[1].r), 0.0f, 1.0f);
 				r->setCaptionWidth(rgbCaptionWidth);
 				r->setWidth(m_rgbSliderWidth);
-				auto g = reticleControlPane->addSlider("G", &(user.reticleColor[1].g), 0.0f, 1.0f);
+				auto g = reticleControlPane->addSlider("G", &(user.reticle.color[1].g), 0.0f, 1.0f);
 				g->setCaptionWidth(rgbCaptionWidth);
 				g->setWidth(m_rgbSliderWidth);
 				g->moveRightOf(r, rgbCaptionWidth);
-				auto b = reticleControlPane->addSlider("B", &(user.reticleColor[1].b), 0.0f, 1.0f);
+				auto b = reticleControlPane->addSlider("B", &(user.reticle.color[1].b), 0.0f, 1.0f);
 				b->setCaptionWidth(rgbCaptionWidth);
 				b->setWidth(m_rgbSliderWidth);
 				b->moveRightOf(g, rgbCaptionWidth);
-				auto a = reticleControlPane->addSlider("A", &(user.reticleColor[1].a), 0.0f, 1.0f);
+				auto a = reticleControlPane->addSlider("A", &(user.reticle.color[1].a), 0.0f, 1.0f);
 				a->setCaptionWidth(rgbCaptionWidth);
 				a->setWidth(m_rgbSliderWidth);
 				a->moveRightOf(b, rgbCaptionWidth);
 			} reticleControlPane->endRow();
 			if (config.allowReticleChangeTimeChange) {
 				reticleControlPane->beginRow(); {
-					auto c = reticleControlPane->addNumberBox("Reticle Change Time", &(user.reticleChangeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
+					auto c = reticleControlPane->addNumberBox("Reticle Change Time", &(user.reticle.changeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
 					c->setCaptionWidth(150.0f);
 					c->setWidth(m_sliderWidth);
 				} reticleControlPane->endRow();
@@ -749,7 +748,7 @@ void UserMenu::updateReticlePreview() {
 	m_reticlePreviewPane->removeAllChildren();
 	// Redraw the preview
 	shared_ptr<Texture> reticleTex = m_app->reticleTexture;
-	Color4 rColor = m_users.getUserById(m_userStatus.currentUser)->reticleColor[0];
+	Color4 rColor = m_users.getUserById(m_userStatus.currentUser)->reticle.color[0];
 
 	RenderDevice* rd = m_app->renderDevice;
 	rd->push2D(m_reticleBuffer); {

@@ -1,10 +1,10 @@
 #pragma once
 #include <G3D/G3D.h>
-//#include "ConfigFiles.h"
 #include "UserConfig.h"
 #include "UserStatus.h"
 #include "TargetEntity.h"
 #include "Weapon.h"
+#include "FPSciAnyTableReader.h"
 
 class FPSciApp;
 class SessionConfig;
@@ -34,7 +34,7 @@ public:
 	bool showMenuOnStartup = true;								///< Show the user menu on startup?
 	bool showMenuBetweenSessions = true;						///< Show the user menu between session?
 
-	void load(AnyTableReader reader, int settingsVersion = 1);
+	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, const bool forceAll = false) const;
 	bool allowAnyChange() const;
 };
@@ -126,12 +126,12 @@ protected:
 
 	void updateUserMenu(void);
 
-	RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
+	RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, const int maxFrameDelay = 360, const float minFrameRate = 1.0f, const float maxFrameRate=1000.0f, float width=400.0f, float height=10.0f);
 public:
-	static shared_ptr<RenderControls> create(FPSciApp* app, SessionConfig& config, bool& drawFps, bool& turbo, const int numReticles, float& brightness,
+	static shared_ptr<RenderControls> create(FPSciApp* app, SessionConfig& config, bool& drawFps, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, const int maxFrameDelay = 360, const float minFrameRate = 1.0f, const float maxFrameRate=1000.0f, float width = 400.0f, float height = 10.0f) {
-		return createShared<RenderControls>(app, config, drawFps, turbo, numReticles, brightness, theme, maxFrameDelay, minFrameRate, maxFrameRate, width, height);
+		return createShared<RenderControls>(app, config, drawFps, numReticles, brightness, theme, maxFrameDelay, minFrameRate, maxFrameRate, width, height);
 	}
 };
 

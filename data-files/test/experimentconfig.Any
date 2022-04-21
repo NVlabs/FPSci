@@ -2,7 +2,7 @@
     settingsVersion = 1; 
     
     description = "TestExperiment";
-    scene = { name = "G3D Simple Cornell Box (Empty CO)"; };
+    scene = { name = "FPSci Test Cornell Box (Empty CO)"; };
 
     frameDelay = 0;
     frameRate = 60;
@@ -24,6 +24,7 @@
         instantKill = true;
         damagePerSecond = 100;
         autoFire = false;
+        fireSoundVol = 0;
     };
 
     sessions = (
@@ -48,15 +49,11 @@
         {
             id = "defaultCamera";
             trials = ( { ids = ( "small"); count = 1; } );
-            scene = {
-                name = "FPSci Test Cornell Box (Empty CO)"; 
-            };
         },
         {
             id = "customCamera";
             trials = ( { ids = ( "small"); count = 1; } );
             scene = {
-                name = "FPSci Test Cornell Box (Empty CO)";
                 playerCamera = "customCamera";
             };
         },
@@ -69,6 +66,7 @@
                 firePeriod = 0;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -80,6 +78,7 @@
                 firePeriod = 0;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -91,6 +90,7 @@
                 firePeriod = 0.067;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -102,6 +102,7 @@
                 firePeriod = 0.150;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -113,6 +114,7 @@
                 firePeriod = 0.067;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -124,6 +126,7 @@
                 firePeriod = 0.033;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
         },
         {
@@ -135,7 +138,13 @@
                 firePeriod = 0.016;
                 damagePerSecond = 1;
                 autoFire = true;
+                fireSoundVol = 0;
             }
+        },
+        {
+            id = "TargetColors";
+            frameRate = 60; 
+            trials = ( { ids = ( "1color", "2colors", "3colors" ); count = 2; } );
         },
 
     );
@@ -158,6 +167,7 @@
             jumpEnabled = false;
             respawnCount = 0;
             axisLocked = [false,true,true];
+            hitSoundVol = 0;
         },
         {
             id = "front";
@@ -176,6 +186,8 @@
             jumpEnabled = false;
             respawnCount = 0;
             axisLocked = [false,true,true];
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "right";
@@ -194,6 +206,8 @@
             jumpEnabled = false;
             respawnCount = 0;
             axisLocked = [false,true,true];
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "small";
@@ -201,8 +215,8 @@
             visualSize = [ 0.05, 0.05 ];
             destSpace = "world";
             spawnBounds = AABox {
-                Point3(-0.5, 0.5, -1.00001),
-                Point3(-0.50001, 0.50001, -1.0),
+                Point3(-0.5, 0.5, -1.0),
+                Point3(-0.5, 0.5, -1.0),
             };
             moveBounds = AABox {
                 Point3(-100.0, -100.0, -100.0),
@@ -210,6 +224,8 @@
             };
             motionChangePeriod = [ 0.8, 1.5 ];
             jumpEnabled = false;
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "medium";
@@ -226,6 +242,8 @@
             };
             motionChangePeriod = [ 0.8, 1.5 ];
             jumpEnabled = false;
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "large";
@@ -242,6 +260,8 @@
             };
             motionChangePeriod = [ 0.8, 1.5 ];
             jumpEnabled = false;
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "toosmall";
@@ -249,8 +269,8 @@
             visualSize = [ 0.000001, 0.000001 ];
             destSpace = "world";
             spawnBounds = AABox {
-                Point3(0.02, -1.0, -0.00201),
-                Point3(0.02001, -1.00001, -0.002),
+                Point3(0.02, -1.0, -0.002),
+                Point3(0.02, -1.0, -0.002),
             };
             moveBounds = AABox {
                 Point3(-100.0, -100.0, -100.0),
@@ -258,6 +278,8 @@
             };
             motionChangePeriod = [ 0.8, 1.5 ];
             jumpEnabled = false;
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
         },
         {
             id = "toolarge";
@@ -265,8 +287,8 @@
             visualSize = [ 200, 200 ];
             destSpace = "world";
             spawnBounds = AABox {
-                Point3(0.0, -2.0, -100.00001),
-                Point3(0.00001, -2.00001, -100.0),
+                Point3(0.0, -2.0, -100.0),
+                Point3(0.0, -2.0, -100.0),
             };
             moveBounds = AABox {
                 Point3(-100.0, -100.0, -200.0),
@@ -274,6 +296,44 @@
             };
             motionChangePeriod = [ 0.8, 1.5 ];
             jumpEnabled = false;
-        }
+            hitSoundVol = 0;
+            destroyedSoundVol = 0;
+        },
+        {
+            id = "1color";
+            colors = [Color3(0, 0, 1)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
+        {
+            id = "2colors";
+            colors = [Color3(0, 1, 0), Color3(1, 0, 0)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
+        {
+            id = "3colors";
+            colors = [Color3(0, 0, 1), Color3(0, 1, 0), Color3(1, 0, 0)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
+        {
+            id = "4colors";
+            colors = [Color3(0, 0, 1), Color3(0, 1, 0), Color3(1, 0, 0), Color3(0, 1, 1)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
+        {
+            id = "5colors";
+            colors = [Color3(0, 0, 1), Color3(0, 1, 0), Color3(1, 0, 0), Color3(0, 1, 1), Color3(1, 1, 0)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
+        {
+            id = "7colors";
+            colors = [Color3(0, 0, 1), Color3(0, 1, 0), Color3(1, 0, 0), Color3(0, 1, 1), Color3(1, 1, 0), Color3(1, 0, 1), Color3(0, 0, 0)];
+            spawnBounds = AABox { Point3(0.0, -2.0, -100.0), Point3(0.0, -2.0, -100.0), };
+            moveBounds = AABox { Point3(-100.0, -100.0, -200.0), Point3(100.0, 100.0, 100.0), };
+        },
     );
 }

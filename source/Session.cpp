@@ -32,10 +32,11 @@
 #include "PlayerEntity.h"
 #include "Dialogs.h"
 #include "Weapon.h"
+#include "FPSciAnyTableReader.h"
 
 TrialCount::TrialCount(const Any& any) {
 	int settingsVersion = 1;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	switch (settingsVersion) {
@@ -61,9 +62,9 @@ Any TrialCount::toAny(const bool forceAll) const {
 	return a;
 }
 
-SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig) {
+SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 	TrialCount::defaultCount = timing.defaultTrialCount;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	switch (settingsVersion) {
 	case 1:
 		// Unique session info
@@ -106,6 +107,16 @@ float SessionConfig::getTrialsPerBlock(void) const {
 	return count;
 }
 
+Array<String> SessionConfig::getUniqueTargetIds() const {
+	Array<String> ids;
+	for (TrialCount trial : trials) {
+		for (String id : trial.ids) {
+			if (!ids.contains(id)) { ids.append(id); }
+		}
+	}
+	return ids;
+}
+
 Session::Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config), m_weapon(app->weapon) {
 	m_hasSession = notNull(m_config);
 }
@@ -121,6 +132,36 @@ bool Session::hasNextCondition() const{
 	return false;
 }
 
+const RealTime Session::targetFrameTime()
+{
+	const RealTime defaultFrameTime = 1.0 / m_app->window()->settings().refreshRate;
+	if (!m_hasSession) return defaultFrameTime;
+
+	uint arraySize = m_config->render.frameTimeArray.size();
+	if (arraySize > 0) {
+		if ((m_config->render.frameTimeMode == "taskonly" || m_config->render.frameTimeMode == "restartwithtask") && currentState != PresentationState::trialTask) {
+			// We are in a frame time mode which specifies only to change frame time during the task
+			return 1.0f / m_config->render.frameRate;
+		}
+
+		if (m_config->render.frameTimeRandomize) {
+			return m_config->render.frameTimeArray.randomElement();
+		}
+		else {
+			RealTime targetTime =  m_config->render.frameTimeArray[m_frameTimeIdx % arraySize];
+			m_frameTimeIdx += 1;
+			m_frameTimeIdx %= arraySize;
+			return targetTime;
+		}
+	}
+
+	// The below matches the functionality in FPSciApp::updateParameters()
+	if (m_config->render.frameRate > 0) {
+		return 1.0f / m_config->render.frameRate;
+	}
+	return defaultFrameTime;
+}
+
 bool Session::nextCondition() {
 	Array<int> unrunTrialIdxs;
 	for (int i = 0; i < m_remainingTrials.size(); i++) {
@@ -131,6 +172,11 @@ bool Session::nextCondition() {
 	if (unrunTrialIdxs.size() == 0) return false;
 	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
 	m_currTrialIdx = unrunTrialIdxs[idx];
+
+	// Produce (potentially random in range) pretrial duration
+	if (isNaN(m_config->timing.pretrialDurationLambda)) m_pretrialDuration = m_config->timing.pretrialDuration;
+	else m_pretrialDuration = drawTruncatedExp(m_config->timing.pretrialDurationLambda, m_config->timing.pretrialDurationRange[0], m_config->timing.pretrialDurationRange[1]);
+	
 	return true;
 }
 
@@ -204,9 +250,9 @@ void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
 		target->resetMotionParams();							// Reset the target motion behavior
 	}
 	else {
-		const float rot_pitch = randSign() * Random::common().uniform(config->eccV[0], config->eccV[1]);
-		const float rot_yaw = randSign() * Random::common().uniform(config->eccH[0], config->eccH[1]);
-		const CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, rot_yaw - 180.0f/(float)pi()*initialHeadingRadians, rot_pitch, 0.0f);
+		const float rot_pitch = (config->symmetricEccV ? randSign() : 1) * Random::common().uniform(config->eccV[0], config->eccV[1]);
+		const float rot_yaw = (config->symmetricEccH ? randSign() : 1) * Random::common().uniform(config->eccH[0], config->eccH[1]);
+		const CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, - 180.0f/(float)pi()*initialHeadingRadians - rot_yaw, rot_pitch, 0.0f);
 		loc = f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
 	}
 	target->setFrame(loc);
@@ -229,6 +275,7 @@ void Session::initTargetAnimation() {
 		}
 		else {
 			spawnTrialTargets(initialSpawnPos);			// Spawn all the targets normally
+			m_weapon->drawsDecals = true;				// Enable drawing decals
 		}
 	}
 	else { // State is feedback and we are spawning a reference target
@@ -241,10 +288,17 @@ void Session::initTargetAnimation() {
 			m_config->targetView.refTargetColor
 		);
 		m_hittableTargets.append(t);
+		m_lastRefTargetPos = t->frame().translation;		// Save last spawned reference target position
 
 		if (m_config->targetView.previewWithRef) {
 			spawnTrialTargets(initialSpawnPos, true);		// Spawn all the targets in preview mode
 		}
+
+		// Set weapon decal state to match configuration for reference targets
+		m_weapon->drawsDecals = m_config->targetView.showRefDecals;
+	
+		// Clear target logOnChange management
+		m_lastLogTargetLoc.clear();
 	}
 
 	// Reset number of destroyed targets (in the trial)
@@ -257,12 +311,12 @@ void Session::initTargetAnimation() {
 void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 	// Iterate through the targets
 	for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
-		const Color3 spawnColor = previewMode ? m_config->targetView.previewColor : m_config->targetView.healthColors[0];
+		const Color3 previewColor = m_config->targetView.previewColor;
 		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
 		const String name = format("%s_%d_%d_%s_%d", m_config->id, m_currTrialIdx, m_completedTrials[m_currTrialIdx], target->id, i);
 
-		const float spawn_eccV = randSign() * Random::common().uniform(target->eccV[0], target->eccV[1]);
-		const float spawn_eccH = randSign() * Random::common().uniform(target->eccH[0], target->eccH[1]);
+		const float spawn_eccV = (target->symmetricEccV ? randSign() : 1) * Random::common().uniform(target->eccV[0], target->eccV[1]);
+		const float spawn_eccH = (target->symmetricEccH ? randSign() : 1) * Random::common().uniform(target->eccH[0], target->eccH[1]);
 		const float targetSize = G3D::Random().common().uniform(target->size[0], target->size[1]);
 		bool isWorldSpace = target->destSpace == "world";
 
@@ -272,23 +326,25 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 			logger->addTarget(name, target, spawnTime, targetSize, Point2(spawn_eccH, spawn_eccV));
 		}
 
-		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, spawn_eccH - (initialHeadingRadians * 180.0f / (float)pi()), spawn_eccV, 0.0f);
+		CFrame f = CFrame::fromXYZYPRDegrees(initialSpawnPos.x, initialSpawnPos.y, initialSpawnPos.z, -initialHeadingRadians * 180.0f / pif() - spawn_eccH, spawn_eccV, 0.0f);
 
 		// Check for case w/ destination array
 		shared_ptr<TargetEntity> t;
 		if (target->destinations.size() > 0) {
-			Point3 offset = isWorldSpace ? Point3(0.0, 0.0, 0.0) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-			t = spawnDestTarget(target, offset, spawnColor, i, name);
+			Point3 offset = isWorldSpace ? Point3(0.f, 0.f, 0.f) : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
+			t = spawnDestTarget(target, offset, previewColor, i, name);
 		}
 		// Otherwise check if this is a jumping target
 		else if (target->jumpEnabled) {
 			Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-			t = spawnJumpingTarget(target, offset, initialSpawnPos, spawnColor, m_targetDistance, i, name);
+			t = spawnJumpingTarget(target, offset, initialSpawnPos, previewColor, m_targetDistance, i, name);
 		}
 		else {
 			Point3 offset = isWorldSpace ? target->spawnBounds.randomInteriorPoint() : f.pointToWorldSpace(Point3(0, 0, -m_targetDistance));
-			t = spawnFlyingTarget(target, offset, initialSpawnPos, spawnColor, i, name);
+			t = spawnFlyingTarget(target, offset, initialSpawnPos, previewColor, i, name);
 		}
+
+		if (!previewMode) m_app->updateTargetColor(t);		// If this isn't a preview target update its color now
 
 		// Set whether the target can be hit based on whether we are in preview mode
 		t->setCanHit(!previewMode);
@@ -310,6 +366,7 @@ void Session::processResponse()
 		m_remainingTrials[m_currTrialIdx] -= 1;	
 	}
 
+	// This update is only used for completed trials
 	if (notNull(logger)) {
 		logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
 	}
@@ -343,7 +400,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::pretrial)
 	{
-		if (stateElapsedTime > m_config->timing.pretrialDuration)
+		if (stateElapsedTime > m_pretrialDuration)
 		{
 			newState = PresentationState::trialTask;
 			if (m_config->player.stillBetweenTrials) {
@@ -398,7 +455,7 @@ void Session::updatePresentationState()
 							if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
 								m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
 								if (m_config->logger.enable) {
-									logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id);	// Log the question and its answer
+									logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id, m_app->dialog);	// Log the question and its answer
 								}
 								m_currQuestionIdx++;																
 								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
@@ -414,6 +471,10 @@ void Session::updatePresentationState()
 						}
 					}
 					else {
+						// Write final session timestamp to log
+						if (notNull(logger) && m_config->logger.enable) {
+							logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
+						}
 						if (m_config->logger.enable) {
 							endLogging();
 						}
@@ -486,12 +547,31 @@ void Session::updatePresentationState()
 	{ // handle state transition.
 		m_timer.startTimer();
 		if (newState == PresentationState::trialTask) {
+			if (m_config->render.frameTimeMode == "restartwithtask") {
+				m_frameTimeIdx = 0;		// Reset the frame time index with the task if requested
+			}
 			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
 		}
 		currentState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
 		if ((newState == PresentationState::trialTask) || (newState == PresentationState::trialFeedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
+			if (newState == PresentationState::trialTask && m_config->timing.maxPretrialAimDisplacement >= 0) {
+				// Test for aiming in valid region before spawning task targets				
+				Vector3 aim = m_camera->frame().lookVector().unit();
+				Vector3 ref = (m_lastRefTargetPos - m_camera->frame().translation).unit();
+				// Get the view displacement as the arccos of view/reference direction dot product (should never exceed 180 deg)
+				float viewDisplacement = 180 / pif() * acosf(aim.dot(ref));
+				if (viewDisplacement > m_config->timing.maxPretrialAimDisplacement) {
+					clearTargets();		// Clear targets (in case preview targets are being shown)
+					m_feedbackMessage = formatFeedback(m_config->feedback.aimInvalid);
+					currentState = PresentationState::trialFeedback;		// Jump to feedback state w/ error message
+				}
+			}
 			initTargetAnimation();
+		}
+
+		if (newState == PresentationState::pretrial && m_config->targetView.clearDecalsWithRef) {
+			m_weapon->clearDecals();		// Clear the decals when transitioning into the task state
 		}
 	}
 }
@@ -502,11 +582,8 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	updatePresentationState();
 
 	// 2. Record target trajectories, view direction trajectories, and mouse motion.
-	if (currentState == PresentationState::trialTask)
-	{
-		accumulateTrajectories();
-		accumulateFrameInfo(rdt, sdt, idt);
-	}
+	accumulateTrajectories();
+	accumulateFrameInfo(rdt, sdt, idt);
 }
 
 void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
@@ -521,6 +598,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 			format("'Block %d'", m_currBlock),
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
+			String(std::to_string(m_pretrialDuration)),
 			String(std::to_string(m_taskExecutionTime)),
 			String(std::to_string(destroyedTargets)),
 			String(std::to_string(totalTargets))
@@ -533,13 +611,22 @@ void Session::accumulateTrajectories()
 {
 	if (notNull(logger) && m_config->logger.logTargetTrajectories) {
 		for (shared_ptr<TargetEntity> target : m_targetArray) {
-			if (!target->isLogged()) continue;					   
+			if (!target->isLogged()) continue;
+			String name = target->name();
+			Point3 pos = target->frame().translation;
+			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), name, currentState, pos);
+			if (m_config->logger.logOnChange) {
+				// Check for target in logged position table
+				if (m_lastLogTargetLoc.containsKey(name)  && location.noChangeFrom(m_lastLogTargetLoc[name])) {	
+					continue; // Duplicates last logged position/state (don't log)
+				}
+			}
 			//// below for 2D direction calculation (azimuth and elevation)
 			//Point3 t = targetPosition.direction();
 			//float az = atan2(-t.z, -t.x) * 180 / pif();
 			//float el = atan2(t.y, sqrtf(t.x * t.x + t.z * t.z)) * 180 / pif();
-			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), target->name(), target->frame().translation);
 			logger->logTargetLocation(location);
+			m_lastLogTargetLoc.set(name, location);					// Update the last logged location
 		}
 	}
 	// recording view direction trajectories
@@ -548,24 +635,39 @@ void Session::accumulateTrajectories()
 
 void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 {
+	// Count hits (in task state) here
+	if ((action == PlayerActionType::Hit || action == PlayerActionType::Destroy) && currentState == PresentationState::trialTask) { m_hitCount++; }
+
+	static PlayerAction lastPA;
+
 	if (notNull(logger) && m_config->logger.logPlayerActions) {
 		BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 		// recording target trajectories
 		Point2 dir = getViewDirection();
 		Point3 loc = getPlayerLocation();
-		PlayerAction pa = PlayerAction(FPSciLogger::getFileTime(), dir, loc, action, targetName);
+		PlayerAction pa = PlayerAction(FPSciLogger::getFileTime(), dir, loc, currentState, action, targetName);
+		// Check for log only on change condition
+		if (m_config->logger.logOnChange && pa.noChangeFrom(lastPA)) {
+			return;		// Early exit for (would be) duplicate log entry
+		}
 		logger->logPlayerAction(pa);
+		lastPA = pa;				// Update last logged values
 		END_PROFILER_EVENT();
 	}
-	
-	// Count hits here
-	if (action == PlayerActionType::Hit || action == PlayerActionType::Destroy) { m_hitCount++; }
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
 	if (notNull(logger) && m_config->logger.logFrameInfo) {
 		logger->logFrameInfo(FrameInfo(FPSciLogger::getFileTime(), sdt));
 	}
+}
+
+bool Session::inTask() {
+	return currentState == PresentationState::trialTask;
+}
+
+float Session::getElapsedTrialTime() {
+	return m_timer.getTime();
 }
 
 float Session::getRemainingTrialTime() {
@@ -585,8 +687,8 @@ float Session::getProgress() {
 	return fnan();
 }
 
-int Session::getScore() {
-	return (int)(10.0 * m_totalRemainingTime);
+double Session::getScore() {
+	return 100.0 * m_totalRemainingTime;
 }
 
 String Session::formatCommand(const String& input) {
@@ -702,7 +804,7 @@ void Session::endLogging() {
 
 shared_ptr<TargetEntity> Session::spawnDestTarget(
 	shared_ptr<TargetConfig> config,
-	const Point3& position,
+	const Point3& offset,
 	const Color3& color,
 	const int paramIdx,
 	const String& name)
@@ -712,13 +814,14 @@ shared_ptr<TargetEntity> Session::spawnDestTarget(
 	const String nameStr = name.empty() ? format("target%03d", ++m_lastUniqueID) : name;
 	const int scaleIndex = clamp(iRound(log(targetSize) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 
-	const shared_ptr<TargetEntity>& target = TargetEntity::create(config, nameStr, m_scene, (*m_targetModels)[config->id][scaleIndex], position, scaleIndex, paramIdx);
+	const shared_ptr<TargetEntity>& target = TargetEntity::create(config, nameStr, m_scene, (*m_targetModels)[config->id][scaleIndex], offset, scaleIndex, paramIdx);
 
 	// Update parameters for the target
 	target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
-	target->setFrame(position);
-	target->setColor(color);
+
+	Color4 gloss = config->hasGloss ? config->gloss : m_app->experimentConfig.targetView.gloss;
+	target->setColor(color, gloss);
 
 	// Add target to array and scene
 	insertTarget(target);
@@ -732,11 +835,18 @@ shared_ptr<FlyingEntity> Session::spawnReferenceTarget(
 	const Color3& color)
 {
 	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
-	const shared_ptr<FlyingEntity>& target = FlyingEntity::create("reference", m_scene, (*m_targetModels)["reference"][scaleIndex], CFrame());
+
+	String refId = m_config->id + "_reference";
+	if (isNull(m_targetModels->getPointer(refId))) {
+		// This session doesn't have a custom reference target
+		refId = "reference";
+	}
+
+	const shared_ptr<FlyingEntity>& target = FlyingEntity::create("reference", m_scene, (*m_targetModels)[refId][scaleIndex], CFrame());
 
 	// Setup additional target parameters
 	target->setFrame(position);
-	target->setColor(color);
+	target->setColor(color, m_app->experimentConfig.targetView.gloss);
 
 	// Add target to array and scene
 	insertTarget(target);
@@ -765,7 +875,9 @@ shared_ptr<FlyingEntity> Session::spawnFlyingTarget(
 	}
 	target->setHitSound(config->hitSound, m_app->soundTable,  config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
-	target->setColor(color);
+
+	Color4 gloss = config->hasGloss ? config->gloss : m_app->experimentConfig.targetView.gloss;
+	target->setColor(color, gloss);
 
 	// Add the target to the scene/target array
 	insertTarget(target);
@@ -795,7 +907,9 @@ shared_ptr<JumpingEntity> Session::spawnJumpingTarget(
 	}
 	target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
 	target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
-	target->setColor(color);
+
+	Color4 gloss = config->hasGloss ? config->gloss : m_app->experimentConfig.targetView.gloss;
+	target->setColor(color, gloss);
 
 	// Add the target to the scene/target array
 	insertTarget(target);

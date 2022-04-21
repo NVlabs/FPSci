@@ -87,6 +87,9 @@
     <ClInclude Include="..\source\ExperimentConfig.h">
       <Filter>Header Files\Configuration</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\FPSciAnyTableReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\sqlHelpers.cpp">
@@ -142,6 +145,9 @@
     </ClCompile>
     <ClCompile Include="..\source\ExperimentConfig.cpp">
       <Filter>Source Files\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FPSciGraphics.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

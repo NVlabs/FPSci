@@ -1,8 +1,9 @@
 #include "Weapon.h"
+#include "FPSciAnyTableReader.h"
 
 WeaponConfig::WeaponConfig(const Any& any) {
 	int settingsVersion = 1;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	switch (settingsVersion) {
@@ -293,7 +294,7 @@ void Weapon::simulateProjectiles(SimTime sdt, const Array<shared_ptr<TargetEntit
 
 void Weapon::drawDecal(const Point3& point, const Vector3& normal, bool hit) {
 	// End here if we're not drawing decals
-	if (!m_config->renderDecals) return;
+	if (!drawsDecals || !m_config->renderDecals) return;
 	// Don't draw decals for these cases
 	if (!hit && (m_config->missDecalCount == 0 || m_missDecalModel == nullptr)) return;
 	else if (hit && m_hitDecalModel == nullptr) return;

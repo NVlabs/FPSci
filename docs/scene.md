@@ -22,8 +22,7 @@ Physics = {
 The `PlayerEntity` is specified by the following sub-fields:
 
 * `model` - A model to display for the player (currently not drawn)
-* `frame` - An initial frame for the player (in the scene geometry coordinate units)
-* `heading` - An (independent) initial heading for the player (in radians)
+* `frame` - An initial frame for the player (in the scene geometry coordinate units) can include rotation
 * `collisionSphere` - A `Sphere` to be used as a collision proxy for the player (normally used to specify the radius of the proxy in scene units)
 
 The parameters above allow the scene file to completely contain all scene-dependent information related to player motion. An example from the top-level of a `scene.any` file is provided below:
@@ -31,11 +30,16 @@ The parameters above allow the scene file to completely contain all scene-depend
 ```
 player = PlayerEntity {
     model = "playerModel";              // Use the model (specifed below as "playerModel") for the player
-    frame = Point3(0, 1.5, 0);          // Initialize the player 1.5m above the origin
-	heading = 0;                        // Player initial rotation of 0 radians
+    frame = CFrame::fromXYZYPRDegrees(0, 1.5, 0, 0, 0, 0);          // Initialize the player 1.5m above the origin
     collisionSphere = Sphere(1.0);      // Use a 1m sphere as the collision proxy
 };
 ```
+
+If no `spawnPosition` or `spawnHeading` is provided as part of the [scene configuration](general_config.md#scene-settings) within the experiment-level configuration, the `frame` from the `PlayerEntity` is used for the default spawn position/heading. 
+
+Note that if a `PlayerEntity` is specified in a scene file its `frame` parameter will override any camera-based fallback. This includes the case where a `PlayerEntity` is specified without a `frame` field (its `frame` will default to the scene origin with 0 heading values).
+
+*Note:* A runtime exception will occur if the `frame` Y value for the `PlayerEntity` (or specified/default camera if no `PlayerEntity` exists) is less than the `Physics`' `minHeight` parameter (if no `Physics` are specified the default `minHeight` value is 1e-6).
 
 ### Player Camera
 Any camera specified in the scene can be used as the camera attached to the player. This mapping is done by putting the name of the chosen camera in the [FPSci scene settings](./general_config.md#scene-settings). If no name is specified, the `defaultCamera` will be used.
@@ -46,3 +50,5 @@ The player camera is a way to modify camera properties for the player view, excl
 * Bloom strength
 * Position/Rotation
 * Field of View
+
+If no `spawnPosition` or `spawnHeading` is specified in the experiment-specific configuration *and* no `PlayerEntity` is present in the scene file then the player/default camera's `frame` is used to initialize player position/heading in the scene.

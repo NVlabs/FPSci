@@ -552,11 +552,11 @@ TEST_F(FPSciTests, TestCameraSelection) {
 
 	SelectSession("defaultCamera");
 	s_app->oneFrame();
-	EXPECT_TRUE(s_app->playerCamera->name() == "camera");
+	EXPECT_TRUE(s_app->playerCamera->name() == "camera") << "Camera name was " << s_app->playerCamera->name().c_str();
 
 	SelectSession("customCamera");
 	s_app->oneFrame();
-	EXPECT_TRUE(s_app->playerCamera->name() == "customCamera");
+	EXPECT_TRUE(s_app->playerCamera->name() == "customCamera") << "Camera name was " << s_app->playerCamera->name().c_str();
 
 }
 
@@ -727,4 +727,169 @@ TEST_F(FPSciTests, TestWeapon60Hz16ms) {
 	s_app->oneFrame();
 	EXPECT_NEAR(end - start, 1, 0.017) << "Failed to be within a frame of the expected end time!";
 	ASSERT_NEAR(numFrames, 60, 1) << "Wrong number of frames taken.";
+}
+
+void checkColor(Color4 col, Color4 targetCol, float abs_error, String str) {
+	EXPECT_NEAR(col.r, targetCol.r, abs_error) << "Red didn't match for target " << str.c_str();
+	EXPECT_NEAR(col.g, targetCol.g, abs_error) << "Green didn't match for target " << str.c_str();
+	EXPECT_NEAR(col.b, targetCol.b, abs_error) << "Blue didn't match for target " << str.c_str();
+}
+
+TEST_F(FPSciTests, TestTargetColors) {
+	// Should be 1 second to kill
+	SelectSession("TargetColors");
+	Color4 col;
+	for (auto matkv : s_app->materials) {
+		//// This is the code that prints the test cases that follow below
+		//if (matkv.key == "1color" || matkv.key == "2colors" || matkv.key == "3colors" || matkv.key == "4colors" || matkv.key == "5colors" || matkv.key == "7colors") {
+		//	printf("if (matkv.key == \"%s\") {\n", matkv.key.c_str());
+		//	printf("printf(\"Testing materials for %%s.\n\", matkv.key.c_str());\n");
+		//	int i = 0;
+		//	for (auto mat : matkv.value) {
+		//		Color4 col = mat->bsdf()->lambertian().mean();
+		//		printf("\tcheckColor(Color4(%.4ff, %.4ff, %.4ff, 1.0), matkv.value[%d]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + \" Color[%d]\");\n", col.r, col.g, col.b, i, i++);
+		//	}
+		//	printf("}\n");
+		//}
+
+		//// This version prints the colors generated for visual debugging
+		//printf("Colors for %s.\n", matkv.key.c_str());
+		//for (auto mat : matkv.value) {
+		//	Color4 col = mat->bsdf()->lambertian().mean();
+		//	printf("\t(%.2f, %.2f, %.2f)\n", col.r, col.g, col.b );
+		//}
+
+		if (matkv.key == "1color") {
+			printf("Testing materials for %s.\n", matkv.key.c_str());
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[0]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[0]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[1]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[1]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[2]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[2]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[3]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[3]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[4]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[4]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[5]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[5]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[6]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[6]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[7]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[7]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[8]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[8]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[9]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[9]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[10]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[10]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[11]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[11]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[12]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[12]");
+		}
+		if (matkv.key == "2colors") {
+			printf("Testing materials for %s.\n", matkv.key.c_str());
+			checkColor(Color4(1.0000f, 0.0000f, 0.0000f, 1.0), matkv.value[0]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[0]");
+			checkColor(Color4(0.9167f, 0.0833f, 0.0000f, 1.0), matkv.value[1]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[1]");
+			checkColor(Color4(0.8333f, 0.1667f, 0.0000f, 1.0), matkv.value[2]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[2]");
+			checkColor(Color4(0.7500f, 0.2500f, 0.0000f, 1.0), matkv.value[3]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[3]");
+			checkColor(Color4(0.6667f, 0.3333f, 0.0000f, 1.0), matkv.value[4]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[4]");
+			checkColor(Color4(0.5833f, 0.4167f, 0.0000f, 1.0), matkv.value[5]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[5]");
+			checkColor(Color4(0.5000f, 0.5000f, 0.0000f, 1.0), matkv.value[6]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[6]");
+			checkColor(Color4(0.4167f, 0.5833f, 0.0000f, 1.0), matkv.value[7]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[7]");
+			checkColor(Color4(0.3333f, 0.6667f, 0.0000f, 1.0), matkv.value[8]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[8]");
+			checkColor(Color4(0.2500f, 0.7500f, 0.0000f, 1.0), matkv.value[9]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[9]");
+			checkColor(Color4(0.1667f, 0.8333f, 0.0000f, 1.0), matkv.value[10]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[10]");
+			checkColor(Color4(0.0833f, 0.9167f, 0.0000f, 1.0), matkv.value[11]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[11]");
+			checkColor(Color4(0.0000f, 1.0000f, 0.0000f, 1.0), matkv.value[12]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[12]");
+		}
+		if (matkv.key == "3colors") {
+			printf("Testing materials for %s.\n", matkv.key.c_str());
+			checkColor(Color4(1.0000f, 0.0000f, 0.0000f, 1.0), matkv.value[0]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[0]");
+			checkColor(Color4(0.8333f, 0.1667f, 0.0000f, 1.0), matkv.value[1]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[1]");
+			checkColor(Color4(0.6667f, 0.3333f, 0.0000f, 1.0), matkv.value[2]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[2]");
+			checkColor(Color4(0.5000f, 0.5000f, 0.0000f, 1.0), matkv.value[3]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[3]");
+			checkColor(Color4(0.3333f, 0.6667f, 0.0000f, 1.0), matkv.value[4]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[4]");
+			checkColor(Color4(0.1667f, 0.8333f, 0.0000f, 1.0), matkv.value[5]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[5]");
+			checkColor(Color4(0.0000f, 1.0000f, 0.0000f, 1.0), matkv.value[6]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[6]");
+			checkColor(Color4(0.0000f, 0.8333f, 0.1667f, 1.0), matkv.value[7]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[7]");
+			checkColor(Color4(0.0000f, 0.6667f, 0.3333f, 1.0), matkv.value[8]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[8]");
+			checkColor(Color4(0.0000f, 0.5000f, 0.5000f, 1.0), matkv.value[9]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[9]");
+			checkColor(Color4(0.0000f, 0.3333f, 0.6667f, 1.0), matkv.value[10]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[10]");
+			checkColor(Color4(0.0000f, 0.1667f, 0.8333f, 1.0), matkv.value[11]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[11]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[12]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[12]");
+		}
+		if (matkv.key == "4colors") {
+			printf("Testing materials for %s.\n", matkv.key.c_str());
+			checkColor(Color4(0.0000f, 1.0000f, 1.0000f, 1.0), matkv.value[0]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[0]");
+			checkColor(Color4(0.2500f, 0.7500f, 0.7500f, 1.0), matkv.value[1]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[1]");
+			checkColor(Color4(0.5000f, 0.5000f, 0.5000f, 1.0), matkv.value[2]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[2]");
+			checkColor(Color4(0.7500f, 0.2500f, 0.2500f, 1.0), matkv.value[3]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[3]");
+			checkColor(Color4(1.0000f, 0.0000f, 0.0000f, 1.0), matkv.value[4]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[4]");
+			checkColor(Color4(0.7500f, 0.2500f, 0.0000f, 1.0), matkv.value[5]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[5]");
+			checkColor(Color4(0.5000f, 0.5000f, 0.0000f, 1.0), matkv.value[6]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[6]");
+			checkColor(Color4(0.2500f, 0.7500f, 0.0000f, 1.0), matkv.value[7]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[7]");
+			checkColor(Color4(0.0000f, 1.0000f, 0.0000f, 1.0), matkv.value[8]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[8]");
+			checkColor(Color4(0.0000f, 0.7500f, 0.2500f, 1.0), matkv.value[9]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[9]");
+			checkColor(Color4(0.0000f, 0.5000f, 0.5000f, 1.0), matkv.value[10]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[10]");
+			checkColor(Color4(0.0000f, 0.2500f, 0.7500f, 1.0), matkv.value[11]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[11]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[12]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[12]");
+		}
+		if (matkv.key == "5colors") {
+			printf("Testing materials for %s.\n", matkv.key.c_str());
+			checkColor(Color4(1.0000f, 1.0000f, 0.0000f, 1.0), matkv.value[0]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[0]");
+			checkColor(Color4(0.6667f, 1.0000f, 0.3333f, 1.0), matkv.value[1]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[1]");
+			checkColor(Color4(0.3333f, 1.0000f, 0.6667f, 1.0), matkv.value[2]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[2]");
+			checkColor(Color4(0.0000f, 1.0000f, 1.0000f, 1.0), matkv.value[3]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[3]");
+			checkColor(Color4(0.3333f, 0.6667f, 0.6667f, 1.0), matkv.value[4]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[4]");
+			checkColor(Color4(0.6667f, 0.3333f, 0.3333f, 1.0), matkv.value[5]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[5]");
+			checkColor(Color4(1.0000f, 0.0000f, 0.0000f, 1.0), matkv.value[6]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[6]");
+			checkColor(Color4(0.6667f, 0.3333f, 0.0000f, 1.0), matkv.value[7]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[7]");
+			checkColor(Color4(0.3333f, 0.6667f, 0.0000f, 1.0), matkv.value[8]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[8]");
+			checkColor(Color4(0.0000f, 1.0000f, 0.0000f, 1.0), matkv.value[9]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[9]");
+			checkColor(Color4(0.0000f, 0.6667f, 0.3333f, 1.0), matkv.value[10]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[10]");
+			checkColor(Color4(0.0000f, 0.3333f, 0.6667f, 1.0), matkv.value[11]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[11]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[12]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[12]");
+		}
+		if (matkv.key == "7colors") {
+			printf("Testing materials for %s.\n", matkv.key.c_str());
+			checkColor(Color4(0.0000f, 0.0000f, 0.0000f, 1.0), matkv.value[0]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[0]");
+			checkColor(Color4(0.5000f, 0.0000f, 0.5000f, 1.0), matkv.value[1]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[1]");
+			checkColor(Color4(1.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[2]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[2]");
+			checkColor(Color4(1.0000f, 0.5000f, 0.5000f, 1.0), matkv.value[3]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[3]");
+			checkColor(Color4(1.0000f, 1.0000f, 0.0000f, 1.0), matkv.value[4]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[4]");
+			checkColor(Color4(0.5000f, 1.0000f, 0.5000f, 1.0), matkv.value[5]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[5]");
+			checkColor(Color4(0.0000f, 1.0000f, 1.0000f, 1.0), matkv.value[6]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[6]");
+			checkColor(Color4(0.5000f, 0.5000f, 0.5000f, 1.0), matkv.value[7]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[7]");
+			checkColor(Color4(1.0000f, 0.0000f, 0.0000f, 1.0), matkv.value[8]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[8]");
+			checkColor(Color4(0.5000f, 0.5000f, 0.0000f, 1.0), matkv.value[9]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[9]");
+			checkColor(Color4(0.0000f, 1.0000f, 0.0000f, 1.0), matkv.value[10]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[10]");
+			checkColor(Color4(0.0000f, 0.5000f, 0.5000f, 1.0), matkv.value[11]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[11]");
+			checkColor(Color4(0.0000f, 0.0000f, 1.0000f, 1.0), matkv.value[12]->bsdf()->lambertian().mean(), 0.0001f, matkv.key + " Color[12]");
+		}
+	}
+}
+
+
+TEST_F(FPSciTests, TestFreshStart) {
+	// Make sure autogenereated config files aren't present from previous runs
+	bool failDelete = false;
+	failDelete = remove("test/emptyconfig.Any");
+	EXPECT_TRUE(failDelete) << "Experiment Config present from previous run!";
+	failDelete = remove("test/emptyuser.Any");
+	EXPECT_TRUE(failDelete) << "User Config present from previous run!";
+	failDelete = remove("test/emptystatus.Any");
+	EXPECT_TRUE(failDelete) << "User Status present from previous run!";
+	failDelete = remove("test/emptykeymap.Any");
+	EXPECT_TRUE(failDelete) << "Keymap present from previous run!";
+	failDelete = remove("test/emptysystem.Any");
+	EXPECT_TRUE(failDelete) << "System Config present from previous run!";
+	// Load `freshStartExperiment` (at index 1)
+	s_app->experimentIdx = 1;
+	EXPECT_NO_THROW(
+		s_app->initExperiment();
+	) << "Failed to initialize with autogenerated config";
+	// Run one frame (to make sure there's no crash)
+	EXPECT_NO_FATAL_FAILURE(
+		s_app->oneFrame();
+	) << "Failed to run one frame with autogenerated config";
+	// Delete the generated files, error if any were not generated
+	failDelete = remove("test/emptyconfig.Any");
+	EXPECT_FALSE(failDelete) << "Experiment Config not generated!";
+	failDelete = remove("test/emptyuser.Any");
+	EXPECT_FALSE(failDelete) << "User Config not generated!";
+	failDelete = remove("test/emptystatus.Any");
+	EXPECT_FALSE(failDelete) << "User Status not generated!";
+	failDelete = remove("test/emptykeymap.Any");
+	EXPECT_FALSE(failDelete) << "Keymap not generated!";
+	failDelete = remove("test/emptysystem.Any");
+	EXPECT_FALSE(failDelete) << "System Config not generated!";
 }

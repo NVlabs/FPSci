@@ -1,0 +1,205 @@
+// Sample of the '1HIT' task as in Spjut et al. 2019. 
+// See https://research.nvidia.com/publication/2019-11_Latency-of-30
+// Use this to design your own experiment if you want to use similar tasks/conditions.
+// Refresh rate and latency to be configured by users for their specific environment.
+// Latency indicator is enabled by default for latency measurement.
+
+{
+    // global settings
+    showMenuBetweenSessions = False;
+    logToSingleDb = False;
+    clearMissDecalsWithReference = True;
+    showReferenceTargetMissDecals = False;
+
+    scene = {
+        name = "FPSci Simple Hallway";
+        spawnPosition = Point3(46.08, -2.2, 0);
+        spawnHeading = -90;
+    };
+
+    feedbackDuration = 0.0; // Time allocated for providing user feedback
+    pretrialDuration = 0.25; // Time allocated for preparing for trial
+    maxTrialDuration = 5.0; // Maximum duration allowed for completion of the task
+    referenceTargetSize = 0.02;
+
+    // feedback settings
+    trialFeedbackDuration = 0.0;
+    referenceTargetInitialFeedback = "Use left shift key to clear the reference targets (red) and left mouse click to clear test targets (green).";
+    sessionFeedbackDuration = 5.0;
+    sessionCompleteFeedback = "Session complete! Moving to next session.";
+    allSessionsCompleteFeedback = "All Sessions Complete! Thank you for participating in this experiment.";
+    blockCompleteFeedback = "Block %lastBlock of %totalBlocks completed. Your score so far is %totalTimeLeftS.\nStarting Block %currBlock.";
+    weapon = "pistol",
+    
+    // weapon settings
+    weapon = {
+        id = "pistol";
+        firePeriod = 0.5;
+        autoFire = False;
+        damagePerSecond = 2.0;
+        maxAmmo = 3600;
+    };
+
+    // UI settings
+    showHUD = True;
+    renderWeaponStatus = True;
+    cooldownMode = "ring";
+    cooldownInnerRadius = 40.0;
+    cooldownColor = Color4(1.0,1.0,1.0,0.8);
+    
+    // LDAT settings
+    renderClickPhoton = True;
+    clickPhotonSide = "left";
+    clickPhotonSize = Point2(0.05,0.095);
+    clickPhotonVertPos = 0.5;
+    clickPhotonColors = (
+        Color3(0.2,0.2,0.2),
+        Color3(0.8,0.8,0.8)
+    );
+    
+    // session settings
+    sessions = (
+        {
+            id = "60hz_0delay";
+            frameRate = 60;
+            frameDelay = 0;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
+        },
+        {
+            id = "60hz_2delay";
+            frameRate = 60;
+            frameDelay = 2;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
+        },
+        {
+            id = "120hz_0delay";
+            frameRate = 120;
+            frameDelay = 0;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
+        },
+        {
+            id = "120hz_4delay";
+            frameRate = 120;
+            frameDelay = 4;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
+        },
+        {
+            id = "240hz_0delay";
+            frameRate = 240;
+            frameDelay = 0;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
+        },
+        {
+            id = "240hz_8delay";
+            frameRate = 240;
+            frameDelay = 8;
+            blockCount = 10;
+            trials = (
+                {ids = ("static"), count = 3},
+                {ids = ("straight_fly"), count = 3},
+                {ids = ("stray_fly_easy"), count = 4},
+                {ids = ("stray_fly_hard"), count = 4},
+                {ids = ("strafe_jump"), count = 8}
+            );
+        },
+    );
+
+    // target settings
+    targets = (
+        {
+            id = "static";
+            destSpace = "player";
+            elevationLocked = False;
+            speed = ( 0, 0 );
+            visualSize = ( 0.02, 0.02 );
+            eccH = ( 5.0, 15.0 );
+            eccV = ( 0.0, 1.0 );
+            motionChangePeriod = ( 1000000, 1000000 );
+            jumpEnabled = False;
+        },
+        {
+            id = "straight_fly";
+            destSpace = "player";
+            elevationLocked = False;
+            speed = ( 8, 15 );
+            visualSize = ( 0.02, 0.02 );
+            eccH = ( 5.0, 15.0 );
+            eccV = ( 0.0, 1.0 );
+            motionChangePeriod = ( 1000000, 1000000 );
+            jumpEnabled = False;
+        },
+        {
+            id = "stray_fly_hard";
+            destSpace = "player";
+            elevationLocked = False;
+            speed = ( 8, 15 );
+            visualSize = ( 0.02, 0.02 );
+            eccH = ( 5.0, 15.0 );
+            eccV = ( 0.0, 1.0 );
+            motionChangePeriod = ( 0.5, 0.6 );
+            jumpEnabled = False;
+        },
+        {
+            id = "stray_fly_easy";
+            destSpace = "player";
+            elevationLocked = False;
+            speed = ( 8, 15 );
+            visualSize = ( 0.02, 0.02 );
+            eccH = ( 5.0, 15.0 );
+            eccV = ( 0.0, 1.0 );
+            motionChangePeriod = ( 1.0, 1.2 );
+            jumpEnabled = False;
+        },
+        {
+            id = "strafe_jump";
+            destSpace = "player";
+            elevationLocked = true;
+            speed = ( 8, 15 );
+            visualSize = ( 0.02, 0.02 );
+            eccH = ( 5.0, 15.0 );
+            eccV = ( 0.0, 1.0 );
+            motionChangePeriod = ( 0.2, 0.8 );
+            jumpEnabled = true;
+            distance = ( 20, 25);
+            jumpPeriod = ( 0.3, 0.8 );
+            jumpSpeed = (7, 7);
+            accelGravity = (20, 20);
+        },
+    );
+
+}

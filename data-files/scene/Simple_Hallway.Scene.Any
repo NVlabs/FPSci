@@ -17,11 +17,16 @@
         
 		player = PlayerEntity {
             model = "playerModel";
-            frame = Point3(47.522999, -2.3549, -0.35916	);
-			heading = -1.5707963267948966192313216916398;
+            // When the player entity is specified, its frame overrides the camera frame
+            // even if not specified and filled with the default.
+            // If you prefer to use a specified camera frame, you can specify which camera to use
+            // in the experiment config as long as there's no `PlayerEntity` in the scene config.
+            frame = CFrame::fromXYZYPRDegrees(46.0, -2.2, 0.0, -90, 0, 0 ); 
         };
 		
 		camera = Camera {
+            // As long as the PlayerEntity is specified, FPSci will ignore this camera's CFrame,
+            // even if you select this camera in the experiment config.
             frame = CFrame::fromXYZYPRDegrees(  -13.3, 1, -11.2, 0, 0, 0 );
         
             depthOfFieldSettings = DepthOfFieldSettings {
@@ -82,7 +87,9 @@
                 vignetteTopStrength = 0.5; 
             };
             
-            frame = CFrame::fromXYZYPRDegrees(47.523, -2.3549, -0.35916, 87.025, 3.163, 0 ); 
+            // This camera is set to the same location as the player entity for use in other G3D applications.
+            // The player entity frame takes presidence in FPSci.
+            frame = CFrame::fromXYZYPRDegrees(46.0, -2.2, 0.0, -90, 0, 0 ); 
             mass = 1; 
             motionBlurSettings = MotionBlurSettings { 
                 enabled = false; 
