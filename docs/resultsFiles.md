@@ -6,13 +6,16 @@ Generally speaking the current FPSci results files are **not** considered broadl
 ## Database Format
 The FPSci output database is a SQLite database with time strings provided in one of the standard/supported SQL time formats. It should work with most common SQLite tools. For more tips on querying SQLite databases see the [Useful Queries section below](#useful_queries).
 
+### Boolean Values
+We make use of [`BOOLEAN` types](https://www.sqlite.org/datatype3.html#boolean_datatype) (introduced in SQLite 3.23.0) for several columns in our results. These values are stored as `INTEGER` types natively with `0` representing `false` and `1` representing `true`. 
+
 ## Results Tables
 This section outlines the high-level results tables, with more info provided on each below.
 
 * [`Frame_Info`](#frame_info): Timing information about each frame presented to the user during the session
 * [`Player_Action`](#player_action): Information about each aim/fire point the player made during the session
 * [`Questions`](#questions): Results from questions answered using the in-app questions systems
-
+* [`Sessions`](#sessions): Per session information
 * [`Targets`](#targets): Trial-specific details of individual targets that were spawned
 * [`Target_Types`](#target_types): The high-level parameters/randomized ranges used to spawn a particular type of target
 * [`Target_Trajectory`](#target_trajectory): The position of each target (in Cartesian coordinates) over time
@@ -57,26 +60,30 @@ The `Questions` table is intended to quickly capture feedback from questions ask
 * `time`: The (wall clock) time at which the question was answered
 * `session_id`: The session id of the session in which the question was asked
 * `question`: The text of the question asked of the user
-* `responseArray`: A string of the list of available responses for this question, e.g. `( "One", "Two" )`.
-* `keyArray`: A string of the list of keys bound to responses for questions that use this, e.g. `( "A", "B" )`.
-* `presentedResponses`: For `MultipleChoice` and `Rating` questions, this is a string of the list that was presented to the user in the order the user saw it (including randomization), e.g. `( "Two (B)", "One (A)" )`.
+* `response_array`: A string of the list of available responses for this question, e.g. `( "One", "Two" )`.
+* `key_array`: A string of the list of keys bound to responses for questions that use this, e.g. `( "A", "B" )`.
+* `presented_responses`: For `MultipleChoice` and `Rating` questions, this is a string of the list that was presented to the user in the order the user saw it (including randomization), e.g. `( "Two (B)", "One (A)" )`.
 * `response`: The response provided by the user
 
 ### Sessions
 The `Sessions` table is the highest-level description in the per-session results files. By default the sessions table supports the following columns:
 
 * `session_id`: The id of this session
-* `time`: The (wall clock) time at which the session started/the results file was created
+* `start_time`: The (wall clock) time at which the session started/the results file was created (if logging per session)
+* `end_time`: The (wall clock) time at which the session ended/the results file was updated
 * `subject_id`: The subject who took part in this session
 * `description`: The experiment description appended to the session description (separated by a `/`)
+* `complete`: A boolean describing whether this session has been logged as completed
+* `trials_complete`: The (integer) number of trials completed within this session
 
-In addition to the default fields provided above, the user can provide additional parameters (by name) in the [`sessParamsToLog` field](general_config.md#logging_controls) which are added to this table. Any session-level configuration parameter should be supported for logging here.
+In addition to the default fields provided above, the user can provide additional parameters (by name) in the [`sessParamsToLog` field](general_config.md#logging_controls) which are added to this table. Any session-level configuration parameter should be supported for logging here. All parameters logged using `sessParamsToLog` are currently logged as text, so type conversion for integers/reals/bools may be required.
 
 ###  Target_Trajectory
 The `Target_Trajectory` table describes the motion of targets within the session. Each target trajectory entry includes the following columns:
 
 * `time`: The (wall clock) time at which the target position was logged
 * `target_id`: The name of the target being logged (specific to the trial type and target, but not unique to individual trials)
+* `state`: The experiment state at the time at which the target was logged (see the [`Player_Action`](#playeraction) state field above for values)
 * `position_x`: The target world position (translation) X coordinate
 * `position_y`: The target world position (translation) Y coordinate
 * `position_z`: The target world position (translation) Z coordinate
@@ -97,6 +104,8 @@ The following columns are only valid for `parametrized` target types. They can/s
 
 * `min_size`: The minimum spawned target size (low end of randomized range)
 * `max_size`: The maximum spawned target size (high end of randomized range)
+* `symmetric_ecc_h`: A boolean defining whether symmetric horizontal spawn eccentricity is enforced
+* `symmetric_ecc_v`: A boolean defining whether symmetric vertical spawn eccentricity is enforced
 * `min_ecc_h`: The minimum horizontal spawn eccentricity (low end of randomized range)
 * `max_ecc_h`: The maximum horizontal spawn eccentricity (high end of randomized range)
 * `min_ecc_v`: The minimum vertical spawn eccentricity (low end of randomized range)
@@ -119,8 +128,8 @@ The `Targets` table is intended to provide additional detailed information about
 #### Parametric Target Info
 The following columns are only valid for `parametrized` target types. They can/should be ignored for all `waypoint` targets.
 
-* `spawn_ecc_h`: The (randomized) horizontal spawn eccentricity of the target
-* `spawn_ecc_v`: The (randomized) vertical spawn eccentricity of the target
+* `spawn_ecc_h`: The (randomized) horizontal spawn eccentricity of this target instance
+* `spawn_ecc_v`: The (randomized) vertical spawn eccentricity of this target instance
 
 ### Trials
 The `Trials` table provides more detailed feedback on user performance within each trial. Table columns include:
