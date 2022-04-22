@@ -70,7 +70,7 @@ void FPSciLogger::initResultsFile(const String& filename,
 		"'" + m_openTimeStr + "'",
 		"'" + subjectID + "'",
 		"'" + description + "'",
-		"'false'",
+		"false",
 		"'0'"
 	};
 
@@ -130,7 +130,7 @@ void FPSciLogger::updateSessionEntry(bool complete, int trialCount) {
 	const String completeStr = complete ? "true" : "false";
 	const String trialCountStr = String(std::to_string(trialCount));
 	char* errMsg;
-	String updateQ = "UPDATE Sessions SET end_time = '" + genUniqueTimestamp() + "', complete = '" + completeStr + "', trials_complete = '" + trialCountStr + "' WHERE start_time = '" + m_openTimeStr + "'";
+	String updateQ = "UPDATE Sessions SET end_time = '" + genUniqueTimestamp() + "', complete = " + completeStr + ", trials_complete = '" + trialCountStr + "' WHERE start_time = '" + m_openTimeStr + "'";
 	int ret = sqlite3_exec(m_db, updateQ.c_str(), 0, 0, &errMsg);
 	if (ret != SQLITE_OK) { logPrintf("Error in UPDATE statement (%s): %s\n", updateQ, errMsg); }
 }
@@ -164,9 +164,6 @@ void FPSciLogger::logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets)
 	Array<RowEntry> rows;
 	for (auto config : targets) {
 		const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
-		const String jumpEnabled = config->jumpEnabled ? "true" : "false";
-		const String symmetricEccH = config->symmetricEccH ? "true" : "false";
-		const String symmetricEccV = config->symmetricEccV ? "true" : "false";
 		const String modelName = config->modelSpec["filename"];
 		const RowEntry targetTypeRow = {
 			"'" + config->id + "'",
@@ -174,8 +171,8 @@ void FPSciLogger::logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets)
 			"'" + config->destSpace + "'",
 			String(std::to_string(config->size[0])),
 			String(std::to_string(config->size[1])),
-			"'" + symmetricEccH+ "'",
-			"'" + symmetricEccV + "'",
+			config->symmetricEccH ? "true" : "false",
+			config->symmetricEccV ? "true" : "false",
 			String(std::to_string(config->eccH[0])),
 			String(std::to_string(config->eccH[1])),
 			String(std::to_string(config->eccV[0])),
@@ -184,7 +181,7 @@ void FPSciLogger::logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets)
 			String(std::to_string(config->speed[1])),
 			String(std::to_string(config->motionChangePeriod[0])),
 			String(std::to_string(config->motionChangePeriod[1])),
-			"'" + jumpEnabled + "'",
+			config->jumpEnabled ? "true" : "false",
 			"'" + modelName + "'"
 		};
 		rows.append(targetTypeRow);
