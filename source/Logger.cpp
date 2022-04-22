@@ -225,8 +225,8 @@ void FPSciLogger::createTrialsTable() {
 		{ "end_time", "text" },
 		{ "pretrial_duration", "real" },
 		{ "task_execution_time", "real" },
-		{ "destroyed_targets", "real" },
-		{ "total_targets", "real" }
+		{ "destroyed_targets", "integer" },
+		{ "total_targets", "integer" }
 	};
 	createTableInDB(m_db, "Trials", trialColumns);
 }
