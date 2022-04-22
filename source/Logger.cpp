@@ -71,7 +71,7 @@ void FPSciLogger::initResultsFile(const String& filename,
 		"'" + subjectID + "'",
 		"'" + description + "'",
 		"false",
-		"'0'"
+		"0"
 	};
 
 	// Create any table to do lookup here
@@ -92,7 +92,7 @@ void FPSciLogger::createSessionsTable(const shared_ptr<SessionConfig>& sessConfi
 	createTableC += "subject_id TEXT NOT NULL, ";
 	createTableC += "description TEXT NOT NULL, ";
 	createTableC += "complete BOOLEAN NOT NULL, ";
-	createTableC += "trials_complete TEXT NOT NULL";
+	createTableC += "trials_complete INTEGER NOT NULL";
 	for (String name : sessConfig->logger.sessParamsToLog) { 
 		createTableC += ", '" + name + "' TEXT NOT NULL" ; 
 	}
@@ -130,7 +130,7 @@ void FPSciLogger::updateSessionEntry(bool complete, int trialCount) {
 	const String completeStr = complete ? "true" : "false";
 	const String trialCountStr = String(std::to_string(trialCount));
 	char* errMsg;
-	String updateQ = "UPDATE Sessions SET end_time = '" + genUniqueTimestamp() + "', complete = " + completeStr + ", trials_complete = '" + trialCountStr + "' WHERE start_time = '" + m_openTimeStr + "'";
+	String updateQ = "UPDATE Sessions SET end_time = '" + genUniqueTimestamp() + "', complete = " + completeStr + ", trials_complete = " + trialCountStr + " WHERE start_time = '" + m_openTimeStr + "'";
 	int ret = sqlite3_exec(m_db, updateQ.c_str(), 0, 0, &errMsg);
 	if (ret != SQLITE_OK) { logPrintf("Error in UPDATE statement (%s): %s\n", updateQ, errMsg); }
 }
