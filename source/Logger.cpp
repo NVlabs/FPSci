@@ -111,13 +111,13 @@ void FPSciLogger::createSessionsTable(const shared_ptr<SessionConfig>& sessConfi
 	// Session description (time and subject ID)
 	//Columns sessColumns = {
 	//	// format: column name, data type, sqlite modifier(s)
-	//	{ "sessionID", "text", "NOT NULL"},
+	//	{ "session_id", "text", "NOT NULL"},
 	//	{ "start_time", "text", "NOT NULL" },
 	//	{ "end_time", "text", "NOT NULL" },
-	//	{ "subjectID", "text", "NOT NULL" },
-	//	{ "appendingDescription", "text"},
-	//	{ "complete", "text"},
-	//	{ "trialsComplete", "integer" }
+	//	{ "subject_id", "text", "NOT NULL" },
+	//	{ "description", "text"},
+	//	{ "complete", "boolean"},
+	//	{ "trials_complete", "integer" }
 	//};
 	//// add any user-specified parameters as headers
 	//for (String name : sessConfig->logger.sessParamsToLog) { sessColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
