@@ -91,7 +91,7 @@ void FPSciLogger::createSessionsTable(const shared_ptr<SessionConfig>& sessConfi
 	createTableC += "end_time TEXT NOT NULL, ";
 	createTableC += "subject_id TEXT NOT NULL, ";
 	createTableC += "description TEXT NOT NULL, ";
-	createTableC += "complete TEXT NOT NULL, ";
+	createTableC += "complete BOOLEAN NOT NULL, ";
 	createTableC += "trials_complete TEXT NOT NULL";
 	for (String name : sessConfig->logger.sessParamsToLog) { 
 		createTableC += ", '" + name + "' TEXT NOT NULL" ; 
@@ -143,8 +143,8 @@ void FPSciLogger::createTargetTypeTable() {
 		{ "dest_space", "text"},
 		{ "min_size", "real"},
 		{ "max_size", "real"},
-		{ "symmetric_ecc_h", "text" },
-		{ "symmetric_ecc_v", "text" },
+		{ "symmetric_ecc_h", "boolean" },
+		{ "symmetric_ecc_v", "boolean" },
 		{ "min_ecc_h", "real" },
 		{ "min_ecc_v", "real" },
 		{ "max_ecc_h", "real" },
@@ -153,7 +153,7 @@ void FPSciLogger::createTargetTypeTable() {
 		{ "max_speed", "real" },
 		{ "min_motion_change_period", "real" },
 		{ "max_motion_change_period", "real" },
-		{ "jump_enabled", "text" },
+		{ "jump_enabled", "boolean" },
 		{ "model_file", "text" }
 	};
 	createTableInDB(m_db, "Target_Types", targetTypeColumns); // Primary Key needed for this table.
@@ -164,9 +164,9 @@ void FPSciLogger::logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets)
 	Array<RowEntry> rows;
 	for (auto config : targets) {
 		const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
-		const String jumpEnabled = config->jumpEnabled ? "True" : "False";
-		const String symmetricEccH = config->symmetricEccH ? "True" : "False";
-		const String symmetricEccV = config->symmetricEccV ? "True" : "False";
+		const String jumpEnabled = config->jumpEnabled ? "true" : "false";
+		const String symmetricEccH = config->symmetricEccH ? "true" : "false";
+		const String symmetricEccV = config->symmetricEccV ? "true" : "false";
 		const String modelName = config->modelSpec["filename"];
 		const RowEntry targetTypeRow = {
 			"'" + config->id + "'",
