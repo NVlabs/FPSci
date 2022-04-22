@@ -336,9 +336,9 @@ void FPSciLogger::createQuestionsTable() {
 		{"time", "text"},
 		{"session_id", "text"},
 		{"question", "text"},
-		{"responseArray", "text"},
-		{"keyArray", "text"},
-		{"presentedResponses", "text"},
+		{"response_array", "text"},
+		{"key_array", "text"},
+		{"presented_responses", "text"},
 		{"response", "text"}
 	};
 	createTableInDB(m_db, "Questions", questionColumns);
