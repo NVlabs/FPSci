@@ -84,45 +84,20 @@ void FPSciLogger::initResultsFile(const String& filename,
 }
 
 void FPSciLogger::createSessionsTable(const shared_ptr<SessionConfig>& sessConfig) {
-
-	String createTableC = "CREATE TABLE IF NOT EXISTS Sessions ( ";
-	createTableC += "session_id TEXT NOT NULL, ";
-	createTableC += "start_time TEXT NOT NULL, ";
-	createTableC += "end_time TEXT NOT NULL, ";
-	createTableC += "subject_id TEXT NOT NULL, ";
-	createTableC += "description TEXT NOT NULL, ";
-	createTableC += "complete BOOLEAN NOT NULL, ";
-	createTableC += "trials_complete INTEGER NOT NULL";
-	for (String name : sessConfig->logger.sessParamsToLog) { 
-		createTableC += ", '" + name + "' TEXT NOT NULL" ; 
-	}
-	createTableC += ");";
-
-
-	logPrintf("createSessionsTable SQL query:%s\n\n", createTableC.c_str());
-	char* errmsg;
-	int ret = sqlite3_exec(m_db, createTableC.c_str(), 0, 0, &errmsg);
-	if (ret != SQLITE_OK) {
-		logPrintf("Error in createSessionsTable statement (%s): %s\n", createTableC, errmsg);
-	}
-
-	/// Comparison: Above is recommended all in one place, below is previous implementation
-
 	// Session description (time and subject ID)
-	//Columns sessColumns = {
-	//	// format: column name, data type, sqlite modifier(s)
-	//	{ "session_id", "text", "NOT NULL"},
-	//	{ "start_time", "text", "NOT NULL" },
-	//	{ "end_time", "text", "NOT NULL" },
-	//	{ "subject_id", "text", "NOT NULL" },
-	//	{ "description", "text"},
-	//	{ "complete", "boolean"},
-	//	{ "trials_complete", "integer" }
-	//};
-	//// add any user-specified parameters as headers
-	//for (String name : sessConfig->logger.sessParamsToLog) { sessColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
-	//createTableInDB(m_db, "Sessions", sessColumns); // no need of Primary Key for this table.
-
+	Columns sessColumns = {
+		// format: column name, data type, sqlite modifier(s)
+		{ "session_id", "text", "NOT NULL"},
+		{ "start_time", "text", "NOT NULL" },
+		{ "end_time", "text", "NOT NULL" },
+		{ "subject_id", "text", "NOT NULL" },
+		{ "description", "text"},
+		{ "complete", "boolean"},
+		{ "trials_complete", "integer" }
+	};
+	// add any user-specified parameters as headers
+	for (String name : sessConfig->logger.sessParamsToLog) { sessColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
+	createTableInDB(m_db, "Sessions", sessColumns); // no need of Primary Key for this table.
 }
 
 void FPSciLogger::updateSessionEntry(bool complete, int trialCount) {
@@ -284,11 +259,11 @@ void FPSciLogger::recordPlayerActions(const Array<PlayerAction>& actions) {
 
 		String actionStr = "";
 		switch (action.action) {
-		case FireCooldown: actionStr = "fireCooldown"; break;
-		case Aim: actionStr = "aim"; break;
-		case Miss: actionStr = "miss"; break;
-		case Hit: actionStr = "hit"; break;
-		case Destroy: actionStr = "destroy"; break;
+			case FireCooldown: actionStr = "fireCooldown"; break;
+			case Aim: actionStr = "aim"; break;
+			case Miss: actionStr = "miss"; break;
+			case Hit: actionStr = "hit"; break;
+			case Destroy: actionStr = "destroy"; break;
 		}
 
 		Array<String> playerActionValues = {
