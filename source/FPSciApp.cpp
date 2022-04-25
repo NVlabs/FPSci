@@ -723,14 +723,12 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	}
 
 	// Create and check log file name
-	const String logFilename = sessConfig->logger.logToSingleDb ? 
+	const String logFileBasename = sessConfig->logger.logToSingleDb ? 
 		experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
 		id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
-	if (!FilePath::isLegalFilename(logFilename + ".db")) {
-		throw "Results filename \"" + logFilename + ".db\" is not valid! Make sure experiment description and username do not include any illegal characters (e.g. '.', '\\', '/', '*')";
-	}
-
+	const String logFilename = FilePath::makeLegalFilename(logFileBasename + ".db");
 	const String logPath = resultsDirPath + logFilename;
+
 	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
