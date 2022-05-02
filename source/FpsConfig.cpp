@@ -440,6 +440,7 @@ void TargetViewConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 			throw "Specified \"healthColors\" doesn't contain at least one Color3!";
 		}
 		reader.getIfPresent("targetGloss", gloss);
+		reader.getIfPresent("targetEmissive", emissive);
 		reader.getIfPresent("targetHealthBarColors", healthBarColors);
 		reader.getIfPresent("showFloatingCombatText", showCombatText);
 		reader.getIfPresent("floatingCombatTextSize", combatTextSize);

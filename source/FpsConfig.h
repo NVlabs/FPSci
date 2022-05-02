@@ -192,12 +192,13 @@ public:
 class TargetViewConfig {
 public:
 	// Target color based on health
-	Array<Color3>   healthColors = {									    ///< Target start/end color (based on target health)
+	Array<Color4>   healthColors = {									    ///< Target start/end color (based on target health)
 		Color3(0.0, 1.0, 0.0),
 		Color3(1.0, 0.0, 0.0)
 	};
 
-	Color4 gloss;		///< Target glossyness (alpha is F0 or minimum reflectivity, see G3D docs)
+	Color4 gloss;				///< Target glossyness (alpha is F0 or minimum reflectivity, see G3D docs)
+	Array<Color4> emissive;		///< Target emissive color
 
 	// Target health bars
 	bool            showHealthBars = false;									///< Display a target health bar?
