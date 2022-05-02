@@ -273,7 +273,7 @@ Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetCo
 	Array<shared_ptr<UniversalMaterial>> targetMaterials;
 	for (int i = 0; i < matTableSize; i++) {
 		float complete = (float)i / (matTableSize-1);
-		Color3 color;
+		Color4 color;
 		if (notNull(tconfig) && tconfig->colors.length() > 0) {
 			color = lerpColor(tconfig->colors, complete);
 		}
@@ -287,17 +287,27 @@ Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetCo
 		else {
 			gloss = experimentConfig.targetView.gloss;
 		}
+		Color4 emissive;
+		if (notNull(tconfig) && tconfig->emissive.length() > 0) {
+			emissive = lerpColor(tconfig->emissive, complete);
+		}
+		else if(experimentConfig.targetView.emissive.length() > 0) {
+			emissive = lerpColor(experimentConfig.targetView.emissive, complete);
+		}
+		else {
+			emissive = color * 0.7f;	// Historical behavior fallback for unspecified case
+		}
 
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
-		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+		materialSpecification.setEmissive(Texture::Specification(emissive));
 		materialSpecification.setGlossy(Texture::Specification(gloss));					// Used to be Color4(0.4f, 0.2f, 0.1f, 0.8f)
 		targetMaterials.append(UniversalMaterial::create(materialSpecification));
 	}
 	return targetMaterials;
 }
 
-Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
+Color4 FPSciApp::lerpColor(Array<Color4> colors, float a) {
 	if (colors.length() == 0) {
 		throw "Cannot interpolate from colors array with length 0!";
 	}
@@ -323,7 +333,7 @@ Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
 		float interp = (1.0f - a) * (colors.length() - 1);
 		int idx = int(floor(interp));
 		interp = interp - float(idx);
-		Color3 output = colors[idx] * (1.0f - interp) + colors[idx + 1] * interp;
+		Color4 output = colors[idx] * (1.0f - interp) + colors[idx + 1] * interp;
 		return output;
 	}
 }

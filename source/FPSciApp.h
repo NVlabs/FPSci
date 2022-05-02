@@ -199,7 +199,7 @@ public:
 	const int											matTableSize = 13;	///< Set this to set # of color "levels"
 	
 	Array<shared_ptr<UniversalMaterial>> makeMaterials(shared_ptr<TargetConfig> tconfig);
-	Color3 lerpColor(Array<Color3> colors, float a);
+	Color4 lerpColor(Array<Color4> colors, float a);
 
 	shared_ptr<Session> sess;					///< Pointer to the experiment
 	shared_ptr<Camera> playerCamera;			///< Pointer to the player camera						
