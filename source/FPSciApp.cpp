@@ -273,26 +273,29 @@ Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetCo
 	Array<shared_ptr<UniversalMaterial>> targetMaterials;
 	for (int i = 0; i < matTableSize; i++) {
 		float complete = (float)i / (matTableSize-1);
+		
 		Color4 color;
 		if (notNull(tconfig) && tconfig->colors.length() > 0) {
 			color = lerpColor(tconfig->colors, complete);
 		}
 		else {
-			color = lerpColor(experimentConfig.targetView.healthColors, complete);
+			color = lerpColor(sessConfig->targetView.healthColors, complete);
 		}
+		
 		Color4 gloss;
 		if (notNull(tconfig) && tconfig->hasGloss) {
 			gloss = tconfig->gloss;
 		}
 		else {
-			gloss = experimentConfig.targetView.gloss;
+			gloss = sessConfig->targetView.gloss;
 		}
+
 		Color4 emissive;
 		if (notNull(tconfig) && tconfig->emissive.length() > 0) {
 			emissive = lerpColor(tconfig->emissive, complete);
 		}
-		else if(experimentConfig.targetView.emissive.length() > 0) {
-			emissive = lerpColor(experimentConfig.targetView.emissive, complete);
+		else if(sessConfig->targetView.emissive.length() > 0) {
+			emissive = lerpColor(sessConfig->targetView.emissive, complete);
 		}
 		else {
 			emissive = color * 0.7f;	// Historical behavior fallback for unspecified case
