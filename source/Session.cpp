@@ -368,7 +368,9 @@ void Session::processResponse()
 
 	// This update is only used for completed trials
 	if (notNull(logger)) {
-		logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
+		int totalTrials = 0;
+		for (int tCount : m_completedTrials) { totalTrials += tCount;  }
+		logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), totalTrials);			// Update session entry in database
 	}
 
 	// Check for whether all targets have been destroyed
@@ -473,7 +475,9 @@ void Session::updatePresentationState()
 					else {
 						// Write final session timestamp to log
 						if (notNull(logger) && m_config->logger.enable) {
-							logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), m_completedTrials[m_currTrialIdx]);			// Update session entry in database
+							int totalTrials = 0;
+							for (int tCount : m_completedTrials) { totalTrials += tCount; }
+							logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), totalTrials);			// Update session entry in database
 						}
 						if (m_config->logger.enable) {
 							endLogging();
