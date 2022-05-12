@@ -92,6 +92,7 @@ protected:
 	/** Open a results file, or create it if it doesn't exist */
 	void initResultsFile(const String& filename, 
 		const String& subjectID, 
+		const String& expConfigFilename,
 		const shared_ptr<SessionConfig>& sessConfig, 
 		const String& description);
 
@@ -100,6 +101,7 @@ protected:
 
 	// Functions that set up the database schema
 	/** Create a session table with columns as specified by the provided sessionConfig */
+	void createExperimentsTable(const String& expConfigFilename);
 	void createSessionsTable(const shared_ptr<SessionConfig>& sessConfig);
 	void createTargetTypeTable();
 	void createTargetsTable();
@@ -117,15 +119,16 @@ protected:
 
 public:
 
-	FPSciLogger(const String& filename, const String& subjectID, const shared_ptr<SessionConfig>& sessConfig, const String& description);
+	FPSciLogger(const String& filename, const String& subjectID, const String& expConfigFilename, const shared_ptr<SessionConfig>& sessConfig, const String& description);
 	virtual ~FPSciLogger();
 	
 	static shared_ptr<FPSciLogger> create(const String& filename, 
 		const String& subjectID, 
+		const String& expConfigFilename,
 		const shared_ptr<SessionConfig>& sessConfig,
 		const String& description="None") 
 	{
-		return createShared<FPSciLogger>(filename, subjectID, sessConfig, description);
+		return createShared<FPSciLogger>(filename, subjectID, expConfigFilename, sessConfig, description);
 	}
 
 	void updateSessionEntry(bool complete, int trialCount);

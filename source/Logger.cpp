@@ -39,6 +39,7 @@ String FPSciLogger::genFileTimestamp() {
 
 void FPSciLogger::initResultsFile(const String& filename, 
 	const String& subjectID, 
+	const String& expConfigFilename,
 	const shared_ptr<SessionConfig>& sessConfig, 
 	const String& description)
 {
@@ -51,6 +52,7 @@ void FPSciLogger::initResultsFile(const String& filename,
 
 	// Create tables if a new log file is opened
 	if (createNewFile) {
+		createExperimentsTable(expConfigFilename);
 		createSessionsTable(sessConfig);
 		createTargetTypeTable();
 		createTargetsTable();
@@ -81,6 +83,31 @@ void FPSciLogger::initResultsFile(const String& filename,
 	// add header row
 	insertRowIntoDB(m_db, "Sessions", sessValues);
 
+}
+
+void FPSciLogger::createExperimentsTable(const String& expConfigFilename) {
+	// Create experiments table columns
+	Columns expColumns = {
+		{ "description", "text", "NOT NULL"},
+		{ "time", "text", "NOT NULL"},
+		{ "hash", "text", "NOT NULL"},
+		{ "config", "text", "NOT NULL"}
+	};
+	createTableInDB(m_db, "Experiments", expColumns);
+
+	// Currently this should just happen once per results file (hash is in name) but in the future we may want to check if the hash is in the the table...
+	// Load experiment config text and get hash
+	ExperimentConfig expConfig = ExperimentConfig::load(expConfigFilename);
+	const size_t hash = HashTrait<String>::hashCode(expConfig.toAny().unparse());		// Hash the serialized Any (don't consider formatting)
+
+	// Update row
+	RowEntry expRow = {
+		"'" + expConfig.description + "'",
+		"'" + genUniqueTimestamp() + "'",
+		"'" + format("0x%x", hash) + "'",
+		"'" + readWholeFile(expConfigFilename)  + "'"
+	};
+	insertRowIntoDB(m_db, "Experiments", expRow);
 }
 
 void FPSciLogger::createSessionsTable(const shared_ptr<SessionConfig>& sessConfig) {
@@ -453,6 +480,7 @@ void FPSciLogger::loggerThreadEntry()
 
 FPSciLogger::FPSciLogger(const String& filename, 
 	const String& subjectID, 
+	const String& expConfigFilename,
 	const shared_ptr<SessionConfig>& sessConfig, 
 	const String& description 
 	) : m_db(nullptr), m_config(sessConfig->logger)
@@ -462,7 +490,7 @@ FPSciLogger::FPSciLogger(const String& filename,
 	m_targetLocations.reserve(5000);
 	
 	// Create the results file
-	initResultsFile(filename, subjectID,  sessConfig, description);
+	initResultsFile(filename, subjectID, expConfigFilename, sessConfig, description);
 
 	// Thread management
 	m_running = true;
