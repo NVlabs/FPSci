@@ -222,12 +222,12 @@ void Session::onInit(String filename, String description) {
 		if (m_config->logger.enable) {
 			UserConfig user = *m_app->currentUser();
 			// Setup the logger and create results file
-			logger = FPSciLogger::create(filename, user.id, 
+			logger = FPSciLogger::create(filename + ".db", user.id, 
 				m_app->startupConfig.experimentList[m_app->experimentIdx].experimentConfigFilename, 
 				m_config, description);
 			logger->logTargetTypes(m_app->experimentConfig.getSessionTargets(m_config->id));			// Log target info at start of session
 			logger->logUserConfig(user, m_config->id, m_config->player.turnScale);						// Log user info at start of session
-			m_dbFilename = filename.substr(0, filename.length() - 3);
+			m_dbFilename = filename;
 		}
 
 		runSessionCommands("start");				// Run start of session commands
@@ -511,7 +511,6 @@ void Session::updatePresentationState()
         
 				// Save current user config and status
 				m_app->saveUserConfig(true);											
-				m_app->saveUserStatus();
         
 				closeSessionProcesses();					// Close the process we started at session start (if there is one)
 				runSessionCommands("end");					// Launch processes for the end of the session
