@@ -12,36 +12,6 @@ static bool operator==(Array<T> a1, Array<T> a2) {
 	return !(a1 != a2);
 }
 
-// Currently unused, allows getting scalar or vector from Any
-template <class T>
-static void getArrayFromAny(AnyTableReader reader, const String& name, Array<T>& output) {
-	bool valid = true;
-	T value;
-	try {
-		Array<T> arr;
-		reader.get(name, arr);					// Try to read an array directly
-		if (arr.size() < output.size()) {		// Check for under size (critical)
-			throw format("\"%s\" array of length %d is underspecified (should be of length %d)!", name.c_str(), arr.size(), output.size());
-		}
-		else if (arr.size() != output.size()) {	// Check for over size (warn)
-			logPrintf("WARNING: array specified for \"%s\" is of length %d, but should be %d (using first %d elements)...\n", name.c_str(), arr.size(), output.size(), output.size());
-		}
-		// Copy over array elements
-		for (int i = 0; i < output.size(); i++) {
-			output[i] = arr[i];
-		}
-	}
-	catch(ParseError& e){
-		// Failed to read array, try to duplicate a single value
-		valid = reader.getIfPresent(name, value);
-		if (valid) {
-			for (int i = 0; i < output.size(); i++) {
-				output[i] = value;
-			}
-		}
-	}
-}
-
 // Currently unused, allows writing (single valued) vector as scalar to Any
 template <class T>
 static void arrayToAny(Any& a, const String& name, const Array<T>& arr) {
@@ -80,7 +50,7 @@ static float tExpLambdaFromMean(float mean, float min, float max, float acceptab
 }
 
 SceneConfig::SceneConfig(const Any& any) {
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	int settingsVersion = 1;
 	reader.getIfPresent("settingsVersion", settingsVersion);
 	switch (settingsVersion) {
@@ -90,7 +60,7 @@ SceneConfig::SceneConfig(const Any& any) {
 		//reader.getIfPresent("gravity", gravity);
 		reader.getIfPresent("resetHeight", resetHeight);
 		reader.getIfPresent("spawnPosition", spawnPosition);
-		reader.getIfPresent("spawnHeading", spawnHeading);
+		reader.getIfPresent("spawnHeading", spawnHeadingDeg);
 		break;
 	default:
 		throw format("Did not recognize scene config settings version: %d", settingsVersion);
@@ -104,21 +74,23 @@ Any SceneConfig::toAny(const bool forceAll) const {
 	if (forceAll || def.name != name)					a["name"] = name;
 	if (forceAll || def.playerCamera != playerCamera)   a["playerCamera"] = playerCamera;
 	//if (forceAll || def.gravity != gravity)				a["gravity"] = gravity;
-	if (forceAll || def.resetHeight != resetHeight)		a["resetHeight"] = resetHeight;
-	if (forceAll || def.spawnPosition != spawnPosition) a["spawnPosition"] = spawnPosition;
-	if (forceAll || def.spawnHeading != spawnHeading)   a["spawnHeading"] = spawnHeading;
+	if (forceAll || !isnan(resetHeight))				a["resetHeight"] = resetHeight;
+	if (forceAll || !spawnPosition.isNaN())				a["spawnPosition"] = spawnPosition;
+	if (forceAll || !isnan(spawnHeadingDeg))			a["spawnHeading"] = spawnHeadingDeg;
+
 	return a;
 }
 
 bool SceneConfig::operator!=(const SceneConfig& other) const {
 	return name != other.name ||
+		playerCamera != other.playerCamera ||
 		//gravity != other.gravity ||
-		resetHeight != other.resetHeight ||
-		spawnPosition != other.spawnPosition ||
-		spawnHeading != other.spawnHeading;
+		(isnan(resetHeight) ? !isnan(other.resetHeight) : resetHeight != other.resetHeight) ||
+		spawnPosition.isNaN() ? !other.spawnPosition.isNaN() : spawnPosition != other.spawnPosition ||				// Assume if any spawn coordinate is nan positions are equal
+		(isnan(spawnHeadingDeg) ? !isnan(other.spawnHeadingDeg) : spawnHeadingDeg != other.spawnHeadingDeg);
 }
 
-void RenderConfig::load(AnyTableReader reader, int settingsVersion) {
+void RenderConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	// List of valid frame time modes for parsing from Any
 	const Array<String> validFrameTimeModes = { "always", "taskonly", "restartwithtask" };
 
@@ -201,7 +173,7 @@ Any RenderConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void PlayerConfig::load(AnyTableReader reader, int settingsVersion) {
+void PlayerConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("moveRate", moveRate);
@@ -240,7 +212,7 @@ Any PlayerConfig::addToAny(Any a, bool forceAll) const {
 }
 
 StaticHudElement::StaticHudElement(const Any& any) {
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.get("filename", filename, "Must provide filename for all Static HUD elements!");
 	reader.get("position", position, "Must provide position for all static HUD elements");
 	reader.getIfPresent("scale", scale);
@@ -261,7 +233,7 @@ bool StaticHudElement::operator!=(const StaticHudElement& other) const {
 }
 
 
-void HudConfig::load(AnyTableReader reader, int settingsVersion) {
+void HudConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("showHUD", enable);
@@ -337,7 +309,7 @@ Any HudConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void AudioConfig::load(AnyTableReader reader, int settingsVersion) {
+void AudioConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("sceneHitSound", sceneHitSound);
@@ -364,7 +336,7 @@ Any AudioConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void TimingConfig::load(AnyTableReader reader, int settingsVersion) {
+void TimingConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("pretrialDuration", pretrialDuration);
@@ -393,6 +365,7 @@ void TimingConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("clickToStart", clickToStart);
 		reader.getIfPresent("sessionFeedbackRequireClick", sessionFeedbackRequireClick);
 		reader.getIfPresent("defaultTrialCount", defaultTrialCount);
+		reader.getIfPresent("maxPretrialAimDisplacement", maxPretrialAimDisplacement);
 		break;
 	default:
 		throw format("Did not recognize settings version: %d", settingsVersion);
@@ -410,14 +383,16 @@ Any TimingConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.clickToStart != clickToStart)						a["clickToStart"] = clickToStart;
 	if (forceAll || def.sessionFeedbackRequireClick != sessionFeedbackRequireClick) a["sessionFeedbackRequireClick"] = sessionFeedbackRequireClick;
 	if (forceAll || def.defaultTrialCount != defaultTrialCount)				a["defaultTrialCount"] = defaultTrialCount;
+	if (forceAll || def.maxPretrialAimDisplacement != maxPretrialAimDisplacement)	a["maxPretrialAimDisplacement"] = maxPretrialAimDisplacement;
 	return a;
 }
 
-void FeedbackConfig::load(AnyTableReader reader, int settingsVersion) {
+void FeedbackConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("referenceTargetInitialFeedback", initialWithRef);
 		reader.getIfPresent("noReferenceTargetInitialFeedback", initialNoRef);
+		reader.getIfPresent("pretrialAimInvalidFeedback", aimInvalid);
 		reader.getIfPresent("trialSuccessFeedback", trialSuccess);
 		reader.getIfPresent("trialFailureFeedback", trialFailure);
 		reader.getIfPresent("blockCompleteFeedback", blockComplete);
@@ -438,6 +413,7 @@ Any FeedbackConfig::addToAny(Any a, bool forceAll) const {
 	FeedbackConfig def;
 	if (forceAll || def.initialWithRef != initialWithRef)	a["referenceTargetInitialFeedback"] = initialWithRef;
 	if (forceAll || def.initialNoRef != initialNoRef)		a["noReferenceTargetInitialFeedback"] = initialNoRef;
+	if (forceAll || def.aimInvalid != aimInvalid)			a["pretrialAimInvalidFeedback"] = aimInvalid;
 	if (forceAll || def.trialSuccess != trialSuccess)		a["trialSuccessFeedback"] = trialSuccess;
 	if (forceAll || def.trialFailure != trialFailure)		a["trialFailureFeedback"] = trialFailure;
 	if (forceAll || def.blockComplete != blockComplete)		a["blockCompleteFeedback"] = blockComplete;
@@ -450,7 +426,8 @@ Any FeedbackConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void TargetViewConfig::load(AnyTableReader reader, int settingsVersion) {
+void TargetViewConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
+	bool gotColors = false;
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("showTargetHealthBars", showHealthBars);
@@ -458,7 +435,11 @@ void TargetViewConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("targetHealthBarOffset", healthBarOffset);
 		reader.getIfPresent("targetHealthBarBorderSize", healthBarBorderSize);
 		reader.getIfPresent("targetHealthBarBorderColor", healthBarBorderColor);
-		reader.getIfPresent("targetHealthColors", healthColors);
+		gotColors = reader.getIfPresent("targetHealthColors", healthColors);
+		if (gotColors && healthColors.length() < 1) {
+			throw "Specified \"healthColors\" doesn't contain at least one Color3!";
+		}
+		reader.getIfPresent("targetGloss", gloss);
 		reader.getIfPresent("targetHealthBarColors", healthBarColors);
 		reader.getIfPresent("showFloatingCombatText", showCombatText);
 		reader.getIfPresent("floatingCombatTextSize", combatTextSize);
@@ -472,6 +453,7 @@ void TargetViewConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("showReferenceTarget", showRefTarget);
 		reader.getIfPresent("referenceTargetSize", refTargetSize);
 		reader.getIfPresent("referenceTargetColor", refTargetColor);
+		reader.getIfPresent("referenceTargetModelSpec", refTargetModelSpec);
 		reader.getIfPresent("clearMissDecalsWithReference", clearDecalsWithRef);
 		reader.getIfPresent("showPreviewTargetsWithReference", previewWithRef);
 		reader.getIfPresent("showReferenceTargetMissDecals", showRefDecals);
@@ -511,7 +493,7 @@ Any TargetViewConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void ClickToPhotonConfig::load(AnyTableReader reader, int settingsVersion) {
+void ClickToPhotonConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("renderClickPhoton", enabled);
@@ -537,7 +519,7 @@ Any ClickToPhotonConfig::addToAny(Any a, bool forceAll) const {
 	return a;
 }
 
-void LoggerConfig::load(AnyTableReader reader, int settingsVersion) {
+void LoggerConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("logEnable", enable);
@@ -547,6 +529,7 @@ void LoggerConfig::load(AnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("logTrialResponse", logTrialResponse);
 		reader.getIfPresent("logUsers", logUsers);
 		reader.getIfPresent("logSystemInfo", logSystemInfo);
+		reader.getIfPresent("logOnChange", logOnChange);
 		reader.getIfPresent("sessionParametersToLog", sessParamsToLog);
 		reader.getIfPresent("logToSingleDb", logToSingleDb);
 		break;
@@ -565,6 +548,7 @@ Any LoggerConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.logTrialResponse != logTrialResponse)			a["logTrialResponse"] = logTrialResponse;
 	if (forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
 	if (forceAll || def.logSystemInfo != logSystemInfo)					a["logSystemInfo"] = logSystemInfo;
+	if (forceAll || def.logOnChange != logOnChange)						a["logOnChange"] = logOnChange;
 	if (forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessionParametersToLog"] = sessParamsToLog;
 	if (forceAll || def.logToSingleDb != logToSingleDb)					a["logToSingleDb"] = logToSingleDb;
 	return a;
@@ -572,7 +556,7 @@ Any LoggerConfig::addToAny(Any a, bool forceAll) const {
 
 CommandSpec::CommandSpec(const Any& any) {
 	try {
-		AnyTableReader reader(any);
+		FPSciAnyTableReader reader(any);
 		reader.get("command", cmdStr, "A command string must be specified!");
 		reader.getIfPresent("foreground", foreground);
 		reader.getIfPresent("blocking", blocking);
@@ -596,7 +580,7 @@ Any CommandSpec::toAny(const bool forceAll) const {
 	return a;
 }
 
-void CommandConfig::load(AnyTableReader reader, int settingsVersion) {
+void CommandConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("commandsOnSessionStart", sessionStartCmds);
@@ -620,7 +604,7 @@ Any CommandConfig::addToAny(Any a, const bool forceAll) const {
 
 Question::Question(const Any& any) {
 	int settingsVersion = 1;
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
 
 	String typeStr;
@@ -641,8 +625,12 @@ Question::Question(const Any& any) {
 			type = Type::Rating;
 			reader.get("options", options, "An \"options\" Array must be specified with \"Rating\" style questions!");
 		}
+		else if (!typeStr.compare("DropDown")) {
+			type = Type::DropDown;
+			reader.get("options", options, "An \"options\" Array must be specified with \"DropDown\" style questions!");
+		}
 		else {
-			throw format("Unrecognized question \"type\" String \"%s\". Valid options are \"MultipleChoice\" or \"Entry\"", typeStr);
+			throw format("Unrecognized question \"type\" String \"%s\". Valid options are \"MultipleChoice\", \"Rating\", \"DropDown\", or \"Entry\"", typeStr);
 		}
 
 		// Get the question prompt (required) and title (optional)
@@ -650,7 +638,17 @@ Question::Question(const Any& any) {
 		reader.getIfPresent("title", title);
 		reader.getIfPresent("fullscreen", fullscreen);
 		reader.getIfPresent("showCursor", showCursor);
-		reader.getIfPresent("randomOrder", randomOrder);
+		if (!reader.getIfPresent("randomOrder", randomOrder)) {
+			if (type == Type::MultipleChoice) {
+				randomOrder = true;		// Default to random order for multiple choice questions
+			}
+		}
+		if (reader.getIfPresent("optionsPerRow", optionsPerRow)) {
+			if (type == Type::Rating) {		
+				// Ratings will ignore the optionsPerRow (always uses 1 row)
+				logPrintf("WARNING: Specified \"optionsPerRow\" parameter is ignored when using a \"Rating\" type question. If you'd like to change the layout look into using a \"MultipleChoice\" question instead!");
+			}
+		}
 
 		// Handle (optional) key binds for options (if provided)
 		if (type == Type::Rating || type == Type::MultipleChoice) {
@@ -660,6 +658,18 @@ Question::Question(const Any& any) {
 				throw format("Length of \"optionKeys\" (%d) did not match \"options\" (%d) for question!", optionKeys.length(), options.length());
 			}
 		}
+
+		// Get font sizes for elements
+		float baseFontSize;
+		if (reader.getIfPresent("fontSize", baseFontSize)) {
+			promptFontSize = baseFontSize;
+			optionFontSize = baseFontSize;
+			buttonFontSize = baseFontSize;
+		}
+		reader.getIfPresent("promptFontSize", promptFontSize);
+		reader.getIfPresent("optionFontSize", optionFontSize);
+		reader.getIfPresent("buttonFontSize", buttonFontSize);
+
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in Question.\n", settingsVersion);

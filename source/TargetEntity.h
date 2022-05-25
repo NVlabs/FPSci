@@ -1,5 +1,6 @@
 #pragma once
 #include <G3D/G3D.h>
+#include "FPSciAnyTableReader.h"
 
 struct Destination {
 public:
@@ -18,7 +19,7 @@ public:
 
 	Destination(const Any& any) {
 		int settingsVersion = 1;
-		AnyTableReader reader(any);
+		FPSciAnyTableReader reader(any);
 		reader.getIfPresent("settingsVersion", settingsVersion);
 
 		switch (settingsVersion) {
@@ -79,8 +80,13 @@ public:
 	String          destroyedSound = "sound/fpsci_destroy_150ms.wav";		///< Sound to play when target destroyed
 	float           destroyedSoundVol = 1.0f;
 
+	// Target color based on health
+	Array<Color3>   colors;									///< Target start/end color (based on target health)
+	Color4			gloss;									///< Target gloss (alpha is F0, see docs)
+	bool			hasGloss = false;						///< Target has gloss specified
+
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
-		filename = "model/target/target.obj";
+		filename = "model/target/low_poly_sphere.obj";
 		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
 					allowVertexMerging = true;
 					forceComputeNormals = false;
@@ -166,11 +172,11 @@ public:
 		destinationIdx = 0;
 	}
 
-	void setColor(const Color3& color) {
+	void setColor(const Color3& color, const Color4& gloss = Color4()) {
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
 		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
+		materialSpecification.setGlossy(Texture::Specification(gloss));						// Used to be Color4(0.4f, 0.2f, 0.1f, 0.8f)
 
 		const shared_ptr<ArticulatedModel::Pose>& amPose = ArticulatedModel::Pose::create();
 		amPose->materialTable.set("core/icosahedron_default", UniversalMaterial::create(materialSpecification));
@@ -319,7 +325,7 @@ public:
     static shared_ptr<Entity> create (
 	const String&					name,
      Scene*                         scene,
-     AnyTableReader&                propertyTable,
+     AnyTableReader&           propertyTable,
      const ModelTable&				modelTable,
      const Scene::LoadOptions&		loadOptions
 	);

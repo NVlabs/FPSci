@@ -38,8 +38,7 @@ protected:
     #pragma clang diagnostic ignored "-Woverloaded-virtual"
 #endif
     void init(AnyTableReader& propertyTable);
-    
-    void init(const Vector3& velocity, const Sphere& collisionSphere, float heading=0);
+    void init(const Sphere& collisionSphere);
 #ifdef G3D_OSX
     #pragma clang diagnostic pop
 #endif
@@ -88,7 +87,7 @@ public:
     bool slideMove(SimTime deltaTime);
 
 	float heightOffset(float height) const;
-
+    float respawnPosHeight()  { return m_respawnPosition.y; }
     bool doDamage(float damage);
 
     /** In world space */
@@ -98,7 +97,9 @@ public:
 
 	const CFrame getCameraFrame() const {
 		CFrame f = frame();
-		f.translation += Point3(0.0f, heightOffset(m_crouched ? *crouchHeight : *height), 0.0f);
+        if (notNull(height)) {
+            f.translation += Point3(0.0f, heightOffset(m_crouched ? *crouchHeight : *height), 0.0f);
+        }
 		return f;
 	}
 
@@ -107,13 +108,14 @@ public:
 	void setMoveEnable(bool enabled) { m_motionEnable = enabled; }
 
 	void setRespawnPosition(Point3 pos) { m_respawnPosition = pos; }
-    void setRespawnHeading(float heading) { m_spawnHeadingRadians = heading; }
+    void setRespawnHeadingDegrees(float headingDeg) { m_spawnHeadingRadians = pif() / 180.f * headingDeg; }
 	void setRespawnHeight(float height) { m_respawnHeight = height; }
 
 	void respawn() {
 		m_frame.translation = m_respawnPosition;
 		m_headingRadians = m_spawnHeadingRadians;
-		m_headTilt = 0.0f;
+		m_headTilt = 0.0f;                              // Reset heading tilt
+        m_inAir = true;                                 // Set in air to let player "fall" if needed
 		setDesiredOSVelocity(Vector3::zero());
 		setDesiredAngularVelocity(0.0f, 0.0f);
 	}
@@ -122,7 +124,7 @@ public:
     /** In radians... not used for rendering, use for first-person cameras */
     float headTilt() const { return m_headTilt; }
     float heading() const { return m_headingRadians;  }
-    float respawnHeading() const { return m_spawnHeadingRadians; }
+    float respawnHeadingDeg() const { return m_spawnHeadingRadians * 180 / pif(); }
 
     /** For deserialization from Any / loading from file */
     static shared_ptr<Entity> create 

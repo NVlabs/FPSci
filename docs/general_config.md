@@ -20,7 +20,7 @@ The following fields are specified within the `scene` parameter structure:
 |`playerCamera`     |`String`   | The name of the camera (from the `.scene.Any` file) to use for the player view. If this string is empty the `defaultCamera` from the G3D scene is used instead. |
 |`resetHeight`      |`float`    | The height at which the player should be respawned when falling (overrides any setting in a `scene.Any` file if specified here).    |
 |`spawnPosition`    |`Point3`   | The location at which the player should be respawned (overrides any setting in a `scene.Any` file if specified here).  |
-|`spawnHeading`     |`float`    | The player heading (in radians) at which the player should be respawned (overrides the `scene.Any` file setting if specified here). |
+|`spawnHeading`     |degrees    | The player heading (in degrees) at which the player should be respawned (overrides the `scene.Any` file setting if specified here). |
 
 An example configuration is provided below for reference:
 
@@ -33,6 +33,17 @@ scene = {
     spawnHeading = 0;                   // Spawn the player at 0 heading
 };
 ```
+
+*Note:* The full priority chain for setting heading/position in the scene is as follows:
+
+1. This scene configuration's `spawnPosition` and `spawnHeading` parameters
+2. The [scene.Any file's `PlayerEntity`](scene.md#player-entity) `frame` value (if the `PlayerEntity` is specified)
+3. The specified `playerCamera`'s `frame` (if specified)
+4. The [scene.Any file's `defaultCamera`](scene.md#player-camera) `frame`
+
+Experiment designers should be careful to avoid setting the player spawn position Y-value lower than the player reset height (specified using either `resetHeight` above, the `minHeight` value in the [scene's `Physics` field](scene.md#physics), or a default value of 1e-6). A runtime exception will occur if this requirement is violated.
+
+One practical configuration would be to specify a set of cameras in the `scene.Any` file without specifying a `PlayerEntity` in that file, then in the experiment config use a line like `scene = { playerCamera = "cameraName"; };` to specify the use of a specific camera (named `cameraName` in this example). This would allow for different sessions to change the spawn location within the same scene.
 
 ### Scene Name
 If unspecified, the scene `name` field comes from:
@@ -64,6 +75,7 @@ The following settings allow the user to control various timings/durations aroun
 |`sessionFeedbackDuration`      |s                  |The duration of the feedback window between sessions                |
 |`sessionFeedbackRequireClick`  |`bool`             |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
 |`defaultTrialCount`            |`int`              |The value to use for trials with no specified `count` settings      |
+|`maxPretrialAimDisplacement`   |degrees            |The maximum aim displacement (from the 0 direction) allowed during the pretrial duration (larger aim motion results in invalidated trials). **Not intended for use with player motion!** |
 
 ```
 "clickToStart : true,                       // Require a click to start the session
@@ -73,7 +85,8 @@ The following settings allow the user to control various timings/durations aroun
 "trialFeedbackDuration": 1.0,               // Time for user feedback between trials
 "sessionFeedbackDuration": 5.0,             // Time for user feedback between sessions
 "sessionFeedbackRequireClick" : false,      // Don't require a click to move past the scoreboard
-"defaultTrialCount" : 5,
+"defaultTrialCount" : 5,                    
+"maxPretrialAimDisplacement" : 180,         // Disable max pretrial aim displacement by default (allow all motion)
 ```
 
 *Note:* If you are specifying `pretrialDurationRange` to create a truncated exponential range of pretrial duration we *highly* recommend keeping the `pretrialDuration` (i.e. mean value) to less than the mid-point of the `pretrialDurationRange`, skewing the distribution towards the minimum pretrial duration. Skewing this distribution towards the maximum pretrial duration has been demonstrated to produce confounding effects in reaction time studies (makes time at which to react more predictable)!
@@ -105,6 +118,7 @@ In addition to controlling the duration and formatting of displayed feedback mes
 |-----------------------------------|---------|--------------------------------------------------------------------|
 |`referenceTargetInitialFeedback`   |`String` | The message to display at the start of a session that includes a reference target|
 |`noReferenceTargetInitialFeedback` |`String` | The message to display at the start of a session that doesn't include a reference target|
+|`pretrialAimInvalidFeedback`       |`String` | The message to display when the pretrial aim exceeds the `maxPretrialAimDisplacement` |
 |`trialSuccessFeedback`             |`String` | Message to display when a trial is a success                       |
 |`trialFailureFeedback`             |`String` | Message to display when a trial is a failure                       |
 |`blockCompleteFeedback`            |`String` | Message to display when a block is completed                       |
@@ -132,6 +146,7 @@ Using these custom strings we can implement the following (default) feedback mes
 ```
 referenceTargetInitialFeedback: "Click to spawn a target, then use shift on red target to begin.",
 noReferenceTargetInitialFeedback: "Click to start the session!",
+maxPretrialAimDisplacement: "Invalid trial! Do not displace your aim during the pretrial duration.",
 trialSuccessFeedback: "%trialTaskTimeMs ms!",
 trialFailureFeedback: "Failure!",
 blockCompleteFeedback: "Block %lastBlock complete! Starting block %currBlock.",
@@ -151,7 +166,7 @@ allSessionsCompleteFeedback: "All Sessions Complete!",
 |`resolution2D`             |`Array<int>`| The resolution to render 2D content at (defaults to window resolution)       |
 |`resolution3D`             |`Array<int>`| The resolution to render 3D content at (defaults to window resolution)       |
 |`resolutionComposite`      |`Array<int>`| The resolution to render the composite result at (defaults to window resolution)     |
-|`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`), only valid if `split2DBuffer` = `true`! |
+|`shader2D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 2D content (as a `.pix`) |
 |`shader3D`                 |file   | The (relative) path/filename of an (optional) shader to run on the 3D content (as a `.pix`) |
 |`shaderComposite`          |file   | The (relative) path/filename of an (optional) shader to run on the composited 2D/3D content (as a `.pix`) |
 |`sampler2D`                |`Sampler`  | The sampler for resampling the `iChannel0` input to `shader2D`                       |
@@ -282,7 +297,7 @@ Questions are configured on a per experiment/session basis using the `questions`
 
 | Parameter Name        | Units  | Description                                                                      |
 |-----------------------|--------|----------------------------------------------------------------------------------|
-|`type`                 |`String`| The question type (required), can be `"MultipleChoice"`, `Rating`, or (text) `"Entry"`      |
+|`type`                 |`String`| The question type (required), can be `"MultipleChoice"`, `Rating`, `DropDown` or (text) `"Entry"`      |
 |`prompt`               |`String`| The question prompt (required), a string to present the user with                |
 |`title`                |`String`| The title for the feedback prompt                                                |
 |`options`              |`Array<String>`| An array of `String` options for `MultipleChoice` questions only          |
@@ -290,15 +305,23 @@ Questions are configured on a per experiment/session basis using the `questions`
 |`fullscreen`           |`bool`  | When set this opens the dialog in "fullscreen" mode, overlaying all of the rendered content (default is `false`) |
 |`showCursor`           |`bool`  | Allows the experiment designer to hide the cursor while responding to this dialog (default is `true`). Best used with `optionKeys` set otherwise there may be no way to answer the question. Not intended for use with `"Entry"` question types. |
 |`randomOrder`          |`bool`  | Randomize the option order for `MultipleChoice` and `Rating` questions optionally    |
+|`optionsPerRow`        |`int`   | The number of options to display per row (for `MultipleChoice` questions only)   |
+|`fontSize`             |`float` | Set the base font size for all elements in the question                          |
+|`promptFontSize`       |`float` | The font size for the prompt text (overrides `fontSize`)                         |
+|`optionFontSize`       |`float` | The font size for the presented options (overrides `fontSize`), does not impact `DropDown` or `Entry` questions |
+|`buttonFontSize`       |`float` | The font size for the question clear/submit buttons if present (overrides `fontSize`)     |
 
 The user can specify one or more questions using the `questions` array, as demonstrated below.
+
+Note that when using `randomOrder` the options key bindings specified in `optionKeys` remains static (i.e. while ordering of presented options will change the keypress used to enter any given option will remain constant between the `options` and `optionKeys` array).
 
 ```
 "questions" : [
     {
         "type": "Entry",
         "prompt": "Write some text!",
-        "title": "Example text entry"
+        "title": "Example text entry",
+        "fontSize": -1                  // This is the default value for all font sizes (corresponds to 12pt font)
     },
     {
         "type": "MultipleChoice",
@@ -307,12 +330,24 @@ The user can specify one or more questions using the `questions` array, as demon
         "optionKeys" : ["A", "B", "C"],
         "fullscreen": true,
         "showCursor" : false,
-        "randomOrder": false
+        "randomOrder": true,
+        "optionsPerRow": 3,
+
+        "promptFontSize" = 12,          // Default for all fonts
+        "optionFontSize" = 20,          // Demonstration of using different size
+        "buttonFontSize" = 16
     }
 ]
 ```
 
-Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log. Note that `MultipleChoise` and `Rating` questions include a confirmation button that must be pressed to confirm the selection before proceeding.
+Each question in the array is then asked of the user (via an independent time-sequenced dialog box) before being recorded to the output log. Note that `MultipleChoice` and `Rating` questions include a confirmation button that must be pressed to confirm the selection before proceeding. `DropDown` questions use the same approach with a drop-down menu instead of button-based selection, note `DropDown` questions can be fullscreen but currently still require use of the cursor (`optionsKeys` are ignored).
+
+There are 2 primary differences between questions with `type` of `MultipleChoice` and `Rating`. These are:
+
+1. `MultipleChoice` questions can specify an `optionsPerRow` field to control layout (otherwise defaults to 3). `Rating` questions always use a single row of responses (`optionsPerRow` = total # of options)
+2. `MultipleChoice` questions default to `randomOrder` = `true` (randomize option order) whereas `Rating` questions default to the provided option ordering
+
+Questions are recorded in the results database along with a timestamp, the question prompt, a `responseArray` indicating available options and the `response` the user provided. If multiple choice, a `keyArray` is included with `optionKeys` values (as specified) and the `presentedResponses` array provides the response/key pairs in the order they were presented to the user for that question, which is particularly helpful when the order is randomized.
 
 ## HUD settings
 | Parameter Name        |Units      | Description                                                                                                           |
@@ -380,6 +415,18 @@ The image below provides an example of the banner with the timer, progress, and 
 "ammoColor": Color4(1.0,1.0,1.0,1.0),               // Set the ammo indicator to white
 "ammoOutlineColor": Color4(0.0,0.0,0.0,1.0),        // Set the outline/background color for the ammo indicator
 ```
+
+### Reticle
+In addition to being able to be specified on a per-user basis, the experiment/session level configuration can provide reticle configuration using the same parameters. When these parameters are specified at an experiment or session level they override any value provided using user configuration. See the [selecting a reticle section](userConfigReadme.md#selecting-a-reticle) for more information.
+
+| Parameter Name        |Units           | Description                                                                                         |
+|-----------------------|----------------|-----------------------------------------------------------------------------------------------------|
+|`reticleIndex`         |`int`           |Refers to which reticle this user prefers (if not required for the study)                            |
+|`reticleScale`         |`Array<float>`  |Provides a range of reticle sizes over which to set the scale as an `Array` w/ 2 elements (min, max) | 
+|`reticleColor`         |`Array<Color4>` |Provides a range of colors over which to set the reticle color as an `Array` w/ 2 elements (min, max)|
+|`reticleChangeTime`    |`float`         |Provides the time (in seconds) for the reticle to change color and/or size following a shot          |
+
+Note that when these values are specified at the experiment or session level the `allowReticleChange` property of the [menu configuration](#menu-config) should be set to `false` as user changes to the reticle will not apply.
 
 ### Weapon Cooldown
 | Parameter Name        |Units| Description                                                                             |
@@ -460,9 +507,11 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 | Parameter Name        |Units                  | Description                                                                        |
 |-----------------------|-----------------------|------------------------------------------------------------------------------------|
 |`targetHealthColors`   |[`Color3`, `Color3`]   | The max/min health colors for the target as an array of [`max color`, `min color`], if you do not want the target to change color as its health drops, set these values both to the same color                                              |
+|`targetGloss`          |`Color4`               | The target glossy (reflection) value, first 3 channels are RGB w/ alpha representing minimum reflection (F0). Set all channels to 0 or do not specify to disable glossy reflections. This sets the glossy color for the reference target in addition to trial targets       |
 |`showReferenceTarget`   |`bool`                | Show a reference target to re-center the view between trials/sessions?             |
 |`referenceTargetColor` |`Color3`               | The color of the "reference" targets spawned between trials                        |
 |`referenceTargetSize`  |m                      | The size of the "reference" targets spawned between trials                         |
+|`referenceTargetModelSpec`|`ArticulatedModel::Specification`| The model specification of the "reference" targets spawned between trials |
 |`clearMissDecalsWithReference`|`bool`              | Clear miss decals when the reference target is destroyed                           |
 |`showPreviewTargetsWithReference` |`bool`      | Show a preview of the trial targets (unhittable) with the reference target. Make these targets hittable once the reference is destroyed |
 |`showReferenceTargetMissDecals`|`bool`         | Show miss decals when the weapon is firing at a reference target?                  |
@@ -476,10 +525,23 @@ These flags help control the behavior of click-to-photon monitoring in applicati
 "showReferenceTarget": true,                    // Show a reference target between trials
 "referenceTargetColor": Color3(1.0,1.0,1.0),    // Reference target color (return to "0" view direction)
 "referenceTargetSize": 0.01,                    // This is a size in meters
+"referenceTargetModelSpec" : ArticulatedModel::Specification{	    // Basic model spec for reference target
+    filename = "model/target/target.obj";
+    cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
+        allowVertexMerging = true;
+        forceComputeNormals = false;
+        forceComputeTangents = false;
+        forceVertexMerging = true;
+        maxEdgeLength = inf;
+        maxNormalWeldAngleDegrees = 0;
+        maxSmoothAngleDegrees = 0;
+    };
+},
 "clearMissDecalsWithReference" : false,         // Don't clear the miss decals when the reference target is eliminated
 "showPreviewTargetsWithReference" : false,      // Don't show the preview targets with the reference
 "showReferenceTargetMissDecals" : true,         // Show miss decals for reference targets
 "previewTargetColor" = Color3(0.5, 0.5, 0.5),   // Use gray for preview targets (if they are shown)
+"targetGloss" = Color4(0.4f, 0.2f, 0.1f, 0.8f), // Use the target gloss behavior from FPSci v22.02.01 and earlier
 ```
 
 ### Target Health Bars
@@ -587,17 +649,21 @@ These flags control whether various information is written to the output databas
 |`logTrialResponse`                 |`bool` | Enable/disable for logging trial responses to database (per trial)    |
 |`logUsers`                         |`bool` | Enable/disable for logging users to database (per session)            |
 |`logSystemInfo`                    |`bool` | Enable/disable for logging system (hardware) information to database (per session) |
+|`logOnChange`                      |`bool` | Enable/disable for logging values to the `Player_Action` and `Target_Trajectory` tables only when changes occur    |
 |`logToSingleDb`                    |`bool` | Enable/disable for logging to a unified output database file (named using the experiment description and user ID)  |
-
+|`sessionParametersToLog`           |`Array<String>`| A list of other config parameters (by name) that are logged on a per-session basis to the `Sessions` table |
+ 
 ```
-"logEnable" = true,
-"logTargetTrajectories" = true,
-"logFrameInfo" = true,
-"logPlayerActions" = true,
-"logTrialResponse" = true,
-"logUsers" = true,
-"logSystemInfo" = true,
-"logToSingleDb" = true,
+"logEnable" = true,                     // Enable logging by default
+"logTargetTrajectories" = true,         // Log target trajectories (name, state, position)
+"logFrameInfo" = true,                  // Log per-frame timestamp and delta time
+"logPlayerActions" = true,              // Log player actions (view direction, position, state, event, target)
+"logTrialResponse" = true,              // Log trial results to the Trials table
+"logUsers" = true,                      // Log the users to the Users table
+"logSystemInfo" = true,                 // Log the system information (USB VID/PID)
+"logOnChange" = false,                  // Log every frame (do not log only on change)
+"logToSingleDb" = true,                 // Log all sessions affiliated with a given experiment to the same database file
+"sessionParametersToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table
 ```
 
 *Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user]_[experiment config hash].db"`. This hash is printed to the `log.txt` from the run in case it is needed to disambiguate results files. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues. The experiment config hash takes into account only "valid" settings and ignores formatting only changes in the configuration file. Default values are used for the hash for anything that is not specified, so if a default is specified, the hash will match the config where the default was not specified.

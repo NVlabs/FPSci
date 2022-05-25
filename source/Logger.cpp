@@ -1,6 +1,7 @@
 #include "Logger.h"
 #include "SystemInfo.h"
 #include "Session.h"
+#include "FPSciApp.h"
 
 // TODO: Replace with the G3D timestamp uses.
 // utility function for generating a unique timestamp.
@@ -118,6 +119,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 		const Columns targetTrajectoryColumns = {
 				{ "time", "text" },
 				{ "target_id", "text"},
+				{ "state", "text"},
 				{ "position_x", "real" },
 				{ "position_y", "real" },
 				{ "position_z", "real" },
@@ -132,6 +134,7 @@ void FPSciLogger::openResultsFile(const String& filename,
 				{ "position_x", "real"},
 				{ "position_y", "real"},
 				{ "position_z", "real"},
+				{ "state", "text"},
 				{ "event", "text" },
 				{ "target_id", "text" },
 		};
@@ -146,9 +149,13 @@ void FPSciLogger::openResultsFile(const String& filename,
 		createTableInDB(m_db, "Frame_Info", frameInfoColumns);
 
 		// Questions table
-		const Columns questionColumns = {
-			{"session_id", "text"},
+		Columns questionColumns = {
+			{"time", "text"},
+			{"session", "text"},
 			{"question", "text"},
+			{"responseArray", "text"},
+			{"keyArray", "text"},
+			{"presentedResponses", "text"},
 			{"response", "text"}
 		};
 		createTableInDB(m_db, "Questions", questionColumns);
@@ -232,15 +239,17 @@ void FPSciLogger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
 void FPSciLogger::recordPlayerActions(const Array<PlayerAction>& actions) {
 	Array<RowEntry> rows;
 	for (PlayerAction action : actions) {
+		String stateStr = presentationStateToString(action.state);
+
 		String actionStr = "";
 		switch (action.action) {
-		case Invalid: actionStr = "invalid"; break;
-		case Nontask: actionStr = "non-task"; break;
+		case FireCooldown: actionStr = "fireCooldown"; break;
 		case Aim: actionStr = "aim"; break;
 		case Miss: actionStr = "miss"; break;
 		case Hit: actionStr = "hit"; break;
 		case Destroy: actionStr = "destroy"; break;
 		}
+
 		Array<String> playerActionValues = {
 		"'" + FPSciLogger::formatFileTime(action.time) + "'",
 		String(std::to_string(action.viewDirection.x)),
@@ -248,6 +257,7 @@ void FPSciLogger::recordPlayerActions(const Array<PlayerAction>& actions) {
 		String(std::to_string(action.position.x)),
 		String(std::to_string(action.position.y)),
 		String(std::to_string(action.position.z)),
+		"'" + stateStr + "'",
 		"'" + actionStr + "'",
 		"'" + action.targetName + "'",
 		};
@@ -259,9 +269,11 @@ void FPSciLogger::recordPlayerActions(const Array<PlayerAction>& actions) {
 void FPSciLogger::recordTargetLocations(const Array<TargetLocation>& locations) {
 	Array<RowEntry> rows;
 	for (const auto& loc : locations) {
+		String stateStr = presentationStateToString(loc.state);
 		Array<String> targetTrajectoryValues = {
 			"'" + FPSciLogger::formatFileTime(loc.time) + "'",
 			"'" + loc.name + "'",
+			"'" + stateStr + "'",
 			String(std::to_string(loc.position.x)),
 			String(std::to_string(loc.position.y)),
 			String(std::to_string(loc.position.z)),
@@ -414,10 +426,21 @@ void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& 
 	logTargetInfo(targetValues);
 }
 
-void FPSciLogger::addQuestion(const Question& q, const String& sessID) {
+void FPSciLogger::addQuestion(Question q, String session, const shared_ptr<DialogBase>& dialog) {
+	const String time = genUniqueTimestamp();
+	const String optStr = Any(q.options).unparse();
+	const String keyStr = Any(q.optionKeys).unparse();
+	String orderStr = "";
+	if (q.type == Question::Type::MultipleChoice || q.type == Question::Type::Rating) {
+		orderStr = Any(dynamic_pointer_cast<SelectionDialog>(dialog)->options()).unparse();
+	}
 	RowEntry rowContents = {
-		"'" + sessID + "'",
+		"'" + time + "'",
+		"'" + session + "'",
 		"'" + q.prompt + "'",
+		"'" + optStr + "'",
+		"'" + keyStr + "'",
+		"'" + orderStr + "'",
 		"'" + q.result + "'"
 	};
 	logQuestionResult(rowContents);
@@ -438,12 +461,12 @@ void FPSciLogger::logUserConfig(const UserConfig& user, const String& sessID, co
 		String(std::to_string(cmp360)),
 		String(std::to_string(user.mouseDegPerMm)),
 		String(std::to_string(user.mouseDPI)),
-		String(std::to_string(user.reticleIndex)),
-		String(std::to_string(user.reticleScale[0])),
-		String(std::to_string(user.reticleScale[1])),
-		"'" + user.reticleColor[0].toString() + "'",
-		"'" + user.reticleColor[1].toString() + "'",
-		String(std::to_string(user.reticleChangeTimeS)),
+		String(std::to_string(user.reticle.index)),
+		String(std::to_string(user.reticle.scale[0])),
+		String(std::to_string(user.reticle.scale[1])),
+		"'" + user.reticle.color[0].toString() + "'",
+		"'" + user.reticle.color[1].toString() + "'",
+		String(std::to_string(user.reticle.changeTimeS)),
 		String(std::to_string(user.turnScale.x)),
 		String(std::to_string(userYTurnScale)),
 		String(std::to_string(sessTurnScale.x)),

@@ -83,6 +83,10 @@ As an example of how to use the `experimentList`, let's say we have 2 experiment
 
 ## Sample Experiments
 
-Some sample experiments are provided in the `samples` directory. These experiments are intended to give some examples of types of functionality that may be interesting for experimenters to use in designing new experiments, but are unlikely to be useful experiments on their own. When FPSci starts, it will find each file in the `samples` directory that matches the `*.Experiment.Any` file naming scheme, and include an equivalent `*.Status.Any` as well as the provided `samples/sample.User.Any` as the `userStatusFilename` and will use thos along side the other default values in an [Experiment Specification](#experiment-specification). These specifications will be appended at the end of the `experimentList` provided in the startup config.
+FPSci samples are only viewable in game when `developerMode` is set to `True`.
+
+Some sample experiments are provided in the `samples` directory. These experiments are intended to give some examples of types of functionality that may be interesting for experimenters to use in designing new experiments, but are unlikely to be useful experiments on their own. When FPSci starts, it will find each file in the `samples` directory that matches the `*.Experiment.Any` file naming scheme, and include an equivalent `*.Status.Any` as well as the provided `samples/sample.User.Any` as the `userStatusFilename` and will use those along side the other default values in an [Experiment Specification](#experiment-specification). These specifications will be appended at the end of the `experimentList` provided in the startup config.
 
 If a type of sample that you would like to see is missing, please [open an issue on github](https://github.com/NVlabs/FPSci/issues/new/choose) and describe the type of sample you would like to see.
+
+If you would like to contribute new samples, then please open a pull request that adds the new samples to the `data-files/samples/` directory and includes some explanation of what the sample adds in your pull request.

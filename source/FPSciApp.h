@@ -34,6 +34,18 @@ class WaypointManager;
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
 enum PresentationState { initial, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
+static String presentationStateToString(const PresentationState& state) {
+	String stateStr = "N/A";
+	switch (state) {
+	case initial: stateStr = "initial"; break;
+	case pretrial: stateStr = "pretrial";  break;
+	case trialTask: stateStr = "trialTask"; break;
+	case trialFeedback: stateStr = "trialFeedback";  break;
+	case sessionFeedback: stateStr = "sessionFeedback";  break;
+	case complete: stateStr = "complete"; break;
+	}
+	return stateStr;
+}
 
 class FPSciApp : public GApp {
 public:
@@ -55,10 +67,7 @@ protected:
 	Array<RealTime>							m_explosionRemainingTimes;			///< Time for end of explosion
 	int										m_explosionIdx = 0;					///< Explosion index
 	const int								m_maxExplosions = 20;				///< Maximum number of simultaneous explosions
-		
-	const int								m_MatTableSize = 10;				///< Set this to set # of color "levels"
-	Array<shared_ptr<UniversalMaterial>>	m_materials;						///< This stores the color materials
-
+	
 	Table<String, Array<shared_ptr<ArticulatedModel>>> m_explosionModels;
 	/** table of shaders cached for the 2D shader parameters set per session */
 	Table<String, shared_ptr<G3D::Shader>> m_shaderTable;
@@ -94,8 +103,11 @@ protected:
 	MouseInputMode							m_mouseInputMode = MouseInputMode::MOUSE_CURSOR;	///< Does the mouse currently have control over the view
 	bool									m_showUserMenu = true;				///< Show the user menu after update?
 
-	bool									m_firstSession = true;
+	bool									m_firstSession = true;				///< Flag indicating that this is the first session run
 	UserConfig								m_lastSavedUser;					///< Used to track if user has changed since last save
+
+	bool									m_sceneHasPlayerEntity = false;		///< Flag indicating whether loaded scene has a PlayerEntity specified
+	Table<String, CFrame>					m_initialCameraFrames;				///< Initial frames for all cameras in the scene
 
 	shared_ptr<PlayerControls>				m_playerControls;					///< Player controls window (developer mode)
 	shared_ptr<RenderControls>				m_renderControls;					///< Render controls window (developer mode)
@@ -122,9 +134,10 @@ protected:
 	void loadConfigs(const ConfigFiles& configs);
 
 	virtual void loadModels();
+	
 	/** Initializes player settings from configs and resets player to initial position 
 		Also updates mouse sensitivity. */
-	void initPlayer();
+	void initPlayer(bool firstSpawn = false);
 
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {
@@ -155,10 +168,12 @@ public:
 	shared_ptr<GFont>               outputFont;						///< Font used for output
 	shared_ptr<GFont>               hudFont;						///< Font used in HUD
 	Array<shared_ptr<GFont>>		floatingCombatText;				///< Floating combat text array
+
+	ReticleConfig					reticleConfig;					///< Config for the active reticle
 	shared_ptr<Texture>             reticleTexture;					///< Texture used for reticle
+	
 	Table<String, shared_ptr<Texture>> hudTextures;					///< Textures used for the HUD
 	shared_ptr<GuiTheme>			theme;	
-	bool                            emergencyTurbo = false;			///< Lower rendering quality to improve performance
 
 	FPSciApp(const GApp::Settings& settings = GApp::Settings());
 
@@ -177,7 +192,14 @@ public:
 	Table<String, Array<shared_ptr<ArticulatedModel>>>	targetModels;
 
 	/** A table of sounds that targets can use to allow sounds to finish playing after they're destroyed */
-	Table<String, shared_ptr<Sound>>	soundTable;
+	Table<String, shared_ptr<Sound>>					soundTable;
+
+	/** A table of materials for models to use */
+	Table<String, Array<shared_ptr<UniversalMaterial>>>	materials;
+	const int											matTableSize = 13;	///< Set this to set # of color "levels"
+	
+	Array<shared_ptr<UniversalMaterial>> makeMaterials(shared_ptr<TargetConfig> tconfig);
+	Color3 lerpColor(Array<Color3> colors, float a);
 
 	shared_ptr<Session> sess;					///< Pointer to the experiment
 	shared_ptr<Camera> playerCamera;			///< Pointer to the player camera						

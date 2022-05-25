@@ -1,7 +1,7 @@
 #include "ExperimentConfig.h"
 
 ExperimentConfig::ExperimentConfig(const Any& any) : FpsConfig(any) {
-	AnyTableReader reader(any);
+	FPSciAnyTableReader reader(any);
 	switch (settingsVersion) {
 	case 1:
 		// Setup the default FPS config based on this
@@ -92,11 +92,12 @@ ExperimentConfig ExperimentConfig::load(const String& filename, bool saveJSON) {
 	ExperimentConfig ex;
 	if (!FileSystem::exists(System::findDataFile(filename, false))) {
 		// if file not found, save the default
-		ex.toAny().save(filename, saveJSON);
-		SessionConfig::defaultConfig() = (FpsConfig)ex;
+		SessionConfig::defaultConfig() = FpsConfig();		// Need to reinitialize default experiment-level config here (if not will copy from any previously loaded valid experiment)
+		ex = ExperimentConfig();							// Recreate this config (w/ reset default config)
+		ex.toAny().save(filename, saveJSON);				// Save the defaults
 	}
 	else {
-		ex = Any::fromFile(System::findDataFile(filename));
+		ex = Any::fromFile(System::findDataFile(filename));	// Load from existing Any file
 	}
 	return ex;
 }

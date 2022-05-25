@@ -36,6 +36,7 @@ class PlayerEntity;
 class TargetEntity;
 class FPSciLogger;
 class Weapon;
+enum PresentationState;
 
 // Simple timer for measuring time offsets
 class Timer
@@ -67,22 +68,27 @@ public:
 struct TargetLocation {
 	FILETIME time;
 	String name = "";
+	PresentationState state;
 	Point3 position = Point3::zero();
 
 	TargetLocation() {};
 
-	TargetLocation(FILETIME t, String targetName, Point3 targetPosition) {
+	TargetLocation(FILETIME t, String targetName, PresentationState trialState, Point3 targetPosition) {
 		time = t;
 		name = targetName;
+		state = trialState;
 		position = targetPosition;
+	}
+
+	inline bool noChangeFrom(const TargetLocation& other) const {
+		return state == other.state && position == other.position;
 	}
 };
 
 enum PlayerActionType{
 	None,
 	Aim,
-	Invalid,
-	Nontask,
+	FireCooldown,
 	Miss,
 	Hit,
 	Destroy
@@ -92,17 +98,23 @@ struct PlayerAction {
 	FILETIME			time;
 	Point2				viewDirection = Point2::zero();
 	Point3				position = Point3::zero();
+	PresentationState	state;
 	PlayerActionType	action = PlayerActionType::None;
 	String				targetName = "";
 
 	PlayerAction() {};
 
-	PlayerAction(FILETIME t, Point2 playerViewDirection, Point3 playerPosition, PlayerActionType playerAction, String name) {
+	PlayerAction(FILETIME t, Point2 playerViewDirection, Point3 playerPosition, PresentationState trialState, PlayerActionType playerAction, String name) {
 		time = t;
 		viewDirection = playerViewDirection;
 		position = playerPosition;
 		action = playerAction;
+		state = trialState;
 		targetName = name;
+	}
+
+	inline bool noChangeFrom(const PlayerAction& other) const {
+		return viewDirection == other.viewDirection && position == other.position && action == other.action && state == other.state && targetName == other.targetName;
 	}
 };
 
@@ -142,7 +154,7 @@ public:
 	static shared_ptr<SessionConfig> create() { return createShared<SessionConfig>(); }
 	Any toAny(const bool forceAll = false) const;
 	float getTrialsPerBlock(void) const;			// Get the total number of trials in this session
-
+	Array<String> getUniqueTargetIds() const;
 };
 
 class Session : public ReferenceCountedObject {
@@ -174,6 +186,8 @@ protected:
 	Array<shared_ptr<TargetEntity>> m_hittableTargets;		///< Array of targets that can be hit
 	Array<shared_ptr<TargetEntity>> m_unhittableTargets;	///< Array of targets that can't be hit
 
+	Table<String, TargetLocation> m_lastLogTargetLoc;		///< Last logged target location (used for logOnChange)
+	Point3 m_lastRefTargetPos;								///< Last reference target location (used for aim invalidation)
 
 	int m_frameTimeIdx = 0;									///< Frame time index
 	int m_currTrialIdx;										///< Current trial
@@ -261,7 +275,7 @@ protected:
 
 	shared_ptr<TargetEntity> spawnDestTarget(
 		shared_ptr<TargetConfig> config,
-		const Point3& position,
+		const Point3& offset,
 		const Color3& color,
 		const int paramIdx,
 		const String& name = "");
@@ -303,7 +317,7 @@ protected:
 	inline Point2 getViewDirection()
 	{   // returns (azimuth, elevation), where azimuth is 0 deg when straightahead and + for right, - for left.
 		Point3 view_cartesian = m_camera->frame().lookVector();
-		float az = atan2(-view_cartesian.z, -view_cartesian.x) * 180 / pif();
+		float az = atan2(view_cartesian.x, -view_cartesian.z) * 180 / pif();
 		float el = atan2(view_cartesian.y, sqrtf(view_cartesian.x * view_cartesian.x + view_cartesian.z * view_cartesian.z)) * 180 / pif();
 		return Point2(az, el);
 	}
@@ -420,7 +434,7 @@ public:
 	bool updateBlock(bool init = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
-	enum PresentationState currentState;			///< Current presentation state
+	PresentationState currentState;						///< Current presentation state
 
 	const Array<shared_ptr<TargetEntity>>& targetArray() const {
 		return m_targetArray;

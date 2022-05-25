@@ -86,10 +86,6 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 
 	pushRdStateWithDelay(rd, m_ldrDelayBufferQueue, m_currentDelayBufferIndex, displayLagFrames);
 
-	scene()->lightingEnvironment().ambientOcclusionSettings.enabled = !emergencyTurbo;
-	playerCamera->filmSettings().setAntialiasingEnabled(!emergencyTurbo);
-	playerCamera->filmSettings().setBloomStrength(emergencyTurbo ? 0.0f : 0.5f);
-
 	// Tone mapping from HDR --> LDR happens at the end of this call (after onPostProcessHDR3DEffects() call)
 	GApp::onGraphics3D(rd, surface);
 
@@ -134,11 +130,11 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 				rd->push2D(m_hdrShader3DOutput); {
 				// Setup shadertoy-style args
 				Args args;
-					args.setUniform("iChannel0", m_framebuffer->texture(0), sessConfig->render.sampler3D);
-					const float iTime = float(System::time() - m_startTime);
-					args.setUniform("iTime", iTime);
-					args.setUniform("iTimeDelta", iTime - m_lastTime);
-					args.setUniform("iMouse", userInput->mouseXY());
+				args.setUniform("iChannel0", m_framebuffer->texture(0), sessConfig->render.sampler3D);
+				const float iTime = float(System::time() - m_startTime);
+				args.setUniform("iTime", iTime);
+				args.setUniform("iTimeDelta", iTime - m_lastTime);
+				args.setUniform("iMouse", userInput->mouseXY());
 				args.setUniform("iFrame", m_frameNumber);
 				args.setRect(rd->viewport());
 				LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shader3D], args);
@@ -289,10 +285,9 @@ void FPSciApp::draw2DElements(RenderDevice* rd, Vector2 resolution) {
 	// Player camera only indicators
 	if (activeCamera() == playerCamera) {
 		// Reticle
-		const shared_ptr<UserConfig> user = currentUser();
-		float tscale = weapon->cooldownRatio(m_lastOnSimulationRealTime, user->reticleChangeTimeS);
-		float rScale = scale * (tscale * user->reticleScale[0] + (1.0f - tscale) * user->reticleScale[1]);
-		Color4 rColor = user->reticleColor[1] * (1.0f - tscale) + user->reticleColor[0] * tscale;
+		float tscale = weapon->cooldownRatio(m_lastOnSimulationRealTime, reticleConfig.changeTimeS);
+		float rScale = scale * (tscale * reticleConfig.scale[0] + (1.0f - tscale) * reticleConfig.scale[1]);
+		Color4 rColor = reticleConfig.color[1] * (1.0f - tscale) + reticleConfig.color[0] * tscale;
 		Draw::rect2D(((reticleTexture->rect2DBounds() - reticleTexture->vector2Bounds() / 2.0f)) * rScale / 2.0f + resolution / 2.0f, rd, rColor, reticleTexture);
 	}
 }
@@ -500,7 +495,7 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 		);
 	}
 
-	if (sessConfig->hud.showBanner && !emergencyTurbo) {
+	if (sessConfig->hud.showBanner) {
 		const shared_ptr<Texture> scoreBannerTexture = hudTextures["scoreBannerBackdrop"];
 		const Point2 hudCenter(resolution.x / 2.0f, sessConfig->hud.bannerVertVisible * scoreBannerTexture->height() * scale.y + debugMenuHeight());
 		Draw::rect2D((scoreBannerTexture->rect2DBounds() * scale - scoreBannerTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), scoreBannerTexture);

@@ -22,7 +22,8 @@ void FPSciApp::onInit() {
 	Random::common().reset(uint32(time(0)));
 
 	GApp::onInit();			// Initialize the G3D application (one time)
-	startupConfig.validateExperiments();
+	// TODO: Move validateExperiments() to a developer mode GUI button
+	//startupConfig.validateExperiments();
 	initExperiment();		// Initialize the experiment
 }
 
@@ -58,7 +59,7 @@ void FPSciApp::initExperiment(){
 
 	// Load models and set the reticle
 	loadModels();
-	setReticle(currentUser()->reticleIndex);
+	setReticle(reticleConfig.index);
 
 	// Load fonts and images
 	outputFont = GFont::fromFile(System::findDataFile("arial.fnt"));
@@ -206,19 +207,20 @@ void FPSciApp::loadModels() {
 		explosionsToBuild.set(target.id, target.destroyDecal);
 		explosionScales.set(target.id, target.destroyDecalScale);
 	}
-	// Append the basic model automatically (used for reference targets for now)
-	targetsToBuild.set("reference", PARSE_ANY(ArticulatedModel::Specification{
-		filename = "model/target/target.obj";
-		cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
-					allowVertexMerging = true;
-					forceComputeNormals = false;
-					forceComputeTangents = false;
-					forceVertexMerging = true;
-					maxEdgeLength = inf;
-					maxNormalWeldAngleDegrees = 0;
-					maxSmoothAngleDegrees = 0;
-		};
-	}));
+
+	// Append reference target model(s)
+	Any& defaultRefTarget = experimentConfig.targetView.refTargetModelSpec;
+	for (SessionConfig& sess : experimentConfig.sessions) {
+		if (sess.targetView.refTargetModelSpec != defaultRefTarget) {
+			// This is a custom reference target model
+			String id = sess.id + "_reference";
+			targetsToBuild.set(id, sess.targetView.refTargetModelSpec);
+			explosionsToBuild.set(id, "explosion_01.png");
+			explosionScales.set(id, 1.0);
+		}
+	}
+	// Add default reference
+	targetsToBuild.set("reference", defaultRefTarget);
 	explosionsToBuild.set("reference", "explosion_01.png");
 	explosionScales.set("reference", 1.0);
 
@@ -252,25 +254,77 @@ void FPSciApp::loadModels() {
 		Array<shared_ptr<ArticulatedModel>> tModels, expModels;
 		for (int i = 0; i <= TARGET_MODEL_SCALE_COUNT; ++i) {
 			const float scale = pow(1.0f + TARGET_MODEL_ARRAY_SCALING, float(i) - TARGET_MODEL_ARRAY_OFFSET);
-			tSpec.set("scale", scale*default_scale);
+			tSpec.set("scale", scale * default_scale);
 			explosionSpec.set("scale", (20.0 * scale * explosionScales.get(id)));
 			tModels.push(ArticulatedModel::create(tSpec));
 			expModels.push(ArticulatedModel::create(explosionSpec));
 		}
 		targetModels.set(id, tModels);
 		m_explosionModels.set(id, expModels);
-	}
 
-	// Create a series of colored materials to choose from for target health
-	m_materials.clear();
-	for (int i = 0; i < m_MatTableSize; i++) {
-		float complete = (float)i / m_MatTableSize;
-		Color3 color = experimentConfig.targetView.healthColors[0] * complete + experimentConfig.targetView.healthColors[1] * (1.0f - complete);
+		// Create a series of colored materials to choose from for target health
+		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
+		materials.remove(id);
+		materials.set(id, makeMaterials(tconfig));
+	}
+}
+
+Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetConfig> tconfig) {
+	Array<shared_ptr<UniversalMaterial>> targetMaterials;
+	for (int i = 0; i < matTableSize; i++) {
+		float complete = (float)i / (matTableSize-1);
+		Color3 color;
+		if (notNull(tconfig) && tconfig->colors.length() > 0) {
+			color = lerpColor(tconfig->colors, complete);
+		}
+		else {
+			color = lerpColor(experimentConfig.targetView.healthColors, complete);
+		}
+		Color4 gloss;
+		if (notNull(tconfig) && tconfig->hasGloss) {
+			gloss = tconfig->gloss;
+		}
+		else {
+			gloss = experimentConfig.targetView.gloss;
+		}
+
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
 		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-		m_materials.append(UniversalMaterial::create(materialSpecification));
+		materialSpecification.setGlossy(Texture::Specification(gloss));					// Used to be Color4(0.4f, 0.2f, 0.1f, 0.8f)
+		targetMaterials.append(UniversalMaterial::create(materialSpecification));
+	}
+	return targetMaterials;
+}
+
+Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
+	if (colors.length() == 0) {
+		throw "Cannot interpolate from colors array with length 0!";
+	}
+	else if (colors.length() == 1 || a >= 1.0f) {
+		// a >= 1.0f indicates we should use the first color in the array 
+		// since above 1.0 would imply negative a negative array index
+		return colors[0];
+	}
+	else if (a <= 0.0f) {
+		// Use only the last color in the array
+		return colors[colors.length() - 1];
+	}
+	else
+	{
+		// For 2 or more colors, linearly interpolate between the N colors.
+		// a comes in the range [0, 1] where 
+		//     0 means to use the last value in colors
+		// and 1 means to use the first value in colors
+		// This means that a = 0 maps to colors[colors.length() - 1]
+		// and a = 1 maps to colors[0]
+		// We need to flip the direction and scale up to the number of elements in the array
+		// a will indicate which two entries to interpolate between (left of .), and how much of each to use (right of .)
+		float interp = (1.0f - a) * (colors.length() - 1);
+		int idx = int(floor(interp));
+		interp = interp - float(idx);
+		Color3 output = colors[idx] * (1.0f - interp) + colors[idx + 1] * interp;
+		return output;
 	}
 }
 
@@ -303,7 +357,7 @@ void FPSciApp::updateControls(bool firstSession) {
 		rect = m_renderControls->rect();
 		removeWidget(m_renderControls);
 	}
-	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, emergencyTurbo, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
+	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(visible);
 	if (!rect.isEmpty()) m_renderControls->setRect(rect);
 	addWidget(m_renderControls);
@@ -368,7 +422,7 @@ void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
 	String filename = Scene::sceneNameToFilename(sessConfig->scene.name);
-	scene()->toAny().save(filename, startupConfig.jsonAnyOutput);
+	scene()->toAny().save(filename);		// Save this w/o JSON format (breaks scene.Any file)
 }
 
 void FPSciApp::showPlayerControls() {
@@ -393,18 +447,37 @@ void FPSciApp::presentQuestion(Question question) {
 	switch (question.type) {
 	case Question::Type::MultipleChoice:
 		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
-			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+			for (int i = 0; i < options.length(); i++) { 
+				// Find the correct index for this option (order might be randomized)
+				int keyIdx;
+				for (keyIdx = 0; keyIdx < question.options.length(); keyIdx++) {
+					if (options[i] == question.options[keyIdx]) break;
+				}
+				options[i] += format(" (%s)", question.optionKeys[keyIdx].toString()); 
+			}
 		}
-		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, question.showCursor, 3, size, !question.fullscreen);
+		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, question.showCursor, question.optionsPerRow, size, !question.fullscreen,
+			question.promptFontSize, question.optionFontSize, question.buttonFontSize);
 		break;
 	case Question::Type::Entry:
-		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false, size, !question.fullscreen);
+		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false, size, !question.fullscreen, question.promptFontSize, question.buttonFontSize);
 		break;
 	case Question::Type::Rating:
 		if (question.optionKeys.length() > 0) {		// Add key-bound option to the dialog
-			for (int i = 0; i < options.length(); i++) { options[i] += format(" (%s)", question.optionKeys[i].toString()); }
+			for (int i = 0; i < options.length(); i++) { 
+				// Find the correct index for this option (order might be randomized)
+				int keyIdx;
+				for (keyIdx = 0; keyIdx < question.options.length(); keyIdx++) {
+					if (options[i] == question.options[keyIdx]) break;
+				}
+				options[i] += format(" (%s)", question.optionKeys[keyIdx].toString()); 
+			}
 		}
-		dialog = RatingDialog::create(question.prompt, options, theme, question.title, question.showCursor, size, !question.fullscreen);
+		dialog = RatingDialog::create(question.prompt, options, theme, question.title, question.showCursor, size, !question.fullscreen,
+			question.promptFontSize, question.optionFontSize, question.buttonFontSize);
+		break;
+	case Question::Type::DropDown:
+		dialog = DropDownDialog::create(question.prompt, options, theme, question.title, size, !question.fullscreen, question.promptFontSize, question.buttonFontSize);
 		break;
 	default:
 		throw "Unknown question type!";
@@ -441,9 +514,15 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, simStepDuration());
 }
 
-void FPSciApp::initPlayer() {
-	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+void FPSciApp::initPlayer(bool setSpawnPosition) {
 	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
+	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");	// Get player from the scene
+
+	// Update the player camera
+	const String pcamName = sessConfig->scene.playerCamera;
+	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(pcamName);
+	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, pcamName));
+	setActiveCamera(playerCamera);
 
 	// Set gravity and camera field of view
 	Vector3 grav = experimentConfig.player.gravity;
@@ -453,27 +532,65 @@ void FPSciApp::initPlayer() {
 		FoV = sessConfig->render.hFoV;
 	}
 	pscene->setGravity(grav);
+
+	String respawnHeightSource;
 	playerCamera->setFieldOfView(FoV * units::degrees(), FOVDirection::HORIZONTAL);
+	if (!m_sceneHasPlayerEntity) {		// Scene doesn't have player entity, copy the player entity frame from the camera
+		respawnHeightSource = format("\"%s\" camera in scene.Any file", playerCamera->name());
+		player->setFrame(m_initialCameraFrames[playerCamera->name()]);
+		setSpawnPosition = true;		// Set the player spawn position from the camera
+	}
+	else {
+		respawnHeightSource = "PlayerEntity in scene.Any file";
+	}
+	playerCamera->setFrame(player->getCameraFrame());
 
 	// For now make the player invisible (prevent issues w/ seeing model from inside)
 	player->setVisible(false);
 
 	// Set the reset height
+	String resetHeightSource = "scene configuration \"resetHeight\" parameter";
 	float resetHeight = sessConfig->scene.resetHeight;
 	if (isnan(resetHeight)) {
-		float resetHeight = pscene->resetHeight();
+		resetHeightSource = "scene.Any Physics \"minHeight\" field";
+		resetHeight = pscene->resetHeight();
 		if (isnan(resetHeight)) {
+			resetHeightSource = "default value";
 			resetHeight = -1e6;
 		}
 	}
 	player->setRespawnHeight(resetHeight);
 
-	// Set player respawn location
-	Point3 spawnPosition = sessConfig->scene.spawnPosition;
-	if (isnan(spawnPosition.x)) {
-		spawnPosition = player->frame().translation;
+	// Update the respawn heading
+	if (isnan(sessConfig->scene.spawnHeadingDeg)) {
+		if (setSpawnPosition) {	// This is the first spawn in the scene
+			// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
+			Point3 view_dir = playerCamera->frame().lookVector();
+			float spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
+			player->setRespawnHeadingDegrees(spawnHeadingDeg);
+		}
 	}
-	player->setRespawnPosition(spawnPosition);
+	else {	// Respawn heading specified by the scene config
+		player->setRespawnHeadingDegrees(sessConfig->scene.spawnHeadingDeg);
+	}
+
+	// Set player respawn location
+	float respawnPosHeight = player->respawnPosHeight();	// Report the respawn position height
+	if (sessConfig->scene.spawnPosition.isNaN()) {
+		if (setSpawnPosition) { // This is the first spawn, copy the respawn position from the scene
+			player->setRespawnPosition(player->frame().translation);
+			respawnPosHeight = player->frame().translation.y;
+		}
+	}
+	else {	// Respawn position set by scene config
+		player->setRespawnPosition(sessConfig->scene.spawnPosition);
+		respawnPosHeight = sessConfig->scene.spawnPosition.y;
+		respawnHeightSource = "scene configuration \"spawnPosition\" parameter";
+	}
+
+	if (respawnPosHeight < resetHeight) {
+		throw format("Invalid respawn height (%f) from %s (< %f specified from %s)!", respawnPosHeight, respawnHeightSource.c_str(), resetHeight, resetHeightSource.c_str());
+	}
 
 	// Set player values from session config
 	player->moveRate = &sessConfig->player.moveRate;
@@ -500,7 +617,7 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (!id.empty() && ids.contains(id)) {
 		// Load the session config specified by the id
 		sessConfig = experimentConfig.getSessionConfigById(id);
-		logPrintf("User selected session: %s. Updating now...\n", id);
+		logPrintf("User selected session: %s. Updating now...\n", id.c_str());
 		m_userSettingsWindow->setSelectedSession(id);
 		// Create the session based on the loaded config
 		sess = Session::create(this, sessConfig);
@@ -510,6 +627,13 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		sessConfig = SessionConfig::create();
 		sess = Session::create(this);
 	}
+
+	// Update reticle
+	reticleConfig.index = sessConfig->reticle.indexSpecified ? sessConfig->reticle.index : currentUser()->reticle.index;
+	reticleConfig.scale = sessConfig->reticle.scaleSpecified ? sessConfig->reticle.scale : currentUser()->reticle.scale;
+	reticleConfig.color = sessConfig->reticle.colorSpecified ? sessConfig->reticle.color : currentUser()->reticle.color;
+	reticleConfig.changeTimeS = sessConfig->reticle.changeTimeSpecified ? sessConfig->reticle.changeTimeS : currentUser()->reticle.changeTimeS;
+	setReticle(reticleConfig.index);
 
 	// Update the controls for this session
 	updateControls(m_firstSession);				// If first session consider showing the menu
@@ -560,6 +684,9 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		m_loadedScene = sessConfig->scene;
 	}
 
+	// Player parameters
+	initPlayer();
+
 	// Check for play mode specific parameters
 	if (notNull(weapon)) weapon->clearDecals();
 	weapon->setConfig(&sessConfig->weapon);
@@ -581,20 +708,12 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		hudTextures.set(element.filename, Texture::fromFile(System::findDataFile(element.filename)));
 	}
 
-	// Create a series of colored materials to choose from for target health
-	m_materials.clear();
-	for (int i = 0; i < m_MatTableSize; i++) {
-		float complete = (float)i / m_MatTableSize;
-		Color3 color = sessConfig->targetView.healthColors[0] * complete + sessConfig->targetView.healthColors[1] * (1.0f - complete);
-		UniversalMaterial::Specification materialSpecification;
-		materialSpecification.setLambertian(Texture::Specification(color));
-		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
-		materialSpecification.setGlossy(Texture::Specification(Color4(0.4f, 0.2f, 0.1f, 0.8f)));
-		m_materials.append(UniversalMaterial::create(materialSpecification));
+	// Update colored materials to choose from for target health
+	for (String id : sessConfig->getUniqueTargetIds()) {
+		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
+		materials.remove(id);
+		materials.set(id, makeMaterials(tconfig));
 	}
-
-	// Player parameters
-	initPlayer();
 
 	const String resultsDirPath = startupConfig.experimentList[experimentIdx].resultsDirPath;
 
@@ -603,9 +722,13 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		FileSystem::createDirectory(resultsDirPath);
 	}
 
-	const String logName = sessConfig->logger.logToSingleDb ? 
-		resultsDirPath + experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
-		resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+	// Create and check log file name
+	const String logFileBasename = sessConfig->logger.logToSingleDb ? 
+		experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
+		id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+	const String logFilename = FilePath::makeLegalFilename(logFileBasename);
+	// This is the specified path and log basename with illegal characters replaced, but not suffix (.db)
+	const String logPath = resultsDirPath + logFilename;
 
 	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
@@ -619,18 +742,18 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 			m_pyLogger->mergeLogToDb();
 		}
 		// Run a new logger if we need to (include the mode to run in here...)
-		m_pyLogger->run(logName, sessConfig->clickToPhoton.mode);
+		m_pyLogger->run(logPath, sessConfig->clickToPhoton.mode);
 	}
 
 	// Initialize the experiment (this creates the results file)
-	sess->onInit(logName+".db", experimentConfig.description + "/" + sessConfig->description);
+	sess->onInit(logPath, experimentConfig.description + "/" + sessConfig->description);
 
 	// Don't create a results file for a user w/ no sessions left
 	if (m_userSettingsWindow->sessionsForSelectedUser() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
 	}
 	else {
-		logPrintf("Created results file: %s.db\n", logName.c_str());
+		logPrintf("Created results file: %s.db\n", logPath.c_str());
 	}
 
 	if (m_firstSession) {
@@ -654,21 +777,21 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 
 	// Make sure the scene has a "player" entity
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
-
-	// Add a player if one isn't present in the scene
-	if (isNull(player)) {
+	m_sceneHasPlayerEntity = notNull(player);
+	if (!m_sceneHasPlayerEntity) {		// Add a player if one isn't present in the scene
 		logPrintf("WARNING: Didn't find a \"player\" specified in \"%s\"! Adding one at the origin.", sceneName);
 		shared_ptr<Entity> newPlayer = PlayerEntity::create("player", scene().get(), CFrame(), nullptr);
 		scene()->insert(newPlayer);
 	}
 
-	// Set the active camera to the player
-	const String pcamName = sessConfig->scene.playerCamera;
-	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(sessConfig->scene.playerCamera);
-	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, sessConfig->scene.playerCamera));
-	setActiveCamera(playerCamera);
+	// Build lookup of initial camera positions here
+	Array<shared_ptr<Camera>> camArray;
+	scene()->getTypedEntityArray<Camera>(camArray);
+	for (shared_ptr<Camera> cam : camArray) {
+		m_initialCameraFrames.set(cam->name(), cam->frame());
+	}
 
-	initPlayer();
+	initPlayer(true);		// Initialize the player (first time for this scene)
 
 	if (weapon) {
 		weapon->setScene(scene());
@@ -708,11 +831,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	if (shootButtonJustPressed && stateCanFire && !weapon->canFire(currentRealTime)) {
 		// Invalid click since the weapon isn't ready to fire
-		sess->accumulatePlayerAction(PlayerActionType::Invalid);
-	}
-	else if ((shootButtonJustPressed || !shootButtonUp) && !stateCanFire) {
-		// Non-task state but button pressed
-		sess->accumulatePlayerAction(PlayerActionType::Nontask);
+		sess->accumulatePlayerAction(PlayerActionType::FireCooldown);
 	}
 	else if (shootButtonJustPressed && !weapon->config()->autoFire && weapon->canFire(currentRealTime) && stateCanFire) {
 		// Discrete weapon fires a single shot with normal damage at the current time
@@ -1115,8 +1234,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 			m_refTargetHitSound->play(sessConfig->audio.refTargetHitSoundVol);
 		}
 		destroyedTarget = true;
-		sess->accumulatePlayerAction(PlayerActionType::Nontask, target->name());
-
+		sess->accumulatePlayerAction(PlayerActionType::Destroy, target->name());
 	}
 	else if (target->health() <= 0) {
 		// Position explosion
@@ -1167,7 +1285,7 @@ void FPSciApp::updateTargetColor(const shared_ptr<TargetEntity>& target) {
 	shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
 	END_PROFILER_EVENT();
 	BEGIN_PROFILER_EVENT("updateTargetColor/materialSet");
-	shared_ptr<UniversalMaterial> mat = m_materials[min((int)(target->health() * m_MatTableSize), m_MatTableSize - 1)];
+	shared_ptr<UniversalMaterial> mat = materials[target->id()][min((int)(target->health() * matTableSize), matTableSize - 1)];
 	pose->materialTable.set("core/icosahedron_default", mat);
 	END_PROFILER_EVENT();
 	BEGIN_PROFILER_EVENT("updateTargetColor/setPose");
@@ -1251,10 +1369,12 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		}
 	}
 
-	if (m_lastReticleLoaded != currentUser()->reticleIndex || m_userSettingsWindow->visible()) {
+	if (m_lastReticleLoaded != currentUser()->reticle.index || m_userSettingsWindow->visible()) {
 		// Slider was used to change the reticle
-		setReticle(currentUser()->reticleIndex);
-		m_userSettingsWindow->updateReticlePreview();
+		if (!sessConfig->reticle.indexSpecified) {		// Only allow reticle change if it isn't specified in experiment config
+			setReticle(currentUser()->reticle.index);
+			m_userSettingsWindow->updateReticlePreview();
+		}
 	}
 
 	playerCamera->filmSettings().setSensitivity(sceneBrightness);

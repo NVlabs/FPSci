@@ -81,6 +81,8 @@ The following configuration is universal to all target types.
 * `id` a short string to refer to this target information
 * `respawnCount` is an integer providing the number of respawns to occur. For non-respawning items use `0` or leave unspecified. A value of `-1` creates a target that respawns infinitely (trial ends when ammo or task time runs out).
 * `visualSize` is a vector indicating the minimum ([0]) and maximum ([1]) visual size for the target (in deg)
+* `colors` is an array of 2 colors (max and min health) which are interpolated between based on target damage (note this setting overrides the experiment or session-level [`targetHealthColors`](general_config.md#target-rendering) setting). If unspecified the experiment/session level settings are used.
+* `gloss` is a `Color4` representing glossyness, the first 3 channels are RGB w/ alpha representing minimum reflection (F0). Set all channels to 0 or do not specify to disable glossy reflections (note this setting overrides the experiment or session-level [`targetGloss`](general_config.md#target-rendering) setting). If unspecified the experiment/session level settings are used.
 * `destSpace` the space for which the target is rendered (useful for non-destiantion based targets, "player" or "world")
 * `hitSound` is a filename for the sound to play when the target is hit but not destroyed (for no sound use an empty string).
 * `hitSoundVol` provides the volume (as a float) for the hit sound to be played at (default is `1.0`).
@@ -126,6 +128,7 @@ targets = [
         "id": "simple_target",
         "destSpace" : "player",                 // This is a player-centered-spherical-space target
         "visualSize" : [0.5, 0.5],              // 0.5m size
+        "colors": [Color3(0,1,0), Color3(1,0,0)];   // Green at max health, red at min health
         "respawnCount" : 0,                     // Don't respawn
         "speed": [1.0, 3.0],                    // 1-3m/s speed
         "symmetricEccH" : true;                 // Target will only spawn randomly on any quadrant within specified eccH (between (-)15 to (-)5 or 5 to 15)
@@ -160,10 +163,61 @@ targets = [
             ...
             {"t": 10.2, "xyz": Vector3(10.1, 1.01, -100.3)}
         },
+        modelSpec = ArticulatedModel::Specification{
+            filename = "model/target/sphere.obj";
+        },
     },
     #include("example_target.Any"),             // Example of including an external .Any file
 ],
 ```
+
+#### Target model notes
+
+Target models can get quite large in file size when they're highly detailed. As a result, we only include a handful of different model files with the FPSci repo and binary distributions. We have made a high quality sphere model available that you can [download from google drive here](https://drive.google.com/file/d/1LvJaJUD3k7DR0taZYZ_9Y0PNVQDMdShM/view?usp=sharing). Once you get that file (named `high_poly_sphere.obj`), you can place it in the `data-files/model/target/` directory or the `FPSci/model/target/` directory if using a binary distribution. We recommend scripting the download of this type of file if you are building an automated experiment build on FPSci. These files can then be used by targets as follows:
+
+```
+targets = ( 
+    { 
+        id = "ico"; 
+        destSpace = "player"; 
+        speed = ( 0, 0 ); 
+        visualSize = ( 0.05, 0.05 ); 
+        modelSpec = ArticulatedModel::Specification{
+            filename = "model/target/target.obj";
+        };
+    }, 
+    { 
+        id = "low"; 
+        destSpace = "player"; 
+        speed = ( 0, 0 ); 
+        visualSize = ( 0.05, 0.05 ); 
+        modelSpec = ArticulatedModel::Specification{
+            filename = "model/target/low_poly_sphere.obj";
+        };
+    }, 
+    { 
+        id = "mid"; 
+        destSpace = "player"; 
+        speed = ( 0, 0 ); 
+        visualSize = ( 0.05, 0.05 ); 
+        modelSpec = ArticulatedModel::Specification{
+            filename = "model/target/mid_poly_sphere.obj";
+        };
+    }, 
+    { 
+        // This one only works if you download the file from https://drive.google.com/file/d/1LvJaJUD3k7DR0taZYZ_9Y0PNVQDMdShM/view?usp=sharing
+        id = "high"; 
+        destSpace = "player"; 
+        speed = ( 0, 0 ); 
+        visualSize = ( 0.05, 0.05 ); 
+        modelSpec = ArticulatedModel::Specification{
+            filename = "model/target/high_poly_sphere.obj";
+        };
+    }, 
+);
+```
+
+The above examples are borrowed from the Spheres experiment sample that is provided with FPSci. Feel free to try that out if you want to compare the target shapes in game.
 
 ## Target Paths (Using Destinations)
 The `destinations` array within the target object overrides much of the default motion behavior in the target motion controls. Once a destinations array (including more than 2 destiantions) is specified all other motion parameters are considered unused. Once a `destinations` array is specified only the following fields from the [target configuration](#target-configuration) apply:
