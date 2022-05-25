@@ -440,6 +440,7 @@ void TargetViewConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 			throw "Specified \"healthColors\" doesn't contain at least one Color3!";
 		}
 		reader.getIfPresent("targetGloss", gloss);
+		reader.getIfPresent("targetEmissive", emissive);
 		reader.getIfPresent("targetHealthBarColors", healthBarColors);
 		reader.getIfPresent("showFloatingCombatText", showCombatText);
 		reader.getIfPresent("floatingCombatTextSize", combatTextSize);
@@ -467,6 +468,8 @@ void TargetViewConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 
 Any TargetViewConfig::addToAny(Any a, bool forceAll) const {
 	TargetViewConfig def;
+	if (forceAll || def.gloss != gloss)									a["targetGloss"] = gloss;
+	if (forceAll || def.emissive != emissive)							a["targetEmissive"] = emissive;
 	if (forceAll || def.showHealthBars != showHealthBars)				a["showTargetHealthBars"] = showHealthBars;
 	if (forceAll || def.healthBarSize != healthBarSize)					a["targetHealthBarSize"] = healthBarSize;
 	if (forceAll || def.healthBarOffset != healthBarOffset)				a["targetHealthBarOffset"] = healthBarOffset;
@@ -486,6 +489,7 @@ Any TargetViewConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.showRefTarget != showRefTarget)					a["showRefTarget"] = showRefTarget;
 	if (forceAll || def.refTargetSize != refTargetSize)					a["referenceTargetSize"] = refTargetSize;
 	if (forceAll || def.refTargetColor != refTargetColor)				a["referenceTargetColor"] = refTargetColor;
+	if (forceAll || def.refTargetModelSpec != refTargetModelSpec)		a["referenceTargetModelSpec"] = refTargetModelSpec;
 	if (forceAll || def.clearDecalsWithRef != clearDecalsWithRef)		a["clearMissDecalsWithReference"] = clearDecalsWithRef;
 	if (forceAll || def.previewWithRef != previewWithRef)				a["showPreviewTargetsWithReference"] = previewWithRef;
 	if (forceAll || def.showRefDecals != showRefDecals)					a["showReferenceTargetMissDecals"] = showRefDecals;
