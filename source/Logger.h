@@ -17,7 +17,8 @@ template<typename ItemType> static size_t queueBytes(Array<ItemType>& queue)
 	return queue.size() * sizeof(ItemType);
 }
 
-/** Simple class to log data from trials */
+/** Used to log data from experiments, sessions, trials and users
+	Uses SQLITE database output. */
 class FPSciLogger : public ReferenceCountedObject {
 public:
 	using TargetInfo = RowEntry;
@@ -29,6 +30,11 @@ protected:
 	sqlite3* m_db = nullptr;						///< The db used for logging
 	
 	String m_openTimeStr;							///< Time string for database creation
+
+	// state of current database entries (not yet used)
+	long long int m_sessionRowID;
+	long long int m_userRowID;
+	long long int m_trialRowID;
 
 	const size_t m_bufferLimit = 1024 * 1024;		///< Flush every this many bytes
 	const LoggerConfig& m_config;					/// Logger configuration
@@ -83,26 +89,46 @@ protected:
 	/** Record an array of target locations */
 	void recordTargetLocations(const Array<TargetLocation>& locations);
 
-	/** Create a results file */
-	void openResultsFile(const String& filename, 
+	/** Open a results file, or create it if it doesn't exist */
+	void initResultsFile(const String& filename, 
 		const String& subjectID, 
+		const String& expConfigFilename,
 		const shared_ptr<SessionConfig>& sessConfig, 
 		const String& description);
 
 	/** Close the results file */
 	void closeResultsFile(void);
 
+	// Functions that set up the database schema
+	/** Create a session table with columns as specified by the provided sessionConfig */
+	void createExperimentsTable(const String& expConfigFilename);
+	void createSessionsTable(const shared_ptr<SessionConfig>& sessConfig);
+	void createTargetTypeTable();
+	void createTargetsTable();
+	void createTrialsTable();
+	void createTargetTrajectoryTable();
+	void createPlayerActionTable();
+	void createFrameInfoTable();
+	void createQuestionsTable();
+	void createUsersTable();
+
+	// Functions that assume the schema from above
+	//void insertSession(sessionInfo);
+	//void updateSession(sessionInfo);
+	// ... 
+
 public:
 
-	FPSciLogger(const String& filename, const String& subjectID, const shared_ptr<SessionConfig>& sessConfig, const String& description);
+	FPSciLogger(const String& filename, const String& subjectID, const String& expConfigFilename, const shared_ptr<SessionConfig>& sessConfig, const String& description);
 	virtual ~FPSciLogger();
 	
 	static shared_ptr<FPSciLogger> create(const String& filename, 
 		const String& subjectID, 
+		const String& expConfigFilename,
 		const shared_ptr<SessionConfig>& sessConfig,
 		const String& description="None") 
 	{
-		return createShared<FPSciLogger>(filename, subjectID, sessConfig, description);
+		return createShared<FPSciLogger>(filename, subjectID, expConfigFilename, sessConfig, description);
 	}
 
 	void updateSessionEntry(bool complete, int trialCount);

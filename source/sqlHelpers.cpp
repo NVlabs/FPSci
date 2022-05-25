@@ -1,20 +1,21 @@
 #include "sqlHelpers.h"
 
 
-bool createTableInDB(sqlite3* db, String tableName, Array<Array<String>> columns) {
-	// Do not use this command for the trialData table, that one is special!
-	String createTableC = "CREATE TABLE IF NOT EXISTS " + tableName + " ( ";
+bool createTableInDB(sqlite3* db, const String tableName, const Array<Array<String>>& columns) {
+	// This method builds up a query with the format "CREATE TABLE IF NOT EXISTS {tableName} ({column name} {column type} {column modifiers}, ...);
+	// Columns is passed in using the order {column name, column type, column modifiers} for each entry in the Array
 
-	for (int i = 0; i < columns.size(); i++)
-	{
-		for (String val : columns[i]) {
-			createTableC += val + " ";
+	String createTableC = "CREATE TABLE IF NOT EXISTS " + tableName + " ( ";
+	for (int i = 0; i < columns.size(); i++) {
+		for (int j = 0; j < columns[i].length(); j++) {
+			String val = columns[i][j];
+			createTableC += (j == 0 ? val : toUpper(val)) + " ";
 		}
 		if (i < columns.size() - 1) {
-			createTableC +=  ",";
+			createTableC +=  ",";			// Add comma to finish column
 		}
 		else {
-			createTableC += ");";
+			createTableC += ");";			// Add close parens to finish query
 		}
 	}
 	logPrintf("Creating table %s w/ SQL query:%s\n\n", tableName.c_str(), createTableC.c_str());
@@ -26,7 +27,7 @@ bool createTableInDB(sqlite3* db, String tableName, Array<Array<String>> columns
 	return ret == SQLITE_OK;
 }
 
-bool insertRowIntoDB(sqlite3* db, String tableName, Array<String> values, String colNames) {
+bool insertRowIntoDB(sqlite3* db, const String tableName, const Array<String>& values, const String colNames) {
 	if (values.length() == 0) {
 		logPrintf("Warning insert row with empty values ignored!\n");
 		return false;	// Don't attempt to insert for empty values
@@ -48,7 +49,7 @@ bool insertRowIntoDB(sqlite3* db, String tableName, Array<String> values, String
 	return ret == SQLITE_OK;
 }
 
-bool insertRowsIntoDB(sqlite3* db, String tableName, Array<Array<String>> value_vector, String colNames) {
+bool insertRowsIntoDB(sqlite3* db, const String tableName, const Array<Array<String>>& value_vector, const String colNames) {
 	if (value_vector.length() == 0) {
 		logPrintf("Warning insert rows with empty row value array ignored!\n");
 		return false;		// Don't insert for empty value vector (creates an error)

@@ -765,7 +765,7 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (m_userSettingsWindow->sessionsForSelectedUser() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
 	}
-	else {
+	else if(sessConfig->logger.enable) {
 		logPrintf("Created results file: %s.db\n", logPath.c_str());
 	}
 

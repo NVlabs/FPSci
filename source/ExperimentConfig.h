@@ -16,7 +16,7 @@ public:
 	ExperimentConfig(const Any& any);
 
 	void init();
-	static ExperimentConfig load(const String& filename, bool saveJSON);	// Get the experiment config from file
+	static ExperimentConfig load(const String& filename, bool saveJSON = false); // Get the experiment config from file
 	Any toAny(const bool forceAll = false) const;
 
 	void getSessionIds(Array<String>& ids) const;								// Get an array of session IDs
