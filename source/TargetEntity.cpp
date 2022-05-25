@@ -75,6 +75,7 @@ TargetConfig::TargetConfig(const Any& any) {
 		reader.getIfPresent("destroyedSound", destroyedSound);
 		reader.getIfPresent("destroyedSoundVol", destroyedSoundVol);
 		reader.getIfPresent("colors", colors);
+		reader.getIfPresent("emissive", emissive);
 		hasGloss = reader.getIfPresent("gloss", gloss);
 
 		break;
