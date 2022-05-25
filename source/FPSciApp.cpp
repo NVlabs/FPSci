@@ -617,7 +617,7 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (!id.empty() && ids.contains(id)) {
 		// Load the session config specified by the id
 		sessConfig = experimentConfig.getSessionConfigById(id);
-		logPrintf("User selected session: %s. Updating now...\n", id);
+		logPrintf("User selected session: %s. Updating now...\n", id.c_str());
 		m_userSettingsWindow->setSelectedSession(id);
 		// Create the session based on the loaded config
 		sess = Session::create(this, sessConfig);
