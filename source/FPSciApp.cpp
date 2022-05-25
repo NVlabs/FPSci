@@ -617,7 +617,7 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (!id.empty() && ids.contains(id)) {
 		// Load the session config specified by the id
 		sessConfig = experimentConfig.getSessionConfigById(id);
-		logPrintf("User selected session: %s. Updating now...\n", id);
+		logPrintf("User selected session: %s. Updating now...\n", id.c_str());
 		m_userSettingsWindow->setSelectedSession(id);
 		// Create the session based on the loaded config
 		sess = Session::create(this, sessConfig);
@@ -722,9 +722,13 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		FileSystem::createDirectory(resultsDirPath);
 	}
 
-	const String logName = sessConfig->logger.logToSingleDb ? 
-		resultsDirPath + experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
-		resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+	// Create and check log file name
+	const String logFileBasename = sessConfig->logger.logToSingleDb ? 
+		experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
+		id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+	const String logFilename = FilePath::makeLegalFilename(logFileBasename);
+	// This is the specified path and log basename with illegal characters replaced, but not suffix (.db)
+	const String logPath = resultsDirPath + logFilename;
 
 	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
@@ -738,18 +742,18 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 			m_pyLogger->mergeLogToDb();
 		}
 		// Run a new logger if we need to (include the mode to run in here...)
-		m_pyLogger->run(logName, sessConfig->clickToPhoton.mode);
+		m_pyLogger->run(logPath, sessConfig->clickToPhoton.mode);
 	}
 
 	// Initialize the experiment (this creates the results file)
-	sess->onInit(logName+".db", experimentConfig.description + "/" + sessConfig->description);
+	sess->onInit(logPath, experimentConfig.description + "/" + sessConfig->description);
 
 	// Don't create a results file for a user w/ no sessions left
 	if (m_userSettingsWindow->sessionsForSelectedUser() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
 	}
 	else {
-		logPrintf("Created results file: %s.db\n", logName.c_str());
+		logPrintf("Created results file: %s.db\n", logPath.c_str());
 	}
 
 	if (m_firstSession) {
