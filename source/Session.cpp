@@ -505,7 +505,6 @@ void Session::updatePresentationState()
         
 				// Save current user config and status
 				m_app->saveUserConfig(true);											
-				m_app->saveUserStatus();
         
 				closeSessionProcesses();					// Close the process we started at session start (if there is one)
 				runSessionCommands("end");					// Launch processes for the end of the session
