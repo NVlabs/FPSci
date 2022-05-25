@@ -17,9 +17,14 @@ public:
 	int		displayYRes;		///< The vertical size of the display in pixels
 	int		displayXSize;		///< The horizontal size of the display in mm
 	int		displayYSize;		///< The vertical size of the display in mm
+	Array<String> usbDevices;	///< Array of USB devices (VID, PID, and interpreted names)
 
 	static SystemInfo get(void);						// Get the system info using (windows) calls
 
 	Any toAny(const bool forceAll = true) const;
 	void printToLog();
+
+protected:
+	static int getUSBInfo(Array<String>& VIDs, Array<String>& PIDs);
+	static bool loadVIDPIDTable(const String& filename, Any::AnyTable& table);
 };

@@ -11,6 +11,7 @@ using Columns = Array<Array<String>>;
 struct TargetLocation;
 struct PlayerAction;
 struct FrameInfo;
+class SystemInfo;
 
 template<typename ItemType> static size_t queueBytes(Array<ItemType>& queue)
 {
@@ -111,6 +112,7 @@ protected:
 	void createFrameInfoTable();
 	void createQuestionsTable();
 	void createUsersTable();
+	void createSystemInfoTable();
 
 	// Functions that assume the schema from above
 	//void insertSession(sessionInfo);
@@ -142,6 +144,7 @@ public:
 
 	void logUserConfig(const UserConfig& userConfig, const String& sessId, const Vector2& sessTurnScale);
 	void logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets);
+	void logSystemInfo(const String& sessID, const SystemInfo& info);
 
 	/** Wakes up the logging thread and flushes even if the buffer limit is not reached yet. */
 	void flush(bool blockUntilDone);

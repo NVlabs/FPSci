@@ -653,6 +653,7 @@ These flags control whether various information is written to the output databas
 |`logPlayerActions`                 |`bool` | Enable/disable for logging player position, aim , and actions to database (per frame) |
 |`logTrialResponse`                 |`bool` | Enable/disable for logging trial responses to database (per trial)    |
 |`logUsers`                         |`bool` | Enable/disable for logging users to database (per session)            |
+|`logSystemInfo`                    |`bool` | Enable/disable for logging system (hardware) information to database (per session) |
 |`logOnChange`                      |`bool` | Enable/disable for logging values to the `Player_Action` and `Target_Trajectory` tables only when changes occur    |
 |`logToSingleDb`                    |`bool` | Enable/disable for logging to a unified output database file (named using the experiment description and user ID)  |
 |`sessionParametersToLog`           |`Array<String>`| A list of other config parameters (by name) that are logged on a per-session basis to the `Sessions` table |
@@ -664,6 +665,7 @@ These flags control whether various information is written to the output databas
 "logPlayerActions" = true,              // Log player actions (view direction, position, state, event, target)
 "logTrialResponse" = true,              // Log trial results to the Trials table
 "logUsers" = true,                      // Log the users to the Users table
+"logSystemInfo" = true,                 // Log the system information (USB VID/PID)
 "logOnChange" = false,                  // Log every frame (do not log only on change)
 "logToSingleDb" = true,                 // Log all sessions affiliated with a given experiment to the same database file
 "sessionParametersToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table

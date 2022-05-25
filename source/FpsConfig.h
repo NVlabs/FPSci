@@ -275,8 +275,8 @@ public:
 	bool logTrialResponse = true;		///< Log trial response in table?
 	bool logUsers = true;				///< Log user information in table?
 	bool logOnChange = false;			///< Only log to Player_Action/Target_Trajectory table when the player/target position/orientation changes
-
-	bool logToSingleDb = true;			///< Log all results to a single db file?
+	bool logToSingleDb = true;		///< Log all results to a single db file?
+	bool logSystemInfo = true;		///< Log system information to the results database
 
 	// Session parameter logging
 	Array<String> sessParamsToLog = { "frameRate", "frameDelay" };			///< Parameter names to log to the Sessions table of the DB

@@ -1,4 +1,5 @@
 #include "Logger.h"
+#include "SystemInfo.h"
 #include "Session.h"
 #include "FPSciApp.h"
 
@@ -62,6 +63,7 @@ void FPSciLogger::initResultsFile(const String& filename,
 		createFrameInfoTable();
 		createQuestionsTable();
 		createUsersTable();
+		createSystemInfoTable();
 	}
 
 	// Add the session info to the sessions table
@@ -420,6 +422,33 @@ void FPSciLogger::logUserConfig(const UserConfig& user, const String& sessId, co
 		String(std::to_string(sensitivity.y))
 	};
 	m_users.append(row);
+}
+
+void FPSciLogger::createSystemInfoTable() {
+	const Columns systemInfoColumns = {
+		{"time", "text"},
+		{"session_id", "text"},
+		{"parameter", "text"},
+		{"value", "text"}
+	};
+	createTableInDB(m_db, "System_Info", systemInfoColumns);
+}
+
+void FPSciLogger::logSystemInfo(const String& sessID, const SystemInfo& info) {
+	String time = genUniqueTimestamp();		// Produce a single unique timestamp for this entry
+	Any::AnyTable infoTable = info.toAny().table();
+	Array<RowEntry> rows;
+	// Iterate through entries writing to log
+	for (String paramName : infoTable.getKeys()) {
+		Array<String> row = {
+			"'" + time + "'",
+			"'" + sessID + "'",
+			"'" + paramName + "'",
+			"'" + infoTable[paramName].unparse() + "'"
+		};
+		rows.append(row);
+	}
+	insertRowsIntoDB(m_db, "System_Info", rows);
 }
 
 void FPSciLogger::loggerThreadEntry()
