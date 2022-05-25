@@ -726,7 +726,8 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	const String logFileBasename = sessConfig->logger.logToSingleDb ? 
 		experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
 		id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
-	const String logFilename = FilePath::makeLegalFilename(logFileBasename + ".db");
+	const String logFilename = FilePath::makeLegalFilename(logFileBasename);
+	// This is the specified path and log basename with illegal characters replaced, but not suffix (.db)
 	const String logPath = resultsDirPath + logFilename;
 
 	if (systemConfig.hasLogger) {
@@ -745,7 +746,7 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	}
 
 	// Initialize the experiment (this creates the results file)
-	sess->onInit(logPath +".db", experimentConfig.description + "/" + sessConfig->description);
+	sess->onInit(logPath, experimentConfig.description + "/" + sessConfig->description);
 
 	// Don't create a results file for a user w/ no sessions left
 	if (m_userSettingsWindow->sessionsForSelectedUser() == 0) {
