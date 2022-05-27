@@ -868,6 +868,8 @@ TEST_F(FPSciTests, TestFreshStart) {
 	EXPECT_TRUE(failDelete) << "User Config present from previous run!";
 	failDelete = remove("test/emptystatus.Any");
 	EXPECT_TRUE(failDelete) << "User Status present from previous run!";
+	failDelete = remove("test/emptystatus.sessions.csv");
+	EXPECT_TRUE(failDelete) << "User Status sessions present from previous run!";
 	failDelete = remove("test/emptykeymap.Any");
 	EXPECT_TRUE(failDelete) << "Keymap present from previous run!";
 	failDelete = remove("test/emptysystem.Any");
@@ -892,4 +894,19 @@ TEST_F(FPSciTests, TestFreshStart) {
 	EXPECT_FALSE(failDelete) << "Keymap not generated!";
 	failDelete = remove("test/emptysystem.Any");
 	EXPECT_FALSE(failDelete) << "System Config not generated!";
+
+	// The sessions csv doesn't generate until some progress happens. 
+	// We switch experiments here to force that to happen.
+	// Load `testExperiment` (at index 0)
+	s_app->experimentIdx = 0;
+	EXPECT_NO_THROW(
+		s_app->initExperiment();
+	) << "Failed to initialize with test config";
+	// Run one frame (to make sure there's no crash)
+	EXPECT_NO_FATAL_FAILURE(
+		s_app->oneFrame();
+	) << "Failed to run one frame with test config";
+	// Delete the sessions csv
+	failDelete = remove("test/emptystatus.sessions.csv");
+	EXPECT_FALSE(failDelete) << "User Status sessions csv not generated!";
 }
