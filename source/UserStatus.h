@@ -1,12 +1,13 @@
 #pragma once
 #include <G3D/G3D.h>
+#include <fstream>
 
 /** Class for handling user status */
 class UserSessionStatus {
 public:
 	String					id = "anon";					///< User ID
 	Array<String>			sessionOrder;					///< Array containing session ordering
-	Array<String>			completedSessions;				///< Array containing all completed session ids for this user
+	Array<String>			completedSessions;				///< Array containing all completed session ids for this user (loaded from log)
 	static Array<String>	defaultSessionOrder;			///< Default session order
 	static bool				randomizeDefaults;				///< Randomize default session order when applying to individual?
 
@@ -24,6 +25,10 @@ public:
 	String currentUser;									///< Currently selected user
 	Array<String> defaultSessionOrder = {};				///< Default session ordering (for all unspecified users)
 	Array<UserSessionStatus> userInfo = {};				///< Array of user status
+	Table<String, Array<String>> completed;
+
+	String completedLogFilename;						///< File containing completed sessions
+	std::ofstream completedLog;
 
 	UserStatusTable() {}
 	UserStatusTable(const Any& any);
@@ -31,7 +36,9 @@ public:
 	static UserStatusTable load(const String& filename, bool saveJSON);
 	Any toAny(const bool forceAll = false) const;
 
-	inline void save(const String& filename, bool json) { toAny().save(filename, json); }
+	inline void save(const String& filename, bool json) {
+		toAny().save(filename, json);
+	};
 
 	shared_ptr<UserSessionStatus> getUserStatus(const String& id);			// Get a given user's status from the table by ID
 	String getNextSession(String userId = "");								// Get the next session ID for a given user (by ID)

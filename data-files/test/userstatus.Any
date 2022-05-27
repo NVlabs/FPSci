@@ -4,12 +4,10 @@
     settingsVersion = 1; 
     users = ( 
         { 
-            completedSessions = ( ); 
             id = "TestUser"; 
             sessions = ( "main", "sizes"); 
         }, 
         { 
-            completedSessions = ( ); 
             id = "anon"; 
             sessions = ( "main", "sizes", "defaultCamera", "customCamera", "60HzContinuous", "30HzContinuous"); 
         } ); 

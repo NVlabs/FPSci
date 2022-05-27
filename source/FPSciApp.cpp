@@ -508,7 +508,6 @@ void FPSciApp::markSessComplete(String sessId) {
 	}
 	// Add the session id to completed session array and save the user status table
 	userStatusTable.addCompletedSession(userStatusTable.currentUser, sessId);
-	saveUserStatus();
 	logPrintf("Marked session: %s complete for user %s.\n", sessId, userStatusTable.currentUser);
 
 	// Update the session drop-down to remove this session
