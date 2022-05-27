@@ -196,6 +196,8 @@ public:
 			}
 			m_hitSound = soundTable[hitSoundFilename];
 			m_hitSoundVol = hitSoundVol;
+			// Play with volume 0 to pre-load
+			m_hitSound->play(0.f);
 		}
 	}
 
@@ -208,6 +210,8 @@ public:
 			}
 			m_destroyedSound = soundTable[destroyedSoundFilename];
 			m_destroyedSoundVol = destroyedSoundVol;
+			// Play with volume 0 to pre-load
+			m_destroyedSound->play(0.f);
 		}
 	}
 

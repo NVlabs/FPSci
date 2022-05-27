@@ -711,9 +711,13 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	weapon->loadSounds();
 	if (!sessConfig->audio.sceneHitSound.empty()) {
 		m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
+		// Play silently to pre-load the sound
+		m_sceneHitSound->play(0.f);
 	}
 	if (!sessConfig->audio.refTargetHitSound.empty()) {
 		m_refTargetHitSound = Sound::create(System::findDataFile(sessConfig->audio.refTargetHitSound));
+		// Play silently to pre-load the sound
+		m_refTargetHitSound->play(0.f);
 	}
 
 	// Load static HUD textures
