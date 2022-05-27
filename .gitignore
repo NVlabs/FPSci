@@ -2,22 +2,22 @@
 .vscode
 .vs
 # Don't check in any compiled results
-vs/Build
-vs/packages
+/vs/Build
+/vs/packages
 # Avoid .pyc files (everywhere)
 *.pyc
 # Don't check-in any of these data-files
-data-files/debugging_db.db
-data-files/g3d-license.txt
-data-files/log.txt
-data-files/*.db
-data-files/*.csv
-data-files/*.pdn
-data-files/*.Any
-data-files/*.jpg
+/data-files/debugging_db.db
+/data-files/g3d-license.txt
+/data-files/log.txt
+/data-files/*.db
+/data-files/*.csv
+/data-files/*.pdn
+/data-files/*.Any
+/data-files/*.jpg
 *.mp4
 # Test generated files
-data-files/test/userconfig.Any
+/data-files/test/userconfig.Any
 # Don't check in any results
 "scripts/event logger/software/Logs"
 results/
@@ -35,6 +35,9 @@ results/
 !/data-files/scene/Test_Cornell_Box.Scene.Any
 # FPSci provided audio
 !/data-files/sound/fpsci_*
+# Ignore sample and test status
+/data-files/samples/*.csv
+/data-files/test/*.csv
 # This stuff ignores any packaged outputs
 *.zip
 *.tar
