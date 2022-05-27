@@ -1,7 +1,9 @@
 # Introduction
 The user status file tracks all user infomration specific to a given experiment (unlike the [userconfig.Any](./userConfigReadme.md) file which tracks experiment-indepdent user settings). 
 
-The user status is the primary mechanism by which sessions are ordered and progress is tracked in `FirstPersonScience`. Similarly to the [`userconfig.Any`](./userConfigReadme.md) this file controls per-user actions using a user table and also records completed sessions so that the application can track user progress over multiple runtimes.
+The user status is the primary mechanism by which sessions are ordered and progress is tracked in `FirstPersonScience`. Similarly to the [`userconfig.Any`](./userConfigReadme.md) this file controls per-user session ordering using a user table.
+
+A second file records completed sessions to track user progress over multiple restarts. This second file name can be specified inside the user status, otherwise it'll use the same basename as the user status and append `.sessions.csv`. To restart an experiment, or reset progress, delete, move, or rename that file.
 
 ## File Location
 The `userstatus.Any` file is located in the [`data-files` directory](../data-files) at the root of the project. If no `userstatus.Any` file is present at startup the application writes a set of default values to `userstatus.Any`. The default user name in this file is `anon` and the sessions assigned to this user refer to the default values for `experimentconfig.Any` to make the solution work as-is without any config files present.
@@ -30,6 +32,6 @@ users = (
 );
 ```
 
-Once all the items from the `sessions` list are present in the `completedSessions` list the experiment is considered "done" for this user. At this point, if a user wants to re-run the experiment they need to open the `userstatus.Any` file and delete all items from their `completedSessions` list. Alternatively if new trials will be run for all users a new copy of the file (w/ empty `completedSessions` lists for all users) can be copy-pasted over the full one.
+Once all the items from the `sessions` list are present in the completed sessions list (which is saved to the `completedLogFilename` file) the experiment is considered "done" for this user. At this point, if a user wants to re-run the experiment they need to reset by deleting the file whose name matches the `completedLogFilename` or the user status basename plus `.sessions.csv`. Note that by deleting the `.sessions.csv` file, all users' progress will be reset. Alternatively a single user can be reset by removing all lines with that user's name in the `.sessions.csv` or file using the `completedLogFilename`.
 
-If the `sequence` flag is set to `true` then repeated sessions may appear in the `sessions` array as these will be strictly ordered. In addition when `sequence = true` the `completedSession` array is expected to match the `sessions` array item-for-item (as ordered). If this is not the case the application may not behave as intended. For this reason it is a good idea to make sure the `completeSessions` arrays are emptied following any change to the `sessions` arrays within `userstatus.Any`.
+If the `sequence` flag is set to `true` then repeated sessions may appear in the `sessions` array as these will be strictly ordered. In addition when `sequence = true` the completed sessions array is expected to match the `sessions` array item-for-item (as ordered). If this is not the case the application may not behave as intended. For this reason it is a good idea to make sure remove all entries for a given user following any change to the `sessions` arrays within `userstatus.Any`.

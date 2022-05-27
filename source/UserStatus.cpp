@@ -2,27 +2,16 @@
 #include "FPSciAnyTableReader.h"
 
 UserSessionStatus::UserSessionStatus(const Any& any) {
-	int settingsVersion = 1; // used to allow different version numbers to be loaded differently
 	FPSciAnyTableReader reader(any);
-	reader.getIfPresent("settingsVersion", settingsVersion);
 
-	switch (settingsVersion) {
-	case 1:
-		// Require a user ID
-		reader.get("id", id, "All user status fields must include the user ID!");
-		// Setup default session order, then overwrite if specified	
-		sessionOrder = defaultSessionOrder;
-		if (randomizeDefaults) sessionOrder.randomize();
-		reader.getIfPresent("sessions", sessionOrder);			// Override the default session order if one is provided for this user
-		if (sessionOrder.length() == 0) {						// Check for sessions in list
-			throw format("Must provide \"sessions\" array (or default) for User ID:\"%s\" in user status!", id);
-		}
-		// Get the completed sessions array
-		reader.getIfPresent("completedSessions", completedSessions);
-		break;
-	default:
-		debugPrintf("Settings version '%d' not recognized in UserSessionStatus.\n", settingsVersion);
-		break;
+	// Require a user ID
+	reader.get("id", id, "All user status fields must include the user ID!");
+	// Setup default session order, then overwrite if specified	
+	sessionOrder = defaultSessionOrder;
+	if (randomizeDefaults) sessionOrder.randomize();
+	reader.getIfPresent("sessions", sessionOrder);			// Override the default session order if one is provided for this user
+	if (sessionOrder.length() == 0) {						// Check for sessions in list
+		throw format("Must provide \"sessions\" array (or default) for User ID:\"%s\" in user status!", id);
 	}
 }
 
@@ -34,25 +23,16 @@ Any UserSessionStatus::toAny(const bool forceAll) const {
 }
 
 UserStatusTable::UserStatusTable(const Any& any) {
-	int settingsVersion = 1; // used to allow different version numbers to be loaded differently
 	FPSciAnyTableReader reader(any);
-	reader.getIfPresent("settingsVersion", settingsVersion);
 
-	switch (settingsVersion) {
-	case 1:
-		reader.getIfPresent("currentUser", currentUser);
-		reader.getIfPresent("allowRepeat", allowRepeat);
-		reader.getIfPresent("sessions", defaultSessionOrder);
-		UserSessionStatus::defaultSessionOrder = defaultSessionOrder;				// Set the default order here
-		reader.getIfPresent("randomizeSessionOrder", randomizeDefaults);
-		UserSessionStatus::randomizeDefaults = randomizeDefaults;					// Set whether default session order is randomized
-		reader.get("users", userInfo, "Issue in the (required) \"users\" array from the user status file!");
-		reader.getIfPresent("completedLogFilename", completedLogFilename);
-		break;
-	default:
-		debugPrintf("Settings version '%d' not recognized in UserStatus.\n", settingsVersion);
-		break;
-	}
+	reader.getIfPresent("currentUser", currentUser);
+	reader.getIfPresent("allowRepeat", allowRepeat);
+	reader.getIfPresent("sessions", defaultSessionOrder);
+	UserSessionStatus::defaultSessionOrder = defaultSessionOrder;				// Set the default order here
+	reader.getIfPresent("randomizeSessionOrder", randomizeDefaults);
+	UserSessionStatus::randomizeDefaults = randomizeDefaults;					// Set whether default session order is randomized
+	reader.get("users", userInfo, "Issue in the (required) \"users\" array from the user status file!");
+	reader.getIfPresent("completedLogFilename", completedLogFilename);
 }
 
 UserStatusTable UserStatusTable::load(const String& filename, bool saveJSON) {
