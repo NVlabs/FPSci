@@ -273,31 +273,44 @@ Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetCo
 	Array<shared_ptr<UniversalMaterial>> targetMaterials;
 	for (int i = 0; i < matTableSize; i++) {
 		float complete = (float)i / (matTableSize-1);
-		Color3 color;
+		
+		Color4 color;
 		if (notNull(tconfig) && tconfig->colors.length() > 0) {
 			color = lerpColor(tconfig->colors, complete);
 		}
 		else {
-			color = lerpColor(experimentConfig.targetView.healthColors, complete);
+			color = lerpColor(sessConfig->targetView.healthColors, complete);
 		}
+		
 		Color4 gloss;
 		if (notNull(tconfig) && tconfig->hasGloss) {
 			gloss = tconfig->gloss;
 		}
 		else {
-			gloss = experimentConfig.targetView.gloss;
+			gloss = sessConfig->targetView.gloss;
+		}
+
+		Color4 emissive;
+		if (notNull(tconfig) && tconfig->emissive.length() > 0) {
+			emissive = lerpColor(tconfig->emissive, complete);
+		}
+		else if(sessConfig->targetView.emissive.length() > 0) {
+			emissive = lerpColor(sessConfig->targetView.emissive, complete);
+		}
+		else {
+			emissive = color * 0.7f;	// Historical behavior fallback for unspecified case
 		}
 
 		UniversalMaterial::Specification materialSpecification;
 		materialSpecification.setLambertian(Texture::Specification(color));
-		materialSpecification.setEmissive(Texture::Specification(color * 0.7f));
+		materialSpecification.setEmissive(Texture::Specification(emissive));
 		materialSpecification.setGlossy(Texture::Specification(gloss));					// Used to be Color4(0.4f, 0.2f, 0.1f, 0.8f)
 		targetMaterials.append(UniversalMaterial::create(materialSpecification));
 	}
 	return targetMaterials;
 }
 
-Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
+Color4 FPSciApp::lerpColor(Array<Color4> colors, float a) {
 	if (colors.length() == 0) {
 		throw "Cannot interpolate from colors array with length 0!";
 	}
@@ -323,7 +336,7 @@ Color3 FPSciApp::lerpColor(Array<Color3> colors, float a) {
 		float interp = (1.0f - a) * (colors.length() - 1);
 		int idx = int(floor(interp));
 		interp = interp - float(idx);
-		Color3 output = colors[idx] * (1.0f - interp) + colors[idx + 1] * interp;
+		Color4 output = colors[idx] * (1.0f - interp) + colors[idx + 1] * interp;
 		return output;
 	}
 }
@@ -616,7 +629,7 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (!id.empty() && ids.contains(id)) {
 		// Load the session config specified by the id
 		sessConfig = experimentConfig.getSessionConfigById(id);
-		logPrintf("User selected session: %s. Updating now...\n", id);
+		logPrintf("User selected session: %s. Updating now...\n", id.c_str());
 		m_userSettingsWindow->setSelectedSession(id);
 		// Create the session based on the loaded config
 		sess = Session::create(this, sessConfig);
@@ -721,9 +734,13 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		FileSystem::createDirectory(resultsDirPath);
 	}
 
-	const String logName = sessConfig->logger.logToSingleDb ? 
-		resultsDirPath + experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
-		resultsDirPath + id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+	// Create and check log file name
+	const String logFileBasename = sessConfig->logger.logToSingleDb ? 
+		experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
+		id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
+	const String logFilename = FilePath::makeLegalFilename(logFileBasename);
+	// This is the specified path and log basename with illegal characters replaced, but not suffix (.db)
+	const String logPath = resultsDirPath + logFilename;
 
 	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
@@ -737,18 +754,18 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 			m_pyLogger->mergeLogToDb();
 		}
 		// Run a new logger if we need to (include the mode to run in here...)
-		m_pyLogger->run(logName, sessConfig->clickToPhoton.mode);
+		m_pyLogger->run(logPath, sessConfig->clickToPhoton.mode);
 	}
 
 	// Initialize the experiment (this creates the results file)
-	sess->onInit(logName+".db", experimentConfig.description + "/" + sessConfig->description);
+	sess->onInit(logPath, experimentConfig.description + "/" + sessConfig->description);
 
 	// Don't create a results file for a user w/ no sessions left
 	if (m_userSettingsWindow->sessionsForSelectedUser() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
 	}
-	else {
-		logPrintf("Created results file: %s.db\n", logName.c_str());
+	else if(sessConfig->logger.enable) {
+		logPrintf("Created results file: %s.db\n", logPath.c_str());
 	}
 
 	if (m_firstSession) {

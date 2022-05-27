@@ -440,6 +440,7 @@ void TargetViewConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 			throw "Specified \"healthColors\" doesn't contain at least one Color3!";
 		}
 		reader.getIfPresent("targetGloss", gloss);
+		reader.getIfPresent("targetEmissive", emissive);
 		reader.getIfPresent("targetHealthBarColors", healthBarColors);
 		reader.getIfPresent("showFloatingCombatText", showCombatText);
 		reader.getIfPresent("floatingCombatTextSize", combatTextSize);
@@ -467,6 +468,8 @@ void TargetViewConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 
 Any TargetViewConfig::addToAny(Any a, bool forceAll) const {
 	TargetViewConfig def;
+	if (forceAll || def.gloss != gloss)									a["targetGloss"] = gloss;
+	if (forceAll || def.emissive != emissive)							a["targetEmissive"] = emissive;
 	if (forceAll || def.showHealthBars != showHealthBars)				a["showTargetHealthBars"] = showHealthBars;
 	if (forceAll || def.healthBarSize != healthBarSize)					a["targetHealthBarSize"] = healthBarSize;
 	if (forceAll || def.healthBarOffset != healthBarOffset)				a["targetHealthBarOffset"] = healthBarOffset;
@@ -486,6 +489,7 @@ Any TargetViewConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.showRefTarget != showRefTarget)					a["showRefTarget"] = showRefTarget;
 	if (forceAll || def.refTargetSize != refTargetSize)					a["referenceTargetSize"] = refTargetSize;
 	if (forceAll || def.refTargetColor != refTargetColor)				a["referenceTargetColor"] = refTargetColor;
+	if (forceAll || def.refTargetModelSpec != refTargetModelSpec)		a["referenceTargetModelSpec"] = refTargetModelSpec;
 	if (forceAll || def.clearDecalsWithRef != clearDecalsWithRef)		a["clearMissDecalsWithReference"] = clearDecalsWithRef;
 	if (forceAll || def.previewWithRef != previewWithRef)				a["showPreviewTargetsWithReference"] = previewWithRef;
 	if (forceAll || def.showRefDecals != showRefDecals)					a["showReferenceTargetMissDecals"] = showRefDecals;
@@ -673,4 +677,58 @@ Question::Question(const Any& any) {
 		debugPrintf("Settings version '%d' not recognized in Question.\n", settingsVersion);
 		break;
 	}
+}
+
+Any Question::toAny(const bool forceAll) const {
+	Any a(Any::TABLE);
+	Question def;
+
+	// Type serialization
+	String typeStr;
+	switch (type) {
+	case MultipleChoice:
+		typeStr = "MultipleChoice";
+		break;
+	case Entry:
+		typeStr = "Entry";
+		break;
+	case Rating:
+		typeStr = "Rating";
+		break;
+	case DropDown:
+		typeStr = "DropDown";
+		break;
+	default:
+		typeStr = "None";
+		break;
+	}
+
+	if (forceAll || def.type != type) a["type"] = typeStr;
+	if (forceAll || def.prompt != prompt) a["prompt"] = prompt;
+	if (forceAll || def.title != title)	a["title"] = title;
+	if (forceAll || def.fullscreen != fullscreen) a["fullscreen"] = fullscreen;
+	if (forceAll || def.showCursor != showCursor) a["showCursor"] = showCursor;
+	if (forceAll || def.optionsPerRow != optionsPerRow) a["optionsPerRow"] = optionsPerRow;
+
+	// Default is different for multiple choice here
+	if (forceAll || (type == MultipleChoice && !randomOrder) || (type != MultipleChoice && randomOrder)) a["randomOrder"] = randomOrder;
+
+	if (type != Entry) {
+		a["options"] = options;
+	}
+	if (type == Rating || type == MultipleChoice) {
+		a["optionKeys"] = optionKeys;
+	}
+
+	// Font sizing
+	if (forceAll || (promptFontSize == optionFontSize && optionFontSize == buttonFontSize && buttonFontSize != def.buttonFontSize)) {
+		a["fontSize"] = promptFontSize;
+	}
+	else {
+		if (forceAll || def.promptFontSize != promptFontSize) a["promptFontSize"] = promptFontSize;
+		if (forceAll || def.optionFontSize != optionFontSize) a["optionFontSize"] = optionFontSize;
+		if (forceAll || def.buttonFontSize != buttonFontSize) a["buttonFontSize"] = buttonFontSize;
+	}
+
+	return a;
 }

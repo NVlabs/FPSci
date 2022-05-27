@@ -81,9 +81,10 @@ public:
 	float           destroyedSoundVol = 1.0f;
 
 	// Target color based on health
-	Array<Color3>   colors;									///< Target start/end color (based on target health)
+	Array<Color4>   colors;									///< Target start/end color (based on target health)
 	Color4			gloss;									///< Target gloss (alpha is F0, see docs)
 	bool			hasGloss = false;						///< Target has gloss specified
+	Array<Color4>	emissive;								///< Target start/end emissive color (similar to colors above)
 
 	Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 		filename = "model/target/low_poly_sphere.obj";
