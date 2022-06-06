@@ -29,6 +29,7 @@ public:
 /** Configure how the application should start */
 class StartupConfig {
 public:
+	bool	serverMode = false;									///< Sets whether the app is run in server mode (no display and opens network for connections)
 	bool	developerMode = false;								///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
 	bool	waypointEditorMode = false;							///< Sets whether the app is run w/ the waypoint editor available
 	bool	fullscreen = true;									///< Whether the app runs in windowed mode
