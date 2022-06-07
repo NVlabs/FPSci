@@ -98,6 +98,7 @@ void FPSciApp::openUserSettingsWindow() {
 
 /** Handle the user settings window visibility */
 void FPSciApp::closeUserSettingsWindow() {
+	if (sessConfig->menu.requireUserAdd && !userAdded) return;		// Don't close if a user hasn't bee
 	if (sessConfig->menu.allowUserSettingsSave) {		// If the user could have saved their settings
 		saveUserConfig(true);							// Save the user config (if it has changed) whenever this window is closed
 	}
@@ -428,7 +429,8 @@ void FPSciApp::makeGUI() {
 
 	// Add the control panes here
 	updateControls();
-	m_showUserMenu = experimentConfig.menu.showMenuOnStartup;
+	// If we require a new user show the menu on startup regardless of configuration
+	m_showUserMenu = experimentConfig.menu.showMenuOnStartup || experimentConfig.menu.requireUserAdd;
 }
 
 void FPSciApp::exportScene() {

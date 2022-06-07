@@ -341,6 +341,7 @@ void MenuConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("showUserSettings", showUserSettings);
 		reader.getIfPresent("allowSessionChange", allowSessionChange);
 		reader.getIfPresent("allowUserAdd", allowUserAdd);
+		reader.getIfPresent("requireUserAdd", requireUserAdd);
 		reader.getIfPresent("allowUserSettingsSave", allowUserSettingsSave);
 		reader.getIfPresent("allowSensitivityChange", allowSensitivityChange);
 		reader.getIfPresent("allowTurnScaleChange", allowTurnScaleChange);
@@ -368,6 +369,7 @@ Any MenuConfig::addToAny(Any a, const bool forceAll) const {
 	if (forceAll || def.showUserSettings != showUserSettings)							a["showUserSettings"] = showUserSettings;
 	if (forceAll || def.allowSessionChange != allowSessionChange)						a["allowSessionChange"] = allowSessionChange;
 	if (forceAll || def.allowUserAdd != allowUserAdd)									a["allowUserAdd"] = allowUserAdd;
+	if (forceAll || def.requireUserAdd != requireUserAdd)								a["requireUserAdd"] = requireUserAdd;
 	if (forceAll || def.allowUserSettingsSave != allowUserSettingsSave)					a["allowUserSettingsSave"] = allowUserSettingsSave;
 	if (forceAll || def.allowSensitivityChange != allowSensitivityChange)				a["allowSensitivityChange"] = allowSensitivityChange;
 	if (forceAll || def.allowTurnScaleChange != allowTurnScaleChange)					a["allowTurnScaleChange"] = allowTurnScaleChange;
@@ -393,7 +395,7 @@ bool MenuConfig::allowAnyChange() const {
 /// USER MENU
 ///////////////////////
 UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus, MenuConfig& config, const shared_ptr<GuiTheme>& theme, const Rect2D& rect) :
-	GuiWindow("", theme, rect, GuiTheme::TOOL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_app(app), m_users(users), m_userStatus(userStatus), m_config(config)
+	GuiWindow("", theme, rect, GuiTheme::TOOL_WINDOW_STYLE, GuiWindow::NO_CLOSE), m_app(app), m_users(users), m_userStatus(userStatus), m_config(config)
 {
 	m_reticlePreviewTexture = Texture::createEmpty("FPSci::ReticlePreview", m_app->reticleTexture->width(), m_app->reticleTexture->height());
 	m_reticleBuffer = Framebuffer::create(m_reticlePreviewTexture);
@@ -425,11 +427,17 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 		} m_expPane->endRow();
 	}
 
+	const bool needUser = config.requireUserAdd && !m_app->userAdded;
 	m_expPane->beginRow(); {
-		m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
-		m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
+		if (needUser) {
+			m_expPane->addLabel("Add a new user");
+		}
+		else {
+			m_userDropDown = m_expPane->addDropDownList("User", m_users.getIds(), &m_ddCurrUserIdx);
+			m_expPane->addButton("Select User", this, &UserMenu::updateUserPress);
+		}
 	} m_expPane->endRow();
-	if (m_config.allowUserAdd) {
+	if (m_config.allowUserAdd || m_config.requireUserAdd) {
 		m_expPane->beginRow(); {
 			m_expPane->addTextBox("New User", &m_newUser);
 			m_expPane->addButton("+", this, &UserMenu::addUserPress)->setWidth(20.0f);
@@ -453,7 +461,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	}
 
 	// User Settings Pane
-	if (config.showUserSettings) {
+	if (config.showUserSettings && !needUser) {
 		m_currentUserPane = m_parent->addPane("Current User Settings");
 		drawUserPane(config, m_users.users[m_users.getUserIndex(m_userStatus.currentUser)]);
 	}
@@ -467,6 +475,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 		// Create resume and quit buttons
 		resumeBtn = m_resumeQuitPane->addButton("Resume", this, &UserMenu::resumePress, GuiTheme::TOOL_BUTTON_STYLE);
 		resumeBtn->setSize(resumeQuitBtnSize);
+		resumeBtn->setEnabled(!needUser);
 		quitBtn = m_resumeQuitPane->addButton("Quit", m_app, &FPSciApp::quitRequest, GuiTheme::TOOL_BUTTON_STYLE);
 		quitBtn->setSize(resumeQuitBtnSize);
 	} m_resumeQuitPane->endRow();
@@ -684,19 +693,19 @@ Array<String> UserMenu::updateSessionDropDown() {
 
 void UserMenu::updateUserPress() {
 	if (m_lastUserIdx != m_ddCurrUserIdx) {
-		// Update user ID
 		String userId = m_userDropDown->get(m_ddCurrUserIdx);
-
-		// Update the current user and save to the user config file
-		m_userStatus.currentUser = userId;
-		m_app->saveUserStatus();
-
+		updateUser(userId);
 		m_lastUserIdx = m_ddCurrUserIdx;
-		
-		// Update (selected) sessions
-		const String sessId = updateSessionDropDown()[0];
-		m_app->updateSession(sessId);
 	}
+}
+
+void UserMenu::updateUser(const String& id) {
+	// Update the current user and save to the user config file
+	m_userStatus.currentUser = id;
+	m_app->saveUserStatus();
+	// Update (selected) sessions
+	const String sessId = updateSessionDropDown()[0];
+	m_app->updateSession(sessId);
 }
 
 void UserMenu::addUserPress() {
@@ -733,13 +742,15 @@ void UserMenu::addUserPress() {
 	m_userStatus.userInfo.append(status);
 	m_userStatus.currentUser = m_newUser;
 	m_app->saveUserStatus();
+	m_app->userAdded = true;
 
 	logPrintf("Added new user: %s\n", m_newUser);
 
 	// Add user to dropdown then update the user/session
-	m_userDropDown->append(m_newUser);
+	if(notNull(m_userDropDown)) m_userDropDown->append(m_newUser);
 	m_ddCurrUserIdx = m_users.users.length() - 1;
-	updateUserPress();
+	
+	updateUser(m_newUser);
 }
 
 void UserMenu::updateReticlePreview() {
@@ -784,6 +795,7 @@ void UserMenu::setVisible(bool enable) {
 }
 
 void UserMenu::resumePress() {
+	if (m_config.requireUserAdd && !m_app->userAdded) return;
 	setVisible(!visible());
 	m_app->setMouseInputMode(visible() ? FPSciApp::MouseInputMode::MOUSE_CURSOR : FPSciApp::MouseInputMode::MOUSE_FPM);
 }

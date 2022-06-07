@@ -607,6 +607,7 @@ These flags control the display of the in-game user menu:
 |`showUserSettings`                 |`bool`     |Show the per-user customization (sensitivity, reticle, etc) options    |
 |`allowSessionChange`               |`bool`     |Allow users to change the session using a user menu dropdown           |
 |`allowUserAdd`                     |`bool`     |Allow users to add new users to the experiment                         |
+|`requireUserAdd`                   |`bool`     |Require subjects to always create a new user on each run of FPSci      |
 |`allowUserSettingsSave`            |`bool`     |Allow the user to save their settings from the menu                    |
 |`allowSensitivityChange`           |`bool`     |Allow the user to change their (cm/360) sensitivity value from the menu|
 |`allowTurnScaleChange`             |`bool`     |Allow the user to change their turn scale from the menu                |
@@ -627,6 +628,7 @@ These flags control the display of the in-game user menu:
 "showUserSettings": true,               // Show the user settings
 "allowSessionChange": true,             // Allow the user to change sessions using the menu dropdown
 "allowUserAdd": false,                  // Don't allow new user add by default
+"requireUserAdd": false,                // Don't require new users by default
 "allowUserSettingsSave": true,          // Allow the user to save their settings changes
 "allowSensitivityChange": true,         // Allow the user to change the cm/360 sensitivity
 "allowTurnScaleChange": true,           // Allow the user to change their turn scale (see below)
