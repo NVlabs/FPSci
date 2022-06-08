@@ -539,7 +539,7 @@ void Session::updatePresentationState()
 		else {
 			// Go ahead and move to the complete state since there aren't any valid sessions
 			newState = PresentationState::complete;
-			m_feedbackMessage = formatFeedback(m_config->feedback.allSessComplete);
+			m_feedbackMessage = formatFeedback(m_app->experimentConfig.feedback.allSessComplete);
 			moveOn = false;
 		}
 	}
