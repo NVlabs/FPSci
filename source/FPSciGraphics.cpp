@@ -519,16 +519,16 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 
 		const double score = sess->getScore();
 		String score_string;
-		if (score < 1e3) {
+		if (score <= 1e4) {
 			score_string = format("%d", (int)G3D::round(score));
 		}
-		else if (score > 1e3 && score < 1e6) {
+		else if (score > 1e4 && score <= 1e7) {
 			score_string = format("%dk", (int)G3D::round(score / 1e3));
 		}
-		else if (score > 1e6 && score < 1e9) {
+		else if (score > 1e7 && score <= 1e10) {
 			score_string = format("%dM", (int)G3D::round(score / 1e6));
 		}
-		else if (score > 1e9) {
+		else if (score > 1e10) {
 			score_string = format("%dB", (int)G3D::round(score / 1e9));
 		}
 

@@ -140,6 +140,7 @@ For any/all of the feedback strings provided above, a number of `%`-delimited sp
 |`%trialTotalTargets`       | The number of total targets in the current trial                                      |
 |`%trialShotsHit`           | The number of shots the user hit in the current trial                                 |
 |`%trialTotalShots`         | The number of shots the user took in the current trial                                |
+|`%sessionScore`            | The total score (so far) for this session                                             |
 
 Using these custom strings we can implement the following (default) feedback messages:
 
@@ -150,9 +151,30 @@ maxPretrialAimDisplacement: "Invalid trial! Do not displace your aim during the 
 trialSuccessFeedback: "%trialTaskTimeMs ms!",
 trialFailureFeedback: "Failure!",
 blockCompleteFeedback: "Block %lastBlock complete! Starting block %currBlock.",
-sessionCompleteFeedback: "Session complete! You scored %totalTimeLeftS!",
+sessionCompleteFeedback: "Session complete! You scored %sessionScore!",
 allSessionsCompleteFeedback: "All Sessions Complete!",
 ```
+
+### Scoring
+First Person Science supports several different scoring modes to provide feedback to the user. Score can be displayed either via the [banner](#hud-settings) or through [feedback messages](#feedback-messages).
+
+Session scoring is set using the following parameters:
+
+| Parameter Name            |Units  | Description                                                        |
+|---------------------------|-------|--------------------------------------------------------------------|
+|`scoreModel`               |`String`| The score model (see table below)                                 |
+|`scoreMultiplier`          |`float` | A multiplier to apply to the raw score model described above      |
+
+The currently supported score models are described below (each model is an option for the `String` provided by the `scoreModel` parameter).
+
+|Score Model            |Description                                                                     |
+|-----------------------|--------------------------------------------------------------------------------|
+|`time remaining`       |Score the subject based on aggregate remaining time in trials (best for limited duration) |
+|`targets destroyed`    |Score the total number of targets destroyed in this session                     |
+|`shots hit`            |Score the total number of shots hit in this session                             |
+|`accuracy`             |Score the accuracy (as a 100-based percentage)                                  |
+|`trial successes`      |Score the total number of successful trials                                     |
+
 
 ## Rendering Settings
 | Parameter Name            |Units  | Description                                                        |

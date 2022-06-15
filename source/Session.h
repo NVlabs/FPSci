@@ -201,10 +201,17 @@ protected:
 	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial
 	String m_taskStartTime;								///< Recorded task start timestamp							
 	String m_taskEndTime;								///< Recorded task end timestamp
-	RealTime m_totalRemainingTime = 0;					///< Time remaining in the trial
 	Timer m_timer;										///< Timer used for timing tasks	
 	// Could move timer above to stopwatch in future
 	//Stopwatch stopwatch;			
+
+	// Scoring mechanisms
+	RealTime m_totalRemainingTime = 0;					///< Time remaining in the trial
+	int m_totalTargetsDestroyed = 0;					///< Total number of targets destroyed
+	int m_totalShots = 0;								///< Total number of shots taken
+	int m_totalShotsHit = 0;							///< Total number of shots hit
+	float m_accuracy = 0;								///< Overall accuracy
+	int m_totalTrialSuccesses = 0;						///< Total number of successful trials
 
 	Array<HANDLE> m_sessProcesses;						///< Handles for session-level processes
 	Array<HANDLE> m_trialProcesses;						///< Handles for trial-level processes
