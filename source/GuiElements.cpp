@@ -668,10 +668,12 @@ Array<String> UserMenu::updateSessionDropDown() {
 	}
 	m_sessDropDown->setList(remainingSess);
 
-	// Print message to log
-	logPrintf("Updated %s's session drop down to:\n", userId);
-	for (String id : remainingSess) {
-		logPrintf("\t%s\n", id);
+	if (m_app->sessConfig->logger.logSessDDUpdate) {
+		// Print update to log each time we update the drop down
+		logPrintf("Updated %s's session drop down to:\n", userId);
+		for (String id : remainingSess) {
+			logPrintf("\t%s\n", id);
+		}
 	}
 
 	// Make sure there's an empty session in the list

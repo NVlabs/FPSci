@@ -272,7 +272,8 @@ As part of the general configuration parameters several controls over reporting 
 |`logFrameInfo`         |`bool` | Whether or not to log frame info into the `Frame_Info` table                     |
 |`logPlayerActions`     |`bool` | Whether or not to log player actions into the `Player_Action` table              |
 |`logTrialResponse`     |`bool` | Whether or not to log trial responses into the `Trials` table                    |
-|`sessionParametersToLog`      |`Array<String>`| A list of additional parameter names (from the config) to log            |
+|`sessionParametersToLog`   |`Array<String>`| A list of additional parameter names (from the config) to log        |
+|`logSessionDropDownUpdate` |`bool`         | Controls whether session drop-down updates are written to `log.txt`  |
 
 ```
 "logEnable" : true,
@@ -281,6 +282,7 @@ As part of the general configuration parameters several controls over reporting 
 "logPlayerActions": true,
 "logTrialResponse": true,
 "sessionParametersToLog" : ["frameRate", "frameDelay"],
+"logSessionDropDownUpdate" : false,
 ```
 
 ### Logging Session Parameters

@@ -275,6 +275,7 @@ public:
 	bool logTrialResponse = true;		///< Log trial response in table?
 	bool logUsers = true;				///< Log user information in table?
 	bool logOnChange = false;			///< Only log to Player_Action/Target_Trajectory table when the player/target position/orientation changes
+	bool logSessDDUpdate = false;		///< Log the session drop-down update (on each session complete)
 
 	bool logToSingleDb = true;			///< Log all results to a single db file?
 
