@@ -176,6 +176,7 @@ public:
 	shared_ptr<GuiTheme>			theme;	
 
 	FPSciApp(const GApp::Settings& settings = GApp::Settings());
+	FPSciApp(const GApp::Settings& settings, OSWindow* window , RenderDevice* rd, bool createWindowOnNull) : GApp(settings, window, rd, createWindowOnNull) {}
 
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment

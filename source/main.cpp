@@ -1,6 +1,7 @@
 /** \file main.cpp */
 
 #include "FPSciApp.h"
+#include "NoWindow.h"
 
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
 G3D_START_AT_MAIN();

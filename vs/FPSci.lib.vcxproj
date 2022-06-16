@@ -149,6 +149,7 @@
     <ClInclude Include="..\source\FPSciNetworkApp.h" />
     <ClInclude Include="..\source\FpsConfig.h" />
     <ClInclude Include="..\source\KeyMapping.h" />
+    <ClInclude Include="..\source\NoWindow.h" />
     <ClInclude Include="..\source\Session.h" />
     <ClInclude Include="..\source\ExperimentConfig.h" />
     <ClInclude Include="..\source\Logger.h" />
@@ -174,6 +175,7 @@
     <ClCompile Include="..\source\FPSciNetworkApp.cpp" />
     <ClCompile Include="..\source\FpsConfig.cpp" />
     <ClCompile Include="..\source\KeyMapping.cpp" />
+    <ClCompile Include="..\source\NoWindow.cpp" />
     <ClCompile Include="..\source\Session.cpp" />
     <ClCompile Include="..\source\Logger.cpp" />
     <ClCompile Include="..\source\PhysicsScene.cpp" />
