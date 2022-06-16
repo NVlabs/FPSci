@@ -30,21 +30,39 @@ bool createTableInDB(sqlite3* db, const String tableName, const Array<Array<Stri
 bool insertRowIntoDB(sqlite3* db, const String tableName, const Array<String>& values, const String colNames) {
 	if (values.length() == 0) {
 		logPrintf("Warning insert row with empty values ignored!\n");
-		return false;	// Don't attempt to insert for empty values
+		return false;
 	}
-	// Quotes must be added around text-type values (eg. "addQuotes(expVersion)")
 	// Note that ID does not need to be provided unless PRIMARY KEY is set.
 	String insertC = "INSERT INTO " + tableName + colNames + " VALUES(";
 	for (int i = 0; i < values.size(); i++) {
-		insertC += values[i];
+		insertC += "?";
+		//insertC += values[i];
 		if(i < values.size() - 1) insertC += ",";
 	}
 	insertC += ");";
+
+	// prepare
+	sqlite3_stmt* res;
+	int ret = sqlite3_prepare_v2(db, insertC.c_str(), -1, &res, 0);
+	if (ret != SQLITE_OK)
+	{
+		logPrintf("Error preparing INSERT INTO statement (%s): %s\n", insertC, sqlite3_errmsg(db));
+		return ret == SQLITE_OK;
+	}
+	// bind values
+	for (int i = 0; i < values.size(); i++) {
+		sqlite3_bind_text(res, i + 1, values[i].c_str(), -1, SQLITE_TRANSIENT);
+	}
+	ret = sqlite3_step(res);
+	if (ret != SQLITE_DONE)
+	{
+		logPrintf("Error in INSERT (%s) with VALUE including %s!\n", insertC, values[0]);
+	}
+	// clean up the sqlite3_stmt
+	ret = sqlite3_finalize(res);
 	//logPrintf("Inserting row into %s table w/ SQL query:%s\n\n", tableName.c_str(), insertC.c_str());
-	char* errmsg;
-	int ret = sqlite3_exec(db, insertC.c_str(), 0, 0, &errmsg);
 	if (ret != SQLITE_OK) {
-		logPrintf("Error in INSERT INTO statement (%s): %s\n", insertC, errmsg);
+		logPrintf("Error in INSERT INTO statement (%s): %s\n", insertC);
 	}
 	return ret == SQLITE_OK;
 }
