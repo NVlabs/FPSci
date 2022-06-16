@@ -7,3 +7,4 @@
 bool createTableInDB(sqlite3* db, const String tableName, const Array<Array<String>>& columns);
 bool insertRowIntoDB(sqlite3* db, const String tableName, const Array<String>& values, const String colNames = "");
 bool insertRowsIntoDB(sqlite3* db, const String tableName, const Array<Array<String>>& valueVector, const String colNames = "");
+bool replaceSingleQuote(String& str);

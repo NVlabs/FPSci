@@ -36,11 +36,17 @@ bool insertRowIntoDB(sqlite3* db, const String tableName, const Array<String>& v
 	// Note that ID does not need to be provided unless PRIMARY KEY is set.
 	String insertC = "INSERT INTO " + tableName + colNames + " VALUES(";
 	for (int i = 0; i < values.size(); i++) {
-		insertC += values[i];
+		String insertVal = values[i];
+		if (beginsWith(values[i], "'")) {	// Check if we are handling a single-quote delimited string
+			insertVal = values[i].substr(1, values[i].length() - 2);
+			replaceSingleQuote(insertVal);
+			insertVal = "'" + insertVal + "'";
+		}
+		insertC += insertVal;
 		if(i < values.size() - 1) insertC += ",";
 	}
 	insertC += ");";
-	//logPrintf("Inserting row into %s table w/ SQL query:%s\n\n", tableName.c_str(), insertC.c_str());
+	
 	char* errmsg;
 	int ret = sqlite3_exec(db, insertC.c_str(), 0, 0, &errmsg);
 	if (ret != SQLITE_OK) {
@@ -60,7 +66,13 @@ bool insertRowsIntoDB(sqlite3* db, const String tableName, const Array<Array<Str
 	for (int i = 0; i < value_vector.size(); ++i) {
 		insertC += "(";
 		for (int j = 0; j < value_vector[i].size(); j++) {
-			insertC += value_vector[i][j];
+			String insertVal = value_vector[i][j];
+			if (beginsWith(value_vector[i][j], "'")) {	// Check if we are handling a single-quote delimited string
+				insertVal = value_vector[i][j].substr(1, value_vector[i][j].length() - 2);
+				replaceSingleQuote(insertVal);
+				insertVal = "'" + insertVal + "'";
+			}
+			insertC += insertVal;
 			if (j < value_vector[i].size() - 1) insertC += ",";
 		}
 		insertC += ")";
@@ -80,3 +92,14 @@ bool insertRowsIntoDB(sqlite3* db, const String tableName, const Array<Array<Str
 	return ret == SQLITE_OK;
 }
 
+bool replaceSingleQuote(String& str) {
+	size_t pos;
+	size_t lastPos = 0;
+	bool found = false;
+	while ((pos = str.find('\'', lastPos)) != String::npos) {
+		found = true;
+		str = str.substr(0, pos) + "'" + str.substr(pos);
+		lastPos = pos + 2;
+	}
+	return found;
+}
