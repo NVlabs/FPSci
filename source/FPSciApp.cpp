@@ -16,6 +16,9 @@ StartupConfig FPSciApp::startupConfig;
 
 FPSciApp::FPSciApp(const GApp::Settings& settings) : GApp(settings) {}
 
+FPSciApp::FPSciApp(const GApp::Settings& settings, OSWindow* window, RenderDevice* rd, bool createWindowOnNull) : GApp(settings, window, rd, createWindowOnNull) {}
+
+
 /** Initialize the app */
 void FPSciApp::onInit() {
 	// Seed random based on the time
@@ -72,6 +75,26 @@ void FPSciApp::initExperiment(){
 	updateMouseSensitivity();				// Update (apply) mouse sensitivity
 	const Array<String> sessions = m_userSettingsWindow->updateSessionDropDown();	// Update the session drop down to remove already completed sessions
 	updateSession(sessions[0], true);		// Update session to create results file/start collection
+
+	// Setup the connection to the server if this experiment is networked
+	if (experimentConfig.serverAddress != "") {
+		enet_initialize();
+		ENetAddress localAddress;
+		localAddress.host = ENET_HOST_ANY;
+		localAddress.port = experimentConfig.serverPort;	//TODO: Make this use a different clientPort variable
+		m_localHost  = enet_host_create(&localAddress, 1, 2, 0, 0);
+		if (m_localHost == NULL) {
+			throw std::runtime_error("Could not create a local host for the server to connect to");
+		}
+		ENetAddress serverAddress;
+		enet_address_set_host(&serverAddress, experimentConfig.serverAddress.c_str());
+		serverAddress.port = experimentConfig.serverPort;
+		m_serverPeer = enet_host_connect(m_localHost, &serverAddress, 2, 0);
+		if (m_serverPeer == NULL) {
+			throw std::runtime_error("Could not create a connection to the server");
+		}
+		logPrintf("created a peer with the server at %s:%d (the connection may not have been accepeted by the server)", experimentConfig.serverAddress, experimentConfig.serverPort);
+	}
 }
 
 void FPSciApp::toggleUserSettingsMenu() {
@@ -819,6 +842,10 @@ void FPSciApp::onAI() {
 
 void FPSciApp::onNetwork() {
 	GApp::onNetwork();
+	//if (m_serverPeer->state != ENET_PEER_STATE_CONNECTED) {
+		//throw std::runtime_error("Lost connection to the server!");
+	//}
+	
 	// Poll net messages here
 }
 

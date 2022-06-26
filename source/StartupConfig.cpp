@@ -82,14 +82,11 @@ StartupConfig::StartupConfig(const Any& any) {
 
 	switch (settingsVersion) {
 	case 1:
-		reader.getIfPresent("serverMode", serverMode);			// Just added this to test
 		reader.getIfPresent("developerMode", developerMode);
 		reader.getIfPresent("waypointEditorMode", waypointEditorMode);
 		reader.getIfPresent("fullscreen", fullscreen);
 		reader.getIfPresent("windowSize", windowSize);
 		reader.getIfPresent("jsonAnyOutput", jsonAnyOutput);
-
-		logPrintf("The server mode variable is set to: %s\n", serverMode ? "true" : "false");
 		
 		foundDefault = reader.getIfPresent("defaultExperiment", defaultExperiment);
 		if (!foundDefault) {
@@ -146,7 +143,6 @@ StartupConfig::StartupConfig(const Any& any) {
 Any StartupConfig::toAny(const bool forceAll) const {
 	StartupConfig def;		// Create a dummy default config for value testing
 	Any a(Any::TABLE);
-	if (forceAll || def.serverMode != serverMode)									a["serverMode"] = serverMode;
 	if (forceAll || def.developerMode != developerMode)								a["developerMode"] = developerMode;
 	if (forceAll || def.waypointEditorMode != waypointEditorMode)					a["waypointEditorMode"] = waypointEditorMode;
 	if (forceAll || def.fullscreen != fullscreen)									a["fullscreen"] = fullscreen;

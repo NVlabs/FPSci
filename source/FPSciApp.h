@@ -10,6 +10,7 @@
  */
 #pragma once
 #include <G3D/G3D.h>
+#include <enet/enet.h>
 
 #include "ExperimentConfig.h"
 #include "StartupConfig.h"
@@ -127,6 +128,9 @@ protected:
 	RealTime								m_startTime;						///< Start time (for the session)
 	RealTime								m_last2DTime, m_last3DTime, m_lastCompositeTime;		///< Times used for iTimeDelta
 
+	ENetPeer*								m_serverPeer;						///< Peer used for server-side communication		
+	ENetHost*								m_localHost;						///< Host used to allow the server to connect to me
+
 	/** Called from onInit */
 	void makeGUI();
 	void updateControls(bool firstSession = false);
@@ -176,7 +180,7 @@ public:
 	shared_ptr<GuiTheme>			theme;	
 
 	FPSciApp(const GApp::Settings& settings = GApp::Settings());
-	FPSciApp(const GApp::Settings& settings, OSWindow* window , RenderDevice* rd, bool createWindowOnNull) : GApp(settings, window, rd, createWindowOnNull) {}
+	FPSciApp(const GApp::Settings&, G3D::OSWindow*, G3D::RenderDevice* ,bool);
 
 	/** Parameter configurations */
 	UserTable						userTable;						///< Table of per user information (DPI/cm/360) that doesn't change across experiment
@@ -272,7 +276,7 @@ public:
     void updateMouseSensitivity();
 	
 	/** Initialize an experiment */
-	void initExperiment();
+	virtual void initExperiment();
 
 	virtual void onInit() override;
 	virtual void onAI() override;
