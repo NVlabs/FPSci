@@ -1,0 +1,815 @@
+Application Log
+Start: Tue Jun 28 20:32:15 2022
+
+WARNING: AudioDevice is not enabled. Set G3DSpecification::audio = true before invoking initGLG3D() to enable audio.
+Searching 'samples' directory for sample experiments.
+Sample '[Sample]sa2019_1hit' added to experiment list
+Sample '[Sample]sa2019_track' added to experiment list
+Sample '[Sample]spheres' added to experiment list
+Sample '[Sample]targets' added to experiment list
+Sample '[Sample]weapons' added to experiment list
+
+Initializing System::findDataFile took 0.003427s
+
+Entering GApp::GApp()
+cwd = G:\git\FPSci\data-files
+System::setAppDataDir("G:\git\FPSci\data-files")
+System::setAppDataDirs()Initializing System::findDataFile took 0.001578s
+Setting video mode
+wglSwapIntervalEXT(0);
+Setting initial rendering state.
+Done setting initial state.
+104 ImageFormats:
+              Format  Readable    Writeable
+                  L8  Yes         Yes
+                 L16  Yes         Yes
+                L16F  Yes         Yes
+                L32F  Yes         Yes
+                  A8  Yes         Yes
+                 A16  Yes         Yes
+                A16F  Yes         Yes
+                A32F  Yes         Yes
+                 LA4  Yes         Yes
+                 LA8  Yes         Yes
+                LA16  Yes         Yes
+               LA16F  Yes         Yes
+               LA32F  Yes         Yes
+                RGB5  Yes         Yes
+              RGB5A1  Yes         Yes
+                RGB8  Yes         Yes
+               RGB10  Yes         Yes
+             RGB10A2  Yes         Yes
+               RGB16  Yes         Yes
+              RGB16F  Yes         Yes
+              RGB32F  Yes         Yes
+          R11G11B10F  Yes         Yes
+             RGB9E5F  Yes         No 
+               RGB8I  Yes         Yes
+              RGB8UI  Yes         Yes
+              RGBA8I  Yes         Yes
+             RGBA8UI  Yes         Yes
+          RGB8_SNORM  Yes         Yes
+         RGBA8_SNORM  Yes         Yes
+         RGB16_SNORM  Yes         Yes
+        RGBA16_SNORM  Yes         Yes
+                BGR8  Yes         Yes
+               BGRA8  Yes         Yes
+                  R8  Yes         Yes
+                 R8I  Yes         Yes
+                R8UI  Yes         Yes
+            R8_SNORM  Yes         Yes
+                 R16  Yes         Yes
+                R16I  Yes         Yes
+               R16UI  Yes         Yes
+           R16_SNORM  Yes         Yes
+                R16F  Yes         Yes
+                R32I  Yes         Yes
+               R32UI  Yes         Yes
+                 RG8  Yes         Yes
+                RG8I  Yes         Yes
+               RG8UI  Yes         Yes
+           RG8_SNORM  Yes         Yes
+                RG16  Yes         Yes
+               RG16I  Yes         Yes
+              RG16UI  Yes         Yes
+          RG16_SNORM  Yes         Yes
+               RG16F  Yes         Yes
+               RG32I  Yes         Yes
+              RG32UI  Yes         Yes
+                R32F  Yes         Yes
+               RG32F  Yes         Yes
+               RGBA8  Yes         Yes
+              RGBA16  Yes         Yes
+             RGBA16F  Yes         Yes
+             RGBA32F  Yes         Yes
+             RGBA16I  Yes         Yes
+            RGBA16UI  Yes         Yes
+              RGB32I  Yes         Yes
+             RGB32UI  Yes         Yes
+             RGBA32I  Yes         Yes
+            RGBA32UI  Yes         Yes
+               RGBA4  Yes         Yes
+               RGBA2  Yes         Yes
+       YUV420_PLANAR  No          No 
+              YUV422  No          No 
+              YUV444  No          No 
+            RGB_DXT1  Yes         No 
+           RGBA_DXT1  Yes         No 
+           RGBA_DXT3  Yes         No 
+           RGBA_DXT5  Yes         No 
+               SRGB8  Yes         Yes
+              SRGBA8  Yes         Yes
+                 SL8  Yes         Yes
+                SLA8  Yes         Yes
+           SRGB_DXT1  Yes         No 
+          SRGBA_DXT1  Yes         No 
+          SRGBA_DXT3  Yes         No 
+          SRGBA_DXT5  Yes         No 
+             DEPTH16  Yes         No 
+             DEPTH24  Yes         No 
+             DEPTH32  Yes         No 
+            DEPTH32F  Yes         No 
+            STENCIL1  Yes         No 
+            STENCIL4  Yes         No 
+            STENCIL8  Yes         No 
+           STENCIL16  Yes         No 
+    DEPTH24_STENCIL8  Yes         No 
+
+Capability    Minimum   Desired   Received  Ok?
+-------------------------------------------------
+* RENDER DEVICE 
+Depth         16 bits   24 bits   24 bits   ok
+Stencil        8 bits    8 bits    8 bits   ok
+Alpha                              8 bits   ok
+Red                                8 bits   ok
+Green                              8 bits   ok
+Blue                               8 bits   ok
+FSAA                       1     1    ok
+Width                 1920 pixels           ok
+Height                1080 pixels           ok
+Mode                   Windowed             ok
+
+This driver does support G3D 10:
+GLSL version 4.10                   yes - GLSL version on this driver is 4.60
+GPU Supports OpenGL 4.1 or later    yes - OpenGL version on this driver is 4.42
+            GL_ARB_sample_shading   yes - Optional
+
+
+Done initializing RenderDevice.
+Network StartupSystem = { 
+    App { 
+        Name = "G:\\git\\FPSci\\vs\\Build\\FirstPersonScienceServer-x64-Debug\\FirstPersonScienceServer.exe"
+        cwd = "G:\\git\\FPSci\\data-files"
+    } 
+    
+    OS { 
+        Name = "Windows 6.2 build 9200 Platform 2 "
+    } 
+    
+    CPU { 
+        Architecture = "Intel/AMD x64"
+        Num HW Threads = 12 
+    } 
+    
+    G3D { 
+        Link version = 100100 
+        Compile version = "G3D Innovation Engine 10.01 (Debug)"
+        G3DSpecification::deployMode = No 
+        G3D10DATA = "G:\\program_files\\g3d\\G3D10\\data-files;G:\\program_files\\g3d\\data10\\common;G:\\program_files\\g3d\\data10\\research;G:\\program_files\\g3d\\data10\\game"
+    } 
+    
+    GPU = { 
+        Chipset = "Radeon RX 580 Series;"
+        Vendor = "ATI Technologies Inc.;"
+        Driver = "Unknown (Can't find driver);"
+        OpenGL version = "4.6.14800 Compatibility Profile Context 22.5.2 30.0.21017.1000;"
+        Textures = 32 ;
+        Texture coordinates = 16 ;
+        Texture units = 8 ;
+        GL_MAX_TEXTURE_SIZE = 16384 ;
+        GL_MAX_CUBE_MAP_TEXTURE_SIZE = 16384 ;
+        GL_MAX_COLOR_ATTACHMENTS = 8 ;
+    } ; 
+    
+    Window = { 
+        API = "GLFW;"
+        Version = "3.3.2 Win32 WGL EGL OSMesa VisualC;"
+        
+        In focus = false; 
+        Centered = true; 
+        Framed = true; 
+        Visible = false; 
+        Resizable = false; 
+        Full screen = false; 
+        Top = 0 ;
+        Left = 0 ;
+        Width = 1920 ;
+        Height = 1080 ;
+        Refresh rate = -1 ;
+        
+        Alpha bits = 0 ;
+        Red bits = 8 ;
+        Green bits = 8 ;
+        Blue bits = 8 ;
+        Depth bits = 24 ;
+        Stencil bits = 8 ;
+        Asynchronous = true; 
+        Stereo = false; 
+        FSAA samples = 1 ;
+        GL extensions = [ GL_ARB_get_program_binary,
+             GL_ARB_shadow,
+             GL_ARB_texture_swizzle,
+             GL_NV_copy_depth_to_color,
+             GL_ARB_shader_texture_image_samples,
+             GL_KHR_context_flush_control,
+             GL_EXT_histogram,
+             GL_ARB_texture_storage_multisample,
+             GL_ARB_texture_multisample,
+             GL_AMD_shader_stencil_value_export,
+             GL_EXT_texture_env_dot3,
+             GL_ARB_texture_rgb10_a2ui,
+             GL_EXT_texture_compression_rgtc,
+             GL_ARB_ES3_compatibility,
+             GL_ARB_copy_buffer,
+             GL_EXT_texture_filter_anisotropic,
+             GL_ARB_indirect_parameters,
+             GL_NV_half_float,
+             GL_ARB_debug_output,
+             GL_ARB_texture_compression_rgtc,
+             GL_EXT_texture_compression_latc,
+             GL_WIN_swap_hint,
+             GL_ARB_seamless_cubemap_per_texture,
+             GL_ARB_draw_instanced,
+             GL_ARB_derivative_control,
+             GL_ARB_fragment_program,
+             GL_ARB_multi_bind,
+             GL_AMD_vertex_shader_viewport_index,
+             GL_ARB_texture_buffer_object,
+             GL_ARB_texture_storage,
+             GL_EXT_texture_sRGB_RG8,
+             GL_EXT_texture_object,
+             GL_ARB_vertex_program,
+             GL_AMD_shader_trace,
+             GL_ARB_texture_compression,
+             GL_ARB_viewport_array,
+             GL_ARB_texture_barrier,
+             GL_ARB_texture_env_combine,
+             GL_EXT_blend_subtract,
+             GL_EXT_texture_env_add,
+             GL_NV_texgen_reflection,
+             GL_ARB_blend_func_extended,
+             GL_ATI_texture_env_combine3,
+             GL_ARB_texture_mirror_clamp_to_edge,
+             GL_ARB_tessellation_shader,
+             GL_EXT_texture_swizzle,
+             GL_ARB_texture_snorm,
+             GL_EXT_texture_edge_clamp,
+             GL_ARB_vertex_type_10f_11f_11f_rev,
+             GL_EXT_blend_func_separate,
+             GL_ARB_multitexture,
+             GL_ARB_shader_stencil_export,
+             GL_ARB_multi_draw_indirect,
+             GL_SGIS_texture_lod,
+             GL_ARB_window_pos,
+             GL_EXT_transform_feedback,
+             GL_ARB_clear_buffer_object,
+             GL_ARB_query_buffer_object,
+             GL_EXT_texture_rectangle,
+             GL_NV_texture_barrier,
+             GL_ARB_base_instance,
+             GL_ARB_instanced_arrays,
+             GL_EXT_draw_buffers2,
+             GL_NV_primitive_restart,
+             GL_EXT_vertex_array_bgra,
+             GL_AMD_vertex_shader_layer,
+             GL_ARB_framebuffer_no_attachments,
+             GL_ARB_compute_shader,
+             GL_ARB_polygon_offset_clamp,
+             GL_ARB_compatibility,
+             GL_ARB_shader_viewport_layer_array,
+             GL_EXT_timer_query,
+             GL_ARB_sparse_texture,
+             GL_ARB_ES3_1_compatibility,
+             GL_ARB_separate_shader_objects,
+             GL_ARB_draw_buffers_blend,
+             GL_ARB_vertex_shader,
+             GL_ARB_texture_cube_map,
+             GL_EXT_texture_snorm,
+             GL_ARB_internalformat_query,
+             GL_ARB_draw_elements_base_vertex,
+             GL_ARB_clip_control,
+             GL_ARB_texture_buffer_range,
+             GL_ARB_compressed_texture_pixel_storage,
+             GL_ARB_seamless_cube_map,
+             GL_ARB_shading_language_packing,
+             GL_ARB_stencil_texturing,
+             GL_EXT_texture_compression_s3tc,
+             GL_ARB_depth_clamp,
+             GL_EXT_texture_env_combine,
+             GL_EXT_bindable_uniform,
+             GL_ARB_spirv_extensions,
+             GL_EXT_nonuniform_qualifier,
+             GL_EXT_draw_instanced,
+             GL_ARB_gpu_shader5,
+             GL_AMD_sample_positions,
+             GL_ARB_enhanced_layouts,
+             GL_EXT_point_parameters,
+             GL_ARB_transform_feedback_overflow_query,
+             GL_ARB_vertex_buffer_object,
+             GL_ARB_shader_objects,
+             GL_ARB_fragment_coord_conventions,
+             GL_EXT_texture_storage,
+             GL_AMD_shader_trinary_minmax,
+             GL_ARB_texture_cube_map_array,
+             GL_ARB_framebuffer_sRGB,
+             GL_ARB_transpose_matrix,
+             GL_SUN_multi_draw_arrays,
+             GL_EXT_texture_mirror_clamp,
+             GL_AMD_debug_output,
+             GL_EXT_texgen_reflection,
+             GL_ARB_shader_ballot,
+             GL_ARB_shader_group_vote,
+             GL_EXT_bgra,
+             GL_ARB_shader_precision,
+             GL_ATI_texture_float,
+             GL_ARB_robust_buffer_access_behavior,
+             GL_AMD_texture_cube_map_array,
+             GL_EXT_texture_compression_bptc,
+             GL_EXT_texture3D,
+             GL_ARB_half_float_pixel,
+             GL_ARB_explicit_attrib_location,
+             GL_ATI_draw_buffers,
+             GL_ARB_provoking_vertex,
+             GL_EXT_vertex_array,
+             GL_EXT_pixel_buffer_object,
+             GL_ARB_shading_language_include,
+             GL_EXT_polygon_offset_clamp,
+             GL_AMD_name_gen_delete,
+             GL_EXT_subtexture,
+             GL_ATI_separate_stencil,
+             GL_ARB_vertex_type_2_10_10_10_rev,
+             GL_EXT_memory_object,
+             GL_EXT_texture_shared_exponent,
+             GL_ATI_texture_compression_3dc,
+             GL_NV_conditional_render,
+             GL_ARB_texture_query_lod,
+             GL_AMD_gpu_shader_int16,
+             GL_ARB_texture_stencil8,
+             GL_ARB_internalformat_query2,
+             GL_ARB_uniform_buffer_object,
+             GL_AMDX_debug_output,
+             GL_ARB_get_texture_sub_image,
+             GL_ARB_shader_atomic_counter_ops,
+             GL_ARB_texture_rg,
+             GL_ARB_transform_feedback3,
+             GL_AMD_interleaved_elements,
+             GL_KHR_debug,
+             GL_ARB_sync,
+             GL_EXT_provoking_vertex,
+             GL_ATI_envmap_bumpmap,
+             GL_SGIS_generate_mipmap,
+             GL_EXT_direct_state_access,
+             GL_ARB_texture_env_dot3,
+             GL_AMD_sparse_texture_pool,
+             GL_AMD_occlusion_query_event,
+             GL_ARB_fragment_layer_viewport,
+             GL_ARB_occlusion_query2,
+             GL_ARB_gpu_shader_fp64,
+             GL_ARB_buffer_storage,
+             GL_ARB_bindless_texture,
+             GL_ARB_shader_atomic_counters,
+             GL_EXT_shadow_funcs,
+             GL_NV_depth_buffer_float,
+             GL_ARB_fragment_program_shadow,
+             GL_EXT_depth_bounds_test,
+             GL_ARB_half_float_vertex,
+             GL_EXT_blend_color,
+             GL_ARB_program_interface_query,
+             GL_EXT_shader_integer_mix,
+             GL_ARB_shadow_ambient,
+             GL_ARB_draw_indirect,
+             GL_ARB_vertex_attrib_64bit,
+             GL_AMD_shader_atomic_counter_ops,
+             GL_EXT_rescale_normal,
+             GL_ARB_shader_image_size,
+             GL_ARB_texture_env_add,
+             GL_EXT_texture_integer,
+             GL_EXT_framebuffer_blit,
+             GL_ARB_ES2_compatibility,
+             WGL_EXT_swap_control,
+             GL_AMD_sparse_texture,
+             GL_EXT_copy_texture,
+             GL_EXT_stencil_wrap,
+             GL_EXT_texture_buffer_object,
+             GL_ARB_sampler_objects,
+             GL_EXT_draw_range_elements,
+             GL_NV_shader_atomic_int64,
+             GL_AMD_stencil_operation_extended,
+             GL_AMD_conservative_depth,
+             GL_ARB_draw_buffers,
+             GL_EXT_semaphore,
+             GL_ARB_color_buffer_float,
+             GL_ARB_timer_query,
+             GL_ARB_shading_language_420pack,
+             GL_ARB_multisample,
+             GL_ARB_sample_shading,
+             GL_KHR_parallel_shader_compile,
+             GL_EXT_gpu_shader4,
+             GL_ARB_parallel_shader_compile,
+             GL_ARB_map_buffer_alignment,
+             GL_ARB_sparse_buffer,
+             GL_ARB_vertex_attrib_binding,
+             GL_ARB_texture_gather,
+             GL_ARB_shader_subroutine,
+             GL_KTX_buffer_region,
+             GL_ARB_texture_float,
+             GL_ARB_texture_buffer_object_rgb32,
+             GL_EXT_memory_object_win32,
+             GL_ARB_texture_rectangle,
+             GL_ARB_occlusion_query,
+             GL_AMD_gpu_shader_int64,
+             GL_AMD_seamless_cubemap_per_texture,
+             GL_AMD_blend_minmax_factor,
+             GL_ARB_cull_distance,
+             GL_IBM_texture_mirrored_repeat,
+             GL_EXT_packed_float,
+             GL_AMD_texture_texture4,
+             GL_KHR_no_error,
+             GL_SGIS_texture_edge_clamp,
+             GL_EXT_texture_sRGB_decode,
+             GL_NV_explicit_multisample,
+             GL_ARB_framebuffer_object,
+             GL_EXT_packed_depth_stencil,
+             GL_ARB_imaging,
+             GL_ARB_geometry_shader4,
+             GL_ARB_texture_view,
+             GL_AMD_performance_monitor,
+             GL_AMD_transform_feedback3_lines_triangles,
+             GL_EXT_framebuffer_object,
+             GL_ATI_fragment_shader,
+             GL_NV_blend_square,
+             GL_ARB_map_buffer_range,
+             GL_ARB_transform_feedback2,
+             GL_NV_float_buffer,
+             GL_NV_alpha_to_coverage_dither_control,
+             GL_ARB_texture_env_crossbar,
+             GL_ARB_texture_query_levels,
+             GL_ARB_texture_mirrored_repeat,
+             GL_ARB_depth_buffer_float,
+             GL_AMD_gpu_shader_half_float,
+             GL_ARB_pipeline_statistics_query,
+             GL_EXT_blend_minmax,
+             GL_AMD_pinned_memory,
+             GL_ARB_explicit_uniform_location,
+             GL_EXT_semaphore_win32,
+             GL_EXT_texture_sRGB_R8,
+             GL_ARB_arrays_of_arrays,
+             GL_AMD_gcn_shader,
+             GL_ARB_copy_image,
+             GL_ARB_vertex_array_object,
+             GL_EXT_packed_pixels,
+             GL_AMD_framebuffer_sample_positions,
+             GL_ARB_texture_non_power_of_two,
+             GL_NV_copy_image,
+             GL_EXT_texture_lod_bias,
+             GL_AMD_query_buffer_object,
+             GL_EXT_abgr,
+             GL_ARB_shading_language_100,
+             GL_ARB_shader_texture_lod,
+             GL_OES_EGL_image,
+             GL_EXT_copy_buffer,
+             GL_KHR_robustness,
+             GL_EXT_secondary_color,
+             GL_ARB_gl_spirv,
+             GL_EXT_texture_sRGB,
+             GL_ARB_shader_storage_buffer_object,
+             GL_ARB_invalidate_subdata,
+             GL_ARB_shader_image_load_store,
+             GL_EXT_texture_lod,
+             GL_EXT_multi_draw_arrays,
+             GL_EXT_texture_cube_map,
+             GL_ARB_fragment_shader,
+             GL_EXT_geometry_shader4,
+             GL_EXT_compiled_vertex_array,
+             GL_ARB_direct_state_access,
+             GL_ARB_depth_texture,
+             GL_ARB_clear_texture,
+             GL_EXT_vertex_attrib_64bit,
+             GL_EXT_framebuffer_sRGB,
+             GL_ARB_vertex_array_bgra,
+             GL_EXT_blend_equation_separate,
+             GL_ARB_texture_border_clamp,
+             GL_ARB_point_sprite,
+             GL_EXT_fog_coord,
+             GL_AMD_transform_feedback4,
+             GL_AMD_shader_stencil_export,
+             GL_ARB_shader_bit_encoding,
+             GL_ARB_pixel_buffer_object,
+             GL_EXT_texture_array,
+             GL_ARB_texture_compression_bptc,
+             GL_EXT_gpu_program_parameters,
+             GL_ARB_conservative_depth,
+             GL_EXT_shader_image_load_store,
+             GL_ARB_transform_feedback_instanced,
+             GL_ARB_point_parameters,
+             GL_ARB_shader_draw_parameters,
+             GL_AMD_multi_draw_indirect,
+             GL_AMD_depth_clamp_separate,
+             GL_AMD_draw_buffers_blend,
+             GL_ARB_conditional_render_inverted,
+             GL_ATI_texture_mirror_once,
+             GL_KHR_robust_buffer_access_behavior,
+             GL_EXT_framebuffer_multisample,
+             GL_EXT_separate_specular_color ]; 
+    }; 
+    
+    Network = { 
+        Adapter0 ={ 
+            hostname = "Ara;"
+            name = ";"
+            ip = "192.168.  1.131"; 
+            subnet = "  0.  0.255.255"; 
+            broadcast = "255.255.255.255"; 
+            mac = "00:00:00:00:00:00"; 
+        }; 
+    }; 
+    
+    
+    }; 
+
+Entering GApp::loadFont("console-small.fnt")
+Found "console-small.fnt" at "G:/program_files/g3d/G3D10/data-files/font/console-small.fnt"
+Done GApp::loadFont(...)
+Done GApp::GApp()
+
+Found scenes:
+  "FPSci Medium Courtyard" (G:\git\FPSci\data-files/scene/Medium_Courtyard.Scene.Any)
+  "FPSci Simple Hallway" (G:\git\FPSci\data-files/scene/Simple_Hallway.Scene.Any)
+  "FPSci Test Cornell Box (Empty CO)" (G:\git\FPSci\data-files/scene/Test_Cornell_Box.Scene.Any)
+  "G3D Debug Animation (Skeletal)" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Animation_(Skeletal).Scene.Any)
+  "G3D Debug Area Light (Glossy)" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Area_Light_(Glossy).Scene.Any)
+  "G3D Debug Area Light (Matte)" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Area_Light_(Matte).Scene.Any)
+  "G3D Debug Cubemap" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Cubemap.Scene.Any)
+  "G3D Debug Depth of Field" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Depth_of_Field.Scene.Any)
+  "G3D Debug Heightfield" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Heightfield.Scene.Any)
+  "G3D Debug Light Intensity" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Light_Intensity.Scene.Any)
+  "G3D Debug Refraction" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Refraction.Scene.Any)
+  "G3D Debug Roughness" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Roughness.Scene.Any)
+  "G3D Debug Teapot" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Teapot.Scene.Any)
+  "G3D Debug Transparency" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Transparency.Scene.Any)
+  "G3D Debug Triangle" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Triangle.Scene.Any)
+  "G3D Simple Cornell Box (Empty CO)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box-empty-cyan-orange.Scene.Any)
+  "G3D Simple Cornell Box" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box.Scene.Any)
+  "G3D Simple Cornell Box (Area Light)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box_(Area_Light).Scene.Any)
+  "G3D Simple Cornell Box (Glossy)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box_(Glossy).Scene.Any)
+  "G3D Simple Cornell Box (Mirror)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box_(Mirror).Scene.Any)
+  "G3D Simple Cornell Box (Spheres)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box_(Spheres).Scene.Any)
+  "G3D Simple Cornell Box (Water)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box_(Water).Scene.Any)
+  "G3D Simple Void" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Void.Scene.Any)
+  "G3D Simple Whiteroom" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Whiteroom.Scene.Any)
+  "G3D Sponza" (G:\program_files\g3d\data10\common/scene/G3D_Sponza.Scene.Any)
+  "G3D Sponza (Area Light)" (G:\program_files\g3d\data10\common/scene/G3D_Sponza_(Area_Light).Scene.Any)
+  "G3D Sponza (White)" (G:\program_files\g3d\data10\common/scene/G3D_Sponza_(White).Scene.Any)
+  "G3D Test Models" (G:\program_files\g3d\data10\common/scene/G3D_Test_Models.Scene.Any)
+  "G3D VR Holodeck" (G:\program_files\g3d\data10\common/scene/G3D_VR_Holodeck.Scene.Any)
+  "G3D VR Portaldeck" (G:\program_files\g3d\data10\common/scene/G3D_VR_Portaldeck.Scene.Any)
+  "G3D Bistro Exterior (Day)" (G:\program_files\g3d\data10\research/scene/G3D_Bistro_Exterior_(Day).Scene.Any)
+  "G3D Bistro Exterior (Night)" (G:\program_files\g3d\data10\research/scene/G3D_Bistro_Exterior_(Night).Scene.Any)
+  "G3D Bistro Interior" (G:\program_files\g3d\data10\research/scene/G3D_Bistro_Interior.Scene.Any)
+  "G3D Breakfast Room" (G:\program_files\g3d\data10\research/scene/G3D_Breakfast_Room.Scene.Any)
+  "G3D Breakfast Room (Area Lights)" (G:\program_files\g3d\data10\research/scene/G3D_Breakfast_Room_(Area_Lights).Scene.Any)
+  "G3D Breakfast Room (Area Lights) Animated" (G:\program_files\g3d\data10\research/scene/G3D_Breakfast_Room_(Area_Lights)_Animated.Scene.Any)
+  "G3D Fireplace Room" (G:\program_files\g3d\data10\research/scene/G3D_Fireplace_Room.Scene.Any)
+  "G3D Fireplace Room (Area Lights)" (G:\program_files\g3d\data10\research/scene/G3D_Fireplace_Room_(Area_Lights).Scene.Any)
+  "G3D Fireplace Room (Emissive Windows)" (G:\program_files\g3d\data10\research/scene/G3D_Fireplace_Room_(Emissive_Windows).Scene.Any)
+  "G3D Fireplace Room (No Glass)" (G:\program_files\g3d\data10\research/scene/G3D_Fireplace_Room_(No_Glass).Scene.Any)
+  "G3D Living Room" (G:\program_files\g3d\data10\research/scene/G3D_Living_Room.Scene.Any)
+  "G3D Living Room (Area Lights)" (G:\program_files\g3d\data10\research/scene/G3D_Living_Room_(Area_Lights).Scene.Any)
+  "G3D Living Room (Emissive Windows)" (G:\program_files\g3d\data10\research/scene/G3D_Living_Room_(Emissive_Windows).Scene.Any)
+  "G3D Minecraft" (G:\program_files\g3d\data10\research/scene/G3D_Minecraft.Scene.Any)
+  "G3D Salle de Bain" (G:\program_files\g3d\data10\research/scene/G3D_Salle_de_Bain.Scene.Any)
+  "G3D San Miguel" (G:\program_files\g3d\data10\research/scene/G3D_San_Miguel.Scene.Any)
+  "G3D San Miguel Low Poly" (G:\program_files\g3d\data10\research/scene/G3D_San_Miguel_Low_Poly.Scene.Any)
+  "G3D San Miguel Low Poly Area Lights" (G:\program_files\g3d\data10\research/scene/G3D_San_Miguel_Low_Poly_Area_Light.Scene.Any)
+  "G3D Sibenik" (G:\program_files\g3d\data10\research/scene/G3D_Sibenik.Scene.Any)
+  "G3D Sibenik (Statue)" (G:\program_files\g3d\data10\research/scene/G3D_Sibenik_(Statue).Scene.Any)
+  "G3D Simple Cloud" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Cloud.Scene.Any)
+  "G3D Simple Cornell Box (Globe)" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Cornell_Box_(Globe).Scene.Any)
+  "G3D Simple Motion" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Motion.Scene.Any)
+  "G3D Simple Opening Door" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Opening_Door.Scene.Any)
+  "G3D Simple Particles" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Particles.Scene.Any)
+  "G3D Simple Rough Transparency" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Rough_Transparency.Scene.Any)
+  "G3D Simple White Furnace (lambertian)" (G:\program_files\g3d\data10\research/scene/G3D_Simple_White_Furnace_(lambertian).Scene.Any)
+  "G3D Simple White Furnace (smoothness = 0.5)" (G:\program_files\g3d\data10\research/scene/G3D_Simple_White_Furnace_(smoothness=0.5).Scene.Any)
+  "G3D Sponza (Glossy)" (G:\program_files\g3d\data10\research/scene/G3D_Sponza_(Glossy).Scene.Any)
+  "G3D Sponza (Glossy Area Lights)" (G:\program_files\g3d\data10\research/scene/G3D_Sponza_(Glossy_Area_Lights).Scene.Any)
+  "G3D Sponza (Statue)" (G:\program_files\g3d\data10\research/scene/G3D_Sponza_(Statue).Scene.Any)
+  "G3D Sponza (Statue Glossy)" (G:\program_files\g3d\data10\research/scene/G3D_Sponza_(Statue_Glossy).Scene.Any)
+  "G3D Sponza (Volumetric Shadows)" (G:\program_files\g3d\data10\research/scene/G3D_Sponza_(Volumetric_Shadows).Scene.Any)
+  "G3D Sports Car" (G:\program_files\g3d\data10\research/scene/G3D_Sports_Car.Scene.Any)
+  "G3D Sports Car (BMW)" (G:\program_files\g3d\data10\research/scene/G3D_Sports_Car_(BMW).Scene.Any)
+  "G3D Sports Car (White)" (G:\program_files\g3d\data10\research/scene/G3D_Sports_Car_(White).Scene.Any)
+  "G3D Veach Door" (G:\program_files\g3d\data10\research/scene/G3D_Veach_Door.Scene.Any)
+  "G3D VR Bedroom" (G:\program_files\g3d\data10\research/scene/G3D_VR_Bedroom.Scene.Any)
+  "G3D VR Gallery" (G:\program_files\g3d\data10\research/scene/G3D_VR_Gallery.Scene.Any)
+  "G3D atcs" (G:\program_files\g3d\data10\game/scene/atcs.Scene.Any)
+  "G3D Beta Squadron" (G:\program_files\g3d\data10\game/scene/beta.Scene.Any)
+  "G3D AR Mountain" (G:\program_files\g3d\data10\game/scene/G3D_AR_Mountain/G3D_AR_Mountain.Scene.Any)
+serverAddress is : 127.0.0.1:18821
+
+-------------------
+Experiment Config
+-------------------
+appendingDescription = Experiment
+scene name = 
+Trial Feedback Duration = 1.000000
+Pretrial Duration = 0.500000
+Max Trial Task Duration = 100000.000000
+Max Clicks = 10000
+Server Address = 127.0.0.1
+Server Port = 18821
+	-------------------
+	Session Config
+	-------------------
+	ID = 60Hz
+	Frame Rate = 60.000000
+	Frame Delay = 0
+		Trial Run Config: IDs = [static, moving, jumping], Count = 2
+	-------------------
+	Session Config
+	-------------------
+	ID = 30Hz
+	Frame Rate = 30.000000
+	Frame Delay = 0
+		Trial Run Config: IDs = [static, moving, jumping], Count = 2
+	-------------------
+	Target Config
+	-------------------
+	ID = static
+	Motion Change Period = [1.000000-1.000000]
+	Min Speed = 0.000000
+	Max Speed = 0.000000
+	Visual Size = [0.050000-0.050000]
+	Upper Hemisphere Only = False
+	Jump Enabled = False
+	Jump Period = [2.000000-2.000000]
+	jumpSpeed = [2.000000-5.500000]
+	Accel Gravity = [9.800000-9.800000]
+	Axis Lock = [false, false, false]
+	-------------------
+	Target Config
+	-------------------
+	ID = moving
+	Motion Change Period = [0.800000-1.500000]
+	Min Speed = 7.000000
+	Max Speed = 10.000000
+	Visual Size = [0.050000-0.050000]
+	Upper Hemisphere Only = False
+	Jump Enabled = False
+	Jump Period = [2.000000-2.000000]
+	jumpSpeed = [2.000000-5.500000]
+	Accel Gravity = [9.800000-9.800000]
+	Axis Lock = [false, false, true]
+	-------------------
+	Target Config
+	-------------------
+	ID = jumping
+	Motion Change Period = [0.800000-1.500000]
+	Min Speed = 10.000000
+	Max Speed = 10.000000
+	Visual Size = [0.050000-0.050000]
+	Upper Hemisphere Only = False
+	Jump Enabled = True
+	Jump Period = [0.500000-1.000000]
+	jumpSpeed = [2.000000-5.500000]
+	Accel Gravity = [9.800000-9.800000]
+	Axis Lock = [false, false, false]
+Experiment hash: da1b4a96
+	User ID: anon, sensitivity = 2.820000 deg/mm, mouseDPI = 0
+Subject ID: anon
+Session Order: [60Hz, 30Hz]
+Completed Sessions: []
+
+-------------------
+System Info:
+-------------------
+	Hostname: ARA
+	Username: ben
+	Processor: AMD Ryzen 5 2600 Six-Core Processor            
+	Core Count: 12
+	Memory: 32699MB
+	GPU: ATI Technologies Inc. Radeon RX 580 Series
+	Display: 
+	Display Resolution: 1920 x 1080 (px)
+	Display Size: 508 x 286 (mm)
+
+-------------------
+LDAT-R Config:
+-------------------
+	Logger Present: False
+	Logger COM Port: None
+	Sync Card Present: False
+	Sync COM Port: None
+
+             jumping bounding box: [2.28, 2.40, 2.40]
+              moving bounding box: [2.28, 2.40, 2.40]
+           reference bounding box: [2.28, 2.40, 2.40]
+              static bounding box: [2.28, 2.40, 2.40]
+Updated anon's session drop down to:
+	60Hz
+	30Hz
+Updated anon's session drop down to:
+	60Hz
+	30Hz
+User selected session: 60Hz. Updating now...
+
+
+Found scenes:
+  "FPSci Medium Courtyard" (G:\git\FPSci\data-files/scene/Medium_Courtyard.Scene.Any)
+  "FPSci Simple Hallway" (G:\git\FPSci\data-files/scene/Simple_Hallway.Scene.Any)
+  "FPSci Test Cornell Box (Empty CO)" (G:\git\FPSci\data-files/scene/Test_Cornell_Box.Scene.Any)
+  "G3D Debug Animation (Skeletal)" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Animation_(Skeletal).Scene.Any)
+  "G3D Debug Area Light (Glossy)" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Area_Light_(Glossy).Scene.Any)
+  "G3D Debug Area Light (Matte)" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Area_Light_(Matte).Scene.Any)
+  "G3D Debug Cubemap" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Cubemap.Scene.Any)
+  "G3D Debug Depth of Field" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Depth_of_Field.Scene.Any)
+  "G3D Debug Heightfield" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Heightfield.Scene.Any)
+  "G3D Debug Light Intensity" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Light_Intensity.Scene.Any)
+  "G3D Debug Refraction" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Refraction.Scene.Any)
+  "G3D Debug Roughness" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Roughness.Scene.Any)
+  "G3D Debug Teapot" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Teapot.Scene.Any)
+  "G3D Debug Transparency" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Transparency.Scene.Any)
+  "G3D Debug Triangle" (G:\program_files\g3d\data10\common/scene/G3D_Debug_Triangle.Scene.Any)
+  "G3D Simple Cornell Box (Empty CO)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box-empty-cyan-orange.Scene.Any)
+  "G3D Simple Cornell Box" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box.Scene.Any)
+  "G3D Simple Cornell Box (Area Light)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box_(Area_Light).Scene.Any)
+  "G3D Simple Cornell Box (Glossy)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box_(Glossy).Scene.Any)
+  "G3D Simple Cornell Box (Mirror)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box_(Mirror).Scene.Any)
+  "G3D Simple Cornell Box (Spheres)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box_(Spheres).Scene.Any)
+  "G3D Simple Cornell Box (Water)" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Cornell_Box_(Water).Scene.Any)
+  "G3D Simple Void" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Void.Scene.Any)
+  "G3D Simple Whiteroom" (G:\program_files\g3d\data10\common/scene/G3D_Simple_Whiteroom.Scene.Any)
+  "G3D Sponza" (G:\program_files\g3d\data10\common/scene/G3D_Sponza.Scene.Any)
+  "G3D Sponza (Area Light)" (G:\program_files\g3d\data10\common/scene/G3D_Sponza_(Area_Light).Scene.Any)
+  "G3D Sponza (White)" (G:\program_files\g3d\data10\common/scene/G3D_Sponza_(White).Scene.Any)
+  "G3D Test Models" (G:\program_files\g3d\data10\common/scene/G3D_Test_Models.Scene.Any)
+  "G3D VR Holodeck" (G:\program_files\g3d\data10\common/scene/G3D_VR_Holodeck.Scene.Any)
+  "G3D VR Portaldeck" (G:\program_files\g3d\data10\common/scene/G3D_VR_Portaldeck.Scene.Any)
+  "G3D Bistro Exterior (Day)" (G:\program_files\g3d\data10\research/scene/G3D_Bistro_Exterior_(Day).Scene.Any)
+  "G3D Bistro Exterior (Night)" (G:\program_files\g3d\data10\research/scene/G3D_Bistro_Exterior_(Night).Scene.Any)
+  "G3D Bistro Interior" (G:\program_files\g3d\data10\research/scene/G3D_Bistro_Interior.Scene.Any)
+  "G3D Breakfast Room" (G:\program_files\g3d\data10\research/scene/G3D_Breakfast_Room.Scene.Any)
+  "G3D Breakfast Room (Area Lights)" (G:\program_files\g3d\data10\research/scene/G3D_Breakfast_Room_(Area_Lights).Scene.Any)
+  "G3D Breakfast Room (Area Lights) Animated" (G:\program_files\g3d\data10\research/scene/G3D_Breakfast_Room_(Area_Lights)_Animated.Scene.Any)
+  "G3D Fireplace Room" (G:\program_files\g3d\data10\research/scene/G3D_Fireplace_Room.Scene.Any)
+  "G3D Fireplace Room (Area Lights)" (G:\program_files\g3d\data10\research/scene/G3D_Fireplace_Room_(Area_Lights).Scene.Any)
+  "G3D Fireplace Room (Emissive Windows)" (G:\program_files\g3d\data10\research/scene/G3D_Fireplace_Room_(Emissive_Windows).Scene.Any)
+  "G3D Fireplace Room (No Glass)" (G:\program_files\g3d\data10\research/scene/G3D_Fireplace_Room_(No_Glass).Scene.Any)
+  "G3D Living Room" (G:\program_files\g3d\data10\research/scene/G3D_Living_Room.Scene.Any)
+  "G3D Living Room (Area Lights)" (G:\program_files\g3d\data10\research/scene/G3D_Living_Room_(Area_Lights).Scene.Any)
+  "G3D Living Room (Emissive Windows)" (G:\program_files\g3d\data10\research/scene/G3D_Living_Room_(Emissive_Windows).Scene.Any)
+  "G3D Minecraft" (G:\program_files\g3d\data10\research/scene/G3D_Minecraft.Scene.Any)
+  "G3D Salle de Bain" (G:\program_files\g3d\data10\research/scene/G3D_Salle_de_Bain.Scene.Any)
+  "G3D San Miguel" (G:\program_files\g3d\data10\research/scene/G3D_San_Miguel.Scene.Any)
+  "G3D San Miguel Low Poly" (G:\program_files\g3d\data10\research/scene/G3D_San_Miguel_Low_Poly.Scene.Any)
+  "G3D San Miguel Low Poly Area Lights" (G:\program_files\g3d\data10\research/scene/G3D_San_Miguel_Low_Poly_Area_Light.Scene.Any)
+  "G3D Sibenik" (G:\program_files\g3d\data10\research/scene/G3D_Sibenik.Scene.Any)
+  "G3D Sibenik (Statue)" (G:\program_files\g3d\data10\research/scene/G3D_Sibenik_(Statue).Scene.Any)
+  "G3D Simple Cloud" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Cloud.Scene.Any)
+  "G3D Simple Cornell Box (Globe)" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Cornell_Box_(Globe).Scene.Any)
+  "G3D Simple Motion" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Motion.Scene.Any)
+  "G3D Simple Opening Door" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Opening_Door.Scene.Any)
+  "G3D Simple Particles" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Particles.Scene.Any)
+  "G3D Simple Rough Transparency" (G:\program_files\g3d\data10\research/scene/G3D_Simple_Rough_Transparency.Scene.Any)
+  "G3D Simple White Furnace (lambertian)" (G:\program_files\g3d\data10\research/scene/G3D_Simple_White_Furnace_(lambertian).Scene.Any)
+  "G3D Simple White Furnace (smoothness = 0.5)" (G:\program_files\g3d\data10\research/scene/G3D_Simple_White_Furnace_(smoothness=0.5).Scene.Any)
+  "G3D Sponza (Glossy)" (G:\program_files\g3d\data10\research/scene/G3D_Sponza_(Glossy).Scene.Any)
+  "G3D Sponza (Glossy Area Lights)" (G:\program_files\g3d\data10\research/scene/G3D_Sponza_(Glossy_Area_Lights).Scene.Any)
+  "G3D Sponza (Statue)" (G:\program_files\g3d\data10\research/scene/G3D_Sponza_(Statue).Scene.Any)
+  "G3D Sponza (Statue Glossy)" (G:\program_files\g3d\data10\research/scene/G3D_Sponza_(Statue_Glossy).Scene.Any)
+  "G3D Sponza (Volumetric Shadows)" (G:\program_files\g3d\data10\research/scene/G3D_Sponza_(Volumetric_Shadows).Scene.Any)
+  "G3D Sports Car" (G:\program_files\g3d\data10\research/scene/G3D_Sports_Car.Scene.Any)
+  "G3D Sports Car (BMW)" (G:\program_files\g3d\data10\research/scene/G3D_Sports_Car_(BMW).Scene.Any)
+  "G3D Sports Car (White)" (G:\program_files\g3d\data10\research/scene/G3D_Sports_Car_(White).Scene.Any)
+  "G3D Veach Door" (G:\program_files\g3d\data10\research/scene/G3D_Veach_Door.Scene.Any)
+  "G3D VR Bedroom" (G:\program_files\g3d\data10\research/scene/G3D_VR_Bedroom.Scene.Any)
+  "G3D VR Gallery" (G:\program_files\g3d\data10\research/scene/G3D_VR_Gallery.Scene.Any)
+  "G3D atcs" (G:\program_files\g3d\data10\game/scene/atcs.Scene.Any)
+  "G3D Beta Squadron" (G:\program_files\g3d\data10\game/scene/beta.Scene.Any)
+  "G3D AR Mountain" (G:\program_files\g3d\data10\game/scene/G3D_AR_Mountain/G3D_AR_Mountain.Scene.Any)
+BSPMap reports missing texture #1: "noshader"
+BSPMap reports missing texture #2: "textures/atcs/skybox_s"
+BSPMap reports missing texture #20: "textures/atcs/eq2lt_bmtl03light_300"
+BSPMap reports missing texture #26: "textures/atcs/eq2lt_baselt03b_s_1500"
+BSPMap reports missing texture #36: "textures/atcs/eq2_baselt03_blue_s_3000"
+BSPMap reports missing texture #37: "textures/atcs/eq2lt_baselt03b_blue_s_2000"
+BSPMap reports missing texture #38: "textures/atcs/eq2_baselt03_blue_s_5000"
+BSPMap reports missing texture #39: "textures/atcs/cubelight_32_red_s_20k"
+BSPMap reports missing texture #41: "textures/atcs/eq2lt_baselt03b_blue_s_1500"
+BSPMap reports missing texture #56: "textures/atcs/eq2lt_baselt03b_blue_s_3000"
+BSPMap reports missing texture #57: "textures/atcs/cubelight_32_blue_s_10k"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Created results file: ./results/Experiment_anon_da1b4a96.db
+Updated anon's session drop down to:
+	60Hz
+	30Hz
+made connection to 127.0.0.1 in response to input

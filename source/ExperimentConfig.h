@@ -7,11 +7,14 @@
 /** Experiment configuration */
 class ExperimentConfig : public FpsConfig {
 public:
+	
 	String description = "Experiment";					///< Experiment description
 	Array<SessionConfig> sessions;						///< Array of sessions
 	Array<TargetConfig> targets;						///< Array of trial configs   
 	bool closeOnComplete = false;						///< Close application on all sessions complete
-
+	String serverAddress = "";							///< Address for server
+	int serverPort = 12345;								///< Port for server
+	
 	ExperimentConfig() { init(); }
 	ExperimentConfig(const Any& any);
 
