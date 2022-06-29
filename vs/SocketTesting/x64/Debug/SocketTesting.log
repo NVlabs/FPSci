@@ -1,8 +1,0 @@
-﻿SocketTesting.obj : error LNK2019: unresolved external symbol __imp_WSAGetLastError referenced in function main
-SocketTesting.obj : error LNK2019: unresolved external symbol enet_initialize referenced in function main
-SocketTesting.obj : error LNK2019: unresolved external symbol enet_socket_create referenced in function main
-SocketTesting.obj : error LNK2019: unresolved external symbol enet_socket_bind referenced in function main
-SocketTesting.obj : error LNK2019: unresolved external symbol enet_socket_send referenced in function main
-SocketTesting.obj : error LNK2019: unresolved external symbol enet_socket_receive referenced in function main
-SocketTesting.obj : error LNK2019: unresolved external symbol enet_address_set_host referenced in function main
-E:\MQP\FPSci\vs\x64\Debug\SocketTesting.exe : fatal error LNK1120: 7 unresolved externals

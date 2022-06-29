@@ -3,6 +3,7 @@
 #include <enet/enet.h>
 #include <iostream>
 #include <string>
+#include <G3D/G3D.h>
 
 #define PORT 6624
 
