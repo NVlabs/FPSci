@@ -54,7 +54,7 @@ void FPSciNetworkApp::initExperiment() {
 
 	// Setup the connection to the server if this experiment is networked
 		ENetAddress localAddress;
-		if (experimentConfig.serverAddress.c_str() != "") {
+		if (false){//experimentConfig.serverAddress.c_str() != "") {
 			enet_address_set_host(&localAddress, experimentConfig.serverAddress.c_str());
 		}
 		else {
@@ -92,7 +92,9 @@ void FPSciNetworkApp::onNetwork() {
 }
 
 void FPSciNetworkApp::onInit() {
-	enet_initialize();
+    if (enet_initialize()) {
+        throw std::runtime_error("Failed to initalize enet!");
+    }
 	FPSciApp::onInit();
 }
 

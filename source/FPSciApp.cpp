@@ -81,8 +81,8 @@ void FPSciApp::initExperiment(){
 		enet_initialize();
 		ENetAddress localAddress;
 		localAddress.host = ENET_HOST_ANY;
-		localAddress.port = experimentConfig.serverPort;	//TODO: Make this use a different clientPort variable
-		m_localHost  = enet_host_create(&localAddress, 1, 2, 0, 0);
+		localAddress.port = experimentConfig.serverPort+1;	//TODO: Make this use a different clientPort variable
+		m_localHost  = enet_host_create(NULL, 1, 2, 0, 0);
 		if (m_localHost == NULL) {
 			throw std::runtime_error("Could not create a local host for the server to connect to");
 		}
@@ -842,10 +842,16 @@ void FPSciApp::onAI() {
 
 void FPSciApp::onNetwork() {
 	GApp::onNetwork();
-	//if (m_serverPeer->state != ENET_PEER_STATE_CONNECTED) {
-		//throw std::runtime_error("Lost connection to the server!");
-	//}
-	
+	ENetEvent event;
+	while (enet_host_service(m_localHost, &event, 0) > 0) {
+		char ip[16];
+		enet_address_get_host_ip(&event.peer->address, ip, 16);
+		switch (event.type) {
+			case ENET_EVENT_TYPE_RECEIVE:
+				debugPrintf("Recieved a message from ip: %s", ip);
+				break;
+		}
+	}
 	// Poll net messages here
 }
 

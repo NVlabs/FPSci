@@ -7,13 +7,14 @@ G3D_START_AT_MAIN();
 
 int main(int argc, const char* argv[]) {
 
-	FPSciNetworkApp::startupConfig = StartupConfig::load("startupconifg.Any");
-
 	{
 		G3DSpecification spec;
 		spec.audio = false;
+		spec.logFilename = "serverlog.txt";
 		initGLG3D(spec);
 	}
+
+	FPSciNetworkApp::startupConfig = StartupConfig::load("startupconifg.Any");
 
 	FPSciNetworkApp::Settings settings(FPSciNetworkApp::startupConfig, argc, argv);
 	settings.window.visible = false;
