@@ -1,5 +1,5 @@
 Application Log
-Start: Tue Jun 28 20:32:15 2022
+Start: Wed Jun 29 21:33:32 2022
 
 WARNING: AudioDevice is not enabled. Set G3DSpecification::audio = true before invoking initGLG3D() to enable audio.
 Searching 'samples' directory for sample experiments.
@@ -9,12 +9,12 @@ Sample '[Sample]spheres' added to experiment list
 Sample '[Sample]targets' added to experiment list
 Sample '[Sample]weapons' added to experiment list
 
-Initializing System::findDataFile took 0.003427s
+Initializing System::findDataFile took 0.003875s
 
 Entering GApp::GApp()
 cwd = G:\git\FPSci\data-files
 System::setAppDataDir("G:\git\FPSci\data-files")
-System::setAppDataDirs()Initializing System::findDataFile took 0.001578s
+System::setAppDataDirs()Initializing System::findDataFile took 0.001355s
 Setting video mode
 wglSwapIntervalEXT(0);
 Setting initial rendering state.
@@ -125,8 +125,8 @@ Red                                8 bits   ok
 Green                              8 bits   ok
 Blue                               8 bits   ok
 FSAA                       1     1    ok
-Width                 1920 pixels           ok
-Height                1080 pixels           ok
+Width                 3440 pixels           ok
+Height                1440 pixels           ok
 Mode                   Windowed             ok
 
 This driver does support G3D 10:
@@ -183,8 +183,8 @@ Network StartupSystem = {
         Full screen = false; 
         Top = 0 ;
         Left = 0 ;
-        Width = 1920 ;
-        Height = 1080 ;
+        Width = 3440 ;
+        Height = 1440 ;
         Refresh rate = -1 ;
         
         Alpha bits = 0 ;
@@ -664,11 +664,11 @@ Server Port = 18821
 	jumpSpeed = [2.000000-5.500000]
 	Accel Gravity = [9.800000-9.800000]
 	Axis Lock = [false, false, false]
-Experiment hash: da1b4a96
+Experiment hash: 98727e53
 	User ID: anon, sensitivity = 2.820000 deg/mm, mouseDPI = 0
 Subject ID: anon
 Session Order: [60Hz, 30Hz]
-Completed Sessions: []
+Completed Sessions: [60Hz, 30Hz]
 
 -------------------
 System Info:
@@ -680,8 +680,8 @@ System Info:
 	Memory: 32699MB
 	GPU: ATI Technologies Inc. Radeon RX 580 Series
 	Display: 
-	Display Resolution: 1920 x 1080 (px)
-	Display Size: 508 x 286 (mm)
+	Display Resolution: 3440 x 1440 (px)
+	Display Size: 797 x 333 (mm)
 
 -------------------
 LDAT-R Config:
@@ -696,12 +696,7 @@ LDAT-R Config:
            reference bounding box: [2.28, 2.40, 2.40]
               static bounding box: [2.28, 2.40, 2.40]
 Updated anon's session drop down to:
-	60Hz
-	30Hz
 Updated anon's session drop down to:
-	60Hz
-	30Hz
-User selected session: 60Hz. Updating now...
 
 
 Found scenes:
@@ -808,8 +803,7 @@ BSPMap reports missing texture #57: "textures/atcs/cubelight_32_blue_s_10k"
 
 
 
-Created results file: ./results/Experiment_anon_da1b4a96.db
+No sessions remaining for selected user.
 Updated anon's session drop down to:
-	60Hz
-	30Hz
 made connection to 127.0.0.1 in response to input
+127.0.0.1 disconnected.

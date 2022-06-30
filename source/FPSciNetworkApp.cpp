@@ -87,7 +87,9 @@ void FPSciNetworkApp::onNetwork() {
 			/* Reset the peer's client information. */
 			event.peer->data = NULL;
 			break;
-		}
+        case ENET_EVENT_TYPE_RECEIVE:
+			debugPrintf("%s\n", event.packet->data);
+        }
 	}	
 }
 
