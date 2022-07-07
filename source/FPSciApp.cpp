@@ -84,21 +84,25 @@ void FPSciApp::initExperiment()
 		enet_initialize();
 		ENetAddress localAddress;
 		localAddress.host = ENET_HOST_ANY;
-		localAddress.port = experimentConfig.serverPort + 1; // TODO: Make this use a different clientPort variable
+		localAddress.port = experimentConfig.serverPort; // TODO: Make this use a different clientPort variable
 		m_localHost = enet_host_create(NULL, 1, 2, 0, 0);
+
 		if (m_localHost == NULL)
 		{
 			throw std::runtime_error("Could not create a local host for the server to connect to");
 		}
-		ENetAddress serverAddress;
-		enet_address_set_host(&serverAddress, experimentConfig.serverAddress.c_str());
-		serverAddress.port = experimentConfig.serverPort;
-		m_serverPeer = enet_host_connect(m_localHost, &serverAddress, 2, 0);
+		enet_address_set_host(&m_reliableServerAddress, experimentConfig.serverAddress.c_str());
+		m_reliableServerAddress.port = experimentConfig.serverPort;
+		m_serverPeer = enet_host_connect(m_localHost, &m_reliableServerAddress, 2, 0);
 		if (m_serverPeer == NULL)
 		{
 			throw std::runtime_error("Could not create a connection to the server");
 		}
 		logPrintf("created a peer with the server at %s:%d (the connection may not have been accepeted by the server)", experimentConfig.serverAddress, experimentConfig.serverPort);
+
+		enet_address_set_host(&m_unreliableServerAddress, experimentConfig.serverAddress.c_str());
+		m_unreliableServerAddress.port = experimentConfig.serverPort + 1;
+		m_serverSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
 	}
 }
 
@@ -968,19 +972,58 @@ void FPSciApp::onNetwork()
 {
 	GApp::onNetwork();
 
+	/*
 	G3D::Box boundingBox;
 	String entityName;
-	Array<shared_ptr<Entity> > entityArray;
+	Array<shared_ptr<Entity>> entityArray;
 	scene()->getTypedEntityArray<Entity>(entityArray);
 	for (int i = 0; i < entityArray.size(); i++)
 	{
-		
+
 		entityArray[i]->getLastBounds(boundingBox);
 		entityName = entityArray[i]->name();
 		String messageToSend = entityName + ": (" + String(std::to_string(boundingBox.center().x)) + ", " + String(std::to_string(boundingBox.center().y)) + ", " + String(std::to_string(boundingBox.center().z)) + ")\n";
-		ENetPacket* packet = enet_packet_create(messageToSend.c_str(), messageToSend.size() + 1, ENET_PACKET_FLAG_RELIABLE);
+		ENetPacket *packet = enet_packet_create(messageToSend.c_str(), messageToSend.size() + 1, ENET_PACKET_FLAG_RELIABLE);
 		enet_peer_send(m_serverPeer, 0, packet);
 	}
+	*/
+
+	// Serialize user input
+	const Array<float32> movementMap = {
+		static_cast<float32>(userInput->getX() < 0), // left
+		static_cast<float32>(userInput->getX() > 0), // right
+		static_cast<float32>(userInput->getY() < 0), // down
+		static_cast<float32>(userInput->getY() > 0)	 // up
+	};
+
+	const Array<float32> mouseDeltas = {
+		userInput->mouseDX(),
+		userInput->mouseDY()};
+
+	//const Array<Array<float32>> userInput = {
+	//	movementMap,
+	//	mouseDeltas};
+
+	BinaryOutput output;
+	//G3D::serialize(userInput, output);
+
+	output.setEndian(G3D_BIG_ENDIAN);
+	output.writeFloat32 (userInput->getX());		// x-axis movement
+	output.writeFloat32(userInput->getY());		// y-axis movement
+
+	output.writeFloat32(userInput->mouseDX());	// mouseDX
+	output.writeFloat32(userInput->mouseDY());	// mouseDY
+
+
+	// Send user input to server
+	ENetBuffer enet_buff;
+	enet_buff.data = (void*) output.getCArray();
+	enet_buff.dataLength = output.length();
+
+	int status;
+	status = enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &enet_buff, 1);
+
+	/*
 	ENetEvent event;
 	while (enet_host_service(m_localHost, &event, 0) > 0)
 	{
@@ -993,7 +1036,7 @@ void FPSciApp::onNetwork()
 			break;
 		}
 	}
-	// Poll net messages here
+	*/
 }
 
 void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
@@ -1014,7 +1057,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 
 	// These variables will be used to fire after the various weapon styles populate them below
 	int numShots = 0;
-	float damagePerShot = weapon->damagePerShot();
+	float damagePerShot = +weapon->damagePerShot();
 	RealTime newLastFireTime = currentRealTime;
 
 	if (shootButtonJustPressed && stateCanFire && !weapon->canFire(currentRealTime))

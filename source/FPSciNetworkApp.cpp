@@ -65,14 +65,54 @@ void FPSciNetworkApp::initExperiment() {
 		if (m_serverHost == NULL) {
 			throw std::runtime_error("Could not create a local host for the clients to connect to");
 		}
+        m_listenSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM); //Create unreliable UDP socket
+        enet_socket_set_option(m_listenSocket, ENET_SOCKOPT_NONBLOCK, 1); //Set socket to non-blocking
+        localAddress.port += 1;
+        if (enet_socket_bind(m_listenSocket, &localAddress)) {
+            debugPrintf("bind failed with error: %d\n", WSAGetLastError());
+			throw std::runtime_error("Could not bind to the local address");
+        }
 }
 
 void FPSciNetworkApp::onNetwork() {
-	if (isNull(m_serverHost)) {
-		return;
-	}
+	
 
-	ENetEvent event;
+    ENetAddress addr_from;
+    ENetBuffer buff;
+	// TODO: make this choose the MTU better than this
+    void* data = malloc(1500);  //Allocate 1 mtu worth of space for the data from the packet
+    buff.data = data;
+    buff.dataLength = 1500;
+	int status = enet_socket_receive(m_listenSocket, &addr_from, &buff, 1);
+    Array<float> movementMap;
+    Array<float> mouseDeltas;
+	
+    if (status > 0) {
+        BinaryInput input((const uint8 *)buff.data, buff.dataLength, G3D_BIG_ENDIAN, false, true);
+        Array<Array<float32>> userInput;
+        //G3D::deserialize(userInput, input);
+
+        movementMap.append(input.readFloat32());
+        movementMap.append(input.readFloat32());
+		
+        mouseDeltas.append(input.readFloat32());
+        mouseDeltas.append(input.readFloat32());
+        /*float value = userInput[0][0];
+        value = userInput[0][1];
+        value = userInput[0][2];
+        value = userInput[0][3];
+        value = userInput[1][0];
+        value = userInput[1][1];*/
+
+        debugPrintf("Movement Key map: [%s, %s]\n", String(std::to_string(movementMap[0])), String(std::to_string(movementMap[1])));
+        debugPrintf("Mouse Deltas: [%s, %s]\n", String(std::to_string(mouseDeltas[0])), String(std::to_string(mouseDeltas[1])));
+
+    }
+    
+    if (isNull(m_serverHost)) {
+        return;
+    }
+	/*ENetEvent event;
 	while (enet_host_service(m_serverHost, &event, 0) > 0) {
 		char ip[16];
 		enet_address_get_host_ip(&event.peer->address, ip, 16);
@@ -84,13 +124,14 @@ void FPSciNetworkApp::onNetwork() {
 			break;
 		case ENET_EVENT_TYPE_DISCONNECT:
 			logPrintf("%s disconnected.\n", ip);
-			/* Reset the peer's client information. */
+			// Reset the peer's client information.
 			event.peer->data = NULL;
 			break;
         case ENET_EVENT_TYPE_RECEIVE:
 			debugPrintf("%s\n", event.packet->data);
         }
-	}	
+	}
+	*/
 }
 
 void FPSciNetworkApp::onInit() {
