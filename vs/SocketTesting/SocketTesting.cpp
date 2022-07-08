@@ -59,21 +59,15 @@ int run_flood_test() {
             buff.dataLength = 40;
 
             ENetAddress addr_from;
-            status = enet_socket_receive(server_socket, &addr_from, &buff, 1);
             // receive data from socket
-            if (status > 0) {  // if we received data...
+            while (enet_socket_receive(server_socket, &addr_from, &buff, 1) > 0) {  // if we received data...
                 socket_n++;
                 //std::string message((char*)buff.data, status); // convert to std::string
                 //printf("recieved packet (%i bytes): %s\n", status, message.c_str()); // print the message
             }
-            else {
-                socket_l++;
-                // no packet this tick
-                //printf("No socket packet...");
-            }
 
             ENetEvent event;
-            if (enet_host_service(serverHost, &event, 0) > 0)
+            while (enet_host_service(serverHost, &event, 0) > 0)
             {
                 switch (event.type)
                 {
@@ -86,13 +80,12 @@ int run_flood_test() {
                     break;
                 case ENET_EVENT_TYPE_RECEIVE:
                     peer_n++;
+                    enet_packet_destroy(event.packet);
                     break;
                 }
             }
-            else {
-                peer_l++;
-            }
             if (running) {
+                Sleep(1);
                 printf("Socket: %i\t\tPeer:%i\t\tSocket_l: %i\t\tPeer_l: %i\r", socket_n, peer_n, socket_l, peer_l);
                 fflush(stdout);
             }
