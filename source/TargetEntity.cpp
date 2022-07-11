@@ -871,3 +871,276 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 #endif
 }
 
+/*NETWORKED STUFF HGOES HERE*/
+
+shared_ptr<Entity> NetworkedEntity::create(
+	const String& name,
+	Scene* scene,
+	AnyTableReader& propertyTable,
+	const ModelTable& modelTable,
+	const Scene::LoadOptions& loadOptions)
+{
+	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
+	const shared_ptr<NetworkedEntity>& betworkedEntity = createShared<NetworkedEntity>();
+
+	// Initialize each base class, which parses its own fields
+	networkedEntity->Entity::init(name, scene, propertyTable);
+	networkedEntity->VisibleEntity::init(propertyTable, modelTable);
+	networkedEntity->NetworkedEntity::init(propertyTable);
+
+	// Verify that all fields were read by the base classes
+	propertyTable.verifyDone();
+
+	return networkedEntity;
+}
+
+
+shared_ptr<NetworkedEntity> NetworkedEntity::create(
+	const String& name,
+	Scene* scene,
+	const shared_ptr<Model>& model,
+	const CFrame& position) {
+
+	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
+	const shared_ptr<NetworkedEntity>& networkedEntity = createShared<NetworkedEntity>();
+
+	// Initialize each base class, which parses its own fields
+	networkedEntity->Entity::init(name, scene, position, shared_ptr<Entity::Track>(), true, true);
+	networkedEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
+	networkedEntity->NetworkedEntity::init();
+
+	return networkedEntity;
+}
+
+shared_ptr<NetworkedEntity> NetworkedEntity::create(
+	shared_ptr<TargetConfig>		config,
+	const String& name,
+	Scene* scene,
+	const shared_ptr<Model>& model,
+	const Point3& orbitCenter,
+	int								scaleIdx,
+	int								paramIdx)
+{
+	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
+	const shared_ptr<NetworkedEntity>& networkedEntity = createShared<NetworkedEntity>();
+
+	// Initialize each base class, which parses its own fields
+	networkedEntity->Entity::init(name, scene, CFrame(), shared_ptr<Entity::Track>(), true, true);
+	networkedEntity->VisibleEntity::init(model, true, Surface::ExpressiveLightScatteringProperties(), ArticulatedModel::PoseSpline());
+	networkedEntity->NetworkedEntity::init(
+		{ config->speed[0], config->speed[1] },
+		{ config->motionChangePeriod[0], config->motionChangePeriod[1] },
+		config->upperHemisphereOnly,
+		orbitCenter,
+		paramIdx,
+		config->axisLock,
+		config->respawnCount,
+		scaleIdx,
+		config->logTargetTrajectory);
+	networkedEntity->m_id = config->id;
+	return networkedEntity;
+}
+
+
+
+void NetworkedEntity::init(AnyTableReader& propertyTable) {
+	//TODO: implement load from any file here...
+	init();
+}
+
+//init from network TODO
+
+void NetworkedEntity::init() {
+}
+
+
+void NetworkedEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, Array<bool> axisLock, int respawns, int scaleIdx, bool isLogged) {
+	m_angularSpeedRange = angularSpeedRange;
+	m_motionChangePeriodRange = motionChangePeriodRange;
+	m_upperHemisphereOnly = upperHemisphereOnly;
+	m_orbitCenter = orbitCenter;
+	m_paramIdx = paramIdx;
+	m_respawnCount = respawns;
+	m_scaleIdx = scaleIdx;
+	m_isLogged = isLogged;
+	alwaysAssertM(axisLock.size() == 3, "Axis lock must have size 3!");
+	for (int i = 0; i < 3; i++) {
+		m_axisLocks[i] = axisLock[i];
+	}
+}
+
+void NetworkedEntity::fromNetwork(void* buff) {
+	//set frame
+}
+
+void* NetworkedEntity::toNetwork() {
+	//serialize frame
+}
+
+Any NetworkedEntity::toAny(const bool forceAll) const {
+	Any a = VisibleEntity::toAny(forceAll);
+	a.setName("NetworkedEntity");
+
+	// a["velocity"] = m_velocity;
+
+	return a;
+}
+
+void NetworkedEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
+	// Do not call Entity::onSimulation; that will override with spline animation
+
+	if (!(isNaN(deltaTime) || (deltaTime == 0))) { // first frame?
+		m_previousFrame = m_frame;
+	}
+
+	simulatePose(absoluteTime, deltaTime);
+
+	if (m_worldSpace) {
+		Point3 pos = m_frame.translation;
+		// Handle world-space target here
+		// Check for change in direction
+		if (absoluteTime > m_nextChangeTime) {
+			// Update the next change time
+			float motionChangeTime = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
+			m_nextChangeTime = absoluteTime + motionChangeTime;
+			// Velocity to use for this next interval
+			float vel = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+			Point3 destination = m_bounds.randomInteriorPoint();
+			if (m_axisLocks[0]) {
+				destination.x = pos.x;
+			}
+			if (m_axisLocks[1]) {
+				destination.y = pos.y;
+			}
+			if (m_axisLocks[2]) {
+				destination.z = pos.z;
+			}
+			if (m_axisLocks[0] && m_axisLocks[1] && m_axisLocks[2] && vel > 0) {
+				throw "Cannot lock all axes for non-static target!";
+			}
+			m_velocity = vel * (destination - m_frame.translation).direction();
+		}
+		// Check for whether the target has "left" the bounds, if so "reflect" it about the wall
+		else if (!m_bounds.contains(pos)) {
+			if (pos.x >= m_bounds.high().x) {
+				m_velocity.x = -abs(m_velocity.x);
+			}
+			else if (pos.x <= m_bounds.low().x) {
+				m_velocity.x = abs(m_velocity.x);
+			}
+			if (pos.y >= m_bounds.high().y) {
+				m_velocity.y = -abs(m_velocity.y);
+			}
+			else if (pos.y <= m_bounds.low().y) {
+				m_velocity.y = abs(m_velocity.y);
+			}
+			if (pos.z >= m_bounds.high().z) {
+				m_velocity.z = -abs(m_velocity.z);
+			}
+			else if (pos.z <= m_bounds.low().z) {
+				m_velocity.z = abs(m_velocity.z);
+			}
+		}
+
+		// Update the position and set the frame
+		pos += m_velocity * deltaTime;
+		setFrame(pos);
+
+		// Set changed time if it moved
+		if (m_velocity != Vector3(0.f, 0.f, 0.f)) {
+			m_lastChangeTime = System::time();
+		}
+	}
+	else {
+		// Handle non-world space (player projection here)
+		while ((deltaTime > 0.000001f) && m_angularSpeedRange[0] > 0.0f) {
+			if (m_destinationPoints.empty()) {
+				// Add destimation points if no destination points.
+				float motionChangePeriod = Random::common().uniform(m_motionChangePeriodRange[0], m_motionChangePeriodRange[1]);
+				float angularSpeed = Random::common().uniform(m_angularSpeedRange[0], m_angularSpeedRange[1]);
+				float angularDistance = motionChangePeriod * angularSpeed;
+				angularDistance = angularDistance > 170.f ? 170.0f : angularDistance; // replace with 170 deg if larger than 170.
+
+				// [m/s] = [m/radians] * [radians/s]
+				const float radius = (m_frame.translation - m_orbitCenter).length();
+				m_speed = radius * (angularSpeed * pif() / 180.0f);
+
+				// relative position to orbit center
+				Point3 relPos = m_frame.translation - m_orbitCenter;
+				// find a vector perpendicular to the current position
+				Point3 perpen = findPerpendicularVector(relPos);
+				// calculate destination point
+				Point3 dest = m_orbitCenter + rotateToward(relPos, perpen, angularDistance);
+				// add destination point.
+				m_destinationPoints.pushBack(dest);
+			}
+
+			if ((m_frame.translation - m_destinationPoints[0]).length() < 0.001f) {
+				// Retire this destination. We are almost at the destination (linear and geodesic distances 
+				// are the same when small), and the following math will be numerically imprecise if we
+				// use such a close destination.
+				m_destinationPoints.popFront();
+			}
+			else {
+				const Point3 destinationPoint = m_destinationPoints[0];
+				const Point3 currentPoint = m_frame.translation;
+
+				// Transform to directions
+				const float radius = (destinationPoint - m_orbitCenter).length();
+				const Vector3& destinationVector = (destinationPoint - m_orbitCenter).direction();
+				const Vector3& currentVector = (currentPoint - m_orbitCenter).direction();
+
+				// The direction is always "from current to destination", so we can use acos here
+				// and not worry about it being unsigned.
+				const float projection = currentVector.dot(destinationVector);
+				const float destinationAngle = G3D::acos(projection);
+
+				// [radians/s] = [m/s] / [m/radians]
+				const float angularSpeed = m_speed / radius;
+
+				// [rad] = [rad/s] * [s] 
+				float angleChange = angularSpeed * deltaTime;
+
+				if (angleChange > destinationAngle) {
+					// We'll reach the destination before the time step ends.
+					// Record how much time was consumed by this step.
+					deltaTime -= destinationAngle / angularSpeed;
+					angleChange = destinationAngle;
+					m_destinationPoints.popFront();
+				}
+				else {
+					// Consumed the entire time step
+					deltaTime = 0;
+				}
+
+				// Transform to spherical coordinates in the plane of the arc
+				const Vector3& U = currentVector;
+				const Vector3& V = (destinationVector - currentVector * projection).direction();
+
+				setFrame(m_orbitCenter + (cos(angleChange) * U + sin(angleChange) * V) * radius);
+
+				// Set changed time if it moved
+				if (angleChange != 0.f) {
+					m_lastChangeTime = System::time();
+				}
+			}
+
+			if (m_upperHemisphereOnly) {
+				// Target position must be always above the orbit horizon (plane defined by "y = m_orbitCenter.y")
+				// If target is below the orbit horizon, y-invert position & destination points w.r.t. the orbit horizon.
+				if (m_frame.translation.y < m_orbitCenter.y) {
+					m_frame.translation.y = m_orbitCenter.y + (m_orbitCenter.y - m_frame.translation.y);
+					for (int i = 0; i < m_destinationPoints.length(); ++i) { // iterate by the number of elements in m_destinationPoints.
+						Point3 t_dp = m_destinationPoints.popFront(); // pop first element.
+						t_dp.y = m_orbitCenter.y + (m_orbitCenter.y - t_dp.y);
+						m_destinationPoints.pushBack(t_dp); // push the newly processed destination points at the back.
+					}
+				}
+			}
+		}
+	}
+#ifdef DRAW_BOUNDING_SPHERES
+	// Draw a 1m sphere at this position
+	debugDraw(Sphere(m_frame.translation, BOUNDING_SPHERE_RADIUS), 0.0f, Color4::clear(), Color3::black());
+#endif
+}
