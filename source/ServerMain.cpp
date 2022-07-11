@@ -17,8 +17,8 @@ int main(int argc, const char* argv[]) {
 	FPSciNetworkApp::startupConfig = StartupConfig::load("startupconifg.Any");
 
 	FPSciNetworkApp::Settings settings(FPSciNetworkApp::startupConfig, argc, argv);
-	settings.window.visible = false;
-	settings.window.fullScreen = false;
+	//settings.window.visible = false;
+	//settings.window.fullScreen = false;
 
 	return FPSciNetworkApp(settings).run();
 }

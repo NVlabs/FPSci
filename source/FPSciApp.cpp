@@ -79,7 +79,7 @@ void FPSciApp::initExperiment()
 	updateSession(sessions[0], true);											  // Update session to create results file/start collection
 
 	// Setup the connection to the server if this experiment is networked
-	if (experimentConfig.serverAddress != "")
+		if (experimentConfig.serverAddress != "")
 	{
 		enet_initialize();
 		ENetAddress localAddress;
@@ -103,6 +103,16 @@ void FPSciApp::initExperiment()
 		enet_address_set_host(&m_unreliableServerAddress, experimentConfig.serverAddress.c_str());
 		m_unreliableServerAddress.port = experimentConfig.serverPort + 1;
 		m_serverSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
+		
+		// Send the server a control message with the hostname so it knows to add this address as a peer
+		BinaryOutput bitstring;
+		bitstring.setEndian(G3D_BIG_ENDIAN);
+		bitstring.writeUInt8(CONTROL_MESSAGE);
+		bitstring.writeString(NetAddress::localHostname().c_str());			// Send the hostname to the server so it can identify the client
+		ENetBuffer buff;
+		buff.data = (void*)	bitstring.getCArray();
+		buff.dataLength = bitstring.length();
+		enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &buff, 1);
 	}
 }
 
@@ -972,21 +982,7 @@ void FPSciApp::onNetwork()
 {
 	GApp::onNetwork();
 
-	/*
-	G3D::Box boundingBox;
-	String entityName;
-	Array<shared_ptr<Entity>> entityArray;
-	scene()->getTypedEntityArray<Entity>(entityArray);
-	for (int i = 0; i < entityArray.size(); i++)
-	{
 
-		entityArray[i]->getLastBounds(boundingBox);
-		entityName = entityArray[i]->name();
-		String messageToSend = entityName + ": (" + String(std::to_string(boundingBox.center().x)) + ", " + String(std::to_string(boundingBox.center().y)) + ", " + String(std::to_string(boundingBox.center().z)) + ")\n";
-		ENetPacket *packet = enet_packet_create(messageToSend.c_str(), messageToSend.size() + 1, ENET_PACKET_FLAG_RELIABLE);
-		enet_peer_send(m_serverPeer, 0, packet);
-	}
-	*/
 
 	// Serialize user input
 	const Array<float32> movementMap = {
@@ -998,32 +994,49 @@ void FPSciApp::onNetwork()
 
 	const Array<float32> mouseDeltas = {
 		userInput->mouseDX(),
-		userInput->mouseDY()};
+		userInput->mouseDY() };
 
 	//const Array<Array<float32>> userInput = {
 	//	movementMap,
 	//	mouseDeltas};
 
 	BinaryOutput output;
+	output.setEndian(G3D_BIG_ENDIAN);
 	//G3D::serialize(userInput, output);
 
-	output.setEndian(G3D_BIG_ENDIAN);
+	/*
+	output.writeUInt8(FPSciApp::messageType::UPDATE_MESSAGE);
 	output.writeFloat32 (userInput->getX());		// x-axis movement
 	output.writeFloat32(userInput->getY());		// y-axis movement
 
 	output.writeFloat32(userInput->mouseDX());	// mouseDX
 	output.writeFloat32(userInput->mouseDY());	// mouseDY
+	*/
 
 
-	// Send user input to server
+	// Get and serialize the players frame
+	output.writeUInt8(UPDATE_MESSAGE);
+	Array<shared_ptr<Entity>> entityArray;
+	scene()->getTypedEntityArray<Entity>(entityArray);
+	for (int i = 0; i < entityArray.size(); i++)
+	{
+		if (entityArray[i]->name() == "player") {
+			shared_ptr<Entity> player = entityArray[i];
+			CoordinateFrame frame = player->frame();
+			frame.serialize(output);
+		}
+	}
+	
+	
 	ENetBuffer enet_buff;
-	enet_buff.data = (void*) output.getCArray();
+	enet_buff.data = (void*)output.getCArray();
 	enet_buff.dataLength = output.length();
 
-	int status;
-	status = enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &enet_buff, 1);
+	// Send the serialized frame to the server
+	if (enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &enet_buff, 1) <= 0) {
+		logPrintf("Failed to send a packet to the server\n");
+	}
 
-	/*
 	ENetEvent event;
 	while (enet_host_service(m_localHost, &event, 0) > 0)
 	{
@@ -1034,6 +1047,25 @@ void FPSciApp::onNetwork()
 		case ENET_EVENT_TYPE_RECEIVE:
 			debugPrintf("Recieved a message from ip: %s", ip);
 			break;
+		}
+	}
+
+	/*G3D::Box boundingBox;
+	String entityName;
+	Array<shared_ptr<Entity>> entityArray;
+	scene()->getTypedEntityArray<Entity>(entityArray);
+	for (int i = 0; i < entityArray.size(); i++)
+	{
+
+		entityArray[i]->getLastBounds(boundingBox);
+		entityName = entityArray[i]->name();
+		if (entityName == "player") {
+			ENetBuffer enet_buff;
+			enet_buff.data = (void*)output.getCArray();
+			enet_buff.dataLength = output.length();
+			String messageToSend = entityName + ": (" + String(std::to_string(boundingBox.center().x)) + ", " + String(std::to_string(boundingBox.center().y)) + ", " + String(std::to_string(boundingBox.center().z)) + ")\n";
+			ENetPacket* packet = enet_packet_create(messageToSend.c_str(), messageToSend.size() + 1, ENET_PACKET_FLAG_RELIABLE);
+			
 		}
 	}
 	*/

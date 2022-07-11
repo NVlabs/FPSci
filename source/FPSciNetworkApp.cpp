@@ -2,6 +2,7 @@
 #include "FPSciNetworkApp.h"
 #include "PhysicsScene.h"
 #include "WaypointManager.h"
+#include <Windows.h>
 
 FPSciNetworkApp::FPSciNetworkApp(const GApp::Settings& settings) : FPSciApp(settings) { }
 
@@ -83,31 +84,50 @@ void FPSciNetworkApp::onNetwork() {
     void* data = malloc(1500);  //Allocate 1 mtu worth of space for the data from the packet
     buff.data = data;
     buff.dataLength = 1500;
-	int status = enet_socket_receive(m_listenSocket, &addr_from, &buff, 1);
-    Array<float> movementMap;
-    Array<float> mouseDeltas;
+	//int status = enet_socket_receive(m_listenSocket, &addr_from, &buff, 1);
+    //Array<float> movementMap;
+    //Array<float> mouseDeltas;
 	
-    if (status > 0) {
+    while (enet_socket_receive(m_listenSocket, &addr_from, &buff, 1)) { //while there are packets to receive
+        char ip[16];
+        enet_address_get_host_ip(&addr_from, ip, 16);
         BinaryInput input((const uint8 *)buff.data, buff.dataLength, G3D_BIG_ENDIAN, false, true);
-        Array<Array<float32>> userInput;
+        CoordinateFrame frame;
+        //Array<Array<float32>> userInput;
         //G3D::deserialize(userInput, input);
+        messageType type = (messageType)input.readUInt8();
+        if (type == CONTROL_MESSAGE) {
+            m_connectedAddresses.append(addr_from);
+            String hostname = String(input.readString());
+			debugPrintf("Connected to %s at address %s:%u\n", hostname, ip, addr_from.port);
+        }
+        else if (type == UPDATE_MESSAGE) {
+            frame.deserialize(input);
+            //movementMap.append(input.readFloat32());
+            //movementMap.append(input.readFloat32());
 
-        movementMap.append(input.readFloat32());
-        movementMap.append(input.readFloat32());
-		
-        mouseDeltas.append(input.readFloat32());
-        mouseDeltas.append(input.readFloat32());
-        /*float value = userInput[0][0];
-        value = userInput[0][1];
-        value = userInput[0][2];
-        value = userInput[0][3];
-        value = userInput[1][0];
-        value = userInput[1][1];*/
+            //mouseDeltas.append(input.readFloat32());
+            //mouseDeltas.append(input.readFloat32());
 
-        debugPrintf("Movement Key map: [%s, %s]\n", String(std::to_string(movementMap[0])), String(std::to_string(movementMap[1])));
-        debugPrintf("Mouse Deltas: [%s, %s]\n", String(std::to_string(mouseDeltas[0])), String(std::to_string(mouseDeltas[1])));
+            SYSTEMTIME now;
+            GetSystemTime(&now);
+            debugPrintf("\n%02d.%03d:\tPacket from %s:%u\n", now.wSecond, now.wMilliseconds, ip, addr_from.port);
+            debugPrintf("Player is at: %s\n",  frame.toXYZYPRDegreesString());
+            //debugPrintf("Movement Key map: [%s, %s]\n", String(std::to_string(movementMap[0])), String(std::to_string(movementMap[1])));
+            //debugPrintf("Mouse Deltas: [%s, %s]\n", String(std::to_string(mouseDeltas[0])), String(std::to_string(mouseDeltas[1])));
+            Array<shared_ptr<Entity>> entityArray;
+            scene()->getTypedEntityArray<Entity>(entityArray);
+            for (int i = 0; i < entityArray.size(); i++)
+            {
+                if (entityArray[i]->name() == "player") {
+                    shared_ptr<Entity> player = entityArray[i];
+                    player->setFrame(frame);
+                }
+            }
+        }
 
     }
+    free(data);
     
     if (isNull(m_serverHost)) {
         return;
@@ -247,6 +267,23 @@ void FPSciNetworkApp::oneFrame() {
         m_simulationWatch.tock();
         END_PROFILER_EVENT();
     }
+
+    // Pose
+    BEGIN_PROFILER_EVENT("Pose");
+    m_poseWatch.tick();
+    {
+        m_posed3D.fastClear();
+        m_posed2D.fastClear();
+        onPose(m_posed3D, m_posed2D);
+
+        // The debug camera is not in the scene, so we have
+        // to explicitly pose it. This actually does nothing, but
+        // it allows us to trigger the TAA code.
+        playerCamera->onPose(m_posed3D);
+    }
+    m_poseWatch.tock();
+    END_PROFILER_EVENT();
+    
     // Wait
     // Note: we might end up spending all of our time inside of
     // RenderDevice::beginFrame.  Waiting here isn't double waiting,
@@ -287,7 +324,66 @@ void FPSciNetworkApp::oneFrame() {
         }  m_waitWatch.tock();
         END_PROFILER_EVENT();
     }
+	
+    // Graphics
+    debugAssertGLOk();
+    if ((submitToDisplayMode() == SubmitToDisplayMode::BALANCE) && (!renderDevice->swapBuffersAutomatically()))
+    {
+        swapBuffers();
+    }
 
+    if (notNull(m_gazeTracker))
+    {
+        BEGIN_PROFILER_EVENT("Gaze Tracker");
+        sampleGazeTrackerData();
+        END_PROFILER_EVENT();
+    }
+
+    BEGIN_PROFILER_EVENT("Graphics");
+    renderDevice->beginFrame();
+    m_widgetManager->onBeforeGraphics();
+    m_graphicsWatch.tick();
+    {
+        debugAssertGLOk();
+        renderDevice->pushState();
+        {
+            debugAssertGLOk();
+            onGraphics(renderDevice, m_posed3D, m_posed2D);
+        }
+        renderDevice->popState();
+    }
+    m_graphicsWatch.tock();
+    renderDevice->endFrame();
+    if ((submitToDisplayMode() == SubmitToDisplayMode::MINIMIZE_LATENCY) && (!renderDevice->swapBuffersAutomatically()))
+    {
+        swapBuffers();
+    }
+    END_PROFILER_EVENT();
+
+    // Remove all expired debug shapes
+    for (int i = 0; i < debugShapeArray.size(); ++i)
+    {
+        if (debugShapeArray[i].endTime <= m_now)
+        {
+            debugShapeArray.fastRemove(i);
+            --i;
+        }
+    }
+
+    for (int i = 0; i < debugLabelArray.size(); ++i)
+    {
+        if (debugLabelArray[i].endTime <= m_now)
+        {
+            debugLabelArray.fastRemove(i);
+            --i;
+        }
+    }
+
+    debugText.fastClear();
+
+    m_posed3D.fastClear();
+    m_posed2D.fastClear();
+	
     if (m_endProgram && window()->requiresMainLoop()) {
         window()->popLoopBody();
     }
