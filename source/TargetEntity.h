@@ -459,3 +459,83 @@ public:
 	virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;
 
 };
+
+
+class NetworkedEntity : public TargetEntity {
+protected:
+	float			m_speed = 0.0f;									///< Speed of the target (deg/s or m/s depending on space)
+	Point3			m_orbitCenter;									///< World space point at center of orbit
+	Vector2			m_angularSpeedRange = Vector2{ 0.0f, 4.0f };	///< Angular Speed Range(deg / s) x = min y = max
+	Vector2			m_motionChangePeriodRange = Vector2{ 10000.0f, 10000.0f };	  ///< Motion Change period in seconds (x=min y=max)
+
+	/** The target will move through these points along arcs around
+		m_orbitCenter at m_speed. As each point is hit, it is
+		removed from the queue.*/
+	Queue<Point3>	m_destinationPoints;
+
+	/** Limits flying target entity motion for the upper hemisphere only.
+		OnSimulation will y-invert target position & destination points
+		whenever the target enters into the lower hemisphere.
+		*/
+	bool			m_upperHemisphereOnly;
+	AABox			m_bounds = AABox();							///< Bounds (for world space motion)
+	bool			m_axisLocks[3] = { false };					///< Axis locks (for world space motion)
+
+	NetworkedEntity() {}
+	void init(AnyTableReader& propertyTable);
+
+	void init();
+
+	void init(Vector2 angularSpeedRange, Vector2 motionChangePeriodRange, bool upperHemisphereOnly, Point3 orbitCenter, int paramIdx, Array<bool> axisLock, int respawns = 0, int scaleIdx = 0, bool isLogged = true);
+
+public:
+	bool tryRespawn() {
+		m_destinationPoints.fastClear();				// clear all destination points
+		return TargetEntity::tryRespawn();
+	}
+
+	/** Destinations must be no more than 170 degrees apart to avoid ambiguity in movement direction */
+	void setDestinations(const Array<Point3>& destinationArray, const Point3 orbitCenter);
+
+	void setBounds(AABox bounds) { m_bounds = bounds; }
+	AABox bounds() { return m_bounds; }
+
+	void setSpeed(float speed) {
+		m_speed = speed;
+	}
+
+	// TODO: After other implementations are complete.
+	/** For deserialization from Any / loading from file */
+	static shared_ptr<Entity> create(
+		const String& name,
+		Scene* scene,
+		AnyTableReader& propertyTable,
+		const ModelTable& modelTable,
+		const Scene::LoadOptions& loadOptions
+	);
+
+	/** For programmatic construction at runtime */
+	static shared_ptr<NetworkedEntity> create(
+		const String& name,
+		Scene* scene,
+		const shared_ptr<Model>& model,
+		const CFrame& position
+	);
+
+	static shared_ptr<NetworkedEntity> create(
+		shared_ptr<TargetConfig>		config,
+		const String& name,
+		Scene* scene,
+		const shared_ptr<Model>& model,
+		const Point3& orbitCenter,
+		int								scaleIdx,
+		int								paramIdx
+	);
+
+	/** Converts the current VisibleEntity to an Any.  Subclasses should
+		modify at least the name of the Table returned by the base class, which will be "Entity"
+		if not changed. */
+	virtual Any toAny(const bool forceAll = false) const override;
+
+	virtual void onSimulation(SimTime absoluteTime, SimTime deltaTime) override;
+};
