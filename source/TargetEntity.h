@@ -481,6 +481,8 @@ protected:
 	AABox			m_bounds = AABox();							///< Bounds (for world space motion)
 	bool			m_axisLocks[3] = { false };					///< Axis locks (for world space motion)
 
+	bool			m_remote;
+
 	NetworkedEntity() {}
 	void init(AnyTableReader& propertyTable);
 
@@ -503,6 +505,12 @@ public:
 	void setSpeed(float speed) {
 		m_speed = speed;
 	}
+
+	void fromNetwork(BinaryInput b);
+	BinaryOutput toNetwork();
+
+	void setFrame(CoordinateFrame f);
+	CoordinateFrame getFrame();
 
 	// TODO: After other implementations are complete.
 	/** For deserialization from Any / loading from file */

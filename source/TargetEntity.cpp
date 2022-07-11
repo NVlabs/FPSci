@@ -871,7 +871,7 @@ void JumpingEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 #endif
 }
 
-/*NETWORKED STUFF HGOES HERE*/
+/*NETWORKED STUFF GOES HERE ================================================================================================================*/
 
 shared_ptr<Entity> NetworkedEntity::create(
 	const String& name,
@@ -881,7 +881,7 @@ shared_ptr<Entity> NetworkedEntity::create(
 	const Scene::LoadOptions& loadOptions)
 {
 	// Don't initialize in the constructor, where it is unsafe to throw Any parse exceptions
-	const shared_ptr<NetworkedEntity>& betworkedEntity = createShared<NetworkedEntity>();
+	const shared_ptr<NetworkedEntity>& networkedEntity = createShared<NetworkedEntity>();
 
 	// Initialize each base class, which parses its own fields
 	networkedEntity->Entity::init(name, scene, propertyTable);
@@ -969,12 +969,21 @@ void NetworkedEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriod
 	}
 }
 
-void NetworkedEntity::fromNetwork(void* buff) {
+void NetworkedEntity::fromNetwork(BinaryInput b) {
 	//set frame
 }
-
-void* NetworkedEntity::toNetwork() {
+/*
+BinaryOutput NetworkedEntity::toNetwork() {
 	//serialize frame
+	return BinaryOutput();
+}*/
+
+void NetworkedEntity::setFrame(CoordinateFrame f) {
+	m_frame = f;
+}
+
+CoordinateFrame NetworkedEntity::getFrame() {
+	return m_frame;
 }
 
 Any NetworkedEntity::toAny(const bool forceAll) const {
@@ -988,6 +997,10 @@ Any NetworkedEntity::toAny(const bool forceAll) const {
 
 void NetworkedEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	// Do not call Entity::onSimulation; that will override with spline animation
+
+	if (m_remote) { // The Entity is simulated on the remote host and only echoed here.
+		return;
+	}
 
 	if (!(isNaN(deltaTime) || (deltaTime == 0))) { // first frame?
 		m_previousFrame = m_frame;
