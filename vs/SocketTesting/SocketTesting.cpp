@@ -104,7 +104,7 @@ int run_flood_test() {
         std::cout << "=== client mode ===\n";
 
         ENetSocket client_socket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM); // create UDP socket
-        enet_socket_set_option(client_socket, ENET_SOCKOPT_NONBLOCK, 1);
+        //enet_socket_set_option(client_socket, ENET_SOCKOPT_NONBLOCK, 1);
 
         ENetAddress address;    //declare address
         address.host = 0; // initialize to garbage data
@@ -148,7 +148,7 @@ int run_flood_test() {
 
             int status;
             status = enet_socket_send(client_socket, &address, &enet_buff, 1); // send the buffer to the address via the socket.
-            if (status < 0) { // status here is the number of bytes sent
+            if (status <= 0) { // status here is the number of bytes sent
                 printf("Send failed (status: %i)\n", status);
                 printf("socket_send failed with error: %d\n", WSAGetLastError());
             }
