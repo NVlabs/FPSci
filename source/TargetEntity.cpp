@@ -969,10 +969,10 @@ void NetworkedEntity::init(Vector2 angularSpeedRange, Vector2 motionChangePeriod
 	}
 }
 
-void NetworkedEntity::fromNetwork(BinaryInput b) {
+/*void NetworkedEntity::fromNetwork(BinaryInput b) {
 	//set frame
 }
-/*
+
 BinaryOutput NetworkedEntity::toNetwork() {
 	//serialize frame
 	return BinaryOutput();

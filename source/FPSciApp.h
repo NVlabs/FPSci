@@ -76,6 +76,8 @@ public:
 	enum messageType {
 		CONTROL_MESSAGE,
 		UPDATE_MESSAGE,
+		BATCH_ENTITY_UPDATE,
+		CREATE_ENTITY,
 	};
 	
 	enum MouseInputMode

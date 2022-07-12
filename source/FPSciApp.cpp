@@ -1037,6 +1037,24 @@ void FPSciApp::onNetwork()
 		logPrintf("Failed to send a packet to the server\n");
 	}
 
+	/*
+			PACKET STRUCTURE:
+			UInt8: type
+			...
+
+			Type BATCH_ENTITY_UPDATE:
+			UInt8: type (BATCH_ENTITY_UPDATE)
+			UInt8: object_count # number of frames contained in this packet
+			UInt16 * n: ID of object
+			CFrame * n: CFrames of objects
+
+			Type CREATE_ENTITY:
+			UInt8: type (CREATE_ENTITY)
+			UInt16: object ID
+			Uint8: Entity Type
+			... : misc. data for constructor, dependent on Entity type
+			*/
+
 	ENetEvent event;
 	while (enet_host_service(m_localHost, &event, 0) > 0)
 	{
@@ -1046,6 +1064,28 @@ void FPSciApp::onNetwork()
 		{
 		case ENET_EVENT_TYPE_RECEIVE:
 			debugPrintf("Recieved a message from ip: %s", ip);
+			
+			BinaryInput packet_contents (event.packet->data, event.packet->dataLength, G3D_BIG_ENDIAN);
+			messageType type = (messageType)packet_contents.readUInt8();
+			
+			if (type == BATCH_ENTITY_UPDATE) { // TODO MOVE THIS TO SOCKET RECIEVE OOPS
+				int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
+				std::vector<uint16> updated_objects = {};
+				for (int i = 0; i < num_packet_members; i++) { // get IDs for each update object from first half of packet
+					updated_objects.push_back(packet_contents.readUInt16());
+				}
+				for (int i = 0; i < num_packet_members; i++) { // get new frames and update objects
+					uint16 entity_id = updated_objects.at(i);
+					CoordinateFrame frame;
+					frame.deserialize(packet_contents);
+
+					//global_entities.get(entity_id)->setFrame(frame); // need to figure out how entities are stored in a larger context
+				}
+			}
+			else if (type == CREATE_ENTITY) {
+				// create entity and add it to the entity storage
+			}
+			enet_packet_destroy(event.packet);
 			break;
 		}
 	}
