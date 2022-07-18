@@ -14,7 +14,7 @@ int main(int argc, const char* argv[]) {
 		initGLG3D(spec);
 	}
 
-	FPSciNetworkApp::startupConfig = StartupConfig::load("startupconifg.Any");
+	FPSciNetworkApp::startupConfig = StartupConfig::load("serverstartupconfig.Any");
 
 	FPSciNetworkApp::Settings settings(FPSciNetworkApp::startupConfig, argc, argv);
 	//settings.window.visible = false;
