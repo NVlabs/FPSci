@@ -517,6 +517,7 @@ void Session::updatePresentationState()
 
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
+					// Currently this code is never run as updateSessionDropDown() always returns an array of at least length 1...
 					m_feedbackMessage = formatFeedback(m_config->feedback.allSessComplete); // Update the feedback message
 					moveOn = false;
 					if (m_app->experimentConfig.closeOnComplete || m_config->closeOnComplete) {
@@ -530,10 +531,6 @@ void Session::updatePresentationState()
 					}
 					moveOn = true;														// Check for session complete (signal start of next session)
 				}
-
-				if (m_app->experimentConfig.closeOnComplete) {
-					m_app->quitRequest();
-				}
 			}
 		}
 		else {
@@ -541,6 +538,9 @@ void Session::updatePresentationState()
 			newState = PresentationState::complete;
 			m_feedbackMessage = formatFeedback("All sessions complete!");
 			moveOn = false;
+			if (m_app->experimentConfig.closeOnComplete) {		// This is the case that is used for experiment config closeOnComplete!
+				m_app->quitRequest();
+			}
 		}
 	}
 
