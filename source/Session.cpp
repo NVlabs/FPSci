@@ -515,22 +515,12 @@ void Session::updatePresentationState()
 				closeSessionProcesses();					// Close the process we started at session start (if there is one)
 				runSessionCommands("end");					// Launch processes for the end of the session
 
-				Array<String> remaining = m_app->updateSessionDropDown();
-				if (remaining.size() == 0) {
-					// Currently this code is never run as updateSessionDropDown() always returns an array of at least length 1...
-					m_feedbackMessage = formatFeedback(m_config->feedback.allSessComplete); // Update the feedback message
-					moveOn = false;
-					if (m_app->experimentConfig.closeOnComplete || m_config->closeOnComplete) {
-						m_app->quitRequest();
-					}
+				m_app->updateSessionDropDown();
+				m_feedbackMessage = formatFeedback(m_config->feedback.sessComplete);	// Update the feedback message
+				if (m_config->closeOnComplete) {
+					m_app->quitRequest();
 				}
-				else {
-					m_feedbackMessage = formatFeedback(m_config->feedback.sessComplete);	// Update the feedback message
-					if (m_config->closeOnComplete) {
-						m_app->quitRequest();
-					}
-					moveOn = true;														// Check for session complete (signal start of next session)
-				}
+				moveOn = true;														// Check for session complete (signal start of next session)
 			}
 		}
 		else {
