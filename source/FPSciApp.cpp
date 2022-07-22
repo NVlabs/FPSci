@@ -57,6 +57,7 @@ void FPSciApp::initExperiment()
 	setScene(PhysicsScene::create(m_ambientOcclusion));
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create); // Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create); // Register the target entity for creation
+	scene()->registerEntitySubclass("NetworkedEntity", &NetworkedEntity::create); //Register any networked entities for creation
 
 	weapon = Weapon::create(&experimentConfig.weapon, scene(), activeCamera());
 	weapon->setHitCallback(std::bind(&FPSciApp::hitTarget, this, std::placeholders::_1));
@@ -84,7 +85,7 @@ void FPSciApp::initExperiment()
 		enet_initialize();
 		ENetAddress localAddress;
 		localAddress.host = ENET_HOST_ANY;
-		localAddress.port = experimentConfig.serverPort; // TODO: Make this use a different clientPort variable
+		localAddress.port = experimentConfig.clientPort; // TODO: Make this use a different clientPort variable
 		m_localHost = enet_host_create(NULL, 1, 2, 0, 0);
 
 		if (m_localHost == NULL)
@@ -103,12 +104,22 @@ void FPSciApp::initExperiment()
 		enet_address_set_host(&m_unreliableServerAddress, experimentConfig.serverAddress.c_str());
 		m_unreliableServerAddress.port = experimentConfig.serverPort + 1;
 		m_serverSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
+		m_listenSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
+		enet_socket_set_option(m_listenSocket, ENET_SOCKOPT_NONBLOCK, 1); //Set socket to non-blocking
 		
-		// Send the server a control message with the hostname so it knows to add this address as a peer
+		//localAddress.port += 2;
+		localAddress.port = experimentConfig.clientPort + 1;
+		if (enet_socket_bind(m_listenSocket, &localAddress)) {
+			debugPrintf("bind failed with error: %d\n", WSAGetLastError());
+			throw std::runtime_error("Could not bind to the local address");
+		}
+		
+		m_playerGUID = GUniqueID::create();
+		// Send the server a control message with the players GUID so it knows to add this address as a peer
 		BinaryOutput bitstring;
 		bitstring.setEndian(G3D_BIG_ENDIAN);
 		bitstring.writeUInt8(CONTROL_MESSAGE);
-		bitstring.writeString(NetAddress::localHostname().c_str());			// Send the hostname to the server so it can identify the client
+		m_playerGUID.serialize(bitstring);		// Send the GUID as a byte string to the server so it can identify the client
 		ENetBuffer buff;
 		buff.data = (void*)	bitstring.getCArray();
 		buff.dataLength = bitstring.length();
@@ -1016,6 +1027,8 @@ void FPSciApp::onNetwork()
 
 	// Get and serialize the players frame
 	output.writeUInt8(UPDATE_MESSAGE);
+	output.writeUInt8(1);				// Only update the player
+	output.writeBytes(&m_playerGUID, sizeof(m_playerGUID));	// Identfy the player as the clients GUID
 	Array<shared_ptr<Entity>> entityArray;
 	scene()->getTypedEntityArray<Entity>(entityArray);
 	for (int i = 0; i < entityArray.size(); i++)
@@ -1045,15 +1058,61 @@ void FPSciApp::onNetwork()
 			Type BATCH_ENTITY_UPDATE:
 			UInt8: type (BATCH_ENTITY_UPDATE)
 			UInt8: object_count # number of frames contained in this packet
-			UInt16 * n: ID of object
+			GUID * n: ID of object
 			CFrame * n: CFrames of objects
 
 			Type CREATE_ENTITY:
 			UInt8: type (CREATE_ENTITY)
-			UInt16: object ID
+			GUID: object ID
 			Uint8: Entity Type
 			... : misc. data for constructor, dependent on Entity type
 			*/
+	
+	ENetAddress addr_from;
+	ENetBuffer buff;
+	// TODO: make this choose the MTU better than this
+	void* data = malloc(1500);  //Allocate 1 mtu worth of space for the data from the packet
+	buff.data = data;
+	buff.dataLength = 1500;
+	
+	while (enet_socket_receive(m_listenSocket, &addr_from, &buff, 1)) {
+		char ip[16];
+		enet_address_get_host_ip(&addr_from, ip, 16);
+		BinaryInput packet_contents((const uint8*)buff.data, buff.dataLength, G3D_BIG_ENDIAN, false, true);
+		messageType type = (messageType)packet_contents.readUInt8();
+		
+		if (type == BATCH_ENTITY_UPDATE) { // TODO MOVE THIS TO SOCKET RECIEVE OOPS
+			int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
+			std::vector<GUID> updated_objects = {};
+			for (int i = 0; i < num_packet_members; i++) { // get IDs for each update object from first half of packet
+				GUID id;
+				packet_contents.readBytes(&id, sizeof(id));
+				updated_objects.push_back(id);
+			}
+			for (int i = 0; i < num_packet_members; i++) { // get new frames and update objects
+				GUID entity_id = updated_objects.at(i);
+				CoordinateFrame frame;
+				frame.deserialize(packet_contents);
+
+				//global_entities.get(entity_id)->setFrame(frame); // need to figure out how entities are stored in a larger context
+			}
+		}
+		else if (type == CREATE_ENTITY) {
+			// Looks like we dont need anyhing in our Any so just create a blank one and pass that in
+			// TODO: Probably good to actually give the Any some amount of data
+			// create entity and add it to the entity storage
+			GUniqueID entity_id;
+			entity_id.deserialize(packet_contents);
+			Any entity_any(Any::TABLE);
+			//entity_any["id"] = entity_id.toString16();
+			//entity_any["destSpace"] = "player";
+			Array<int> speed = { 0,0 };
+			//entity_any["speed"] = speed;
+			Array<float> visualSize = { 0.05,0.05 };
+			//entity_any["visualSize"] = visualSize;
+			(*scene()).createEntity("NetworkedEntity", entity_id.toString16(), entity_any);
+		}
+	}
 
 	ENetEvent event;
 	while (enet_host_service(m_localHost, &event, 0) > 0)
@@ -1070,12 +1129,14 @@ void FPSciApp::onNetwork()
 			
 			if (type == BATCH_ENTITY_UPDATE) { // TODO MOVE THIS TO SOCKET RECIEVE OOPS
 				int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
-				std::vector<uint16> updated_objects = {};
+				std::vector<GUID> updated_objects = {};
 				for (int i = 0; i < num_packet_members; i++) { // get IDs for each update object from first half of packet
-					updated_objects.push_back(packet_contents.readUInt16());
+					GUID id;
+					packet_contents.readBytes(&id, sizeof(id));
+					updated_objects.push_back(id);
 				}
 				for (int i = 0; i < num_packet_members; i++) { // get new frames and update objects
-					uint16 entity_id = updated_objects.at(i);
+					GUID entity_id = updated_objects.at(i);
 					CoordinateFrame frame;
 					frame.deserialize(packet_contents);
 
@@ -1084,6 +1145,17 @@ void FPSciApp::onNetwork()
 			}
 			else if (type == CREATE_ENTITY) {
 				// create entity and add it to the entity storage
+				GUniqueID entity_id;
+				entity_id.deserialize(packet_contents);
+				Any entity_any;
+				entity_any["id"] = entity_id.toString16();
+				entity_any["destSpace"] = "player";
+				Array<int> speed = { 0,0 };
+				entity_any["speed"] = speed;
+				Array<float> visualSize = { 0.05,0.05 };
+				entity_any["visualSize"] = visualSize;
+				(* scene()).createEntity("NetworkedEntity", entity_id.toString16(), entity_any);
+				//NetworkedEntity newEntity = NetworkedEntity::create(entity_id.toString16(),scene(),NULL, frame);
 			}
 			enet_packet_destroy(event.packet);
 			break;

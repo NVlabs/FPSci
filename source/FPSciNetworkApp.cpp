@@ -66,6 +66,7 @@ void FPSciNetworkApp::initExperiment() {
 		if (m_serverHost == NULL) {
 			throw std::runtime_error("Could not create a local host for the clients to connect to");
 		}
+		m_sendSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
         m_listenSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM); //Create unreliable UDP socket
         enet_socket_set_option(m_listenSocket, ENET_SOCKOPT_NONBLOCK, 1); //Set socket to non-blocking
         localAddress.port += 1;
@@ -98,8 +99,10 @@ void FPSciNetworkApp::onNetwork() {
         messageType type = (messageType)input.readUInt8();
         if (type == CONTROL_MESSAGE) {
             m_connectedAddresses.append(addr_from);
-            String hostname = String(input.readString());
-			debugPrintf("Connected to %s at address %s:%u\n", hostname, ip, addr_from.port);
+            GUniqueID clientGUID;
+            clientGUID.deserialize(input);
+			m_connectedGUIDs.append(clientGUID);
+			debugPrintf("Connected to client at address %s:%u\n", ip, addr_from.port);
         }
         else if (type == UPDATE_MESSAGE) {
             frame.deserialize(input);
@@ -132,6 +135,25 @@ void FPSciNetworkApp::onNetwork() {
     if (isNull(m_serverHost)) {
         return;
     }
+    BinaryOutput output;
+    output.setEndian(G3D_BIG_ENDIAN);
+
+
+    // This was used to test the create entity call on the client side
+    /*output.writeUInt8(CREATE_ENTITY);
+    GUniqueID guid;
+    guid = GUniqueID::create();
+    guid.serialize(output);
+    buff.data = (void*)output.getCArray();
+    buff.dataLength = output.length();
+	for (int i = 0; i < m_connectedAddresses.size(); i++) {
+		ENetAddress remoteAddress = m_connectedAddresses[i];
+        remoteAddress.port =experimentConfig.clientPort + 1;
+		//enet_socket_send(m_sendSocket, &remoteAddress, &buff, 1);
+	}
+    */
+    debugPrintf("Sent create entity message to %d clients\n", m_connectedAddresses.size());
+	
 	/*ENetEvent event;
 	while (enet_host_service(m_serverHost, &event, 0) > 0) {
 		char ip[16];

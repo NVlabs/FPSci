@@ -1,5 +1,5 @@
 Application Log
-Start: Mon Jul 11 11:42:39 2022
+Start: Thu Jul 21 21:17:26 2022
 
 WARNING: AudioDevice is not enabled. Set G3DSpecification::audio = true before invoking initGLG3D() to enable audio.
 Searching 'samples' directory for sample experiments.
@@ -9,12 +9,12 @@ Sample '[Sample]spheres' added to experiment list
 Sample '[Sample]targets' added to experiment list
 Sample '[Sample]weapons' added to experiment list
 
-Initializing System::findDataFile took 0.003346s
+Initializing System::findDataFile took 0.004973s
 
 Entering GApp::GApp()
 cwd = G:\git\FPSci\data-files
 System::setAppDataDir("G:\git\FPSci\data-files")
-System::setAppDataDirs()Initializing System::findDataFile took 0.001297s
+System::setAppDataDirs()Initializing System::findDataFile took 0.003829s
 Setting video mode
 wglSwapIntervalEXT(0);
 Setting initial rendering state.
@@ -126,8 +126,8 @@ Green                              8 bits   ok
 Blue                               8 bits   ok
 FSAA                       1     1    ok
 Width                 1920 pixels           ok
-Height                1080 pixels           ok
-Mode                 Fullscreen             ok
+Height                 980 pixels           ok
+Mode                   Windowed             ok
 
 This driver does support G3D 10:
 GLSL version 4.10                   yes - GLSL version on this driver is 4.60
@@ -179,13 +179,13 @@ Network StartupSystem = {
         Centered = true; 
         Framed = true; 
         Visible = true; 
-        Resizable = false; 
-        Full screen = true; 
+        Resizable = true; 
+        Full screen = false; 
         Top = 0 ;
         Left = 0 ;
         Width = 1920 ;
-        Height = 1080 ;
-        Refresh rate = 32 ;
+        Height = 980 ;
+        Refresh rate = -1 ;
         
         Alpha bits = 0 ;
         Red bits = 8 ;
@@ -595,115 +595,6 @@ Found scenes:
   "G3D atcs" (G:\program_files\g3d\data10\game/scene/atcs.Scene.Any)
   "G3D Beta Squadron" (G:\program_files\g3d\data10\game/scene/beta.Scene.Any)
   "G3D AR Mountain" (G:\program_files\g3d\data10\game/scene/G3D_AR_Mountain/G3D_AR_Mountain.Scene.Any)
-serverAddress is : 127.0.0.1:18821
-
--------------------
-Experiment Config
--------------------
-appendingDescription = Experiment
-scene name = 
-Trial Feedback Duration = 1.000000
-Pretrial Duration = 0.500000
-Max Trial Task Duration = 100000.000000
-Max Clicks = 10000
-Server Address = 127.0.0.1
-Server Port = 18821
-	-------------------
-	Session Config
-	-------------------
-	ID = 60Hz
-	Frame Rate = 60.000000
-	Frame Delay = 0
-		Trial Run Config: IDs = [static, moving, jumping], Count = 2
-	-------------------
-	Session Config
-	-------------------
-	ID = 30Hz
-	Frame Rate = 30.000000
-	Frame Delay = 0
-		Trial Run Config: IDs = [static, moving, jumping], Count = 2
-	-------------------
-	Target Config
-	-------------------
-	ID = static
-	Motion Change Period = [1.000000-1.000000]
-	Min Speed = 0.000000
-	Max Speed = 0.000000
-	Visual Size = [0.050000-0.050000]
-	Upper Hemisphere Only = False
-	Jump Enabled = False
-	Jump Period = [2.000000-2.000000]
-	jumpSpeed = [2.000000-5.500000]
-	Accel Gravity = [9.800000-9.800000]
-	Axis Lock = [false, false, false]
-	-------------------
-	Target Config
-	-------------------
-	ID = moving
-	Motion Change Period = [0.800000-1.500000]
-	Min Speed = 7.000000
-	Max Speed = 10.000000
-	Visual Size = [0.050000-0.050000]
-	Upper Hemisphere Only = False
-	Jump Enabled = False
-	Jump Period = [2.000000-2.000000]
-	jumpSpeed = [2.000000-5.500000]
-	Accel Gravity = [9.800000-9.800000]
-	Axis Lock = [false, false, true]
-	-------------------
-	Target Config
-	-------------------
-	ID = jumping
-	Motion Change Period = [0.800000-1.500000]
-	Min Speed = 10.000000
-	Max Speed = 10.000000
-	Visual Size = [0.050000-0.050000]
-	Upper Hemisphere Only = False
-	Jump Enabled = True
-	Jump Period = [0.500000-1.000000]
-	jumpSpeed = [2.000000-5.500000]
-	Accel Gravity = [9.800000-9.800000]
-	Axis Lock = [false, false, false]
-Experiment hash: 98727e53
-	User ID: anon, sensitivity = 2.820000 deg/mm, mouseDPI = 0
-Subject ID: anon
-Session Order: [60Hz, 30Hz]
-Completed Sessions: []
-
--------------------
-System Info:
--------------------
-	Hostname: ARA
-	Username: ben
-	Processor: AMD Ryzen 5 2600 Six-Core Processor            
-	Core Count: 12
-	Memory: 32699MB
-	GPU: ATI Technologies Inc. Radeon RX 580 Series
-	Display: 
-	Display Resolution: 1920 x 1080 (px)
-	Display Size: 508 x 286 (mm)
-
--------------------
-LDAT-R Config:
--------------------
-	Logger Present: False
-	Logger COM Port: None
-	Sync Card Present: False
-	Sync COM Port: None
-
-             jumping bounding box: [2.28, 2.40, 2.40]
-              moving bounding box: [2.28, 2.40, 2.40]
-           reference bounding box: [2.28, 2.40, 2.40]
-              static bounding box: [2.28, 2.40, 2.40]
-Updated anon's session drop down to:
-	60Hz
-	30Hz
-Updated anon's session drop down to:
-	60Hz
-	30Hz
-User selected session: 60Hz. Updating now...
-
-
 Found scenes:
   "FPSci Medium Courtyard" (G:\git\FPSci\data-files/scene/Medium_Courtyard.Scene.Any)
   "FPSci Simple Hallway" (G:\git\FPSci\data-files/scene/Simple_Hallway.Scene.Any)
@@ -777,6 +668,116 @@ Found scenes:
   "G3D atcs" (G:\program_files\g3d\data10\game/scene/atcs.Scene.Any)
   "G3D Beta Squadron" (G:\program_files\g3d\data10\game/scene/beta.Scene.Any)
   "G3D AR Mountain" (G:\program_files\g3d\data10\game/scene/G3D_AR_Mountain/G3D_AR_Mountain.Scene.Any)
+serverAddress is : 127.0.0.1:18821
+
+-------------------
+Experiment Config
+-------------------
+appendingDescription = Experiment
+scene name = 
+Trial Feedback Duration = 1.000000
+Pretrial Duration = 0.500000
+Max Trial Task Duration = 100000.000000
+Max Clicks = 10000
+Server Address = 127.0.0.1
+Server Port = 18821
+Client Port = 12350
+	-------------------
+	Session Config
+	-------------------
+	ID = 60Hz
+	Frame Rate = 60.000000
+	Frame Delay = 0
+		Trial Run Config: IDs = [static, moving, jumping], Count = 2
+	-------------------
+	Session Config
+	-------------------
+	ID = 30Hz
+	Frame Rate = 30.000000
+	Frame Delay = 0
+		Trial Run Config: IDs = [static, moving, jumping], Count = 2
+	-------------------
+	Target Config
+	-------------------
+	ID = static
+	Motion Change Period = [1.000000-1.000000]
+	Min Speed = 0.000000
+	Max Speed = 0.000000
+	Visual Size = [0.050000-0.050000]
+	Upper Hemisphere Only = False
+	Jump Enabled = False
+	Jump Period = [2.000000-2.000000]
+	jumpSpeed = [2.000000-5.500000]
+	Accel Gravity = [9.800000-9.800000]
+	Axis Lock = [false, false, false]
+	-------------------
+	Target Config
+	-------------------
+	ID = moving
+	Motion Change Period = [0.800000-1.500000]
+	Min Speed = 7.000000
+	Max Speed = 10.000000
+	Visual Size = [0.050000-0.050000]
+	Upper Hemisphere Only = False
+	Jump Enabled = False
+	Jump Period = [2.000000-2.000000]
+	jumpSpeed = [2.000000-5.500000]
+	Accel Gravity = [9.800000-9.800000]
+	Axis Lock = [false, false, true]
+	-------------------
+	Target Config
+	-------------------
+	ID = jumping
+	Motion Change Period = [0.800000-1.500000]
+	Min Speed = 10.000000
+	Max Speed = 10.000000
+	Visual Size = [0.050000-0.050000]
+	Upper Hemisphere Only = False
+	Jump Enabled = True
+	Jump Period = [0.500000-1.000000]
+	jumpSpeed = [2.000000-5.500000]
+	Accel Gravity = [9.800000-9.800000]
+	Axis Lock = [false, false, false]
+Experiment hash: 98727e53
+	User ID: anon, sensitivity = 2.820000 deg/mm, mouseDPI = 0
+Subject ID: anon
+Session Order: [60Hz, 30Hz]
+Completed Sessions: []
+
+-------------------
+System Info:
+-------------------
+	Hostname: ARA
+	Username: ben
+	Processor: AMD Ryzen 5 2600 Six-Core Processor            
+	Core Count: 12
+	Memory: 32699MB
+	GPU: ATI Technologies Inc. Radeon RX 580 Series
+	Display: 
+	Display Resolution: 1920 x 1200 (px)
+	Display Size: 508 x 318 (mm)
+
+-------------------
+LDAT-R Config:
+-------------------
+	Logger Present: False
+	Logger COM Port: None
+	Sync Card Present: False
+	Sync COM Port: None
+
+             jumping bounding box: [2.28, 2.40, 2.40]
+              moving bounding box: [2.28, 2.40, 2.40]
+           reference bounding box: [2.28, 2.40, 2.40]
+              static bounding box: [2.28, 2.40, 2.40]
+Updated anon's session drop down to:
+	60Hz
+	30Hz
+Updated anon's session drop down to:
+	60Hz
+	30Hz
+User selected session: 60Hz. Updating now...
+
+
 BSPMap reports missing texture #1: "noshader"
 BSPMap reports missing texture #2: "textures/atcs/skybox_s"
 BSPMap reports missing texture #20: "textures/atcs/eq2lt_bmtl03light_300"
@@ -812,192 +813,4 @@ Created results file: ./results/Experiment_anon_98727e53.db
 Updated anon's session drop down to:
 	60Hz
 	30Hz
-
-
-Warning insert rows with empty row value array ignored!
-Warning insert rows with empty row value array ignored!
-Warning insert rows with empty row value array ignored!
-Warning insert rows with empty row value array ignored!
-_____________________________________________________
-
-    ###    Files Used    ###
-
-cudart64_102.dll
-embree.dll
-optix.6.0.0.dll
-tbb.dll
-tbbmalloc.dll
-avcodec-58.dll
-avdevice-58.dll
-avfilter-7.dll
-avformat-58.dll
-avutil-56.dll
-postproc-55.dll
-swresample-3.dll
-swscale-5.dll
-fmod64.dll
-G:/git/FPSci/data-files/experimentconfig.Any
-G:/git/FPSci/data-files/gui/scoreBannerBackdrop.png
-G:/git/FPSci/data-files/icon.png
-G:/git/FPSci/data-files/keymap.Any
-G:/git/FPSci/data-files/material/FPSciBanner.png
-G:/git/FPSci/data-files/material/LowContrastChecker.UniversalMaterial.Any
-G:/git/FPSci/data-files/material/bullet-decal-256x256.png
-G:/git/FPSci/data-files/material/explosion_01.png
-G:/git/FPSci/data-files/material/low-contrast-checker-huge-1024x1024.png
-G:/git/FPSci/data-files/model/sniper/sniper.mtl
-G:/git/FPSci/data-files/model/sniper/sniper.obj
-G:/git/FPSci/data-files/model/target/low_poly_sphere.obj
-G:/git/FPSci/data-files/model/target/sphere.mtl
-G:/git/FPSci/data-files/scene/Simple_Hallway.Scene.Any
-G:/git/FPSci/data-files/serverlog.txt
-G:/git/FPSci/data-files/sound/fpsci_fire_100ms.wav
-G:/git/FPSci/data-files/sound/fpsci_miss_100ms.wav
-G:/git/FPSci/data-files/startupconifg.Any
-G:/git/FPSci/data-files/systemconfig.Any
-G:/git/FPSci/data-files/userconfig.Any
-G:/git/FPSci/data-files/userstatus.Any
-G:/program_files/g3d/G3D10/data-files/font/arial.fnt
-G:/program_files/g3d/G3D10/data-files/font/console-small.fnt
-G:/program_files/g3d/G3D10/data-files/font/icon.fnt
-G:/program_files/g3d/G3D10/data-files/gui/osx-10.7.gtm
-G:/program_files/g3d/G3D10/data-files/shader/AlphaFilter.glsl
-G:/program_files/g3d/G3D10/data-files/shader/AmbientOcclusion/AmbientOcclusion_AO.pix
-G:/program_files/g3d/G3D10/data-files/shader/AmbientOcclusion/AmbientOcclusion_AO.vrt
-G:/program_files/g3d/G3D10/data-files/shader/AmbientOcclusion/AmbientOcclusion_blur.pix
-G:/program_files/g3d/G3D10/data-files/shader/AmbientOcclusion/AmbientOcclusion_blur.vrt
-G:/program_files/g3d/G3D10/data-files/shader/AmbientOcclusion/AmbientOcclusion_constants.glsl
-G:/program_files/g3d/G3D10/data-files/shader/AmbientOcclusion/AmbientOcclusion_minify.pix
-G:/program_files/g3d/G3D10/data-files/shader/AmbientOcclusion/AmbientOcclusion_minify.vrt
-G:/program_files/g3d/G3D10/data-files/shader/AmbientOcclusion/AmbientOcclusion_packBilateralKey.glsl
-G:/program_files/g3d/G3D10/data-files/shader/AmbientOcclusion/AmbientOcclusion_reconstructCSZ.pix
-G:/program_files/g3d/G3D10/data-files/shader/AmbientOcclusion/AmbientOcclusion_reconstructCSZ.vrt
-G:/program_files/g3d/G3D10/data-files/shader/ArticulatedModel/ArticulatedModel_blitShader.pix
-G:/program_files/g3d/G3D10/data-files/shader/BumpMap/BumpMap.glsl
-G:/program_files/g3d/G3D10/data-files/shader/Camera/Camera.glsl
-G:/program_files/g3d/G3D10/data-files/shader/DDGIVolume/DDGIVolume.glsl
-G:/program_files/g3d/G3D10/data-files/shader/DefaultRenderer/DefaultRenderer_deferredShade.pix
-G:/program_files/g3d/G3D10/data-files/shader/Film/Film_FXAA_13_quality.pix
-G:/program_files/g3d/G3D10/data-files/shader/Film/Film_bloomExpose.pix
-G:/program_files/g3d/G3D10/data-files/shader/Film/Film_composite.pix
-G:/program_files/g3d/G3D10/data-files/shader/Film/Film_effectsDisabledBlit.pix
-G:/program_files/g3d/G3D10/data-files/shader/Film/Film_toneMap.glsl
-G:/program_files/g3d/G3D10/data-files/shader/GBuffer/GBuffer.glsl
-G:/program_files/g3d/G3D10/data-files/shader/GFont/GFont_render.pix
-G:/program_files/g3d/G3D10/data-files/shader/GFont/GFont_render.vrt
-G:/program_files/g3d/G3D10/data-files/shader/GaussianBlur/GaussianBlur_apply.pix
-G:/program_files/g3d/G3D10/data-files/shader/GuiTextureBox/GuiTextureBox_2D.pix
-G:/program_files/g3d/G3D10/data-files/shader/GuiTextureBox/GuiTextureBox_Arrows.glsl
-G:/program_files/g3d/G3D10/data-files/shader/GuiTheme/GuiTheme_render.pix
-G:/program_files/g3d/G3D10/data-files/shader/GuiTheme/GuiTheme_render.vrt
-G:/program_files/g3d/G3D10/data-files/shader/Light/Light.glsl
-G:/program_files/g3d/G3D10/data-files/shader/LightingEnvironment/LightingEnvironment_LightUniforms.glsl
-G:/program_files/g3d/G3D10/data-files/shader/LightingEnvironment/LightingEnvironment_environmentMapUniforms.glsl
-G:/program_files/g3d/G3D10/data-files/shader/SkyboxSurface/SkyboxSurface_gbuffer.pix
-G:/program_files/g3d/G3D10/data-files/shader/SkyboxSurface/SkyboxSurface_gbuffer.vrt
-G:/program_files/g3d/G3D10/data-files/shader/TemporalFilter/TemporalFilter_apply.pix
-G:/program_files/g3d/G3D10/data-files/shader/Texture/Texture.glsl
-G:/program_files/g3d/G3D10/data-files/shader/Texture/Texture_copy.pix
-G:/program_files/g3d/G3D10/data-files/shader/UniversalMaterial/UniversalMaterial.glsl
-G:/program_files/g3d/G3D10/data-files/shader/UniversalMaterial/UniversalMaterial_sample.glsl
-G:/program_files/g3d/G3D10/data-files/shader/UniversalMaterial/UniversalMaterial_writeToGBuffer.glsl
-G:/program_files/g3d/G3D10/data-files/shader/UniversalSurface/UniversalSurface_gbuffer.pix
-G:/program_files/g3d/G3D10/data-files/shader/UniversalSurface/UniversalSurface_gbuffer.vrt
-G:/program_files/g3d/G3D10/data-files/shader/UniversalSurface/UniversalSurface_vertex.glsl
-G:/program_files/g3d/G3D10/data-files/shader/UniversalSurface/UniversalSurface_vertexHelpers.glsl
-G:/program_files/g3d/G3D10/data-files/shader/compatibility.glsl
-G:/program_files/g3d/G3D10/data-files/shader/default.vrt
-G:/program_files/g3d/G3D10/data-files/shader/deferredHelpers.glsl
-G:/program_files/g3d/G3D10/data-files/shader/depthPeel.glsl
-G:/program_files/g3d/G3D10/data-files/shader/g3dmath.glsl
-G:/program_files/g3d/G3D10/data-files/shader/lightMap.glsl
-G:/program_files/g3d/G3D10/data-files/shader/octahedral.glsl
-G:/program_files/g3d/G3D10/data-files/shader/reconstructFromDepth.glsl
-G:/program_files/g3d/G3D10/data-files/shader/reverseReprojection.glsl
-G:/program_files/g3d/G3D10/data-files/shader/textureFilter.glsl
-G:/program_files/g3d/G3D10/data-files/shader/unlit.pix
-G:/program_files/g3d/G3D10/data-files/shader/unlit.vrt
-G:/program_files/g3d/data10/common/cubemap/sponza/sponza-NX.png
-G:/program_files/g3d/data10/common/cubemap/sponza/sponza-NY.png
-G:/program_files/g3d/data10/common/cubemap/sponza/sponza-NZ.png
-G:/program_files/g3d/data10/common/cubemap/sponza/sponza-PX.png
-G:/program_files/g3d/data10/common/cubemap/sponza/sponza-PY.png
-G:/program_files/g3d/data10/common/cubemap/sponza/sponza-PZ.png
-G:/program_files/g3d/data10/common/font/dominant.fnt
-G:/program_files/g3d/data10/common/gui/reticle/reticle-027.png
-G:/program_files/g3d/data10/common/gui/reticle/reticle-039.png
-G:/program_files/g3d/data10/common/ifs/d10.ifs
-G:/program_files/g3d/data10/common/ifs/square.ifs
-G:/program_files/g3d/data10/game/cubemap/islands/islands_down.jpg
-G:/program_files/g3d/data10/game/cubemap/islands/islands_east.jpg
-G:/program_files/g3d/data10/game/cubemap/islands/islands_north.jpg
-G:/program_files/g3d/data10/game/cubemap/islands/islands_south.jpg
-G:/program_files/g3d/data10/game/cubemap/islands/islands_up.jpg
-G:/program_files/g3d/data10/game/cubemap/islands/islands_west.jpg
-G:/program_files/g3d/data10/game/md3/crusader/models/players/Crusader/animation.cfg
-G:/program_files/g3d/data10/game/md3/crusader/models/players/Crusader/chead.tga
-G:/program_files/g3d/data10/game/md3/crusader/models/players/Crusader/clower.tga
-G:/program_files/g3d/data10/game/md3/crusader/models/players/Crusader/cupper.tga
-G:/program_files/g3d/data10/game/md3/crusader/models/players/Crusader/head.md3
-G:/program_files/g3d/data10/game/md3/crusader/models/players/Crusader/head_default.skin
-G:/program_files/g3d/data10/game/md3/crusader/models/players/Crusader/lower.md3
-G:/program_files/g3d/data10/game/md3/crusader/models/players/Crusader/lower_default.skin
-G:/program_files/g3d/data10/game/md3/crusader/models/players/Crusader/upper.md3
-G:/program_files/g3d/data10/game/md3/crusader/models/players/Crusader/upper_default.skin
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/maps/atcs.bsp
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/bulb_red_s.tga
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/cubelight_32_blue_s_15k.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/cubelight_32_blue_s_20k.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/cubelight_32_red_s_10k.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/cubelight_32_red_s_15k.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/cubelight_32_white_s_20k.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bigmet_01.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl_01.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl_02.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl_02_384.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl_02_384b.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl_02up.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl_03.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl_03_blue.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl_03_red.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl_04.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl_05.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bmtl_08.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_bounce.tga
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_fbase.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_fgrate_01.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_floor_04.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_floor_05.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_floor_06b.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_grate_01.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_stepside_01.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trim_02.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimh_01.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimh_03c.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimh_03cc.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_00.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_01b.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_02.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_04.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_05.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_05b.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_09b.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_10b.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_11.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_11d.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_11d_blue.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_11d_red.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_12b.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_mini.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_mini02.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/eq2_trimv_mini02b.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/force_field_s.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/rockground.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/atcs/rust_2.jpg
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/common/caulk.tga
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/common/clip.tga
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/common/slick.tga
-G:/program_files/g3d/data10/game/model/atcs/atcs.pk3/textures/common/trigger.tga
 

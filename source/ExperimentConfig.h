@@ -13,7 +13,8 @@ public:
 	Array<TargetConfig> targets;						///< Array of trial configs   
 	bool closeOnComplete = false;						///< Close application on all sessions complete
 	String serverAddress = "";							///< Address for server
-	int serverPort = 12345;								///< Port for server
+	int serverPort = 12345;								///< Port for server to listen to
+	int clientPort = 12350;								///< Port for the client to listen to
 	
 	ExperimentConfig() { init(); }
 	ExperimentConfig(const Any& any);

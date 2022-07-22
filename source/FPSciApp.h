@@ -11,6 +11,7 @@
 #pragma once
 #include <G3D/G3D.h>
 #include <enet/enet.h>
+#include <combaseapi.h>
 
 #include "ExperimentConfig.h"
 #include "StartupConfig.h"
@@ -158,11 +159,13 @@ protected:
 	RealTime m_startTime;									  ///< Start time (for the session)
 	RealTime m_last2DTime, m_last3DTime, m_lastCompositeTime; ///< Times used for iTimeDelta
 
-	ENetSocket m_serverSocket;		///< Socket for server
-	ENetPeer *m_serverPeer;			///< Peer used for server-side communication
-	ENetHost *m_localHost;			///< Host used to allow the server to connect to me
+	ENetSocket m_serverSocket;				///< Socket for server TODO: Rename this to m_sendSocket
+	ENetSocket m_listenSocket;				///< Socket for the client to listen on
+	ENetPeer *m_serverPeer;					///< Peer used for server-side communication
+	ENetHost *m_localHost;					///< Host used to allow the server to connect to me
 	ENetAddress m_reliableServerAddress;	///< Address of server for reliable traffic
-	ENetAddress m_unreliableServerAddress; ///< Address of server for unreliable traffic
+	ENetAddress m_unreliableServerAddress;	///< Address of server for unreliable traffic
+	GUniqueID m_playerGUID;						///< GUID for the player (used to identify the player in the network)
 
 	/** Called from onInit */
 	void makeGUI();
