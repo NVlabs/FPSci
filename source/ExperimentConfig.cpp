@@ -74,7 +74,7 @@ void ExperimentConfig::init() {
 		sess60.id = "60Hz";
 		sess60.description = "60Hz trials";
 		sess60.render.frameRate = 60.0f;
-		sess60.trials = Array<TrialCount>({ TrialCount(Array<String>({ "static", "moving", "jumping" }), 2) });
+		sess60.trials = Array<TrialConfig>({ TrialConfig(Array<String>({ "static", "moving", "jumping" }), 2) });
 
 		sessions.append(sess60);
 
@@ -82,7 +82,7 @@ void ExperimentConfig::init() {
 		sess30.id = "30Hz";
 		sess30.description = "30Hz trials";
 		sess30.render.frameRate = 30.0f;
-		sess30.trials = Array<TrialCount>({ TrialCount(Array<String>({ "static", "moving", "jumping" }), 2) });
+		sess30.trials = Array<TrialConfig>({ TrialConfig(Array<String>({ "static", "moving", "jumping" }), 2) });
 
 		sessions.append(sess30);
 	}
@@ -178,7 +178,7 @@ bool ExperimentConfig::validate(bool throwException) const {
 	for (SessionConfig session : sessions) {
 		Array<String> sessionTargetIds;
 		// Build a list of target ids used in this session
-		for (TrialCount trial : session.trials) {
+		for (TrialConfig trial : session.trials) {
 			for (String id : trial.ids) { if (!sessionTargetIds.contains(id)) sessionTargetIds.append(id); }
 		}
 		// Check each ID against the experiment targets array

@@ -8,7 +8,7 @@
 #include <chrono>
 
 // Storage for configuration static vars
-int TrialCount::defaultCount;
+int TrialConfig::defaultCount;
 Array<String> UserSessionStatus::defaultSessionOrder;
 bool UserSessionStatus::randomizeDefaults;
 
@@ -98,7 +98,7 @@ void FPSciApp::openUserSettingsWindow() {
 
 /** Handle the user settings window visibility */
 void FPSciApp::closeUserSettingsWindow() {
-	if (sessConfig->menu.allowUserSettingsSave) {		// If the user could have saved their settings
+	if (trialConfig->menu.allowUserSettingsSave) {		// If the user could have saved their settings
 		saveUserConfig(true);							// Save the user config (if it has changed) whenever this window is closed
 	}
 	if (!dialog) {										// Don't allow the user menu to hide the mouse when a dialog box is open
@@ -279,7 +279,7 @@ Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetCo
 			color = lerpColor(tconfig->colors, complete);
 		}
 		else {
-			color = lerpColor(sessConfig->targetView.healthColors, complete);
+			color = lerpColor(trialConfig->targetView.healthColors, complete);
 		}
 		
 		Color4 gloss;
@@ -287,15 +287,15 @@ Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetCo
 			gloss = tconfig->gloss;
 		}
 		else {
-			gloss = sessConfig->targetView.gloss;
+			gloss = trialConfig->targetView.gloss;
 		}
 
 		Color4 emissive;
 		if (notNull(tconfig) && tconfig->emissive.length() > 0) {
 			emissive = lerpColor(tconfig->emissive, complete);
 		}
-		else if(sessConfig->targetView.emissive.length() > 0) {
-			emissive = lerpColor(sessConfig->targetView.emissive, complete);
+		else if(trialConfig->targetView.emissive.length() > 0) {
+			emissive = lerpColor(trialConfig->targetView.emissive, complete);
 		}
 		else {
 			emissive = color * 0.7f;	// Historical behavior fallback for unspecified case
@@ -434,7 +434,7 @@ void FPSciApp::makeGUI() {
 void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
-	String filename = Scene::sceneNameToFilename(sessConfig->scene.name);
+	String filename = Scene::sceneNameToFilename(trialConfig->scene.name);
 	scene()->toAny().save(filename);		// Save this w/o JSON format (breaks scene.Any file)
 }
 
@@ -514,7 +514,7 @@ void FPSciApp::markSessComplete(String sessId) {
 	m_userSettingsWindow->updateSessionDropDown();
 }
 
-void FPSciApp::updateParameters(int frameDelay, float frameRate) {
+void FPSciApp::updateFrameParameters(int frameDelay, float frameRate) {
 	// Apply frame lag
 	displayLagFrames = frameDelay;
 	lastSetFrameRate = frameRate;
@@ -526,14 +526,14 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, simStepDuration());
 }
 
-void FPSciApp::initPlayer(bool setSpawnPosition) {
+void FPSciApp::initPlayer(const shared_ptr<FpsConfig> config, bool setSpawnPosition) {
 	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");	// Get player from the scene
 
 	// Update the player camera
-	const String pcamName = sessConfig->scene.playerCamera;
+	const String pcamName = config->scene.playerCamera;
 	playerCamera = pcamName.empty() ? scene()->defaultCamera() : scene()->typedEntity<Camera>(pcamName);
-	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", sessConfig->scene.name, pcamName));
+	alwaysAssertM(notNull(playerCamera), format("Scene %s does not contain a camera named \"%s\"!", config->scene.name, pcamName));
 	setActiveCamera(playerCamera);
 
 	// Set gravity and camera field of view
@@ -562,7 +562,7 @@ void FPSciApp::initPlayer(bool setSpawnPosition) {
 
 	// Set the reset height
 	String resetHeightSource = "scene configuration \"resetHeight\" parameter";
-	float resetHeight = sessConfig->scene.resetHeight;
+	float resetHeight = config->scene.resetHeight;
 	if (isnan(resetHeight)) {
 		resetHeightSource = "scene.Any Physics \"minHeight\" field";
 		resetHeight = pscene->resetHeight();
@@ -574,7 +574,7 @@ void FPSciApp::initPlayer(bool setSpawnPosition) {
 	player->setRespawnHeight(resetHeight);
 
 	// Update the respawn heading
-	if (isnan(sessConfig->scene.spawnHeadingDeg)) {
+	if (isnan(config->scene.spawnHeadingDeg)) {
 		if (setSpawnPosition) {	// This is the first spawn in the scene
 			// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
 			Point3 view_dir = playerCamera->frame().lookVector();
@@ -583,20 +583,20 @@ void FPSciApp::initPlayer(bool setSpawnPosition) {
 		}
 	}
 	else {	// Respawn heading specified by the scene config
-		player->setRespawnHeadingDegrees(sessConfig->scene.spawnHeadingDeg);
+		player->setRespawnHeadingDegrees(config->scene.spawnHeadingDeg);
 	}
 
 	// Set player respawn location
 	float respawnPosHeight = player->respawnPosHeight();	// Report the respawn position height
-	if (sessConfig->scene.spawnPosition.isNaN()) {
+	if (config->scene.spawnPosition.isNaN()) {
 		if (setSpawnPosition) { // This is the first spawn, copy the respawn position from the scene
 			player->setRespawnPosition(player->frame().translation);
 			respawnPosHeight = player->frame().translation.y;
 		}
 	}
 	else {	// Respawn position set by scene config
-		player->setRespawnPosition(sessConfig->scene.spawnPosition);
-		respawnPosHeight = sessConfig->scene.spawnPosition.y;
+		player->setRespawnPosition(config->scene.spawnPosition);
+		respawnPosHeight = config->scene.spawnPosition.y;
 		respawnHeightSource = "scene configuration \"spawnPosition\" parameter";
 	}
 
@@ -605,14 +605,14 @@ void FPSciApp::initPlayer(bool setSpawnPosition) {
 	}
 
 	// Set player values from session config
-	player->moveRate = &sessConfig->player.moveRate;
-	player->moveScale = &sessConfig->player.moveScale;
-	player->axisLock = &sessConfig->player.axisLock;
-	player->jumpVelocity = &sessConfig->player.jumpVelocity;
-	player->jumpInterval = &sessConfig->player.jumpInterval;
-	player->jumpTouch = &sessConfig->player.jumpTouch;
-	player->height = &sessConfig->player.height;
-	player->crouchHeight = &sessConfig->player.crouchHeight;
+	player->moveRate = &config->player.moveRate;
+	player->moveScale = &config->player.moveScale;
+	player->axisLock = &config->player.axisLock;
+	player->jumpVelocity = &config->player.jumpVelocity;
+	player->jumpInterval = &config->player.jumpInterval;
+	player->jumpTouch = &config->player.jumpTouch;
+	player->height = &config->player.height;
+	player->crouchHeight = &config->player.crouchHeight;
 
 	// Respawn player
 	player->respawn();
@@ -622,7 +622,7 @@ void FPSciApp::initPlayer(bool setSpawnPosition) {
 	sess->initialHeadingRadians = player->heading();
 }
 
-void FPSciApp::updateSession(const String& id, bool forceReload) {
+void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 	// Check for a valid ID (non-emtpy and 
 	Array<String> ids;
 	experimentConfig.getSessionIds(ids);
@@ -640,86 +640,6 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		sess = Session::create(this);
 	}
 
-	// Update reticle
-	reticleConfig.index = sessConfig->reticle.indexSpecified ? sessConfig->reticle.index : currentUser()->reticle.index;
-	reticleConfig.scale = sessConfig->reticle.scaleSpecified ? sessConfig->reticle.scale : currentUser()->reticle.scale;
-	reticleConfig.color = sessConfig->reticle.colorSpecified ? sessConfig->reticle.color : currentUser()->reticle.color;
-	reticleConfig.changeTimeS = sessConfig->reticle.changeTimeSpecified ? sessConfig->reticle.changeTimeS : currentUser()->reticle.changeTimeS;
-	setReticle(reticleConfig.index);
-
-	// Update the controls for this session
-	updateControls(m_firstSession);				// If first session consider showing the menu
-
-	// Update the frame rate/delay
-	updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
-
-	// Handle buffer setup here
-	updateShaderBuffers();
-
-	// Update shader table
-	m_shaderTable.clear();
-	if (!sessConfig->render.shader3D.empty()) {
-		m_shaderTable.set(sessConfig->render.shader3D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader3D));
-	}
-	if (!sessConfig->render.shader2D.empty()) {
-		m_shaderTable.set(sessConfig->render.shader2D, G3D::Shader::getShaderFromPattern(sessConfig->render.shader2D));
-	}
-	if (!sessConfig->render.shaderComposite.empty()) {
-		m_shaderTable.set(sessConfig->render.shaderComposite, G3D::Shader::getShaderFromPattern(sessConfig->render.shaderComposite));
-	}
-
-	// Update shader parameters
-	m_startTime = System::time();
-	m_last2DTime = m_startTime;
-	m_last3DTime = m_startTime;
-	m_lastCompositeTime = m_startTime;
-	m_frameNumber = 0;
-
-	// Load (session dependent) fonts
-	hudFont = GFont::fromFile(System::findDataFile(sessConfig->hud.hudFont));
-	m_combatFont = GFont::fromFile(System::findDataFile(sessConfig->targetView.combatTextFont));
-
-	// Handle clearing the targets here (clear any remaining targets before loading a new scene)
-	if (notNull(scene())) sess->clearTargets();
-
-	// Load the experiment scene if we haven't already (target only)
-	if (sessConfig->scene.name.empty()) {
-		// No scene specified, load default scene
-		if (m_loadedScene.name.empty() || forceReload) {
-			loadScene(m_defaultSceneName);					// Note: this calls onGraphics()
-			m_loadedScene.name = m_defaultSceneName;
-		}
-		// Otherwise let the loaded scene persist
-	}
-	else if (sessConfig->scene != m_loadedScene || forceReload) {
-		loadScene(sessConfig->scene.name);
-		m_loadedScene = sessConfig->scene;
-	}
-
-	// Player parameters
-	initPlayer();
-
-	// Check for play mode specific parameters
-	if (notNull(weapon)) weapon->clearDecals();
-	weapon->setConfig(&sessConfig->weapon);
-	weapon->setScene(scene());
-	weapon->setCamera(activeCamera());
-
-	// Update weapon model (if drawn) and sounds
-	weapon->loadModels();
-	weapon->loadSounds();
-	if (!sessConfig->audio.sceneHitSound.empty()) {
-		m_sceneHitSound = Sound::create(System::findDataFile(sessConfig->audio.sceneHitSound));
-	}
-	if (!sessConfig->audio.refTargetHitSound.empty()) {
-		m_refTargetHitSound = Sound::create(System::findDataFile(sessConfig->audio.refTargetHitSound));
-	}
-
-	// Load static HUD textures
-	for (StaticHudElement element : sessConfig->hud.staticElements) {
-		hudTextures.set(element.filename, Texture::fromFile(System::findDataFile(element.filename)));
-	}
-
 	// Update colored materials to choose from for target health
 	for (String id : sessConfig->getUniqueTargetIds()) {
 		shared_ptr<TargetConfig> tconfig = experimentConfig.getTargetConfigById(id);
@@ -727,6 +647,10 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		materials.set(id, makeMaterials(tconfig));
 	}
 
+	// Update the application w/ the session parameters
+	updateConfigParameters(sessConfig, forceSceneReload);
+
+	// Handle results files
 	const String resultsDirPath = startupConfig.experimentList[experimentIdx].resultsDirPath;
 
 	// Check for need to start latency logging and if so run the logger now
@@ -735,13 +659,14 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	}
 
 	// Create and check log file name
-	const String logFileBasename = sessConfig->logger.logToSingleDb ? 
+	const String logFileBasename = sessConfig->logger.logToSingleDb ?
 		experimentConfig.description + "_" + userStatusTable.currentUser + "_" + m_expConfigHash :
 		id + "_" + userStatusTable.currentUser + "_" + String(FPSciLogger::genFileTimestamp());
 	const String logFilename = FilePath::makeLegalFilename(logFileBasename);
 	// This is the specified path and log basename with illegal characters replaced, but not suffix (.db)
 	const String logPath = resultsDirPath + logFilename;
 
+	// Logger only supported at the session-level
 	if (systemConfig.hasLogger) {
 		if (!sessConfig->clickToPhoton.enabled) {
 			logPrintf("WARNING: Using a click-to-photon logger without the click-to-photon region enabled!\n\n");
@@ -764,12 +689,96 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	if (m_userSettingsWindow->sessionsForSelectedUser() == 0) {
 		logPrintf("No sessions remaining for selected user.\n");
 	}
-	else if(sessConfig->logger.enable) {
+	else if (sessConfig->logger.enable) {
 		logPrintf("Created results file: %s.db\n", logPath.c_str());
 	}
 
 	if (m_firstSession) {
 		m_firstSession = false;
+	}
+}
+
+void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const bool forceSceneReload) {
+	trialConfig = config;	// Naive way to store trial config pointer for now
+
+	// Update reticle
+	reticleConfig.index = config->reticle.indexSpecified ? config->reticle.index : currentUser()->reticle.index;
+	reticleConfig.scale = config->reticle.scaleSpecified ? config->reticle.scale : currentUser()->reticle.scale;
+	reticleConfig.color = config->reticle.colorSpecified ? config->reticle.color : currentUser()->reticle.color;
+	reticleConfig.changeTimeS = config->reticle.changeTimeSpecified ? config->reticle.changeTimeS : currentUser()->reticle.changeTimeS;
+	setReticle(reticleConfig.index);
+
+	// Update the controls for this session
+	updateControls(m_firstSession);				// If first session consider showing the menu
+
+	// Update the frame rate/delay
+	updateFrameParameters(config->render.frameDelay, config->render.frameRate);
+
+	// Handle buffer setup here
+	updateShaderBuffers(config);
+
+	// Update shader table
+	m_shaderTable.clear();
+	if (!config->render.shader3D.empty()) {
+		m_shaderTable.set(config->render.shader3D, G3D::Shader::getShaderFromPattern(config->render.shader3D));
+	}
+	if (!config->render.shader2D.empty()) {
+		m_shaderTable.set(config->render.shader2D, G3D::Shader::getShaderFromPattern(config->render.shader2D));
+	}
+	if (!config->render.shaderComposite.empty()) {
+		m_shaderTable.set(config->render.shaderComposite, G3D::Shader::getShaderFromPattern(config->render.shaderComposite));
+	}
+
+	// Update shader parameters
+	m_startTime = System::time();
+	m_last2DTime = m_startTime;
+	m_last3DTime = m_startTime;
+	m_lastCompositeTime = m_startTime;
+	m_frameNumber = 0;
+
+	// Load (session dependent) fonts
+	hudFont = GFont::fromFile(System::findDataFile(config->hud.hudFont));
+	m_combatFont = GFont::fromFile(System::findDataFile(config->targetView.combatTextFont));
+
+	// Handle clearing the targets here (clear any remaining targets before loading a new scene)
+	if (notNull(scene())) sess->clearTargets();
+
+	// Load the experiment scene if we haven't already (target only)
+	if (config->scene.name.empty()) {
+		// No scene specified, load default scene
+		if (m_loadedScene.name.empty() || forceSceneReload) {
+			loadScene(m_defaultSceneName);					// Note: this calls onGraphics()
+			m_loadedScene.name = m_defaultSceneName;
+		}
+		// Otherwise let the loaded scene persist
+	}
+	else if (config->scene != m_loadedScene || forceSceneReload) {
+		loadScene(config->scene.name);
+		m_loadedScene = config->scene;
+	}
+
+	// Player parameters
+	initPlayer(config);
+
+	// Check for play mode specific parameters
+	if (notNull(weapon)) weapon->clearDecals();
+	weapon->setConfig(&config->weapon);
+	weapon->setScene(scene());
+	weapon->setCamera(activeCamera());
+
+	// Update weapon model (if drawn) and sounds
+	weapon->loadModels();
+	weapon->loadSounds();
+	if (!config->audio.sceneHitSound.empty()) {
+		m_sceneHitSound = Sound::create(System::findDataFile(config->audio.sceneHitSound));
+	}
+	if (!config->audio.refTargetHitSound.empty()) {
+		m_refTargetHitSound = Sound::create(System::findDataFile(config->audio.refTargetHitSound));
+	}
+
+	// Load static HUD textures
+	for (StaticHudElement element : config->hud.staticElements) {
+		hudTextures.set(element.filename, Texture::fromFile(System::findDataFile(element.filename)));
 	}
 }
 
@@ -803,7 +812,7 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 		m_initialCameraFrames.set(cam->name(), cam->frame());
 	}
 
-	initPlayer(true);		// Initialize the player (first time for this scene)
+	initPlayer(trialConfig, true);		// Initialize the player (first time for this scene)
 
 	if (weapon) {
 		weapon->setScene(scene());
@@ -898,7 +907,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		{
 			// Play scene hit sound
 			if (!weapon->config()->isContinuous() && notNull(m_sceneHitSound)) {
-				m_sceneHitSound->play(sessConfig->audio.sceneHitSoundVol);
+				m_sceneHitSound->play(trialConfig->audio.sceneHitSoundVol);
 			}
 		}
 		shotFired = true;
@@ -950,8 +959,8 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		}
 
 		// Handle frame rate/delay updates here
-		if (sessConfig->render.frameRate != lastSetFrameRate || displayLagFrames != sessConfig->render.frameDelay) {
-			updateParameters(sessConfig->render.frameDelay, sessConfig->render.frameRate);
+		if (trialConfig->render.frameRate != lastSetFrameRate || displayLagFrames != trialConfig->render.frameDelay) {
+			updateFrameParameters(trialConfig->render.frameDelay, trialConfig->render.frameRate);
 		}
 
 		if (notNull(waypointManager)) {
@@ -1151,7 +1160,7 @@ bool FPSciApp::onEvent(const GEvent& event) {
 	// Handle resize event here
 	if (event.type == GEventType::VIDEO_RESIZE) {
 		// Resize the shader buffers here
-		updateShaderBuffers();
+		updateShaderBuffers(trialConfig);
 	}
 
 	// Handle super-class events
@@ -1165,7 +1174,7 @@ void FPSciApp::onAfterEvents() {
 
 		// Re-create the settings window
 		String selSess = m_userSettingsWindow->selectedSession();
-		m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, sessConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
+		m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, trialConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
 		m_userSettingsWindow->setSelectedSession(selSess);
 		moveToCenter(m_userSettingsWindow);
 		m_userSettingsWindow->setVisible(m_showUserMenu);
@@ -1189,7 +1198,7 @@ void FPSciApp::onAfterEvents() {
 
 Vector2 FPSciApp::currentTurnScale() {
 	const shared_ptr<UserConfig> user = currentUser();
-	Vector2 baseTurnScale = sessConfig->player.turnScale * user->turnScale;
+	Vector2 baseTurnScale = trialConfig->player.turnScale * user->turnScale;
 	// Apply y-invert here
 	if (user->invertY) baseTurnScale.y = -baseTurnScale.y;
 	// If we're not scoped just return the normal user turn scale
@@ -1201,16 +1210,16 @@ Vector2 FPSciApp::currentTurnScale() {
 	}
 	else {
 		// Otherwise scale the scope turn scalue using the ratio of FoV
-		return playerCamera->fieldOfViewAngleDegrees() / sessConfig->render.hFoV * baseTurnScale;
+		return playerCamera->fieldOfViewAngleDegrees() / trialConfig->render.hFoV * baseTurnScale;
 	}
 }
 
 void FPSciApp::setScopeView(bool scoped) {
 	// Get player entity and calculate scope FoV
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
-	const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
-	weapon->setScoped(scoped);														// Update the weapon state		
-	const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
+	const float scopeFoV = trialConfig->weapon.scopeFoV > 0 ? trialConfig->weapon.scopeFoV : trialConfig->render.hFoV;
+	weapon->setScoped(scoped);															// Update the weapon state		
+	const float FoV = (scoped ? scopeFoV : trialConfig->render.hFoV);					// Get new FoV in degrees (depending on scope state)
 	playerCamera->setFieldOfView(FoV * pif() / 180.f, FOVDirection::HORIZONTAL);		// Set the camera FoV
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
@@ -1222,17 +1231,17 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	target->playHitSound();
 
 	// Check if we need to add combat text for this damage
-	if (sessConfig->targetView.showCombatText) {
+	if (trialConfig->targetView.showCombatText) {
 		m_combatTextList.append(FloatingCombatText::create(
 			format("%2.0f", 100.f * damage),
 			m_combatFont,
-			sessConfig->targetView.combatTextSize,
-			sessConfig->targetView.combatTextColor,
-			sessConfig->targetView.combatTextOutline,
-			sessConfig->targetView.combatTextOffset,
-			sessConfig->targetView.combatTextVelocity,
-			sessConfig->targetView.combatTextFade,
-			sessConfig->targetView.combatTextTimeout));
+			trialConfig->targetView.combatTextSize,
+			trialConfig->targetView.combatTextColor,
+			trialConfig->targetView.combatTextOutline,
+			trialConfig->targetView.combatTextOffset,
+			trialConfig->targetView.combatTextVelocity,
+			trialConfig->targetView.combatTextFade,
+			trialConfig->targetView.combatTextTimeout));
 		m_combatTextList.last()->setFrame(target->frame());
 	}
 
@@ -1243,7 +1252,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 		// Handle reference target here
 		sess->destroyTarget(target);
 		if (notNull(m_refTargetHitSound)) {
-			m_refTargetHitSound->play(sessConfig->audio.refTargetHitSoundVol);
+			m_refTargetHitSound->play(trialConfig->audio.refTargetHitSoundVol);
 		}
 		destroyedTarget = true;
 		sess->accumulatePlayerAction(PlayerActionType::Destroy, target->name());
@@ -1331,7 +1340,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	for (GKey scopeButton : keyMap.map["scope"]) {
 		if (ui->keyPressed(scopeButton)) {
 			// Are we using scope toggling?
-			if (sessConfig->weapon.scopeToggle) {
+			if (trialConfig->weapon.scopeToggle) {
 				setScopeView(!weapon->scoped());
 			}
 			// Otherwise just set scope based on the state of the scope button
@@ -1339,7 +1348,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 				setScopeView(true);
 			}
 		}
-		if (ui->keyReleased(scopeButton) && !sessConfig->weapon.scopeToggle) {
+		if (ui->keyReleased(scopeButton) && !trialConfig->weapon.scopeToggle) {
 			setScopeView(false);
 		}
 	}
@@ -1375,7 +1384,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 			float hitDist = finf();
 			int hitIdx = -1;
 			shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
-			if (sessConfig->audio.refTargetPlayFireSound && !sessConfig->weapon.loopAudio()) {		// Only play shot sounds for non-looped weapon audio (continuous/automatic fire not allowed)
+			if (trialConfig->audio.refTargetPlayFireSound && !trialConfig->weapon.loopAudio()) {		// Only play shot sounds for non-looped weapon audio (continuous/automatic fire not allowed)
 				weapon->playSound(true, false);			// Play audio here for reference target
 			}
 		}
@@ -1383,7 +1392,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 
 	if (m_lastReticleLoaded != currentUser()->reticle.index || m_userSettingsWindow->visible()) {
 		// Slider was used to change the reticle
-		if (!sessConfig->reticle.indexSpecified) {		// Only allow reticle change if it isn't specified in experiment config
+		if (!trialConfig->reticle.indexSpecified) {		// Only allow reticle change if it isn't specified in experiment config
 			setReticle(currentUser()->reticle.index);
 			m_userSettingsWindow->updateReticlePreview();
 		}

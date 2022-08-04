@@ -119,15 +119,24 @@ struct PlayerAction {
 };
 
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */
-class TrialCount {
+class TrialConfig : public FpsConfig {
 public:
 	Array<String>	ids;			///< Trial ID list
 	int				count = 1;		///< Count of trials to be performed
 	static int		defaultCount;	///< Default count to use
 
-	TrialCount() {};
-	TrialCount(const Array<String>& trialIds, int trialCount) : ids(trialIds), count(trialCount) {};
-	TrialCount(const Any& any);
+	TrialConfig() : FpsConfig(defaultConfig()) {};
+	TrialConfig(const Array<String>& trialIds, int trialCount) : ids(trialIds), count(trialCount) {};
+	TrialConfig(const Any& any);
+
+	static shared_ptr<TrialConfig> create() { return createShared<TrialConfig>(); }
+
+	// Use a static method to bypass order of declaration for static members (specific to Sampler s_freeList in GLSamplerObect)
+	// Trick from: https://www.cs.technion.ac.il/users/yechiel/c++-faq/static-init-order-on-first-use.html	
+	static FpsConfig& defaultConfig() {
+		static FpsConfig def;
+		return def;
+	}
 
 	Any toAny(const bool forceAll = true) const;
 };
@@ -138,7 +147,7 @@ public:
 	String				id;								///< Session ID
 	String				description = "Session";		///< String indicating whether session is training or real
 	int					blockCount = 1;					///< Default to just 1 block per session
-	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
+	Array<TrialConfig>	trials;							///< Array of trials (and their counts) to be performed
 	bool				closeOnComplete = false;		///< Close application on session completed?
 
 	SessionConfig() : FpsConfig(defaultConfig()) {}

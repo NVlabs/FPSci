@@ -34,7 +34,7 @@
 #include "Weapon.h"
 #include "FPSciAnyTableReader.h"
 
-TrialCount::TrialCount(const Any& any) {
+TrialConfig::TrialConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 	int settingsVersion = 1;
 	FPSciAnyTableReader reader(any);
 	reader.getIfPresent("settingsVersion", settingsVersion);
@@ -55,18 +55,19 @@ TrialCount::TrialCount(const Any& any) {
 	}
 }
 
-Any TrialCount::toAny(const bool forceAll) const {
-	Any a(Any::TABLE);
+Any TrialConfig::toAny(const bool forceAll) const {
+	Any a = FpsConfig::toAny(forceAll);
 	a["ids"] = ids;
 	a["count"] = count;
 	return a;
 }
 
 SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
-	TrialCount::defaultCount = timing.defaultTrialCount;
+	TrialConfig::defaultCount = timing.defaultTrialCount;
 	FPSciAnyTableReader reader(any);
 	switch (settingsVersion) {
 	case 1:
+		TrialConfig::defaultConfig() = (FpsConfig)(*this);		// Setup the default configuration for trials here
 		// Unique session info
 		reader.get("id", id, "An \"id\" field must be provided for each session!");
 		reader.getIfPresent("description", description);
@@ -96,7 +97,7 @@ Any SessionConfig::toAny(const bool forceAll) const {
 
 float SessionConfig::getTrialsPerBlock(void) const {
 	float count = 0.f;
-	for (const TrialCount& tc : trials) {
+	for (const TrialConfig& tc : trials) {
 		if (count < 0) {
 			return finf();
 		}
@@ -109,7 +110,7 @@ float SessionConfig::getTrialsPerBlock(void) const {
 
 Array<String> SessionConfig::getUniqueTargetIds() const {
 	Array<String> ids;
-	for (TrialCount trial : trials) {
+	for (TrialConfig trial : trials) {
 		for (String id : trial.ids) {
 			if (!ids.contains(id)) { ids.append(id); }
 		}

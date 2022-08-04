@@ -2,16 +2,16 @@
 #include "FPSciApp.h"
 #include "WaypointManager.h"
 
-void FPSciApp::updateShaderBuffers() {
+void FPSciApp::updateShaderBuffers(const shared_ptr<FpsConfig> config) {
 	// Parameters for update/resize of buffers
 	int width = renderDevice->width();
 	int height = renderDevice->height();
 
 	// 2D buffers (input and output) used when 2D resolution or shader is specified
-	if (!sessConfig->render.shader2D.empty() || sessConfig->render.resolution2D[0] > 0) {
-		if (sessConfig->render.resolution2D[0] > 0) {
-			width = sessConfig->render.resolution2D[0];
-			height = sessConfig->render.resolution2D[1];
+	if (!config->render.shader2D.empty() || config->render.resolution2D[0] > 0) {
+		if (config->render.resolution2D[0] > 0) {
+			width = config->render.resolution2D[0];
+			height = config->render.resolution2D[1];
 		}
 		m_ldrBuffer2D = Framebuffer::create(Texture::createEmpty("FPSci::2DShaderPass::Input", width, height, 
 			ImageFormat::RGBA8(), Texture::DIM_2D, true));
@@ -24,11 +24,11 @@ void FPSciApp::updateShaderBuffers() {
 	}
 
 	// 3D shader output (use popped framebuffer as input) used when 3D resolution or shader is specified
-	if (!sessConfig->render.shader3D.empty() || sessConfig->render.resolution3D[0] > 0) {
+	if (!config->render.shader3D.empty() || config->render.resolution3D[0] > 0) {
 		width = m_framebuffer->width(); height = m_framebuffer->height();
-		if (sessConfig->render.resolution3D[0] > 0) {
-			width = sessConfig->render.resolution3D[0];
-			height = sessConfig->render.resolution3D[1];
+		if (config->render.resolution3D[0] > 0) {
+			width = config->render.resolution3D[0];
+			height = config->render.resolution3D[1];
 		}
 		m_hdrShader3DOutput = Framebuffer::create(Texture::createEmpty("FPSci::3DShaderPass::Output", width, height, 
 			m_framebuffer->texture(0)->format(), Texture::DIM_2D, true));
@@ -38,13 +38,13 @@ void FPSciApp::updateShaderBuffers() {
 	}
 
 	// Composite buffer (input and output) used when composite shader or resolution is specified
-	if (!sessConfig->render.shaderComposite.empty() || sessConfig->render.resolutionComposite[0] > 0) {
+	if (!config->render.shaderComposite.empty() || config->render.resolutionComposite[0] > 0) {
 		width = renderDevice->width(); height = renderDevice->height();
 		m_ldrBufferPrecomposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Precomposite", width, height, 
 			ImageFormat::RGB8(), Texture::DIM_2D, true));
-		if (sessConfig->render.resolutionComposite[0] > 0) {
-			width = sessConfig->render.resolutionComposite[0];
-			height = sessConfig->render.resolutionComposite[1];
+		if (config->render.resolutionComposite[0] > 0) {
+			width = config->render.resolutionComposite[0];
+			height = config->render.resolutionComposite[1];
 		}
 		m_ldrBufferComposite = Framebuffer::create(Texture::createEmpty("FPSci::CompositeShaderPass::Input", width, height, 
 			ImageFormat::RGB8(), Texture::DIM_2D, true));
