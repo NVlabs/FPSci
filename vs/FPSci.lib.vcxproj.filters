@@ -90,6 +90,9 @@
     <ClInclude Include="..\source\FPSciAnyTableReader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\ConfigParameter.h">
+      <Filter>Header Files\Configuration</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\sqlHelpers.cpp">

@@ -73,7 +73,7 @@ void ExperimentConfig::init() {
 		SessionConfig sess60;
 		sess60.id = "60Hz";
 		sess60.description = "60Hz trials";
-		sess60.render.frameRate = 60.0f;
+		sess60.render.frameRate.value = 60.0f;
 		sess60.trials = Array<TrialCount>({ TrialCount(Array<String>({ "static", "moving", "jumping" }), 2) });
 
 		sessions.append(sess60);
@@ -81,7 +81,7 @@ void ExperimentConfig::init() {
 		SessionConfig sess30;
 		sess30.id = "30Hz";
 		sess30.description = "30Hz trials";
-		sess30.render.frameRate = 30.0f;
+		sess30.render.frameRate.value = 30.0f;
 		sess30.trials = Array<TrialCount>({ TrialCount(Array<String>({ "static", "moving", "jumping" }), 2) });
 
 		sessions.append(sess30);

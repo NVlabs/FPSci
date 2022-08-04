@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\source\ConfigParameter.h" />
     <ClInclude Include="..\source\FPSciAnyTableReader.h" />
     <ClInclude Include="..\source\FPSciApp.h" />
     <ClInclude Include="..\source\CombatText.h" />

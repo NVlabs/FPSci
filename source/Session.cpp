@@ -141,7 +141,7 @@ const RealTime Session::targetFrameTime()
 	if (arraySize > 0) {
 		if ((m_config->render.frameTimeMode == "taskonly" || m_config->render.frameTimeMode == "restartwithtask") && currentState != PresentationState::trialTask) {
 			// We are in a frame time mode which specifies only to change frame time during the task
-			return 1.0f / m_config->render.frameRate;
+			return 1.0f / m_config->render.frameRate.value;
 		}
 
 		if (m_config->render.frameTimeRandomize) {
@@ -156,8 +156,8 @@ const RealTime Session::targetFrameTime()
 	}
 
 	// The below matches the functionality in FPSciApp::updateParameters()
-	if (m_config->render.frameRate > 0) {
-		return 1.0f / m_config->render.frameRate;
+	if (m_config->render.frameRate.value > 0) {
+		return 1.0f / m_config->render.frameRate.value;
 	}
 	return defaultFrameTime;
 }

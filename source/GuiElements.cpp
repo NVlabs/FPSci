@@ -225,11 +225,11 @@ RenderControls::RenderControls(FPSciApp* app, SessionConfig& config, bool& drawF
 		framePane->addCheckBox("Show FPS", &drawFps);
 	}framePane->endRow();
 	framePane->beginRow(); {
-		auto c = framePane->addNumberBox("Framerate", &(config.render.frameRate), "fps", GuiTheme::LINEAR_SLIDER, minFrameRate, maxFrameRate, 1.0f);
+		auto c = framePane->addNumberBox("Framerate", &(config.render.frameRate.value), "fps", GuiTheme::LINEAR_SLIDER, minFrameRate, maxFrameRate, 1.0f);
 		c->setWidth(width*0.95f);
 	} framePane->endRow();
 	framePane->beginRow(); {
-		auto c = framePane->addNumberBox("Display Lag", &(config.render.frameDelay), "f", GuiTheme::LINEAR_SLIDER, 0, maxFrameDelay);
+		auto c = framePane->addNumberBox("Display Lag", &(config.render.frameDelay.value), "f", GuiTheme::LINEAR_SLIDER, 0, maxFrameDelay);
 		c->setWidth(width*0.95f);
 	}framePane->endRow();
 

@@ -96,39 +96,29 @@ void RenderConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 
 	switch (settingsVersion) {
 	case 1:
-		reader.getIfPresent("frameRate", frameRate);
-		reader.getIfPresent("frameDelay", frameDelay);
-		reader.getIfPresent("frameTimeArray", frameTimeArray);
-		reader.getIfPresent("frameTimeRandomize", frameTimeRandomize);
+		frameRate.fromAny(reader);
+		frameDelay.fromAny(reader);
+		frameTimeArray.fromAny(reader);
+		frameTimeRandomize.fromAny(reader);
+		frameTimeMode.fromAny(reader);
 		
-		reader.getIfPresent("frameTimeMode", frameTimeMode);
-		frameTimeMode = toLower(frameTimeMode);	// Convert to lower case
-		if (!validFrameTimeModes.contains(frameTimeMode)) {
-			String errMsg = "Specified \"frameTimeMode\" (\"" + frameTimeMode + "\") is invalid, must be one of: [";
-			for (int i = 0; i < validFrameTimeModes.length(); i++) {
-				errMsg += "\"" + validFrameTimeModes[i] + "\", ";
-			}
-			errMsg = errMsg.substr(0, errMsg.length() - 2) + "]!";
-			throw errMsg;
-		}
+		hFoV.fromAny(reader);
 
-		reader.getIfPresent("horizontalFieldOfView", hFoV);
+		resolution2D.fromAny(reader);
+		resolution3D.fromAny(reader);
+		resolutionComposite.fromAny(reader);
 
-		reader.getIfPresent("resolution2D", resolution2D);
-		reader.getIfPresent("resolution3D", resolution3D);
-		reader.getIfPresent("resolutionComposite", resolutionComposite);
+		shader2D.fromAny(reader);
+		shader3D.fromAny(reader);
+		shaderComposite.fromAny(reader);
 
-		reader.getIfPresent("shader2D", shader2D);
-		reader.getIfPresent("shader3D", shader3D);
-		reader.getIfPresent("shaderComposite", shaderComposite);
-
-		reader.getIfPresent("sampled2D", sampler2D);
-		reader.getIfPresent("sampler2DOutput", sampler2DOutput);
-		reader.getIfPresent("sampler3D", sampler3D);
-		reader.getIfPresent("sampler3DOutput", sampler3DOutput);
-		reader.getIfPresent("samplerPrecomposite", samplerPrecomposite);
-		reader.getIfPresent("samplerComposite", samplerComposite);
-		reader.getIfPresent("samplerFinal", samplerFinal);
+		sampler2D.fromAny(reader);
+		sampler2DOutput.fromAny(reader);
+		sampler3D.fromAny(reader);
+		sampler3DOutput.fromAny(reader);
+		samplerPrecomposite.fromAny(reader);
+		samplerComposite.fromAny(reader);
+		samplerFinal.fromAny(reader);
 
 		break;
 	default:
@@ -147,9 +137,12 @@ static bool operator!=(Sampler s1, Sampler s2) {
 
 Any RenderConfig::addToAny(Any a, bool forceAll) const {
 	RenderConfig def;
-	if (forceAll || def.frameRate != frameRate)					a["frameRate"] = frameRate;
-	if (forceAll || def.frameDelay != frameDelay)				a["frameDelay"] = frameDelay;
-	if (forceAll || def.frameTimeArray != frameTimeArray)		a["frameTimeArray"] = frameTimeArray;
+
+	frameRate.addToAny(a, forceAll);
+	frameDelay.addToAny(a, forceAll);
+	frameTimeArray.addToAny(a, forceAll);
+	frameTimeRandomize.addToAny(a, forceAll);
+
 	if (forceAll || def.frameTimeRandomize != frameTimeRandomize) a["frameTimeRandomize"] = frameTimeRandomize;
 	if (forceAll || def.frameTimeMode != frameTimeMode)			a["frameTimeMode"] = frameTimeMode;
 	if (forceAll || def.hFoV != hFoV)							a["horizontalFieldOfView"] = hFoV;

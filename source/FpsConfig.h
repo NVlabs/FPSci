@@ -4,18 +4,18 @@
 #include "GuiElements.h"
 #include "UserConfig.h"
 #include "FPSciAnyTableReader.h"
+#include "ConfigParameter.h"
 
 class SceneConfig {
 public:
 
-	String name;										///< Name of the scene to load
-	String playerCamera;								///< Name of the camera to use for the player
+	ConfigParameter<String> name = ConfigParameter<String>("name", "");						///< Name of the scene to load
+	ConfigParameter<String> playerCamera = ConfigParameter<String>("playerCamera", "");		///< Name of the camera to use for the player
 
 	//float gravity = fnan();							///< Gravity for the PhysicsScene
-	float resetHeight = fnan();							///< Reset height for the PhysicsScene
-
-	Point3 spawnPosition = { fnan(),fnan(), fnan() };	///< Location for player spawn
-	float spawnHeadingDeg = fnan();						///< Heading for player spawn (in degrees)
+	NumericConfigParameter<float> resetHeight = NumericConfigParameter<float>("resetHeight", fnan());				///< Reset height for the PhysicsScene
+	ConfigParameter<Point3> spawnPosition = ConfigParameter<Point3>("spawnPosition", { fnan(), fnan(), fnan() });	///< Location for player spawn
+	NumericConfigParameter<float> spawnHeadingDeg = NumericConfigParameter<float>("spawnHeading", fnan(), 0.f, 0.f, 360.f);			///< Heading for player spawn (in degrees)
 
 	SceneConfig() {}
 	SceneConfig(const Any& any);
@@ -26,52 +26,55 @@ public:
 
 class RenderConfig {
 public:
+	Array<FpsciParameter*> params;
+
 	// Rendering parameters
-	float           frameRate = 1000.0f;						///< Target (goal) frame rate (in Hz)
-	int             frameDelay = 0;								///< Integer frame delay (in frames)
-	Array<float>	frameTimeArray = { };						///< Array of target frame times (in seconds)
-	bool			frameTimeRandomize = false;					///< Whether to choose a sequential or random item from frameTimeArray
-	String			frameTimeMode = "always";					///< Mode to use for frame time selection (can be "always", "taskOnly", or "restartWithTask", case insensitive)
+	NumericConfigParameter<float> frameRate = NumericConfigParameter<float>("frameRate", 1000.0f, 0.f, 10000.f);		///< Target (goal) frame rate (in Hz)
+	params.append(&frameRate);
 
-	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
+	NumericConfigParameter<int> frameDelay = NumericConfigParameter<int>("frameDelay", 0, 0, 1000);						///< Integer frame delay (in frames)
+	ConfigParameter<Array<float>> frameTimeArray = ConfigParameter<Array<float>>("frameTimeArray", {});					///< Array of target frame times (in seconds)				
+	ConfigParameter<bool> frameTimeRandomize = ConfigParameter<bool>("frameTimeRandomize", false);						///< Whether to choose a sequential or random item from frameTimeArray
+	OptionsConfigParameter<String> frameTimeMode = OptionsConfigParameter<String>("frameTimeMode", "always", { "always", "taskOnly", "restartWithTask" });		///< Mode to use for frame time selection (case insensitive)
+
+	NumericConfigParameter<float> hFoV = NumericConfigParameter<float>("horizontalFieldOfView", 103.0f, 1.0f, 179.0f);	///< Field of view (horizontal) for the user
 	
-	Array<int>		resolution2D = { 0, 0 };					///< Optional 2D buffer resolution
-	Array<int>		resolution3D = { 0, 0 };					///< Optional 3D buffer resolution
-	Array<int>		resolutionComposite = { 0, 0 };				///< Optional composite buffer resolution	
+	ConfigParameter<Array<int>> resolution2D = ConfigParameter<Array<int>>("resolution2D", { 0, 0 });					///< Optional 2D buffer resolution
+	ConfigParameter<Array<int>>	resolution3D = ConfigParameter<Array<int>>("resolution3D", { 0, 0 });					///< Optional 3D buffer resolution
+	ConfigParameter<Array<int>>	resolutionComposite = ConfigParameter<Array<int>>("resolutionComposite", { 0, 0 });		///< Optional composite buffer resolution	
 
-	String			shader2D = "";								///< Option for the filename of a custom shader to run on 2D content only
-	String          shader3D = "";								///< Option for the filename of a custom shader to run on 3D content only
-	String			shaderComposite = "";						///< Option for the filename of a custom shader to run on the (final) composited 2D/3D content	float           hFoV = 103.0f;							    ///< Field of view (horizontal) for the user
+	ConfigParameter<String> shader2D = ConfigParameter<String>("shader2D", "");											///< Option for the filename of a custom shader to run on 2D content only
+	ConfigParameter<String> shader3D = ConfigParameter<String>("shader3D", "");											///< Option for the filename of a custom shader to run on 3D content only
+	ConfigParameter<String> shaderComposite = ConfigParameter<String>("shaderComposite", "");							///< Option for the filename of a custom shader to run on the (final) composited 2D/3D content
 	
 	// Samplers only exist between buffers with (possibly) different resolution, all equal sized buffers use Sampler::buffer()
-	Sampler			sampler2D = Sampler::video();				///< Sampler for sampling the shader2D iChannel0 input
-	Sampler			sampler2DOutput = Sampler::video();			///< Sampler for sampling the LDR 2D output into the framebuffer/composite input buffer
-	Sampler			sampler3D = Sampler::video();				///< Sampler for sampling the framebuffer into the HDR 3D buffer (including if using a shader)
-	Sampler			sampler3DOutput = Sampler::video();			///< Sampler for sampling the HDR 3D output buffer back into the framebuffer
-	Sampler			samplerPrecomposite = Sampler::video();		///< Sampler for precomposite (framebuffer blit) to composite input buffer
-	Sampler			samplerComposite = Sampler::video();		///< Sampler for sampling the shaderComposite iChannel0 input
-	Sampler			samplerFinal = Sampler::video();			///< Sampler for sampling composite (shader) output buffer into the final framebuffer
+	ConfigParameter<Sampler> sampler2D = ConfigParameter<Sampler>("sampler2D", Sampler::video());						///< Sampler for sampling the shader2D iChannel0 input
+	ConfigParameter<Sampler> sampler2DOutput = ConfigParameter<Sampler>("sampler2DOutput", Sampler::video());			///< Sampler for sampling the LDR 2D output into the framebuffer/composite input buffer
+	ConfigParameter<Sampler> sampler3D = ConfigParameter<Sampler>("sampler3D", Sampler::video());						///< Sampler for sampling the framebuffer into the HDR 3D buffer (including if using a shader)
+	ConfigParameter<Sampler> sampler3DOutput = ConfigParameter<Sampler>("sampler3DOutput", Sampler::video());			///< Sampler for sampling the HDR 3D output buffer back into the framebuffer
+	ConfigParameter<Sampler> samplerPrecomposite = ConfigParameter<Sampler>("samplerPrecomposite", Sampler::video());	///< Sampler for precomposite (framebuffer blit) to composite input buffer
+	ConfigParameter<Sampler> samplerComposite = ConfigParameter<Sampler>("samplerComposite", Sampler::video());			///< Sampler for sampling the shaderComposite iChannel0 input
+	ConfigParameter<Sampler> samplerFinal =	ConfigParameter<Sampler>("samplerFinal", Sampler::video());					///< Sampler for sampling composite (shader) output buffer into the final framebuffer
 
 	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
-
 };
 
 class PlayerConfig {
 public:
 	// View parameters
-	float           moveRate = 0.0f;							///< Player move rate (defaults to no motion)
-	float           height = 1.5f;								///< Height for the player view (in walk mode)
-	float           crouchHeight = 1.5f;						///< Height for the player view (during crouch in walk mode)
-	float           jumpVelocity = 0.0f;						///< Jump velocity for the player
-	float           jumpInterval = 0.5f;						///< Minimum time between jumps in seconds
-	bool            jumpTouch = true;							///< Require the player to be touch a surface to jump?
-	Vector3         gravity = Vector3(0.0f, -10.0f, 0.0f);		///< Gravity vector
-	Vector2			moveScale = Vector2(1.0f, 1.0f);			///< Player (X/Y) motion scaler
-	Vector2			turnScale = Vector2(1.0f, 1.0f);			///< Player (horizontal/vertical) turn rate scaler
-	Array<bool>		axisLock = { false, false, false };			///< World-space player motion axis lock
-	bool			stillBetweenTrials = false;					///< Disable player motion between trials?
-	bool			resetPositionPerTrial = false;				///< Reset the player's position on a per trial basis (to scene default)
+	NumericConfigParameter<float> moveRate = NumericConfigParameter<float>("moveRate", 0.0f, 0.0f);						///< Player move rate (defaults to no motion)
+	NumericConfigParameter<float> height = NumericConfigParameter<float>("playerHeight", 1.5f, 0.f);					///< Height for the player view (in walk mode)
+	NumericConfigParameter<float> crouchHeight = NumericConfigParameter<float>("crouchHeight", 1.5f, 0.f);				///< Height for the player view (during crouch in walk mode)
+	NumericConfigParameter<float> jumpVelocity = NumericConfigParameter<float>("jumpVelocity", 0.0f, 0.f);				///< Jump velocity for the player
+	NumericConfigParameter<float> jumpInterval = NumericConfigParameter <float>("jumpInterval", 0.5f, 0.f);				///< Minimum time between jumps in seconds
+	ConfigParameter<bool> jumpTouch = ConfigParameter<bool>("jumpTouch", true);											///< Require the player to be touch a surface to jump?
+	ConfigParameter<Vector3> gravity = ConfigParameter<Vector3>("playerGravity", Vector3(0.0f, -10.0f, 0.0f));			///< Gravity vector
+	ConfigParameter<Vector2> moveScale = ConfigParameter<Vector2>("moveScale", Vector2(1.0f, 1.0f));					///< Player (X/Y) motion scaler
+	ConfigParameter<Vector2> turnScale = ConfigParameter<Vector2>("turnScale", Vector2(1.0f, 1.0f));					///< Player (horizontal/vertical) turn rate scaler
+	ConfigParameter<Array<bool>> axisLock = ConfigParameter<Array<bool>>("playerAxisLock", { false, false, false });	///< World-space player motion axis lock
+	ConfigParameter<bool> stillBetweenTrials = ConfigParameter<bool>("disablePlayerMotionBetweenTrials", false);		///< Disable player motion between trials?
+	ConfigParameter<bool> resetPositionPerTrial = ConfigParameter<bool>("resetPlayerPositionBetweenTrials", false);		///< Reset the player's position on a per trial basis (to scene default)
 
 	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
