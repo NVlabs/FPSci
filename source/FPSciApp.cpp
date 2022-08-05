@@ -698,7 +698,7 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 	}
 }
 
-void FPSciApp::updateTrial(const shared_ptr<TrialConfig> config, bool forceSceneReload) {
+void FPSciApp::updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload) {
 	trialConfig = config;	// Naive way to store trial config pointer for now
 	updateConfigParameters(config, forceSceneReload);
 }
