@@ -77,8 +77,15 @@ public:
 	enum messageType {
 		CONTROL_MESSAGE,
 		UPDATE_MESSAGE,
+
 		BATCH_ENTITY_UPDATE,
 		CREATE_ENTITY,
+
+		REGISTER_CLIENT,
+		CLIENT_REGISTRATION_REPLY,
+
+		HANDSHAKE,
+		HANDSHAKE_REPLY
 	};
 	
 	enum MouseInputMode
@@ -166,6 +173,8 @@ protected:
 	ENetAddress m_reliableServerAddress;	///< Address of server for reliable traffic
 	ENetAddress m_unreliableServerAddress;	///< Address of server for unreliable traffic
 	GUniqueID m_playerGUID;						///< GUID for the player (used to identify the player in the network)
+	bool m_enetConnected;
+	bool m_socketConnected;
 
 	/** Called from onInit */
 	void makeGUI();

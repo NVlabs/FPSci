@@ -5,6 +5,7 @@
 #include "Session.h"
 #include "PhysicsScene.h"
 #include "WaypointManager.h"
+#include "NetworkUtils.h"
 #include <chrono>
 
 // Storage for configuration static vars
@@ -80,7 +81,7 @@ void FPSciApp::initExperiment()
 	updateSession(sessions[0], true);											  // Update session to create results file/start collection
 
 	// Setup the connection to the server if this experiment is networked
-		if (experimentConfig.serverAddress != "")
+	if (experimentConfig.serverAddress != "")
 	{
 		enet_initialize();
 		ENetAddress localAddress;
@@ -104,26 +105,32 @@ void FPSciApp::initExperiment()
 		enet_address_set_host(&m_unreliableServerAddress, experimentConfig.serverAddress.c_str());
 		m_unreliableServerAddress.port = experimentConfig.serverPort + 1;
 		m_serverSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
-		m_listenSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
-		enet_socket_set_option(m_listenSocket, ENET_SOCKOPT_NONBLOCK, 1); //Set socket to non-blocking
+		enet_socket_set_option(m_serverSocket, ENET_SOCKOPT_NONBLOCK, 1); //Set socket to non-blocking
 		
 		//localAddress.port += 2;
 		localAddress.port = experimentConfig.clientPort + 1;
-		if (enet_socket_bind(m_listenSocket, &localAddress)) {
+		if (enet_socket_bind(m_serverSocket, &localAddress)) {
 			debugPrintf("bind failed with error: %d\n", WSAGetLastError());
 			throw std::runtime_error("Could not bind to the local address");
 		}
 		
 		m_playerGUID = GUniqueID::create();
-		// Send the server a control message with the players GUID so it knows to add this address as a peer
-		BinaryOutput bitstring;
-		bitstring.setEndian(G3D_BIG_ENDIAN);
-		bitstring.writeUInt8(CONTROL_MESSAGE);
-		m_playerGUID.serialize(bitstring);		// Send the GUID as a byte string to the server so it can identify the client
-		ENetBuffer buff;
-		buff.data = (void*)	bitstring.getCArray();
-		buff.dataLength = bitstring.length();
-		enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &buff, 1);
+
+		m_enetConnected = false;
+		
+		m_socketConnected = true;
+		
+		m_socketConnected = false;
+		BinaryOutput hs_bitstring;
+		hs_bitstring.setEndian(G3D_BIG_ENDIAN);
+		hs_bitstring.writeUInt8(HANDSHAKE);
+		ENetBuffer hs_buff;
+		hs_buff.data = (void*)hs_bitstring.getCArray();
+		hs_buff.dataLength = hs_bitstring.length();
+		enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &hs_buff, 1);
+
+		debugPrintf("Sent handshake and registration requests to %s port %i\n", experimentConfig.serverAddress.c_str(), experimentConfig.serverPort);
+		
 	}
 }
 
@@ -996,59 +1003,42 @@ void FPSciApp::onNetwork()
 
 
 	// Serialize user input
-	const Array<float32> movementMap = {
-		static_cast<float32>(userInput->getX() < 0), // left
-		static_cast<float32>(userInput->getX() > 0), // right
-		static_cast<float32>(userInput->getY() < 0), // down
-		static_cast<float32>(userInput->getY() > 0)	 // up
-	};
-
-	const Array<float32> mouseDeltas = {
-		userInput->mouseDX(),
-		userInput->mouseDY() };
-
-	//const Array<Array<float32>> userInput = {
-	//	movementMap,
-	//	mouseDeltas};
 
 	BinaryOutput output;
 	output.setEndian(G3D_BIG_ENDIAN);
 	//G3D::serialize(userInput, output);
 
-	/*
-	output.writeUInt8(FPSciApp::messageType::UPDATE_MESSAGE);
-	output.writeFloat32 (userInput->getX());		// x-axis movement
-	output.writeFloat32(userInput->getY());		// y-axis movement
+	if (m_socketConnected && m_enetConnected) {
+		// Get and serialize the players frame
+		output.writeUInt8(BATCH_ENTITY_UPDATE);
+		output.writeUInt8(1);				// Only update the player
+		//output.writeBytes(&m_playerGUID, sizeof(m_playerGUID));	// Identfy the player as the clients GUID
+		Array<shared_ptr<Entity>> entityArray;
+		scene()->getTypedEntityArray<Entity>(entityArray);
+		for (int i = 0; i < entityArray.size(); i++)
+		{
+			if (entityArray[i]->name() == "player") {
+				shared_ptr<Entity> player = entityArray[i];
+				NetworkUtils::createFrameUpdate(m_playerGUID, player, output);
 
-	output.writeFloat32(userInput->mouseDX());	// mouseDX
-	output.writeFloat32(userInput->mouseDY());	// mouseDY
-	*/
+				//CoordinateFrame frame = player->frame();
+				//frame.serialize(output);
 
+				//logPrintf("Sent frame: %s\n", frame.toXYZYPRDegreesString());
+			}
+		}
 
-	// Get and serialize the players frame
-	output.writeUInt8(UPDATE_MESSAGE);
-	output.writeUInt8(1);				// Only update the player
-	output.writeBytes(&m_playerGUID, sizeof(m_playerGUID));	// Identfy the player as the clients GUID
-	Array<shared_ptr<Entity>> entityArray;
-	scene()->getTypedEntityArray<Entity>(entityArray);
-	for (int i = 0; i < entityArray.size(); i++)
-	{
-		if (entityArray[i]->name() == "player") {
-			shared_ptr<Entity> player = entityArray[i];
-			CoordinateFrame frame = player->frame();
-			frame.serialize(output);
+		ENetBuffer enet_buff;
+		enet_buff.data = (void*)output.getCArray();
+		enet_buff.dataLength = output.length();
+
+		// Send the serialized frame to the server
+		if (enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &enet_buff, 1) <= 0) {
+			logPrintf("Failed to send a packet to the server\n");
 		}
 	}
-	
-	
-	ENetBuffer enet_buff;
-	enet_buff.data = (void*)output.getCArray();
-	enet_buff.dataLength = output.length();
 
-	// Send the serialized frame to the server
-	if (enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &enet_buff, 1) <= 0) {
-		logPrintf("Failed to send a packet to the server\n");
-	}
+	//enet_packet_destroy(registerPacket);
 
 	/*
 			PACKET STRUCTURE:
@@ -1058,15 +1048,29 @@ void FPSciApp::onNetwork()
 			Type BATCH_ENTITY_UPDATE:
 			UInt8: type (BATCH_ENTITY_UPDATE)
 			UInt8: object_count # number of frames contained in this packet
-			GUID * n: ID of object
-			CFrame * n: CFrames of objects
+			<DATA> * n: Opaque view of data, written to and from with NetworkUtils
+			[DEPRECATED] GUID * n: ID of object
+			[DEPRECATED] * n: CFrames of objects
 
 			Type CREATE_ENTITY:
 			UInt8: type (CREATE_ENTITY)
 			GUID: object ID
 			Uint8: Entity Type
 			... : misc. data for constructor, dependent on Entity type
-			*/
+
+			Type REGISTER_CLIENT:
+			GUID: player's ID
+			? String: player metadata
+
+			Type CLIENT_REGISTRATION_REPLY:
+			GUID: player's ID
+			UInt8: status [0 = success, 1 = Failure, ....]
+
+			Type HANDSHAKE
+
+			Type HANDSHAKE_REPLY
+
+	*/
 	
 	ENetAddress addr_from;
 	ENetBuffer buff;
@@ -1075,87 +1079,117 @@ void FPSciApp::onNetwork()
 	buff.data = data;
 	buff.dataLength = 1500;
 	
-	while (enet_socket_receive(m_listenSocket, &addr_from, &buff, 1)) {
+	while (enet_socket_receive(m_serverSocket, &addr_from, &buff, 1)) {
 		char ip[16];
 		enet_address_get_host_ip(&addr_from, ip, 16);
 		BinaryInput packet_contents((const uint8*)buff.data, buff.dataLength, G3D_BIG_ENDIAN, false, true);
 		messageType type = (messageType)packet_contents.readUInt8();
 		
-		if (type == BATCH_ENTITY_UPDATE) { // TODO MOVE THIS TO SOCKET RECIEVE OOPS
+		if (type == BATCH_ENTITY_UPDATE) {
 			int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
-			std::vector<GUID> updated_objects = {};
+			/*std::vector<GUniqueID> updated_objects = {};
 			for (int i = 0; i < num_packet_members; i++) { // get IDs for each update object from first half of packet
-				GUID id;
+				GUniqueID id;
 				packet_contents.readBytes(&id, sizeof(id));
 				updated_objects.push_back(id);
-			}
+			}*/
 			for (int i = 0; i < num_packet_members; i++) { // get new frames and update objects
-				GUID entity_id = updated_objects.at(i);
-				CoordinateFrame frame;
-				frame.deserialize(packet_contents);
-
+				//GUniqueID entity_id = updated_objects.at(i);
+				GUniqueID entity_id;
+				packet_contents.readBytes(&entity_id, sizeof(entity_id));
+				if (entity_id != m_playerGUID) { // don't let the server move this client
+					shared_ptr<NetworkedEntity> e = (*scene()).typedEntity<NetworkedEntity>(entity_id.toString16());
+					if (&e != nullptr) {
+						NetworkUtils::updateEntity(e, packet_contents);
+						//e->setFrameN(frame);
+					}
+				}
 				//global_entities.get(entity_id)->setFrame(frame); // need to figure out how entities are stored in a larger context
 			}
 		}
-		else if (type == CREATE_ENTITY) {
-			// Looks like we dont need anyhing in our Any so just create a blank one and pass that in
-			// TODO: Probably good to actually give the Any some amount of data
-			// create entity and add it to the entity storage
-			GUniqueID entity_id;
-			entity_id.deserialize(packet_contents);
-			Any entity_any(Any::TABLE);
-			//entity_any["id"] = entity_id.toString16();
-			//entity_any["destSpace"] = "player";
-			Array<int> speed = { 0,0 };
-			//entity_any["speed"] = speed;
-			Array<float> visualSize = { 0.05,0.05 };
-			//entity_any["visualSize"] = visualSize;
-			(*scene()).createEntity("NetworkedEntity", entity_id.toString16(), entity_any);
+		else if (type == HANDSHAKE_REPLY) {
+			m_socketConnected = true;
+			debugPrintf("Received HANDSHAKE_REPLY from server\n");
 		}
 	}
+
+	free(data);
 
 	ENetEvent event;
 	while (enet_host_service(m_localHost, &event, 0) > 0)
 	{
 		char ip[16];
 		enet_address_get_host_ip(&event.peer->address, ip, 16);
+
+		ENetPacket* registerPacket;
+		BinaryOutput bitstring;
 		switch (event.type)
 		{
+		case ENET_EVENT_TYPE_CONNECT:
+			// Send the server a control message with the players GUID so it knows to add this address as a peer
+			//BinaryOutput bitstring;
+			bitstring.setEndian(G3D_BIG_ENDIAN);
+			bitstring.writeUInt8(REGISTER_CLIENT);
+			m_playerGUID.serialize(bitstring);		// Send the GUID as a byte string to the server so it can identify the client
+			registerPacket = enet_packet_create((void*)bitstring.getCArray(), bitstring.length() + 1, ENET_PACKET_FLAG_RELIABLE);
+			// check error on packet_create
+			debugPrintf("packet_send error: %i", enet_peer_send(m_serverPeer, 0, registerPacket));
+			//ENetEvent event;
+			//enet_host_service(m_localHost, &event, 0);
+			break;
 		case ENET_EVENT_TYPE_RECEIVE:
-			debugPrintf("Recieved a message from ip: %s", ip);
+			logPrintf("Recieved a message from ip: %s", ip);
 			
 			BinaryInput packet_contents (event.packet->data, event.packet->dataLength, G3D_BIG_ENDIAN);
 			messageType type = (messageType)packet_contents.readUInt8();
 			
 			if (type == BATCH_ENTITY_UPDATE) { // TODO MOVE THIS TO SOCKET RECIEVE OOPS
-				int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
-				std::vector<GUID> updated_objects = {};
-				for (int i = 0; i < num_packet_members; i++) { // get IDs for each update object from first half of packet
-					GUID id;
-					packet_contents.readBytes(&id, sizeof(id));
-					updated_objects.push_back(id);
-				}
-				for (int i = 0; i < num_packet_members; i++) { // get new frames and update objects
-					GUID entity_id = updated_objects.at(i);
-					CoordinateFrame frame;
-					frame.deserialize(packet_contents);
-
-					//global_entities.get(entity_id)->setFrame(frame); // need to figure out how entities are stored in a larger context
-				}
+				debugPrintf("MALFORMED REQUEST: Batch entity update on reliable channel\n");
 			}
 			else if (type == CREATE_ENTITY) {
 				// create entity and add it to the entity storage
 				GUniqueID entity_id;
 				entity_id.deserialize(packet_contents);
-				Any entity_any;
-				entity_any["id"] = entity_id.toString16();
-				entity_any["destSpace"] = "player";
-				Array<int> speed = { 0,0 };
-				entity_any["speed"] = speed;
-				Array<float> visualSize = { 0.05,0.05 };
-				entity_any["visualSize"] = visualSize;
-				(* scene()).createEntity("NetworkedEntity", entity_id.toString16(), entity_any);
-				//NetworkedEntity newEntity = NetworkedEntity::create(entity_id.toString16(),scene(),NULL, frame);
+
+				Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
+				   filename = "model/target/low_poly_sphere.obj";
+				   cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
+				   allowVertexMerging = true;
+				   forceComputeNormals = false;
+				   forceComputeTangents = false;
+				   forceVertexMerging = true;
+				   maxEdgeLength = inf;
+				   maxNormalWeldAngleDegrees = 0;
+				   maxSmoothAngleDegrees = 0;
+				   };
+					});
+				shared_ptr<Model> model = ArticulatedModel::create(modelSpec);
+
+				const shared_ptr<NetworkedEntity>& target = NetworkedEntity::create(entity_id.toString16(), &(*scene()), model, CFrame());
+				//target->setFrame(position);
+				target->setWorldSpace(true);
+				//target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
+				//target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
+
+				target->setColor(G3D::Color3(20.0, 20.0, 200.0));
+
+				(*scene()).insert(target);
+			}
+			else if (type == CLIENT_REGISTRATION_REPLY) {
+				// create entity and add it to the entity storage
+				debugPrintf("INFO: Received registration reply...\n");
+				GUniqueID clientGUID;
+				clientGUID.deserialize(packet_contents);
+				if (clientGUID == m_playerGUID) {
+					int status = packet_contents.readUInt8();
+					if (status == 0) {
+						m_enetConnected = true;
+						debugPrintf("INFO: Received registration from server\n");
+					}
+					else {
+						debugPrintf("WARN: Server connection refused (%i)", status);
+					}
+				}
 			}
 			enet_packet_destroy(event.packet);
 			break;

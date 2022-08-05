@@ -16,6 +16,7 @@ protected:
     ENetSocket m_sendSocket;                             //> Socket for the server to send on
     Array <ENetAddress> m_connectedAddresses;            //> Addresses we have received UDP traffic from so we can broadcast worldstate updates
 	Array <GUniqueID> m_connectedGUIDs;					 //> GUIDs of the connected clients
+    Array <ENetPeer> m_connectedPeers;
 
 public:
     FPSciNetworkApp(const GApp::Settings& settings);

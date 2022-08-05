@@ -978,8 +978,8 @@ BinaryOutput NetworkedEntity::toNetwork() {
 	return BinaryOutput();
 }*/
 
-void NetworkedEntity::setFrame(CoordinateFrame f) {
-	m_frame = f;
+void NetworkedEntity::setFrameN(CoordinateFrame f) {
+	setFrame(f);
 }
 
 CoordinateFrame NetworkedEntity::getFrame() {

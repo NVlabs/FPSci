@@ -509,7 +509,7 @@ public:
 	void fromNetwork(BinaryInput b);
 	BinaryOutput toNetwork();
 
-	void setFrame(CoordinateFrame f);
+	void setFrameN(CoordinateFrame f);
 	CoordinateFrame getFrame();
 
 	// TODO: After other implementations are complete.

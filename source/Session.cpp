@@ -216,6 +216,7 @@ void Session::onInit(String filename, String description) {
 	m_camera = m_app->activeCamera();
 
 	m_targetModels = &(m_app->targetModels);
+	m_targetModels = &(m_app->targetModels);
 
 	// Check for valid session
 	if (m_hasSession) {
