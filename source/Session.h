@@ -171,7 +171,8 @@ protected:
 	FPSciApp* m_app = nullptr;							///< Pointer to the app
 	Scene* m_scene = nullptr;							///< Pointer to the scene
 	
-	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
+	shared_ptr<SessionConfig> m_sessConfig;				///< Configuration for this session
+	shared_ptr<TrialConfig> m_trialConfig;				///< Configuration for the trial we are in 
 	
 	String m_dbFilename;								///< Filename for output logging (less the .db extension)
 
@@ -233,7 +234,7 @@ protected:
 
 	inline void runTrialCommands(String evt) {
 		evt = toLower(evt);
-		auto cmds = (evt == "start") ? m_config->commands.trialStartCmds : m_config->commands.trialEndCmds;
+		auto cmds = (evt == "start") ? m_sessConfig->commands.trialStartCmds : m_sessConfig->commands.trialEndCmds;
 		for (auto cmd : cmds) { 
 			m_trialProcesses.append(runCommand(cmd, evt + " of trial")); 
 		}
@@ -248,7 +249,7 @@ protected:
 
 	inline void runSessionCommands(String evt) {
 		evt = toLower(evt);
-		auto cmds = (evt == "start") ? m_config->commands.sessionStartCmds : m_config->commands.sessionEndCmds;
+		auto cmds = (evt == "start") ? m_sessConfig->commands.sessionStartCmds : m_sessConfig->commands.sessionEndCmds;
 		for (auto cmd : cmds) { 
 			m_sessProcesses.append(runCommand(cmd, evt + " of session")); 
 		}

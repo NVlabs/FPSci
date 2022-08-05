@@ -118,8 +118,8 @@ Array<String> SessionConfig::getUniqueTargetIds() const {
 	return ids;
 }
 
-Session::Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_config(config), m_weapon(app->weapon) {
-	m_hasSession = notNull(m_config);
+Session::Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_sessConfig(config), m_weapon(app->weapon) {
+	m_hasSession = notNull(m_sessConfig);
 }
 
 Session::Session(FPSciApp* app) : m_app(app), m_weapon(app->weapon) {
@@ -138,18 +138,18 @@ const RealTime Session::targetFrameTime()
 	const RealTime defaultFrameTime = 1.0 / m_app->window()->settings().refreshRate;
 	if (!m_hasSession) return defaultFrameTime;
 
-	uint arraySize = m_config->render.frameTimeArray.size();
+	uint arraySize = m_trialConfig->render.frameTimeArray.size();
 	if (arraySize > 0) {
-		if ((m_config->render.frameTimeMode == "taskonly" || m_config->render.frameTimeMode == "restartwithtask") && currentState != PresentationState::trialTask) {
+		if ((m_trialConfig->render.frameTimeMode == "taskonly" || m_trialConfig->render.frameTimeMode == "restartwithtask") && currentState != PresentationState::trialTask) {
 			// We are in a frame time mode which specifies only to change frame time during the task
-			return 1.0f / m_config->render.frameRate;
+			return 1.0f / m_trialConfig->render.frameRate;
 		}
 
-		if (m_config->render.frameTimeRandomize) {
-			return m_config->render.frameTimeArray.randomElement();
+		if (m_trialConfig->render.frameTimeRandomize) {
+			return m_trialConfig->render.frameTimeArray.randomElement();
 		}
 		else {
-			RealTime targetTime =  m_config->render.frameTimeArray[m_frameTimeIdx % arraySize];
+			RealTime targetTime = m_trialConfig->render.frameTimeArray[m_frameTimeIdx % arraySize];
 			m_frameTimeIdx += 1;
 			m_frameTimeIdx %= arraySize;
 			return targetTime;
@@ -157,8 +157,8 @@ const RealTime Session::targetFrameTime()
 	}
 
 	// The below matches the functionality in FPSciApp::updateParameters()
-	if (m_config->render.frameRate > 0) {
-		return 1.0f / m_config->render.frameRate;
+	if (m_trialConfig->render.frameRate > 0) {
+		return 1.0f / m_trialConfig->render.frameRate;
 	}
 	return defaultFrameTime;
 }
@@ -173,10 +173,12 @@ bool Session::nextCondition() {
 	if (unrunTrialIdxs.size() == 0) return false;
 	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
 	m_currTrialIdx = unrunTrialIdxs[idx];
+	m_trialConfig = shared_ptr<TrialConfig>(&(m_sessConfig->trials[m_currTrialIdx]));
+	m_app->updateTrial(m_trialConfig);
 
 	// Produce (potentially random in range) pretrial duration
-	if (isNaN(m_config->timing.pretrialDurationLambda)) m_pretrialDuration = m_config->timing.pretrialDuration;
-	else m_pretrialDuration = drawTruncatedExp(m_config->timing.pretrialDurationLambda, m_config->timing.pretrialDurationRange[0], m_config->timing.pretrialDurationRange[1]);
+	if (isNaN(m_trialConfig->timing.pretrialDurationLambda)) m_pretrialDuration = m_trialConfig->timing.pretrialDuration;
+	else m_pretrialDuration = drawTruncatedExp(m_trialConfig->timing.pretrialDurationLambda, m_trialConfig->timing.pretrialDurationRange[0], m_trialConfig->timing.pretrialDurationRange[1]);
 	
 	return true;
 }
@@ -193,12 +195,12 @@ bool Session::updateBlock(bool init) {
 	for (int i = 0; i < m_trials.size(); i++) {
 		const Array<shared_ptr<TargetConfig>>& targets = m_trials[i];
 		if (init) { // If this is the first block in the session
-			m_completedTrials.append(0);							// This increments across blocks (unique trial index)
-			m_remainingTrials.append(m_config->trials[i].count);	// This is reset across blocks (tracks progress)
-			m_targetConfigs.append(targets);						// This only needs to be setup once
+			m_completedTrials.append(0);								// This increments across blocks (unique trial index)
+			m_remainingTrials.append(m_trialConfig->count);				// This is reset across blocks (tracks progress)
+			m_targetConfigs.append(targets);							// This only needs to be setup once
 		}
 		else { // Update for a new block in the session
-			m_remainingTrials[i] += m_config->trials[i].count;		// Add another set of trials of this type
+			m_remainingTrials[i] += m_trialConfig->count;				// Add another set of trials of this type
 		}
 	}
 	return nextCondition();
@@ -207,8 +209,8 @@ bool Session::updateBlock(bool init) {
 void Session::onInit(String filename, String description) {
 	// Initialize presentation states
 	currentState = PresentationState::initial;
-	if (m_config) {
-		m_feedbackMessage = formatFeedback(m_config->targetView.showRefTarget ? m_config->feedback.initialWithRef: m_config->feedback.initialNoRef);
+	if (m_sessConfig) {
+		m_feedbackMessage = formatFeedback(m_sessConfig->targetView.showRefTarget ? m_sessConfig->feedback.initialWithRef: m_sessConfig->feedback.initialNoRef);
 	}
 
 	// Get the player from the app
@@ -220,21 +222,21 @@ void Session::onInit(String filename, String description) {
 
 	// Check for valid session
 	if (m_hasSession) {
-		if (m_config->logger.enable) {
+		if (m_sessConfig->logger.enable) {
 			UserConfig user = *m_app->currentUser();
 			// Setup the logger and create results file
 			logger = FPSciLogger::create(filename + ".db", user.id, 
 				m_app->startupConfig.experimentList[m_app->experimentIdx].experimentConfigFilename, 
-				m_config, description);
-			logger->logTargetTypes(m_app->experimentConfig.getSessionTargets(m_config->id));			// Log target info at start of session
-			logger->logUserConfig(user, m_config->id, m_config->player.turnScale);						// Log user info at start of session
+				m_sessConfig, description);
+			logger->logTargetTypes(m_app->experimentConfig.getSessionTargets(m_sessConfig->id));			// Log target info at start of session
+			logger->logUserConfig(user, m_sessConfig->id, m_sessConfig->player.turnScale);					// Log user info at start of session
 			m_dbFilename = filename;
 		}
 
 		runSessionCommands("start");				// Run start of session commands
 
 		// Iterate over the sessions here and add a config for each
-		m_trials = m_app->experimentConfig.getTargetsByTrial(m_config->id);
+		m_trials = m_app->experimentConfig.getTargetsByTrial(m_sessConfig->id);
 		updateBlock(true);
 	}
 	else {	// Invalid session, move to displaying message
@@ -268,7 +270,7 @@ void Session::initTargetAnimation() {
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
 	if (currentState == PresentationState::trialTask) {
-		if (m_config->targetView.previewWithRef && m_config->targetView.showRefTarget) {
+		if (m_trialConfig->targetView.previewWithRef && m_trialConfig->targetView.showRefTarget) {
 			// Activate the preview targets
 			for (shared_ptr<TargetEntity> target : m_targetArray) {
 				target->setCanHit(true);
@@ -287,18 +289,18 @@ void Session::initTargetAnimation() {
 		auto t = spawnReferenceTarget(
 			f.pointToWorldSpace(Point3(0, 0, -m_targetDistance)),
 			initialSpawnPos,
-			m_config->targetView.refTargetSize,
-			m_config->targetView.refTargetColor
+			m_trialConfig->targetView.refTargetSize,
+			m_trialConfig->targetView.refTargetColor
 		);
 		m_hittableTargets.append(t);
 		m_lastRefTargetPos = t->frame().translation;		// Save last spawned reference target position
 
-		if (m_config->targetView.previewWithRef) {
+		if (m_trialConfig->targetView.previewWithRef) {
 			spawnTrialTargets(initialSpawnPos, true);		// Spawn all the targets in preview mode
 		}
 
 		// Set weapon decal state to match configuration for reference targets
-		m_weapon->drawsDecals = m_config->targetView.showRefDecals;
+		m_weapon->drawsDecals = m_trialConfig->targetView.showRefDecals;
 	
 		// Clear target logOnChange management
 		m_lastLogTargetLoc.clear();
@@ -314,9 +316,9 @@ void Session::initTargetAnimation() {
 void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 	// Iterate through the targets
 	for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
-		const Color3 previewColor = m_config->targetView.previewColor;
+		const Color3 previewColor = m_trialConfig->targetView.previewColor;
 		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
-		const String name = format("%s_%d_%d_%s_%d", m_config->id, m_currTrialIdx, m_completedTrials[m_currTrialIdx], target->id, i);
+		const String name = format("%s_%d_%d_%s_%d", m_sessConfig->id, m_currTrialIdx, m_completedTrials[m_currTrialIdx], target->id, i);
 
 		const float spawn_eccV = (target->symmetricEccV ? randSign() : 1) * Random::common().uniform(target->eccV[0], target->eccV[1]);
 		const float spawn_eccH = (target->symmetricEccH ? randSign() : 1) * Random::common().uniform(target->eccH[0], target->eccH[1]);
@@ -324,7 +326,7 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 		bool isWorldSpace = target->destSpace == "world";
 
 		// Log the target if desired
-		if (m_config->logger.enable) {
+		if (m_sessConfig->logger.enable) {
 			const String spawnTime = FPSciLogger::genUniqueTimestamp();
 			logger->addTarget(name, target, spawnTime, targetSize, Point2(spawn_eccH, spawn_eccV));
 		}
@@ -378,11 +380,11 @@ void Session::processResponse()
 
 	// Check for whether all targets have been destroyed
 	if (m_destroyedTargets == totalTargets) {
-		m_totalRemainingTime += (double(m_config->timing.maxTrialDuration) - m_taskExecutionTime);
-		m_feedbackMessage = formatFeedback(m_config->feedback.trialSuccess);
+		m_totalRemainingTime += (double(m_trialConfig->timing.maxTrialDuration) - m_taskExecutionTime);
+		m_feedbackMessage = formatFeedback(m_trialConfig->feedback.trialSuccess);
 	}
 	else {
-		m_feedbackMessage = formatFeedback(m_config->feedback.trialFailure);
+		m_feedbackMessage = formatFeedback(m_trialConfig->feedback.trialFailure);
 	}
 }
 
@@ -396,10 +398,10 @@ void Session::updatePresentationState()
 
 	if (currentState == PresentationState::initial)
 	{
-		if (m_config->player.stillBetweenTrials) {
+		if (m_sessConfig->player.stillBetweenTrials) {
 			m_player->setMoveEnable(false);
 		}
-		if (!(m_app->shootButtonUp && m_config->timing.clickToStart)) {
+		if (!(m_app->shootButtonUp && m_trialConfig->timing.clickToStart)) {
 			newState = PresentationState::trialFeedback;
 		}
 	}
@@ -408,7 +410,7 @@ void Session::updatePresentationState()
 		if (stateElapsedTime > m_pretrialDuration)
 		{
 			newState = PresentationState::trialTask;
-			if (m_config->player.stillBetweenTrials) {
+			if (m_sessConfig->player.stillBetweenTrials) {
 				m_player->setMoveEnable(true);
 			}
 
@@ -419,16 +421,16 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::trialTask)
 	{
-		if ((stateElapsedTime > m_config->timing.maxTrialDuration) || (remainingTargets <= 0) || (m_weapon->remainingAmmo() == 0))
+		if ((stateElapsedTime > m_trialConfig->timing.maxTrialDuration) || (remainingTargets <= 0) || (m_weapon->remainingAmmo() == 0))
 		{
 			m_taskEndTime = FPSciLogger::genUniqueTimestamp();
 			processResponse();
 			clearTargets(); // clear all remaining targets
 			newState = PresentationState::trialFeedback;
-			if (m_config->player.stillBetweenTrials) {
+			if (m_sessConfig->player.stillBetweenTrials) {
 				m_player->setMoveEnable(false);
 			}
-			if (m_config->player.resetPositionPerTrial) {
+			if (m_sessConfig->player.resetPositionPerTrial) {
 				m_player->respawn();
 			}
 
@@ -444,56 +446,56 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::trialFeedback)
 	{
-		if ((stateElapsedTime > m_config->timing.trialFeedbackDuration) && (remainingTargets <= 0))
+		if ((stateElapsedTime > m_trialConfig->timing.trialFeedbackDuration) && (remainingTargets <= 0))
 		{
 			if (blockComplete()) {
 				m_currBlock++;		// Increment the block index
-				if (m_currBlock > m_config->blockCount) {
+				if (m_currBlock > m_sessConfig->blockCount) {
 					// Check for end of session (all blocks complete)
-					if (m_config->questionArray.size() > 0 && m_currQuestionIdx < m_config->questionArray.size()) {
+					if (m_sessConfig->questionArray.size() > 0 && m_currQuestionIdx < m_sessConfig->questionArray.size()) {
 						// Pop up question dialog(s) here if we need to
 						if (m_currQuestionIdx == -1) {
 							m_currQuestionIdx = 0;
-							m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);
+							m_app->presentQuestion(m_sessConfig->questionArray[m_currQuestionIdx]);
 						}
 						else if (!m_app->dialog->visible()) {														// Check for whether dialog is closed (otherwise we are waiting for input)
 							if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
-								m_config->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
-								if (m_config->logger.enable) {
-									logger->addQuestion(m_config->questionArray[m_currQuestionIdx], m_config->id, m_app->dialog);	// Log the question and its answer
+								m_sessConfig->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
+								if (m_sessConfig->logger.enable) {
+									logger->addQuestion(m_sessConfig->questionArray[m_currQuestionIdx], m_sessConfig->id, m_app->dialog);	// Log the question and its answer
 								}
 								m_currQuestionIdx++;																
-								if (m_currQuestionIdx < m_config->questionArray.size()) {							// Double check we have a next question before launching the next question
-									m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);				// Present the next question (if there is one)
+								if (m_currQuestionIdx < m_sessConfig->questionArray.size()) {							// Double check we have a next question before launching the next question
+									m_app->presentQuestion(m_sessConfig->questionArray[m_currQuestionIdx]);				// Present the next question (if there is one)
 								}
 								else {
 									m_app->dialog.reset();															// Null the dialog pointer when all questions complete
 								}
 							}
 							else {
-								m_app->presentQuestion(m_config->questionArray[m_currQuestionIdx]);					// Relaunch the same dialog (this wasn't completed)
+								m_app->presentQuestion(m_sessConfig->questionArray[m_currQuestionIdx]);					// Relaunch the same dialog (this wasn't completed)
 							}
 						}
 					}
 					else {
 						// Write final session timestamp to log
-						if (notNull(logger) && m_config->logger.enable) {
+						if (notNull(logger) && m_sessConfig->logger.enable) {
 							int totalTrials = 0;
 							for (int tCount : m_completedTrials) { totalTrials += tCount; }
 							logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), totalTrials);			// Update session entry in database
 						}
-						if (m_config->logger.enable) {
+						if (m_sessConfig->logger.enable) {
 							endLogging();
 						}
-						m_app->markSessComplete(m_config->id);														// Add this session to user's completed sessions
+						m_app->markSessComplete(m_sessConfig->id);														// Add this session to user's completed sessions
 
-						m_feedbackMessage = formatFeedback(m_config->feedback.sessComplete);						// Update the feedback message
+						m_feedbackMessage = formatFeedback(m_sessConfig->feedback.sessComplete);						// Update the feedback message
 						m_currQuestionIdx = -1;
 						newState = PresentationState::sessionFeedback;
 					}
 				}
 				else {					// Block is complete but session isn't
-					m_feedbackMessage = formatFeedback(m_config->feedback.blockComplete);
+					m_feedbackMessage = formatFeedback(m_sessConfig->feedback.blockComplete);
 					updateBlock();
 					newState = PresentationState::initial;
 				}
@@ -507,7 +509,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::sessionFeedback) {
 		if (m_hasSession) {
-			if (stateElapsedTime > m_config->timing.sessionFeedbackDuration && (!m_config->timing.sessionFeedbackRequireClick || !m_app->shootButtonUp)) {
+			if (stateElapsedTime > m_sessConfig->timing.sessionFeedbackDuration && (!m_sessConfig->timing.sessionFeedbackRequireClick || !m_app->shootButtonUp)) {
 				newState = PresentationState::complete;
         
 				// Save current user config and status
@@ -518,15 +520,15 @@ void Session::updatePresentationState()
 
 				Array<String> remaining = m_app->updateSessionDropDown();
 				if (remaining.size() == 0) {
-					m_feedbackMessage = formatFeedback(m_config->feedback.allSessComplete); // Update the feedback message
+					m_feedbackMessage = formatFeedback(m_sessConfig->feedback.allSessComplete); // Update the feedback message
 					moveOn = false;
-					if (m_app->experimentConfig.closeOnComplete || m_config->closeOnComplete) {
+					if (m_app->experimentConfig.closeOnComplete || m_sessConfig->closeOnComplete) {
 						m_app->quitRequest();
 					}
 				}
 				else {
-					m_feedbackMessage = formatFeedback(m_config->feedback.sessComplete);	// Update the feedback message
-					if (m_config->closeOnComplete) {
+					m_feedbackMessage = formatFeedback(m_sessConfig->feedback.sessComplete);	// Update the feedback message
+					if (m_sessConfig->closeOnComplete) {
 						m_app->quitRequest();
 					}
 					moveOn = true;														// Check for session complete (signal start of next session)
@@ -553,30 +555,30 @@ void Session::updatePresentationState()
 	{ // handle state transition.
 		m_timer.startTimer();
 		if (newState == PresentationState::trialTask) {
-			if (m_config->render.frameTimeMode == "restartwithtask") {
+			if (m_sessConfig->render.frameTimeMode == "restartwithtask") {
 				m_frameTimeIdx = 0;		// Reset the frame time index with the task if requested
 			}
 			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
 		}
 		currentState = newState;
 		//If we switched to task, call initTargetAnimation to handle new trial
-		if ((newState == PresentationState::trialTask) || (newState == PresentationState::trialFeedback && hasNextCondition() && m_config->targetView.showRefTarget)) {
-			if (newState == PresentationState::trialTask && m_config->timing.maxPretrialAimDisplacement >= 0) {
+		if ((newState == PresentationState::trialTask) || (newState == PresentationState::trialFeedback && hasNextCondition() && m_trialConfig->targetView.showRefTarget)) {
+			if (newState == PresentationState::trialTask && m_trialConfig->timing.maxPretrialAimDisplacement >= 0) {
 				// Test for aiming in valid region before spawning task targets				
 				Vector3 aim = m_camera->frame().lookVector().unit();
 				Vector3 ref = (m_lastRefTargetPos - m_camera->frame().translation).unit();
 				// Get the view displacement as the arccos of view/reference direction dot product (should never exceed 180 deg)
 				float viewDisplacement = 180 / pif() * acosf(aim.dot(ref));
-				if (viewDisplacement > m_config->timing.maxPretrialAimDisplacement) {
+				if (viewDisplacement > m_trialConfig->timing.maxPretrialAimDisplacement) {
 					clearTargets();		// Clear targets (in case preview targets are being shown)
-					m_feedbackMessage = formatFeedback(m_config->feedback.aimInvalid);
+					m_feedbackMessage = formatFeedback(m_trialConfig->feedback.aimInvalid);
 					currentState = PresentationState::trialFeedback;		// Jump to feedback state w/ error message
 				}
 			}
 			initTargetAnimation();
 		}
 
-		if (newState == PresentationState::pretrial && m_config->targetView.clearDecalsWithRef) {
+		if (newState == PresentationState::pretrial && m_trialConfig->targetView.clearDecalsWithRef) {
 			m_weapon->clearDecals();		// Clear the decals when transitioning into the task state
 		}
 	}
@@ -594,11 +596,11 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 
 void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 {
-	if (!m_config->logger.enable) return;		// Skip this if the logger is disabled
-	if (m_config->logger.logTrialResponse) {
+	if (!m_sessConfig->logger.enable) return;		// Skip this if the logger is disabled
+	if (m_trialConfig->logger.logTrialResponse) {
 		// Trials table. Record trial start time, end time, and task completion time.
 		FPSciLogger::TrialValues trialValues = {
-			"'" + m_config->id + "'",
+			"'" + m_sessConfig->id + "'",
 			String(std::to_string(m_currTrialIdx)),
 			String(std::to_string(m_completedTrials[m_currTrialIdx])),
 			format("'Block %d'", m_currBlock),
@@ -615,13 +617,13 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 
 void Session::accumulateTrajectories()
 {
-	if (notNull(logger) && m_config->logger.logTargetTrajectories) {
+	if (notNull(logger) && m_trialConfig->logger.logTargetTrajectories) {
 		for (shared_ptr<TargetEntity> target : m_targetArray) {
 			if (!target->isLogged()) continue;
 			String name = target->name();
 			Point3 pos = target->frame().translation;
 			TargetLocation location = TargetLocation(FPSciLogger::getFileTime(), name, currentState, pos);
-			if (m_config->logger.logOnChange) {
+			if (m_trialConfig->logger.logOnChange) {
 				// Check for target in logged position table
 				if (m_lastLogTargetLoc.containsKey(name)  && location.noChangeFrom(m_lastLogTargetLoc[name])) {	
 					continue; // Duplicates last logged position/state (don't log)
@@ -646,14 +648,14 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 
 	static PlayerAction lastPA;
 
-	if (notNull(logger) && m_config->logger.logPlayerActions) {
+	if (notNull(logger) && m_trialConfig->logger.logPlayerActions) {
 		BEGIN_PROFILER_EVENT("accumulatePlayerAction");
 		// recording target trajectories
 		Point2 dir = getViewDirection();
 		Point3 loc = getPlayerLocation();
 		PlayerAction pa = PlayerAction(FPSciLogger::getFileTime(), dir, loc, currentState, action, targetName);
 		// Check for log only on change condition
-		if (m_config->logger.logOnChange && pa.noChangeFrom(lastPA)) {
+		if (m_trialConfig->logger.logOnChange && pa.noChangeFrom(lastPA)) {
 			return;		// Early exit for (would be) duplicate log entry
 		}
 		logger->logPlayerAction(pa);
@@ -663,7 +665,7 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 }
 
 void Session::accumulateFrameInfo(RealTime t, float sdt, float idt) {
-	if (notNull(logger) && m_config->logger.logFrameInfo) {
+	if (notNull(logger) && m_trialConfig->logger.logFrameInfo) {
 		logger->logFrameInfo(FrameInfo(FPSciLogger::getFileTime(), sdt));
 	}
 }
@@ -677,18 +679,18 @@ float Session::getElapsedTrialTime() {
 }
 
 float Session::getRemainingTrialTime() {
-	if (isNull(m_config)) return 10.0;
-	return m_config->timing.maxTrialDuration - m_timer.getTime();
+	if (isNull(m_trialConfig)) return 10.0;
+	return m_trialConfig->timing.maxTrialDuration - m_timer.getTime();
 }
 
 float Session::getProgress() {
-	if (notNull(m_config)) {
+	if (notNull(m_sessConfig)) {
 		float remainingTrials = 0.f;
 		for (int tcount : m_remainingTrials) {
 			if (tcount < 0) return 0.f;				// Infinite trials, never make any progress
 			remainingTrials += (float)tcount;
 		}
-		return 1.f - (remainingTrials / m_config->getTrialsPerBlock());
+		return 1.f - (remainingTrials / m_sessConfig->getTrialsPerBlock());
 	}
 	return fnan();
 }
@@ -760,7 +762,7 @@ String Session::formatFeedback(const String& input) {
 			formatted = formatted.substr(0, foundIdx) + format("%d", m_currBlock) + formatted.substr(foundIdx + currBlock.length());
 		}
 		else if (!formatted.compare(foundIdx, totalBlocks.length(), totalBlocks)) {
-			formatted = formatted.substr(0, foundIdx) + format("%d", m_config->blockCount) + formatted.substr(foundIdx + totalBlocks.length());
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_sessConfig->blockCount) + formatted.substr(foundIdx + totalBlocks.length());
 		}
 		else if (!formatted.compare(foundIdx, trialTaskTimeMs.length(), trialTaskTimeMs)) {
 			formatted = formatted.substr(0, foundIdx) + format("%d", (int)(m_taskExecutionTime * 1000)) + formatted.substr(foundIdx + trialTaskTimeMs.length());
@@ -842,7 +844,7 @@ shared_ptr<FlyingEntity> Session::spawnReferenceTarget(
 {
 	const int scaleIndex = clamp(iRound(log(size) / log(1.0f + TARGET_MODEL_ARRAY_SCALING) + TARGET_MODEL_ARRAY_OFFSET), 0, TARGET_MODEL_SCALE_COUNT - 1);
 
-	String refId = m_config->id + "_reference";
+	String refId = m_sessConfig->id + "_reference";
 	if (isNull(m_targetModels->getPointer(refId))) {
 		// This session doesn't have a custom reference target
 		refId = "reference";

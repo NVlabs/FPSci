@@ -698,9 +698,12 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 	}
 }
 
-void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const bool forceSceneReload) {
+void FPSciApp::updateTrial(const shared_ptr<TrialConfig> config, bool forceSceneReload) {
 	trialConfig = config;	// Naive way to store trial config pointer for now
+	updateConfigParameters(config, forceSceneReload);
+}
 
+void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const bool forceSceneReload) {
 	// Update reticle
 	reticleConfig.index = config->reticle.indexSpecified ? config->reticle.index : currentUser()->reticle.index;
 	reticleConfig.scale = config->reticle.scaleSpecified ? config->reticle.scale : currentUser()->reticle.scale;
