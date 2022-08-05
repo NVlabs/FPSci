@@ -173,6 +173,8 @@ bool Session::nextCondition() {
 	if (unrunTrialIdxs.size() == 0) return false;
 	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
 	m_currTrialIdx = unrunTrialIdxs[idx];
+	
+	// Get and update the trial configuration
 	m_trialConfig = shared_ptr<TrialConfig>(&(m_sessConfig->trials[m_currTrialIdx]));
 	m_app->updateTrial(m_trialConfig);
 
@@ -196,7 +198,7 @@ bool Session::updateBlock(bool init) {
 		const Array<shared_ptr<TargetConfig>>& targets = m_trials[i];
 		if (init) { // If this is the first block in the session
 			m_completedTrials.append(0);								// This increments across blocks (unique trial index)
-			m_remainingTrials.append(m_trialConfig->count);				// This is reset across blocks (tracks progress)
+			m_remainingTrials.append(m_sessConfig->trials[i].count);	// This is reset across blocks (tracks progress)
 			m_targetConfigs.append(targets);							// This only needs to be setup once
 		}
 		else { // Update for a new block in the session
