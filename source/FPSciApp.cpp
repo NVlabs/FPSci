@@ -1037,40 +1037,6 @@ void FPSciApp::onNetwork()
 			logPrintf("Failed to send a packet to the server\n");
 		}
 	}
-
-	//enet_packet_destroy(registerPacket);
-
-	/*
-			PACKET STRUCTURE:
-			UInt8: type
-			...
-
-			Type BATCH_ENTITY_UPDATE:
-			UInt8: type (BATCH_ENTITY_UPDATE)
-			UInt8: object_count # number of frames contained in this packet
-			<DATA> * n: Opaque view of data, written to and from with NetworkUtils
-			[DEPRECATED] GUID * n: ID of object
-			[DEPRECATED] * n: CFrames of objects
-
-			Type CREATE_ENTITY:
-			UInt8: type (CREATE_ENTITY)
-			GUID: object ID
-			Uint8: Entity Type
-			... : misc. data for constructor, dependent on Entity type
-
-			Type REGISTER_CLIENT:
-			GUID: player's ID
-			? String: player metadata
-
-			Type CLIENT_REGISTRATION_REPLY:
-			GUID: player's ID
-			UInt8: status [0 = success, 1 = Failure, ....]
-
-			Type HANDSHAKE
-
-			Type HANDSHAKE_REPLY
-
-	*/
 	
 	ENetAddress addr_from;
 	ENetBuffer buff;
@@ -1086,6 +1052,7 @@ void FPSciApp::onNetwork()
 		messageType type = (messageType)packet_contents.readUInt8();
 		
 		if (type == BATCH_ENTITY_UPDATE) {
+			debugPrintf("Got entity update...\n");
 			int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
 			/*std::vector<GUniqueID> updated_objects = {};
 			for (int i = 0; i < num_packet_members; i++) { // get IDs for each update object from first half of packet
@@ -1097,6 +1064,7 @@ void FPSciApp::onNetwork()
 				//GUniqueID entity_id = updated_objects.at(i);
 				GUniqueID entity_id;
 				packet_contents.readBytes(&entity_id, sizeof(entity_id));
+				//debugPrintf("Updating position of %s\n", entity_id.toString16());
 				if (entity_id != m_playerGUID) { // don't let the server move this client
 					shared_ptr<NetworkedEntity> e = (*scene()).typedEntity<NetworkedEntity>(entity_id.toString16());
 					if (&e != nullptr) {
@@ -1131,6 +1099,10 @@ void FPSciApp::onNetwork()
 			bitstring.setEndian(G3D_BIG_ENDIAN);
 			bitstring.writeUInt8(REGISTER_CLIENT);
 			m_playerGUID.serialize(bitstring);		// Send the GUID as a byte string to the server so it can identify the client
+			bitstring.writeUInt16(experimentConfig.clientPort + 1); // Client socket port
+			debugPrintf("Registering client...\n");
+			debugPrintf("\tPort: %i\n", experimentConfig.clientPort + 1);
+			debugPrintf("\tHost: \n");
 			registerPacket = enet_packet_create((void*)bitstring.getCArray(), bitstring.length() + 1, ENET_PACKET_FLAG_RELIABLE);
 			// check error on packet_create
 			debugPrintf("packet_send error: %i", enet_peer_send(m_serverPeer, 0, registerPacket));
@@ -1150,6 +1122,7 @@ void FPSciApp::onNetwork()
 				// create entity and add it to the entity storage
 				GUniqueID entity_id;
 				entity_id.deserialize(packet_contents);
+				debugPrintf("Created entity with ID %s\n", entity_id.toString16());
 
 				Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
 				   filename = "model/target/low_poly_sphere.obj";
