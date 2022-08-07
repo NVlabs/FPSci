@@ -43,7 +43,7 @@ public:
 		NOOP,
 		REPLACE_FRAME,
 	};
-	static void updateEntity(shared_ptr<Entity> entity, BinaryInput &inBuffer);
+	static void updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Scene> scene, BinaryInput &inBuffer);
 
 	static void createFrameUpdate(GUniqueID id, shared_ptr<Entity> entity, BinaryOutput &outBuffer);
 };

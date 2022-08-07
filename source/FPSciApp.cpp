@@ -1060,24 +1060,14 @@ void FPSciApp::onNetwork()
 				packet_contents.readBytes(&id, sizeof(id));
 				updated_objects.push_back(id);
 			}*/
+			Array<GUniqueID> ignore;
+			ignore.append(m_playerGUID);
+			//debugPrintf("Received bulk update packet (%i members): ", num_packet_members);
 			for (int i = 0; i < num_packet_members; i++) { // get new frames and update objects
 				//GUniqueID entity_id = updated_objects.at(i);
-				GUniqueID entity_id;
-				packet_contents.readBytes(&entity_id, sizeof(entity_id));
-				if (entity_id != m_playerGUID) { // don't let the server move this client
-					
-					shared_ptr<NetworkedEntity> e = (*scene()).typedEntity<NetworkedEntity>(entity_id.toString16());
-					if (e != nullptr) {
-						//debugPrintf("Updating position of %s\n", entity_id.toString16());
-						NetworkUtils::updateEntity(e, packet_contents);
-						//e->setFrameN(frame);
-					}
-					else {
-						debugPrintf("Entity not found: %s\n", entity_id.toString16());
-					}
-				}
-				//global_entities.get(entity_id)->setFrame(frame); // need to figure out how entities are stored in a larger context
+				NetworkUtils::updateEntity(ignore, scene(), packet_contents);	
 			}
+			//debugPrintf("\n");
 		}
 		else if (type == HANDSHAKE_REPLY) {
 			m_socketConnected = true;

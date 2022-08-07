@@ -147,14 +147,7 @@ void FPSciNetworkApp::onNetwork() {
             int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
             for (int i = 0; i < num_packet_members; i++) { // get new frames and update objects
                 //GUniqueID entity_id = updated_objects.at(i);
-                GUniqueID entity_id;
-                packet_contents.readBytes(&entity_id, sizeof(entity_id));
-                if (entity_id != m_playerGUID) { // don't let the server move this client
-                    shared_ptr<NetworkedEntity> e = (*scene()).typedEntity<NetworkedEntity>(entity_id.toString16());
-                    if (&e != nullptr) {
-                        NetworkUtils::updateEntity(e, packet_contents);
-                    }
-                }
+                NetworkUtils::updateEntity(Array<GUniqueID>(), scene(), packet_contents);
             }/*
             std::vector<GUniqueID> updated_objects = {};
             for (int i = 0; i < num_packet_members; i++) { // get IDs for each update object from first half of packet
@@ -291,7 +284,7 @@ void FPSciNetworkApp::onNetwork() {
                 BinaryOutput forwardingbitstring;
                 forwardingbitstring.setEndian(G3D_BIG_ENDIAN);
                 forwardingbitstring.writeUInt8(CREATE_ENTITY);
-                m_playerGUID.serialize(forwardingbitstring);		// Send the GUID as a byte string to the server so it can identify the client
+                clientGUID.serialize(forwardingbitstring);		// Send the GUID as a byte string to the server so it can identify the client
                 ENetPacket* forwardingPacket = enet_packet_create((void*)forwardingbitstring.getCArray(), forwardingbitstring.length(), ENET_PACKET_FLAG_RELIABLE);
 
                 for (int i = 0; i < m_connectedPeers.length(); i++) {
@@ -299,6 +292,7 @@ void FPSciNetworkApp::onNetwork() {
                     if (addr.host != event.peer->address.host) {
                         // update the other peer with new connection
                         enet_peer_send(&m_connectedPeers[i], 0, forwardingPacket);
+                        debugPrintf("Sent add to %s to add %s\n", m_connectedGUIDs[i].toString16(), clientGUID.toString16());
 
                         // update the new connection with other peer
                         BinaryOutput addExistingbitstring;
@@ -307,6 +301,7 @@ void FPSciNetworkApp::onNetwork() {
                         m_connectedGUIDs[i].serialize(addExistingbitstring);
                         ENetPacket* addExistingPacket = enet_packet_create((void*)addExistingbitstring.getCArray(), addExistingbitstring.length(), ENET_PACKET_FLAG_RELIABLE);
                         enet_peer_send(event.peer, 0, addExistingPacket);
+                        debugPrintf("Sent add to %s to add %s\n", clientGUID.toString16(), m_connectedGUIDs[i].toString16());
                         
                     }
                 }
@@ -328,13 +323,13 @@ void FPSciNetworkApp::onNetwork() {
         for (int i = 0; i < m_connectedAddresses.length(); i++) {
             ENetAddress toAddress = m_connectedAddresses[i];
             if (toAddress.host != addr_from.host) { // don't send back to the sender
-                if (enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &enet_buff, 1) <= 0) {
+                if (enet_socket_send(m_serverSocket, &toAddress, &enet_buff, 1) <= 0) {
                     logPrintf("Failed to send a packet to the server\n");
                 }
             }
         }
     }*/
-    //
+    //*
     BinaryOutput output;
     output.setEndian(G3D_BIG_ENDIAN);
     output.writeUInt8(BATCH_ENTITY_UPDATE);
