@@ -214,9 +214,17 @@ void FPSciNetworkApp::onNetwork() {
 			logPrintf("made connection to %s in response to input\n", ip);
 			break;
 		case ENET_EVENT_TYPE_DISCONNECT:
-            debugPrintf("connection recieved...\n");
+            debugPrintf("disconnection recieved...\n");
 			logPrintf("%s disconnected.\n", ip);
 			// Reset the peer's client information.
+            for (int i = 0; i < m_connectedPeers.size(); i++) {
+                if (m_connectedPeers[i].address.host == event.peer->address.host) {
+                    m_connectedAddresses.remove(i, 1);
+                    m_connectedGUIDs.remove(i, 1);
+                    m_connectedPeers.remove(i, 1);
+                    // TODO TELL OTHER CLIENTS THAT THIS CLIENT DC'D
+                }
+            }
 			event.peer->data = NULL;
 			break;
         case ENET_EVENT_TYPE_RECEIVE:
@@ -328,6 +336,7 @@ void FPSciNetworkApp::onNetwork() {
     }*/
     //
     BinaryOutput output;
+    output.setEndian(G3D_BIG_ENDIAN);
     output.writeUInt8(BATCH_ENTITY_UPDATE);
     Array<shared_ptr<NetworkedEntity>> entityArray;
     scene()->getTypedEntityArray<NetworkedEntity>(entityArray);
@@ -336,20 +345,14 @@ void FPSciNetworkApp::onNetwork() {
     {
         shared_ptr<NetworkedEntity> e = entityArray[i];
         GUniqueID guid = GUniqueID::fromString16((*e).name().c_str());
-        
-        NetworkUtils::createFrameUpdate(GUniqueID::fromString16((*e).name().c_str()), e, output);
-
-        //CoordinateFrame frame = player->frame();
-        //frame.serialize(output);
-
-        //logPrintf("Sent frame: %s\n", frame.toXYZYPRDegreesString());
+        NetworkUtils::createFrameUpdate(guid, e, output);
     }
+
     ENetBuffer enet_buff;
     enet_buff.data = (void*)output.getCArray();
     enet_buff.dataLength = output.length();
     for (int i = 0; i < m_connectedAddresses.length(); i++) {
         ENetAddress toAddress = m_connectedAddresses[i];
-        //debugPrintf("Sent packet to host %s (%i, %i)\n", m_connectedGUIDs[i].toString16(), toAddress.host, toAddress.port);
         if (enet_socket_send(m_serverSocket, &toAddress, &enet_buff, 1) <= 0) {
             logPrintf("Failed to send a packet to the client\n");
         }

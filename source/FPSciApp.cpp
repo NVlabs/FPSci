@@ -1052,7 +1052,7 @@ void FPSciApp::onNetwork()
 		messageType type = (messageType)packet_contents.readUInt8();
 		
 		if (type == BATCH_ENTITY_UPDATE) {
-			debugPrintf("Got entity update...\n");
+			//debugPrintf("Got entity update...\n");
 			int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
 			/*std::vector<GUniqueID> updated_objects = {};
 			for (int i = 0; i < num_packet_members; i++) { // get IDs for each update object from first half of packet
@@ -1064,12 +1064,16 @@ void FPSciApp::onNetwork()
 				//GUniqueID entity_id = updated_objects.at(i);
 				GUniqueID entity_id;
 				packet_contents.readBytes(&entity_id, sizeof(entity_id));
-				//debugPrintf("Updating position of %s\n", entity_id.toString16());
 				if (entity_id != m_playerGUID) { // don't let the server move this client
+					
 					shared_ptr<NetworkedEntity> e = (*scene()).typedEntity<NetworkedEntity>(entity_id.toString16());
-					if (&e != nullptr) {
+					if (e != nullptr) {
+						//debugPrintf("Updating position of %s\n", entity_id.toString16());
 						NetworkUtils::updateEntity(e, packet_contents);
 						//e->setFrameN(frame);
+					}
+					else {
+						debugPrintf("Entity not found: %s\n", entity_id.toString16());
 					}
 				}
 				//global_entities.get(entity_id)->setFrame(frame); // need to figure out how entities are stored in a larger context
@@ -1125,16 +1129,16 @@ void FPSciApp::onNetwork()
 				debugPrintf("Created entity with ID %s\n", entity_id.toString16());
 
 				Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
-				   filename = "model/target/low_poly_sphere.obj";
-				   cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
-				   allowVertexMerging = true;
-				   forceComputeNormals = false;
-				   forceComputeTangents = false;
-				   forceVertexMerging = true;
-				   maxEdgeLength = inf;
-				   maxNormalWeldAngleDegrees = 0;
-				   maxSmoothAngleDegrees = 0;
-				   };
+					filename = "model/target/low_poly_sphere_no_outline.obj";
+					cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
+					allowVertexMerging = true;
+					forceComputeNormals = false;
+					forceComputeTangents = false;
+					forceVertexMerging = true;
+					maxEdgeLength = inf;
+					maxNormalWeldAngleDegrees = 0;
+					maxSmoothAngleDegrees = 0;
+					};
 					});
 				shared_ptr<Model> model = ArticulatedModel::create(modelSpec);
 
@@ -1143,7 +1147,6 @@ void FPSciApp::onNetwork()
 				target->setWorldSpace(true);
 				//target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
 				//target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
-
 				target->setColor(G3D::Color3(20.0, 20.0, 200.0));
 
 				(*scene()).insert(target);
