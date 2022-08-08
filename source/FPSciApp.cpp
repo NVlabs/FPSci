@@ -647,6 +647,9 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 		materials.set(id, makeMaterials(tconfig));
 	}
 
+	// Handle clearing the targets here (clear any remaining targets before loading a new scene)
+	if (notNull(scene())) sess->clearTargets();
+
 	// Update the application w/ the session parameters
 	updateConfigParameters(sessConfig, forceSceneReload);
 
@@ -742,9 +745,6 @@ void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const 
 	// Load (session dependent) fonts
 	hudFont = GFont::fromFile(System::findDataFile(config->hud.hudFont));
 	m_combatFont = GFont::fromFile(System::findDataFile(config->targetView.combatTextFont));
-
-	// Handle clearing the targets here (clear any remaining targets before loading a new scene)
-	if (notNull(scene())) sess->clearTargets();
 
 	// Load the experiment scene if we haven't already (target only)
 	if (config->scene.name.empty()) {
