@@ -175,7 +175,7 @@ bool Session::nextCondition() {
 	m_currTrialIdx = unrunTrialIdxs[idx];
 	
 	// Get and update the trial configuration
-	m_trialConfig = shared_ptr<TrialConfig>(&(m_sessConfig->trials[m_currTrialIdx]));
+	m_trialConfig = TrialConfig::createShared<TrialConfig>(m_sessConfig->trials[m_currTrialIdx]);
 	m_app->updateTrial(m_trialConfig);
 
 	// Produce (potentially random in range) pretrial duration
