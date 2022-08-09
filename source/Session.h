@@ -183,7 +183,7 @@ protected:
 	// Experiment management					
 	int m_destroyedTargets = 0;							///< Number of destroyed target
 	int m_hitCount = 0;									///< Count of total hits in this trial
-	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
+	bool m_hasSession;									///< Flag indicating whether this session was loaded from a valid config
 	int	m_currBlock = 1;								///< Index to the current block of trials
 	Array<Array<shared_ptr<TargetConfig>>> m_trials;	///< Storage for trials (to repeat over blocks)
 	String m_feedbackMessage;							///< Message to show when trial complete
@@ -392,7 +392,7 @@ public:
 	}
 
 	void randomizePosition(const shared_ptr<TargetEntity>& target) const;
-	void initTargetAnimation();
+	void initTargetAnimation(const bool task);
 	void spawnTrialTargets(Point3 initialSpawnPos, bool previewMode = false);
 
 	bool blockComplete() const;

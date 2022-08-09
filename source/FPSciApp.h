@@ -33,11 +33,12 @@ class WaypointManager;
 // ready: ready scene that happens before beginning of a task.
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
-enum PresentationState { initial, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
+enum PresentationState { initial, refTarget, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
 static String presentationStateToString(const PresentationState& state) {
 	String stateStr = "N/A";
 	switch (state) {
 	case initial: stateStr = "initial"; break;
+	case refTarget: stateStr = "referenceTarget"; break;
 	case pretrial: stateStr = "pretrial";  break;
 	case trialTask: stateStr = "trialTask"; break;
 	case trialFeedback: stateStr = "trialFeedback";  break;

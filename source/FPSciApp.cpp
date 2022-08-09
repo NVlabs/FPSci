@@ -1379,7 +1379,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	}
 	
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
-		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::trialFeedback) && !m_userSettingsWindow->visible()) {
+		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::refTarget) && !m_userSettingsWindow->visible()) {
 			Array<shared_ptr<Entity>> dontHit;
 			dontHit.append(m_explosions);
 			dontHit.append(sess->unhittableTargets());

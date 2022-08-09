@@ -265,13 +265,13 @@ void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
 	target->setFrame(loc);
 }
 
-void Session::initTargetAnimation() {
+void Session::initTargetAnimation(const bool task) {
 	// initialize target location based on the initial displacement values
 	// Not reference: we don't want it to change after the first call.
 	const Point3 initialSpawnPos = m_player->getCameraFrame().translation;
 
 	// In task state, spawn a test target. Otherwise spawn a target at straight ahead.
-	if (currentState == PresentationState::trialTask) {
+	if (task) {
 		if (m_trialConfig->targetView.previewWithRef && m_trialConfig->targetView.showRefTarget) {
 			// Activate the preview targets
 			for (shared_ptr<TargetEntity> target : m_targetArray) {
@@ -404,8 +404,15 @@ void Session::updatePresentationState()
 			m_player->setMoveEnable(false);
 		}
 		if (!(m_app->shootButtonUp && m_trialConfig->timing.clickToStart)) {
-			newState = PresentationState::trialFeedback;
+			newState = PresentationState::referenceTarget;
 		}
+	}
+	else if (currentState == PresentationState::referenceTarget) {
+		// State for showing the trial reference target
+		if (remainingTargets == 0) {
+			newState = PresentationState::pretrial;
+		}
+
 	}
 	else if (currentState == PresentationState::pretrial)
 	{
@@ -448,7 +455,7 @@ void Session::updatePresentationState()
 	}
 	else if (currentState == PresentationState::trialFeedback)
 	{
-		if ((stateElapsedTime > m_trialConfig->timing.trialFeedbackDuration) && (remainingTargets <= 0))
+		if (stateElapsedTime > m_trialConfig->timing.trialFeedbackDuration)
 		{
 			if (blockComplete()) {
 				m_currBlock++;		// Increment the block index
@@ -505,7 +512,7 @@ void Session::updatePresentationState()
 			else {
 				m_feedbackMessage = "";				// Clear the feedback message
 				nextCondition();
-				newState = PresentationState::pretrial;
+				newState = PresentationState::referenceTarget;
 			}
 		}
 	}
@@ -548,7 +555,6 @@ void Session::updatePresentationState()
 			moveOn = false;
 		}
 	}
-
 	else {
 		newState = currentState;
 	}
@@ -556,17 +562,21 @@ void Session::updatePresentationState()
 	if (currentState != newState)
 	{ // handle state transition.
 		m_timer.startTimer();
-		if (newState == PresentationState::trialTask) {
+		if (newState == PresentationState::referenceTarget) {
+			initTargetAnimation(false);	// Spawn the reference (and also preview if requested) target(s)
+		}
+		else if (newState == PresentationState::pretrial) {
+			// Clear weapon miss decals (if requested)
+			if (m_trialConfig->targetView.clearDecalsWithRef) {
+				m_weapon->clearDecals();
+			}
+		}
+		else if (newState == PresentationState::trialTask) {
 			if (m_sessConfig->render.frameTimeMode == "restartwithtask") {
 				m_frameTimeIdx = 0;		// Reset the frame time index with the task if requested
 			}
-			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
-		}
-		currentState = newState;
-		//If we switched to task, call initTargetAnimation to handle new trial
-		if ((newState == PresentationState::trialTask) || (newState == PresentationState::trialFeedback && hasNextCondition() && m_trialConfig->targetView.showRefTarget)) {
-			if (newState == PresentationState::trialTask && m_trialConfig->timing.maxPretrialAimDisplacement >= 0) {
-				// Test for aiming in valid region before spawning task targets				
+			// Test for aiming in valid region before spawning task targets				
+			if (m_trialConfig->timing.maxPretrialAimDisplacement >= 0) {
 				Vector3 aim = m_camera->frame().lookVector().unit();
 				Vector3 ref = (m_lastRefTargetPos - m_camera->frame().translation).unit();
 				// Get the view displacement as the arccos of view/reference direction dot product (should never exceed 180 deg)
@@ -574,15 +584,13 @@ void Session::updatePresentationState()
 				if (viewDisplacement > m_trialConfig->timing.maxPretrialAimDisplacement) {
 					clearTargets();		// Clear targets (in case preview targets are being shown)
 					m_feedbackMessage = formatFeedback(m_trialConfig->feedback.aimInvalid);
-					currentState = PresentationState::trialFeedback;		// Jump to feedback state w/ error message
+					newState = PresentationState::trialFeedback;		// Jump to feedback state w/ error message
 				}
 			}
-			initTargetAnimation();
+			m_taskStartTime = FPSciLogger::genUniqueTimestamp();
+			initTargetAnimation(true);		// Spawn task targets (or convert from previews)
 		}
-
-		if (newState == PresentationState::pretrial && m_trialConfig->targetView.clearDecalsWithRef) {
-			m_weapon->clearDecals();		// Clear the decals when transitioning into the task state
-		}
+		currentState = newState;
 	}
 }
 
