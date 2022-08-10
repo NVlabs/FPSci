@@ -111,17 +111,17 @@ void FPSciApp::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surfa
 		rd->copyTextureFromScreen(m_ldrBufferPrecomposite->texture(0), rd->viewport());
 		// Resample the copied framebuffer onto the (controlled resolution) composite shader input buffer
 		rd->push2D(m_ldrBufferComposite); {
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrBufferPrecomposite->texture(0), sessConfig->render.samplerPrecomposite, true);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrBufferPrecomposite->texture(0), trialConfig->render.samplerPrecomposite, true);
 		} rd->pop2D();
 	}
 }
  
 void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 	if (notNull(m_hdrShader3DOutput)) {
-		if(sessConfig->render.shader3D.empty()) {
+		if(trialConfig->render.shader3D.empty()) {
 			// No shader specified, just a resize perform pass through into 3D output buffer from framebuffer
 			rd->push2D(m_hdrShader3DOutput); {
-				Draw::rect2D(rd->viewport(), rd, Color3::white(), m_framebuffer->texture(0), sessConfig->render.sampler3D);
+				Draw::rect2D(rd->viewport(), rd, Color3::white(), m_framebuffer->texture(0), trialConfig->render.sampler3D);
 			} rd->pop2D();
 		}
 		else {
@@ -130,14 +130,14 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 				rd->push2D(m_hdrShader3DOutput); {
 				// Setup shadertoy-style args
 				Args args;
-				args.setUniform("iChannel0", m_framebuffer->texture(0), sessConfig->render.sampler3D);
+				args.setUniform("iChannel0", m_framebuffer->texture(0), trialConfig->render.sampler3D);
 				const float iTime = float(System::time() - m_startTime);
 				args.setUniform("iTime", iTime);
 				args.setUniform("iTimeDelta", iTime - m_lastTime);
 				args.setUniform("iMouse", userInput->mouseXY());
 				args.setUniform("iFrame", m_frameNumber);
 				args.setRect(rd->viewport());
-				LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shader3D], args);
+				LAUNCH_SHADER_PTR(m_shaderTable[trialConfig->render.shader3D], args);
 				m_lastTime = iTime;
 			} rd->pop2D();
 
@@ -146,7 +146,7 @@ void FPSciApp::onPostProcessHDR3DEffects(RenderDevice* rd) {
 
 		// Resample the shader output buffer into the framebuffer
 		rd->push2D(); {
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_hdrShader3DOutput->texture(0), sessConfig->render.sampler3DOutput);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_hdrShader3DOutput->texture(0), trialConfig->render.sampler3DOutput);
 		} rd->pop2D();
 	}
 
@@ -165,7 +165,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 	} rd->pop2D();
 
 	if(notNull(m_ldrBuffer2D)){
-		if (sessConfig->render.shader2D.empty()) {
+		if (trialConfig->render.shader2D.empty()) {
 			m_ldrShader2DOutput = m_ldrBuffer2D;		// Redirect output pointer to input (skip shading)
 		}
 		else {
@@ -173,14 +173,14 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			rd->push2D(m_ldrShader2DOutput); {
 				// Setup shadertoy-style args
 				Args args;
-				args.setUniform("iChannel0", m_ldrBuffer2D->texture(0), sessConfig->render.sampler2D);
+				args.setUniform("iChannel0", m_ldrBuffer2D->texture(0), trialConfig->render.sampler2D);
 				const float iTime = float(System::time() - m_startTime);
 				args.setUniform("iTime", iTime);
 				args.setUniform("iTimeDelta", iTime - m_last2DTime);
 				args.setUniform("iMouse", userInput->mouseXY());
 				args.setUniform("iFrame", m_frameNumber);
 				args.setRect(rd->viewport());
-				LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shader2D], args);
+				LAUNCH_SHADER_PTR(m_shaderTable[trialConfig->render.shader2D], args);
 				m_last2DTime = iTime;
 			} rd->pop2D();
 			END_PROFILER_EVENT();
@@ -189,13 +189,13 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 		// Direct shader output to the display or composite shader input (if specified)
 		isNull(m_ldrBufferComposite) ? rd->push2D() : rd->push2D(m_ldrBufferComposite); {
 			rd->setBlendFunc(RenderDevice::BLEND_SRC_ALPHA, RenderDevice::BLEND_ONE_MINUS_SRC_ALPHA);
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShader2DOutput->texture(0), sessConfig->render.sampler2DOutput);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShader2DOutput->texture(0), trialConfig->render.sampler2DOutput);
 		} rd->pop2D();
 	}
 
 	//  Handle post-2D composite shader here
 	if (m_ldrBufferComposite) {
-		if (sessConfig->render.shaderComposite.empty()) {
+		if (trialConfig->render.shaderComposite.empty()) {
 			m_ldrShaderCompositeOutput = m_ldrBufferComposite;		// Redirect output pointer to input
 		}
 		else {
@@ -205,14 +205,14 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 			rd->push2D(m_ldrShaderCompositeOutput); {
 				// Setup shadertoy-style args
 				Args args;
-				args.setUniform("iChannel0", m_ldrBufferComposite->texture(0), sessConfig->render.samplerComposite);
+				args.setUniform("iChannel0", m_ldrBufferComposite->texture(0), trialConfig->render.samplerComposite);
 				const float iTime = float(System::time() - m_startTime);
 				args.setUniform("iTime", iTime);
 				args.setUniform("iTimeDelta", iTime - m_lastCompositeTime);
 				args.setUniform("iMouse", userInput->mouseXY());
 				args.setUniform("iFrame", m_frameNumber);
 				args.setRect(rd->viewport());
-				LAUNCH_SHADER_PTR(m_shaderTable[sessConfig->render.shaderComposite], args);
+				LAUNCH_SHADER_PTR(m_shaderTable[trialConfig->render.shaderComposite], args);
 				m_lastCompositeTime = iTime;
 			} rd->pop2D();
 
@@ -221,7 +221,7 @@ void FPSciApp::onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& pose
 
 		// Copy the shader output buffer into the framebuffer
 		rd->push2D(); {
-			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShaderCompositeOutput->texture(0), sessConfig->render.samplerFinal);
+			Draw::rect2D(rd->viewport(), rd, Color3::white(), m_ldrShaderCompositeOutput->texture(0), trialConfig->render.samplerFinal);
 		} rd->pop2D();
 	}
 
@@ -278,8 +278,8 @@ void FPSciApp::draw2DElements(RenderDevice* rd, Vector2 resolution) {
 	}
 
 	// Click-to-photon mouse event indicator
-	if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode != "total") {
-		drawClickIndicator(rd, sessConfig->clickToPhoton.mode, resolution);
+	if (trialConfig->clickToPhoton.enabled && trialConfig->clickToPhoton.mode != "total") {
+		drawClickIndicator(rd, trialConfig->clickToPhoton.mode, resolution);
 	}
 
 	// Player camera only indicators
@@ -297,19 +297,19 @@ void FPSciApp::drawDelayed2DElements(RenderDevice* rd, Vector2 resolution) {
 	const float scale = resolution.x / 1920.0f;
 
 	// Draw target health bars
-	if (sessConfig->targetView.showHealthBars) {
+	if (trialConfig->targetView.showHealthBars) {
 		for (auto const& target : sess->targetArray()) {
 			target->drawHealthBar(rd, *activeCamera(), *m_framebuffer,
-				sessConfig->targetView.healthBarSize,
-				sessConfig->targetView.healthBarOffset,
-				sessConfig->targetView.healthBarBorderSize,
-				sessConfig->targetView.healthBarColors,
-				sessConfig->targetView.healthBarBorderColor);
+				trialConfig->targetView.healthBarSize,
+				trialConfig->targetView.healthBarOffset,
+				trialConfig->targetView.healthBarBorderSize,
+				trialConfig->targetView.healthBarColors,
+				trialConfig->targetView.healthBarBorderColor);
 		}
 	}
 
 	// Draw the combat text
-	if (sessConfig->targetView.showCombatText) {
+	if (trialConfig->targetView.showCombatText) {
 		Array<int> toRemove;
 		for (int i = 0; i < m_combatTextList.size(); i++) {
 			bool remove = !m_combatTextList[i]->draw(rd, *playerCamera, *m_framebuffer);
@@ -319,36 +319,36 @@ void FPSciApp::drawDelayed2DElements(RenderDevice* rd, Vector2 resolution) {
 		m_combatTextList.removeNulls();
 	}
 
-	if (sessConfig->clickToPhoton.enabled && sessConfig->clickToPhoton.mode == "total") {
+	if (trialConfig->clickToPhoton.enabled && trialConfig->clickToPhoton.mode == "total") {
 		drawClickIndicator(rd, "total", resolution);
 	}
 
 	// Draw the HUD here
-	if (sessConfig->hud.enable) {
+	if (trialConfig->hud.enable) {
 		drawHUD(rd, resolution);
 	}
 }
 
 void FPSciApp::drawClickIndicator(RenderDevice* rd, String mode, Vector2 resolution) {
 	// Click to photon latency measuring corner box
-	if (sessConfig->clickToPhoton.enabled) {
+	if (trialConfig->clickToPhoton.enabled) {
 		float boxLeft = 0.0f;
 		// Paint both sides by the width of latency measuring box.
-		Point2 latencyRect = sessConfig->clickToPhoton.size * resolution;
-		float boxTop = resolution.y * sessConfig->clickToPhoton.vertPos - latencyRect.y / 2;
-		if (sessConfig->clickToPhoton.mode == "both") {
+		Point2 latencyRect = trialConfig->clickToPhoton.size * resolution;
+		float boxTop = resolution.y * trialConfig->clickToPhoton.vertPos - latencyRect.y / 2;
+		if (trialConfig->clickToPhoton.mode == "both") {
 			boxTop = (mode == "minimum") ? boxTop - latencyRect.y : boxTop + latencyRect.y;
 		}
-		if (sessConfig->clickToPhoton.side == "right") {
+		if (trialConfig->clickToPhoton.side == "right") {
 			boxLeft = resolution.x - latencyRect.x;
 		}
 		// Draw the "active" box
 		Color3 boxColor;
-		if (sessConfig->clickToPhoton.mode == "frameRate") {
-			boxColor = (frameToggle) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+		if (trialConfig->clickToPhoton.mode == "frameRate") {
+			boxColor = (frameToggle) ? trialConfig->clickToPhoton.colors[0] : trialConfig->clickToPhoton.colors[1];
 			frameToggle = !frameToggle;
 		}
-		else boxColor = (shootButtonUp) ? sessConfig->clickToPhoton.colors[0] : sessConfig->clickToPhoton.colors[1];
+		else boxColor = (shootButtonUp) ? trialConfig->clickToPhoton.colors[0] : trialConfig->clickToPhoton.colors[1];
 		Draw::rect2D(Rect2D::xywh(boxLeft, boxTop, latencyRect.x, latencyRect.y), rd, boxColor);
 	}
 }
@@ -362,7 +362,7 @@ void FPSciApp::drawFeedbackMessage(RenderDevice* rd) {
 		const float scale = rd->width() / 1920.f;
 		String message = sess->getFeedbackMessage();
 		const float centerHeight = rd->height() * 0.4f;
-		const float scaledFontSize = floor(sessConfig->feedback.fontSize * scale);
+		const float scaledFontSize = floor(trialConfig->feedback.fontSize * scale);
 		if (!message.empty()) {
 			String currLine;
 			Array<String> lines = stringSplit(message, '\n');
@@ -372,13 +372,13 @@ void FPSciApp::drawFeedbackMessage(RenderDevice* rd) {
 				vertPos - 1.5f * scaledFontSize,
 				(float) rd->width(),
 				scaledFontSize * (lines.length() + 1) * 1.5f),
-				rd, sessConfig->feedback.backgroundColor);
+				rd, trialConfig->feedback.backgroundColor);
 			for (String line : lines) {
 				outputFont->draw2D(rd, line.c_str(),
 					(Point2(rd->width() * 0.5f, vertPos)).floor(),
 					scaledFontSize,
-					sessConfig->feedback.color,
-					sessConfig->feedback.outlineColor,
+					trialConfig->feedback.color,
+					trialConfig->feedback.outlineColor,
 					GFont::XALIGN_CENTER, GFont::YALIGN_CENTER
 				);
 				vertPos += scaledFontSize * 1.5f;
@@ -427,28 +427,28 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 	RealTime now = m_lastOnSimulationRealTime;
 
 	// Weapon ready status (cooldown indicator)
-	if (sessConfig->hud.renderWeaponStatus) {
+	if (trialConfig->hud.renderWeaponStatus) {
 		// Draw the "active" cooldown box
-		if (sessConfig->hud.cooldownMode == "box") {
+		if (trialConfig->hud.cooldownMode == "box") {
 			float boxLeft = 0.0f;
-			if (sessConfig->hud.weaponStatusSide == "right") {
+			if (trialConfig->hud.weaponStatusSide == "right") {
 				// swap side
-				boxLeft = resolution.x * (1.0f - sessConfig->clickToPhoton.size.x);
+				boxLeft = resolution.x * (1.0f - trialConfig->clickToPhoton.size.x);
 			}
 			Draw::rect2D(
 				Rect2D::xywh(
 					boxLeft,
 					resolution.y * (weapon->cooldownRatio(now)),
-					resolution.x * sessConfig->clickToPhoton.size.x,
+					resolution.x * trialConfig->clickToPhoton.size.x,
 					resolution.y * (1.0f - weapon->cooldownRatio(now))
 				), rd, Color3::white() * 0.8f
 			);
 		}
-		else if (sessConfig->hud.cooldownMode == "ring") {
+		else if (trialConfig->hud.cooldownMode == "ring") {
 			// Draw cooldown "ring" instead of box
-			const float iRad = sessConfig->hud.cooldownInnerRadius;
-			const float oRad = iRad + sessConfig->hud.cooldownThickness;
-			const int segments = sessConfig->hud.cooldownSubdivisions;
+			const float iRad = trialConfig->hud.cooldownInnerRadius;
+			const float oRad = iRad + trialConfig->hud.cooldownThickness;
+			const int segments = trialConfig->hud.cooldownSubdivisions;
 			int segsToLight = static_cast<int>(ceilf((1 - weapon->cooldownRatio(now))*segments));
 			// Create the segments
 			for (int i = 0; i < segsToLight; i++) {
@@ -461,52 +461,52 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 					center + Vector2(iRad*sin(theta + inc), -iRad * cos(theta + inc)),
 					center + Vector2(iRad*sin(theta), -iRad * cos(theta))
 				};
-				Draw::poly2D(verts, rd, sessConfig->hud.cooldownColor);
+				Draw::poly2D(verts, rd, trialConfig->hud.cooldownColor);
 			}
 		}
 	}
 
 	// Draw the player health bar
-	if (sessConfig->hud.showPlayerHealthBar) {
+	if (trialConfig->hud.showPlayerHealthBar) {
 		//const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
 		const float health = scene()->typedEntity<PlayerEntity>("player")->health();
-		Point2 location = sessConfig->hud.playerHealthBarPos * resolution;
+		Point2 location = trialConfig->hud.playerHealthBarPos * resolution;
 		location.y += (m_debugMenuHeight * scale.y);
-		const Point2 size = sessConfig->hud.playerHealthBarSize * resolution;
-		const Vector2 border = sessConfig->hud.playerHealthBarBorderSize * resolution;
-		const Color4 borderColor = sessConfig->hud.playerHealthBarBorderColor;
-		const Color4 color = sessConfig->hud.playerHealthBarColors[1] * (1.0f - health) + sessConfig->hud.playerHealthBarColors[0] * health;
+		const Point2 size = trialConfig->hud.playerHealthBarSize * resolution;
+		const Vector2 border = trialConfig->hud.playerHealthBarBorderSize * resolution;
+		const Color4 borderColor = trialConfig->hud.playerHealthBarBorderColor;
+		const Color4 color = trialConfig->hud.playerHealthBarColors[1] * (1.0f - health) + trialConfig->hud.playerHealthBarColors[0] * health;
 
 		Draw::rect2D(Rect2D::xywh(location - border, size + border + border), rd, borderColor);
 		Draw::rect2D(Rect2D::xywh(location, size*Point2(health, 1.0f)), rd, color);
 	}
 	// Draw the ammo indicator
-	if (sessConfig->hud.showAmmo) {
+	if (trialConfig->hud.showAmmo) {
 		//const float guardband = (rd->framebuffer()->width() - window()->framebuffer()->width()) / 2.0f;
 		Point2 lowerRight = resolution; //Point2(static_cast<float>(rd->viewport().width()), static_cast<float>(rd->viewport().height())) - Point2(guardband, guardband);
 		hudFont->draw2D(rd,
-			format("%d/%d", weapon->remainingAmmo(), sessConfig->weapon.maxAmmo),
-			lowerRight - sessConfig->hud.ammoPosition,
-			sessConfig->hud.ammoSize,
-			sessConfig->hud.ammoColor,
-			sessConfig->hud.ammoOutlineColor,
+			format("%d/%d", weapon->remainingAmmo(), trialConfig->weapon.maxAmmo),
+			lowerRight - trialConfig->hud.ammoPosition,
+			trialConfig->hud.ammoSize,
+			trialConfig->hud.ammoColor,
+			trialConfig->hud.ammoOutlineColor,
 			GFont::XALIGN_RIGHT,
 			GFont::YALIGN_BOTTOM
 		);
 	}
 
-	if (sessConfig->hud.showBanner) {
+	if (trialConfig->hud.showBanner) {
 		const shared_ptr<Texture> scoreBannerTexture = hudTextures["scoreBannerBackdrop"];
-		const Point2 hudCenter(resolution.x / 2.0f, sessConfig->hud.bannerVertVisible * scoreBannerTexture->height() * scale.y + debugMenuHeight());
+		const Point2 hudCenter(resolution.x / 2.0f, trialConfig->hud.bannerVertVisible * scoreBannerTexture->height() * scale.y + debugMenuHeight());
 		Draw::rect2D((scoreBannerTexture->rect2DBounds() * scale - scoreBannerTexture->vector2Bounds() * scale / 2.0f) * 0.8f + hudCenter, rd, Color3::white(), scoreBannerTexture);
 
 		// Create strings for time remaining, progress in sessions, and score
 		float time;
-		if (sessConfig->hud.bannerTimerMode == "remaining") {
+		if (trialConfig->hud.bannerTimerMode == "remaining") {
 			time = sess->getRemainingTrialTime();
 			if (time < 0.f) time = 0.f;
 		}
-		else if (sessConfig->hud.bannerTimerMode == "elapsed") {
+		else if (trialConfig->hud.bannerTimerMode == "elapsed") {
 			time = sess->getElapsedTrialTime();
 		}
 		String time_string = time < 10000.f ? format("%0.1f", time) : "---";		// Only allow up to 3 digit time strings
@@ -532,16 +532,16 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 			score_string = format("%dB", (int)G3D::round(score / 1e9));
 		}
 
-		if (sessConfig->hud.bannerTimerMode != "none" && sess->inTask()) {
-			hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale.x, scale.x * sessConfig->hud.bannerSmallFontSize, 
+		if (trialConfig->hud.bannerTimerMode != "none" && sess->inTask()) {
+			hudFont->draw2D(rd, time_string, hudCenter - Vector2(80, 0) * scale.x, scale.x * trialConfig->hud.bannerSmallFontSize,
 				Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 		}
-		if(sessConfig->hud.bannerShowProgress) hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale.x * sessConfig->hud.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
-		if(sessConfig->hud.bannerShowScore) hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * sessConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
+		if(trialConfig->hud.bannerShowProgress) hudFont->draw2D(rd, prog_string, hudCenter + Vector2(0, -1), scale.x * trialConfig->hud.bannerLargeFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_CENTER, GFont::YALIGN_CENTER);
+		if(trialConfig->hud.bannerShowScore) hudFont->draw2D(rd, score_string, hudCenter + Vector2(125, 0) * scale, scale.x * trialConfig->hud.bannerSmallFontSize, Color3::white(), Color4::clear(), GFont::XALIGN_RIGHT, GFont::YALIGN_CENTER);
 	}
 
 	// Draw any static HUD elements
-	for (StaticHudElement element : sessConfig->hud.staticElements) {
+	for (StaticHudElement element : trialConfig->hud.staticElements) {
 		if (!hudTextures.containsKey(element.filename)) continue;						// Skip any items we haven't loaded
 		const shared_ptr<Texture> texture = hudTextures[element.filename];				// Get the loaded texture for this element
 		const Vector2 size = element.scale * scale * texture->vector2Bounds();			// Get the final size of the image
