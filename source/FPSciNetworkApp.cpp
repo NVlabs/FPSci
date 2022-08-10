@@ -281,18 +281,32 @@ void FPSciNetworkApp::onNetwork() {
                 //return target;
 
                 //ADD THIS CLIENT TO OTHER CLIENTS, ADD OTHER CLIENTS TO THIS
+                
                 BinaryOutput forwardingbitstring;
                 forwardingbitstring.setEndian(G3D_BIG_ENDIAN);
                 forwardingbitstring.writeUInt8(CREATE_ENTITY);
                 clientGUID.serialize(forwardingbitstring);		// Send the GUID as a byte string to the server so it can identify the client
+                
                 ENetPacket* forwardingPacket = enet_packet_create((void*)forwardingbitstring.getCArray(), forwardingbitstring.length(), ENET_PACKET_FLAG_RELIABLE);
+                // update the other peer with new connection
+                enet_host_broadcast(m_serverHost, 0, forwardingPacket);
+                debugPrintf("Sent a broadcast packet to all connected clinets (hopefully)\n");
 
                 for (int i = 0; i < m_connectedPeers.length(); i++) {
+                    /*BinaryOutput forwardingbitstring;
+                    forwardingbitstring.setEndian(G3D_BIG_ENDIAN);
+                    forwardingbitstring.writeUInt8(CREATE_ENTITY);
+                    clientGUID.serialize(forwardingbitstring);		// Send the GUID as a byte string to the server so it can identify the client
                     ENetAddress addr = m_connectedPeers[i].address;
                     if (addr.host != event.peer->address.host) {
+						debugPrintf("Sending packet to %d:%d", addr.host, addr.port);
+                        ENetPacket* forwardingPacket = enet_packet_create((void*)forwardingbitstring.getCArray(), forwardingbitstring.length(), ENET_PACKET_FLAG_RELIABLE);
                         // update the other peer with new connection
-                        enet_peer_send(&m_connectedPeers[i], 0, forwardingPacket);
+                        if (enet_peer_send(&m_connectedPeers[i], 0, forwardingPacket)) {
+                            debugPrintf("Failed to queue");
+                        }
                         debugPrintf("Sent add to %s to add %s\n", m_connectedGUIDs[i].toString16(), clientGUID.toString16());
+						*/
 
                         // update the new connection with other peer
                         BinaryOutput addExistingbitstring;
@@ -303,7 +317,7 @@ void FPSciNetworkApp::onNetwork() {
                         enet_peer_send(event.peer, 0, addExistingPacket);
                         debugPrintf("Sent add to %s to add %s\n", clientGUID.toString16(), m_connectedGUIDs[i].toString16());
                         
-                    }
+                    //}
                 }
             }
             enet_packet_destroy(event.packet);

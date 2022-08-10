@@ -37,5 +37,8 @@
     <None Include="..\data-files\userstatus.Any">
       <Filter>Config Files</Filter>
     </None>
+    <None Include="..\data-files\serverstartupconfig.Any">
+      <Filter>Config Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

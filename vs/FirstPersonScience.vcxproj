@@ -166,6 +166,7 @@
   <ItemGroup>
     <None Include="..\data-files\experimentconfig.Any" />
     <None Include="..\data-files\keymap.Any" />
+    <None Include="..\data-files\serverstartupconfig.Any" />
     <None Include="..\data-files\startupconfig.Any" />
     <None Include="..\data-files\systemconfig.Any" />
     <None Include="..\data-files\userconfig.Any" />

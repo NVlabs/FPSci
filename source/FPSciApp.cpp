@@ -1116,30 +1116,32 @@ void FPSciApp::onNetwork()
 				// create entity and add it to the entity storage
 				GUniqueID entity_id;
 				entity_id.deserialize(packet_contents);
-				debugPrintf("Created entity with ID %s\n", entity_id.toString16());
+				if (entity_id != m_playerGUID) {
+					debugPrintf("Created entity with ID %s\n", entity_id.toString16());
 
-				Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
-					filename = "model/target/low_poly_sphere_no_outline.obj";
-					cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
-					allowVertexMerging = true;
-					forceComputeNormals = false;
-					forceComputeTangents = false;
-					forceVertexMerging = true;
-					maxEdgeLength = inf;
-					maxNormalWeldAngleDegrees = 0;
-					maxSmoothAngleDegrees = 0;
-					};
-					});
-				shared_ptr<Model> model = ArticulatedModel::create(modelSpec);
+					Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
+						filename = "model/target/low_poly_sphere_no_outline.obj";
+						cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
+						allowVertexMerging = true;
+						forceComputeNormals = false;
+						forceComputeTangents = false;
+						forceVertexMerging = true;
+						maxEdgeLength = inf;
+						maxNormalWeldAngleDegrees = 0;
+						maxSmoothAngleDegrees = 0;
+						};
+						});
+					shared_ptr<Model> model = ArticulatedModel::create(modelSpec);
 
-				const shared_ptr<NetworkedEntity>& target = NetworkedEntity::create(entity_id.toString16(), &(*scene()), model, CFrame());
-				//target->setFrame(position);
-				target->setWorldSpace(true);
-				//target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
-				//target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
-				target->setColor(G3D::Color3(20.0, 20.0, 200.0));
+					const shared_ptr<NetworkedEntity>& target = NetworkedEntity::create(entity_id.toString16(), &(*scene()), model, CFrame());
+					//target->setFrame(position);
+					target->setWorldSpace(true);
+					//target->setHitSound(config->hitSound, m_app->soundTable, config->hitSoundVol);
+					//target->setDestoyedSound(config->destroyedSound, m_app->soundTable, config->destroyedSoundVol);
+					target->setColor(G3D::Color3(20.0, 20.0, 200.0));
 
-				(*scene()).insert(target);
+					(*scene()).insert(target);
+				}
 			}
 			else if (type == CLIENT_REGISTRATION_REPLY) {
 				// create entity and add it to the entity storage
