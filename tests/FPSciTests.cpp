@@ -171,7 +171,7 @@ void FPSciTests::zeroCameraRotation()
 int FPSciTests::respawnTargets()
 {
 	s_app->sess->clearTargets();
-	s_app->sess->initTargetAnimation();
+	s_app->sess->initTargetAnimation(true);
 
 	// TODO: investigate why it takes a frame for targets to be placed. Without this, the transform below is clobbered.
 	s_app->oneFrame();
