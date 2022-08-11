@@ -212,10 +212,14 @@ void FPSciNetworkApp::onNetwork() {
 			// Reset the peer's client information.
             for (int i = 0; i < m_connectedPeers.size(); i++) {
                 if (m_connectedPeers[i].address.host == event.peer->address.host) {
+                    GUniqueID id = m_connectedGUIDs[i];
                     m_connectedAddresses.remove(i, 1);
                     m_connectedGUIDs.remove(i, 1);
                     m_connectedPeers.remove(i, 1);
                     // TODO TELL OTHER CLIENTS THAT THIS CLIENT DC'D
+                    ENetPacket* destroyPacket = NetworkUtils::createDestroyEntityPacket(id);
+                    enet_host_broadcast(m_serverHost, 0, destroyPacket);
+                    break;
                 }
             }
 			event.peer->data = NULL;

@@ -1159,6 +1159,7 @@ void FPSciApp::onNetwork()
 					}
 				}
 			}
+			
 			enet_packet_destroy(event.packet);
 			break;
 		}

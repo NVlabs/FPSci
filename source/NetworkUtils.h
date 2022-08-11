@@ -1,5 +1,6 @@
 #pragma once
 #include <G3D/G3D.h>
+#include <enet/enet.h>
 
 #define BATCH_UPDATE_COUNT_POSITION 1
 
@@ -64,6 +65,9 @@ public:
 
 		BATCH_ENTITY_UPDATE,
 		CREATE_ENTITY,
+		DESTROY_ENTITY,
+		MOVE_CLIENT,
+
 
 		REGISTER_CLIENT,
 		CLIENT_REGISTRATION_REPLY,
@@ -76,8 +80,11 @@ public:
 		NOOP,
 		REPLACE_FRAME,
 	};
-	static void updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Scene> scene, BinaryInput &inBuffer);
 
-	static void createFrameUpdate(GUniqueID id, shared_ptr<Entity> entity, BinaryOutput &outBuffer);
+	static void updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer);
+	static void createFrameUpdate(GUniqueID id, shared_ptr<Entity> entity, BinaryOutput& outBuffer);
+
+	static void handleDestroyEntity(shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer);
+	static ENetPacket* createDestroyEntityPacket(GUniqueID id);
 };
 
