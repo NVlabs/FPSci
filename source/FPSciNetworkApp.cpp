@@ -93,7 +93,7 @@ void FPSciNetworkApp::onNetwork() {
     //Array<float> mouseDeltas;
     BinaryOutput entity_updates;
     entity_updates.setEndian(G3D_BIG_ENDIAN);
-    entity_updates.writeUInt8(BATCH_ENTITY_UPDATE);
+    entity_updates.writeUInt8(NetworkUtils::MessageType::BATCH_ENTITY_UPDATE);
     entity_updates.writeUInt8(0); // init to 0 updates
     uint8 num_entity_updates = 0;
 	
@@ -103,13 +103,13 @@ void FPSciNetworkApp::onNetwork() {
         enet_address_get_host_ip(&addr_from, ip, 16);
         BinaryInput packet_contents((const uint8 *)buff.data, buff.dataLength, G3D_BIG_ENDIAN, false, true);
         CoordinateFrame frame;
-        messageType type = (messageType)packet_contents.readUInt8();
+        NetworkUtils::MessageType type = (NetworkUtils::MessageType)packet_contents.readUInt8();
         
-        if (type == HANDSHAKE) {
+        if (type == NetworkUtils::MessageType::HANDSHAKE) {
             debugPrintf("Replying to handshake...\n");
             BinaryOutput bitstring;
             bitstring.setEndian(G3D_BIG_ENDIAN);
-            bitstring.writeUInt8(HANDSHAKE_REPLY);
+            bitstring.writeUInt8(NetworkUtils::MessageType::HANDSHAKE_REPLY);
             ENetBuffer buff;
             buff.data = (void*)bitstring.getCArray();
             buff.dataLength = bitstring.length();
@@ -118,7 +118,7 @@ void FPSciNetworkApp::onNetwork() {
                 debugPrintf("Failed to send reply...\n");
             };
         }
-        else if (type == UPDATE_MESSAGE) {
+        else if (type == NetworkUtils::MessageType::UPDATE_MESSAGE) {
             frame.deserialize(packet_contents);
             //movementMap.append(input.readFloat32());
             //movementMap.append(input.readFloat32());
@@ -142,7 +142,7 @@ void FPSciNetworkApp::onNetwork() {
                 }
             }
         }
-        else if (type == BATCH_ENTITY_UPDATE) {
+        else if (type == NetworkUtils::MessageType::BATCH_ENTITY_UPDATE) {
             //update locally: 
             int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
             for (int i = 0; i < num_packet_members; i++) { // get new frames and update objects
@@ -224,9 +224,9 @@ void FPSciNetworkApp::onNetwork() {
 			debugPrintf("recieved packet\n");
 
             BinaryInput packet_contents(event.packet->data, event.packet->dataLength, G3D_BIG_ENDIAN);
-            messageType type = (messageType)packet_contents.readUInt8();
+            NetworkUtils::MessageType type = (NetworkUtils::MessageType)packet_contents.readUInt8();
 
-            if (type == REGISTER_CLIENT) {
+            if (type == NetworkUtils::MessageType::REGISTER_CLIENT) {
                 debugPrintf("Registering client...\n");
                 m_connectedPeers.append(*event.peer);
                 GUniqueID clientGUID;
@@ -242,7 +242,7 @@ void FPSciNetworkApp::onNetwork() {
                 // create reply
                 BinaryOutput bitstring;
                 bitstring.setEndian(G3D_BIG_ENDIAN);
-                bitstring.writeUInt8(CLIENT_REGISTRATION_REPLY);
+                bitstring.writeUInt8(NetworkUtils::MessageType::CLIENT_REGISTRATION_REPLY);
                 clientGUID.serialize(bitstring);		// Send the GUID as a byte string to the client in confirmation
                 bitstring.writeUInt8(0);
                 ENetBuffer buff;
@@ -254,7 +254,7 @@ void FPSciNetworkApp::onNetwork() {
                 debugPrintf("\tRegistered client: %s\n", clientGUID.toString16());
 
                 Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
-                    filename = "model/target/low_poly_sphere_no_outline.obj";
+                    filename = "model/target/mid_poly_sphere_no_outline.obj";
                     cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
                     allowVertexMerging = true;
                     forceComputeNormals = false;
@@ -284,13 +284,13 @@ void FPSciNetworkApp::onNetwork() {
                 
                 BinaryOutput forwardingbitstring;
                 forwardingbitstring.setEndian(G3D_BIG_ENDIAN);
-                forwardingbitstring.writeUInt8(CREATE_ENTITY);
+                forwardingbitstring.writeUInt8(NetworkUtils::MessageType::CREATE_ENTITY);
                 clientGUID.serialize(forwardingbitstring);		// Send the GUID as a byte string to the server so it can identify the client
                 
                 ENetPacket* forwardingPacket = enet_packet_create((void*)forwardingbitstring.getCArray(), forwardingbitstring.length(), ENET_PACKET_FLAG_RELIABLE);
                 // update the other peer with new connection
                 enet_host_broadcast(m_serverHost, 0, forwardingPacket);
-                debugPrintf("Sent a broadcast packet to all connected clinets (hopefully)\n");
+                debugPrintf("Sent a broadcast packet to all connected clients (hopefully)\n");
 
                 for (int i = 0; i < m_connectedPeers.length(); i++) {
                     /*BinaryOutput forwardingbitstring;
@@ -311,7 +311,7 @@ void FPSciNetworkApp::onNetwork() {
                         // update the new connection with other peer
                         BinaryOutput addExistingbitstring;
                         addExistingbitstring.setEndian(G3D_BIG_ENDIAN);
-                        addExistingbitstring.writeUInt8(CREATE_ENTITY);
+                        addExistingbitstring.writeUInt8(NetworkUtils::MessageType::CREATE_ENTITY);
                         m_connectedGUIDs[i].serialize(addExistingbitstring);
                         ENetPacket* addExistingPacket = enet_packet_create((void*)addExistingbitstring.getCArray(), addExistingbitstring.length(), ENET_PACKET_FLAG_RELIABLE);
                         enet_peer_send(event.peer, 0, addExistingPacket);
@@ -346,7 +346,7 @@ void FPSciNetworkApp::onNetwork() {
     //*
     BinaryOutput output;
     output.setEndian(G3D_BIG_ENDIAN);
-    output.writeUInt8(BATCH_ENTITY_UPDATE);
+    output.writeUInt8(NetworkUtils::MessageType::BATCH_ENTITY_UPDATE);
     Array<shared_ptr<NetworkedEntity>> entityArray;
     scene()->getTypedEntityArray<NetworkedEntity>(entityArray);
     output.writeUInt8(entityArray.size());

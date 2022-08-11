@@ -74,19 +74,6 @@ static String presentationStateToString(const PresentationState &state)
 class FPSciApp : public GApp
 {
 public:
-	enum messageType {
-		CONTROL_MESSAGE,
-		UPDATE_MESSAGE,
-
-		BATCH_ENTITY_UPDATE,
-		CREATE_ENTITY,
-
-		REGISTER_CLIENT,
-		CLIENT_REGISTRATION_REPLY,
-
-		HANDSHAKE,
-		HANDSHAKE_REPLY
-	};
 	
 	enum MouseInputMode
 	{						///< Enumerated type for controlling the mouse input mode

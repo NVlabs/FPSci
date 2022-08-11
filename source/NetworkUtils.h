@@ -21,24 +21,57 @@
 			Uint8: Entity Type
 			... : misc. data for constructor, dependent on Entity type
 
+			#NYI
+			Type DESTROY_ENTITY:
+			UInt8: type (DESTROY_ENTITY)
+			GUID: object ID
+
 			Type REGISTER_CLIENT:
+			UInt8: type (REGISTER_CLIENT)
 			GUID: player's ID
 			UInt16: client's port
 			? String: player metadata
 
 			Type CLIENT_REGISTRATION_REPLY:
+			UInt8: type (CLIENT_REGISTRATION_REPLY)
 			GUID: player's ID
 			UInt8: status [0 = success, 1 = Failure, ....]
 
 			Type HANDSHAKE
+			UInt8: type (HANDSHAKE)
 
 			Type HANDSHAKE_REPLY
+			UInt8: type (HANDSHAKE_REPLY)
+
+			#NYI
+			Type MOVE_CLIENT:
+			UInt 8: type (MOVE_CLIENT)
+			CFrame: new position
+
+			Type CLIENT_DISCONNECTED: ?????
+
+			Type REGISTER_HIT:
+
 
 	*/
 
 class NetworkUtils
 {
 public:
+	enum MessageType {
+		CONTROL_MESSAGE,
+		UPDATE_MESSAGE,
+
+		BATCH_ENTITY_UPDATE,
+		CREATE_ENTITY,
+
+		REGISTER_CLIENT,
+		CLIENT_REGISTRATION_REPLY,
+
+		HANDSHAKE,
+		HANDSHAKE_REPLY
+	};
+
 	enum NetworkUpdateType {
 		NOOP,
 		REPLACE_FRAME,

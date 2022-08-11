@@ -123,7 +123,7 @@ void FPSciApp::initExperiment()
 		m_socketConnected = false;
 		BinaryOutput hs_bitstring;
 		hs_bitstring.setEndian(G3D_BIG_ENDIAN);
-		hs_bitstring.writeUInt8(HANDSHAKE);
+		hs_bitstring.writeUInt8(NetworkUtils::MessageType::HANDSHAKE);
 		ENetBuffer hs_buff;
 		hs_buff.data = (void*)hs_bitstring.getCArray();
 		hs_buff.dataLength = hs_bitstring.length();
@@ -1010,7 +1010,7 @@ void FPSciApp::onNetwork()
 
 	if (m_socketConnected && m_enetConnected) {
 		// Get and serialize the players frame
-		output.writeUInt8(BATCH_ENTITY_UPDATE);
+		output.writeUInt8(NetworkUtils::MessageType::BATCH_ENTITY_UPDATE);
 		output.writeUInt8(1);				// Only update the player
 		//output.writeBytes(&m_playerGUID, sizeof(m_playerGUID));	// Identfy the player as the clients GUID
 		Array<shared_ptr<Entity>> entityArray;
@@ -1049,9 +1049,9 @@ void FPSciApp::onNetwork()
 		char ip[16];
 		enet_address_get_host_ip(&addr_from, ip, 16);
 		BinaryInput packet_contents((const uint8*)buff.data, buff.dataLength, G3D_BIG_ENDIAN, false, true);
-		messageType type = (messageType)packet_contents.readUInt8();
+		NetworkUtils::MessageType type = (NetworkUtils::MessageType)packet_contents.readUInt8();
 		
-		if (type == BATCH_ENTITY_UPDATE) {
+		if (type == NetworkUtils::MessageType::BATCH_ENTITY_UPDATE) {
 			//debugPrintf("Got entity update...\n");
 			int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
 			/*std::vector<GUniqueID> updated_objects = {};
@@ -1069,7 +1069,7 @@ void FPSciApp::onNetwork()
 			}
 			//debugPrintf("\n");
 		}
-		else if (type == HANDSHAKE_REPLY) {
+		else if (type == NetworkUtils::MessageType::HANDSHAKE_REPLY) {
 			m_socketConnected = true;
 			debugPrintf("Received HANDSHAKE_REPLY from server\n");
 		}
@@ -1091,7 +1091,7 @@ void FPSciApp::onNetwork()
 			// Send the server a control message with the players GUID so it knows to add this address as a peer
 			//BinaryOutput bitstring;
 			bitstring.setEndian(G3D_BIG_ENDIAN);
-			bitstring.writeUInt8(REGISTER_CLIENT);
+			bitstring.writeUInt8(NetworkUtils::MessageType::REGISTER_CLIENT);
 			m_playerGUID.serialize(bitstring);		// Send the GUID as a byte string to the server so it can identify the client
 			bitstring.writeUInt16(experimentConfig.clientPort + 1); // Client socket port
 			debugPrintf("Registering client...\n");
@@ -1107,12 +1107,12 @@ void FPSciApp::onNetwork()
 			logPrintf("Recieved a message from ip: %s", ip);
 			
 			BinaryInput packet_contents (event.packet->data, event.packet->dataLength, G3D_BIG_ENDIAN);
-			messageType type = (messageType)packet_contents.readUInt8();
+			NetworkUtils::MessageType type = (NetworkUtils::MessageType)packet_contents.readUInt8();
 			
-			if (type == BATCH_ENTITY_UPDATE) { // TODO MOVE THIS TO SOCKET RECIEVE OOPS
+			if (type == NetworkUtils::MessageType::BATCH_ENTITY_UPDATE) { // TODO MOVE THIS TO SOCKET RECIEVE OOPS
 				debugPrintf("MALFORMED REQUEST: Batch entity update on reliable channel\n");
 			}
-			else if (type == CREATE_ENTITY) {
+			else if (type == NetworkUtils::MessageType::CREATE_ENTITY) {
 				// create entity and add it to the entity storage
 				GUniqueID entity_id;
 				entity_id.deserialize(packet_contents);
@@ -1120,7 +1120,7 @@ void FPSciApp::onNetwork()
 					debugPrintf("Created entity with ID %s\n", entity_id.toString16());
 
 					Any modelSpec = PARSE_ANY(ArticulatedModel::Specification{			///< Basic model spec for target
-						filename = "model/target/low_poly_sphere_no_outline.obj";
+						filename = "model/target/mid_poly_sphere_no_outline.obj";
 						cleanGeometrySettings = ArticulatedModel::CleanGeometrySettings{
 						allowVertexMerging = true;
 						forceComputeNormals = false;
@@ -1143,7 +1143,7 @@ void FPSciApp::onNetwork()
 					(*scene()).insert(target);
 				}
 			}
-			else if (type == CLIENT_REGISTRATION_REPLY) {
+			else if (type == NetworkUtils::MessageType::CLIENT_REGISTRATION_REPLY) {
 				// create entity and add it to the entity storage
 				debugPrintf("INFO: Received registration reply...\n");
 				GUniqueID clientGUID;
