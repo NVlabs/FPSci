@@ -10,8 +10,8 @@
  */
 #pragma once
 #include <G3D/G3D.h>
-#include <enet/enet.h>
 #include <combaseapi.h>
+#include "NetworkUtils.h"
 
 #include "ExperimentConfig.h"
 #include "StartupConfig.h"

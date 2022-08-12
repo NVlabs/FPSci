@@ -5,7 +5,6 @@
 #include "Session.h"
 #include "PhysicsScene.h"
 #include "WaypointManager.h"
-#include "NetworkUtils.h"
 #include <chrono>
 
 // Storage for configuration static vars
@@ -15,13 +14,12 @@ bool UserSessionStatus::randomizeDefaults;
 
 StartupConfig FPSciApp::startupConfig;
 
-FPSciApp::FPSciApp(const GApp::Settings &settings) : GApp(settings) {}
+FPSciApp::FPSciApp(const GApp::Settings& settings) : GApp(settings) {}
 
-FPSciApp::FPSciApp(const GApp::Settings &settings, OSWindow *window, RenderDevice *rd, bool createWindowOnNull) : GApp(settings, window, rd, createWindowOnNull) {}
+FPSciApp::FPSciApp(const GApp::Settings& settings, OSWindow* window, RenderDevice* rd, bool createWindowOnNull) : GApp(settings, window, rd, createWindowOnNull) {}
 
 /** Initialize the app */
-void FPSciApp::onInit()
-{
+void FPSciApp::onInit() {
 	// Seed random based on the time
 	Random::common().reset(uint32(time(0)));
 
@@ -31,8 +29,7 @@ void FPSciApp::onInit()
 	initExperiment(); // Initialize the experiment
 }
 
-void FPSciApp::initExperiment()
-{
+void FPSciApp::initExperiment() {
 	// Load config from files
 	loadConfigs(startupConfig.experimentList[experimentIdx]);
 	m_lastSavedUser = *currentUser(); // Copy over the startup user for saves
@@ -106,20 +103,20 @@ void FPSciApp::initExperiment()
 		m_unreliableServerAddress.port = experimentConfig.serverPort + 1;
 		m_serverSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
 		enet_socket_set_option(m_serverSocket, ENET_SOCKOPT_NONBLOCK, 1); //Set socket to non-blocking
-		
+
 		//localAddress.port += 2;
 		localAddress.port = experimentConfig.clientPort + 1;
 		if (enet_socket_bind(m_serverSocket, &localAddress)) {
 			debugPrintf("bind failed with error: %d\n", WSAGetLastError());
 			throw std::runtime_error("Could not bind to the local address");
 		}
-		
+
 		m_playerGUID = GUniqueID::create();
 
 		m_enetConnected = false;
-		
+
 		m_socketConnected = true;
-		
+
 		m_socketConnected = false;
 		BinaryOutput hs_bitstring;
 		hs_bitstring.setEndian(G3D_BIG_ENDIAN);
@@ -130,12 +127,11 @@ void FPSciApp::initExperiment()
 		enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &hs_buff, 1);
 
 		debugPrintf("Sent handshake and registration requests to %s port %i\n", experimentConfig.serverAddress.c_str(), experimentConfig.serverPort);
-		
+
 	}
 }
 
-void FPSciApp::toggleUserSettingsMenu()
-{
+void FPSciApp::toggleUserSettingsMenu() {
 	if (!m_userSettingsWindow->visible())
 	{
 		openUserSettingsWindow();
@@ -149,8 +145,7 @@ void FPSciApp::toggleUserSettingsMenu()
 }
 
 /** Handle the user settings window visibility */
-void FPSciApp::openUserSettingsWindow()
-{
+void FPSciApp::openUserSettingsWindow() {
 	// set focus so buttons properly highlight
 	moveToCenter(m_userSettingsWindow);
 	m_userSettingsWindow->setVisible(true);
@@ -162,8 +157,7 @@ void FPSciApp::openUserSettingsWindow()
 }
 
 /** Handle the user settings window visibility */
-void FPSciApp::closeUserSettingsWindow()
-{
+void FPSciApp::closeUserSettingsWindow() {
 	if (sessConfig->menu.allowUserSettingsSave)
 	{						  // If the user could have saved their settings
 		saveUserConfig(true); // Save the user config (if it has changed) whenever this window is closed
@@ -175,8 +169,7 @@ void FPSciApp::closeUserSettingsWindow()
 	m_userSettingsWindow->setVisible(false);
 }
 
-void FPSciApp::saveUserConfig(bool onDiff)
-{
+void FPSciApp::saveUserConfig(bool onDiff) {
 	// Check for save on diff, without mismatch
 	if (onDiff && m_lastSavedUser == *currentUser())
 		return;
@@ -189,21 +182,19 @@ void FPSciApp::saveUserConfig(bool onDiff)
 	logPrintf("User table saved.\n"); // Print message to log
 }
 
-void FPSciApp::saveUserStatus(void)
-{
+void FPSciApp::saveUserStatus(void) {
 	userStatusTable.save(startupConfig.experimentList[experimentIdx].userStatusFilename, startupConfig.jsonAnyOutput);
 	logPrintf("User status saved.\n");
 }
 
 /** Update the mouse mode/sensitivity */
-void FPSciApp::updateMouseSensitivity()
-{
+void FPSciApp::updateMouseSensitivity() {
 	const shared_ptr<UserConfig> user = currentUser();
 	// Converting from mouseDPI (dots/in) and sensitivity (cm/turn) into rad/dot which explains cm->in (2.54) and turn->rad (2*PI) factors
 	// rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
 	const double cmp360 = 36.0 / user->mouseDegPerMm;
 	const double radiansPerDot = 2.0 * pi() * 2.54 / (cmp360 * user->mouseDPI);
-	const shared_ptr<FirstPersonManipulator> &fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 
 	// Control player motion using the experiment config parameter
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
@@ -216,9 +207,8 @@ void FPSciApp::updateMouseSensitivity()
 	m_userSettingsWindow->updateCmp360();
 }
 
-void FPSciApp::setMouseInputMode(MouseInputMode mode)
-{
-	const shared_ptr<FirstPersonManipulator> &fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
+void FPSciApp::setMouseInputMode(MouseInputMode mode) {
+	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 	switch (mode)
 	{
 	case MouseInputMode::MOUSE_CURSOR:
@@ -232,8 +222,7 @@ void FPSciApp::setMouseInputMode(MouseInputMode mode)
 	m_mouseInputMode = mode;
 }
 
-void FPSciApp::loadConfigs(const ConfigFiles &configs)
-{
+void FPSciApp::loadConfigs(const ConfigFiles& configs) {
 	// Load experiment setting from file
 	experimentConfig = ExperimentConfig::load(configs.experimentConfigFilename, startupConfig.jsonAnyOutput);
 	experimentConfig.printToLog();
@@ -269,8 +258,7 @@ void FPSciApp::loadConfigs(const ConfigFiles &configs)
 	userInput->setKeyMapping(&keyMap.uiMap);
 }
 
-void FPSciApp::loadModels()
-{
+void FPSciApp::loadModels() {
 	if ((experimentConfig.weapon.renderModel || startupConfig.developerMode) && !experimentConfig.weapon.modelSpec.filename.empty())
 	{
 		// Load the model if we (might) need it
@@ -289,8 +277,8 @@ void FPSciApp::loadModels()
 	}
 
 	// Append reference target model(s)
-	Any &defaultRefTarget = experimentConfig.targetView.refTargetModelSpec;
-	for (SessionConfig &sess : experimentConfig.sessions)
+	Any& defaultRefTarget = experimentConfig.targetView.refTargetModelSpec;
+	for (SessionConfig& sess : experimentConfig.sessions)
 	{
 		if (sess.targetView.refTargetModelSpec != defaultRefTarget)
 		{
@@ -354,8 +342,7 @@ void FPSciApp::loadModels()
 	}
 }
 
-Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetConfig> tconfig)
-{
+Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetConfig> tconfig) {
 	Array<shared_ptr<UniversalMaterial>> targetMaterials;
 	for (int i = 0; i < matTableSize; i++)
 	{
@@ -404,8 +391,7 @@ Array<shared_ptr<UniversalMaterial>> FPSciApp::makeMaterials(shared_ptr<TargetCo
 	return targetMaterials;
 }
 
-Color4 FPSciApp::lerpColor(Array<Color4> colors, float a)
-{
+Color4 FPSciApp::lerpColor(Array<Color4> colors, float a) {
 	if (colors.length() == 0)
 	{
 		throw "Cannot interpolate from colors array with length 0!";
@@ -439,8 +425,7 @@ Color4 FPSciApp::lerpColor(Array<Color4> colors, float a)
 	}
 }
 
-void FPSciApp::updateControls(bool firstSession)
-{
+void FPSciApp::updateControls(bool firstSession) {
 	// Update the user settings window
 	updateUserMenu = true;
 	if (!firstSession)
@@ -498,8 +483,7 @@ void FPSciApp::updateControls(bool firstSession)
 	addWidget(m_weaponControls);
 }
 
-void FPSciApp::makeGUI()
-{
+void FPSciApp::makeGUI() {
 
 	theme = GuiTheme::fromFile(System::findDataFile("osx-10.7.gtm"));
 	debugWindow->setVisible(startupConfig.developerMode);
@@ -548,31 +532,26 @@ void FPSciApp::makeGUI()
 	m_showUserMenu = experimentConfig.menu.showMenuOnStartup;
 }
 
-void FPSciApp::exportScene()
-{
+void FPSciApp::exportScene() {
 	CFrame frame = scene()->typedEntity<PlayerEntity>("player")->frame();
 	logPrintf("Player position is: [%f, %f, %f]\n", frame.translation.x, frame.translation.y, frame.translation.z);
 	String filename = Scene::sceneNameToFilename(sessConfig->scene.name);
 	scene()->toAny().save(filename); // Save this w/o JSON format (breaks scene.Any file)
 }
 
-void FPSciApp::showPlayerControls()
-{
+void FPSciApp::showPlayerControls() {
 	m_playerControls->setVisible(true);
 }
 
-void FPSciApp::showRenderControls()
-{
+void FPSciApp::showRenderControls() {
 	m_renderControls->setVisible(true);
 }
 
-void FPSciApp::showWeaponControls()
-{
+void FPSciApp::showWeaponControls() {
 	m_weaponControls->setVisible(true);
 }
 
-void FPSciApp::presentQuestion(Question question)
-{
+void FPSciApp::presentQuestion(Question question) {
 	if (notNull(dialog))
 		removeWidget(dialog);				  // Remove the current dialog widget (if valid)
 	currentQuestion = question;				  // Store this for processing key-bound presses
@@ -599,7 +578,7 @@ void FPSciApp::presentQuestion(Question question)
 			}
 		}
 		dialog = SelectionDialog::create(question.prompt, options, theme, question.title, question.showCursor, question.optionsPerRow, size, !question.fullscreen,
-										 question.promptFontSize, question.optionFontSize, question.buttonFontSize);
+			question.promptFontSize, question.optionFontSize, question.buttonFontSize);
 		break;
 	case Question::Type::Entry:
 		dialog = TextEntryDialog::create(question.prompt, theme, question.title, false, size, !question.fullscreen, question.promptFontSize, question.buttonFontSize);
@@ -620,7 +599,7 @@ void FPSciApp::presentQuestion(Question question)
 			}
 		}
 		dialog = RatingDialog::create(question.prompt, options, theme, question.title, question.showCursor, size, !question.fullscreen,
-									  question.promptFontSize, question.optionFontSize, question.buttonFontSize);
+			question.promptFontSize, question.optionFontSize, question.buttonFontSize);
 		break;
 	case Question::Type::DropDown:
 		dialog = DropDownDialog::create(question.prompt, options, theme, question.title, size, !question.fullscreen, question.promptFontSize, question.buttonFontSize);
@@ -635,8 +614,7 @@ void FPSciApp::presentQuestion(Question question)
 	setMouseInputMode(question.showCursor ? MouseInputMode::MOUSE_CURSOR : MouseInputMode::MOUSE_DISABLED);
 }
 
-void FPSciApp::markSessComplete(String sessId)
-{
+void FPSciApp::markSessComplete(String sessId) {
 	if (notNull(m_pyLogger))
 	{
 		m_pyLogger->mergeLogToDb();
@@ -649,8 +627,7 @@ void FPSciApp::markSessComplete(String sessId)
 	m_userSettingsWindow->updateSessionDropDown();
 }
 
-void FPSciApp::updateParameters(int frameDelay, float frameRate)
-{
+void FPSciApp::updateParameters(int frameDelay, float frameRate) {
 	// Apply frame lag
 	displayLagFrames = frameDelay;
 	lastSetFrameRate = frameRate;
@@ -664,8 +641,7 @@ void FPSciApp::updateParameters(int frameDelay, float frameRate)
 	setFrameDuration(dt, simStepDuration());
 }
 
-void FPSciApp::initPlayer(bool setSpawnPosition)
-{
+void FPSciApp::initPlayer(bool setSpawnPosition) {
 	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player"); // Get player from the scene
 
@@ -773,8 +749,7 @@ void FPSciApp::initPlayer(bool setSpawnPosition)
 	sess->initialHeadingRadians = player->heading();
 }
 
-void FPSciApp::updateSession(const String &id, bool forceReload)
-{
+void FPSciApp::updateSession(const String& id, bool forceReload) {
 	// Check for a valid ID (non-emtpy and
 	Array<String> ids;
 	experimentConfig.getSessionIds(ids);
@@ -945,8 +920,7 @@ void FPSciApp::updateSession(const String &id, bool forceReload)
 	}
 }
 
-void FPSciApp::quitRequest()
-{
+void FPSciApp::quitRequest() {
 	// End session logging
 	if (notNull(sess))
 	{
@@ -960,8 +934,7 @@ void FPSciApp::quitRequest()
 	setExitCode(0);
 }
 
-void FPSciApp::onAfterLoadScene(const Any &any, const String &sceneName)
-{
+void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 
 	// Make sure the scene has a "player" entity
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
@@ -990,14 +963,12 @@ void FPSciApp::onAfterLoadScene(const Any &any, const String &sceneName)
 	}
 }
 
-void FPSciApp::onAI()
-{
+void FPSciApp::onAI() {
 	GApp::onAI();
 	// Add non-simulation game logic and AI code here
 }
 
-void FPSciApp::onNetwork()
-{
+void FPSciApp::onNetwork() {
 	GApp::onNetwork();
 
 
@@ -1020,11 +991,6 @@ void FPSciApp::onNetwork()
 			if (entityArray[i]->name() == "player") {
 				shared_ptr<Entity> player = entityArray[i];
 				NetworkUtils::createFrameUpdate(m_playerGUID, player, output);
-
-				//CoordinateFrame frame = player->frame();
-				//frame.serialize(output);
-
-				//logPrintf("Sent frame: %s\n", frame.toXYZYPRDegreesString());
 			}
 		}
 
@@ -1037,20 +1003,20 @@ void FPSciApp::onNetwork()
 			logPrintf("Failed to send a packet to the server\n");
 		}
 	}
-	
+
 	ENetAddress addr_from;
 	ENetBuffer buff;
 	// TODO: make this choose the MTU better than this
 	void* data = malloc(1500);  //Allocate 1 mtu worth of space for the data from the packet
 	buff.data = data;
 	buff.dataLength = 1500;
-	
+
 	while (enet_socket_receive(m_serverSocket, &addr_from, &buff, 1)) {
 		char ip[16];
 		enet_address_get_host_ip(&addr_from, ip, 16);
 		BinaryInput packet_contents((const uint8*)buff.data, buff.dataLength, G3D_BIG_ENDIAN, false, true);
 		NetworkUtils::MessageType type = (NetworkUtils::MessageType)packet_contents.readUInt8();
-		
+
 		if (type == NetworkUtils::MessageType::BATCH_ENTITY_UPDATE) {
 			//debugPrintf("Got entity update...\n");
 			int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
@@ -1065,7 +1031,7 @@ void FPSciApp::onNetwork()
 			//debugPrintf("Received bulk update packet (%i members): ", num_packet_members);
 			for (int i = 0; i < num_packet_members; i++) { // get new frames and update objects
 				//GUniqueID entity_id = updated_objects.at(i);
-				NetworkUtils::updateEntity(ignore, scene(), packet_contents);	
+				NetworkUtils::updateEntity(ignore, scene(), packet_contents);
 			}
 			//debugPrintf("\n");
 		}
@@ -1105,10 +1071,10 @@ void FPSciApp::onNetwork()
 			break;
 		case ENET_EVENT_TYPE_RECEIVE:
 			logPrintf("Recieved a message from ip: %s", ip);
-			
-			BinaryInput packet_contents (event.packet->data, event.packet->dataLength, G3D_BIG_ENDIAN);
+
+			BinaryInput packet_contents(event.packet->data, event.packet->dataLength, G3D_BIG_ENDIAN);
 			NetworkUtils::MessageType type = (NetworkUtils::MessageType)packet_contents.readUInt8();
-			
+
 			if (type == NetworkUtils::MessageType::BATCH_ENTITY_UPDATE) { // TODO MOVE THIS TO SOCKET RECIEVE OOPS
 				debugPrintf("MALFORMED REQUEST: Batch entity update on reliable channel\n");
 			}
@@ -1164,7 +1130,10 @@ void FPSciApp::onNetwork()
 				shared_ptr<PlayerEntity> entity = scene()->typedEntity<PlayerEntity>("player");
 				NetworkUtils::updateEntity(entity, packet_contents);
 			}
-			
+			else if (type == NetworkUtils::MessageType::DESTROY_ENTITY) {
+				NetworkUtils::handleDestroyEntity(scene(), packet_contents);
+			}
+
 			enet_packet_destroy(event.packet);
 			break;
 		}
@@ -1185,14 +1154,13 @@ void FPSciApp::onNetwork()
 			enet_buff.dataLength = output.length();
 			String messageToSend = entityName + ": (" + String(std::to_string(boundingBox.center().x)) + ", " + String(std::to_string(boundingBox.center().y)) + ", " + String(std::to_string(boundingBox.center().z)) + ")\n";
 			ENetPacket* packet = enet_packet_create(messageToSend.c_str(), messageToSend.size() + 1, ENET_PACKET_FLAG_RELIABLE);
-			
+
 		}
 	}
 	*/
 }
 
-void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
-{
+void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	// TODO: this should eventually probably use sdt instead of rdt
 	RealTime currentRealTime;
 	if (m_lastOnSimulationRealTime == 0)
@@ -1326,7 +1294,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	}
 
 	// Move the player
-	const shared_ptr<PlayerEntity> &p = scene()->typedEntity<PlayerEntity>("player");
+	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
 	playerCamera->setFrame(p->getCameraFrame());
 
 	// Handle developer mode features here
@@ -1374,8 +1342,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	shootButtonJustReleased = false;
 }
 
-bool FPSciApp::onEvent(const GEvent &event)
-{
+bool FPSciApp::onEvent(const GEvent& event) {
 	GKey ksym = event.key.keysym.sym;
 	bool foundKey = false;
 
@@ -1502,7 +1469,7 @@ bool FPSciApp::onEvent(const GEvent &event)
 		if (event.type == GEventType::KEY_DOWN)
 		{
 			// Remove F8 as it isn't masked by useDeveloperTools = False
-			const Array<GKey> player_masked = {GKey::F8};
+			const Array<GKey> player_masked = { GKey::F8 };
 			if (player_masked.contains(ksym))
 			{
 				foundKey = true;
@@ -1541,7 +1508,7 @@ bool FPSciApp::onEvent(const GEvent &event)
 		{
 			// Override 'q', 'z', 'c', and 'e' keys (unused)
 			// THIS IS A PROBLEM IF THESE ARE KEY MAPPED!!!
-			const Array<GKey> unused = {(GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q'};
+			const Array<GKey> unused = { (GKey)'e', (GKey)'z', (GKey)'c', (GKey)'q' };
 			if (unused.contains(ksym))
 			{
 				foundKey = true;
@@ -1598,8 +1565,7 @@ bool FPSciApp::onEvent(const GEvent &event)
 	return GApp::onEvent(event);
 }
 
-void FPSciApp::onAfterEvents()
-{
+void FPSciApp::onAfterEvents() {
 	if (updateUserMenu)
 	{
 		// Remove the old settings window
@@ -1630,8 +1596,7 @@ void FPSciApp::onAfterEvents()
 	GApp::onAfterEvents();
 }
 
-Vector2 FPSciApp::currentTurnScale()
-{
+Vector2 FPSciApp::currentTurnScale() {
 	const shared_ptr<UserConfig> user = currentUser();
 	Vector2 baseTurnScale = sessConfig->player.turnScale * user->turnScale;
 	// Apply y-invert here
@@ -1653,10 +1618,9 @@ Vector2 FPSciApp::currentTurnScale()
 	}
 }
 
-void FPSciApp::setScopeView(bool scoped)
-{
+void FPSciApp::setScopeView(bool scoped) {
 	// Get player entity and calculate scope FoV
-	const shared_ptr<PlayerEntity> &player = scene()->typedEntity<PlayerEntity>("player");
+	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
 	const float scopeFoV = sessConfig->weapon.scopeFoV > 0 ? sessConfig->weapon.scopeFoV : sessConfig->render.hFoV;
 	weapon->setScoped(scoped);													 // Update the weapon state
 	const float FoV = (scoped ? scopeFoV : sessConfig->render.hFoV);			 // Get new FoV in degrees (depending on scope state)
@@ -1664,8 +1628,7 @@ void FPSciApp::setScopeView(bool scoped)
 	player->turnScale = currentTurnScale();										 // Scale sensitivity based on the field of view change here
 }
 
-void FPSciApp::hitTarget(shared_ptr<TargetEntity> target)
-{
+void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	// Damage the target
 	float damage = m_currentWeaponDamage;
 	target->doDamage(damage);
@@ -1748,8 +1711,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target)
 	}
 }
 
-void FPSciApp::updateTargetColor(const shared_ptr<TargetEntity> &target)
-{
+void FPSciApp::updateTargetColor(const shared_ptr<TargetEntity>& target) {
 	BEGIN_PROFILER_EVENT("updateTargetColor/changeColor");
 	BEGIN_PROFILER_EVENT("updateTargetColor/clone");
 	shared_ptr<ArticulatedModel::Pose> pose = dynamic_pointer_cast<ArticulatedModel::Pose>(target->pose()->clone());
@@ -1764,8 +1726,7 @@ void FPSciApp::updateTargetColor(const shared_ptr<TargetEntity> &target)
 	END_PROFILER_EVENT();
 }
 
-void FPSciApp::missEvent()
-{
+void FPSciApp::missEvent() {
 	if (sess)
 	{
 		sess->accumulatePlayerAction(PlayerActionType::Miss); // Declare this shot a miss here
@@ -1773,13 +1734,12 @@ void FPSciApp::missEvent()
 }
 
 /** Handle user input here */
-void FPSciApp::onUserInput(UserInput *ui)
-{
+void FPSciApp::onUserInput(UserInput* ui) {
 	BEGIN_PROFILER_EVENT("onUserInput");
 
 	GApp::onUserInput(ui);
 
-	const shared_ptr<PlayerEntity> &player = scene()->typedEntity<PlayerEntity>("player");
+	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
 	if (m_mouseInputMode == MouseInputMode::MOUSE_FPM && activeCamera() == playerCamera && notNull(player))
 	{
 		player->updateFromInput(ui); // Only update the player if the mouse input mode is FPM and the active camera is the player view camera
@@ -1872,8 +1832,7 @@ void FPSciApp::onUserInput(UserInput *ui)
 	END_PROFILER_EVENT();
 }
 
-void FPSciApp::onPose(Array<shared_ptr<Surface>> &surface, Array<shared_ptr<Surface2D>> &surface2D)
-{
+void FPSciApp::onPose(Array<shared_ptr<Surface>>& surface, Array<shared_ptr<Surface2D>>& surface2D) {
 	GApp::onPose(surface, surface2D);
 
 	typedScene<PhysicsScene>()->poseExceptExcluded(surface, "player");
@@ -1885,8 +1844,7 @@ void FPSciApp::onPose(Array<shared_ptr<Surface>> &surface, Array<shared_ptr<Surf
 }
 
 /** Set the currently reticle by index */
-void FPSciApp::setReticle(const int r)
-{
+void FPSciApp::setReticle(const int r) {
 	int idx = clamp(0, r, numReticles);
 	if (idx == m_lastReticleLoaded)
 		return; // Nothing to do here, setting current reticle
@@ -1902,15 +1860,13 @@ void FPSciApp::setReticle(const int r)
 	m_lastReticleLoaded = idx;
 }
 
-void FPSciApp::onCleanup()
-{
+void FPSciApp::onCleanup() {
 	// Called after the application loop ends.  Place a majority of cleanup code
 	// here instead of in the constructor so that exceptions can be caught.
 }
 
 /** Overridden (optimized) oneFrame() function to improve latency */
-void FPSciApp::oneFrame()
-{
+void FPSciApp::oneFrame() {
 	// Count this frame (for shaders)
 	m_frameNumber++;
 
@@ -2155,8 +2111,7 @@ void FPSciApp::oneFrame()
 	}
 }
 
-FPSciApp::Settings::Settings(const StartupConfig &startupConfig, int argc, const char *argv[])
-{
+FPSciApp::Settings::Settings(const StartupConfig& startupConfig, int argc, const char* argv[]) {
 	if (startupConfig.fullscreen)
 	{
 		// Use the primary
