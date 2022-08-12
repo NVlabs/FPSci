@@ -3,7 +3,6 @@
 #include "PhysicsScene.h"
 #include "WaypointManager.h"
 #include <Windows.h>
-#include "NetworkUtils.h"
 
 FPSciNetworkApp::FPSciNetworkApp(const GApp::Settings& settings) : FPSciApp(settings) { }
 

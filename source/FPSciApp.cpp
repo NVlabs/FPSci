@@ -5,7 +5,6 @@
 #include "Session.h"
 #include "PhysicsScene.h"
 #include "WaypointManager.h"
-#include "NetworkUtils.h"
 #include <chrono>
 
 // Storage for configuration static vars
@@ -1020,11 +1019,6 @@ void FPSciApp::onNetwork()
 			if (entityArray[i]->name() == "player") {
 				shared_ptr<Entity> player = entityArray[i];
 				NetworkUtils::createFrameUpdate(m_playerGUID, player, output);
-
-				//CoordinateFrame frame = player->frame();
-				//frame.serialize(output);
-
-				//logPrintf("Sent frame: %s\n", frame.toXYZYPRDegreesString());
 			}
 		}
 
@@ -1158,6 +1152,9 @@ void FPSciApp::onNetwork()
 						debugPrintf("WARN: Server connection refused (%i)", status);
 					}
 				}
+			}
+			else if (type == NetworkUtils::MessageType::DESTROY_ENTITY) {
+				NetworkUtils::handleDestroyEntity(scene(), packet_contents);
 			}
 			
 			enet_packet_destroy(event.packet);
