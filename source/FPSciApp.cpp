@@ -1159,6 +1159,11 @@ void FPSciApp::onNetwork()
 					}
 				}
 			}
+			else if (type == NetworkUtils::MessageType::MOVE_CLIENT) {
+				//updates the players cframe with what the server says it should be
+				shared_ptr<PlayerEntity> entity = scene()->typedEntity<PlayerEntity>("player");
+				NetworkUtils::updateEntity(entity, packet_contents);
+			}
 			
 			enet_packet_destroy(event.packet);
 			break;

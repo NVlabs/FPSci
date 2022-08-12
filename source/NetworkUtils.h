@@ -82,9 +82,12 @@ public:
 	};
 
 	static void updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer);
+	static void updateEntity(shared_ptr<Entity> entity, BinaryInput& inBuffer);
 	static void createFrameUpdate(GUniqueID id, shared_ptr<Entity> entity, BinaryOutput& outBuffer);
 
 	static void handleDestroyEntity(shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer);
 	static ENetPacket* createDestroyEntityPacket(GUniqueID id);
+
+	static int createMoveClient(CFrame frame, ENetPeer* peer);
 };
 

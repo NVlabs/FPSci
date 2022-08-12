@@ -5,8 +5,7 @@ static void updateEntity(Entity entity, BinaryInput inBuffer) {
 	NetworkUtils::NetworkUpdateType type = (NetworkUtils::NetworkUpdateType)inBuffer.readUInt8();
 }*/
 
-void NetworkUtils::updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Scene> scene, BinaryInput &inBuffer)
-{
+void NetworkUtils::updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer) {
 	GUniqueID entity_id;
 	inBuffer.readBytes(&entity_id, sizeof(entity_id));
 	shared_ptr<NetworkedEntity> entity = (*scene).typedEntity<NetworkedEntity>(entity_id.toString16());
@@ -27,8 +26,13 @@ void NetworkUtils::updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Sce
 	}
 }
 
-void NetworkUtils::createFrameUpdate(GUniqueID id, shared_ptr<Entity> entity, BinaryOutput &outBuffer)
-{
+void NetworkUtils::updateEntity(shared_ptr<Entity> entity, BinaryInput& inBuffer) {
+	CoordinateFrame frame;
+	frame.deserialize(inBuffer);
+	entity->setFrame(frame);
+}
+
+void NetworkUtils::createFrameUpdate(GUniqueID id, shared_ptr<Entity> entity, BinaryOutput& outBuffer) {
 	outBuffer.writeBytes(&id, sizeof(id));
 	outBuffer.writeUInt8(NetworkUpdateType::REPLACE_FRAME);
 	entity->frame().serialize(outBuffer);
@@ -47,5 +51,14 @@ ENetPacket* createDestroyEntityPacket(GUniqueID id) {
 
 	ENetPacket* outPacket = enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length(), ENET_PACKET_FLAG_RELIABLE);
 	return outPacket;
+}
 
+int NetworkUtils::createMoveClient(CFrame frame, ENetPeer* peer) {
+	BinaryOutput outbuffer;
+	outbuffer.setEndian(G3D::G3D_BIG_ENDIAN);
+	outbuffer.writeUInt8(NetworkUtils::MOVE_CLIENT);
+	outbuffer.writeUInt8(NetworkUpdateType::REPLACE_FRAME);
+	frame.serialize(outbuffer);
+	ENetPacket* packet = enet_packet_create((void*)outbuffer.getCArray(), outbuffer.length() + 1, ENET_PACKET_FLAG_RELIABLE);
+	return enet_peer_send(peer, 0, packet);
 }
