@@ -9,7 +9,7 @@ static void updateEntity(Entity entity, BinaryInput inBuffer) {
 
 void NetworkUtils::updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer) {
 	GUniqueID entity_id;
-	inBuffer.readBytes(&entity_id, sizeof(entity_id));
+	entity_id.deserialize(inBuffer);;
 	shared_ptr<NetworkedEntity> entity = (*scene).typedEntity<NetworkedEntity>(entity_id.toString16());
 	if (ignoreIDs.contains(entity_id)) { // don't let the server move ignored entities
 		entity = nullptr;
@@ -43,15 +43,19 @@ void NetworkUtils::updateEntity(shared_ptr<Entity> entity, BinaryInput& inBuffer
 }
 
 void NetworkUtils::createFrameUpdate(GUniqueID id, shared_ptr<Entity> entity, BinaryOutput& outBuffer) {
-	outBuffer.writeBytes(&id, sizeof(id));
+	id.serialize(outBuffer);
 	outBuffer.writeUInt8(NetworkUpdateType::REPLACE_FRAME);
 	entity->frame().serialize(outBuffer);
 }
 
 void NetworkUtils::handleDestroyEntity(shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer) {
 	GUniqueID entity_id;
-	inBuffer.readBytes(&entity_id, sizeof(entity_id));
-	(*scene).removeEntity(entity_id.toString16());
+	entity_id.deserialize(inBuffer);;
+	shared_ptr<NetworkedEntity> entity = (*scene).typedEntity<NetworkedEntity>(entity_id.toString16());
+	debugPrintf("removing %s...\n", entity_id.toString16());
+	if (entity != nullptr) {
+		(*scene).remove(entity);
+	}
 }
 
 ENetPacket* NetworkUtils::createDestroyEntityPacket(GUniqueID id) {
@@ -59,6 +63,8 @@ ENetPacket* NetworkUtils::createDestroyEntityPacket(GUniqueID id) {
 	outBuffer.setEndian(G3D_BIG_ENDIAN);
 	outBuffer.writeUInt8(NetworkUtils::MessageType::DESTROY_ENTITY);
 	id.serialize(outBuffer);		// Send the GUID as a byte string
+
+	debugPrintf("sent destroy packet: %s\n", id.toString16());
 
 	return enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length(), ENET_PACKET_FLAG_RELIABLE);
 }

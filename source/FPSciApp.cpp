@@ -1131,6 +1131,7 @@ void FPSciApp::onNetwork() {
 				NetworkUtils::updateEntity(entity, packet_contents);
 			}
 			else if (type == NetworkUtils::MessageType::DESTROY_ENTITY) {
+				debugPrintf("Recieved destroy entity request\n");
 				NetworkUtils::handleDestroyEntity(scene(), packet_contents);
 			}
 
