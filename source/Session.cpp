@@ -457,69 +457,74 @@ void Session::updatePresentationState()
 	{
 		if (stateElapsedTime > m_trialConfig->timing.trialFeedbackDuration)
 		{
-			if (blockComplete()) {
-				m_currBlock++;		// Increment the block index
-				if (m_currBlock > m_sessConfig->blockCount) {
-					// Check for end of session (all blocks complete)
-					if(presentQuestions(m_sessConfig->questionArray)) {
-						// Write final session timestamp to log
-						if (notNull(logger) && m_sessConfig->logger.enable) {
-							int totalTrials = 0;
-							for (int tCount : m_completedTrials) { totalTrials += tCount; }
-							logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), totalTrials);			// Update session entry in database
-						}
-						if (m_sessConfig->logger.enable) {
-							endLogging();
-						}
-						m_app->markSessComplete(m_sessConfig->id);														// Add this session to user's completed sessions
-
-						m_feedbackMessage = formatFeedback(m_sessConfig->feedback.sessComplete);						// Update the feedback message
-						m_currQuestionIdx = -1;
-						newState = PresentationState::sessionFeedback;
+			bool allAnswered = presentQuestions(m_trialConfig->questionArray);				// Present any trial-level questions
+			if (allAnswered) { 
+				m_currQuestionIdx = -1;														// Reset the question index
+				if (blockComplete()) {
+					m_currBlock++;												
+					if (m_currBlock > m_sessConfig->blockCount) {	// End of session (all blocks complete)
+							newState = PresentationState::sessionFeedback;
+					}
+					else {	// Block is complete but session isn't
+						m_feedbackMessage = formatFeedback(m_sessConfig->feedback.blockComplete);
+						updateBlock();
+						newState = PresentationState::initial;
 					}
 				}
-				else {					// Block is complete but session isn't
-					m_feedbackMessage = formatFeedback(m_sessConfig->feedback.blockComplete);
-					updateBlock();
-					newState = PresentationState::initial;
+				else {	// Individual trial complete, go back to reference target
+					m_feedbackMessage = "";	// Clear the feedback message
+					nextCondition();
+					newState = PresentationState::referenceTarget;
 				}
-			}
-			else {
-				m_feedbackMessage = "";				// Clear the feedback message
-				nextCondition();
-				newState = PresentationState::referenceTarget;
 			}
 		}
 	}
 	else if (currentState == PresentationState::sessionFeedback) {
 		if (m_hasSession) {
 			if (stateElapsedTime > m_sessConfig->timing.sessionFeedbackDuration && (!m_sessConfig->timing.sessionFeedbackRequireClick || !m_app->shootButtonUp)) {
-				newState = PresentationState::complete;
-        
-				// Save current user config and status
-				m_app->saveUserConfig(true);											
-        
-				closeSessionProcesses();					// Close the process we started at session start (if there is one)
-				runSessionCommands("end");					// Launch processes for the end of the session
+				bool allAnswered = presentQuestions(m_sessConfig->questionArray);	// Ask session-level questions
+				if (allAnswered) {			// Present questions until done here
+					// Write final session timestamp to log
+					if (notNull(logger) && m_sessConfig->logger.enable) {
+						int totalTrials = 0;
+						for (int tCount : m_completedTrials) { totalTrials += tCount; }
+						logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), totalTrials);			// Update session entry in database
+					}
+					if (m_sessConfig->logger.enable) {
+						endLogging();
+					}
+					m_app->markSessComplete(m_sessConfig->id);														// Add this session to user's completed sessions
 
-				Array<String> remaining = m_app->updateSessionDropDown();
-				if (remaining.size() == 0) {
-					m_feedbackMessage = formatFeedback(m_sessConfig->feedback.allSessComplete); // Update the feedback message
-					moveOn = false;
-					if (m_app->experimentConfig.closeOnComplete || m_sessConfig->closeOnComplete) {
+					m_feedbackMessage = formatFeedback(m_sessConfig->feedback.sessComplete);						// Update the feedback message
+					m_currQuestionIdx = -1;
+
+					newState = PresentationState::complete;
+
+					// Save current user config and status
+					m_app->saveUserConfig(true);
+
+					closeSessionProcesses();					// Close the process we started at session start (if there is one)
+					runSessionCommands("end");					// Launch processes for the end of the session
+
+					Array<String> remaining = m_app->updateSessionDropDown();
+					if (remaining.size() == 0) {
+						m_feedbackMessage = formatFeedback(m_sessConfig->feedback.allSessComplete); // Update the feedback message
+						moveOn = false;
+						if (m_app->experimentConfig.closeOnComplete || m_sessConfig->closeOnComplete) {
+							m_app->quitRequest();
+						}
+					}
+					else {
+						m_feedbackMessage = formatFeedback(m_sessConfig->feedback.sessComplete);	// Update the feedback message
+						if (m_sessConfig->closeOnComplete) {
+							m_app->quitRequest();
+						}
+						moveOn = true;														// Check for session complete (signal start of next session)
+					}
+
+					if (m_app->experimentConfig.closeOnComplete) {
 						m_app->quitRequest();
 					}
-				}
-				else {
-					m_feedbackMessage = formatFeedback(m_sessConfig->feedback.sessComplete);	// Update the feedback message
-					if (m_sessConfig->closeOnComplete) {
-						m_app->quitRequest();
-					}
-					moveOn = true;														// Check for session complete (signal start of next session)
-				}
-
-				if (m_app->experimentConfig.closeOnComplete) {
-					m_app->quitRequest();
 				}
 			}
 		}
@@ -584,24 +589,26 @@ bool Session::presentQuestions(Array<Question>& questions) {
 		// Initialize if needed
 		if (m_currQuestionIdx == -1) {
 			m_currQuestionIdx = 0;
-			m_app->presentQuestion(m_sessConfig->questionArray[m_currQuestionIdx]);
+			m_app->presentQuestion(questions[m_currQuestionIdx]);
 		}
 		// Manage answered quesions
 		else if (!m_app->dialog->visible()) {											// Check for whether dialog is closed (otherwise we are waiting for input)
 			if (m_app->dialog->complete) {												// Has this dialog box been completed? (or was it closed without an answer?)
-				questions[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
-				if (m_sessConfig->logger.enable) {
-					logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog);	// Log the question and its answer
+				questions[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ question
+				if (m_sessConfig->logger.enable) {										// Log the question and its answer
+					logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog);
 				}
-				m_currQuestionIdx++;
+				m_currQuestionIdx++;													// Move to the next question
 				if (m_currQuestionIdx < questions.size()) {								// Double check we have a next question before launching the next question
 					m_app->presentQuestion(questions[m_currQuestionIdx]);				// Present the next question (if there is one)
 				}
-				else {
+				else {	// All questions complete
 					m_app->dialog.reset();												// Null the dialog pointer when all questions complete
+					m_app->setMouseInputMode(FPSciApp::MouseInputMode::MOUSE_FPM);		// Go back to first-person mouse
+					return true;
 				}
 			}
-			else {
+			else {	// Dialog closed w/o a response (re-present the question)
 				m_app->presentQuestion(questions[m_currQuestionIdx]);					// Relaunch the same dialog (this wasn't completed)
 			}
 		}

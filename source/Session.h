@@ -135,6 +135,7 @@ public:
 	// Trick from: https://www.cs.technion.ac.il/users/yechiel/c++-faq/static-init-order-on-first-use.html	
 	static FpsConfig& defaultConfig() {
 		static FpsConfig def;
+		def.questionArray = Array<Question>();		// Clear the questions array (don't inherit)
 		return def;
 	}
 
