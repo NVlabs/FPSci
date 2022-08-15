@@ -931,6 +931,9 @@ void FPSciApp::quitRequest() {
 	{
 		m_pyLogger->mergeLogToDb(true);
 	}
+	if (experimentConfig.serverAddress != "" && m_serverPeer != nullptr) {
+		enet_peer_disconnect(m_serverPeer, 0);
+	}
 	setExitCode(0);
 }
 

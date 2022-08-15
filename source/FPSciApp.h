@@ -155,7 +155,7 @@ protected:
 
 	ENetSocket m_serverSocket;				///< Socket for server TODO: Rename this to m_sendSocket
 	ENetSocket m_listenSocket;				///< Socket for the client to listen on
-	ENetPeer *m_serverPeer;					///< Peer used for server-side communication
+	ENetPeer *m_serverPeer = nullptr;					///< Peer used for server-side communication
 	ENetHost *m_localHost;					///< Host used to allow the server to connect to me
 	ENetAddress m_reliableServerAddress;	///< Address of server for reliable traffic
 	ENetAddress m_unreliableServerAddress;	///< Address of server for unreliable traffic
