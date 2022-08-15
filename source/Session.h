@@ -264,6 +264,7 @@ protected:
 
 	String formatFeedback(const String& input);
 	String formatCommand(const String& input);
+	bool presentQuestions(Array<Question>& questions);
 
 	/** Insert a target into the target array/scene */
 	inline void insertTarget(shared_ptr<TargetEntity> target);

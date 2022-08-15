@@ -341,7 +341,7 @@ Color4 FPSciApp::lerpColor(Array<Color4> colors, float a) {
 	}
 }
 
-void FPSciApp::updateControls(bool firstSession) {
+void FPSciApp::updateControls(const bool firstSession) {
 	// Update the user settings window
 	updateUserMenu = true;
 	if(!firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;

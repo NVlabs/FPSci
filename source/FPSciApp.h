@@ -130,7 +130,7 @@ protected:
 
 	/** Called from onInit */
 	void makeGUI();
-	void updateControls(bool firstSession = false);
+	void updateControls(const bool firstSession = false);
 	
 	void loadConfigs(const ConfigFiles& configs);
 

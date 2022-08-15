@@ -461,32 +461,7 @@ void Session::updatePresentationState()
 				m_currBlock++;		// Increment the block index
 				if (m_currBlock > m_sessConfig->blockCount) {
 					// Check for end of session (all blocks complete)
-					if (m_sessConfig->questionArray.size() > 0 && m_currQuestionIdx < m_sessConfig->questionArray.size()) {
-						// Pop up question dialog(s) here if we need to
-						if (m_currQuestionIdx == -1) {
-							m_currQuestionIdx = 0;
-							m_app->presentQuestion(m_sessConfig->questionArray[m_currQuestionIdx]);
-						}
-						else if (!m_app->dialog->visible()) {														// Check for whether dialog is closed (otherwise we are waiting for input)
-							if (m_app->dialog->complete) {															// Has this dialog box been completed? (or was it closed without an answer?)
-								m_sessConfig->questionArray[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
-								if (m_sessConfig->logger.enable) {
-									logger->addQuestion(m_sessConfig->questionArray[m_currQuestionIdx], m_sessConfig->id, m_app->dialog);	// Log the question and its answer
-								}
-								m_currQuestionIdx++;																
-								if (m_currQuestionIdx < m_sessConfig->questionArray.size()) {							// Double check we have a next question before launching the next question
-									m_app->presentQuestion(m_sessConfig->questionArray[m_currQuestionIdx]);				// Present the next question (if there is one)
-								}
-								else {
-									m_app->dialog.reset();															// Null the dialog pointer when all questions complete
-								}
-							}
-							else {
-								m_app->presentQuestion(m_sessConfig->questionArray[m_currQuestionIdx]);					// Relaunch the same dialog (this wasn't completed)
-							}
-						}
-					}
-					else {
+					if(presentQuestions(m_sessConfig->questionArray)) {
 						// Write final session timestamp to log
 						if (notNull(logger) && m_sessConfig->logger.enable) {
 							int totalTrials = 0;
@@ -602,6 +577,37 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
 	// 2. Record target trajectories, view direction trajectories, and mouse motion.
 	accumulateTrajectories();
 	accumulateFrameInfo(rdt, sdt, idt);
+}
+
+bool Session::presentQuestions(Array<Question>& questions) {
+	if (questions.size() > 0 && m_currQuestionIdx < questions.size()) {
+		// Initialize if needed
+		if (m_currQuestionIdx == -1) {
+			m_currQuestionIdx = 0;
+			m_app->presentQuestion(m_sessConfig->questionArray[m_currQuestionIdx]);
+		}
+		// Manage answered quesions
+		else if (!m_app->dialog->visible()) {											// Check for whether dialog is closed (otherwise we are waiting for input)
+			if (m_app->dialog->complete) {												// Has this dialog box been completed? (or was it closed without an answer?)
+				questions[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ quesiton
+				if (m_sessConfig->logger.enable) {
+					logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog);	// Log the question and its answer
+				}
+				m_currQuestionIdx++;
+				if (m_currQuestionIdx < questions.size()) {								// Double check we have a next question before launching the next question
+					m_app->presentQuestion(questions[m_currQuestionIdx]);				// Present the next question (if there is one)
+				}
+				else {
+					m_app->dialog.reset();												// Null the dialog pointer when all questions complete
+				}
+			}
+			else {
+				m_app->presentQuestion(questions[m_currQuestionIdx]);					// Relaunch the same dialog (this wasn't completed)
+			}
+		}
+		return false;
+	}
+	else return true;
 }
 
 void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
