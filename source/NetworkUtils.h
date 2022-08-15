@@ -88,6 +88,6 @@ public:
 	static void handleDestroyEntity(shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer);
 	static ENetPacket* createDestroyEntityPacket(GUniqueID id);
 
-	static int createMoveClient(CFrame frame, ENetPeer* peer);
+	static int moveClient(CFrame frame, ENetPeer* peer);
 };
 

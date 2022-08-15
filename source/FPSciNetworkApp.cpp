@@ -322,6 +322,13 @@ void FPSciNetworkApp::onNetwork() {
                         
                     //}
                 }
+                // move the client to a different location
+				// TODO: Make this smart not just some test code
+                if (m_connectedPeers.length() % 2){
+                    Point3 postion = Point3(-45.8, -1.8, -0.1);
+                    CFrame frame = CFrame(postion);
+                    NetworkUtils::moveClient(frame, event.peer);
+                }
             }
             enet_packet_destroy(event.packet);
             break;

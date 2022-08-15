@@ -15,6 +15,15 @@ void NetworkUtils::updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Sce
 		entity = nullptr;
 	}
 
+	if (entity != nullptr) {
+		updateEntity(entity, inBuffer);
+	}
+	else {
+		debugPrintf("Recieved update for entity %s, but it doesn't exist\n", entity_id.toString16().c_str());
+	}
+}
+
+void NetworkUtils::updateEntity(shared_ptr<Entity> entity, BinaryInput& inBuffer) {
 	NetworkUtils::NetworkUpdateType type = (NetworkUtils::NetworkUpdateType)inBuffer.readUInt8();
 	if (type == NOOP) {
 		return;
@@ -25,20 +34,6 @@ void NetworkUtils::updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Sce
 		if (entity != nullptr) {
 			entity->setFrame(frame);
 		}
-	}
-}
-
-void NetworkUtils::updateEntity(shared_ptr<Entity> entity, BinaryInput& inBuffer) {
-	NetworkUtils::NetworkUpdateType type = (NetworkUtils::NetworkUpdateType)inBuffer.readUInt8();
-	if (type == NOOP) {
-		return;
-	}
-	else if (type == NetworkUpdateType::REPLACE_FRAME) {
-	CoordinateFrame frame;
-	frame.deserialize(inBuffer);
-	if (entity != nullptr) {
-		entity->setFrame(frame);
-	}
 	}
 }
 
@@ -69,7 +64,7 @@ ENetPacket* NetworkUtils::createDestroyEntityPacket(GUniqueID id) {
 	return enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length(), ENET_PACKET_FLAG_RELIABLE);
 }
 
-int NetworkUtils::createMoveClient(CFrame frame, ENetPeer* peer) {
+int NetworkUtils::moveClient(CFrame frame, ENetPeer* peer) {
 	BinaryOutput outbuffer;
 	outbuffer.setEndian(G3D::G3D_BIG_ENDIAN);
 	outbuffer.writeUInt8(NetworkUtils::MOVE_CLIENT);
