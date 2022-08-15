@@ -341,11 +341,7 @@ Color4 FPSciApp::lerpColor(Array<Color4> colors, float a) {
 	}
 }
 
-void FPSciApp::updateControls(const bool firstSession) {
-	// Update the user settings window
-	updateUserMenu = true;
-	if(!firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
-
+void FPSciApp::updateControls() {
 	// Update the waypoint manager
 	if (notNull(waypointManager)) { waypointManager->updateControls(); }
 
@@ -427,8 +423,9 @@ void FPSciApp::makeGUI() {
 	m_debugMenuHeight = startupConfig.developerMode ? debugWindow->rect().height() : 0.0f;
 
 	// Add the control panes here
-	updateControls();
+	updateUserMenu = true;
 	m_showUserMenu = experimentConfig.menu.showMenuOnStartup;
+	updateControls();
 }
 
 void FPSciApp::exportScene() {
@@ -651,6 +648,8 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 	if (notNull(scene())) sess->clearTargets();
 
 	// Update the application w/ the session parameters
+	updateUserMenu = true;
+	if (!m_firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
 	updateConfigParameters(sessConfig, forceSceneReload);
 
 	// Handle results files
@@ -715,7 +714,7 @@ void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const 
 	setReticle(reticleConfig.index);
 
 	// Update the controls for this session
-	updateControls(m_firstSession);				// If first session consider showing the menu
+	updateControls();				// If first session consider showing the menu
 
 	// Update the frame rate/delay
 	updateFrameParameters(config->render.frameDelay, config->render.frameRate);
