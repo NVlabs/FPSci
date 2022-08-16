@@ -156,7 +156,7 @@ public:
 	static String genFileTimestamp();
 
 	/** Record a question and its response */
-	void addQuestion(Question question, String session, const shared_ptr<DialogBase>& dialog);
+	void addQuestion(const Question& question, const String& session, const shared_ptr<DialogBase>& dialog, const int trial_id=-1, const int trial_idx=-1);
 
 	/** Add a target to an experiment */
 	void addTarget(const String& name, const shared_ptr<TargetConfig>& targetConfig, const String& spawnTime, const float& size, const Point2& spawnEcc);

@@ -337,6 +337,8 @@ void FPSciLogger::createQuestionsTable() {
 	Columns questionColumns = {
 		{"time", "text"},
 		{"session_id", "text"},
+		{"trial_id", "integer" },
+		{"trial_index", "integer"},
 		{"question", "text"},
 		{"response_array", "text"},
 		{"key_array", "text"},
@@ -346,7 +348,7 @@ void FPSciLogger::createQuestionsTable() {
 	createTableInDB(m_db, "Questions", questionColumns);
 }
 
-void FPSciLogger::addQuestion(Question q, String session, const shared_ptr<DialogBase>& dialog) {
+void FPSciLogger::addQuestion(const Question& q, const String& session, const shared_ptr<DialogBase>& dialog, const int trial_id, const int trial_idx) {
 	const String time = genUniqueTimestamp();
 	const String optStr = Any(q.options).unparse();
 	const String keyStr = Any(q.optionKeys).unparse();
@@ -354,9 +356,14 @@ void FPSciLogger::addQuestion(Question q, String session, const shared_ptr<Dialo
 	if (q.type == Question::Type::MultipleChoice || q.type == Question::Type::Rating) {
 		orderStr = Any(dynamic_pointer_cast<SelectionDialog>(dialog)->options()).unparse();
 	}
+	String trialIdStr = trial_id < 0 ? "NULL" : "'" + String(std::to_string(trial_id)) + "'";
+	String trialIdxStr = trial_idx < 0 ? "NULL" : "'" + String(std::to_string(trial_idx)) + "'";
+
 	RowEntry rowContents = {
 		"'" + time + "'",
 		"'" + session + "'",
+		trialIdStr,
+		trialIdxStr,
 		"'" + q.prompt + "'",
 		"'" + optStr + "'",
 		"'" + keyStr + "'",

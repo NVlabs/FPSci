@@ -604,7 +604,13 @@ bool Session::presentQuestions(Array<Question>& questions) {
 			if (m_app->dialog->complete) {												// Has this dialog box been completed? (or was it closed without an answer?)
 				questions[m_currQuestionIdx].result = m_app->dialog->result;			// Store response w/ question
 				if (m_sessConfig->logger.enable) {										// Log the question and its answer
-					logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog);
+					if (currentState == PresentationState::trialFeedback) {
+						// End of trial question, log trial id and index
+						logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog, m_currTrialIdx, m_completedTrials[m_currTrialIdx]-1);
+					}
+					else {	// End of session question, don't need to log a trial id/index
+						logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog);
+					}
 				}
 				m_currQuestionIdx++;													// Move to the next question
 				if (m_currQuestionIdx < questions.size()) {								// Double check we have a next question before launching the next question
