@@ -150,6 +150,7 @@ public:
 	int					blockCount = 1;					///< Default to just 1 block per session
 	Array<TrialConfig>	trials;							///< Array of trials (and their counts) to be performed
 	bool				closeOnComplete = false;		///< Close application on session completed?
+	bool				randomizeTrialOrder = true;		///< Randomize order of trials presented within the session
 
 	SessionConfig() : FpsConfig(defaultConfig()) {}
 	SessionConfig(const Any& any);

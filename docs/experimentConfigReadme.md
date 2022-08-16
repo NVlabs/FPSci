@@ -33,6 +33,7 @@ In addition to these general parameters each session also has a few unique param
     * `session id` is a short name for the session
     * `description` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
     * `closeOnComplete` signals to close the application whenever this session (in particular) is completed
+    * `randomizeTrialOrder` determines whether trials are presented in the order they are listed or in a randomized order
     * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided).
     * `trials` is a list of trials referencing the `trials` table above:
         * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial

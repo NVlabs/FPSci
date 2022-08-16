@@ -72,6 +72,7 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 		reader.get("id", id, "An \"id\" field must be provided for each session!");
 		reader.getIfPresent("description", description);
 		reader.getIfPresent("closeOnComplete", closeOnComplete);
+		reader.getIfPresent("randomizeTrialOrder", randomizeTrialOrder);
 		reader.getIfPresent("blockCount", blockCount);
 		reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
 		break;
@@ -171,8 +172,15 @@ bool Session::nextCondition() {
 		}
 	}
 	if (unrunTrialIdxs.size() == 0) return false;
-	int idx = Random::common().integer(0, unrunTrialIdxs.size()-1);
-	m_currTrialIdx = unrunTrialIdxs[idx];
+
+	if (m_sessConfig->randomizeTrialOrder) {
+		// Pick a random trial from within the array
+		int idx = Random::common().integer(0, unrunTrialIdxs.size() - 1);
+		m_currTrialIdx = unrunTrialIdxs[idx];
+	}
+	else { // Pick the first remaining trial
+		m_currTrialIdx = unrunTrialIdxs[0];		
+	}
 	
 	// Get and update the trial configuration
 	m_trialConfig = TrialConfig::createShared<TrialConfig>(m_sessConfig->trials[m_currTrialIdx]);
@@ -457,9 +465,9 @@ void Session::updatePresentationState()
 	{
 		if (stateElapsedTime > m_trialConfig->timing.trialFeedbackDuration)
 		{
-			bool allAnswered = presentQuestions(m_trialConfig->questionArray);				// Present any trial-level questions
+			bool allAnswered = presentQuestions(m_trialConfig->questionArray);	// Present any trial-level questions
 			if (allAnswered) { 
-				m_currQuestionIdx = -1;														// Reset the question index
+				m_currQuestionIdx = -1;		// Reset the question index
 				if (blockComplete()) {
 					m_currBlock++;												
 					if (m_currBlock > m_sessConfig->blockCount) {	// End of session (all blocks complete)
