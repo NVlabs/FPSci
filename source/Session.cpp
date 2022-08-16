@@ -91,6 +91,7 @@ Any SessionConfig::toAny(const bool forceAll) const {
 	a["id"] = id;
 	a["description"] = description;
 	if (forceAll || def.closeOnComplete != closeOnComplete)	a["closeOnComplete"] = closeOnComplete;
+	if (forceAll || def.randomizeTrialOrder != randomizeTrialOrder) a["randomizeTrialOrder"] = randomizeTrialOrder;
 	if (forceAll || def.blockCount != blockCount)				a["blockCount"] = blockCount;
 	a["trials"] = trials;
 	return a;
