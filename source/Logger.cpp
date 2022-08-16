@@ -53,10 +53,19 @@ void FPSciLogger::initResultsFile(const String& filename,
 	// Create tables if a new log file is opened
 	if (createNewFile) {
 		createExperimentsTable(expConfigFilename);
-		createSessionsTable(sessConfig);
+		createSessionsTable(sessConfig->logger.sessParamsToLog);
 		createTargetTypeTable();
 		createTargetsTable();
-		createTrialsTable();
+		
+		// Build up array of all trial parameters to log
+		m_trialParams = sessConfig->logger.trialParamsToLog;
+		for (const TrialConfig& t : sessConfig->trials) {
+			for (const String& p : t.logger.trialParamsToLog) {
+				if (!m_trialParams.contains(p)) m_trialParams.append(p);
+			}
+		}
+		createTrialsTable(m_trialParams);
+		
 		createTargetTrajectoryTable();
 		createPlayerActionTable();
 		createFrameInfoTable();
@@ -79,7 +88,7 @@ void FPSciLogger::initResultsFile(const String& filename,
 	// Create any table to do lookup here
 	Any a = sessConfig->toAny(true);
 	// Add the looked up values
-	for (String name : sessConfig->logger.sessParamsToLog) { sessValues.append("'" + a[name].unparse() + "'"); }
+	for (const String& name : sessConfig->logger.sessParamsToLog) { sessValues.append("'" + a[name].unparse() + "'"); }
 	// add header row
 	insertRowIntoDB(m_db, "Sessions", sessValues);
 
@@ -110,7 +119,7 @@ void FPSciLogger::createExperimentsTable(const String& expConfigFilename) {
 	insertRowIntoDB(m_db, "Experiments", expRow);
 }
 
-void FPSciLogger::createSessionsTable(const shared_ptr<SessionConfig>& sessConfig) {
+void FPSciLogger::createSessionsTable(const Array<String>& sessParams) {
 	// Session description (time and subject ID)
 	Columns sessColumns = {
 		// format: column name, data type, sqlite modifier(s)
@@ -123,7 +132,7 @@ void FPSciLogger::createSessionsTable(const shared_ptr<SessionConfig>& sessConfi
 		{ "trials_complete", "integer" }
 	};
 	// add any user-specified parameters as headers
-	for (String name : sessConfig->logger.sessParamsToLog) { sessColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
+	for (const String& name : sessParams) { sessColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
 	createTableInDB(m_db, "Sessions", sessColumns); // no need of Primary Key for this table.
 }
 
@@ -216,7 +225,12 @@ void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& 
 	logTargetInfo(targetValues);
 }
 
-void FPSciLogger::createTrialsTable() {
+void FPSciLogger::addTrialParamValues(TrialValues& t, const shared_ptr<TrialConfig>& config) {
+	Any a = config->toAny(true);
+	for (const String& p : m_trialParams) { t.append("'" + a[p].unparse() + "'"); }
+}
+
+void FPSciLogger::createTrialsTable(const Array<String>& trialParams) {
 	// Trials table
 	Columns trialColumns = {
 		{ "session_id", "text" },
@@ -230,6 +244,7 @@ void FPSciLogger::createTrialsTable() {
 		{ "destroyed_targets", "integer" },
 		{ "total_targets", "integer" }
 	};
+	for (String name : trialParams) { trialColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
 	createTableInDB(m_db, "Trials", trialColumns);
 }
 

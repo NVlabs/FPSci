@@ -280,6 +280,7 @@ public:
 
 	// Session parameter logging
 	Array<String> sessParamsToLog = { "frameRate", "frameDelay" };			///< Parameter names to log to the Sessions table of the DB
+	Array<String> trialParamsToLog = {};									///< Parameter names to log to the Trials table of the DB
 
 	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;

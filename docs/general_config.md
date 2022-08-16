@@ -265,14 +265,15 @@ Note: The sound played when `referenceTargetPlayFireSound` is set to `true` is t
 ## Logging Controls
 As part of the general configuration parameters several controls over reporting of data via the output SQL database are provided. These flags and their functions are described below.
 
-| Parameter Name        | Units | Description                                                                      |
-|-----------------------|-------|----------------------------------------------------------------------------------|
-|`logEnable`            |`bool` | Enables the logger and creation of an output database                            |
-|`logTargetTrajectories`|`bool` | Whether or not to log target position to the `Target_Trajectory` table           |
-|`logFrameInfo`         |`bool` | Whether or not to log frame info into the `Frame_Info` table                     |
-|`logPlayerActions`     |`bool` | Whether or not to log player actions into the `Player_Action` table              |
-|`logTrialResponse`     |`bool` | Whether or not to log trial responses into the `Trials` table                    |
-|`sessionParametersToLog`      |`Array<String>`| A list of additional parameter names (from the config) to log            |
+| Parameter Name            | Units | Description                                                                      |
+|---------------------------|-------|----------------------------------------------------------------------------------|
+|`logEnable`                |`bool` | Enables the logger and creation of an output database                            |
+|`logTargetTrajectories`    |`bool` | Whether or not to log target position to the `Target_Trajectory` table           |
+|`logFrameInfo`             |`bool` | Whether or not to log frame info into the `Frame_Info` table                     |
+|`logPlayerActions`         |`bool` | Whether or not to log player actions into the `Player_Action` table              |
+|`logTrialResponse`         |`bool` | Whether or not to log trial responses into the `Trials` table                    |
+|`sessionParametersToLog`   |`Array<String>`| A list of additional parameter names (from the config) to log with ecah `Sessions` table entry |
+|`trialParametersToLog`     |`Array<String>`| A list of additional parameter names (from the config) to log with each `Trials` table entry |
 
 ```
 "logEnable" : true,
@@ -281,6 +282,7 @@ As part of the general configuration parameters several controls over reporting 
 "logPlayerActions": true,
 "logTrialResponse": true,
 "sessionParametersToLog" : ["frameRate", "frameDelay"],
+"trialParametersToLog": [],
 ```
 
 ### Logging Session Parameters

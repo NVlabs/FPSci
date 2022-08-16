@@ -45,6 +45,8 @@ protected:
 	std::mutex m_queueMutex;
 	std::condition_variable m_queueCV;
 
+	Array<String> m_trialParams;					///< Storage for trial parameters
+
 	// Output queues for reported data storage
 	Array<FrameInfo> m_frameInfo;						///< Storage for frame info (sdt, idt, rdt)
 	Array<PlayerAction> m_playerActions;				///< Storage for player action (hit, miss, aim)
@@ -102,10 +104,10 @@ protected:
 	// Functions that set up the database schema
 	/** Create a session table with columns as specified by the provided sessionConfig */
 	void createExperimentsTable(const String& expConfigFilename);
-	void createSessionsTable(const shared_ptr<SessionConfig>& sessConfig);
+	void createSessionsTable(const Array<String>& sessParams);
 	void createTargetTypeTable();
 	void createTargetsTable();
-	void createTrialsTable();
+	void createTrialsTable(const Array<String>& trialParams);
 	void createTargetTrajectoryTable();
 	void createPlayerActionTable();
 	void createFrameInfoTable();
@@ -139,7 +141,8 @@ public:
 	void logTargetLocation(const TargetLocation& targetLocation) { addToQueue(m_targetLocations, targetLocation); }
 	void logTargetInfo(const TargetInfo& targetInfo) { addToQueue(m_targets, targetInfo); }
 	void logTrial(const TrialValues& trial) { addToQueue(m_trials, trial); }
-
+	
+	void addTrialParamValues(TrialValues& trial, const shared_ptr<TrialConfig>& config);
 	void logUserConfig(const UserConfig& userConfig, const String& sessId, const Vector2& sessTurnScale);
 	void logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets);
 

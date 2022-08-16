@@ -649,6 +649,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 			String(std::to_string(destroyedTargets)),
 			String(std::to_string(totalTargets))
 		};
+		logger->addTrialParamValues(trialValues, m_trialConfig);
 		logger->logTrial(trialValues);
 	}
 }

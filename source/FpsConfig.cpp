@@ -534,6 +534,7 @@ void LoggerConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("logUsers", logUsers);
 		reader.getIfPresent("logOnChange", logOnChange);
 		reader.getIfPresent("sessionParametersToLog", sessParamsToLog);
+		reader.getIfPresent("trialParametersToLog", trialParamsToLog);
 		reader.getIfPresent("logToSingleDb", logToSingleDb);
 		break;
 	default:
@@ -552,6 +553,7 @@ Any LoggerConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
 	if (forceAll || def.logOnChange != logOnChange)						a["logOnChange"] = logOnChange;
 	if (forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessionParametersToLog"] = sessParamsToLog;
+	if (forceAll || def.trialParamsToLog != trialParamsToLog)			a["trialParametersToLog"] = trialParamsToLog;
 	if (forceAll || def.logToSingleDb != logToSingleDb)					a["logToSingleDb"] = logToSingleDb;
 	return a;
 }
