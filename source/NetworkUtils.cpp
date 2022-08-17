@@ -11,16 +11,14 @@ void NetworkUtils::updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Sce
 	GUniqueID entity_id;
 	entity_id.deserialize(inBuffer);;
 	shared_ptr<NetworkedEntity> entity = (*scene).typedEntity<NetworkedEntity>(entity_id.toString16());
+	if(entity == nullptr && !ignoreIDs.contains(entity_id)) {
+		debugPrintf("Recieved update for entity %s, but it doesn't exist\n", entity_id.toString16().c_str());
+	}
 	if (ignoreIDs.contains(entity_id)) { // don't let the server move ignored entities
 		entity = nullptr;
 	}
-
-	if (entity != nullptr) {
-		updateEntity(entity, inBuffer);
-	}
-	else {
-		debugPrintf("Recieved update for entity %s, but it doesn't exist\n", entity_id.toString16().c_str());
-	}
+	updateEntity(entity, inBuffer); // Allways call this even if the entity is ignored so we remove the data from the BinaryInput
+	
 }
 
 void NetworkUtils::updateEntity(shared_ptr<Entity> entity, BinaryInput& inBuffer) {

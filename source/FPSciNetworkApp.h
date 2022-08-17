@@ -10,13 +10,23 @@
 class FPSciNetworkApp : public FPSciApp {
 	
 protected:
+    struct ConnectedClient {
+        ENetPeer peer;
+        GUniqueID guid;
+        ENetAddress unreliableAddress;
+    };
+	
     ENetHost* m_serverHost;                              //> Host that the clients connect to
-    Array <ENetPeer*> m_serverPeers;                     //> Peers that the server is connected to
+    Array <ENetPeer*> m_serverPeers;                     //> Peers that the server is connected to TODO: decide if we need this and remove if not needed
     ENetSocket m_listenSocket;                           //> Socket for the server to listen on
-    ENetSocket m_sendSocket;                             //> Socket for the server to send on
+    ENetSocket m_sendSocket;                             //> Socket for the server to send on TODO: remove this and just send on the listen socket
     Array <ENetAddress> m_connectedAddresses;            //> Addresses we have received UDP traffic from so we can broadcast worldstate updates
 	Array <GUniqueID> m_connectedGUIDs;					 //> GUIDs of the connected clients
     Array <ENetPeer> m_connectedPeers;
+
+    Array <ConnectedClient> m_connectedClients;
+	
+    
 
 public:
     FPSciNetworkApp(const GApp::Settings& settings);

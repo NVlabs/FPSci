@@ -104,14 +104,21 @@ void FPSciApp::initExperiment() {
 		m_serverSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
 		enet_socket_set_option(m_serverSocket, ENET_SOCKOPT_NONBLOCK, 1); //Set socket to non-blocking
 
-		//localAddress.port += 2;
-		localAddress.port = experimentConfig.clientPort + 1;
-		if (enet_socket_bind(m_serverSocket, &localAddress)) {
-			debugPrintf("bind failed with error: %d\n", WSAGetLastError());
-			throw std::runtime_error("Could not bind to the local address");
-		}
+		//ENetAddress socketAddress;
+		//enet_socket_get_address(m_serverSocket, &socketAddress);
+		//socketAddress.host = ENET_HOST_ANY;
+		//if (enet_socket_bind(m_serverSocket, &socketAddress)) {
+		//	debugPrintf("bind failed with error: %d\n", WSAGetLastError());
+		//	throw std::runtime_error("Could not bind to the local address");
+		//}
 
-		m_playerGUID = GUniqueID::create();
+		try {
+			m_playerGUID = GUniqueID::create();
+		}
+		catch (std::runtime_error e) {
+			logPrintf("Error on GUID creation: %s", e.what());
+			debugPrintf("Error on GUID creation: %s", e.what());
+		}
 
 		m_enetConnected = false;
 
@@ -125,6 +132,7 @@ void FPSciApp::initExperiment() {
 		hs_buff.data = (void*)hs_bitstring.getCArray();
 		hs_buff.dataLength = hs_bitstring.length();
 		enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &hs_buff, 1);
+		
 
 		debugPrintf("Sent handshake and registration requests to %s port %i\n", experimentConfig.serverAddress.c_str(), experimentConfig.serverPort);
 
@@ -1062,10 +1070,14 @@ void FPSciApp::onNetwork() {
 			bitstring.setEndian(G3D_BIG_ENDIAN);
 			bitstring.writeUInt8(NetworkUtils::MessageType::REGISTER_CLIENT);
 			m_playerGUID.serialize(bitstring);		// Send the GUID as a byte string to the server so it can identify the client
-			bitstring.writeUInt16(experimentConfig.clientPort + 1); // Client socket port
+			ENetAddress localAddress;
+			enet_socket_get_address(m_serverSocket, &localAddress);
+			bitstring.writeUInt16(localAddress.port); // Client socket port
+			char ipStr[16];
+			enet_address_get_host_ip(&localAddress, ipStr, 16);
 			debugPrintf("Registering client...\n");
-			debugPrintf("\tPort: %i\n", experimentConfig.clientPort + 1);
-			debugPrintf("\tHost: \n");
+			debugPrintf("\tPort: %i\n", localAddress.port);
+			debugPrintf("\tHost: %s\n", ipStr);
 			registerPacket = enet_packet_create((void*)bitstring.getCArray(), bitstring.length() + 1, ENET_PACKET_FLAG_RELIABLE);
 			// check error on packet_create
 			debugPrintf("packet_send error: %i", enet_peer_send(m_serverPeer, 0, registerPacket));

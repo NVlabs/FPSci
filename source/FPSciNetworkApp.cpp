@@ -209,12 +209,13 @@ void FPSciNetworkApp::onNetwork() {
             debugPrintf("disconnection recieved...\n");
 			logPrintf("%s disconnected.\n", ip);
 			// Reset the peer's client information.
-            for (int i = 0; i < m_connectedPeers.size(); i++) {
-                if (m_connectedPeers[i].address.host == event.peer->address.host) {
-                    GUniqueID id = m_connectedGUIDs[i];
-                    m_connectedAddresses.remove(i, 1);
-                    m_connectedGUIDs.remove(i, 1);
-                    m_connectedPeers.remove(i, 1);
+            for (int i = 0; i < m_connectedClients.size(); i++) {
+                if (m_connectedClients[i].peer.address.host == event.peer->address.host && m_connectedClients[i].peer.address.port == event.peer->address.port) {
+                    GUniqueID id = m_connectedClients[i].guid;
+                    //m_connectedAddresses.remove(i, 1);
+                    //m_connectedGUIDs.remove(i, 1);
+                    //m_connectedPeers.remove(i, 1);
+                    m_connectedClients.remove(i, 1);
                     // TODO TELL OTHER CLIENTS THAT THIS CLIENT DC'D
                     ENetPacket* destroyPacket = NetworkUtils::createDestroyEntityPacket(id);
                     enet_host_broadcast(m_serverHost, 0, destroyPacket);
@@ -231,14 +232,25 @@ void FPSciNetworkApp::onNetwork() {
 
             if (type == NetworkUtils::MessageType::REGISTER_CLIENT) {
                 debugPrintf("Registering client...\n");
-                m_connectedPeers.append(*event.peer);
+                ConnectedClient newClient;
+				newClient.peer = *event.peer;
                 GUniqueID clientGUID;
                 clientGUID.deserialize(packet_contents);
-                m_connectedGUIDs.append(clientGUID);
+				newClient.guid = clientGUID;
+                //ENetAddress addr = event.peer->address;
+                ENetAddress addr;
+                addr.host = event.peer->address.host;
+                addr.port = packet_contents.readUInt16();   // Set the port to what the client sends to us because we might loose the UDP handshake packet
+                newClient.unreliableAddress = addr;
+				m_connectedClients.append(newClient);
+                //m_connectedPeers.append(*event.peer);
+                //GUniqueID clientGUID;
+                //clientGUID.deserialize(packet_contents);
+                //m_connectedGUIDs.append(clientGUID);
 
-                ENetAddress addr = event.peer->address;
-                addr.port = packet_contents.readUInt16();
-                m_connectedAddresses.append(addr);
+                //ENetAddress addr = event.peer->address;
+                //addr.port = packet_contents.readUInt16();
+                //m_connectedAddresses.append(addr);
                 debugPrintf("\tPort: %i\n", addr.port);
                 debugPrintf("\tHost: %i\n", addr.host);
                 //debugPrintf("Connected to client %s at address %s:%u\n", clientGUID, ip, addr_from.port);
@@ -291,11 +303,11 @@ void FPSciNetworkApp::onNetwork() {
                 clientGUID.serialize(forwardingbitstring);		// Send the GUID as a byte string to the server so it can identify the client
                 
                 ENetPacket* forwardingPacket = enet_packet_create((void*)forwardingbitstring.getCArray(), forwardingbitstring.length(), ENET_PACKET_FLAG_RELIABLE);
-                // update the other peer with new connection
+                // update the other peers with new connection
                 enet_host_broadcast(m_serverHost, 0, forwardingPacket);
                 debugPrintf("Sent a broadcast packet to all connected clients (hopefully)\n");
 
-                for (int i = 0; i < m_connectedPeers.length(); i++) {
+                for (int i = 0; i < m_connectedClients.length(); i++) {
                     /*BinaryOutput forwardingbitstring;
                     forwardingbitstring.setEndian(G3D_BIG_ENDIAN);
                     forwardingbitstring.writeUInt8(CREATE_ENTITY);
@@ -312,19 +324,20 @@ void FPSciNetworkApp::onNetwork() {
 						*/
 
                         // update the new connection with other peer
+                    if (newClient.guid != m_connectedClients[i].guid) {
                         BinaryOutput addExistingbitstring;
                         addExistingbitstring.setEndian(G3D_BIG_ENDIAN);
                         addExistingbitstring.writeUInt8(NetworkUtils::MessageType::CREATE_ENTITY);
-                        m_connectedGUIDs[i].serialize(addExistingbitstring);
+                        m_connectedClients[i].guid.serialize(addExistingbitstring);
                         ENetPacket* addExistingPacket = enet_packet_create((void*)addExistingbitstring.getCArray(), addExistingbitstring.length(), ENET_PACKET_FLAG_RELIABLE);
                         enet_peer_send(event.peer, 0, addExistingPacket);
-                        debugPrintf("Sent add to %s to add %s\n", clientGUID.toString16(), m_connectedGUIDs[i].toString16());
-                        
+                        debugPrintf("Sent add to %s to add %s\n", clientGUID.toString16(), m_connectedClients[i].guid.toString16());
+                    }
                     //}
                 }
                 // move the client to a different location
 				// TODO: Make this smart not just some test code
-                if (m_connectedPeers.length() % 2){
+                if (m_connectedClients.length() % 2 == 1){
                     Point3 postion = Point3(-45.8, -1.8, -0.1);
                     CFrame frame = CFrame(postion);
                     NetworkUtils::moveClient(frame, event.peer);
@@ -370,8 +383,8 @@ void FPSciNetworkApp::onNetwork() {
     ENetBuffer enet_buff;
     enet_buff.data = (void*)output.getCArray();
     enet_buff.dataLength = output.length();
-    for (int i = 0; i < m_connectedAddresses.length(); i++) {
-        ENetAddress toAddress = m_connectedAddresses[i];
+    for (int i = 0; i < m_connectedClients.length(); i++) {
+        ENetAddress toAddress = m_connectedClients[i].unreliableAddress;
         if (enet_socket_send(m_serverSocket, &toAddress, &enet_buff, 1) <= 0) {
             logPrintf("Failed to send a packet to the client\n");
         }
