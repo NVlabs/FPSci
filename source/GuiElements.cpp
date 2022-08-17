@@ -150,7 +150,7 @@ void WaypointDisplay::setManager(WidgetManager *manager) {
 	}
 }
 
-PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> exportCallback,
+PlayerControls::PlayerControls(FpsConfig& config, std::function<void()> exportCallback,
 	const shared_ptr<GuiTheme>& theme, float width, float height) :
 	GuiWindow("Player Controls", theme, Rect2D::xywh(5, 5, width, height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE)
 {
@@ -199,7 +199,7 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 	moveTo(Vector2(440, 300));
 }
 
-RenderControls::RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, const int numReticles, float& brightness,
+RenderControls::RenderControls(FPSciApp* app, FpsConfig& config, bool& drawFps, const int numReticles, float& brightness,
 	const shared_ptr<GuiTheme>& theme, const int maxFrameDelay, const float minFrameRate, const float maxFrameRate, float width, float height) :
 	GuiWindow("Render Controls", theme, Rect2D::xywh(5,5,width,height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_app(app)
 {

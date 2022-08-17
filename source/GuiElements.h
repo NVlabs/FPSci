@@ -7,7 +7,7 @@
 #include "FPSciAnyTableReader.h"
 
 class FPSciApp;
-class SessionConfig;
+class FpsConfig;
 
 class MenuConfig {
 public:
@@ -107,11 +107,11 @@ public:
 
 class PlayerControls : public GuiWindow {
 protected:
-	PlayerControls(SessionConfig& config, std::function<void()> exportCallback,
+	PlayerControls(FpsConfig& config, std::function<void()> exportCallback,
 		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f);
 
 public:
-	static shared_ptr<PlayerControls> create(SessionConfig& config, std::function<void()> exportCallback,
+	static shared_ptr<PlayerControls> create(FpsConfig& config, std::function<void()> exportCallback,
 		const shared_ptr<GuiTheme>& theme, float width = 400.0f, float height = 10.0f) {
 		return createShared<PlayerControls>(config, exportCallback, theme, width, height);
 	}
@@ -126,10 +126,10 @@ protected:
 
 	void updateUserMenu(void);
 
-	RenderControls(FPSciApp* app, SessionConfig& config, bool& drawFps, const int numReticles, float& brightness,
+	RenderControls(FPSciApp* app, FpsConfig& config, bool& drawFps, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, const int maxFrameDelay = 360, const float minFrameRate = 1.0f, const float maxFrameRate=1000.0f, float width=400.0f, float height=10.0f);
 public:
-	static shared_ptr<RenderControls> create(FPSciApp* app, SessionConfig& config, bool& drawFps, const int numReticles, float& brightness,
+	static shared_ptr<RenderControls> create(FPSciApp* app, FpsConfig& config, bool& drawFps, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, const int maxFrameDelay = 360, const float minFrameRate = 1.0f, const float maxFrameRate=1000.0f, float width = 400.0f, float height = 10.0f) {
 		return createShared<RenderControls>(app, config, drawFps, numReticles, brightness, theme, maxFrameDelay, minFrameRate, maxFrameRate, width, height);
 	}

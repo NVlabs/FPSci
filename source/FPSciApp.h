@@ -130,7 +130,7 @@ protected:
 
 	/** Called from onInit */
 	void makeGUI();
-	void updateControls();
+	void updateDeveloperControls(const shared_ptr<FpsConfig>& config);
 	
 	void loadConfigs(const ConfigFiles& configs);
 

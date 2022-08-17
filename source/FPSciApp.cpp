@@ -341,7 +341,7 @@ Color4 FPSciApp::lerpColor(Array<Color4> colors, float a) {
 	}
 }
 
-void FPSciApp::updateControls() {
+void FPSciApp::updateDeveloperControls(const shared_ptr<FpsConfig>& config) {
 	// Update the waypoint manager
 	if (notNull(waypointManager)) { waypointManager->updateControls(); }
 
@@ -353,7 +353,7 @@ void FPSciApp::updateControls() {
 		rect = m_playerControls->rect();
 		removeWidget(m_playerControls);
 	}
-	m_playerControls = PlayerControls::create(*sessConfig, std::bind(&FPSciApp::exportScene, this), theme);
+	m_playerControls = PlayerControls::create(*config, std::bind(&FPSciApp::exportScene, this), theme);
 	m_playerControls->setVisible(visible);
 	if (!rect.isEmpty()) m_playerControls->setRect(rect);
 	addWidget(m_playerControls);
@@ -366,7 +366,7 @@ void FPSciApp::updateControls() {
 		rect = m_renderControls->rect();
 		removeWidget(m_renderControls);
 	}
-	m_renderControls = RenderControls::create(this, *sessConfig, renderFPS, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
+	m_renderControls = RenderControls::create(this, *config, renderFPS, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(visible);
 	if (!rect.isEmpty()) m_renderControls->setRect(rect);
 	addWidget(m_renderControls);
@@ -379,7 +379,7 @@ void FPSciApp::updateControls() {
 		rect = m_weaponControls->rect();
 		removeWidget(m_weaponControls);
 	}
-	m_weaponControls = WeaponControls::create(sessConfig->weapon, theme);
+	m_weaponControls = WeaponControls::create(config->weapon, theme);
 	m_weaponControls->setVisible(visible);
 	if (!rect.isEmpty()) m_weaponControls->setRect(rect);
 	addWidget(m_weaponControls);
@@ -425,7 +425,7 @@ void FPSciApp::makeGUI() {
 	// Add the control panes here
 	updateUserMenu = true;
 	m_showUserMenu = experimentConfig.menu.showMenuOnStartup;
-	updateControls();
+	updateDeveloperControls(std::make_shared<FpsConfig>((FpsConfig)experimentConfig));
 }
 
 void FPSciApp::exportScene() {
@@ -713,8 +713,7 @@ void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const 
 	reticleConfig.changeTimeS = config->reticle.changeTimeSpecified ? config->reticle.changeTimeS : currentUser()->reticle.changeTimeS;
 	setReticle(reticleConfig.index);
 
-	// Update the controls for this session
-	updateControls();				// If first session consider showing the menu
+	updateDeveloperControls(config);
 
 	// Update the frame rate/delay
 	updateFrameParameters(config->render.frameDelay, config->render.frameRate);
