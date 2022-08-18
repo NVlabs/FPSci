@@ -523,7 +523,7 @@ void FPSciApp::updateFrameParameters(int frameDelay, float frameRate) {
 	setFrameDuration(dt, simStepDuration());
 }
 
-void FPSciApp::initPlayer(const shared_ptr<FpsConfig> config, bool setSpawnPosition) {
+void FPSciApp::initPlayer(const shared_ptr<FpsConfig> config, const bool respawn, bool setSpawnPosition) {
 	shared_ptr<PhysicsScene> pscene = typedScene<PhysicsScene>();
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");	// Get player from the scene
 
@@ -612,7 +612,7 @@ void FPSciApp::initPlayer(const shared_ptr<FpsConfig> config, bool setSpawnPosit
 	player->crouchHeight = &config->player.crouchHeight;
 
 	// Respawn player
-	player->respawn();
+	if (respawn) player->respawn();
 	updateMouseSensitivity();
 
 	// Set initial heading for session
@@ -650,7 +650,7 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 	// Update the application w/ the session parameters
 	updateUserMenu = true;
 	if (!m_firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
-	updateConfigParameters(sessConfig, forceSceneReload);
+	updateConfigParameters(sessConfig, forceSceneReload, true);
 
 	// Handle results files
 	const String resultsDirPath = startupConfig.experimentList[experimentIdx].resultsDirPath;
@@ -705,7 +705,7 @@ void FPSciApp::updateTrial(const shared_ptr<TrialConfig> config, const bool forc
 	updateConfigParameters(config, forceSceneReload);
 }
 
-void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const bool forceSceneReload) {
+void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const bool forceSceneReload, const bool respawn) {
 	// Update reticle
 	reticleConfig.index = config->reticle.indexSpecified ? config->reticle.index : currentUser()->reticle.index;
 	reticleConfig.scale = config->reticle.scaleSpecified ? config->reticle.scale : currentUser()->reticle.scale;
@@ -759,7 +759,7 @@ void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const 
 	}
 
 	// Player parameters
-	initPlayer(config);
+	initPlayer(config, respawn);
 
 	// Check for play mode specific parameters
 	if (notNull(weapon)) weapon->clearDecals();
@@ -813,7 +813,7 @@ void FPSciApp::onAfterLoadScene(const Any& any, const String& sceneName) {
 		m_initialCameraFrames.set(cam->name(), cam->frame());
 	}
 
-	initPlayer(trialConfig, true);		// Initialize the player (first time for this scene)
+	initPlayer(trialConfig, false, true);		// Initialize the player (first time for this scene)
 
 	if (weapon) {
 		weapon->setScene(scene());

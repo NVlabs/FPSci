@@ -409,7 +409,7 @@ void Session::updatePresentationState()
 
 	if (currentState == PresentationState::initial)
 	{
-		if (m_sessConfig->player.stillBetweenTrials) {
+		if (m_trialConfig->player.stillBetweenTrials) {
 			m_player->setMoveEnable(false);
 		}
 		if (!(m_app->shootButtonUp && m_trialConfig->timing.clickToStart)) {
@@ -428,7 +428,7 @@ void Session::updatePresentationState()
 		if (stateElapsedTime > m_pretrialDuration)
 		{
 			newState = PresentationState::trialTask;
-			if (m_sessConfig->player.stillBetweenTrials) {
+			if (m_trialConfig->player.stillBetweenTrials) {
 				m_player->setMoveEnable(true);
 			}
 
@@ -445,10 +445,10 @@ void Session::updatePresentationState()
 			processResponse();
 			clearTargets(); // clear all remaining targets
 			newState = PresentationState::trialFeedback;
-			if (m_sessConfig->player.stillBetweenTrials) {
+			if (m_trialConfig->player.stillBetweenTrials) {
 				m_player->setMoveEnable(false);
 			}
-			if (m_sessConfig->player.resetPositionPerTrial) {
+			if (m_trialConfig->player.resetPositionPerTrial) {
 				m_player->respawn();
 			}
 

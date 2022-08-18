@@ -138,7 +138,7 @@ protected:
 	
 	/** Initializes player settings from configs and resets player to initial position 
 		Also updates mouse sensitivity. */
-	void initPlayer(const shared_ptr<FpsConfig> config, bool firstSpawn = false);
+	void initPlayer(const shared_ptr<FpsConfig> config, const bool respawn = false, bool firstSpawn = false) ;
 
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {
@@ -257,7 +257,7 @@ public:
 	/** Updates experiment state to the provided session id and updates player parameters (including mouse sensitivity) */
 	virtual void updateSession(const String& id, bool forceSceneReload = false);
 	void updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload = false);
-	void updateConfigParameters(const shared_ptr<FpsConfig> config, bool forceSceneReload = false);
+	void updateConfigParameters(const shared_ptr<FpsConfig> config, bool forceSceneReload = false, const bool respawn = false);
 	void updateFrameParameters(int frameDelay, float frameRate);
 	void updateTargetColor(const shared_ptr<TargetEntity>& target);
 	void presentQuestion(Question question);
