@@ -44,8 +44,7 @@ enum PresentationState
 	sessionFeedback,
 	complete
 };
-static String presentationStateToString(const PresentationState &state)
-{
+static String presentationStateToString(const PresentationState& state) {
 	String stateStr = "N/A";
 	switch (state)
 	{
@@ -74,7 +73,7 @@ static String presentationStateToString(const PresentationState &state)
 class FPSciApp : public GApp
 {
 public:
-	
+
 	enum MouseInputMode
 	{						///< Enumerated type for controlling the mouse input mode
 		MOUSE_DISABLED = 0, /// No mouse interaction
@@ -153,13 +152,12 @@ protected:
 	RealTime m_startTime;									  ///< Start time (for the session)
 	RealTime m_last2DTime, m_last3DTime, m_lastCompositeTime; ///< Times used for iTimeDelta
 
-	ENetSocket m_serverSocket;				///< Socket for server TODO: Rename this to m_sendSocket
-	ENetSocket m_listenSocket;				///< Socket for the client to listen on
-	ENetPeer *m_serverPeer = nullptr;					///< Peer used for server-side communication
-	ENetHost *m_localHost;					///< Host used to allow the server to connect to me
-	ENetAddress m_reliableServerAddress;	///< Address of server for reliable traffic
-	ENetAddress m_unreliableServerAddress;	///< Address of server for unreliable traffic
-	GUniqueID m_playerGUID;						///< GUID for the player (used to identify the player in the network)
+	ENetSocket m_unreliableSocket;						///< Socket for unreliable comunication with the server
+	ENetPeer* m_serverPeer = nullptr;					///< Peer used for server-side communication
+	ENetHost* m_localHost = nullptr;								///< Host used to allow inbound relibale connections
+	ENetAddress m_reliableServerAddress;				///< Address of server for reliable traffic
+	ENetAddress m_unreliableServerAddress;				///< Address of server for unreliable traffic
+	GUniqueID m_playerGUID;								///< GUID for the player (used to identify the player in the network)
 	bool m_enetConnected;
 	bool m_socketConnected;
 
@@ -167,7 +165,7 @@ protected:
 	void makeGUI();
 	void updateControls(bool firstSession = false);
 
-	void loadConfigs(const ConfigFiles &configs);
+	void loadConfigs(const ConfigFiles& configs);
 
 	virtual void loadModels();
 
@@ -176,8 +174,7 @@ protected:
 	void initPlayer(bool firstSpawn = false);
 
 	/** Move a window to the center of the display */
-	void moveToCenter(shared_ptr<GuiWindow> window)
-	{
+	void moveToCenter(shared_ptr<GuiWindow> window) {
 		const float scale = 0.5f / m_userSettingsWindow->pixelScale();
 		const Vector2 pos = (scale * renderDevice->viewport().wh()) - (window->bounds().wh() / 2.0f);
 		window->moveTo(pos);
@@ -195,7 +192,7 @@ public:
 	class Settings : public GApp::Settings
 	{
 	public:
-		Settings(const StartupConfig &startupConfig, int argc, const char *argv[]);
+		Settings(const StartupConfig& startupConfig, int argc, const char* argv[]);
 	};
 
 	/** global startup config - sets developer flags and experiment/user paths */
@@ -212,8 +209,8 @@ public:
 	Table<String, shared_ptr<Texture>> hudTextures; ///< Textures used for the HUD
 	shared_ptr<GuiTheme> theme;
 
-	FPSciApp(const GApp::Settings &settings = GApp::Settings());
-	FPSciApp(const GApp::Settings &, G3D::OSWindow *, G3D::RenderDevice *, bool);
+	FPSciApp(const GApp::Settings& settings = GApp::Settings());
+	FPSciApp(const GApp::Settings&, G3D::OSWindow*, G3D::RenderDevice*, bool);
 
 	/** Parameter configurations */
 	UserTable userTable;			   ///< Table of per user information (DPI/cm/360) that doesn't change across experiment
@@ -270,13 +267,11 @@ public:
 	/** Save scene w/ updated player position */
 	void exportScene();
 
-	float debugMenuHeight()
-	{
+	float debugMenuHeight() {
 		return m_debugMenuHeight;
 	}
 
-	const Array<String> experimentNames() const
-	{
+	const Array<String> experimentNames() const {
 		Array<String> names;
 		for (auto config : startupConfig.experimentList)
 		{
@@ -296,9 +291,9 @@ public:
 
 	void markSessComplete(String id);
 	/** Updates experiment state to the provided session id and updates player parameters (including mouse sensitivity) */
-	virtual void updateSession(const String &id, bool forceReload = false);
+	virtual void updateSession(const String& id, bool forceReload = false);
 	void updateParameters(int frameDelay, float frameRate);
-	void updateTargetColor(const shared_ptr<TargetEntity> &target);
+	void updateTargetColor(const shared_ptr<TargetEntity>& target);
 	void presentQuestion(Question question);
 
 	void quitRequest();
@@ -320,34 +315,34 @@ public:
 	virtual void onAI() override;
 	virtual void onNetwork() override;
 	virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
-	virtual void onPose(Array<shared_ptr<Surface>> &posed3D, Array<shared_ptr<Surface2D>> &posed2D) override;
-	virtual void onAfterLoadScene(const Any &any, const String &sceneName) override;
-	virtual bool onEvent(const GEvent &e) override;
+	virtual void onPose(Array<shared_ptr<Surface>>& posed3D, Array<shared_ptr<Surface2D>>& posed2D) override;
+	virtual void onAfterLoadScene(const Any& any, const String& sceneName) override;
+	virtual bool onEvent(const GEvent& e) override;
 	virtual void onAfterEvents() override;
-	virtual void onUserInput(UserInput *ui) override;
+	virtual void onUserInput(UserInput* ui) override;
 	virtual void onCleanup() override;
 	virtual void oneFrame() override;
 
 	// In FPSciGraphics.cpp
-	virtual void onGraphics(RenderDevice *rd, Array<shared_ptr<Surface>> &posed3D, Array<shared_ptr<Surface2D>> &posed2D) override;
-	virtual void onGraphics2D(RenderDevice *rd, Array<shared_ptr<Surface2D>> &surface2D) override;
-	virtual void onGraphics3D(RenderDevice *rd, Array<shared_ptr<Surface>> &surface) override;
-	virtual void onPostProcessHDR3DEffects(RenderDevice *rd) override;
+	virtual void onGraphics(RenderDevice* rd, Array<shared_ptr<Surface>>& posed3D, Array<shared_ptr<Surface2D>>& posed2D) override;
+	virtual void onGraphics2D(RenderDevice* rd, Array<shared_ptr<Surface2D>>& surface2D) override;
+	virtual void onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface>>& surface) override;
+	virtual void onPostProcessHDR3DEffects(RenderDevice* rd) override;
 
-	void draw2DElements(RenderDevice *rd, Vector2 resolution);		  ///< Draw the undelayed 2D elements
-	void drawDelayed2DElements(RenderDevice *rd, Vector2 resolution); ///< Draw the delayed 2D elements
+	void draw2DElements(RenderDevice* rd, Vector2 resolution);		  ///< Draw the undelayed 2D elements
+	void drawDelayed2DElements(RenderDevice* rd, Vector2 resolution); ///< Draw the delayed 2D elements
 
-	virtual void drawHUD(RenderDevice *rd, Vector2 resolution);					///< Draw HUD elements
-	void drawClickIndicator(RenderDevice *rd, String mode, Vector2 resolution); ///< Draw the click-to-photon click indicator
-	void updateFPSIndicator(RenderDevice *rd, Vector2 resolution);				///< Update and draw a (custom) frame time indicator (developer mode feature)
-	void drawFeedbackMessage(RenderDevice *rd);									///< Draw a user feedback message (at full render device resolution)
+	virtual void drawHUD(RenderDevice* rd, Vector2 resolution);					///< Draw HUD elements
+	void drawClickIndicator(RenderDevice* rd, String mode, Vector2 resolution); ///< Draw the click-to-photon click indicator
+	void updateFPSIndicator(RenderDevice* rd, Vector2 resolution);				///< Update and draw a (custom) frame time indicator (developer mode feature)
+	void drawFeedbackMessage(RenderDevice* rd);									///< Draw a user feedback message (at full render device resolution)
 
 	void updateShaderBuffers(); ///< Regenerate buffers (for configured shaders)
 
 	/** calls rd->pushState with the right delayed buffer. Creates buffers if needed */
-	void pushRdStateWithDelay(RenderDevice *rd, Array<shared_ptr<Framebuffer>> &delayBufferQueue, int &delayIndex, int lagFrames = 0);
+	void pushRdStateWithDelay(RenderDevice* rd, Array<shared_ptr<Framebuffer>>& delayBufferQueue, int& delayIndex, int lagFrames = 0);
 	/** calls rd->popState and advances the delayIndex. Copies the latest delay buffer into the current framebuffer */
-	void popRdStateWithDelay(RenderDevice *rd, const Array<shared_ptr<Framebuffer>> &delayBufferQueue, int &delayIndex, int lagFrames = 0);
+	void popRdStateWithDelay(RenderDevice* rd, const Array<shared_ptr<Framebuffer>>& delayBufferQueue, int& delayIndex, int lagFrames = 0);
 };
 
 // The "old" way of animation

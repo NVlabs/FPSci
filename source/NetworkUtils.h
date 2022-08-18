@@ -1,8 +1,7 @@
 #pragma once
 #include <G3D/G3D.h>
 #include <enet/enet.h>
-
-#define BATCH_UPDATE_COUNT_POSITION 1
+#include "TargetEntity.h"
 
 /*
 			PACKET STRUCTURE:
@@ -54,7 +53,7 @@
 			Type REGISTER_HIT:
 
 
-	*/
+*/
 
 class NetworkUtils
 {
@@ -81,6 +80,13 @@ public:
 		REPLACE_FRAME,
 	};
 
+	// Struct containing all the data needed to keep track of and comunicate with clients
+	struct ConnectedClient {
+		ENetPeer *peer;
+		GUniqueID guid;
+		ENetAddress unreliableAddress;
+	};
+
 	static void updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer);
 	static void updateEntity(shared_ptr<Entity> entity, BinaryInput& inBuffer);
 	static void createFrameUpdate(GUniqueID id, shared_ptr<Entity> entity, BinaryOutput& outBuffer);
@@ -88,7 +94,10 @@ public:
 	static void handleDestroyEntity(shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer);
 	static void broadcastDestroyEntity(GUniqueID id, ENetHost* serverHost);
 
-	static int moveClient(CFrame frame, ENetPeer* peer);
+	static int sendMoveClient(CFrame frame, ENetPeer* peer);
 	static int sendHandshakeReply(ENetSocket socket, ENetAddress address);
+	static ConnectedClient registerClient(ENetEvent event, BinaryInput& inBuffer);
+	static void broadcastCreateEntity(GUniqueID id, ENetHost* serverHost);
+	static int sendCreateEntity(GUniqueID guid, ENetPeer* peer);
+	static void broadcastBatchEntityUpdate(Array<shared_ptr<NetworkedEntity>> entities, Array<ConnectedClient> clients, ENetSocket sendSocket);
 };
-

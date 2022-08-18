@@ -106,8 +106,8 @@ void FPSciApp::initExperiment() {
 
 		enet_address_set_host(&m_unreliableServerAddress, experimentConfig.serverAddress.c_str());
 		m_unreliableServerAddress.port = experimentConfig.serverPort + 1;
-		m_serverSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
-		enet_socket_set_option(m_serverSocket, ENET_SOCKOPT_NONBLOCK, 1); //Set socket to non-blocking
+		m_unreliableSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
+		enet_socket_set_option(m_unreliableSocket, ENET_SOCKOPT_NONBLOCK, 1); //Set socket to non-blocking
 
 		//ENetAddress socketAddress;
 		//enet_socket_get_address(m_serverSocket, &socketAddress);
@@ -136,8 +136,8 @@ void FPSciApp::initExperiment() {
 		ENetBuffer hs_buff;
 		hs_buff.data = (void*)hs_bitstring.getCArray();
 		hs_buff.dataLength = hs_bitstring.length();
-		enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &hs_buff, 1);
-		
+		enet_socket_send(m_unreliableSocket, &m_unreliableServerAddress, &hs_buff, 1);
+
 
 		debugPrintf("Sent handshake and registration requests to %s port %i\n", experimentConfig.serverAddress.c_str(), experimentConfig.serverPort);
 
@@ -1014,7 +1014,7 @@ void FPSciApp::onNetwork() {
 		enet_buff.dataLength = output.length();
 
 		// Send the serialized frame to the server
-		if (enet_socket_send(m_serverSocket, &m_unreliableServerAddress, &enet_buff, 1) <= 0) {
+		if (enet_socket_send(m_unreliableSocket, &m_unreliableServerAddress, &enet_buff, 1) <= 0) {
 			logPrintf("Failed to send a packet to the server\n");
 		}
 	}
@@ -1026,7 +1026,7 @@ void FPSciApp::onNetwork() {
 	buff.data = data;
 	buff.dataLength = 1500;
 
-	while (enet_socket_receive(m_serverSocket, &addr_from, &buff, 1)) {
+	while (enet_socket_receive(m_unreliableSocket, &addr_from, &buff, 1)) {
 		char ip[16];
 		enet_address_get_host_ip(&addr_from, ip, 16);
 		BinaryInput packet_contents((const uint8*)buff.data, buff.dataLength, G3D_BIG_ENDIAN, false, true);
@@ -1068,7 +1068,7 @@ void FPSciApp::onNetwork() {
 			bitstring.writeUInt8(NetworkUtils::MessageType::REGISTER_CLIENT);
 			m_playerGUID.serialize(bitstring);		// Send the GUID as a byte string to the server so it can identify the client
 			ENetAddress localAddress;
-			enet_socket_get_address(m_serverSocket, &localAddress);
+			enet_socket_get_address(m_unreliableSocket, &localAddress);
 			bitstring.writeUInt16(localAddress.port); // Client socket port
 			char ipStr[16];
 			enet_address_get_host_ip(&localAddress, ipStr, 16);
