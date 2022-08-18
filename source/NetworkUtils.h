@@ -2,6 +2,7 @@
 #include <G3D/G3D.h>
 #include <enet/enet.h>
 #include "TargetEntity.h"
+#include "PlayerEntity.h"
 
 /*
 			PACKET STRUCTURE:
@@ -96,8 +97,11 @@ public:
 
 	static int sendMoveClient(CFrame frame, ENetPeer* peer);
 	static int sendHandshakeReply(ENetSocket socket, ENetAddress address);
+	static int sendHandshake(ENetSocket socket, ENetAddress address);
+	static int sendRegisterClient(GUniqueID id, uint16 port, ENetPeer* peer);
 	static ConnectedClient registerClient(ENetEvent event, BinaryInput& inBuffer);
 	static void broadcastCreateEntity(GUniqueID id, ENetHost* serverHost);
 	static int sendCreateEntity(GUniqueID guid, ENetPeer* peer);
-	static void broadcastBatchEntityUpdate(Array<shared_ptr<NetworkedEntity>> entities, Array<ConnectedClient> clients, ENetSocket sendSocket);
+	static void broadcastBatchEntityUpdate(Array<shared_ptr<Entity>> entities, Array<ENetAddress> destinations, ENetSocket sendSocket);
+	static void serverBatchEntityUpdate(Array<shared_ptr<NetworkedEntity>> entities, Array<ConnectedClient> clients, ENetSocket sendSocket);
 };

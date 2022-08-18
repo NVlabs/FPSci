@@ -85,37 +85,26 @@ void FPSciApp::initExperiment() {
 			throw std::runtime_error("Could not initialize ENet networking");
 			
 		}
-
-		ENetAddress localAddress;
-		localAddress.host = ENET_HOST_ANY;
-		localAddress.port = experimentConfig.clientPort; // TODO: Make this use a different clientPort variable
 		
-		m_localHost = enet_host_create(NULL, 1, 2, 0, 0);
+		m_localHost = enet_host_create(NULL, 1, 2, 0, 0); // create a host on an arbitrary port which we use to contact the server
 		if (m_localHost == NULL)
 		{
 			throw std::runtime_error("Could not create a local host for the server to connect to");
 		}
 		enet_address_set_host(&m_reliableServerAddress, experimentConfig.serverAddress.c_str());
 		m_reliableServerAddress.port = experimentConfig.serverPort;
-		m_serverPeer = enet_host_connect(m_localHost, &m_reliableServerAddress, 2, 0);
+		m_serverPeer = enet_host_connect(m_localHost, &m_reliableServerAddress, 2, 0);		//setup a peer with the server
 		if (m_serverPeer == NULL)
 		{
 			throw std::runtime_error("Could not create a connection to the server");
 		}
 		logPrintf("created a peer with the server at %s:%d (the connection may not have been accepeted by the server)", experimentConfig.serverAddress, experimentConfig.serverPort);
 
+		// create the socket for communicating quickly and unreliably
 		enet_address_set_host(&m_unreliableServerAddress, experimentConfig.serverAddress.c_str());
 		m_unreliableServerAddress.port = experimentConfig.serverPort + 1;
 		m_unreliableSocket = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM);
 		enet_socket_set_option(m_unreliableSocket, ENET_SOCKOPT_NONBLOCK, 1); //Set socket to non-blocking
-
-		//ENetAddress socketAddress;
-		//enet_socket_get_address(m_serverSocket, &socketAddress);
-		//socketAddress.host = ENET_HOST_ANY;
-		//if (enet_socket_bind(m_serverSocket, &socketAddress)) {
-		//	debugPrintf("bind failed with error: %d\n", WSAGetLastError());
-		//	throw std::runtime_error("Could not bind to the local address");
-		//}
 
 		try {
 			m_playerGUID = GUniqueID::create();
@@ -125,22 +114,9 @@ void FPSciApp::initExperiment() {
 			debugPrintf("Error on GUID creation: %s", e.what());
 		}
 
+		// initialize variables to be reset by handshakes
 		m_enetConnected = false;
-
-		m_socketConnected = true;
-
 		m_socketConnected = false;
-		BinaryOutput hs_bitstring;
-		hs_bitstring.setEndian(G3D_BIG_ENDIAN);
-		hs_bitstring.writeUInt8(NetworkUtils::MessageType::HANDSHAKE);
-		ENetBuffer hs_buff;
-		hs_buff.data = (void*)hs_bitstring.getCArray();
-		hs_buff.dataLength = hs_bitstring.length();
-		enet_socket_send(m_unreliableSocket, &m_unreliableServerAddress, &hs_buff, 1);
-
-
-		debugPrintf("Sent handshake and registration requests to %s port %i\n", experimentConfig.serverAddress.c_str(), experimentConfig.serverPort);
-
 	}
 }
 
@@ -994,25 +970,21 @@ void FPSciApp::onNetwork() {
 	BinaryOutput output;
 	output.setEndian(G3D_BIG_ENDIAN);
 
+	if (!m_socketConnected) {
+		NetworkUtils::sendHandshake(m_unreliableSocket, m_unreliableServerAddress);
+	}
+
+	// wait to send updates until we're sure we're connected
 	if (m_socketConnected && m_enetConnected) {
 		// Get and serialize the players frame
+		// TODO: refactor this to move ENet code into NetworkUtils
 		output.writeUInt8(NetworkUtils::MessageType::BATCH_ENTITY_UPDATE);
 		output.writeUInt8(1);				// Only update the player
-		//output.writeBytes(&m_playerGUID, sizeof(m_playerGUID));	// Identfy the player as the clients GUID
-		Array<shared_ptr<Entity>> entityArray;
-		scene()->getTypedEntityArray<Entity>(entityArray);
-		for (int i = 0; i < entityArray.size(); i++)
-		{
-			if (entityArray[i]->name() == "player") {
-				shared_ptr<Entity> player = entityArray[i];
-				NetworkUtils::createFrameUpdate(m_playerGUID, player, output);
-			}
-		}
-
+		//TODO: allow for non-player entities (i.e. projectiles)?
+		NetworkUtils::createFrameUpdate(m_playerGUID, scene()->entity("player"), output);
 		ENetBuffer enet_buff;
 		enet_buff.data = (void*)output.getCArray();
 		enet_buff.dataLength = output.length();
-
 		// Send the serialized frame to the server
 		if (enet_socket_send(m_unreliableSocket, &m_unreliableServerAddress, &enet_buff, 1) <= 0) {
 			logPrintf("Failed to send a packet to the server\n");
@@ -1021,10 +993,9 @@ void FPSciApp::onNetwork() {
 
 	ENetAddress addr_from;
 	ENetBuffer buff;
-	// TODO: make this choose the MTU better than this
-	void* data = malloc(1500);  //Allocate 1 mtu worth of space for the data from the packet
+	void* data = malloc(ENET_HOST_DEFAULT_MTU);  //Allocate 1 mtu worth of space for the data from the packet
 	buff.data = data;
-	buff.dataLength = 1500;
+	buff.dataLength = ENET_HOST_DEFAULT_MTU;
 
 	while (enet_socket_receive(m_unreliableSocket, &addr_from, &buff, 1)) {
 		char ip[16];
@@ -1035,6 +1006,7 @@ void FPSciApp::onNetwork() {
 		/* Take a set of entity updates from the server and apply them to local entities */
 		if (type == NetworkUtils::MessageType::BATCH_ENTITY_UPDATE) {
 			//debugPrintf("Got entity update...\n");
+			//TODO: move to NetworkUtil
 			int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
 
 			Array<GUniqueID> ignore;
@@ -1062,24 +1034,14 @@ void FPSciApp::onNetwork() {
 		/* connection to server confirmed by ENet */
 		if (event.type == ENET_EVENT_TYPE_CONNECT) {
 			// Send the server a control message with the players GUID so it knows to add this address as a peer
-			ENetPacket* registerPacket;
-			BinaryOutput bitstring;
-			bitstring.setEndian(G3D_BIG_ENDIAN);
-			bitstring.writeUInt8(NetworkUtils::MessageType::REGISTER_CLIENT);
-			m_playerGUID.serialize(bitstring);		// Send the GUID as a byte string to the server so it can identify the client
 			ENetAddress localAddress;
 			enet_socket_get_address(m_unreliableSocket, &localAddress);
-			bitstring.writeUInt16(localAddress.port); // Client socket port
 			char ipStr[16];
 			enet_address_get_host_ip(&localAddress, ipStr, 16);
 			debugPrintf("Registering client...\n");
 			debugPrintf("\tPort: %i\n", localAddress.port);
 			debugPrintf("\tHost: %s\n", ipStr);
-			registerPacket = enet_packet_create((void*)bitstring.getCArray(), bitstring.length() + 1, ENET_PACKET_FLAG_RELIABLE);
-			// check error on packet_create
-			debugPrintf("packet_send error: %i", enet_peer_send(m_serverPeer, 0, registerPacket));
-			//ENetEvent event;
-			//enet_host_service(m_localHost, &event, 0);
+			NetworkUtils::sendRegisterClient(m_playerGUID, localAddress.port, m_serverPeer);
 		}
 		/* Handle traffic from the server over the reliable channel*/
 		if (event.type == ENET_EVENT_TYPE_RECEIVE) {
@@ -1093,7 +1055,8 @@ void FPSciApp::onNetwork() {
 			}
 			/* create an entity in the scene when told to */
 			else if (type == NetworkUtils::MessageType::CREATE_ENTITY) {
-				// create entity and add it to the entity storage
+				// create entity and add it to the entity storage (read GUID and then create an entity with that ID)
+				//TODO move GUID read into NetworkUtils?
 				GUniqueID entity_id;
 				entity_id.deserialize(packet_contents);
 				if (entity_id != m_playerGUID) {
@@ -1127,6 +1090,7 @@ void FPSciApp::onNetwork() {
 			/* receive confirmation of registration from server */
 			else if (type == NetworkUtils::MessageType::CLIENT_REGISTRATION_REPLY) {
 				// create entity and add it to the entity storage
+				//TODO: move network IO to NetworkUtils?
 				debugPrintf("INFO: Received registration reply...\n");
 				GUniqueID clientGUID;
 				clientGUID.deserialize(packet_contents);

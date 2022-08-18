@@ -201,7 +201,7 @@ void FPSciServerApp::onNetwork() {
     Array<shared_ptr<NetworkedEntity>> entityArray;
     scene()->getTypedEntityArray<NetworkedEntity>(entityArray);
     
-    NetworkUtils::broadcastBatchEntityUpdate(entityArray, m_connectedClients, m_unreliableSocket);
+    NetworkUtils::serverBatchEntityUpdate(entityArray, m_connectedClients, m_unreliableSocket);
 }
 
 void FPSciServerApp::onInit() {
