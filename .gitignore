@@ -10,6 +10,7 @@
 /data-files/debugging_db.db
 /data-files/g3d-license.txt
 /data-files/log.txt
+/data-files/serverlog.txt
 /data-files/*.db
 /data-files/*.csv
 /data-files/*.pdn
