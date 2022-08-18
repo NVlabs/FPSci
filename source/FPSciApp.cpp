@@ -80,12 +80,17 @@ void FPSciApp::initExperiment() {
 	// Setup the connection to the server if this experiment is networked
 	if (experimentConfig.serverAddress != "")
 	{
-		enet_initialize();
+		if (enet_initialize() != 0) {
+			// print an error and terminate if Enet does not initialize successfully
+			throw std::runtime_error("Could not initialize ENet networking");
+			
+		}
+
 		ENetAddress localAddress;
 		localAddress.host = ENET_HOST_ANY;
 		localAddress.port = experimentConfig.clientPort; // TODO: Make this use a different clientPort variable
+		
 		m_localHost = enet_host_create(NULL, 1, 2, 0, 0);
-
 		if (m_localHost == NULL)
 		{
 			throw std::runtime_error("Could not create a local host for the server to connect to");
@@ -939,7 +944,7 @@ void FPSciApp::quitRequest() {
 	{
 		m_pyLogger->mergeLogToDb(true);
 	}
-	if (experimentConfig.serverAddress != "" && m_serverPeer != nullptr) {
+	if (experimentConfig.serverAddress != "" && m_serverPeer != nullptr) { // disconnect from the server if we're running in Network mode
 		enet_peer_disconnect(m_serverPeer, 0);
 	}
 	setExitCode(0);
@@ -988,7 +993,6 @@ void FPSciApp::onNetwork() {
 
 	BinaryOutput output;
 	output.setEndian(G3D_BIG_ENDIAN);
-	//G3D::serialize(userInput, output);
 
 	if (m_socketConnected && m_enetConnected) {
 		// Get and serialize the players frame
@@ -1028,45 +1032,38 @@ void FPSciApp::onNetwork() {
 		BinaryInput packet_contents((const uint8*)buff.data, buff.dataLength, G3D_BIG_ENDIAN, false, true);
 		NetworkUtils::MessageType type = (NetworkUtils::MessageType)packet_contents.readUInt8();
 
+		/* Take a set of entity updates from the server and apply them to local entities */
 		if (type == NetworkUtils::MessageType::BATCH_ENTITY_UPDATE) {
 			//debugPrintf("Got entity update...\n");
 			int num_packet_members = packet_contents.readUInt8(); // get # of frames in this packet
-			/*std::vector<GUniqueID> updated_objects = {};
-			for (int i = 0; i < num_packet_members; i++) { // get IDs for each update object from first half of packet
-				GUniqueID id;
-				packet_contents.readBytes(&id, sizeof(id));
-				updated_objects.push_back(id);
-			}*/
+
 			Array<GUniqueID> ignore;
-			ignore.append(m_playerGUID);
-			//debugPrintf("Received bulk update packet (%i members): ", num_packet_members);
+			ignore.append(m_playerGUID); // don't let the server update our location here.
+
 			for (int i = 0; i < num_packet_members; i++) { // get new frames and update objects
-				//GUniqueID entity_id = updated_objects.at(i);
 				NetworkUtils::updateEntity(ignore, scene(), packet_contents);
 			}
-			//debugPrintf("\n");
 		}
+		/* check for reply to a handshake*/
 		else if (type == NetworkUtils::MessageType::HANDSHAKE_REPLY) {
 			m_socketConnected = true;
 			debugPrintf("Received HANDSHAKE_REPLY from server\n");
 		}
 	}
-
 	free(data);
 
+	/* Poll the reliable connection and process inbound traffic.  enet_host_service also transmits the outbound queues when called*/
 	ENetEvent event;
 	while (enet_host_service(m_localHost, &event, 0) > 0)
 	{
 		char ip[16];
 		enet_address_get_host_ip(&event.peer->address, ip, 16);
 
-		ENetPacket* registerPacket;
-		BinaryOutput bitstring;
-		switch (event.type)
-		{
-		case ENET_EVENT_TYPE_CONNECT:
+		/* connection to server confirmed by ENet */
+		if (event.type == ENET_EVENT_TYPE_CONNECT) {
 			// Send the server a control message with the players GUID so it knows to add this address as a peer
-			//BinaryOutput bitstring;
+			ENetPacket* registerPacket;
+			BinaryOutput bitstring;
 			bitstring.setEndian(G3D_BIG_ENDIAN);
 			bitstring.writeUInt8(NetworkUtils::MessageType::REGISTER_CLIENT);
 			m_playerGUID.serialize(bitstring);		// Send the GUID as a byte string to the server so it can identify the client
@@ -1083,16 +1080,18 @@ void FPSciApp::onNetwork() {
 			debugPrintf("packet_send error: %i", enet_peer_send(m_serverPeer, 0, registerPacket));
 			//ENetEvent event;
 			//enet_host_service(m_localHost, &event, 0);
-			break;
-		case ENET_EVENT_TYPE_RECEIVE:
-			logPrintf("Recieved a message from ip: %s", ip);
-
+		}
+		/* Handle traffic from the server over the reliable channel*/
+		if (event.type == ENET_EVENT_TYPE_RECEIVE) {
+			// Pull data out of packet
 			BinaryInput packet_contents(event.packet->data, event.packet->dataLength, G3D_BIG_ENDIAN);
 			NetworkUtils::MessageType type = (NetworkUtils::MessageType)packet_contents.readUInt8();
 
-			if (type == NetworkUtils::MessageType::BATCH_ENTITY_UPDATE) { // TODO MOVE THIS TO SOCKET RECIEVE OOPS
-				debugPrintf("MALFORMED REQUEST: Batch entity update on reliable channel\n");
+			/* for now, batch updates on the reliable channel are ignored.*/
+			if (type == NetworkUtils::MessageType::BATCH_ENTITY_UPDATE) {
+				debugPrintf("MALFORMED REQUEST: Batch entity update on reliable channel (ignoring)\n");
 			}
+			/* create an entity in the scene when told to */
 			else if (type == NetworkUtils::MessageType::CREATE_ENTITY) {
 				// create entity and add it to the entity storage
 				GUniqueID entity_id;
@@ -1124,6 +1123,8 @@ void FPSciApp::onNetwork() {
 					(*scene()).insert(target);
 				}
 			}
+
+			/* receive confirmation of registration from server */
 			else if (type == NetworkUtils::MessageType::CLIENT_REGISTRATION_REPLY) {
 				// create entity and add it to the entity storage
 				debugPrintf("INFO: Received registration reply...\n");
@@ -1140,40 +1141,21 @@ void FPSciApp::onNetwork() {
 					}
 				}
 			}
+			/* force the client to a new position */
 			else if (type == NetworkUtils::MessageType::MOVE_CLIENT) {
 				//updates the players cframe with what the server says it should be
 				shared_ptr<PlayerEntity> entity = scene()->typedEntity<PlayerEntity>("player");
 				NetworkUtils::updateEntity(entity, packet_contents);
 			}
+			/* remove a networked entity */
 			else if (type == NetworkUtils::MessageType::DESTROY_ENTITY) {
 				debugPrintf("Recieved destroy entity request\n");
 				NetworkUtils::handleDestroyEntity(scene(), packet_contents);
 			}
 
 			enet_packet_destroy(event.packet);
-			break;
 		}
 	}
-
-	/*G3D::Box boundingBox;
-	String entityName;
-	Array<shared_ptr<Entity>> entityArray;
-	scene()->getTypedEntityArray<Entity>(entityArray);
-	for (int i = 0; i < entityArray.size(); i++)
-	{
-
-		entityArray[i]->getLastBounds(boundingBox);
-		entityName = entityArray[i]->name();
-		if (entityName == "player") {
-			ENetBuffer enet_buff;
-			enet_buff.data = (void*)output.getCArray();
-			enet_buff.dataLength = output.length();
-			String messageToSend = entityName + ": (" + String(std::to_string(boundingBox.center().x)) + ", " + String(std::to_string(boundingBox.center().y)) + ", " + String(std::to_string(boundingBox.center().z)) + ")\n";
-			ENetPacket* packet = enet_packet_create(messageToSend.c_str(), messageToSend.size() + 1, ENET_PACKET_FLAG_RELIABLE);
-
-		}
-	}
-	*/
 }
 
 void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
