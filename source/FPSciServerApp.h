@@ -7,9 +7,10 @@
 #include "NoWindow.h"
 #include "NetworkUtils.h"
 
-class FPSciNetworkApp : public FPSciApp {
+class FPSciServerApp : public FPSciApp {
 	
 protected:
+	// Struct containing all the data needed to keep track of and comunicate with clients
     struct ConnectedClient {
         ENetPeer peer;
         GUniqueID guid;
@@ -17,19 +18,15 @@ protected:
     };
 	
     ENetHost* m_serverHost;                              //> Host that the clients connect to
-    Array <ENetPeer*> m_serverPeers;                     //> Peers that the server is connected to TODO: decide if we need this and remove if not needed
     ENetSocket m_listenSocket;                           //> Socket for the server to listen on
     ENetSocket m_sendSocket;                             //> Socket for the server to send on TODO: remove this and just send on the listen socket
-    Array <ENetAddress> m_connectedAddresses;            //> Addresses we have received UDP traffic from so we can broadcast worldstate updates
-	Array <GUniqueID> m_connectedGUIDs;					 //> GUIDs of the connected clients
-    Array <ENetPeer> m_connectedPeers;
 
-    Array <ConnectedClient> m_connectedClients;
+    Array <ConnectedClient> m_connectedClients;          //> List of all connected clients and all atributes needed to comunicate with them
 	
     
 
 public:
-    FPSciNetworkApp(const GApp::Settings& settings);
+    FPSciServerApp(const GApp::Settings& settings);
 
     void onInit() override;
     void initExperiment() override;

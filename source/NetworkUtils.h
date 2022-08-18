@@ -86,8 +86,9 @@ public:
 	static void createFrameUpdate(GUniqueID id, shared_ptr<Entity> entity, BinaryOutput& outBuffer);
 
 	static void handleDestroyEntity(shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer);
-	static ENetPacket* createDestroyEntityPacket(GUniqueID id);
+	static void broadcastDestroyEntity(GUniqueID id, ENetHost* serverHost);
 
 	static int moveClient(CFrame frame, ENetPeer* peer);
+	static int sendHandshakeReply(ENetSocket socket, ENetAddress address);
 };
 

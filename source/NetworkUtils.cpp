@@ -11,14 +11,14 @@ void NetworkUtils::updateEntity(Array <GUniqueID> ignoreIDs, shared_ptr<G3D::Sce
 	GUniqueID entity_id;
 	entity_id.deserialize(inBuffer);;
 	shared_ptr<NetworkedEntity> entity = (*scene).typedEntity<NetworkedEntity>(entity_id.toString16());
-	if(entity == nullptr && !ignoreIDs.contains(entity_id)) {
+	if (entity == nullptr && !ignoreIDs.contains(entity_id)) {
 		debugPrintf("Recieved update for entity %s, but it doesn't exist\n", entity_id.toString16().c_str());
 	}
 	if (ignoreIDs.contains(entity_id)) { // don't let the server move ignored entities
 		entity = nullptr;
 	}
 	updateEntity(entity, inBuffer); // Allways call this even if the entity is ignored so we remove the data from the BinaryInput
-	
+
 }
 
 void NetworkUtils::updateEntity(shared_ptr<Entity> entity, BinaryInput& inBuffer) {
@@ -51,7 +51,7 @@ void NetworkUtils::handleDestroyEntity(shared_ptr<G3D::Scene> scene, BinaryInput
 	}
 }
 
-ENetPacket* NetworkUtils::createDestroyEntityPacket(GUniqueID id) {
+void NetworkUtils::broadcastDestroyEntity(GUniqueID id, ENetHost* serverHost) {
 	BinaryOutput outBuffer;
 	outBuffer.setEndian(G3D_BIG_ENDIAN);
 	outBuffer.writeUInt8(NetworkUtils::MessageType::DESTROY_ENTITY);
@@ -59,15 +59,26 @@ ENetPacket* NetworkUtils::createDestroyEntityPacket(GUniqueID id) {
 
 	debugPrintf("sent destroy packet: %s\n", id.toString16());
 
-	return enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length(), ENET_PACKET_FLAG_RELIABLE);
+	ENetPacket* packet = enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length(), ENET_PACKET_FLAG_RELIABLE);
+	enet_host_broadcast(serverHost, 0, packet);
 }
 
 int NetworkUtils::moveClient(CFrame frame, ENetPeer* peer) {
-	BinaryOutput outbuffer;
-	outbuffer.setEndian(G3D::G3D_BIG_ENDIAN);
-	outbuffer.writeUInt8(NetworkUtils::MOVE_CLIENT);
-	outbuffer.writeUInt8(NetworkUpdateType::REPLACE_FRAME);
-	frame.serialize(outbuffer);
-	ENetPacket* packet = enet_packet_create((void*)outbuffer.getCArray(), outbuffer.length() + 1, ENET_PACKET_FLAG_RELIABLE);
+	BinaryOutput outBuffer;
+	outBuffer.setEndian(G3D::G3D_BIG_ENDIAN);
+	outBuffer.writeUInt8(NetworkUtils::MOVE_CLIENT);
+	outBuffer.writeUInt8(NetworkUpdateType::REPLACE_FRAME);
+	frame.serialize(outBuffer);
+	ENetPacket* packet = enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length() + 1, ENET_PACKET_FLAG_RELIABLE);
 	return enet_peer_send(peer, 0, packet);
+}
+
+int NetworkUtils::sendHandshakeReply(ENetSocket socket, ENetAddress address) {
+	BinaryOutput outBuffer;
+	outBuffer.setEndian(G3D::G3D_BIG_ENDIAN);
+	outBuffer.writeUInt8(NetworkUtils::HANDSHAKE_REPLY);
+	ENetBuffer buff;
+	buff.data = (void*)outBuffer.getCArray();
+	buff.dataLength = outBuffer.length();
+	return enet_socket_send(socket, &address, &buff, 1);
 }

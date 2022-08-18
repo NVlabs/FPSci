@@ -90,7 +90,7 @@
     <ClInclude Include="..\source\FPSciAnyTableReader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\FPSciNetworkApp.h">
+    <ClInclude Include="..\source\FPSciServerApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\source\NoWindow.h">
@@ -158,7 +158,7 @@
     <ClCompile Include="..\source\FPSciGraphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\FPSciNetworkApp.cpp">
+    <ClCompile Include="..\source\FPSciServerApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\source\NoWindow.cpp">
