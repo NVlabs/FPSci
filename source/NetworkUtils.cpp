@@ -63,7 +63,7 @@ void NetworkUtils::broadcastDestroyEntity(GUniqueID id, ENetHost* serverHost) {
 	enet_host_broadcast(serverHost, 0, packet);
 }
 
-int NetworkUtils::moveClient(CFrame frame, ENetPeer* peer) {
+int NetworkUtils::sendMoveClient(CFrame frame, ENetPeer* peer) {
 	BinaryOutput outBuffer;
 	outBuffer.setEndian(G3D::G3D_BIG_ENDIAN);
 	outBuffer.writeUInt8(NetworkUtils::MOVE_CLIENT);
@@ -81,4 +81,74 @@ int NetworkUtils::sendHandshakeReply(ENetSocket socket, ENetAddress address) {
 	buff.data = (void*)outBuffer.getCArray();
 	buff.dataLength = outBuffer.length();
 	return enet_socket_send(socket, &address, &buff, 1);
+}
+
+NetworkUtils::ConnectedClient NetworkUtils::registerClient(ENetEvent event, BinaryInput& inBuffer) {
+	/* get the clients information and create a ConnectedClient struct */
+	ConnectedClient newClient;
+	newClient.peer = event.peer;
+	GUniqueID clientGUID;
+	clientGUID.deserialize(inBuffer);
+	newClient.guid = clientGUID;
+	ENetAddress addr;
+	addr.host = event.peer->address.host;
+	addr.port = inBuffer.readUInt16();   // Set the port to what the client sends to us because we might loose the UDP handshake packet
+	newClient.unreliableAddress = addr;
+	debugPrintf("\tPort: %i\n", addr.port);
+	debugPrintf("\tHost: %i\n", addr.host);
+	/* Create Reply to the client */
+	BinaryOutput outBuffer;
+	outBuffer.setEndian(G3D_BIG_ENDIAN);
+	outBuffer.writeUInt8(NetworkUtils::MessageType::CLIENT_REGISTRATION_REPLY);
+	clientGUID.serialize(outBuffer);		// Send the GUID as a byte string to the client in confirmation
+	outBuffer.writeUInt8(0);
+	ENetPacket* replyPacket = enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length(), ENET_PACKET_FLAG_RELIABLE);
+	enet_peer_send(event.peer, 0, replyPacket);
+	return newClient;
+}
+
+void NetworkUtils::broadcastCreateEntity(GUniqueID guid, ENetHost* serverHost) {
+	BinaryOutput outBuffer;
+	outBuffer.setEndian(G3D_BIG_ENDIAN);
+	outBuffer.writeUInt8(NetworkUtils::MessageType::CREATE_ENTITY);
+	guid.serialize(outBuffer);		// Send the GUID as a byte string to the server so it can identify the client
+
+	ENetPacket* packet = enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length(), ENET_PACKET_FLAG_RELIABLE);
+	// update the other peers with new connection
+	enet_host_broadcast(serverHost, 0, packet);
+}
+
+int NetworkUtils::sendCreateEntity(GUniqueID guid, ENetPeer* peer) {
+	BinaryOutput outBuffer;
+	outBuffer.setEndian(G3D_BIG_ENDIAN);
+	outBuffer.writeUInt8(NetworkUtils::MessageType::CREATE_ENTITY);
+	guid.serialize(outBuffer);		// Send the GUID as a byte string to the server so it can identify the client
+	ENetPacket* packet = enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length(), ENET_PACKET_FLAG_RELIABLE);
+	return enet_peer_send(peer, 0, packet);
+}
+
+void NetworkUtils::broadcastBatchEntityUpdate(Array<shared_ptr<NetworkedEntity>> entities, Array<ConnectedClient> clients, ENetSocket sendSocket) {
+	/* Setup the packet */
+	BinaryOutput outBuffer;
+	outBuffer.setEndian(G3D_BIG_ENDIAN);
+	outBuffer.writeUInt8(NetworkUtils::MessageType::BATCH_ENTITY_UPDATE);
+	outBuffer.writeUInt8(entities.size());
+	/* Add the GUID and CFrame of each entity to the packet */
+	for (int i = 0; i < entities.size(); i++)
+	{
+		shared_ptr<NetworkedEntity> e = entities[i];
+		GUniqueID guid = GUniqueID::fromString16((*e).name().c_str());
+		NetworkUtils::createFrameUpdate(guid, e, outBuffer);
+	}
+	ENetBuffer enet_buff;
+	enet_buff.data = (void*)outBuffer.getCArray();
+	enet_buff.dataLength = outBuffer.length();
+	/* Send the packet to all clients over the unreliable connection */
+	for (int i = 0; i < clients.length(); i++) {
+		ENetAddress toAddress = clients[i].unreliableAddress;
+		if (enet_socket_send(sendSocket, &toAddress, &enet_buff, 1) <= 0) {
+			debugPrintf("Failed to send a packet to %s\n", clients[i].guid.toString16());
+			logPrintf("Failed to send at least one packet to a client");
+		}
+	}
 }
