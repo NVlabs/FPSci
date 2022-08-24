@@ -507,16 +507,16 @@ TEST_F(FPSciTests, TestTargetSizes) {
 	auto spawnedtargets = respawnTargets();
 
 	ASSERT_EQ(spawnedtargets, 5);
-	auto small = s_app->sess->targetArray()[0];
+	auto smallArr = s_app->sess->targetArray()[0];
 	auto medium = s_app->sess->targetArray()[1];
 	auto large = s_app->sess->targetArray()[2];
 	auto toosmall = s_app->sess->targetArray()[3];
 	auto toolarge = s_app->sess->targetArray()[4];
 
 	// Expect to match the values written in the config
-	auto smallid = small->id();
-	EXPECT_TRUE(smallid.compare("small") == 0);
-	auto smallsize = small->size();
+	auto smallid = smallArr->id();
+	EXPECT_TRUE(smallid.compare("smallArr") == 0);
+	auto smallsize = smallArr->size();
 	float targetsmallsize = 0.05f;
 	EXPECT_NEAR(smallsize, targetsmallsize, targetsmallsize * e);
 

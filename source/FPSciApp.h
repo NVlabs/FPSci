@@ -152,7 +152,7 @@ protected:
 	RealTime m_startTime;									  ///< Start time (for the session)
 	RealTime m_last2DTime, m_last3DTime, m_lastCompositeTime; ///< Times used for iTimeDelta
 
-	ENetSocket m_unreliableSocket;						///< Socket for unreliable comunication with the server
+	ENetSocket m_unreliableSocket = NULL;				///< Socket for unreliable comunication with the server
 	ENetPeer* m_serverPeer = nullptr;					///< Peer used for server-side communication
 	ENetHost* m_localHost = nullptr;								///< Host used to allow inbound relibale connections
 	ENetAddress m_reliableServerAddress;				///< Address of server for reliable traffic

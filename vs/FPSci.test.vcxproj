@@ -35,7 +35,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Microsoft-googletest-v140-windesktop-msvcstl-static-rt-dyn-Disable-gtest_main>true</Microsoft-googletest-v140-windesktop-msvcstl-static-rt-dyn-Disable-gtest_main>
-    <IncludePath>$(IncludePath);$(ProjectDir)\..\Source;$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
+    <IncludePath>$(IncludePath);$(ProjectDir)\..\Source;$(g3d)\G3D10\external\assimp.lib\include;$(g3d)\G3D10\external\glew.lib\include;$(g3d)\G3D10\external\glfw.lib\include;$(g3d)\G3D10\external\qrencode.lib\include;$(g3d)\G3D10\physx\include;$(g3d)\G3D10\G3D-base.lib\include;$(g3d)\G3D10\G3D-gfx.lib\include;$(g3d)\G3D10\G3D-app.lib\include;$(g3d)\G3D10\external\openvr\include;$(g3d)\G3D10\external\tbb\include;$(g3d)\G3D10\external\python\include;$(g3d)\G3D10\external\enet.lib\include;$(g3d)\G3D10\external\sqlite3.lib\include</IncludePath>
     <OutDir>$(ProjectDir)Build\$(ProjectName)-$(Platform)-$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(ProjectName)-$(Platform)-$(Configuration)\Intermediates\</IntDir>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(g3d)\G3D10\build\lib</LibraryPath>

@@ -1902,7 +1902,9 @@ void FPSciApp::oneFrame() {
 		// Network
 		BEGIN_PROFILER_EVENT("GApp::onNetwork");
 		m_networkWatch.tick();
-		onNetwork();
+		if (experimentConfig.serverAddress != "") {
+			onNetwork();
+		}
 		m_networkWatch.tock();
 		END_PROFILER_EVENT();
 
