@@ -133,6 +133,10 @@ void FPSciServerApp::onNetwork() {
                 if (m_connectedClients[i].peer->address.host == event.peer->address.host &&
                     m_connectedClients[i].peer->address.port == event.peer->address.port) {
                     GUniqueID id = m_connectedClients[i].guid;
+                    shared_ptr<NetworkedEntity> entity = scene()->typedEntity<NetworkedEntity>(id.toString16());
+                    if (entity != nullptr) {
+                        scene()->remove(entity);
+                    }
                     m_connectedClients.remove(i, 1);
                     NetworkUtils::broadcastDestroyEntity(id, m_localHost);
                 }
