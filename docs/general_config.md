@@ -262,33 +262,43 @@ Note: The sound played when `referenceTargetPlayFireSound` is set to `true` is t
 "resetPlayerPositionBetweenTrials": false,  // Respawn the player in the starting location between trials
 ```
 
-## Logging Controls
-As part of the general configuration parameters several controls over reporting of data via the output SQL database are provided. These flags and their functions are described below.
+## Logger Config
+These flags control whether various information is written to the output files. The bulk of data is reported in a `results.db` file (see note on naming below) while primarily debugging information is printed to `log.txt`:
 
-| Parameter Name        | Units | Description                                                                      |
-|-----------------------|-------|----------------------------------------------------------------------------------|
-|`logEnable`            |`bool` | Enables the logger and creation of an output database                            |
-|`logTargetTrajectories`|`bool` | Whether or not to log target position to the `Target_Trajectory` table           |
-|`logFrameInfo`         |`bool` | Whether or not to log frame info into the `Frame_Info` table                     |
-|`logPlayerActions`     |`bool` | Whether or not to log player actions into the `Player_Action` table              |
-|`logTrialResponse`     |`bool` | Whether or not to log trial responses into the `Trials` table                    |
-|`sessionParametersToLog`      |`Array<String>`| A list of additional parameter names (from the config) to log            |
+| Parameter Name                    | Type  | Output File | Description                                                           |
+|-----------------------------------|-------|-------------|-----------------------------------------------------------------------|
+|`logEnable`                        |`bool` | `result.db` | Enable/disable for all output (SQL) database logging                  |
+|`logTargetTrajectories`            |`bool` | `result.db` | Enable/disable for logging target position to database (per frame)    |
+|`logFrameInfo`                     |`bool` | `result.db` | Enable/disable for logging frame info to database (per frame)         |
+|`logPlayerActions`                 |`bool` | `result.db` | Enable/disable for logging player position, aim , and actions to database (per frame) |
+|`logTrialResponse`                 |`bool` | `result.db` | Enable/disable for logging trial responses to database (per trial)    |
+|`logUsers`                         |`bool` | `result.db` | Enable/disable for logging users to database (per session)            |
+|`logOnChange`                      |`bool` | `result.db` | Enable/disable for logging values to the `Player_Action` and `Target_Trajectory` tables only when changes occur (smaller file size when `true`) |
+|`logToSingleDb`                    |`bool` | `result.db` | Enable/disable for logging to a unified output database file (named using the experiment description and user ID)  |
+|`sessionParametersToLog`           |`Array<String>`| `result.db` | A list of other config parameters (by name) that are logged on a per-session basis to the `Sessions` table |
+|`logSessionDropDownUpdate`         |`bool`         | `log.txt`   | Controls whether session drop-down updates are written to `log.txt`  |
+ 
+```
+"logEnable" = true,                     // Enable logging by default
+"logTargetTrajectories" = true,         // Log target trajectories (name, state, position)
+"logFrameInfo" = true,                  // Log per-frame timestamp and delta time
+"logPlayerActions" = true,              // Log player actions (view direction, position, state, event, target)
+"logTrialResponse" = true,              // Log trial results to the Trials table
+"logUsers" = true,                      // Log the users to the Users table
+"logOnChange" = false,                  // Log every frame (do not log only on change)
+"logToSingleDb" = true,                 // Log all sessions affiliated with a given experiment to the same database file
+"sessionParametersToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table
+"logSessionDropDownUpdate" : false,
+```
 
-```
-"logEnable" : true,
-"logTargetTrajectories": true,
-"logFrameInfo": true,
-"logPlayerActions": true,
-"logTrialResponse": true,
-"sessionParametersToLog" : ["frameRate", "frameDelay"],
-```
+*Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user]_[experiment config hash].db"`. This hash is printed to the `log.txt` from the run in case it is needed to disambiguate results files. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues. The experiment config hash takes into account only "valid" settings and ignores formatting only changes in the configuration file. Default values are used for the hash for anything that is not specified, so if a default is specified, the hash will match the config where the default was not specified.
 
 ### Logging Session Parameters
 The `sessionParametersToLog` parameter allows the user to provide an additional list of parameter names to log into the `Sessions` table in the output database. This allows users to control their reporting of conditions on a per-session basis. These logging control can (of course) also be specified at the experiment level. For example, if we had a series of sessions over which the player's `moveRate` or the HUD's `showAmmo` value was changing we could add these to the `sessionParametersToLog` array by specifying:
 ```
 "sessionParametersToLog" = ["moveRate", "showAmmo"],
 ```
-In the top-level of the experiment config file. This allows the experiment designer to tag their sessions w/ relevant/changing parameters as needed for ease of reference later on from the database output file(s).
+In the top-level of the experiment config file. This allows the experiment designer to tag their sessions w/ relevant/changing parameters as needed for ease of reference later on from the database output file(s). If `sessionParametersToLog` is set at the session level, it is likely to cause some sessions to fail to report anything due to SQL errors. Those errors will be printed to the `log.txt` to help debugging this situation.
 
 ## Feedback Questions
 In addition to supporting in-app performance-based reporting the application also includes `.Any` configurable prompts that can be configured from the experiment or session level. Currently `MultipleChoice` and (text) `Entry` questions are supported, though more support could be added for other question types.
@@ -641,35 +651,6 @@ These flags control the display of the in-game user menu:
 "showMenuOnStartup" : true,             // Show the user menu when the application starts
 "showMenuBetweenSessions": true         // Show the user menu between each session
 ```
-
-## Logger Config
-These flags control whether various information is written to the output database file:
-
-| Parameter Name                    | Type  | Description                                                           |
-|-----------------------------------|-------|-----------------------------------------------------------------------|
-|`logEnable`                        |`bool` | Enable/disable for all output (SQL) database logging                  |
-|`logTargetTrajectories`            |`bool` | Enable/disable for logging target position to database (per frame)    |
-|`logFrameInfo`                     |`bool` | Enable/disable for logging frame info to database (per frame)         |
-|`logPlayerActions`                 |`bool` | Enable/disable for logging player position, aim , and actions to database (per frame) |
-|`logTrialResponse`                 |`bool` | Enable/disable for logging trial responses to database (per trial)    |
-|`logUsers`                         |`bool` | Enable/disable for logging users to database (per session)            |
-|`logOnChange`                      |`bool` | Enable/disable for logging values to the `Player_Action` and `Target_Trajectory` tables only when changes occur    |
-|`logToSingleDb`                    |`bool` | Enable/disable for logging to a unified output database file (named using the experiment description and user ID)  |
-|`sessionParametersToLog`           |`Array<String>`| A list of other config parameters (by name) that are logged on a per-session basis to the `Sessions` table |
- 
-```
-"logEnable" = true,                     // Enable logging by default
-"logTargetTrajectories" = true,         // Log target trajectories (name, state, position)
-"logFrameInfo" = true,                  // Log per-frame timestamp and delta time
-"logPlayerActions" = true,              // Log player actions (view direction, position, state, event, target)
-"logTrialResponse" = true,              // Log trial results to the Trials table
-"logUsers" = true,                      // Log the users to the Users table
-"logOnChange" = false,                  // Log every frame (do not log only on change)
-"logToSingleDb" = true,                 // Log all sessions affiliated with a given experiment to the same database file
-"sessionParametersToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table
-```
-
-*Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user]_[experiment config hash].db"`. This hash is printed to the `log.txt` from the run in case it is needed to disambiguate results files. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues. The experiment config hash takes into account only "valid" settings and ignores formatting only changes in the configuration file. Default values are used for the hash for anything that is not specified, so if a default is specified, the hash will match the config where the default was not specified.
 
 ## Command Config
 In addition to the programmable behavior above the general config also supports running of arbitrary commands around the FPSci runtime. Note that the "end" commands keep running and there's the potential for orphaned processes if you specify commands that are long running or infinite. The command options include:
