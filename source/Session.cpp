@@ -535,13 +535,17 @@ void Session::updatePresentationState()
 						m_app->quitRequest();
 					}
 				}
+				moveOn = true;														// Check for session complete (signal start of next session)
 			}
 		}
 		else {
 			// Go ahead and move to the complete state since there aren't any valid sessions
 			newState = PresentationState::complete;
-			m_feedbackMessage = formatFeedback("All sessions complete!");
+			m_feedbackMessage = formatFeedback(m_app->experimentConfig.feedback.allSessComplete);
 			moveOn = false;
+			if (m_app->experimentConfig.closeOnComplete) {		// This is the case that is used for experiment config closeOnComplete!
+				m_app->quitRequest();
+			}
 		}
 	}
 	else {
