@@ -20,14 +20,14 @@ outputScript = 'scripts/package/fpsci_packager.sh'
 outputBatchScript = 'scripts/package/fpsci_packager.bat'
 
 # Path of the log.txt file to use
-inputLog = 'data-files/log.txt'
+inputLogs = ['data-files/log.txt','data-files/serverlog.txt']
 
 # The list of files that should always be excluded
-excludeList = ['log.txt', 'keymap.Any', 'systemconfig.Any']
+excludeList = ['log.txt', 'serverlog.txt', 'keymap.Any', 'systemconfig.Any']
 # The list of files that should be excluded for release builds, but may want to be included for specific experiment distributions
 # Use the empty list if you want to distribute an experiment
-secondaryExcludeList = ['experimentconfig.Any', 'startupconfig.Any', 'userconfig.Any', 'userstatus.Any']
-# secondaryExcludeList = []
+# secondaryExcludeList = ['experimentconfig.Any', 'startupconfig.Any', 'userconfig.Any', 'userstatus.Any', 'serverstartupconfig.Any']
+secondaryExcludeList = []
 
 # List of paths to search for to merge into the same distribution directory
 basePath = ['/data-files/', '/game/', '/common/']
@@ -82,54 +82,56 @@ if __name__ == '__main__':
 
     # Set up copy of .exe
     lineSet.add('cp vs/Build/FirstPersonScience-x64-Release/FirstPersonScience.exe ' + distPath + '\n')
+    lineSet.add('cp vs/Build/FirstPersonScienceServer-x64-Release/FirstPersonScienceServer.exe ' + distPath + '\n')
 
     # The log file which lists the files used
-    try:
-        log = open(inputLog)
-    except FileNotFoundError:
-        print('No %s found, continuing without it.'%(inputLog))
-    else:
-        with log:
-            print('Adding files from %s to %s.'%(inputLog, outputScript))
-            # main loop, need to ignore lines before the file list begins
-            beforeFiles = True
-            for line in log.readlines():
-                # In the file list, add this file to what we want to copy
-                if not beforeFiles and line != '\n':
-                    filename = line.strip()
-                    basename = filename.split('/')[-1]
+    for inputLog in inputLogs:
+        try:
+            log = open(inputLog)
+        except FileNotFoundError:
+            print('No %s found, continuing without it.'%(inputLog))
+        else:
+            with log:
+                print('Adding files from %s to %s.'%(inputLog, outputScript))
+                # main loop, need to ignore lines before the file list begins
+                beforeFiles = True
+                for line in log.readlines():
+                    # In the file list, add this file to what we want to copy
+                    if not beforeFiles and line != '\n':
+                        filename = line.strip()
+                        basename = filename.split('/')[-1]
 
-                    # Exclude the lists of files we don't want to package
-                    if basename in excludeList or basename in secondaryExcludeList:
-                        continue
+                        # Exclude the lists of files we don't want to package
+                        if basename in excludeList or basename in secondaryExcludeList:
+                            continue
                     
-                    # Absolute path given
-                    if filename[1:].startswith(':/'):
-                        for path in basePath:
-                            dest = filename.find(path)
-                            if dest > 0:
-                                dest += len(path)
-                                additionalPath = filename[dest:-len(basename)]
-                                # if this file is inside a compressed structure, skip copying it
-                                if additionalPath.find('.pk3') > 0 or additionalPath.find('.zip') > 0:
-                                    break
+                        # Absolute path given
+                        if filename[1:].startswith(':/'):
+                            for path in basePath:
+                                dest = filename.find(path)
+                                if dest > 0:
+                                    dest += len(path)
+                                    additionalPath = filename[dest:-len(basename)]
+                                    # if this file is inside a compressed structure, skip copying it
+                                    if additionalPath.find('.pk3') > 0 or additionalPath.find('.zip') > 0:
+                                        break
 
-                                # Make paths generic
-                                filename = filename.replace(g3dPath, "$g3d").replace(runPath, ".")
+                                    # Make paths generic
+                                    filename = filename.replace(g3dPath, "$g3d").replace(runPath, ".")
 
-                                # Write commands to file
-                                lineSet.add('mkdir -p ' + distPath + additionalPath + '\n')
-                                lineSet.add('cp ' + filename + ' ' + distPath + additionalPath + '\n')
+                                    # Write commands to file
+                                    lineSet.add('mkdir -p ' + distPath + additionalPath + '\n')
+                                    lineSet.add('cp ' + filename + ' ' + distPath + additionalPath + '\n')
 
-                    # file is in the PATH, need to find it
-                    else:
-                        # Use the `which` version if $g3d is the wrong path
-                        # lineSet.add('cp `which ' + filename + '` ' + distPath + '\n')
-                        lineSet.add('cp $g3d/G3D10/build/bin/' + filename + ' ' + distPath + '\n')
+                        # file is in the PATH, need to find it
+                        else:
+                            # Use the `which` version if $g3d is the wrong path
+                            # lineSet.add('cp `which ' + filename + '` ' + distPath + '\n')
+                            lineSet.add('cp $g3d/G3D10/build/bin/' + filename + ' ' + distPath + '\n')
 
-                # Find where the filenames start
-                if line.startswith('    ###    Files Used    ###'):
-                    beforeFiles = False
+                    # Find where the filenames start
+                    if line.startswith('    ###    Files Used    ###'):
+                        beforeFiles = False
 
     # Write the set of commands in sorted order
     with open(outputScript, 'w') as packageScript:
