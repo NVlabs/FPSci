@@ -197,6 +197,9 @@ void FPSciServerApp::onNetwork() {
                     NetworkUtils::sendMoveClient(frame, event.peer);
                 }
             }
+            else if (type == NetworkUtils::MessageType::REPORT_HIT) {
+                NetworkUtils::handleHitReport(m_connectedClients, packet_contents);
+            }
             enet_packet_destroy(event.packet);
         }
     }

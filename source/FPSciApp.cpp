@@ -3,6 +3,7 @@
 #include "Dialogs.h"
 #include "Logger.h"
 #include "Session.h"
+#include "NetworkedSession.h"
 #include "PhysicsScene.h"
 #include "WaypointManager.h"
 #include <chrono>
@@ -749,13 +750,13 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 		logPrintf("User selected session: %s. Updating now...\n", id.c_str());
 		m_userSettingsWindow->setSelectedSession(id);
 		// Create the session based on the loaded config
-		sess = Session::create(this, sessConfig);
+		sess = NetworkedSession::create(this, sessConfig); // TODO NOT ALWAYS A NETWORKED SESSSION
 	}
 	else
 	{
 		// Create an empty session
 		sessConfig = SessionConfig::create();
-		sess = Session::create(this);
+		sess = NetworkedSession::create(this);
 	}
 
 	// Update reticle
@@ -1084,6 +1085,7 @@ void FPSciApp::onNetwork() {
 					target->setColor(G3D::Color3(20.0, 20.0, 200.0));
 
 					(*scene()).insert(target);
+					static_cast<NetworkedSession*>(sess.get())->addHittableTarget(target);
 				}
 			}
 
@@ -1595,6 +1597,12 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	float damage = m_currentWeaponDamage;
 	target->doDamage(damage);
 	target->playHitSound();
+
+	debugPrintf("HIT TARGET: %s\n", target->name().c_str());
+	if (m_serverPeer != nullptr && m_enetConnected) { // TODO DON'T SEND IF NOT NETWORKED
+		NetworkUtils::sendHitReport(GUniqueID::fromString16(target->name().c_str()), m_playerGUID, m_serverPeer);
+		return;
+	}
 
 	// Check if we need to add combat text for this damage
 	if (sessConfig->targetView.showCombatText)

@@ -22,7 +22,6 @@
 			Uint8: Entity Type
 			... : misc. data for constructor, dependent on Entity type
 
-			#NYI
 			Type DESTROY_ENTITY:
 			UInt8: type (DESTROY_ENTITY)
 			GUID: object ID
@@ -44,15 +43,22 @@
 			Type HANDSHAKE_REPLY
 			UInt8: type (HANDSHAKE_REPLY)
 
-			#NYI
 			Type MOVE_CLIENT:
 			UInt 8: type (MOVE_CLIENT)
 			CFrame: new position
 
-			Type CLIENT_DISCONNECTED: ?????
 
-			Type REGISTER_HIT:
+			Type REPORT_HIT:
+			UInt8: type (REPORT_HIT)
+			GUID: entity shot
+			GUID: shooter
+			...
 
+			Type NOTIFY_HIT:
+			UInt8: type (NOTIFY_HIT)
+			GUID: entity shot
+			GUID: shot by
+			...
 
 */
 
@@ -73,7 +79,10 @@ public:
 		CLIENT_REGISTRATION_REPLY,
 
 		HANDSHAKE,
-		HANDSHAKE_REPLY
+		HANDSHAKE_REPLY,
+
+		REPORT_HIT,
+		NOTIFY_HIT
 	};
 
 	enum NetworkUpdateType {
@@ -83,7 +92,7 @@ public:
 
 	// Struct containing all the data needed to keep track of and comunicate with clients
 	struct ConnectedClient {
-		ENetPeer *peer;
+		ENetPeer* peer;
 		GUniqueID guid;
 		ENetAddress unreliableAddress;
 	};
@@ -94,6 +103,9 @@ public:
 
 	static void handleDestroyEntity(shared_ptr<G3D::Scene> scene, BinaryInput& inBuffer);
 	static void broadcastDestroyEntity(GUniqueID id, ENetHost* serverHost);
+
+	static int sendHitReport(GUniqueID shot_id, GUniqueID shooter_id, ENetPeer* serverPeer);
+	static void handleHitReport(Array<ConnectedClient> clients, BinaryInput& inBuffer);
 
 	static int sendMoveClient(CFrame frame, ENetPeer* peer);
 	static int sendHandshakeReply(ENetSocket socket, ENetAddress address);

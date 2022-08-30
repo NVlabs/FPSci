@@ -63,6 +63,31 @@ void NetworkUtils::broadcastDestroyEntity(GUniqueID id, ENetHost* serverHost) {
 	enet_host_broadcast(serverHost, 0, packet);
 }
 
+int NetworkUtils::sendHitReport(GUniqueID shot_id, GUniqueID shooter_id, ENetPeer* serverPeer) {
+	BinaryOutput outBuffer;
+	outBuffer.setEndian(G3D::G3D_BIG_ENDIAN);
+	outBuffer.writeUInt8(NetworkUtils::REPORT_HIT);
+	shot_id.serialize(outBuffer);
+	shooter_id.serialize(outBuffer);
+	ENetPacket* packet = enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length() + 1, ENET_PACKET_FLAG_RELIABLE);
+	return enet_peer_send(serverPeer, 0, packet);
+}
+void NetworkUtils::handleHitReport(Array<ConnectedClient> clients, BinaryInput& inBuffer) {
+	GUniqueID hit_entity, shooter;
+	hit_entity.deserialize(inBuffer);
+	shooter.deserialize(inBuffer);
+	debugPrintf("HIT REPORTED: %s SHOT %s WITH THE CANDLESTICK IN THE LIBRARY\n", shooter.toString16(), hit_entity.toString16());
+	for (int i = 0; i < clients.size(); i++) {
+		Point3 postion = Point3(45.8, -1.8, -0.1);
+		if (i % 2 == 1) {
+			postion = Point3(-45.8, -1.8, -0.1);
+		}
+		CFrame frame = CFrame(postion);
+
+		NetworkUtils::sendMoveClient(frame, clients[i].peer);
+	}
+}
+
 int NetworkUtils::sendMoveClient(CFrame frame, ENetPeer* peer) {
 	BinaryOutput outBuffer;
 	outBuffer.setEndian(G3D::G3D_BIG_ENDIAN);
