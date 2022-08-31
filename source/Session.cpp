@@ -372,7 +372,7 @@ void Session::processResponse()
 	if (notNull(logger)) {
 		int totalTrials = 0;
 		for (int tCount : m_completedTrials) { totalTrials += tCount;  }
-		logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), totalTrials);			// Update session entry in database
+		logger->updateSessionEntry(false, totalTrials);			// Update session entry in database
 	}
 
 	// Check for whether all targets have been destroyed
@@ -480,7 +480,7 @@ void Session::updatePresentationState()
 						if (notNull(logger) && m_config->logger.enable) {
 							int totalTrials = 0;
 							for (int tCount : m_completedTrials) { totalTrials += tCount; }
-							logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), totalTrials);			// Update session entry in database
+							logger->updateSessionEntry(true, totalTrials);			// Update session entry in database
 						}
 						if (m_config->logger.enable) {
 							endLogging();
@@ -588,12 +588,12 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 	if (m_config->logger.logTrialResponse) {
 		// Trials table. Record trial start time, end time, and task completion time.
 		FPSciLogger::TrialValues trialValues = {
-			"'" + m_config->id + "'",
+			m_config->id,
 			String(std::to_string(m_currTrialIdx)),
 			String(std::to_string(m_completedTrials[m_currTrialIdx])),
-			format("'Block %d'", m_currBlock),
-			"'" + m_taskStartTime + "'",
-			"'" + m_taskEndTime + "'",
+			format("Block %d", m_currBlock),
+			m_taskStartTime,
+			m_taskEndTime,
 			String(std::to_string(m_pretrialDuration)),
 			String(std::to_string(m_taskExecutionTime)),
 			String(std::to_string(destroyedTargets)),
