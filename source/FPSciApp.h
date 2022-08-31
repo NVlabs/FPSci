@@ -219,6 +219,7 @@ public:
 
 	bool		frameToggle			= false;	///< Simple toggle flag used for frame rate click-to-photon monitoring
 	bool		updateUserMenu		= false;	///< Semaphore to indicate user settings needs update
+	bool		userAdded			= false;	///< Flag to track whether a new user has been added
 	bool		reinitExperiment	= false;	///< Semaphore to indicate experiment needs to be reinitialized
 
 	int			experimentIdx = 0;				///< Index of the current experiment

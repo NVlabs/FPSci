@@ -388,6 +388,7 @@ Any TimingConfig::addToAny(Any a, bool forceAll) const {
 }
 
 void FeedbackConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
+	String scoreModelStr;
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("referenceTargetInitialFeedback", initialWithRef);
@@ -402,6 +403,15 @@ void FeedbackConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("feedbackOutlineColor", outlineColor);
 		reader.getIfPresent("feedbackFontSize", fontSize);
 		reader.getIfPresent("feedbackBackgroundColor", backgroundColor);
+		
+		reader.getIfPresent("scoreModel", scoreModelStr);
+		if (!toLower(scoreModelStr).compare("time remaining")) scoreModel = ScoreType::TimeRemaining;
+		else if (!toLower(scoreModelStr).compare("targets destroyed")) scoreModel = ScoreType::TargetsDestroyed;
+		else if (!toLower(scoreModelStr).compare("shots hit")) scoreModel = ScoreType::ShotsHit;
+		else if (!toLower(scoreModelStr).compare("accuracy")) scoreModel = ScoreType::Accuracy;
+		else if (!toLower(scoreModelStr).compare("trial successes")) scoreModel = ScoreType::TrialSuccesses;
+		reader.getIfPresent("scoreMultiplier", scoreMultiplier);
+
 		break;
 	default:
 		throw format("Did not recognize settings version: %d", settingsVersion);
@@ -423,6 +433,16 @@ Any FeedbackConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.outlineColor != outlineColor)		a["feedbackOutlineColor"] = outlineColor;
 	if (forceAll || def.fontSize != fontSize)				a["feedbackFontSize"] = fontSize;
 	if (forceAll || def.backgroundColor != backgroundColor) a["feedbackBackgroundColor"] = backgroundColor;
+	if (forceAll || def.scoreModel != scoreModel) {
+		String scoreStr = "unknown";
+		if (scoreModel == ScoreType::TimeRemaining) scoreStr = "time remaining";
+		else if (scoreModel == ScoreType::TargetsDestroyed) scoreStr = "targets destroyed";
+		else if (scoreModel == ScoreType::ShotsHit) scoreStr = "shots hit";
+		else if (scoreModel == ScoreType::Accuracy) scoreStr = "accuracy";
+		else if (scoreModel == ScoreType::TrialSuccesses) scoreStr = "trial successes";
+		a["scoreModel"] = scoreStr;
+	}
+	if (forceAll || def.scoreMultiplier != scoreMultiplier) a["scoreMultiplier"] = scoreMultiplier;
 	return a;
 }
 

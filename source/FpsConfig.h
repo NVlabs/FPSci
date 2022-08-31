@@ -176,8 +176,20 @@ public:
 	String trialSuccess = "%trialTaskTimeMs ms!";													///< Successful trial feedback message
 	String trialFailure = "Failure!";																///< Failed trial feedback message
 	String blockComplete = "Block %lastBlock complete! Starting block %currBlock.";					///< Block complete feedback message
-	String sessComplete = "Session complete! You scored %totalTimeLeftS!";							///< Session complete feedback message
+	String sessComplete = "Session complete! You scored %sessionScore!";							///< Session complete feedback message
 	String allSessComplete = "All Sessions Complete!";												///< All sessions complete feedback message
+
+	// Different supported scoring mechanism
+	enum ScoreType {
+		TimeRemaining,
+		TargetsDestroyed,
+		ShotsHit,
+		Accuracy,
+		TrialSuccesses
+	}; 
+
+	ScoreType scoreModel = ScoreType::TimeRemaining;				///< Score method to use for sessions
+	float scoreMultiplier = 100.f;
 
 	float fontSize = 20.0f;											///< Default font scale/size
 

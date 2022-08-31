@@ -140,6 +140,7 @@ For any/all of the feedback strings provided above, a number of `%`-delimited sp
 |`%trialTotalTargets`       | The number of total targets in the current trial                                      |
 |`%trialShotsHit`           | The number of shots the user hit in the current trial                                 |
 |`%trialTotalShots`         | The number of shots the user took in the current trial                                |
+|`%sessionScore`            | The total score (so far) for this session                                             |
 
 Using these custom strings we can implement the following (default) feedback messages:
 
@@ -150,8 +151,43 @@ maxPretrialAimDisplacement: "Invalid trial! Do not displace your aim during the 
 trialSuccessFeedback: "%trialTaskTimeMs ms!",
 trialFailureFeedback: "Failure!",
 blockCompleteFeedback: "Block %lastBlock complete! Starting block %currBlock.",
-sessionCompleteFeedback: "Session complete! You scored %totalTimeLeftS!",
+sessionCompleteFeedback: "Session complete! You scored %sessionScore!",
 allSessionsCompleteFeedback: "All Sessions Complete!",
+```
+
+### Scoring
+First Person Science supports several different scoring modes to provide feedback to the user. Score can be displayed either via the [banner](#hud-settings) or through [feedback messages](#feedback-messages).
+
+Session scoring is set using the following parameters:
+
+| Parameter Name            |Units   | Description                                                                   |
+|---------------------------|-----=--|-------------------------------------------------------------------------------|
+|`scoreModel`               |`String`| The score model (see table below)                                             |
+|`scoreMultiplier`          |`float` | A multiplier to apply to the raw score model described above (100 by default) |
+
+The currently supported score models are described below (each model is an option for the `String` provided by the `scoreModel` parameter).
+
+|Score Model            |Description                                                                     |
+|-----------------------|--------------------------------------------------------------------------------|
+|`time remaining`       |Score the subject based on aggregate remaining time in trials (best for limited duration) |
+|`targets destroyed`    |Score the total number of targets destroyed in this session                     |
+|`shots hit`            |Score the total number of shots hit in this session                             |
+|`accuracy`             |Score the accuracy (as a 100-based percentage)                                  |
+|`trial successes`      |Score the total number of successful trials                                     |
+
+The example (default) score settings are the following:
+
+```
+scoreModel = "time remaining";
+scoreMultiplier = 100;
+```
+
+If you prefer to report accuracy directly as a percentage, you could use the following:
+
+```
+scoreModel = "accuracy";
+scoreMultiplier = 1;
+sessionCompleteFeedback = "Session complete! You hit %sessionScore% of your shots.";
 ```
 
 ## Rendering Settings
@@ -619,6 +655,7 @@ These flags control the display of the in-game user menu:
 |`showUserSettings`                 |`bool`     |Show the per-user customization (sensitivity, reticle, etc) options    |
 |`allowSessionChange`               |`bool`     |Allow users to change the session using a user menu dropdown           |
 |`allowUserAdd`                     |`bool`     |Allow users to add new users to the experiment                         |
+|`requireUserAdd`                   |`bool`     |Require subjects to always create a new user on each run of FPSci      |
 |`allowUserSettingsSave`            |`bool`     |Allow the user to save their settings from the menu                    |
 |`allowSensitivityChange`           |`bool`     |Allow the user to change their (cm/360) sensitivity value from the menu|
 |`allowTurnScaleChange`             |`bool`     |Allow the user to change their turn scale from the menu                |
@@ -639,6 +676,7 @@ These flags control the display of the in-game user menu:
 "showUserSettings": true,               // Show the user settings
 "allowSessionChange": true,             // Allow the user to change sessions using the menu dropdown
 "allowUserAdd": false,                  // Don't allow new user add by default
+"requireUserAdd": false,                // Don't require new users by default
 "allowUserSettingsSave": true,          // Allow the user to save their settings changes
 "allowSensitivityChange": true,         // Allow the user to change the cm/360 sensitivity
 "allowTurnScaleChange": true,           // Allow the user to change their turn scale (see below)
