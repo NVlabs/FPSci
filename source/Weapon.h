@@ -220,9 +220,18 @@ public:
 
 	void loadSounds() {
 		// Check for play mode specific parameters
-		if (notNull(m_fireAudio)) { m_fireAudio->stop(); }
-		if(!m_config->fireSound.empty()) m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->loopAudio());
-		else { m_fireSound = nullptr; }
+		if (notNull(m_fireAudio)) { 
+			m_fireAudio->stop(); 
+		}
+		if (!m_config->fireSound.empty()) {
+			m_fireSound = Sound::create(System::findDataFile(m_config->fireSound), m_config->loopAudio());
+			// Play the sound with 0 volume to load it
+			m_fireAudio = m_fireSound->play(0.f);
+			m_fireAudio->stop();
+		}
+		else { 
+			m_fireSound = nullptr; 
+		}
 	}
 	// Plays the sound based on the weapon fire mode
 	void playSound(bool shotFired, bool shootButtonUp);
