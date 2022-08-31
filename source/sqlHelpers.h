@@ -5,5 +5,6 @@
 
 
 bool createTableInDB(sqlite3* db, const String tableName, const Array<Array<String>>& columns);
-bool insertRowIntoDB(sqlite3* db, const String tableName, const Array<String>& values, const String colNames = "");
-bool insertRowsIntoDB(sqlite3* db, const String tableName, const Array<Array<String>>& valueVector, const String colNames = "");
+/**All values sent to this function are stored in the database as Strings.*/
+bool insertRowIntoDB(sqlite3* db, const String tableName, const Array<String>& values);
+bool insertRowsIntoDB(sqlite3* db, const String tableName, const Array<Array<String>>& valueVector);
