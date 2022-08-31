@@ -692,10 +692,10 @@ Array<String> UserMenu::updateSessionDropDown() {
 }
 
 void UserMenu::updateUserPress() {
-	if (m_lastUserIdx != m_ddCurrUserIdx) {
+	if (m_ddLastUserIdx != m_ddCurrUserIdx) {
 		String userId = m_userDropDown->get(m_ddCurrUserIdx);
 		updateUser(userId);
-		m_lastUserIdx = m_ddCurrUserIdx;
+		m_ddLastUserIdx = m_ddCurrUserIdx;
 	}
 }
 
