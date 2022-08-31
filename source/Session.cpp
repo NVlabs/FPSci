@@ -372,7 +372,7 @@ void Session::processResponse()
 	if (notNull(logger)) {
 		int totalTrials = 0;
 		for (int tCount : m_completedTrials) { totalTrials += tCount;  }
-		logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), totalTrials);			// Update session entry in database
+		logger->updateSessionEntry(false, totalTrials);			// Update session entry in database
 	}
 
 	// Check for whether all targets have been destroyed
@@ -480,7 +480,7 @@ void Session::updatePresentationState()
 						if (notNull(logger) && m_config->logger.enable) {
 							int totalTrials = 0;
 							for (int tCount : m_completedTrials) { totalTrials += tCount; }
-							logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), totalTrials);			// Update session entry in database
+							logger->updateSessionEntry(true, totalTrials);			// Update session entry in database
 						}
 						if (m_config->logger.enable) {
 							endLogging();
