@@ -160,10 +160,10 @@ First Person Science supports several different scoring modes to provide feedbac
 
 Session scoring is set using the following parameters:
 
-| Parameter Name            |Units  | Description                                                        |
-|---------------------------|-------|--------------------------------------------------------------------|
-|`scoreModel`               |`String`| The score model (see table below)                                 |
-|`scoreMultiplier`          |`float` | A multiplier to apply to the raw score model described above      |
+| Parameter Name            |Units   | Description                                                                   |
+|---------------------------|-----=--|-------------------------------------------------------------------------------|
+|`scoreModel`               |`String`| The score model (see table below)                                             |
+|`scoreMultiplier`          |`float` | A multiplier to apply to the raw score model described above (100 by default) |
 
 The currently supported score models are described below (each model is an option for the `String` provided by the `scoreModel` parameter).
 
@@ -175,6 +175,20 @@ The currently supported score models are described below (each model is an optio
 |`accuracy`             |Score the accuracy (as a 100-based percentage)                                  |
 |`trial successes`      |Score the total number of successful trials                                     |
 
+The example (default) score settings are the following:
+
+```
+scoreModel = "time remaining";
+scoreMultiplier = 100;
+```
+
+If you prefer to report accuracy directly as a percentage, you could use the following:
+
+```
+scoreModel = "accuracy";
+scoreMultiplier = 1;
+sessionCompleteFeedback = "Session complete! You hit %sessionScore% of your shots.";
+```
 
 ## Rendering Settings
 | Parameter Name            |Units  | Description                                                        |
