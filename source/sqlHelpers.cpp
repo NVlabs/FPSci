@@ -33,10 +33,11 @@ bool insertRowIntoDB(sqlite3* db, const String tableName, const Array<String>& v
 		return false;
 	}
 
+	// ? is a variable that will be bound later with a `sqlite3_bind_XXXX` function
+	// see https://www2.sqlite.org/draft/c3ref/bind_blob.html for details
 	String insertC = "INSERT INTO " + tableName + " VALUES(";
 	for (int i = 0; i < values.size(); i++) {
 		insertC += "?";
-		//insertC += values[i];
 		if(i < values.size() - 1) insertC += ",";
 	}
 	insertC += ");";
@@ -68,36 +69,21 @@ bool insertRowIntoDB(sqlite3* db, const String tableName, const Array<String>& v
 	return ret == SQLITE_OK;
 }
 
-bool insertRowsIntoDB(sqlite3* db, const String tableName, const Array<Array<String>>& value_vector) {
-	if (value_vector.length() == 0) {
-		logPrintf("Warning insert rows with empty row value array ignored!\n");
-		return false;
-	}
-
-	//// TODO: need to not try to submit more than the max number of variables per statement
-	//int max_variables = sqlite3_limit(db, SQLITE_LIMIT_VARIABLE_NUMBER, -1);
-	//logPrintf("Max sqlite variables %d", max_variables);
-	//// If the size is too large, try again with half the size and return the combined result
-	//if (value_vector.size() * value_vector[0].size() > max_variables) {
-	//	// recurse on both halves
-	//	int middle = value_vector.middleIndex();
-	//	bool first = insertRowsIntoDB(db, tableName, value_vector[0:middle]);
-	//	bool second = insertRowsIntoDB(db, tableName, value_vector[middle:-1]);
-	//	return first && second;
-	//}
-
+/** Helper function that takes in a start and end row and only inserts that given range. 
+	Assumes the range is valid and below the SQLITE_LIMIT_VARIABLE_NUMBER */
+bool groupInsertRows(sqlite3* db, const String tableName, const Array<Array<String>>& value_vector, const int start_row, const int end_row) {
+	
+	// ? is a variable that will be bound later with a `sqlite3_bind_XXXX` function
+	// see https://www2.sqlite.org/draft/c3ref/bind_blob.html for details
 	String insertC = "INSERT INTO " + tableName + " VALUES";
-	for (int i = 0; i < value_vector.size(); ++i) {
-	//int len = int(min(value_vector.size(), 5));
-	//for (int i = 0; i < len; ++i) {
+	for (int i = start_row; i < end_row; ++i) {
 		insertC += "(";
 		for (int j = 0; j < value_vector[i].size(); j++) {
 			insertC += "?";
 			if (j < value_vector[i].size() - 1) insertC += ",";
 		}
 		insertC += ")";
-		if (i < value_vector.size() - 1) {
-		//if (i < len - 1) {
+		if (i < end_row - 1) {
 			// We have more rows coming after this row.
 			insertC += ",";
 		}
@@ -118,8 +104,7 @@ bool insertRowsIntoDB(sqlite3* db, const String tableName, const Array<Array<Str
 		return ret == SQLITE_OK;
 	}
 	// bind values
-	for (int i = 0; i < value_vector.size(); ++i) {
-	//for (int i = 0; i < len; ++i) {
+	for (int i = start_row; i < end_row; ++i) {
 		for (int j = 0; j < value_vector[i].size(); j++) {
 			sqlite3_bind_text(res, i * value_vector[i].size() + j + 1, value_vector[i][j].c_str(), -1, SQLITE_TRANSIENT);
 		}
@@ -136,5 +121,42 @@ bool insertRowsIntoDB(sqlite3* db, const String tableName, const Array<Array<Str
 		logPrintf("Error in INSERT INTO statement (%s): %s\n", insertC, sqlite3_errmsg(db));
 	}
 	return ret == SQLITE_OK;
+}
+
+bool insertRowsIntoDB(sqlite3* db, const String tableName, const Array<Array<String>>& value_vector) {
+	if (value_vector.length() == 0) {
+		logPrintf("Warning insert rows with empty row value array ignored!\n");
+		return false;
+	}
+
+	// Figure out how many insert groups we need
+	// SQLITE_LIMIT_VARIABLE_NUMBER indicates the max number of variables in the compiled sqlite version
+	int max_variables = sqlite3_limit(db, SQLITE_LIMIT_VARIABLE_NUMBER, -1);
+	int num_rows_per_group = max_variables / value_vector[0].size();
+	//logPrintf("insertRows %d total in %d rows with %d groups of %d per INSERT\n", 
+	//			value_vector.size() * value_vector[0].size(), 
+	//			value_vector.size(), 
+	//			num_rows_per_group, 
+	//			value_vector[0].size()
+	//		);
+
+	int ret = 0; // sqlite return value
+	int start_row = 0;
+	bool ret_val = true;
+	while (start_row < value_vector.size()) {
+		int end_row = min(start_row + num_rows_per_group, value_vector.size());
+		//logPrintf("inserting rows %d to %d\n", start_row, end_row);
+
+		bool success = groupInsertRows(db, tableName, value_vector, start_row, end_row);
+
+		if (!success) {
+			logPrintf("Failed group insert!\n");
+			ret_val = false;
+		}
+
+		start_row += num_rows_per_group;
+	}
+
+	return ret_val;
 }
 
