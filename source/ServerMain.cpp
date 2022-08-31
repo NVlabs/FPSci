@@ -17,6 +17,7 @@ int main(int argc, const char* argv[]) {
 	FPSciServerApp::startupConfig = StartupConfig::load("serverstartupconfig.Any");
 
 	FPSciServerApp::Settings settings(FPSciServerApp::startupConfig, argc, argv);
+	settings.window.caption = "Frist Person Science Server";
 	//settings.window.visible = false;
 	//settings.window.fullScreen = false;
 

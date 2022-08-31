@@ -72,20 +72,12 @@ int NetworkUtils::sendHitReport(GUniqueID shot_id, GUniqueID shooter_id, ENetPee
 	ENetPacket* packet = enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length() + 1, ENET_PACKET_FLAG_RELIABLE);
 	return enet_peer_send(serverPeer, 0, packet);
 }
-void NetworkUtils::handleHitReport(Array<ConnectedClient> clients, BinaryInput& inBuffer) {
+void NetworkUtils::handleHitReport(ENetHost* serverHost, BinaryInput& inBuffer) {
 	GUniqueID hit_entity, shooter;
 	hit_entity.deserialize(inBuffer);
 	shooter.deserialize(inBuffer);
 	debugPrintf("HIT REPORTED: %s SHOT %s WITH THE CANDLESTICK IN THE LIBRARY\n", shooter.toString16(), hit_entity.toString16());
-	for (int i = 0; i < clients.size(); i++) {
-		Point3 postion = Point3(45.8, -1.8, -0.1);
-		if (i % 2 == 1) {
-			postion = Point3(-45.8, -1.8, -0.1);
-		}
-		CFrame frame = CFrame(postion);
-
-		NetworkUtils::sendMoveClient(frame, clients[i].peer);
-	}
+	NetworkUtils::broadcastRespawn(serverHost);
 }
 
 int NetworkUtils::sendMoveClient(CFrame frame, ENetPeer* peer) {
@@ -210,4 +202,39 @@ void NetworkUtils::serverBatchEntityUpdate(Array<shared_ptr<NetworkedEntity>> en
 		addresses.append(client.unreliableAddress);
 	}
 	NetworkUtils::broadcastBatchEntityUpdate(genericEntities, addresses, sendSocket);
+}
+
+int NetworkUtils::sendSetSpawnPos(G3D::Point3 position, float heading, ENetPeer* peer) {
+	BinaryOutput outBuffer;
+	outBuffer.setEndian(G3D_BIG_ENDIAN);
+	outBuffer.writeUInt8(NetworkUtils::MessageType::SET_SPAWN_LOCATION);
+	position.serialize(outBuffer);
+	outBuffer.writeFloat32(heading);
+	ENetPacket* packet = enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length(), ENET_PACKET_FLAG_RELIABLE);
+	return enet_peer_send(peer, 0, packet);
+}
+
+void NetworkUtils::handleSetSpawnPos(shared_ptr<PlayerEntity> player, BinaryInput& inBuffer) {
+	Point3 position;
+	float heading;
+	position.deserialize(inBuffer);
+	heading = inBuffer.readFloat32();
+	player->setRespawnPosition(position);
+	player->setRespawnHeadingDegrees(heading);
+}
+
+int NetworkUtils::sendRespawnClient(ENetPeer* clientPeer) {
+	BinaryOutput outBuffer;
+	outBuffer.setEndian(G3D_BIG_ENDIAN);
+	outBuffer.writeUInt8(NetworkUtils::MessageType::RESPAWN_CLIENT);
+	ENetPacket* packet = enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length(), ENET_PACKET_FLAG_RELIABLE);
+	return enet_peer_send(clientPeer, 0, packet);
+}
+
+void NetworkUtils::broadcastRespawn(ENetHost* serverHost) {
+	BinaryOutput outBuffer;
+	outBuffer.setEndian(G3D_BIG_ENDIAN);
+	outBuffer.writeUInt8(NetworkUtils::MessageType::RESPAWN_CLIENT);
+	ENetPacket* packet = enet_packet_create((void*)outBuffer.getCArray(), outBuffer.length(), ENET_PACKET_FLAG_RELIABLE);
+	enet_host_broadcast(serverHost, 0, packet);
 }

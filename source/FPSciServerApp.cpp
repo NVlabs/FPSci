@@ -192,13 +192,16 @@ void FPSciServerApp::onNetwork() {
                 // move the client to a different location
                 // TODO: Make this smart not just some test code
                 if (m_connectedClients.length() % 2 == 0) {
-                    Point3 postion = Point3(-45.8, -1.8, -0.1);
-                    CFrame frame = CFrame(postion);
-                    NetworkUtils::sendMoveClient(frame, event.peer);
+                    Point3 position = Point3(-46, -2.3, 0);
+                    float heading = 90;
+                    NetworkUtils::sendSetSpawnPos(position, heading, event.peer);
+                    //CFrame frame = CFrame::fromXYZYPRDegrees(-46, -2.3, 0, -90, -0, 0);
+                    //NetworkUtils::sendMoveClient(frame, event.peer);
+                    NetworkUtils::sendRespawnClient(event.peer);
                 }
             }
             else if (type == NetworkUtils::MessageType::REPORT_HIT) {
-                NetworkUtils::handleHitReport(m_connectedClients, packet_contents);
+                NetworkUtils::handleHitReport(m_localHost, packet_contents);
             }
             enet_packet_destroy(event.packet);
         }

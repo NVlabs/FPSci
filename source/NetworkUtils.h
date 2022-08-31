@@ -37,6 +37,7 @@
 			GUID: player's ID
 			UInt8: status [0 = success, 1 = Failure, ....]
 
+
 			Type HANDSHAKE
 			UInt8: type (HANDSHAKE)
 
@@ -58,6 +59,15 @@
 			UInt8: type (NOTIFY_HIT)
 			GUID: entity shot
 			GUID: shot by
+			...
+
+			Type SET_SPAWN_LOCATION:
+			UInt8: type (SET_SPAWN_LOCATION)
+			Point3: Position translation
+			float: Spawned Heading (Radians)
+
+			Type RESPAWN_CLIENT:
+			UInt8: type (RESPAWN_CLIENT)
 			...
 
 */
@@ -82,7 +92,10 @@ public:
 		HANDSHAKE_REPLY,
 
 		REPORT_HIT,
-		NOTIFY_HIT
+		NOTIFY_HIT,
+
+		SET_SPAWN_LOCATION,
+		RESPAWN_CLIENT
 	};
 
 	enum NetworkUpdateType {
@@ -105,7 +118,7 @@ public:
 	static void broadcastDestroyEntity(GUniqueID id, ENetHost* serverHost);
 
 	static int sendHitReport(GUniqueID shot_id, GUniqueID shooter_id, ENetPeer* serverPeer);
-	static void handleHitReport(Array<ConnectedClient> clients, BinaryInput& inBuffer);
+	static void handleHitReport(ENetHost* serverHost, BinaryInput& inBuffer);
 
 	static int sendMoveClient(CFrame frame, ENetPeer* peer);
 	static int sendHandshakeReply(ENetSocket socket, ENetAddress address);
@@ -116,4 +129,8 @@ public:
 	static int sendCreateEntity(GUniqueID guid, ENetPeer* peer);
 	static void broadcastBatchEntityUpdate(Array<shared_ptr<Entity>> entities, Array<ENetAddress> destinations, ENetSocket sendSocket);
 	static void serverBatchEntityUpdate(Array<shared_ptr<NetworkedEntity>> entities, Array<ConnectedClient> clients, ENetSocket sendSocket);
+	static int sendSetSpawnPos(G3D::Point3 position, float heading, ENetPeer* peer);
+	static void handleSetSpawnPos(shared_ptr<PlayerEntity> player, BinaryInput& inBuffer);
+	static int sendRespawnClient(ENetPeer* peer);
+	static void broadcastRespawn(ENetHost* serverHost);
 };

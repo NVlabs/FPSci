@@ -964,10 +964,6 @@ void FPSciApp::onAI() {
 void FPSciApp::onNetwork() {
 	GApp::onNetwork();
 
-
-
-	// Serialize user input
-
 	BinaryOutput output;
 	output.setEndian(G3D_BIG_ENDIAN);
 
@@ -1119,6 +1115,18 @@ void FPSciApp::onNetwork() {
 				NetworkUtils::handleDestroyEntity(scene(), packet_contents);
 			}
 
+			/* set the spawn position for this player */
+			else if (type == NetworkUtils::MessageType::SET_SPAWN_LOCATION) {
+				debugPrintf("Recieved an updated spawn position\n");
+				shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
+				NetworkUtils::handleSetSpawnPos(player, packet_contents);
+			}
+			
+			/* force the client to respawn */
+			else if (type == NetworkUtils::MessageType::RESPAWN_CLIENT) {
+				debugPrintf("Recieved a request to respawn\n");
+				scene()->typedEntity<PlayerEntity>("player")->respawn();
+			}
 			enet_packet_destroy(event.packet);
 		}
 	}
