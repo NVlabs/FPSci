@@ -172,7 +172,7 @@ protected:
 
 	// Experiment management					
 	int m_destroyedTargets = 0;							///< Number of destroyed target
-	int m_hitCount = 0;									///< Count of total hits in this trial
+	int m_trialShotsHit = 0;									///< Count of total hits in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
 	int	m_currBlock = 1;								///< Index to the current block of trials
 	Array<Array<shared_ptr<TargetConfig>>> m_trials;	///< Storage for trials (to repeat over blocks)
@@ -201,10 +201,17 @@ protected:
 	RealTime m_taskExecutionTime;						///< Task completion time for the most recent trial
 	String m_taskStartTime;								///< Recorded task start timestamp							
 	String m_taskEndTime;								///< Recorded task end timestamp
-	RealTime m_totalRemainingTime = 0;					///< Time remaining in the trial
 	Timer m_timer;										///< Timer used for timing tasks	
 	// Could move timer above to stopwatch in future
 	//Stopwatch stopwatch;			
+
+	// Scoring mechanisms
+	RealTime m_totalRemainingTime = 0;					///< Time remaining in the trial
+	int m_totalTargetsDestroyed = 0;					///< Total number of targets destroyed
+	int m_totalShots = 0;								///< Total number of shots taken
+	int m_totalShotsHit = 0;							///< Total number of shots hit
+	float m_accuracy = 0;								///< Overall accuracy
+	int m_totalTrialSuccesses = 0;						///< Total number of successful trials
 
 	Array<HANDLE> m_sessProcesses;						///< Handles for session-level processes
 	Array<HANDLE> m_trialProcesses;						///< Handles for trial-level processes

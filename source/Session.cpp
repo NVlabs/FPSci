@@ -307,7 +307,7 @@ void Session::initTargetAnimation() {
 	m_destroyedTargets = 0;
 	// Reset shot and hit counters (in the trial)
 	m_weapon->reload();
-	m_hitCount = 0;
+	m_trialShotsHit = 0;
 }
 
 void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
@@ -378,6 +378,7 @@ void Session::processResponse()
 	// Check for whether all targets have been destroyed
 	if (m_destroyedTargets == totalTargets) {
 		m_totalRemainingTime += (double(m_config->timing.maxTrialDuration) - m_taskExecutionTime);
+		m_totalTrialSuccesses += 1;
 		m_feedbackMessage = formatFeedback(m_config->feedback.trialSuccess);
 	}
 	else {
@@ -631,7 +632,20 @@ void Session::accumulateTrajectories()
 void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 {
 	// Count hits (in task state) here
-	if ((action == PlayerActionType::Hit || action == PlayerActionType::Destroy) && currentState == PresentationState::trialTask) { m_hitCount++; }
+	if (currentState == PresentationState::trialTask) {
+		if (action == PlayerActionType::Miss) {
+			m_totalShots += 1;
+			m_accuracy = (float) m_totalShotsHit / (float) m_totalShots * 100.f;
+		}
+		if ((action == PlayerActionType::Hit || action == PlayerActionType::Destroy)) {
+			m_trialShotsHit++;
+			// Update scoring parameters
+			m_totalShotsHit++;
+			m_totalShots += 1;
+			m_accuracy = (float) m_totalShotsHit / (float) m_totalShots * 100.f;
+			if (action == PlayerActionType::Destroy) m_totalTargetsDestroyed += 1;
+		}
+	}
 
 	static PlayerAction lastPA;
 
@@ -683,7 +697,30 @@ float Session::getProgress() {
 }
 
 double Session::getScore() {
-	return 100.0 * m_totalRemainingTime;
+	if (isNull(m_config)) return 0;
+
+	double score = 0;
+	switch (m_config->feedback.scoreModel) {
+	case FeedbackConfig::ScoreType::TimeRemaining:
+		score = m_totalRemainingTime;
+		break;
+	case FeedbackConfig::ScoreType::TargetsDestroyed:
+		score = m_totalTargetsDestroyed;
+		break;
+	case FeedbackConfig::ScoreType::ShotsHit:
+		score = m_totalShotsHit;
+		break;
+	case FeedbackConfig::ScoreType::Accuracy:
+		score = m_accuracy;
+		break;
+	case FeedbackConfig::ScoreType::TrialSuccesses:
+		score = m_totalTrialSuccesses;
+		break;
+	default:
+		break;
+	}
+
+	return m_config->feedback.scoreMultiplier * score;
 }
 
 String Session::formatCommand(const String& input) {
@@ -736,6 +773,7 @@ String Session::formatFeedback(const String& input) {
 	const String trialTotalTargets		= "%trialTotalTargets";				///< The number of targets in this trial ("infinite" if any target respawns infinitely)
 	const String trialShotsHit			= "%trialShotsHit";					///< The number of shots hit in this trial
 	const String trialTotalShots		= "%trialTotalShots";				///< The number of shots taken in this trial
+	const String sessionScore			= "%sessionScore";					///< The score for this session
 
 	// Walk through the string looking for instances of the delimiter
 	while ((foundIdx = (int)formatted.find(delimiter, (size_t)foundIdx)) > -1) {
@@ -771,10 +809,13 @@ String Session::formatFeedback(const String& input) {
 			formatted = formatted.substr(0, foundIdx) + totalTargetsString + formatted.substr(foundIdx + trialTotalTargets.length());
 		}
 		else if (!formatted.compare(foundIdx, trialShotsHit.length(), trialShotsHit)) {
-			formatted = formatted.substr(0, foundIdx) + format("%d", m_hitCount) + formatted.substr(foundIdx + trialShotsHit.length());
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_trialShotsHit) + formatted.substr(foundIdx + trialShotsHit.length());
 		}
 		else if (!formatted.compare(foundIdx, trialTotalShots.length(), trialTotalShots)) {
 			formatted = formatted.substr(0, foundIdx) + format("%d", m_weapon->shotsTaken()) + formatted.substr(foundIdx + trialTotalShots.length());
+		}
+		else if (!formatted.compare(foundIdx, sessionScore.length(), sessionScore)) {
+			formatted = formatted.substr(0, foundIdx) + format("%d", (int)G3D::round(getScore())) + formatted.substr(foundIdx + sessionScore.length());
 		}
 		else {
 			// Bump the found index past this character (not a valid substring)
