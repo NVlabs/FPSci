@@ -174,7 +174,7 @@ protected:
 
 	int m_ddCurrUserIdx = 0;									///< Current user index
 	int m_ddCurrSessIdx = 0;									///< Current session index
-	int m_lastUserIdx = -1;										///< Previously selected user in the drop-down
+	int m_ddLastUserIdx = -1;									///< Previously selected user in the drop-down
 
 	String m_newUser;											///< New user string
 
