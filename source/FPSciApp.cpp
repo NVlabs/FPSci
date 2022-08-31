@@ -98,18 +98,27 @@ void FPSciApp::openUserSettingsWindow() {
 
 /** Handle the user settings window visibility */
 void FPSciApp::closeUserSettingsWindow() {
-	if (sessConfig->menu.allowUserSettingsSave) {		// If the user could have saved their settings
-		saveUserConfig(true);							// Save the user config (if it has changed) whenever this window is closed
+	// Don't allow window close until a user has been added
+	if (sessConfig->menu.requireUserAdd && !userAdded) {
+		return;
 	}
-	if (!dialog) {										// Don't allow the user menu to hide the mouse when a dialog box is open
-		setMouseInputMode(MouseInputMode::MOUSE_FPM);	// Set mouse mode to FPM to allow steering the view again
+	// If the user could have saved their settings, save on close
+	if (sessConfig->menu.allowUserSettingsSave) {
+		saveUserConfig(true);
+	}
+	// Don't allow the user menu to hide the mouse when a dialog box is open
+	if (!dialog) {
+		// Set mouse mode to FPM to allow steering the view again
+		setMouseInputMode(MouseInputMode::MOUSE_FPM);
 	}
 	m_userSettingsWindow->setVisible(false);
 }
 
 void FPSciApp::saveUserConfig(bool onDiff) {
 	// Check for save on diff, without mismatch
-	if (onDiff && m_lastSavedUser == *currentUser()) return;
+	if (onDiff && m_lastSavedUser == *currentUser()) {
+		return;
+	}
 	if (notNull(sess->logger)) {
 		sess->logger->logUserConfig(*currentUser(), sessConfig->id, sessConfig->player.turnScale);
 	}
@@ -428,7 +437,8 @@ void FPSciApp::makeGUI() {
 
 	// Add the control panes here
 	updateControls();
-	m_showUserMenu = experimentConfig.menu.showMenuOnStartup;
+	// If we require a new user show the menu on startup regardless of configuration
+	m_showUserMenu = experimentConfig.menu.showMenuOnStartup || experimentConfig.menu.requireUserAdd;
 }
 
 void FPSciApp::exportScene() {
