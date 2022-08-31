@@ -67,11 +67,11 @@ void FPSciLogger::initResultsFile(const String& filename,
 	// Add the session info to the sessions table
 	m_openTimeStr = genUniqueTimestamp();
 	RowEntry sessValues = {
-		"'" + sessConfig->id + "'",
-		"'" + m_openTimeStr + "'",
-		"'" + m_openTimeStr + "'",
-		"'" + subjectID + "'",
-		"'" + description + "'",
+		sessConfig->id,
+		m_openTimeStr,
+		m_openTimeStr,
+		subjectID,
+		description,
 		"false",
 		"0"
 	};
@@ -79,7 +79,7 @@ void FPSciLogger::initResultsFile(const String& filename,
 	// Create any table to do lookup here
 	Any a = sessConfig->toAny(true);
 	// Add the looked up values
-	for (String name : sessConfig->logger.sessParamsToLog) { sessValues.append("'" + a[name].unparse() + "'"); }
+	for (String name : sessConfig->logger.sessParamsToLog) { sessValues.append(a[name].unparse()); }
 	// add header row
 	insertRowIntoDB(m_db, "Sessions", sessValues);
 
@@ -102,10 +102,10 @@ void FPSciLogger::createExperimentsTable(const String& expConfigFilename) {
 
 	// Update row
 	RowEntry expRow = {
-		"'" + expConfig.description + "'",
-		"'" + genUniqueTimestamp() + "'",
-		"'" + format("0x%x", hash) + "'",
-		"'" + readWholeFile(expConfigFilename)  + "'"
+		expConfig.description,
+		genUniqueTimestamp(),
+		format("0x%x", hash),
+		readWholeFile(expConfigFilename) 
 	};
 	insertRowIntoDB(m_db, "Experiments", expRow);
 }
@@ -123,7 +123,7 @@ void FPSciLogger::createSessionsTable(const shared_ptr<SessionConfig>& sessConfi
 		{ "trials_complete", "integer" }
 	};
 	// add any user-specified parameters as headers
-	for (String name : sessConfig->logger.sessParamsToLog) { sessColumns.append({ "'" + name + "'", "text", "NOT NULL" }); }
+	for (String name : sessConfig->logger.sessParamsToLog) { sessColumns.append({ name, "text", "NOT NULL" }); }
 	createTableInDB(m_db, "Sessions", sessColumns); // no need of Primary Key for this table.
 }
 
@@ -168,9 +168,9 @@ void FPSciLogger::logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets)
 		const String type = (config->destinations.size() > 0) ? "waypoint" : "parametrized";
 		const String modelName = config->modelSpec["filename"];
 		const RowEntry targetTypeRow = {
-			"'" + config->id + "'",
-			"'" + type + "'",
-			"'" + config->destSpace + "'",
+			config->id,
+			type,
+			config->destSpace,
 			String(std::to_string(config->size[0])),
 			String(std::to_string(config->size[1])),
 			config->symmetricEccH ? "true" : "false",
@@ -184,7 +184,7 @@ void FPSciLogger::logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets)
 			String(std::to_string(config->motionChangePeriod[0])),
 			String(std::to_string(config->motionChangePeriod[1])),
 			config->jumpEnabled ? "true" : "false",
-			"'" + modelName + "'"
+			modelName
 		};
 		rows.append(targetTypeRow);
 	}
@@ -206,9 +206,9 @@ void FPSciLogger::createTargetsTable() {
 
 void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& config, const String& spawnTime, const float& size, const Point2& spawnEcc) {
 	const RowEntry targetValues = {
-		"'" + name + "'",
-		"'" + config->id + "'",
-		"'" + spawnTime + "'",
+		name,
+		config->id,
+		spawnTime,
 		String(std::to_string(size)),
 		String(std::to_string(spawnEcc.x)),
 		String(std::to_string(spawnEcc.y)),
@@ -251,9 +251,9 @@ void FPSciLogger::recordTargetLocations(const Array<TargetLocation>& locations) 
 	for (const auto& loc : locations) {
 		String stateStr = presentationStateToString(loc.state);
 		Array<String> targetTrajectoryValues = {
-			"'" + FPSciLogger::formatFileTime(loc.time) + "'",
-			"'" + loc.name + "'",
-			"'" + stateStr + "'",
+			FPSciLogger::formatFileTime(loc.time),
+			loc.name,
+			stateStr,
 			String(std::to_string(loc.position.x)),
 			String(std::to_string(loc.position.y)),
 			String(std::to_string(loc.position.z)),
@@ -294,15 +294,15 @@ void FPSciLogger::recordPlayerActions(const Array<PlayerAction>& actions) {
 		}
 
 		Array<String> playerActionValues = {
-		"'" + FPSciLogger::formatFileTime(action.time) + "'",
+		FPSciLogger::formatFileTime(action.time),
 		String(std::to_string(action.viewDirection.x)),
 		String(std::to_string(action.viewDirection.y)),
 		String(std::to_string(action.position.x)),
 		String(std::to_string(action.position.y)),
 		String(std::to_string(action.position.z)),
-		"'" + stateStr + "'",
-		"'" + actionStr + "'",
-		"'" + action.targetName + "'",
+		stateStr,
+		actionStr,
+		action.targetName,
 		};
 		rows.append(playerActionValues);
 	}
@@ -323,7 +323,7 @@ void FPSciLogger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
 	Array<RowEntry> rows;
 	for (FrameInfo info : frameInfo) {
 		Array<String> frameValues = {
-			"'" + FPSciLogger::formatFileTime(info.time) + "'",
+			FPSciLogger::formatFileTime(info.time),
 			//String(std::to_string(info.idt)),
 			String(std::to_string(info.sdt))
 		};
@@ -355,13 +355,13 @@ void FPSciLogger::addQuestion(Question q, String session, const shared_ptr<Dialo
 		orderStr = Any(dynamic_pointer_cast<SelectionDialog>(dialog)->options()).unparse();
 	}
 	RowEntry rowContents = {
-		"'" + time + "'",
-		"'" + session + "'",
-		"'" + q.prompt + "'",
-		"'" + optStr + "'",
-		"'" + keyStr + "'",
-		"'" + orderStr + "'",
-		"'" + q.result + "'"
+		time,
+		session,
+		q.prompt,
+		optStr,
+		keyStr,
+		orderStr,
+		q.result
 	};
 	logQuestionResult(rowContents);
 }
@@ -400,17 +400,17 @@ void FPSciLogger::logUserConfig(const UserConfig& user, const String& sessId, co
 	const String time = genUniqueTimestamp();
 
 	RowEntry row = {
-		"'" + user.id + "'",
-		"'" + sessId + "'",
-		"'" + time + "'",
+		user.id,
+		sessId,
+		time,
 		String(std::to_string(cmp360)),
 		String(std::to_string(user.mouseDegPerMm)),
 		String(std::to_string(user.mouseDPI)),
 		String(std::to_string(user.reticle.index)),
 		String(std::to_string(user.reticle.scale[0])),
 		String(std::to_string(user.reticle.scale[1])),
-		"'" + user.reticle.color[0].toString() + "'",
-		"'" + user.reticle.color[1].toString() + "'",
+		user.reticle.color[0].toString(),
+		user.reticle.color[1].toString(),
 		String(std::to_string(user.reticle.changeTimeS)),
 		String(std::to_string(user.turnScale.x)),
 		String(std::to_string(userYTurnScale)),
