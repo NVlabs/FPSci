@@ -172,7 +172,7 @@ protected:
 
 	// Experiment management					
 	int m_destroyedTargets = 0;							///< Number of destroyed target
-	int m_hitCount = 0;									///< Count of total hits in this trial
+	int m_trialShotsHit = 0;									///< Count of total hits in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
 	int	m_currBlock = 1;								///< Index to the current block of trials
 	Array<Array<shared_ptr<TargetConfig>>> m_trials;	///< Storage for trials (to repeat over blocks)

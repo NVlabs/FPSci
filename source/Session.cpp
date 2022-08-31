@@ -307,7 +307,7 @@ void Session::initTargetAnimation() {
 	m_destroyedTargets = 0;
 	// Reset shot and hit counters (in the trial)
 	m_weapon->reload();
-	m_hitCount = 0;
+	m_trialShotsHit = 0;
 }
 
 void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
@@ -648,7 +648,7 @@ void Session::accumulatePlayerAction(PlayerActionType action, String targetName)
 			m_accuracy = (float) m_totalShotsHit / (float) m_totalShots * 100.f;
 		}
 		if ((action == PlayerActionType::Hit || action == PlayerActionType::Destroy)) {
-			m_hitCount++;
+			m_trialShotsHit++;
 			// Update scoring parameters
 			m_totalShotsHit++;
 			m_totalShots += 1;
@@ -819,7 +819,7 @@ String Session::formatFeedback(const String& input) {
 			formatted = formatted.substr(0, foundIdx) + totalTargetsString + formatted.substr(foundIdx + trialTotalTargets.length());
 		}
 		else if (!formatted.compare(foundIdx, trialShotsHit.length(), trialShotsHit)) {
-			formatted = formatted.substr(0, foundIdx) + format("%d", m_hitCount) + formatted.substr(foundIdx + trialShotsHit.length());
+			formatted = formatted.substr(0, foundIdx) + format("%d", m_trialShotsHit) + formatted.substr(foundIdx + trialShotsHit.length());
 		}
 		else if (!formatted.compare(foundIdx, trialTotalShots.length(), trialTotalShots)) {
 			formatted = formatted.substr(0, foundIdx) + format("%d", m_weapon->shotsTaken()) + formatted.substr(foundIdx + trialTotalShots.length());
