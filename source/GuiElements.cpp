@@ -422,6 +422,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 		m_expPane->beginRow(); {
 			m_expPane->addDropDownList("Experiment", app->experimentNames(), &(app->experimentIdx));
 			m_expPane->addButton("Select Experiment", this, &UserMenu::updateExperimentPress);
+				
 		} m_expPane->endRow();
 	}
 
@@ -445,7 +446,11 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	} m_expPane->endRow();
 	m_sessDropDown->setVisible(m_config.allowSessionChange);
 	addBtn->setVisible(m_config.allowSessionChange);
-
+	
+	m_expPane->beginRow(); {
+		m_expPane->addCheckBox("Networked Session?", &app->experimentConfig.isNetworked);
+	}
+	m_expPane->endRow();
 	// Hide the experiment settings if not requested to be drawn
 	if (!config.showExperimentSettings) { 
 		m_expPane->setVisible(false);

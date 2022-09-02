@@ -15,6 +15,7 @@ public:
 	String serverAddress = "";							///< Address for server
 	int serverPort = 12345;								///< Port for server to listen to
 	int clientPort = 12350;								///< Port for the client to listen to
+	bool isNetworked;									///< Checks if the experiment is networked or not
 	
 	ExperimentConfig() { init(); }
 	ExperimentConfig(const Any& any);

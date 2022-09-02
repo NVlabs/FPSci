@@ -35,5 +35,6 @@
 class NetworkedSession : public Session {
 public:
 	void addHittableTarget(shared_ptr<TargetEntity> target);
-
+	void onSimulation(RealTime rdt, SimTime sdt, SimTime idt);
+	void onInit(String filename, String description);
 };

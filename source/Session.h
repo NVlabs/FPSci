@@ -140,6 +140,7 @@ public:
 	int					blockCount = 1;					///< Default to just 1 block per session
 	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
 	bool				closeOnComplete = false;		///< Close application on session completed?
+	bool				isNetworked = false;			///< Checks if its a networked session or not
 
 	SessionConfig() : FpsConfig(defaultConfig()) {}
 	SessionConfig(const Any& any);

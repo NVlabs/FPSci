@@ -892,7 +892,10 @@ void FPSciApp::updateSession(const String& id, bool forceReload) {
 	}
 
 	// Initialize the experiment (this creates the results file)
-	sess->onInit(logPath, experimentConfig.description + "/" + sessConfig->description);
+	if (!experimentConfig.isNetworked)
+		sess->onInit(logPath, experimentConfig.description + "/" + sessConfig->description);
+	else
+		static_cast<NetworkedSession*>(sess.get())->onInit("","");
 
 	// Don't create a results file for a user w/ no sessions left
 	if (m_userSettingsWindow->sessionsForSelectedUser() == 0)
@@ -1145,7 +1148,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		currentRealTime = m_lastOnSimulationRealTime + rdt; // Increment the time by the current real time delta
 	}
 
-	bool stateCanFire = sess->currentState == PresentationState::trialTask && !m_userSettingsWindow->visible();
+	bool stateCanFire = sess->currentState == PresentationState::trialTask || (experimentConfig.isNetworked) && !m_userSettingsWindow->visible();
 
 	// These variables will be used to fire after the various weapon styles populate them below
 	int numShots = 0;
@@ -1229,7 +1232,10 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	weapon->playSound(shotFired, shootButtonUp);
 
 	// TODO (or NOTTODO): The following can be cleared at the cost of one more level of inheritance.
-	sess->onSimulation(rdt, sdt, idt);
+	if (!experimentConfig.isNetworked)
+		sess->onSimulation(rdt, sdt, idt);
+	else
+		static_cast<NetworkedSession*>(sess.get())->onSimulation(rdt, sdt, idt);
 
 	// These are all we need from GApp::onSimulation() for walk mode
 	m_widgetManager->onSimulation(rdt, sdt, idt);

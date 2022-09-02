@@ -39,3 +39,13 @@
 void NetworkedSession::addHittableTarget(shared_ptr<TargetEntity> target) {
 	m_hittableTargets.append(target);
 }
+
+void NetworkedSession::onSimulation(RealTime rdt, SimTime sdt, SimTime idt)
+{
+	//TODO: Networked Ticks
+}
+
+void NetworkedSession::onInit(String filename, String description)
+{
+	//TODO: Networked Init
+}
