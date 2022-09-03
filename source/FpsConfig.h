@@ -73,6 +73,8 @@ public:
 	bool			stillBetweenTrials = false;					///< Disable player motion between trials?
 	bool			resetPositionPerTrial = false;				///< Reset the player's position on a per trial basis (to scene default)'
 	float			sprintMultiplier = 2.0f;					///< Multiplies with players move rate when player is sprinting (defaults to 2x)
+	float			headBobAmplitude = 0.1f;					///< Determines how high/low players head will oscillate during movement (defaults to 0.1)
+	float			headBobFrequency = 1.0f;					///< Determines how fast players head will oscillate during movement (defaults to 1)		
 
 	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;

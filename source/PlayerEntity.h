@@ -27,6 +27,10 @@ protected:
 	float			m_lastJumpVelocity;
 	float			m_health = 1.0f;					///< Player health storage
 
+    bool            m_gettingMovementInput;             ///< Is getting movement input from user?
+    bool            m_headBobPolarity;                  ///< Is head moving up/down?
+    float           m_headBobCurrentHeight;             ///< Headbob current that gets added to camera y
+
 	bool			m_inContact = false;				///< Is the player in contact w/ anything?
 	bool			m_motionEnable = true;				///< Flag to disable player motion
 	bool			m_jumpPressed = false;				///< Indicates whether jump buton was pressed
@@ -61,6 +65,9 @@ public:
 
 	float*			height = nullptr;			///< Player height when standing
 	float*			crouchHeight = nullptr;		///< Player height when crouched
+
+    float*          headBobAmplitude = nullptr; ///< Players headbob motion amplitude
+    float*          headBobFrequency = nullptr; ///< Players headbob motion frequency
 
     /** \brief Computes all triangles that could be hit during a
         slideMove with the current \a velocity, allowing that the
@@ -102,7 +109,7 @@ public:
 	const CFrame getCameraFrame() const {
 		CFrame f = frame();
         if (notNull(height)) {
-            f.translation += Point3(0.0f, heightOffset(m_crouched ? *crouchHeight : *height), 0.0f);
+            f.translation += Point3(0.0f, heightOffset(m_crouched ? *crouchHeight : *height) + m_headBobCurrentHeight, 0.0f);
         }
 		return f;
 	}

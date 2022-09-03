@@ -180,6 +180,16 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 		c->setWidth(width * 0.95f);
 	}movePane->endRow();
 	movePane->beginRow(); {
+		auto c = movePane->addNumberBox("Headbob Amplitude", &(config.player.headBobAmplitude), "x", GuiTheme::LINEAR_SLIDER, 0.01f, 0.5f);
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width * 0.95f);
+	}movePane->endRow();
+	movePane->beginRow(); {
+		auto c = movePane->addNumberBox("Headbob Frequency", &(config.player.headBobFrequency), "x", GuiTheme::LINEAR_SLIDER, 0.1f, 3.0f);
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width * 0.95f);
+	}movePane->endRow();
+	movePane->beginRow(); {
 		auto c = movePane->addNumberBox("Jump Velocity", &(config.player.jumpVelocity), "m/s", GuiTheme::LINEAR_SLIDER, 0.0f, 50.0f, 0.1f);
 		c->setCaptionWidth(width / 2);
 		c->setWidth(width*0.95f);

@@ -178,6 +178,9 @@ void PlayerConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 	case 1:
 		reader.getIfPresent("moveRate", moveRate);
 		reader.getIfPresent("moveScale", moveScale);
+		reader.getIfPresent("sprintMultiplier", sprintMultiplier);
+		reader.getIfPresent("headBobAmplitude", headBobAmplitude);
+		reader.getIfPresent("headBobFrequency", headBobFrequency);
 		reader.getIfPresent("turnScale", turnScale);
 		reader.getIfPresent("playerHeight", height);
 		reader.getIfPresent("crouchHeight", crouchHeight);

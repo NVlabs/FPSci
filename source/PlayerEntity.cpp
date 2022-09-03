@@ -105,6 +105,21 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	Vector3 linear = Vector3(ui->getX()*moveScale->x, 0, -ui->getY()*moveScale->y);
 	if (linear.magnitude() > 0) {
 		linear = linear.direction() * walkSpeed;
+		
+		if (!m_headBobPolarity)
+		{
+			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, -*headBobAmplitude * 4.0f, *headBobFrequency * walkSpeed / 200);
+			if (m_headBobCurrentHeight <= -*headBobAmplitude)
+				m_headBobPolarity = !m_headBobPolarity;
+		}
+		else
+		{
+			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, *headBobAmplitude * 4.0f, *headBobFrequency * walkSpeed / 200);
+			if (m_headBobCurrentHeight >= *headBobAmplitude)
+				m_headBobPolarity = !m_headBobPolarity;
+		}
+
+		m_gettingMovementInput = true;
 	}
 	// Add jump here (if needed)
 	RealTime timeSinceLastJump = System::time() - m_lastJumpTime;
@@ -155,6 +170,13 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			respawn();
 		}
 	}
+
+	if (m_gettingMovementInput == false)
+	{
+		m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, 0.0f, 0.1f);
+	}
+
+	m_gettingMovementInput = false;
 }
 
 void PlayerEntity::getConservativeCollisionTris(Array<Tri>& triArray, const Vector3& velocity, float deltaTime) const {
