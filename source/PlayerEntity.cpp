@@ -90,8 +90,16 @@ void PlayerEntity::onPose(Array<shared_ptr<Surface> >& surfaceArray) {
 }
 
 void PlayerEntity::updateFromInput(UserInput* ui) {
+	
+	float walkSpeed;
 
-	const float walkSpeed = *moveRate * units::meters() / units::seconds();
+	// Check if player is sprinting or not
+	if (!m_sprinting) {
+		walkSpeed = *moveRate * units::meters() / units::seconds();
+	}
+	else {
+		walkSpeed = *moveRate * *sprintMultiplier * units::meters() / units::seconds();
+	}
 
 	// Get walking speed here (and normalize if necessary)
 	Vector3 linear = Vector3(ui->getX()*moveScale->x, 0, -ui->getY()*moveScale->y);

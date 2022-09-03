@@ -7,13 +7,14 @@ KeyMapping::KeyMapping() {
 	map.set("strafeLeft", Array<GKey>{ (GKey)'a', GKey::LEFT });
 	map.set("moveBackward", Array<GKey>{ (GKey)'s', GKey::DOWN });
 	map.set("strafeRight", Array<GKey>{ (GKey)'d', GKey::RIGHT });
+	map.set("sprint", Array<GKey>{ GKey::LSHIFT });
 	map.set("openMenu", Array<GKey>{ GKey::ESCAPE });
 	map.set("quit", Array<GKey>{ GKey::KP_MINUS, GKey::PAUSE });
 	map.set("crouch", Array<GKey>{ GKey::LCTRL });
 	map.set("jump", Array<GKey>{ GKey::SPACE });
 	map.set("shoot", Array<GKey>{ GKey::LEFT_MOUSE });
 	map.set("scope", Array<GKey>{ GKey::RIGHT_MOUSE});
-	map.set("dummyShoot", Array<GKey>{ GKey::LSHIFT });
+	map.set("dummyShoot", Array<GKey>{ GKey::TAB });
 	map.set("dropWaypoint", Array<GKey>{ (GKey)'q' });
 	map.set("toggleRecording", Array<GKey>{ (GKey)'r' });
 	map.set("toggleRenderWindow", Array<GKey>{ (GKey)'1' });

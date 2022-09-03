@@ -31,6 +31,8 @@ protected:
 	bool			m_motionEnable = true;				///< Flag to disable player motion
 	bool			m_jumpPressed = false;				///< Indicates whether jump buton was pressed
 
+    bool            m_sprinting = false;                ///< Is the player sprinting?
+
     PlayerEntity() {}
 
 #ifdef G3D_OSX
@@ -50,6 +52,8 @@ public:
 	float*			moveRate = nullptr;	        ///< Player movement rate (m/s)
 	Vector2*		moveScale = nullptr;	    ///< Player X/Y movement scale vector (interpreted as unit vector)
 	Array<bool>*	axisLock = nullptr;		    ///< World-space axis lock
+
+    float*          sprintMultiplier = nullptr; ///< Sprint speed multiplier
 	
 	float*			jumpVelocity = nullptr;		///< Player vertical (+Y) jump velocity
 	float*			jumpInterval = nullptr;		///< Player minimum jump interval limit
@@ -106,7 +110,7 @@ public:
 	void setCrouched(bool crouched) { m_crouched = crouched; };
 	void setJumpPressed(bool pressed=true) { m_jumpPressed = pressed; }
 	void setMoveEnable(bool enabled) { m_motionEnable = enabled; }
-
+    void setSprintPressed(bool sprinting) { m_sprinting = sprinting; };
 	void setRespawnPosition(Point3 pos) { m_respawnPosition = pos; }
     void setRespawnHeadingDegrees(float headingDeg) { m_spawnHeadingRadians = pif() / 180.f * headingDeg; }
 	void setRespawnHeight(float height) { m_respawnHeight = height; }

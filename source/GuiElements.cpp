@@ -175,6 +175,11 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 		c->setWidth(width*0.95f);
 	}movePane->endRow();
 	movePane->beginRow(); {
+		auto c = movePane->addNumberBox("Sprint Multiplier", &(config.player.sprintMultiplier), "x", GuiTheme::LINEAR_SLIDER, 1.0f, 10.0f);
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width * 0.95f);
+	}movePane->endRow();
+	movePane->beginRow(); {
 		auto c = movePane->addNumberBox("Jump Velocity", &(config.player.jumpVelocity), "m/s", GuiTheme::LINEAR_SLIDER, 0.0f, 50.0f, 0.1f);
 		c->setCaptionWidth(width / 2);
 		c->setWidth(width*0.95f);
