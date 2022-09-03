@@ -37,6 +37,10 @@ protected:
 
     bool            m_sprinting = false;                ///< Is the player sprinting?
 
+    Vector3         m_linearVector;                     ///< Vector for movement
+    Vector3         m_lastDirection;                    ///< Holds players last heading
+    float           m_acceleratedVelocity;              ///< Velocity after adding acceleration
+
     PlayerEntity() {}
 
 #ifdef G3D_OSX
@@ -57,11 +61,14 @@ public:
 	Vector2*		moveScale = nullptr;	    ///< Player X/Y movement scale vector (interpreted as unit vector)
 	Array<bool>*	axisLock = nullptr;		    ///< World-space axis lock
 
-    float*          sprintMultiplier = nullptr; ///< Sprint speed multiplier
+    float*          movementAcceleration = nullptr;     ///< Players rate of acceletion during movement
+    float*          movementDeceleration = nullptr;     ///< Players rate of deceleration while stopping movement
+
+    float*          sprintMultiplier = nullptr;     ///< Sprint speed multiplier
 	
 	float*			jumpVelocity = nullptr;		///< Player vertical (+Y) jump velocity
 	float*			jumpInterval = nullptr;		///< Player minimum jump interval limit
-	bool*			jumpTouch = nullptr;	    ///< Require contact for jump?
+	bool*			jumpTouch = nullptr;        ///< Require contact for jump?
 
 	float*			height = nullptr;			///< Player height when standing
 	float*			crouchHeight = nullptr;		///< Player height when crouched

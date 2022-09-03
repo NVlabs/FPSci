@@ -102,19 +102,21 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	}
 
 	// Get walking speed here (and normalize if necessary)
-	Vector3 linear = Vector3(ui->getX()*moveScale->x, 0, -ui->getY()*moveScale->y);
-	if (linear.magnitude() > 0) {
-		linear = linear.direction() * walkSpeed;
-		
+	m_linearVector = Vector3(ui->getX()*moveScale->x, 0, -ui->getY()*moveScale->y);
+	if (m_linearVector.magnitude() > 0) {
+		m_acceleratedVelocity = lerp(m_acceleratedVelocity, walkSpeed, *movementAcceleration);
+		m_linearVector = m_linearVector.direction() * m_acceleratedVelocity;
+		m_lastDirection = m_linearVector.direction();
+
 		if (!m_headBobPolarity)
 		{
-			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, -*headBobAmplitude * 4.0f, *headBobFrequency * walkSpeed / 200);
+			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, -*headBobAmplitude * 4.0f, *headBobFrequency * m_acceleratedVelocity / 200);
 			if (m_headBobCurrentHeight <= -*headBobAmplitude)
 				m_headBobPolarity = !m_headBobPolarity;
 		}
 		else
 		{
-			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, *headBobAmplitude * 4.0f, *headBobFrequency * walkSpeed / 200);
+			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, *headBobAmplitude * 4.0f, *headBobFrequency * m_acceleratedVelocity / 200);
 			if (m_headBobCurrentHeight >= *headBobAmplitude)
 				m_headBobPolarity = !m_headBobPolarity;
 		}
@@ -127,7 +129,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 		// Allow jumping if jumpTouch = False or if jumpTouch = True and the player is in contact w/ the map
 		if (!(*jumpTouch) || m_inContact) {
 			const Vector3 jv(0, *jumpVelocity * units::meters() / units::seconds(), 0);
-			linear += jv;
+			m_linearVector += jv;
 			m_lastJumpTime = System::time();
 		}
 	}
@@ -138,8 +140,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	float yaw = mouseRotate.x;
 	float pitch = mouseRotate.y;
 
-	// Set the player translation/view velocities
-	setDesiredOSVelocity(linear);
+	// Set the player view velocity
 	setDesiredAngularVelocity(yaw, pitch);
 }
 
@@ -171,10 +172,20 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		}
 	}
 
-	if (m_gettingMovementInput == false)
+	if (!m_gettingMovementInput)
 	{
+		if(movementDeceleration != nullptr)
+		m_acceleratedVelocity = lerp(m_acceleratedVelocity, 0.0f, *movementDeceleration);
+
+		if (m_acceleratedVelocity > 0) {
+			m_linearVector = m_acceleratedVelocity * m_lastDirection;
+		}
+
 		m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, 0.0f, 0.1f);
 	}
+
+	//Set Players Translation velocity
+	setDesiredOSVelocity(m_linearVector);
 
 	m_gettingMovementInput = false;
 }
