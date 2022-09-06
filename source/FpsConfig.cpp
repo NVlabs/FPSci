@@ -179,6 +179,7 @@ void PlayerConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("moveRate", moveRate);
 		reader.getIfPresent("moveScale", moveScale);
 		reader.getIfPresent("sprintMultiplier", sprintMultiplier);
+		reader.getIfPresent("headBobEnabled", headBobEnabled);
 		reader.getIfPresent("headBobAmplitude", headBobAmplitude);
 		reader.getIfPresent("headBobFrequency", headBobFrequency);
 		reader.getIfPresent("movementAcceleration", movementAcceleration);

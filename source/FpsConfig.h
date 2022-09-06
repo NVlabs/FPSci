@@ -72,7 +72,8 @@ public:
 	Array<bool>		axisLock = { false, false, false };			///< World-space player motion axis lock
 	bool			stillBetweenTrials = false;					///< Disable player motion between trials?
 	bool			resetPositionPerTrial = false;				///< Reset the player's position on a per trial basis (to scene default)'
-	float			sprintMultiplier = 2.0f;					///< Multiplies with players move rate when player is sprinting (defaults to 2x)
+	float			sprintMultiplier = 1.0f;					///< Multiplies with players move rate when player is sprinting (defaults to 1x (off))
+	bool			headBobEnabled = false;						///< Enables/Disables the HeadBob functionality (default is false (disabled))
 	float			headBobAmplitude = 0.1f;					///< Determines how high/low players head will oscillate during movement (defaults to 0.1)
 	float			headBobFrequency = 1.0f;					///< Determines how fast players head will oscillate during movement (defaults to 1)
 	float			movementAcceleration = 0.05f;				///< Player acceleration during movement (defaults to 0.05)

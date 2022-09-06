@@ -617,6 +617,7 @@ void FPSciApp::initPlayer(bool setSpawnPosition) {
 	// Set player values from session config
 	player->moveRate = &sessConfig->player.moveRate;
 	player->sprintMultiplier = &sessConfig->player.sprintMultiplier;
+	player->headBobEnabled = &sessConfig->player.headBobEnabled;
 	player->headBobAmplitude = &sessConfig->player.headBobAmplitude;
 	player->headBobFrequency = &sessConfig->player.headBobFrequency;
 	player->movementAcceleration = &sessConfig->player.movementAcceleration;

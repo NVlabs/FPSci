@@ -73,6 +73,7 @@ public:
 	float*			height = nullptr;			///< Player height when standing
 	float*			crouchHeight = nullptr;		///< Player height when crouched
 
+    bool*           headBobEnabled = nullptr;   ///< Checks if headbob is enabled or not
     float*          headBobAmplitude = nullptr; ///< Players headbob motion amplitude
     float*          headBobFrequency = nullptr; ///< Players headbob motion frequency
 
@@ -116,7 +117,12 @@ public:
 	const CFrame getCameraFrame() const {
 		CFrame f = frame();
         if (notNull(height)) {
-            f.translation += Point3(0.0f, heightOffset(m_crouched ? *crouchHeight : *height) + m_headBobCurrentHeight, 0.0f);
+            if (*headBobEnabled) {
+                f.translation += Point3(0.0f, heightOffset(m_crouched ? *crouchHeight : *height) + m_headBobCurrentHeight, 0.0f);
+            }
+            else {
+                f.translation += Point3(0.0f, heightOffset(m_crouched ? *crouchHeight : *height), 0.0f);
+            }
         }
 		return f;
 	}
