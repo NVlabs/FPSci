@@ -27,6 +27,8 @@ protected:
 	float			m_lastJumpVelocity;
 	float			m_health = 1.0f;					///< Player health storage
 
+    float           m_walkSpeed;                        ///< Players movement speed
+
     bool            m_gettingMovementInput;             ///< Is getting movement input from user?
     bool            m_headBobPolarity;                  ///< Is head moving up/down?
     float           m_headBobCurrentHeight;             ///< Headbob current that gets added to camera y

@@ -77,8 +77,8 @@ public:
 	float			headBobAmplitude = 0.1f;					///< Determines how high/low players head will oscillate during movement (defaults to 0.1)
 	float			headBobFrequency = 1.0f;					///< Determines how fast players head will oscillate during movement (defaults to 1)
 	bool			accelerationEnabled = false;				///< Enables/Disables the acceleration/deceleration functionality (default is false (disabled))
-	float			movementAcceleration = 0.05f;				///< Player acceleration during movement (defaults to 0.05)
-	float			movementDeceleration = 0.15f;				///< Player deceleration while stopping (defaults to 0.15)
+	float			movementAcceleration = 3.0f;				///< Player acceleration during movement (defaults to 3.0)
+	float			movementDeceleration = 7.0f;				///< Player deceleration while stopping (defaults to 7.0)
 
 	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;

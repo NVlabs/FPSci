@@ -180,12 +180,12 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 		c->setWidth(width * 0.95f);
 	}movePane->endRow();
 	movePane->beginRow(); {
-		auto c = movePane->addNumberBox("Movement Acceleration", &(config.player.movementAcceleration), "", GuiTheme::LINEAR_SLIDER, 0.001f, 1.0f);
+		auto c = movePane->addNumberBox("Movement Acceleration", &(config.player.movementAcceleration), "m/s^2", GuiTheme::LINEAR_SLIDER, 0.001f, 100.0f);
 		c->setCaptionWidth(width / 2);
 		c->setWidth(width * 0.95f);
 	}movePane->endRow();
 	movePane->beginRow(); {
-		auto c = movePane->addNumberBox("Movement Deceleration", &(config.player.movementDeceleration), "", GuiTheme::LINEAR_SLIDER, 0.001f, 1.0f);
+		auto c = movePane->addNumberBox("Movement Deceleration", &(config.player.movementDeceleration), "m/s^2", GuiTheme::LINEAR_SLIDER, 0.001f, 100.0f);
 		c->setCaptionWidth(width / 2);
 		c->setWidth(width * 0.95f);
 	}movePane->endRow();
@@ -200,12 +200,12 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 		c->setWidth(width * 0.95f);
 	}movePane->endRow();
 	movePane->beginRow(); {
-		auto c = movePane->addNumberBox("Headbob Amplitude", &(config.player.headBobAmplitude), "x", GuiTheme::LINEAR_SLIDER, 0.0f, 0.5f);
+		auto c = movePane->addNumberBox("Headbob Amplitude", &(config.player.headBobAmplitude), "m", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f);
 		c->setCaptionWidth(width / 2);
 		c->setWidth(width * 0.95f);
 	}movePane->endRow();
 	movePane->beginRow(); {
-		auto c = movePane->addNumberBox("Headbob Frequency", &(config.player.headBobFrequency), "x", GuiTheme::LINEAR_SLIDER, 0.0f, 3.0f);
+		auto c = movePane->addNumberBox("Headbob Frequency", &(config.player.headBobFrequency), "x", GuiTheme::LINEAR_SLIDER, 0.0f, 10.0f);
 		c->setCaptionWidth(width / 2);
 		c->setWidth(width * 0.95f);
 	}movePane->endRow();

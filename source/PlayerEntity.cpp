@@ -91,45 +91,22 @@ void PlayerEntity::onPose(Array<shared_ptr<Surface> >& surfaceArray) {
 
 void PlayerEntity::updateFromInput(UserInput* ui) {
 	
-	float walkSpeed;
+	m_walkSpeed = 0;
 
 	// Check if player is sprinting or not
 	if (!m_sprinting) {
-		walkSpeed = *moveRate * units::meters() / units::seconds();
+		m_walkSpeed = *moveRate * units::meters() / units::seconds();
 	}
 	else {
-		walkSpeed = *moveRate * *sprintMultiplier * units::meters() / units::seconds();
+		m_walkSpeed = *moveRate * *sprintMultiplier * units::meters() / units::seconds();
 	}
 
 	// Get walking speed here (and normalize if necessary)
 	m_linearVector = Vector3(ui->getX()*moveScale->x, 0, -ui->getY()*moveScale->y);
 	if (m_linearVector.magnitude() > 0) {
-
-		if (*accelerationEnabled) {
-			m_acceleratedVelocity = lerp(m_acceleratedVelocity, walkSpeed, *movementAcceleration);
-		}
-		else {
-			m_acceleratedVelocity = walkSpeed;
-		}
-
-		m_linearVector = m_linearVector.direction() * m_acceleratedVelocity;
-		m_lastDirection = m_linearVector.direction();
-
-		if (!m_headBobPolarity)
-		{
-			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, -*headBobAmplitude * 4.0f, *headBobFrequency * m_acceleratedVelocity / 200);
-			if (m_headBobCurrentHeight <= -*headBobAmplitude)
-				m_headBobPolarity = !m_headBobPolarity;
-		}
-		else
-		{
-			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, *headBobAmplitude * 4.0f, *headBobFrequency * m_acceleratedVelocity / 200);
-			if (m_headBobCurrentHeight >= *headBobAmplitude)
-				m_headBobPolarity = !m_headBobPolarity;
-		}
-
 		m_gettingMovementInput = true;
 	}
+
 	// Add jump here (if needed)
 	RealTime timeSinceLastJump = System::time() - m_lastJumpTime;
 	if (m_jumpPressed && timeSinceLastJump > *jumpInterval) {
@@ -179,10 +156,10 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		}
 	}
 
-	if (!m_gettingMovementInput)
-	{
+	if (!m_gettingMovementInput) {
+
 		if (accelerationEnabled!= nullptr && *accelerationEnabled) {
-			m_acceleratedVelocity = lerp(m_acceleratedVelocity, 0.0f, *movementDeceleration);
+			m_acceleratedVelocity = lerp(m_acceleratedVelocity, 0.0f, *movementDeceleration * deltaTime);
 		}
 		else {
 			m_acceleratedVelocity = 0;
@@ -194,6 +171,35 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
 		if (headBobEnabled!= nullptr && *headBobEnabled) {
 			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, 0.0f, 0.1f);
+		}
+	}
+	else {
+
+		if (*accelerationEnabled) {
+			m_acceleratedVelocity = lerp(m_acceleratedVelocity, m_walkSpeed, *movementAcceleration * deltaTime);
+		}
+		else {
+			m_acceleratedVelocity = m_walkSpeed;
+		}
+
+		m_linearVector = m_linearVector.direction() * m_acceleratedVelocity;
+		m_lastDirection = m_linearVector.direction();
+
+		if (headBobEnabled != nullptr && *headBobEnabled) {
+			if (!m_headBobPolarity) {
+				m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, -*headBobAmplitude, *headBobFrequency * m_acceleratedVelocity * deltaTime);
+				
+				//We are dividing headBobAmplitude because lerp takes a very long time to reach the final result. That why we change the polarity when it reaches half of headBobAmplitude, thus making the effect more aparent
+				if (m_headBobCurrentHeight <= -*headBobAmplitude / 2) {
+					m_headBobPolarity = !m_headBobPolarity;
+				}
+			}
+			else {
+				m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, *headBobAmplitude, *headBobFrequency * m_acceleratedVelocity * deltaTime);
+				if (m_headBobCurrentHeight >= *headBobAmplitude / 2) {
+					m_headBobPolarity = !m_headBobPolarity;
+				}
+			}
 		}
 	}
 
