@@ -175,6 +175,11 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 		c->setWidth(width*0.95f);
 	}movePane->endRow();
 	movePane->beginRow(); {
+		auto c = movePane->addCheckBox("Use Acceleration?", &(config.player.accelerationEnabled));
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width * 0.95f);
+	}movePane->endRow();
+	movePane->beginRow(); {
 		auto c = movePane->addNumberBox("Movement Acceleration", &(config.player.movementAcceleration), "", GuiTheme::LINEAR_SLIDER, 0.001f, 1.0f);
 		c->setCaptionWidth(width / 2);
 		c->setWidth(width * 0.95f);

@@ -61,6 +61,7 @@ public:
 	Vector2*		moveScale = nullptr;	    ///< Player X/Y movement scale vector (interpreted as unit vector)
 	Array<bool>*	axisLock = nullptr;		    ///< World-space axis lock
 
+    bool*           accelerationEnabled = nullptr;      ///< Checks if acceleration/deceleration is enabled or not
     float*          movementAcceleration = nullptr;     ///< Players rate of acceletion during movement
     float*          movementDeceleration = nullptr;     ///< Players rate of deceleration while stopping movement
 

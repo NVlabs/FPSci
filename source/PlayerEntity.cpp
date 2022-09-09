@@ -104,7 +104,14 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	// Get walking speed here (and normalize if necessary)
 	m_linearVector = Vector3(ui->getX()*moveScale->x, 0, -ui->getY()*moveScale->y);
 	if (m_linearVector.magnitude() > 0) {
-		m_acceleratedVelocity = lerp(m_acceleratedVelocity, walkSpeed, *movementAcceleration);
+
+		if (*accelerationEnabled) {
+			m_acceleratedVelocity = lerp(m_acceleratedVelocity, walkSpeed, *movementAcceleration);
+		}
+		else {
+			m_acceleratedVelocity = walkSpeed;
+		}
+
 		m_linearVector = m_linearVector.direction() * m_acceleratedVelocity;
 		m_lastDirection = m_linearVector.direction();
 
@@ -174,14 +181,20 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
 	if (!m_gettingMovementInput)
 	{
-		if(movementDeceleration != nullptr)
-		m_acceleratedVelocity = lerp(m_acceleratedVelocity, 0.0f, *movementDeceleration);
+		if (accelerationEnabled!= nullptr && *accelerationEnabled) {
+			m_acceleratedVelocity = lerp(m_acceleratedVelocity, 0.0f, *movementDeceleration);
+		}
+		else {
+			m_acceleratedVelocity = 0;
+		}
 
 		if (m_acceleratedVelocity > 0) {
 			m_linearVector = m_acceleratedVelocity * m_lastDirection;
 		}
 
-		m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, 0.0f, 0.1f);
+		if (headBobEnabled!= nullptr && *headBobEnabled) {
+			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, 0.0f, 0.1f);
+		}
 	}
 
 	//Set Players Translation velocity

@@ -182,6 +182,7 @@ void PlayerConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("headBobEnabled", headBobEnabled);
 		reader.getIfPresent("headBobAmplitude", headBobAmplitude);
 		reader.getIfPresent("headBobFrequency", headBobFrequency);
+		reader.getIfPresent("accelerationEnabled", accelerationEnabled);
 		reader.getIfPresent("movementAcceleration", movementAcceleration);
 		reader.getIfPresent("movementDeceleration", movementDeceleration);
 		reader.getIfPresent("turnScale", turnScale);
