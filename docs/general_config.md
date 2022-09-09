@@ -287,7 +287,7 @@ Note: The sound played when `referenceTargetPlayFireSound` is set to `true` is t
 |`disablePlayerMotionBetweenTrials`|`bool`|Don't allow the player to move when not in a trial?                  |
 |`resetPlayerPositionBetweenTrials`|`bool`|Respawn the player to their original position between trials?        |
 |`headBobEnabled`    |`bool` | Whether or not the headbob effect is enabled.                                    |
-|`headBobAmplitude`  |m      | How high/low the camera Y will go during headBob motion.                         |
+|`headBobAmplitude`  |m      | This is additive to the crouch/playerHeight, Camera Y will bob within headBobAmplitude/2 and -headBobAmplitude/2.|
 |`headBobFrequency`  |`float`| How fast the headBob will happen. scales up with movement speed.                 |
 
 ```
