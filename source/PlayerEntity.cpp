@@ -159,7 +159,7 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 	if (!m_gettingMovementInput) {
 
 		if (accelerationEnabled!= nullptr && *accelerationEnabled) {
-			m_acceleratedVelocity = lerp(m_acceleratedVelocity, 0.0f, *movementDeceleration * deltaTime);
+			m_acceleratedVelocity = max(m_acceleratedVelocity - *movementDeceleration * deltaTime, 0.0f);
 		}
 		else {
 			m_acceleratedVelocity = 0;
@@ -168,15 +168,11 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		if (m_acceleratedVelocity > 0) {
 			m_linearVector = m_acceleratedVelocity * m_lastDirection;
 		}
-
-		if (headBobEnabled!= nullptr && *headBobEnabled) {
-			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, 0.0f, 0.1f);
-		}
 	}
 	else {
 
 		if (*accelerationEnabled) {
-			m_acceleratedVelocity = lerp(m_acceleratedVelocity, m_walkSpeed, *movementAcceleration * deltaTime);
+			m_acceleratedVelocity = min(m_acceleratedVelocity + *movementAcceleration * deltaTime, m_walkSpeed);
 		}
 		else {
 			m_acceleratedVelocity = m_walkSpeed;
@@ -184,23 +180,37 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
 		m_linearVector = m_linearVector.direction() * m_acceleratedVelocity;
 		m_lastDirection = m_linearVector.direction();
+	}
+	/** The HeadBob uses lerp to achieve the "Bobbing" effect. The lerp function tries to reach
+		the designated amplitude, but as Lerp can never reach final value, we change the polarity
+		when it reaches half of the designated amplitude. The lerp function will then try to reach
+		to the negative(-) of amplitude value. The polarity will again be changed when it reaches
+		half of (-amplitude), thus achieving the effect. 
+	 
+		The frequency (how fast the HeadBob will happen) is controlled by the headBobFrequency value
+		as well as the players current movement speed. So the faster the player moves, faster the
+		effect will be. Its also tied to deltaTime, so FPS will not effect how fast/slow HeadBob 
+		happens. 
+	*/
+	if (headBobEnabled != nullptr && *headBobEnabled && m_acceleratedVelocity > 0) {
+		if (!m_headBobPolarity) {
+			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, *headBobAmplitude, *headBobFrequency * m_acceleratedVelocity * deltaTime);
 
-		if (headBobEnabled != nullptr && *headBobEnabled) {
-			if (!m_headBobPolarity) {
-				m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, -*headBobAmplitude, *headBobFrequency * m_acceleratedVelocity * deltaTime);
-				
-				//We are dividing headBobAmplitude because lerp takes a very long time to reach the final result. That why we change the polarity when it reaches half of headBobAmplitude, thus making the effect more aparent
-				if (m_headBobCurrentHeight <= -*headBobAmplitude / 2) {
-					m_headBobPolarity = !m_headBobPolarity;
-				}
-			}
-			else {
-				m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, *headBobAmplitude, *headBobFrequency * m_acceleratedVelocity * deltaTime);
-				if (m_headBobCurrentHeight >= *headBobAmplitude / 2) {
-					m_headBobPolarity = !m_headBobPolarity;
-				}
+			if (m_headBobCurrentHeight >= *headBobAmplitude / 2) {
+				m_headBobPolarity = !m_headBobPolarity;
 			}
 		}
+		else {
+			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, -*headBobAmplitude, *headBobFrequency * m_acceleratedVelocity * deltaTime);
+
+			if (m_headBobCurrentHeight <= -*headBobAmplitude / 2) {
+				m_headBobPolarity = !m_headBobPolarity;
+			}
+		}
+	}
+	// Height of the camera will reset to the original position once the player has stopped moving
+	else if(headBobEnabled != nullptr && *headBobEnabled && m_acceleratedVelocity <= 0){
+		m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, 0, *headBobFrequency * deltaTime);
 	}
 
 	//Set Players Translation velocity
