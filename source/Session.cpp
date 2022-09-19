@@ -148,7 +148,7 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 			reader.get("staircaseQuestion", staircaseQuestion, format("Must provide a \"staircaseQuestion\" for staircase stimulus session \"%s\"!", id));
 			reader.get("staircaseStepSize", staircaseStepSize, format("Must provide a \"staircaseStepSize\" for staircase stimulus session \"%s\"!", id));
 			reader.get("staircaseMaxSteps", staircaseMaxSteps, format("Must provide a \"staircaseMaxSteps\" for staircase stimulus session \"%s\"!", id));
-			reader.get("staircaseReversals", staircaseReversals, format("Must provide a \"staircaseReversals\" for staircase stimulus session \"%s\"!"), id);
+			reader.get("staircaseReversals", staircaseReversals, format("Must provide a \"staircaseReversals\" for staircase stimulus session \"%s\"!", id));
 		}
 		// Add staircase parameter to logged parameters if not included
 		if(!logger.sessParamsToLog.contains(staircaseParam)) logger.sessParamsToLog.append(staircaseParam);
