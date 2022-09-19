@@ -142,6 +142,36 @@ public:
 	Any toAny(const bool forceAll = true) const;
 };
 
+
+class StaircaseQuestion {
+public:
+	String prompt;						///< Prompt for the up/down question
+	String title = "Feedback";			///< Title of the window displayed (if not fullscreen)
+
+	bool fullscreen = false;			///< Show this question as fullscreen?
+	bool showCursor = true;				///< Show cursor during question response window (allow clicking for selection)?
+	bool randomOrder = false;			///< Randomize question response order?
+
+	float promptFontSize = -1.f;		///< Font size for prompt text
+	float optionFontSize = -1.f;		///< Font size for question entry/options
+	float buttonFontSize = -1.f;		///< Font size for submit/cancel buttons
+
+	// Note: This will always be a 2-option question (2IFC) w/ a corresponding up and down response
+	String upOption;			///< Option corresponding to increasing the parameter by the step
+	String downOption;			///< Option corresponding to decreasing the parameter by the step
+	GKey upKey;					///< Key press (GKey) corresponding to up option above
+	GKey downKey;				///< Key press (GKey) corresponding to down option above
+	
+	StaircaseQuestion() {};
+	StaircaseQuestion(const Any& any);
+	Any toAny(const bool forceAll = false) const;
+};
+
+enum SessionType {
+	Constant,			///< Method of constant stimulus
+	Staircase			///< Staircase (adaptive) stimulus
+};
+
 /** Configuration for a session worth of trials */
 class SessionConfig : public FpsConfig {
 public:
@@ -151,6 +181,14 @@ public:
 	Array<TrialConfig>	trials;							///< Array of trials (and their counts) to be performed
 	bool				closeOnComplete = false;		///< Close application on session completed?
 	bool				randomizeTrialOrder = true;		///< Randomize order of trials presented within the session
+	SessionType			type = SessionType::Constant;	///< Session type, can be constant or staircase stimulus
+
+	// Staircase-specific configuration
+	String				staircaseParam;					///< Variable for staircasing
+	StaircaseQuestion	staircaseQuestion;				///< Question to ask for staircasing
+	float				staircaseStepSize;				///< Step size for staircasing (must be numeric)
+	int					staircaseMaxSteps;				///< Maximum number of steps for staircasing
+	int					staircaseReversals;				///< Number of reversals after which to end the staircase
 
 	SessionConfig() : FpsConfig(defaultConfig()) {}
 	SessionConfig(const Any& any);

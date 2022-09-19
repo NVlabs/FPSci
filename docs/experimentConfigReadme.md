@@ -32,12 +32,41 @@ In addition to these general parameters each session also has a few unique param
 * `sessions` is a list of all sessions and their affiliated information:
     * `session id` is a short name for the session
     * `description` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
+    * `type` indicates the method used for presenting stimuli in the session, valid options are `constant` or `staircase` (see [below](#staircase-session-configuration))
     * `closeOnComplete` signals to close the application whenever this session (in particular) is completed
     * `randomizeTrialOrder` determines whether trials are presented in the order they are listed or in a randomized order
     * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided).
     * `trials` is a list of trials referencing the `trials` table above:
         * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
         * `count` provides the number of trials in this session (should always be an integer strictly greater than 0)
+
+#### Staircase Session Configuration
+The method of constant stimuli (MCS) is the default stimulus model used by FPSci. In this mode the `trials` array refers to a fixed number of trials, with given targets, repeated a constant number of times each. However when the session `type` field is set to `"staircase"` staircase stimulus mode is enabled for the session.
+
+In staircase stimulus mode a single session-level configuration parameter is provided as the `staircaseParameter` to be adapted in a fixed `staircaseStepSize` over a variable number of trials. The staircase stimulus ends when a either (1) specified number of `staircaseReversals` or (2) a `staircaseMaxSteps` count is met.
+
+Whenever a session `type` is set to `"staircase"` the following fields must be specified in the configuration:
+
+* `staircaseParameter` - a valid Any-configured, numeric, [generalconfig](general_config.md) parameter that will be staircased at the trial level (beginning from its configured value)
+* `staircaseQuestion` - a specialized question [described further below](#staircase-question)
+* `staircaseStepSize` - the numeric value to change the `staircaseParameter` by (in its specified units) in each step
+* `staircaseMaxSteps` - the maxmimum number of steps after which to always end the staircase
+* `staircaseReversals` - the number of reversals in decision after which to end the staircase
+
+**DISCLAIMER**: The control of `staircaseParameter`s with appropriate `staircaseStepSize`, `staircaseReversals`, and `staircaseMaxSteps` is left to the experiment designer. This can be challenging to get right without sufficient pilot studies, as users inexperienced with the platform may quickly reach reveral counts or fail to reach convergence even at high max step values.
+
+##### Staircase Question
+Staircase questions are similar to [normal experiment questions](general_config.md#feedback-questions) except that they do not require a `type` be specified (they are always 2-option multiple choice), and require entry of 2 specific choices, the `upOption` and `downOption` which specify when the staircase takes a step up/down based on their selection. Additionally an `upKey` and `downKey` can be provided (and must be when `showCursor` is set to false). 
+
+The full set of staircase question configuration is provided below for reference:
+* `prompt` - Required prompt to provide to the user
+* `title` - Optional title to display on the window (default is "Feedback")
+* `fullscreen` - Show the question as fullscreen?
+* `showCursor` - Show the cursor when the question is presented (if not you must provide `upKey` and `downKey`)
+* `fontSize` - A base font size for all fonts in the question dialog
+* `promptFontSize` - The font size for just the `prompt` in the question dialog
+* `optionFontSize` - The font size for the `upOption` and `downOption`
+* `buttonFontSize` - The font size for the `submit`/`clear` button
 
 #### Session Configuration Example
 An example session configuration snippet is included below:

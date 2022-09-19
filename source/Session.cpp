@@ -62,9 +62,67 @@ Any TrialConfig::toAny(const bool forceAll) const {
 	return a;
 }
 
+StaircaseQuestion::StaircaseQuestion(const Any& any) {
+	FPSciAnyTableReader reader(any);
+	
+	reader.get("prompt", prompt, "A \"prompt\" field must be provided with every \"staircaseQuestion\" question!");
+	reader.get("upOption", upOption, "\"staircaseQuestion\" must specify an \"upOption\" (normal \"options\" ignored)!");
+	reader.get("downOption", downOption, "\"staircaseQuestion\" must specify a \"downOption\" (normal \"options\" ignored)!");
+
+	if (!showCursor) {
+		reader.get("upKey", upKey, "If \"showCursor\" is false the \"staircaseQuestion\" must provide a \"upKey\"!");
+		reader.get("downKey", downKey, "If \"showCursor\" is false the \"staircaseQuestion\" must provide a \"downKey\"!");
+	}
+	else {
+		reader.getIfPresent("upKey", upKey);
+		reader.getIfPresent("downKey", downKey);
+	}
+
+	reader.getIfPresent("title", title);
+	reader.getIfPresent("fullscreen", fullscreen);
+	reader.getIfPresent("showCursor", showCursor);
+	reader.getIfPresent("randomOrder", randomOrder);
+
+	// Get font sizes for elements
+	float baseFontSize;
+	if (reader.getIfPresent("fontSize", baseFontSize)) {
+		promptFontSize = baseFontSize;
+		optionFontSize = baseFontSize;
+		buttonFontSize = baseFontSize;
+	}
+	reader.getIfPresent("promptFontSize", promptFontSize);
+	reader.getIfPresent("optionFontSize", optionFontSize);
+	reader.getIfPresent("buttonFontSize", buttonFontSize);
+}
+
+Any StaircaseQuestion::toAny(const bool forceAll) const {
+	Any a(Any::TABLE);
+	StaircaseQuestion def;
+
+	a["prompt"] = prompt;
+	a["upOption"] = upOption;
+	a["downOption"] = downOption;
+	if (forceAll || def.upKey != upKey) a["upKey"] == upKey;
+	if (forceAll || def.downKey != downKey) a["downKey"] = downKey;
+	if (forceAll || def.fullscreen != fullscreen) a["fullscreen"] = fullscreen;
+	if (forceAll || def.showCursor != showCursor) a["showCursor"] = showCursor;
+	if (forceAll || def.randomOrder != randomOrder) a["randomOrder"] = randomOrder;
+	// Font sizing
+	if (forceAll || (promptFontSize == optionFontSize && optionFontSize == buttonFontSize && buttonFontSize != def.buttonFontSize)) {
+		a["fontSize"] = promptFontSize;
+	}
+	else {
+		if (forceAll || def.promptFontSize != promptFontSize) a["promptFontSize"] = promptFontSize;
+		if (forceAll || def.optionFontSize != optionFontSize) a["optionFontSize"] = optionFontSize;
+		if (forceAll || def.buttonFontSize != buttonFontSize) a["buttonFontSize"] = buttonFontSize;
+	}
+	return a;
+}
+
 SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 	TrialConfig::defaultCount = timing.defaultTrialCount;
 	FPSciAnyTableReader reader(any);
+	String typeStr;
 	switch (settingsVersion) {
 	case 1:
 		TrialConfig::defaultConfig() = (FpsConfig)(*this);		// Setup the default configuration for trials here
@@ -75,6 +133,25 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 		reader.getIfPresent("randomizeTrialOrder", randomizeTrialOrder);
 		reader.getIfPresent("blockCount", blockCount);
 		reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
+		if (reader.getIfPresent("type", typeStr)) {
+			typeStr = toLower(typeStr);
+			if (!typeStr.compare("constant")) type = SessionType::Constant;
+			else if (!typeStr.compare("staircase")) type = SessionType::Staircase;
+		}
+		// Specific requirements for staircase session
+		if (type == SessionType::Staircase) {
+			reader.get("staircaseParameter", staircaseParam, format("Must provide a \"staircaseParameter\" for staircase stimulus session \"%s\"!", id));
+			Any configAny = toAny(true);
+			if (configAny[staircaseParam].type() != Any::Type::NUMBER) {
+				throw format("\"staircaseParameter\" of \"%s\" has a non-numeric type and therefore cannot be staircased!", staircaseParam);
+			}
+			reader.get("staircaseQuestion", staircaseQuestion, format("Must provide a \"staircaseQuestion\" for staircase stimulus session \"%s\"!", id));
+			reader.get("staircaseStepSize", staircaseStepSize, format("Must provide a \"staircaseStepSize\" for staircase stimulus session \"%s\"!", id));
+			reader.get("staircaseMaxSteps", staircaseMaxSteps, format("Must provide a \"staircaseMaxSteps\" for staircase stimulus session \"%s\"!", id));
+			reader.get("staircaseReversals", staircaseReversals, format("Must provide a \"staircaseReversals\" for staircase stimulus session \"%s\"!"), id);
+		}
+		// Add staircase parameter to logged parameters if not included
+		if(!logger.sessParamsToLog.contains(staircaseParam)) logger.sessParamsToLog.append(staircaseParam);
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -90,6 +167,27 @@ Any SessionConfig::toAny(const bool forceAll) const {
 	// Update w/ the session-specific fields
 	a["id"] = id;
 	a["description"] = description;
+	// Serialize type of session to string, then to Any
+	if (forceAll || def.type != type) {
+		String typeStr;
+		switch (type) {
+			case SessionType::Constant: 
+				typeStr = "constant";
+				break;
+			case SessionType::Staircase:
+				typeStr = "staircase";
+				a["staircaseParameter"] = staircaseParam;
+				a["staircaseQuestion"] = staircaseQuestion;
+				a["starcaseStepSize"] = staircaseStepSize;
+				a["staircaseMaxSteps"] = staircaseMaxSteps;
+				a["staircaseReversals"] = staircaseReversals;
+				break;
+			default:
+				typeStr = "constant";
+				break;
+		}
+		a["type"] = typeStr;
+	}
 	if (forceAll || def.closeOnComplete != closeOnComplete)	a["closeOnComplete"] = closeOnComplete;
 	if (forceAll || def.randomizeTrialOrder != randomizeTrialOrder) a["randomizeTrialOrder"] = randomizeTrialOrder;
 	if (forceAll || def.blockCount != blockCount)				a["blockCount"] = blockCount;
