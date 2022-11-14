@@ -234,7 +234,7 @@ void FPSciLogger::createTrialsTable(const Array<String>& trialParams) {
 	// Trials table
 	Columns trialColumns = {
 		{ "session_id", "text" },
-		{ "trial_id", "integer" },
+		{ "trial_id", "text" },
 		{ "trial_index", "integer"},
 		{ "block_id", "text"},
 		{ "start_time", "text" },

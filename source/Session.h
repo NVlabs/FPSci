@@ -121,6 +121,7 @@ struct PlayerAction {
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */
 class TrialConfig : public FpsConfig {
 public:
+	String			id;				///< Trial ID (used for logging)
 	Array<String>	ids;			///< Trial ID list
 	int				count = 1;		///< Count of trials to be performed
 	static int		defaultCount;	///< Default count to use

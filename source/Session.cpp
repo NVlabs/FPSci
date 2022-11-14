@@ -41,6 +41,7 @@ TrialConfig::TrialConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 
 	switch (settingsVersion) {
 	case 1:
+		reader.getIfPresent("id", id);
 		reader.get("ids", ids, "An \"ids\" field must be provided for each set of trials!");
 		if (!reader.getIfPresent("count", count)) {
 			count = defaultCount;
@@ -643,9 +644,13 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 	if (!m_sessConfig->logger.enable) return;		// Skip this if the logger is disabled
 	if (m_trialConfig->logger.logTrialResponse) {
 		// Trials table. Record trial start time, end time, and task completion time.
+		String trialId = m_trialConfig->id;
+		if (trialId.empty()) { 
+			trialId = String(std::to_string(m_currTrialIdx));	// Fall back to trial index if no trial ID is specified (empty string)
+		}
 		FPSciLogger::TrialValues trialValues = {
 			"'" + m_sessConfig->id + "'",
-			String(std::to_string(m_currTrialIdx)),
+			"'" + trialId + "'",
 			String(std::to_string(m_completedTrials[m_currTrialIdx])),
 			format("'Block %d'", m_currBlock),
 			"'" + m_taskStartTime + "'",
