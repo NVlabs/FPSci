@@ -63,6 +63,21 @@ Any TrialConfig::toAny(const bool forceAll) const {
 	return a;
 }
 
+TaskConfig::TaskConfig(const Any& any) {
+	FPSciAnyTableReader reader(any);
+	reader.get("id", id, "Tasks must be provided w/ an \"id\" field!");
+	reader.get("trialOrders", trialOrders, "Tasks must be provided w/ trial orders!");
+	reader.getIfPresent("questions", questions);
+}
+
+Any TaskConfig::toAny(const bool forceAll) const {
+	Any a(Any::TABLE);
+	a["id"] = id;
+	a["trialOrders"] = trialOrders;
+	if(forceAll || questions.length() > 0) a["questions"] = questions;
+	return a;
+}
+
 SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 	TrialConfig::defaultCount = timing.defaultTrialCount;
 	FPSciAnyTableReader reader(any);
@@ -74,8 +89,10 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 		reader.getIfPresent("description", description);
 		reader.getIfPresent("closeOnComplete", closeOnComplete);
 		reader.getIfPresent("randomizeTrialOrder", randomizeTrialOrder);
+		reader.getIfPresent("randomizeTaskOrder", randomizeTaskOrder);
 		reader.getIfPresent("blockCount", blockCount);
 		reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
+		reader.getIfPresent("tasks", tasks);
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -95,6 +112,7 @@ Any SessionConfig::toAny(const bool forceAll) const {
 	if (forceAll || def.randomizeTrialOrder != randomizeTrialOrder) a["randomizeTrialOrder"] = randomizeTrialOrder;
 	if (forceAll || def.blockCount != blockCount)				a["blockCount"] = blockCount;
 	a["trials"] = trials;
+	if (forceAll || tasks.length() > 0) a["tasks"] = tasks;
 	return a;
 }
 
@@ -109,6 +127,13 @@ float SessionConfig::getTrialsPerBlock(void) const {
 		}
 	}
 	return count;
+}
+
+int SessionConfig::getTrialIndex(const String& id) const {
+	for (int i = 0; i < trials.length(); i++) {
+		if (trials[i].id == id) return i;			// Return the index of the trial
+	}
+	return -1;		// Return invalid index if not found
 }
 
 Array<String> SessionConfig::getUniqueTargetIds() const {
@@ -181,7 +206,7 @@ bool Session::nextCondition() {
 		m_currTrialIdx = unrunTrialIdxs[idx];
 	}
 	else { // Pick the first remaining trial
-		m_currTrialIdx = unrunTrialIdxs[0];		
+		m_currTrialIdx = unrunTrialIdxs[0];
 	}
 	
 	// Get and update the trial configuration

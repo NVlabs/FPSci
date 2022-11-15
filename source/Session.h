@@ -121,7 +121,7 @@ struct PlayerAction {
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */
 class TrialConfig : public FpsConfig {
 public:
-	String			id;				///< Trial ID (used for logging)
+	String			id;				///< Trial ID (used for logging and required for task affiliation)
 	Array<String>	ids;			///< Trial ID list
 	int				count = 1;		///< Count of trials to be performed
 	static int		defaultCount;	///< Default count to use
@@ -143,15 +143,29 @@ public:
 	Any toAny(const bool forceAll = true) const;
 };
 
+class TaskConfig {
+public:
+	String		id;						///< Task ID (used for logging)
+	Array<Array<String>> trialOrders;	///< Valid trial orders for this task
+	Array<Question>	questions;			///< Task-level questions
+	int count;							///< Count of times to present this task (in each of the trialOrders)
+
+	TaskConfig() {};
+	TaskConfig(const Any& any);
+	Any toAny(const bool forceAll = true) const;
+};
+
 /** Configuration for a session worth of trials */
 class SessionConfig : public FpsConfig {
 public:
 	String				id;								///< Session ID
 	String				description = "Session";		///< String indicating whether session is training or real
 	int					blockCount = 1;					///< Default to just 1 block per session
+	Array<TaskConfig>   tasks;
 	Array<TrialConfig>	trials;							///< Array of trials (and their counts) to be performed
 	bool				closeOnComplete = false;		///< Close application on session completed?
-	bool				randomizeTrialOrder = true;		///< Randomize order of trials presented within the session
+	bool				randomizeTrialOrder = true;		///< Randomize order of trials presented within the session?
+	bool				randomizeTaskOrder = true;		///< Randomize order of tasks presented within the session?
 
 	SessionConfig() : FpsConfig(defaultConfig()) {}
 	SessionConfig(const Any& any);
@@ -166,6 +180,7 @@ public:
 	static shared_ptr<SessionConfig> create() { return createShared<SessionConfig>(); }
 	Any toAny(const bool forceAll = false) const;
 	float getTrialsPerBlock(void) const;			// Get the total number of trials in this session
+	int getTrialIndex(const String& id) const;
 	Array<String> getUniqueTargetIds() const;
 };
 
@@ -205,8 +220,8 @@ protected:
 	int m_frameTimeIdx = 0;									///< Frame time index
 	int m_currTrialIdx;										///< Current trial
 	int m_currQuestionIdx = -1;								///< Current question index
-	Array<int> m_remainingTrials;							///< Completed flags
-	Array<int> m_completedTrials;								///< Count of completed trials
+	Array<int> m_remainingTrials;							///< Count of remaining trials (by index)
+	Array<int> m_completedTrials;							///< Count of completed trials (by index)
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
 	// Time-based parameters
