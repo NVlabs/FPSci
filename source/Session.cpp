@@ -67,6 +67,8 @@ Any TrialConfig::toAny(const bool forceAll) const {
 SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 	TrialConfig::defaultCount = timing.defaultTrialCount;
 	FPSciAnyTableReader reader(any);
+	Set<String> uniqueIds;
+
 	switch (settingsVersion) {
 	case 1:
 		TrialConfig::defaultConfig() = (FpsConfig)(*this);		// Setup the default configuration for trials here
@@ -81,6 +83,13 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 			if (trials[i].id.empty()) {						// Look for trials without an id
 				trials[i].id = String(std::to_string(i));	// Autoname w/ index
 			}
+			uniqueIds.insert(trials[i].id);
+			if (uniqueIds.size() != i + 1) {
+				logPrintf("ERROR: Duplicate trial ID \"%s\" found (trials without IDs are assigned an ID equal to their index in the trials array)!\n", trials[i].id);
+			}
+		}
+		if (uniqueIds.size() != trials.size()) {
+			throw "Duplicate trial IDs found in experiment config. Check log.txt for details!";
 		}
 		break;
 	default:
