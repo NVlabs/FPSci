@@ -58,6 +58,7 @@ TrialConfig::TrialConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 
 Any TrialConfig::toAny(const bool forceAll) const {
 	Any a = FpsConfig::toAny(forceAll);
+	a["id"] = id;
 	a["ids"] = ids;
 	a["count"] = count;
 	return a;
@@ -92,6 +93,11 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 		reader.getIfPresent("randomizeTaskOrder", randomizeTaskOrder);
 		reader.getIfPresent("blockCount", blockCount);
 		reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
+		for (int i = 0; i < trials.length(); i++) {
+			if (trials[i].id.empty()) {						// Look for trials without an id
+				trials[i].id = String(std::to_string(i));	// Autoname w/ index
+			}
+		}
 		reader.getIfPresent("tasks", tasks);
 		break;
 	default:
@@ -669,13 +675,9 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 	if (!m_sessConfig->logger.enable) return;		// Skip this if the logger is disabled
 	if (m_trialConfig->logger.logTrialResponse) {
 		// Trials table. Record trial start time, end time, and task completion time.
-		String trialId = m_trialConfig->id;
-		if (trialId.empty()) { 
-			trialId = String(std::to_string(m_currTrialIdx));	// Fall back to trial index if no trial ID is specified (empty string)
-		}
 		FPSciLogger::TrialValues trialValues = {
 			"'" + m_sessConfig->id + "'",
-			"'" + trialId + "'",
+			"'" + m_trialConfig->id + "'",
 			String(std::to_string(m_completedTrials[m_currTrialIdx])),
 			format("'Block %d'", m_currBlock),
 			"'" + m_taskStartTime + "'",
