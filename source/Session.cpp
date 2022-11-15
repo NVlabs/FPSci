@@ -58,6 +58,7 @@ TrialConfig::TrialConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 
 Any TrialConfig::toAny(const bool forceAll) const {
 	Any a = FpsConfig::toAny(forceAll);
+	a["id"] = id;
 	a["ids"] = ids;
 	a["count"] = count;
 	return a;
