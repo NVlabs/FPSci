@@ -82,6 +82,7 @@ void FPSciLogger::initResultsFile(const String& filename,
 		"'" + subjectID + "'",
 		"'" + description + "'",
 		"false",
+		"0",
 		"0"
 	};
 
@@ -129,6 +130,7 @@ void FPSciLogger::createSessionsTable(const Array<String>& sessParams) {
 		{ "subject_id", "text", "NOT NULL" },
 		{ "description", "text"},
 		{ "complete", "boolean"},
+		{ "tasks_complete", "integer"},
 		{ "trials_complete", "integer" }
 	};
 	// add any user-specified parameters as headers
@@ -136,12 +138,13 @@ void FPSciLogger::createSessionsTable(const Array<String>& sessParams) {
 	createTableInDB(m_db, "Sessions", sessColumns); // no need of Primary Key for this table.
 }
 
-void FPSciLogger::updateSessionEntry(bool complete, int trialCount) {
+void FPSciLogger::updateSessionEntry(bool complete, int taskCount, int trialCount) {
 	if (m_openTimeStr.empty()) return;		// Need an "open" session
 	const String completeStr = complete ? "true" : "false";
 	const String trialCountStr = String(std::to_string(trialCount));
+	const String taskCountStr = String(std::to_string(taskCount));
 	char* errMsg;
-	String updateQ = "UPDATE Sessions SET end_time = '" + genUniqueTimestamp() + "', complete = " + completeStr + ", trials_complete = " + trialCountStr + " WHERE start_time = '" + m_openTimeStr + "'";
+	String updateQ = "UPDATE Sessions SET end_time = '" + genUniqueTimestamp() + "', complete = " + completeStr + ", tasks_complete =" + taskCountStr + ", trials_complete = " + trialCountStr + " WHERE start_time = '" + m_openTimeStr + "'";
 	int ret = sqlite3_exec(m_db, updateQ.c_str(), 0, 0, &errMsg);
 	if (ret != SQLITE_OK) { logPrintf("Error in UPDATE statement (%s): %s\n", updateQ, errMsg); }
 }
@@ -234,9 +237,10 @@ void FPSciLogger::createTrialsTable(const Array<String>& trialParams) {
 	// Trials table
 	Columns trialColumns = {
 		{ "session_id", "text" },
+		{ "block_id", "text"},
+		{ "task_id", "text"},
 		{ "trial_id", "text" },
 		{ "trial_index", "integer"},
-		{ "block_id", "text"},
 		{ "start_time", "text" },
 		{ "end_time", "text" },
 		{ "pretrial_duration", "real" },
@@ -352,7 +356,8 @@ void FPSciLogger::createQuestionsTable() {
 	Columns questionColumns = {
 		{"time", "text"},
 		{"session_id", "text"},
-		{"trial_id", "integer" },
+		{"task_id", "text"},
+		{"trial_id", "text" },
 		{"trial_index", "integer"},
 		{"question", "text"},
 		{"response_array", "text"},
@@ -363,7 +368,7 @@ void FPSciLogger::createQuestionsTable() {
 	createTableInDB(m_db, "Questions", questionColumns);
 }
 
-void FPSciLogger::addQuestion(const Question& q, const String& session, const shared_ptr<DialogBase>& dialog, const int trial_id, const int trial_idx) {
+void FPSciLogger::addQuestion(const Question& q, const String& session, const shared_ptr<DialogBase>& dialog, const String& task_id, const String& trial_id, const int trial_idx) {
 	const String time = genUniqueTimestamp();
 	const String optStr = Any(q.options).unparse();
 	const String keyStr = Any(q.optionKeys).unparse();
@@ -371,12 +376,14 @@ void FPSciLogger::addQuestion(const Question& q, const String& session, const sh
 	if (q.type == Question::Type::MultipleChoice || q.type == Question::Type::Rating) {
 		orderStr = Any(dynamic_pointer_cast<SelectionDialog>(dialog)->options()).unparse();
 	}
-	String trialIdStr = trial_id < 0 ? "NULL" : "'" + String(std::to_string(trial_id)) + "'";
+	String taskIdStr = task_id.empty() ? "NULL" : "'" + task_id + "'";
+	String trialIdStr = trial_id.empty() ? "NULL" : "'" + trial_id + "'";
 	String trialIdxStr = trial_idx < 0 ? "NULL" : "'" + String(std::to_string(trial_idx)) + "'";
 
 	RowEntry rowContents = {
 		"'" + time + "'",
 		"'" + session + "'",
+		taskIdStr,
 		trialIdStr,
 		trialIdxStr,
 		"'" + q.prompt + "'",

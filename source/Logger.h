@@ -133,7 +133,7 @@ public:
 		return createShared<FPSciLogger>(filename, subjectID, expConfigFilename, sessConfig, description);
 	}
 
-	void updateSessionEntry(bool complete, int trialCount);
+	void updateSessionEntry(bool complete, int taskCount, int trialCount);
 
 	void logFrameInfo(const FrameInfo& frameInfo) { addToQueue(m_frameInfo, frameInfo); }
 	void logPlayerAction(const PlayerAction& playerAction) { addToQueue(m_playerActions, playerAction); }
@@ -159,7 +159,7 @@ public:
 	static String genFileTimestamp();
 
 	/** Record a question and its response */
-	void addQuestion(const Question& question, const String& session, const shared_ptr<DialogBase>& dialog, const int trial_id=-1, const int trial_idx=-1);
+	void addQuestion(const Question& question, const String& session, const shared_ptr<DialogBase>& dialog, const String& task_id = "", const String & trial_id = "", const int trial_idx = -1);
 
 	/** Add a target to an experiment */
 	void addTarget(const String& name, const shared_ptr<TargetConfig>& targetConfig, const String& spawnTime, const float& size, const Point2& spawnEcc);

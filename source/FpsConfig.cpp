@@ -350,7 +350,7 @@ void TimingConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 					pretrialDurationRange[0], pretrialDurationRange[1]).c_str();
 			}
 			else if (pretrialDurationRange.size() > 2) {
-				logPrintf("WARNING: \"pretrialDurationRange\" should be specified as a 2-element array but has length %d (ignoring last %d values)!",
+				logPrintf("WARNING: \"pretrialDurationRange\" should be specified as a 2-element array but has length %d (ignoring last %d values)!\n",
 					pretrialDurationRange.size(), pretrialDurationRange.size() - 2);
 			}
 			if (pretrialDuration < pretrialDurationRange[0] || pretrialDuration > pretrialDurationRange[1]) {
@@ -672,7 +672,7 @@ Question::Question(const Any& any) {
 		if (reader.getIfPresent("optionsPerRow", optionsPerRow)) {
 			if (type == Type::Rating) {		
 				// Ratings will ignore the optionsPerRow (always uses 1 row)
-				logPrintf("WARNING: Specified \"optionsPerRow\" parameter is ignored when using a \"Rating\" type question. If you'd like to change the layout look into using a \"MultipleChoice\" question instead!");
+				logPrintf("WARNING: Specified \"optionsPerRow\" parameter is ignored when using a \"Rating\" type question. If you'd like to change the layout look into using a \"MultipleChoice\" question instead!\n");
 			}
 		}
 

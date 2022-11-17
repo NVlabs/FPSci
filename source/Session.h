@@ -143,12 +143,32 @@ public:
 	Any toAny(const bool forceAll = true) const;
 };
 
+class TrialOrder {
+public:
+	Array<String>	order;			// The order of trials (by id)
+	int				count = 1;		// The count of this order
+
+	TrialOrder() {};
+	TrialOrder(const Any& any) {
+		FPSciAnyTableReader reader(any);
+		reader.get("trials", order);
+		reader.getIfPresent("count", count);
+	}
+	Any toAny(const bool forceAll = true) const {
+		TrialOrder def;
+		Any a(Any::TABLE);
+		a["trials"] = order;
+		if (forceAll || count != def.count) a["count"] = count;
+		return a;
+	}
+};
+
 class TaskConfig {
 public:
 	String		id;						///< Task ID (used for logging)
-	Array<Array<String>> trialOrders;	///< Valid trial orders for this task
+	Array<TrialOrder> trialOrders;		///< Valid trial orders for this task
 	Array<Question>	questions;			///< Task-level questions
-	int count;							///< Count of times to present this task (in each of the trialOrders)
+	int count = 1;						///< Count of times to present this task (in each of the trialOrders, currently unused)
 
 	TaskConfig() {};
 	TaskConfig(const Any& any);
@@ -179,7 +199,7 @@ public:
 
 	static shared_ptr<SessionConfig> create() { return createShared<SessionConfig>(); }
 	Any toAny(const bool forceAll = false) const;
-	float getTrialsPerBlock(void) const;			// Get the total number of trials in this session
+	float getTrialOrdersPerBlock(void) const;			// Get the total number of trials in this session
 	int getTrialIndex(const String& id) const;
 	Array<String> getUniqueTargetIds() const;
 };
@@ -203,7 +223,6 @@ protected:
 	int m_trialShotsHit = 0;							///< Count of total hits in this trial
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
 	int	m_currBlock = 1;								///< Index to the current block of trials
-	Array<Array<shared_ptr<TargetConfig>>> m_trials;	///< Storage for trials (to repeat over blocks)
 	String m_feedbackMessage;							///< Message to show when trial complete
 
 	// Target management
@@ -218,10 +237,14 @@ protected:
 	Point3 m_lastRefTargetPos;								///< Last reference target location (used for aim invalidation)
 
 	int m_frameTimeIdx = 0;									///< Frame time index
-	int m_currTrialIdx;										///< Current trial
+	int m_currTaskIdx;										///< Current task index (from tasks array)
+	int m_currOrderIdx;										///< Current trial order index
+	int m_currTrialIdx;										///< Current trial index (from the trials array)
 	int m_currQuestionIdx = -1;								///< Current question index
-	Array<int> m_remainingTrials;							///< Count of remaining trials (by index)
-	Array<int> m_completedTrials;							///< Count of completed trials (by index)
+	Array<int> m_taskTrials;								///< Indexes of trials (from trials array) for this task
+	Array<Array<int>> m_remainingTrialOrders;				///< Count of remaining trials of each order
+	Array<Array<int>> m_completedTrialOrders;				///< Count of completions of each trial order
+	Table<String, int> m_completedTaskTrials;				///< Count of completed trial types in this task
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
 	// Time-based parameters
@@ -423,7 +446,6 @@ public:
 
 	bool blockComplete() const;
 	bool nextCondition();
-	bool hasNextCondition() const;
 
 	const RealTime targetFrameTime();
 

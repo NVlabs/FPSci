@@ -68,14 +68,17 @@ TaskConfig::TaskConfig(const Any& any) {
 	FPSciAnyTableReader reader(any);
 	reader.get("id", id, "Tasks must be provided w/ an \"id\" field!");
 	reader.get("trialOrders", trialOrders, "Tasks must be provided w/ trial orders!");
+	reader.getIfPresent("count", count);
 	reader.getIfPresent("questions", questions);
 }
 
 Any TaskConfig::toAny(const bool forceAll) const {
+	TaskConfig def;
 	Any a(Any::TABLE);
 	a["id"] = id;
 	a["trialOrders"] = trialOrders;
-	if(forceAll || questions.length() > 0) a["questions"] = questions;
+	if (forceAll || def.count != count) a["count"] = count;
+	if (forceAll || questions.length() > 0) a["questions"] = questions;
 	return a;
 }
 
@@ -131,14 +134,21 @@ Any SessionConfig::toAny(const bool forceAll) const {
 	return a;
 }
 
-float SessionConfig::getTrialsPerBlock(void) const {
+float SessionConfig::getTrialOrdersPerBlock(void) const {
 	float count = 0.f;
-	for (const TrialConfig& tc : trials) {
-		if (count < 0) {
-			return finf();
+	if (tasks.length() == 0) {
+		for (const TrialConfig& tc : trials) {
+			if (tc.count < 0) { return finf(); }
+			else { count += tc.count; }
 		}
-		else {
-			count += tc.count;
+	}
+	else {
+		for (const TaskConfig& tc : tasks) {
+			if (tc.count < 0) { return finf(); }
+			else {
+				// Total trials are count * length of trial orders
+				count += tc.count * tc.trialOrders.length();
+			}
 		}
 	}
 	return count;
@@ -167,13 +177,6 @@ Session::Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), 
 
 Session::Session(FPSciApp* app) : m_app(app), m_weapon(app->weapon) {
 	m_hasSession = false;
-}
-
-bool Session::hasNextCondition() const{
-	for (int count : m_remainingTrials) {
-		if (count > 0) return true;
-	}
-	return false;
 }
 
 const RealTime Session::targetFrameTime()
@@ -207,25 +210,39 @@ const RealTime Session::targetFrameTime()
 }
 
 bool Session::nextCondition() {
-	Array<int> unrunTrialIdxs;
-	for (int i = 0; i < m_remainingTrials.size(); i++) {
-		if (m_remainingTrials[i] > 0 || m_remainingTrials[i] == -1) {
-			unrunTrialIdxs.append(i);
+	// Do we need to create a new task?
+	if(m_taskTrials.length() == 0) {
+		// Build an array of unrun tasks in this block
+		Array<Array<int>> unrunTaskIdxs;
+		for (int i = 0; i < m_remainingTrialOrders.size(); i++) {
+			for (int j = 0; j < m_remainingTrialOrders[i].size(); j++) {
+				if (m_remainingTrialOrders[i][j] > 0 || m_remainingTrialOrders[i][j] == -1) {
+					unrunTaskIdxs.append(Array<int>(i,j));
+				}
+			}
+		}
+		if (unrunTaskIdxs.size() == 0) return false;		// If there are no remaining tasks return
+
+		// Pick the new task and trial order index
+		int idx = 0;
+		if (m_sessConfig->randomizeTaskOrder) {				// Pick a random trial from within the array
+			idx = Random::common().integer(0, unrunTaskIdxs.size() - 1);
+		}
+		m_currTaskIdx = unrunTaskIdxs[idx][0];
+		m_currOrderIdx = unrunTaskIdxs[idx][1];
+		
+		m_completedTaskTrials.clear();
+		// Populate the task trial and completed task trials array
+		for (const String& trialId : m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order) {
+			m_taskTrials.insert(0, m_sessConfig->getTrialIndex(trialId));	// Insert trial at the front of the task trials
+			m_completedTaskTrials.set(trialId, 0);
 		}
 	}
-	if (unrunTrialIdxs.size() == 0) return false;
 
-	if (m_sessConfig->randomizeTrialOrder) {
-		// Pick a random trial from within the array
-		int idx = Random::common().integer(0, unrunTrialIdxs.size() - 1);
-		m_currTrialIdx = unrunTrialIdxs[idx];
-	}
-	else { // Pick the first remaining trial
-		m_currTrialIdx = unrunTrialIdxs[0];
-	}
-	
+	// Select the next trial from this task
+	m_currTrialIdx = m_taskTrials.pop();
+	m_trialConfig = TrialConfig::createShared<TrialConfig>(m_sessConfig->trials[m_currTrialIdx]);	// Pop trial from back of task trails
 	// Get and update the trial configuration
-	m_trialConfig = TrialConfig::createShared<TrialConfig>(m_sessConfig->trials[m_currTrialIdx]);
 	m_app->updateTrial(m_trialConfig);
 
 	// Produce (potentially random in range) pretrial duration
@@ -236,23 +253,41 @@ bool Session::nextCondition() {
 }
 
 bool Session::blockComplete() const{
-	bool allTrialsComplete = true;
-	for (int remaining : m_remainingTrials) {
-		allTrialsComplete = allTrialsComplete && (remaining == 0);
+	for (Array<int> trialOrders : m_remainingTrialOrders) {
+		for (int remaining : trialOrders) {
+			if (remaining != 0) return false;		// If any trials still need to be run block isn't complete
+		}
 	}
-	return allTrialsComplete;
+	return true;		// Block is complete
 }
 
 bool Session::updateBlock(bool init) {
-	for (int i = 0; i < m_trials.size(); i++) {
-		const Array<shared_ptr<TargetConfig>>& targets = m_trials[i];
-		if (init) { // If this is the first block in the session
-			m_completedTrials.append(0);								// This increments across blocks (unique trial index)
-			m_remainingTrials.append(m_sessConfig->trials[i].count);	// This is reset across blocks (tracks progress)
-			m_targetConfigs.append(targets);							// This only needs to be setup once
+	if (m_sessConfig->tasks.size() == 0) {									// If there are no tasks make each trial its own task
+		for (int i = 0; i < m_targetConfigs.size(); i++) {					// There is 1 trial per task, and 1 set of targets specified per trial in the target configs array
+			if (init) { // If this is the first block in the session
+				m_completedTrialOrders.append(Array<int>(0));
+				m_remainingTrialOrders.append(Array<int>(m_sessConfig->trials[i].count));
+			}
+			else { // Update for a new block in the session
+				m_remainingTrialOrders[i][0] += m_trialConfig->count;		// Add another set of trials of this type
+			}
 		}
-		else { // Update for a new block in the session
-			m_remainingTrials[i] += m_trialConfig->count;				// Add another set of trials of this type
+	}
+	else {
+		for (int i = 0; i < m_sessConfig->tasks.size(); i++) {
+			if (init) {
+				m_completedTrialOrders.append(Array<int>());		// Initialize task-level completed trial orders array
+				m_remainingTrialOrders.append(Array<int>());		// Initialize task-level remaining trial orders array
+			}
+			for (int j = 0; j < m_sessConfig->tasks[i].trialOrders.size(); j++) {
+				if (init) {
+					m_completedTrialOrders[i].append(0);	// Zero completed count
+					m_remainingTrialOrders[i].append(m_sessConfig->tasks[i].count); // Append to complete count
+				}
+				else {
+					m_remainingTrialOrders[i][j] += m_sessConfig->tasks[i].count;
+				}
+			}
 		}
 	}
 	return nextCondition();
@@ -288,7 +323,7 @@ void Session::onInit(String filename, String description) {
 		runSessionCommands("start");				// Run start of session commands
 
 		// Iterate over the sessions here and add a config for each
-		m_trials = m_app->experimentConfig.getTargetsByTrial(m_sessConfig->id);
+		m_targetConfigs = m_app->experimentConfig.getTargetsByTrial(m_sessConfig->id);
 		updateBlock(true);
 	}
 	else {	// Invalid session, move to displaying message
@@ -298,7 +333,8 @@ void Session::onInit(String filename, String description) {
 
 void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
 	static const Point3 initialSpawnPos = m_camera->frame().translation;
-	shared_ptr<TargetConfig> config = m_targetConfigs[m_currTrialIdx][target->paramIdx()];
+	const int trialIdx = m_sessConfig->getTrialIndex(m_trialConfig->id);
+	shared_ptr<TargetConfig> config = m_targetConfigs[trialIdx][target->paramIdx()];
 	const bool isWorldSpace = config->destSpace == "world";
 	Point3 loc;
 
@@ -370,7 +406,7 @@ void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
 	for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
 		const Color3 previewColor = m_trialConfig->targetView.previewColor;
 		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
-		const String name = format("%s_%d_%d_%s_%d", m_sessConfig->id, m_currTrialIdx, m_completedTrials[m_currTrialIdx], target->id, i);
+		const String name = format("%s_%d_%d_%d_%s_%d", m_sessConfig->id, m_currTaskIdx, m_currOrderIdx, m_completedTrialOrders[m_currTaskIdx][m_currOrderIdx], target->id, i);
 
 		const float spawn_eccV = (target->symmetricEccV ? randSign() : 1) * Random::common().uniform(target->eccV[0], target->eccV[1]);
 		const float spawn_eccH = (target->symmetricEccH ? randSign() : 1) * Random::common().uniform(target->eccH[0], target->eccH[1]);
@@ -417,17 +453,34 @@ void Session::processResponse()
 
 	recordTrialResponse(m_destroyedTargets, totalTargets);					// Record the trial response into the database
 
-	// Update completed/remaining trial state
-	m_completedTrials[m_currTrialIdx] += 1;
-	if (m_remainingTrials[m_currTrialIdx] > 0) {
-		m_remainingTrials[m_currTrialIdx] -= 1;	
+	// Update completed/remaining task state
+	if (m_taskTrials.size() == 0) {											// Task is complete update tracking
+		m_completedTrialOrders[m_currTaskIdx][m_currOrderIdx] += 1;			// Mark task trial order as completed
+		if (m_remainingTrialOrders[m_currTaskIdx][m_currOrderIdx] > 0) {	// Remove task trial order from remaining
+			m_remainingTrialOrders[m_currTaskIdx][m_currOrderIdx] -= 1;
+		}
 	}
+	m_completedTaskTrials[m_trialConfig->id] += 1;							// Incrememnt count of this trial type in task
+
 
 	// This update is only used for completed trials
 	if (notNull(logger)) {
-		int totalTrials = 0;
-		for (int tCount : m_completedTrials) { totalTrials += tCount;  }
-		logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), totalTrials);			// Update session entry in database
+		int completeTrials = 0;
+		int completeTasks = 0;
+		for (int i = 0; i < m_completedTrialOrders.length(); i++) {
+			for (int count : m_completedTrialOrders[i]) { 
+				completeTrials += count;	
+			}
+			bool taskComplete = true;
+			for (int remaining : m_remainingTrialOrders[i]) {
+				if (remaining > 0) {
+					taskComplete = false;
+					break;
+				}
+			}
+			if (taskComplete) { completeTasks += 1; }
+		}
+		logger->updateSessionEntry(m_currBlock > m_sessConfig->blockCount, completeTasks, completeTrials);			// Update session entry in database
 	}
 
 	// Check for whether all targets have been destroyed
@@ -512,22 +565,34 @@ void Session::updatePresentationState()
 			bool allAnswered = presentQuestions(m_trialConfig->questionArray);	// Present any trial-level questions
 			if (allAnswered) { 
 				m_currQuestionIdx = -1;		// Reset the question index
-				if (blockComplete()) {
-					m_currBlock++;												
-					if (m_currBlock > m_sessConfig->blockCount) {	// End of session (all blocks complete)
-							newState = PresentationState::sessionFeedback;
-					}
-					else {	// Block is complete but session isn't
-						m_feedbackMessage = formatFeedback(m_sessConfig->feedback.blockComplete);
-						updateBlock();
-						newState = PresentationState::initial;
-					}
-				}
-				else {	// Individual trial complete, go back to reference target
-					m_feedbackMessage = "";	// Clear the feedback message
+				m_feedbackMessage = "";	// Clear the feedback message
+				if (m_taskTrials.length() == 0) newState = PresentationState::taskFeedback;	// Move forward to providing task-level feedback
+				else {		// Individual trial complete, go back to reference target
 					nextCondition();
 					newState = PresentationState::referenceTarget;
 				}
+			}
+		}
+	}
+	else if (currentState == PresentationState::taskFeedback) {
+		bool allAnswered = presentQuestions(m_sessConfig->tasks[m_currTaskIdx].questions);
+		if (allAnswered) {
+			m_currQuestionIdx = -1;		// Reset the question index
+			if (blockComplete()) {
+				m_currBlock++;
+				if (m_currBlock > m_sessConfig->blockCount) {	// End of session (all blocks complete)
+					newState = PresentationState::sessionFeedback;
+				}
+				else {	// Block is complete but session isn't
+					m_feedbackMessage = formatFeedback(m_sessConfig->feedback.blockComplete);
+					updateBlock();
+					newState = PresentationState::initial;
+				}
+			}
+			else {	// Individual trial complete, go back to reference target
+				m_feedbackMessage = "";	// Clear the feedback message
+				nextCondition();
+				newState = PresentationState::referenceTarget;
 			}
 		}
 	}
@@ -538,9 +603,22 @@ void Session::updatePresentationState()
 				if (allAnswered) {			// Present questions until done here
 					// Write final session timestamp to log
 					if (notNull(logger) && m_sessConfig->logger.enable) {
-						int totalTrials = 0;
-						for (int tCount : m_completedTrials) { totalTrials += tCount; }
-						logger->updateSessionEntry((m_remainingTrials[m_currTrialIdx] == 0), totalTrials);			// Update session entry in database
+						int completeTrials = 0;
+						int completeTasks = 0;
+						for (int i = 0; i < m_completedTrialOrders.length(); i++) {
+							for (int count : m_completedTrialOrders[i]) {
+								completeTrials += count;
+							}
+							bool taskComplete = true;
+							for (int remaining : m_remainingTrialOrders[i]) {
+								if (remaining > 0) {
+									taskComplete = false;
+									break;
+								}
+							}
+							if (taskComplete) { completeTasks += 1; }
+						}
+						logger->updateSessionEntry(m_currBlock > m_sessConfig->blockCount, completeTasks, completeTrials);			// Update session entry in database
 					}
 					if (m_sessConfig->logger.enable) {
 						endLogging();
@@ -654,9 +732,13 @@ bool Session::presentQuestions(Array<Question>& questions) {
 				if (m_sessConfig->logger.enable) {										// Log the question and its answer
 					if (currentState == PresentationState::trialFeedback) {
 						// End of trial question, log trial id and index
-						logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog, m_currTrialIdx, m_completedTrials[m_currTrialIdx]-1);
+						logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog, m_sessConfig->tasks[m_currTaskIdx].id, m_trialConfig->id, m_completedTaskTrials[m_trialConfig->id]-1);
 					}
-					else {	// End of session question, don't need to log a trial id/index
+					else if (currentState == PresentationState::taskFeedback) {
+						// End of task question, log task id (no trial info)
+						logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog, m_sessConfig->tasks[m_currTaskIdx].id);
+					}
+					else {	// End of session question, don't need to log a task/trial id/index
 						logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog);
 					}
 				}
@@ -686,9 +768,10 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 		// Trials table. Record trial start time, end time, and task completion time.
 		FPSciLogger::TrialValues trialValues = {
 			"'" + m_sessConfig->id + "'",
-			"'" + m_trialConfig->id + "'",
-			String(std::to_string(m_completedTrials[m_currTrialIdx])),
 			format("'Block %d'", m_currBlock),
+			"'" + m_sessConfig->tasks[m_currTaskIdx].id + "'",
+			"'" + m_trialConfig->id + "'",
+			String(std::to_string(m_completedTrialOrders[m_currTaskIdx][m_currOrderIdx])),
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
 			String(std::to_string(m_pretrialDuration)),
@@ -784,12 +867,28 @@ float Session::getRemainingTrialTime() {
 
 float Session::getProgress() {
 	if (notNull(m_sessConfig)) {
-		float remainingTrials = 0.f;
-		for (int tcount : m_remainingTrials) {
-			if (tcount < 0) return 0.f;				// Infinite trials, never make any progress
-			remainingTrials += (float)tcount;
+		// Get progress across tasks
+		float remainingTrialOrders = 0.f;
+		for (Array<int> trialOrderCounts : m_remainingTrialOrders) {
+			for (int orderCount : trialOrderCounts) {
+				if (orderCount < 0) return 0.f;				// Infinite trials, never make any progress
+				remainingTrialOrders += (float)orderCount;
+			}
 		}
-		return 1.f - (remainingTrials / m_sessConfig->getTrialsPerBlock());
+
+		// Get progress in current task
+		int completedTrialsInOrder = 0;
+		const int totalTrialsInOrder = m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.length();
+		for (const String& trialId : m_completedTaskTrials.getKeys()) {
+			completedTrialsInOrder += m_completedTaskTrials[trialId];
+		}
+		float currTaskProgress = (float) completedTrialsInOrder / (float) totalTrialsInOrder;
+		
+		// Start by getting task-level progress (based on m_remainingTrialOrders)
+		float overallProgress = 1.f - (remainingTrialOrders / m_sessConfig->getTrialOrdersPerBlock());
+		// Special case to avoid "double counting" completed tasks (if incomplete add progress in the current task, if complete it has been counted)
+		if (currTaskProgress < 1) overallProgress += currTaskProgress / m_sessConfig->getTrialOrdersPerBlock();
+		return overallProgress;
 	}
 	return fnan();
 }
