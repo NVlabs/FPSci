@@ -239,6 +239,7 @@ void FPSciLogger::createTrialsTable(const Array<String>& trialParams) {
 		{ "session_id", "text" },
 		{ "block_id", "text"},
 		{ "task_id", "text"},
+		{ "task_index", "integer"},
 		{ "trial_id", "text" },
 		{ "trial_index", "integer"},
 		{ "start_time", "text" },
@@ -357,6 +358,7 @@ void FPSciLogger::createQuestionsTable() {
 		{"time", "text"},
 		{"session_id", "text"},
 		{"task_id", "text"},
+		{"task_index", "integer"},
 		{"trial_id", "text" },
 		{"trial_index", "integer"},
 		{"question", "text"},
@@ -368,7 +370,7 @@ void FPSciLogger::createQuestionsTable() {
 	createTableInDB(m_db, "Questions", questionColumns);
 }
 
-void FPSciLogger::addQuestion(const Question& q, const String& session, const shared_ptr<DialogBase>& dialog, const String& task_id, const String& trial_id, const int trial_idx) {
+void FPSciLogger::addQuestion(const Question& q, const String& session, const shared_ptr<DialogBase>& dialog, const String& task_id, const int task_idx, const String& trial_id, const int trial_idx) {
 	const String time = genUniqueTimestamp();
 	const String optStr = Any(q.options).unparse();
 	const String keyStr = Any(q.optionKeys).unparse();
@@ -376,14 +378,16 @@ void FPSciLogger::addQuestion(const Question& q, const String& session, const sh
 	if (q.type == Question::Type::MultipleChoice || q.type == Question::Type::Rating) {
 		orderStr = Any(dynamic_pointer_cast<SelectionDialog>(dialog)->options()).unparse();
 	}
-	String taskIdStr = task_id.empty() ? "NULL" : "'" + task_id + "'";
-	String trialIdStr = trial_id.empty() ? "NULL" : "'" + trial_id + "'";
-	String trialIdxStr = trial_idx < 0 ? "NULL" : "'" + String(std::to_string(trial_idx)) + "'";
+	const String taskIdStr = task_id.empty() ? "NULL" : "'" + task_id + "'";
+	const String taskIdxStr = task_idx < 0 ? "NULL" : String(std::to_string(task_idx));
+	const String trialIdStr = trial_id.empty() ? "NULL" : "'" + trial_id + "'";
+	const String trialIdxStr = trial_idx < 0 ? "NULL" : String(std::to_string(trial_idx));
 
 	RowEntry rowContents = {
 		"'" + time + "'",
 		"'" + session + "'",
 		taskIdStr,
+		taskIdxStr,
 		trialIdStr,
 		trialIdxStr,
 		"'" + q.prompt + "'",

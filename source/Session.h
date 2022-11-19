@@ -242,8 +242,9 @@ protected:
 	int m_currTrialIdx;										///< Current trial index (from the trials array)
 	int m_currQuestionIdx = -1;								///< Current question index
 	Array<int> m_taskTrials;								///< Indexes of trials (from trials array) for this task
-	Array<Array<int>> m_remainingTrialOrders;				///< Count of remaining trials of each order
-	Array<Array<int>> m_completedTrialOrders;				///< Count of completions of each trial order
+	Array<Array<int>> m_remainingTasks;						///< Count of remaining trials of each order
+	Array<Array<int>> m_completedTasks;						///< Count of completions of each trial order
+	int m_lastTaskIndex = 0;								///< Used for providing task index on questions
 	Table<String, int> m_completedTaskTrials;				///< Count of completed trial types in this task
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
