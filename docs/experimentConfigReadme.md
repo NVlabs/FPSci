@@ -13,6 +13,21 @@ For a full description of fields see the descriptions below. Along with each sub
 ## File Location
 The `experimentconfig.Any` file is located in the [`data-files`](../data-files/) directory at the root of the project. If no `experimentconfig.Any` file is present at startup, a default experiment configuration is written to `experimentconfig.Any`.
 
+## Experiment Heirarchy
+FPSci uses a multi-tiered experiment and configuration heirarcy to manage presentation of stimulus to users. Configuration is inherited by each new lower level of the heirarchy from its parents, with only some levels of the heirarcy supporting specification of [general configuration](general_config.md).
+
+This heirarchy is intended to let developers re-use global configuration while tapering configuration towards specific conditions they'd like to change on a per session or trial level.
+
+The heirarchy of FPSci specification is as follows:
+- **Experiment**: Provides base-level general config at the highest-level (plus a few specific fields mentioned below)
+  - **Session**: Supports different general config (plus a few specific fields mentioned below)
+    - **Block**: A repeat of all tasks/trials below this level, *does not support configuration or questions*
+      - **Task**: A grouping of trials with a count and specific affiliated questions, *does not support configuration*
+        - **Trial**: Lowest-level (general) configuration, affiliates a (set of) target(s) with a task to run
+
+
+*Note:* Tasks and blocks do not need to be specified in FPSci. If blocks are not specified, by default each session consists of only 1 block (no repeats of the tasks/trials below the session). If tasks are not specified the default behavior is that each trial becomes its own task, with a task count as specified in the trial. For more information on tasks see the description below.
+
 # Experiment Config Field Descriptions
 
 The experment config supports inclusion of any of the configuration parameters documented in the [general configuration parameter guide](general_config.md). In addition to these common parameters, there are a number of unique inputs to experiment config. The following is a description of what each one means, and how it is meant to be used.
@@ -74,6 +89,48 @@ An example session configuration snippet is included below:
     },
 ],
 ```
+
+### Task Configuration
+FPSci tasks are a way to affiliate trials into meaningful grouping with repeat logic automatically managed.
+
+Tasks are configured using the following parameters:
+- `trialOrders` an array of valid orderings of trials (referenced by `id`)
+- `questions` a question(s) asked after each `trialOrder` is completed
+- `count` a number of times to repeat each of the `trialOrders` specified in this task
+
+For example a task may specify presenting 2 trials (in either order) then asking a question comparing them. An example of this configuration is provided below:
+
+```
+tasks = [
+    {
+        id = "comparison";
+        trialOrders = [
+            {order = ["trial 1", "trial 2"]},       // Show trial 1/2 in this order
+            {order = ["trial 2", "trial 1"]}        // Show trial 1/2 in reverse order
+        ];
+
+        // Present a question about which trial was preferred after any pairing of 2 trials
+        questions = [
+            {
+                prompt = "Which trial did you prefer?";
+                type = "MultipleChoice";
+                options = ["First", "Second"];
+            }
+        ];
+        
+        // Repeat each order 10 times (20 total sets of 2 trials)
+        count = 10;
+    },
+]
+```
+
+### Trial Configuration
+Trials provide the lowest level of [general configuration](general_configuration.md) in FPSci. Trials are specified with the following parameters:
+- `id` is a name to refer to this trial by in logging (and in [tasks](#task-configuration))
+- `ids` is an array of target ids to present within this trial
+- `count` is a count that is applied to this trial (when it is treated as a task)
+
+As mentioned above, if no tasks are specified, each trial's `count` is used to generate a task with a single trial order with just this trial inside of it. This provides a fallback to pre-task FPSci configuration in which trials were run this way directly below blocks.
 
 ### Target Configuration
 The `targets` array specifies a list of targets each of which can contain any/all of the following parameters. The following sections provide a more detailed breakdown of target parameters by group.
