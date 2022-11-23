@@ -233,14 +233,24 @@ bool Session::nextCondition() {
 		
 		m_completedTaskTrials.clear();
 		// Populate the task trial and completed task trials array
-		for (const String& trialId : m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order) {
+		Array<String> trialIds;
+		String taskId;
+		if (m_sessConfig->tasks.size() == 0) {
+			// There are no tasks in this session, we need to create this task based on a single trial
+			trialIds = Array<String>(m_sessConfig->trials[m_currTaskIdx].id);
+			taskId = m_sessConfig->trials[m_currTaskIdx].id;
+		}
+		else {
+			trialIds = m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order;
+			taskId = m_sessConfig->tasks[m_currTaskIdx].id;
+		}
+		for (const String& trialId : trialIds) {
 			m_taskTrials.insert(0, m_sessConfig->getTrialIndex(trialId));	// Insert trial at the front of the task trials
 			m_completedTaskTrials.set(trialId, 0);
 		}
 
 		// Add task to tasks table in database
-		logger->addTask(m_sessConfig->id, m_currBlock-1, m_sessConfig->tasks[m_currTaskIdx].id, getTaskCount(m_currTaskIdx), 
-			m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order);
+		logger->addTask(m_sessConfig->id, m_currBlock-1, taskId, getTaskCount(m_currTaskIdx), trialIds);
 	}
 
 	// Select the next trial from this task
@@ -589,10 +599,16 @@ void Session::updatePresentationState()
 		}
 	}
 	else if (currentState == PresentationState::taskFeedback) {
-		bool allAnswered = presentQuestions(m_sessConfig->tasks[m_currTaskIdx].questions);
+		bool allAnswered = true;
+		if (m_sessConfig->tasks.size() > 0) {
+			// Only ask questions if a task is specified (otherwise trial-level questions have already been presented)
+			allAnswered = presentQuestions(m_sessConfig->tasks[m_currTaskIdx].questions);
+		}
 		if (allAnswered) {
 			m_currQuestionIdx = -1;		// Reset the question index
-			logger->updateTaskEntry(m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size(), true);
+			int completeTrials = 1;		// Assume 1 completed trial (if we don't have specified tasks)
+			if (m_sessConfig->tasks.size() > 0) completeTrials = m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size();
+			logger->updateTaskEntry(completeTrials, true);
 			if (blockComplete()) {
 				m_currBlock++;
 				if (m_currBlock > m_sessConfig->blockCount) {	// End of session (all blocks complete)
@@ -780,13 +796,16 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 {
 	if (!m_sessConfig->logger.enable) return;		// Skip this if the logger is disabled
 	if (m_trialConfig->logger.logTrialResponse) {
+		String taskId;
+		if (m_sessConfig->tasks.size() == 0) taskId = m_trialConfig->id;
+		else taskId = m_sessConfig->tasks[m_currTaskIdx].id;
 		// Get the (unique) index for this run of the task
 		m_lastTaskIndex = getTaskCount(m_currTaskIdx);
 		// Trials table. Record trial start time, end time, and task completion time.
 		FPSciLogger::TrialValues trialValues = {
 			"'" + m_sessConfig->id + "'",
 			format("'Block %d'", m_currBlock),
-			"'" + m_sessConfig->tasks[m_currTaskIdx].id + "'",
+			"'" + taskId + "'",
 			String(std::to_string(m_lastTaskIndex)),
 			"'" + m_trialConfig->id + "'",
 			String(std::to_string(m_completedTasks[m_currTaskIdx][m_currOrderIdx])),
@@ -896,7 +915,8 @@ float Session::getProgress() {
 
 		// Get progress in current task
 		int completedTrialsInOrder = 0;
-		const int totalTrialsInOrder = m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.length();
+		int totalTrialsInOrder = 1; // If there aren't tasks specified there is always 1 trial in this order (single order/trial task)
+		if(m_sessConfig->tasks.size() > 0) totalTrialsInOrder = m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.length();
 		for (const String& trialId : m_completedTaskTrials.getKeys()) {
 			completedTrialsInOrder += m_completedTaskTrials[trialId];
 		}
