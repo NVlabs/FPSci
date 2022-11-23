@@ -54,6 +54,7 @@ void FPSciLogger::initResultsFile(const String& filename,
 	if (createNewFile) {
 		createExperimentsTable(expConfigFilename);
 		createSessionsTable(sessConfig->logger.sessParamsToLog);
+		createTasksTable();
 		createTargetTypeTable();
 		createTargetsTable();
 		
@@ -231,6 +232,49 @@ void FPSciLogger::addTarget(const String& name, const shared_ptr<TargetConfig>& 
 void FPSciLogger::addTrialParamValues(TrialValues& t, const shared_ptr<TrialConfig>& config) {
 	Any a = config->toAny(true);
 	for (const String& p : m_trialParams) { t.append("'" + a[p].unparse() + "'"); }
+}
+
+void FPSciLogger::createTasksTable() {
+	Columns taskColumns = {
+		{"session_id", "text"},
+		{"block_id", "integer"},
+		{"task_id", "text"},
+		{"task_index", "integer"},
+		{"start_time", "text"},
+		{"end_time", "text"},
+		{"trial_order", "text"},
+		{"trials_complete", "integer"},
+		{"complete", "boolean"}
+	};
+	createTableInDB(m_db, "Tasks", taskColumns);
+}
+
+void FPSciLogger::addTask(const String& sessId, const int blockIdx, const String& taskId, const int taskIdx, const Array<String>& trialOrder) {
+	m_taskTimeStr = genUniqueTimestamp();
+	const RowEntry taskValues = {
+		"'" + sessId + "'",
+		String(std::to_string(blockIdx)),
+		"'" + taskId + "'",
+		String(std::to_string(taskIdx)),
+		"'" + m_taskTimeStr + "'",
+		"NULL",
+		"'" + Any(trialOrder).unparse() + "'",
+		"0",
+		"0"
+	};
+	insertRowIntoDB(m_db, "Tasks", taskValues);
+}
+
+void FPSciLogger::updateTaskEntry(const int trialsComplete, const bool complete) {
+	String taskEndTime = "NULL";
+	if (complete) taskEndTime = genUniqueTimestamp();
+	if (m_taskTimeStr.empty()) return;		// Need a start (time) for task to update
+	const String completeStr = complete ? "true" : "false";
+	const String trialCountStr = String(std::to_string(trialsComplete));
+	char* errMsg;
+	String updateQ = "UPDATE Tasks SET end_time = '" + taskEndTime + "', complete = " + completeStr + ", trials_complete = " + trialCountStr + " WHERE start_time = '" + m_taskTimeStr + "'";
+	int ret = sqlite3_exec(m_db, updateQ.c_str(), 0, 0, &errMsg);
+	if (ret != SQLITE_OK) { logPrintf("Error in UPDATE statement (%s): %s\n", updateQ, errMsg); }
 }
 
 void FPSciLogger::createTrialsTable(const Array<String>& trialParams) {

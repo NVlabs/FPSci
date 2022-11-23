@@ -485,6 +485,7 @@ public:
 	float getProgress();
 	double getScore();
 	String getFeedbackMessage();
+	int getTaskCount(const int currTaskIdx) const;
 
 	/** queues action with given name to insert into database when trial completes
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */

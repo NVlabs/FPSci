@@ -30,6 +30,7 @@ protected:
 	sqlite3* m_db = nullptr;						///< The db used for logging
 	
 	String m_openTimeStr;							///< Time string for database creation
+	String m_taskTimeStr;							///< Time string for creation of current task
 
 	// state of current database entries (not yet used)
 	long long int m_sessionRowID;
@@ -107,6 +108,7 @@ protected:
 	void createSessionsTable(const Array<String>& sessParams);
 	void createTargetTypeTable();
 	void createTargetsTable();
+	void createTasksTable();
 	void createTrialsTable(const Array<String>& trialParams);
 	void createTargetTrajectoryTable();
 	void createPlayerActionTable();
@@ -157,6 +159,9 @@ public:
 
 	/** Genearte a timestamp for filenames */
 	static String genFileTimestamp();
+
+	void addTask(const String& sessId, const int blockIdx, const String& taskId, const int taskIdx, const Array<String>& trialOrder);
+	void updateTaskEntry(const int trialsComplete, const bool complete);
 
 	/** Record a question and its response */
 	void addQuestion(const Question& question, const String& session, const shared_ptr<DialogBase>& dialog, const String& task_id = "", const int task_idx=-1, const String & trial_id = "", const int trial_idx = -1);

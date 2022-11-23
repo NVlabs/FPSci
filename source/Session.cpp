@@ -237,6 +237,10 @@ bool Session::nextCondition() {
 			m_taskTrials.insert(0, m_sessConfig->getTrialIndex(trialId));	// Insert trial at the front of the task trials
 			m_completedTaskTrials.set(trialId, 0);
 		}
+
+		// Add task to tasks table in database
+		logger->addTask(m_sessConfig->id, m_currBlock-1, m_sessConfig->tasks[m_currTaskIdx].id, getTaskCount(m_currTaskIdx), 
+			m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order);
 	}
 
 	// Select the next trial from this task
@@ -250,6 +254,14 @@ bool Session::nextCondition() {
 	else m_pretrialDuration = drawTruncatedExp(m_trialConfig->timing.pretrialDurationLambda, m_trialConfig->timing.pretrialDurationRange[0], m_trialConfig->timing.pretrialDurationRange[1]);
 	
 	return true;
+}
+
+int Session::getTaskCount(const int currTaskIdx) const {
+	int idx = 0;
+	for (int trialOrderCount : m_completedTasks[currTaskIdx]) {
+		idx += trialOrderCount;
+	}
+	return idx;
 }
 
 bool Session::blockComplete() const{
@@ -569,6 +581,7 @@ void Session::updatePresentationState()
 				m_feedbackMessage = "";	// Clear the feedback message
 				if (m_taskTrials.length() == 0) newState = PresentationState::taskFeedback;	// Move forward to providing task-level feedback
 				else {		// Individual trial complete, go back to reference target
+					logger->updateTaskEntry(m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size(), false);
 					nextCondition();
 					newState = PresentationState::referenceTarget;
 				}
@@ -579,6 +592,7 @@ void Session::updatePresentationState()
 		bool allAnswered = presentQuestions(m_sessConfig->tasks[m_currTaskIdx].questions);
 		if (allAnswered) {
 			m_currQuestionIdx = -1;		// Reset the question index
+			logger->updateTaskEntry(m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size(), true);
 			if (blockComplete()) {
 				m_currBlock++;
 				if (m_currBlock > m_sessConfig->blockCount) {	// End of session (all blocks complete)
@@ -767,10 +781,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets)
 	if (!m_sessConfig->logger.enable) return;		// Skip this if the logger is disabled
 	if (m_trialConfig->logger.logTrialResponse) {
 		// Get the (unique) index for this run of the task
-		m_lastTaskIndex = 0;
-		for (int i = 0; i < m_completedTasks[m_currTaskIdx].size(); i++) {
-			m_lastTaskIndex += m_completedTasks[m_currTaskIdx][i];
-		}
+		m_lastTaskIndex = getTaskCount(m_currTaskIdx);
 		// Trials table. Record trial start time, end time, and task completion time.
 		FPSciLogger::TrialValues trialValues = {
 			"'" + m_sessConfig->id + "'",
