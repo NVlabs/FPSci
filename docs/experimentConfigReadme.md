@@ -99,7 +99,7 @@ Tasks are configured using the following parameters:
 - `questions` a question(s) asked after each `trialOrder` is completed
 - `count` a number of times to repeat each of the `trialOrders` specified in this task
 
-Note that rather than being a direct `Array<Array<String>>` the `trialOrders` array needs to be an `Array<Object>` in order to parse correctly in the Any format. To do this the `trialOrders` array requires specification of a `trials` array within it to accomplish this nesting, as demonstrated in the example below.
+Note that rather than being a direct `Array<Array<String>>` the `trialOrders` array needs to be an `Array<Object>` in order to parse correctly in the Any format. To do this the `trialOrders` array requires specification of an `order` array within it to accomplish this nesting, as demonstrated in the example below.
 
 For example a task may specify presenting 2 trials (in either order) then asking a question comparing them. An example of this configuration is provided below:
 
@@ -108,8 +108,8 @@ tasks = [
     {
         id = "comparison";
         trialOrders = [
-            {trials = ["trial 1", "trial 2"]},       // Show trial 1/2 in this order
-            {trials = ["trial 2", "trial 1"]}        // Show trial 1/2 in reverse order
+            {order = ["trial 1", "trial 2"]},       // Show trial 1/2 in this order
+            {order = ["trial 2", "trial 1"]}        // Show trial 1/2 in reverse order
         ];
 
         // Present a question about which trial was preferred after any pairing of 2 trials

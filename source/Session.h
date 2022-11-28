@@ -151,13 +151,13 @@ public:
 	TrialOrder() {};
 	TrialOrder(const Any& any) {
 		FPSciAnyTableReader reader(any);
-		reader.get("trials", order);
+		reader.get("order", order);
 		reader.getIfPresent("count", count);
 	}
 	Any toAny(const bool forceAll = true) const {
 		TrialOrder def;
 		Any a(Any::TABLE);
-		a["trials"] = order;
+		a["order"] = order;
 		if (forceAll || count != def.count) a["count"] = count;
 		return a;
 	}
