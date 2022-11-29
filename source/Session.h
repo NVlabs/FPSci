@@ -491,7 +491,7 @@ public:
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */
 	void accumulatePlayerAction(PlayerActionType action, String target="");
 	
-	bool updateBlock(bool init = false);
+	bool nextBlock(bool init = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
 	PresentationState currentState;						///< Current presentation state
