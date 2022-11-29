@@ -48,8 +48,9 @@ In addition to these general parameters each session also has a few unique param
     * `session id` is a short name for the session
     * `description` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
     * `closeOnComplete` signals to close the application whenever this session (in particular) is completed
-    * `randomizeTrialOrder` determines whether trials are presented in the order they are listed or in a randomized order
-    * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided).
+    * `randomizeTaskOrder` determines whether tasks are presented in the order they are listed or in a randomized order (if specified)
+    * `randomizeTrialOrder` determines whether trials are presented in the order they are listed or in a randomized order (within a task `trialOrder` if specified)
+    * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided)
     * `trials` is a list of trials referencing the `trials` table above:
         * `id` is an (optional) target ID that (if specified) is used for logging purposes. If unspecified the `id` defaults to the (integer) index of the trial in the `trials` array.
         * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
@@ -64,6 +65,8 @@ An example session configuration snippet is included below:
         "id" : "test-session",          // This is a short name for our session
         "description" : "test",         // This is an arbitrary string tag (for now)
         "closeOnComplete": false,       // Don't automatically close the application when the session completes
+        "randomizeTaskOrder": true,     // Randomize order of tasks by default
+        "randomizeTrialOrder": true,    // Randomize order of trials within a task by default
         "frameRate" : 120,              // Example of a generic parameter modified for this session
         "blockCount" : 1,         // Single block design
         "trials" : [
@@ -126,6 +129,11 @@ tasks = [
     },
 ]
 ```
+#### Task/Trial Interaction and Ordering
+When no `tasks` are specified in a session configuration, FPSci treats trials as tasks creating one task per trial *type* in the [trial configuration](#trial-configuration). Note that this has impacts on the interpretation of `randomizeTrialOrder` when trials are treated as tasks.
+
+As described [above](#session-configuration) the `randomizeTaskOrder` session-level configuration parameter allows the experiment designer to select tasks in either the order they are specified or a random order. When `tasks` are specified in a session `randomizeTrialOrder` randomizes within the `order` specified in each element of the `trialOrders` array. However,  in order to maintain compatibility with older configurations and avoid complicating configuration, when no `tasks` array is specified in a session (i.e., trials are treated as tasks) `randomizeTrialOrder` behaves the same as `randomizeTaskOrder`.
+
 
 ### Trial Configuration
 Trials provide the lowest level of [general configuration](general_configuration.md) in FPSci. Trials are specified with the following parameters:
