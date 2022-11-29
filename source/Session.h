@@ -446,7 +446,7 @@ public:
 	void spawnTrialTargets(Point3 initialSpawnPos, bool previewMode = false);
 
 	bool blockComplete() const;
-	bool nextCondition();
+	bool nextTrial();
 
 	const RealTime targetFrameTime();
 

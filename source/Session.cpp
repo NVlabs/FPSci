@@ -128,6 +128,7 @@ Any SessionConfig::toAny(const bool forceAll) const {
 	a["description"] = description;
 	if (forceAll || def.closeOnComplete != closeOnComplete)	a["closeOnComplete"] = closeOnComplete;
 	if (forceAll || def.randomizeTrialOrder != randomizeTrialOrder) a["randomizeTrialOrder"] = randomizeTrialOrder;
+	if (forceAll || def.randomizeTaskOrder != randomizeTaskOrder) a["randomizeTaskOrder"] = randomizeTaskOrder;
 	if (forceAll || def.blockCount != blockCount)				a["blockCount"] = blockCount;
 	a["trials"] = trials;
 	if (forceAll || tasks.length() > 0) a["tasks"] = tasks;
@@ -209,7 +210,7 @@ const RealTime Session::targetFrameTime()
 	return defaultFrameTime;
 }
 
-bool Session::nextCondition() {
+bool Session::nextTrial() {
 	// Do we need to create a new task?
 	if(m_taskTrials.length() == 0) {
 		// Build an array of unrun tasks in this block
@@ -225,8 +226,9 @@ bool Session::nextCondition() {
 
 		// Pick the new task and trial order index
 		int idx = 0;
-		if (m_sessConfig->randomizeTaskOrder) {				// Pick a random trial from within the array
-			idx = Random::common().integer(0, unrunTaskIdxs.size() - 1);
+		// Are we randomizing task order (or randomizing trial order when trials are treated as tasks)?
+		if (m_sessConfig->randomizeTaskOrder || (m_sessConfig->tasks.size() == 0 && m_sessConfig->randomizeTrialOrder)) {				
+			idx = Random::common().integer(0, unrunTaskIdxs.size() - 1);		// Pick a random trial from within the array
 		}
 		m_currTaskIdx = unrunTaskIdxs[idx][0];
 		m_currOrderIdx = unrunTaskIdxs[idx][1];
@@ -249,21 +251,27 @@ bool Session::nextCondition() {
 			m_completedTaskTrials.set(trialId, 0);
 		}
 
+		// If we are using tasks and we are randomizing trial order, shuffle the trials array
+		if(m_sessConfig->tasks.length() > 0 && m_sessConfig->randomizeTrialOrder){
+			m_taskTrials.randomize();
+		}
+
 		// Add task to tasks table in database
 		logger->addTask(m_sessConfig->id, m_currBlock-1, taskId, getTaskCount(m_currTaskIdx), trialIds);
 	}
 
-	// Select the next trial from this task
+	// Select the next trial from this task (pop trial from back of task trails)
 	m_currTrialIdx = m_taskTrials.pop();
-	m_trialConfig = TrialConfig::createShared<TrialConfig>(m_sessConfig->trials[m_currTrialIdx]);	// Pop trial from back of task trails
+
 	// Get and update the trial configuration
+	m_trialConfig = TrialConfig::createShared<TrialConfig>(m_sessConfig->trials[m_currTrialIdx]);
 	m_app->updateTrial(m_trialConfig);
 
 	// Produce (potentially random in range) pretrial duration
 	if (isNaN(m_trialConfig->timing.pretrialDurationLambda)) m_pretrialDuration = m_trialConfig->timing.pretrialDuration;
 	else m_pretrialDuration = drawTruncatedExp(m_trialConfig->timing.pretrialDurationLambda, m_trialConfig->timing.pretrialDurationRange[0], m_trialConfig->timing.pretrialDurationRange[1]);
 	
-	return true;
+	return true;	// Successfully loaded the new trial
 }
 
 int Session::getTaskCount(const int currTaskIdx) const {
@@ -314,7 +322,7 @@ bool Session::updateBlock(bool init) {
 			}
 		}
 	}
-	return nextCondition();
+	return nextTrial();
 }
 
 void Session::onInit(String filename, String description) {
@@ -592,7 +600,7 @@ void Session::updatePresentationState()
 				if (m_taskTrials.length() == 0) newState = PresentationState::taskFeedback;	// Move forward to providing task-level feedback
 				else {		// Individual trial complete, go back to reference target
 					logger->updateTaskEntry(m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size(), false);
-					nextCondition();
+					nextTrial();
 					newState = PresentationState::referenceTarget;
 				}
 			}
@@ -622,7 +630,7 @@ void Session::updatePresentationState()
 			}
 			else {	// Individual trial complete, go back to reference target
 				m_feedbackMessage = "";	// Clear the feedback message
-				nextCondition();
+				nextTrial();
 				newState = PresentationState::referenceTarget;
 			}
 		}
