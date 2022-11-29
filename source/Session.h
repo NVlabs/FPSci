@@ -140,7 +140,7 @@ public:
 		return def;
 	}
 
-	Any toAny(const bool forceAll = true) const;
+	Any toAny(const bool forceAll = false) const;
 };
 
 class TrialOrder {
