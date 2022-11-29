@@ -72,6 +72,7 @@ The following settings allow the user to control various timings/durations aroun
 |`pretrialDurationRange`        |`Array<`s`>`       |A [min, max] array over which the pretrial duration will be randomized (according to a truncated exponential distribution) |
 |`maxTrialDuration`             |s                  |The maximum time over which the task can occur                      |
 |`trialFeedbackDuration`        |s                  |The duration of the feedback window between trials                  |
+|`taskFeedbackDuration`         |s                  |The duration of the feedback window between tasks                   |
 |`sessionFeedbackDuration`      |s                  |The duration of the feedback window between sessions                |
 |`sessionFeedbackRequireClick`  |`bool`             |Require the user to click to move past the session feedback (in addition to waiting the `sessionFeedbackDuration`)|
 |`defaultTrialCount`            |`int`              |The value to use for trials with no specified `count` settings      |
@@ -83,6 +84,7 @@ The following settings allow the user to control various timings/durations aroun
 "pretrialDurationRange": [0.5, 0.5]         // Default is a non-randomized pretrial duration of 0.5s (do not need to specify this for non-random ranges)
 "maxTrialDuration": 100000.0,               // Maximum duration allowed for completion of the task
 "trialFeedbackDuration": 1.0,               // Time for user feedback between trials
+"taskFeedbackDuration": 1.0,                // Time for user feedback between tasks
 "sessionFeedbackDuration": 5.0,             // Time for user feedback between sessions
 "sessionFeedbackRequireClick" : false,      // Don't require a click to move past the scoreboard
 "defaultTrialCount" : 5,                    
@@ -121,11 +123,13 @@ In addition to controlling the duration and formatting of displayed feedback mes
 |`pretrialAimInvalidFeedback`       |`String` | The message to display when the pretrial aim exceeds the `maxPretrialAimDisplacement` |
 |`trialSuccessFeedback`             |`String` | Message to display when a trial is a success                       |
 |`trialFailureFeedback`             |`String` | Message to display when a trial is a failure                       |
+|`taskSuccessFeedback`              |`String` | Message to display when a task is a success (question answered correctly) |
+|`taskFailureFeedback`              |`String` | Message to display when a task is a failure (question answered incorrectly) |
 |`blockCompleteFeedback`            |`String` | Message to display when a block is completed                       |
 |`sessionCompleteFeedback`          |`String` | Message to display when a session is completed                     |
 |`allSessionsCompleteFeedback`      |`String` | Message to display when all sessions are completed                 |
 
-Multi-line feedback strings can be provided by inserting a `\n` character in the string at the point at which the line break should occur.
+Multi-line feedback strings can be provided by inserting a `\n` character in the string at the point at which the line break should occur. Empty feedback strings are not displayed.
 
 For any/all of the feedback strings provided above, a number of `%`-delimited special strings are supported to allow find-and-replace with certain values. These include:
 
@@ -150,6 +154,8 @@ noReferenceTargetInitialFeedback: "Click to start the session!",
 maxPretrialAimDisplacement: "Invalid trial! Do not displace your aim during the pretrial duration.",
 trialSuccessFeedback: "%trialTaskTimeMs ms!",
 trialFailureFeedback: "Failure!",
+taskSuccessFeedback: "",
+taskFailureFeedback: "",
 blockCompleteFeedback: "Block %lastBlock complete! Starting block %currBlock.",
 sessionCompleteFeedback: "Session complete! You scored %sessionScore!",
 allSessionsCompleteFeedback: "All Sessions Complete!",

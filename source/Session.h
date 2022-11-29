@@ -146,19 +146,23 @@ public:
 class TrialOrder {
 public:
 	Array<String>	order;			// The order of trials (by id)
-	int				count = 1;		// The count of this order
+	//int				count = 1;		// The count of this order
+	String			correctAnswer = ""; // The correct answer for the task question in this order
 
 	TrialOrder() {};
 	TrialOrder(const Any& any) {
 		FPSciAnyTableReader reader(any);
 		reader.get("order", order);
-		reader.getIfPresent("count", count);
+		reader.getIfPresent("correctAnswer", correctAnswer);
+		//reader.getIfPresent("count", count);
+		
 	}
 	Any toAny(const bool forceAll = false) const {
 		TrialOrder def;
 		Any a(Any::TABLE);
 		a["order"] = order;
-		if (forceAll || count != def.count) a["count"] = count;
+		if (forceAll || def.correctAnswer != correctAnswer) a["correctAnswer"] = correctAnswer;
+		//if (forceAll || count != def.count) a["count"] = count;
 		return a;
 	}
 };
@@ -168,6 +172,7 @@ public:
 	String		id;						///< Task ID (used for logging)
 	Array<TrialOrder> trialOrders;		///< Valid trial orders for this task
 	Array<Question>	questions;			///< Task-level questions
+	int				questionIdx = -1;	// The index of the (task-level) question corresponding to the correct answer above (populated automatically)
 	int count = 1;						///< Count of times to present this task (in each of the trialOrders, currently unused)
 
 	TaskConfig() {};

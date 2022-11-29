@@ -98,7 +98,9 @@ FPSci tasks are a way to affiliate trials into meaningful grouping with repeat l
 
 Tasks are configured using the following parameters:
 - `id` an identifier for the task, used for logging
-- `trialOrders` an array of valid orderings of trials (referenced by `id`)
+- `trialOrders` an array of valid orderings of trials (referenced by `id`) with each order consisting of:
+    - `order` the set of trials (in order) to be presented in this order
+    - `correctAnswer` the correct answer to respond to (the final) multiple choice question in the task (see [below](#task-successfailure-criteria))
 - `questions` a question(s) asked after each `trialOrder` is completed
 - `count` a number of times to repeat each of the `trialOrders` specified in this task
 
@@ -111,8 +113,8 @@ tasks = [
     {
         id = "comparison";
         trialOrders = [
-            {order = ["trial 1", "trial 2"]},       // Show trial 1/2 in this order
-            {order = ["trial 2", "trial 1"]}        // Show trial 1/2 in reverse order
+            {order = ["trial 1", "trial 2"], correctAnswer = "first"},       // Show trial 1/2 in this order
+            {order = ["trial 2", "trial 1"], correctAnswer = "second"}        // Show trial 1/2 in reverse order
         ];
 
         // Present a question about which trial was preferred after any pairing of 2 trials
@@ -129,11 +131,18 @@ tasks = [
     },
 ]
 ```
+
+#### Task Success/Failure Criteria
+FPSci supports minimal "correctness" checking of questions that are asked affiliated with each `order` specified in the task configuration. In order to use this feature you must have at least one question with `type` of `"MultipleChoice"` specified in your task-level questions array. In this case you may choose to specify a `correctAnswer` field with each element in the `trialOrders` array. This answer *must* correspond to an option in the final multiple choice question of the task (if not an exception will be thrown).
+
+When specified correctly FPSci will check if the `correctAnswer` matches the response provided by a user during the task-level questions and if so display the `taskSuccessFeedback` message. If the response does not match `correctAnswer` the `taskFailureFeedback` message is provided instead. **It is up to the experiment designer to make sure the `correctAnswer` field exactly matches the desired option from the final multiple choice question in a task**.
+
+By default if no `correctAnswer` is specified or no `questions` are asked in a task FPSci defaults to the declaring all tasks a success.
+
 #### Task/Trial Interaction and Ordering
-When no `tasks` are specified in a session configuration, FPSci treats trials as tasks creating one task per trial *type* in the [trial configuration](#trial-configuration). Note that this has impacts on the interpretation of `randomizeTrialOrder` when trials are treated as tasks.
+When no `tasks` are specified in a session configuration, FPSci treats trials as tasks creating one task per trial *type* in the [trial configuration](#trial-configuration).
 
-As described [above](#session-configuration) the `randomizeTaskOrder` session-level configuration parameter allows the experiment designer to select tasks in either the order they are specified or a random order. When `tasks` are specified in a session `randomizeTrialOrder` randomizes within the `order` specified in each element of the `trialOrders` array. However,  in order to maintain compatibility with older configurations and avoid complicating configuration, when no `tasks` array is specified in a session (i.e., trials are treated as tasks) `randomizeTrialOrder` behaves the same as `randomizeTaskOrder`.
-
+As described [above](#session-configuration) the `randomizeTaskOrder` session-level configuration parameter allows the experiment designer to select tasks in either the order they are specified or a random order. To support legacy configuration `randomizeTrialOrder` is treated as equivalent to `randomizeTaskOrder` in FPSci, but is overwritten when `randomizeTaskOrder` is defined in the config. Trial order randomization within `order`s in tasks is current not supported in FPSci (all orders need to be specified explicitly).
 
 ### Trial Configuration
 Trials provide the lowest level of [general configuration](general_configuration.md) in FPSci. Trials are specified with the following parameters:

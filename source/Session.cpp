@@ -70,6 +70,29 @@ TaskConfig::TaskConfig(const Any& any) {
 	reader.get("trialOrders", trialOrders, "Tasks must be provided w/ trial orders!");
 	reader.getIfPresent("count", count);
 	reader.getIfPresent("questions", questions);
+
+	// Get the list of options from the final multiple choice question
+	Array<String> options;
+	for (int i = 0; i < questions.size(); i++) {
+		// Use options from the final multiple choice question
+		if (questions[i].type == Question::Type::MultipleChoice) {
+			questionIdx = i;
+			options = questions[i].options;
+		}
+	}
+
+	// Check that each trial order has a valid correctAnswer (if specified)
+	for (TrialOrder& order : trialOrders) {
+		if (!order.correctAnswer.empty()) {
+			if (options.size() == 0) {
+				throw format("Task \"%s\" specifies a \"correctAnswer\" but no multiple choice questions are specified!", id);
+			}
+			// This order has a specified correct answer
+			if (!options.contains(order.correctAnswer)) {
+				throw format("The specfied \"correctAnswer\" (\"%s\") for task \"%s\" is not a valid option for the final multiple choice question in this task!", order.correctAnswer, id);
+			}
+		}
+	}
 }
 
 Any TaskConfig::toAny(const bool forceAll) const {
@@ -595,13 +618,12 @@ void Session::updatePresentationState() {
 	}
 	else if (currentState == PresentationState::trialFeedback)
 	{
-		if (stateElapsedTime > m_trialConfig->timing.trialFeedbackDuration)
-		{
+		if (stateElapsedTime > m_trialConfig->timing.trialFeedbackDuration) {
 			bool allAnswered = presentQuestions(m_trialConfig->questionArray);	// Present any trial-level questions
 			if (allAnswered) { 
 				m_currQuestionIdx = -1;		// Reset the question index
 				m_feedbackMessage = "";		// Clear the feedback message
-				if (m_taskTrials.length() == 0) newState = PresentationState::taskFeedback;	// Move forward to providing task-level feedback
+				if (m_taskTrials.length() == 0) newState = PresentationState::taskQuestions;	// Move forward to providing task-level feedback
 				else {		// Individual trial complete, go back to reference target
 					logger->updateTaskEntry(m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size(), false);
 					nextTrial();
@@ -610,7 +632,7 @@ void Session::updatePresentationState() {
 			}
 		}
 	}
-	else if (currentState == PresentationState::taskFeedback) {
+	else if (currentState == PresentationState::taskQuestions) {
 		bool allAnswered = true;
 		if (m_sessConfig->tasks.size() > 0) {
 			// Only ask questions if a task is specified (otherwise trial-level questions have already been presented)
@@ -618,6 +640,20 @@ void Session::updatePresentationState() {
 		}
 		if (allAnswered) {
 			m_currQuestionIdx = -1;		// Reset the question index
+			const int qIdx = m_sessConfig->tasks[m_currTaskIdx].questionIdx;
+			bool success = true;		// Assume success (for case with no questions)
+			if (qIdx >= 0 && !m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].correctAnswer.empty()) {				
+				// Update the success value if a valid question was asked and correctAnswer was given
+				success = m_sessConfig->tasks[m_currTaskIdx].questions[qIdx].result == m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].correctAnswer;
+			}
+			if (success) m_feedbackMessage = formatFeedback(m_sessConfig->feedback.taskSuccess);
+			else m_feedbackMessage = formatFeedback(m_sessConfig->feedback.taskFailure);
+			newState = PresentationState::taskFeedback;
+		}
+	}
+	else if (currentState == PresentationState::taskFeedback) {
+		if (stateElapsedTime > m_sessConfig->timing.taskFeedbackDuration) {
+			m_feedbackMessage = "";
 			int completeTrials = 1;		// Assume 1 completed trial (if we don't have specified tasks)
 			if (m_sessConfig->tasks.size() > 0) completeTrials = m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size();
 			logger->updateTaskEntry(completeTrials, true);
@@ -776,7 +812,7 @@ bool Session::presentQuestions(Array<Question>& questions) {
 						// End of trial question, log trial id and index
 						logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog, m_sessConfig->tasks[m_currTaskIdx].id, m_lastTaskIndex, m_trialConfig->id, m_completedTaskTrials[m_trialConfig->id]-1);
 					}
-					else if (currentState == PresentationState::taskFeedback) {
+					else if (currentState == PresentationState::taskQuestions) {
 						// End of task question, log task id (no trial info)
 						logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog, m_sessConfig->tasks[m_currTaskIdx].id, m_lastTaskIndex);
 					}
