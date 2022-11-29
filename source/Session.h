@@ -154,7 +154,7 @@ public:
 		reader.get("order", order);
 		reader.getIfPresent("count", count);
 	}
-	Any toAny(const bool forceAll = true) const {
+	Any toAny(const bool forceAll = false) const {
 		TrialOrder def;
 		Any a(Any::TABLE);
 		a["order"] = order;
@@ -172,7 +172,7 @@ public:
 
 	TaskConfig() {};
 	TaskConfig(const Any& any);
-	Any toAny(const bool forceAll = true) const;
+	Any toAny(const bool forceAll = false) const;
 };
 
 /** Configuration for a session worth of trials */
