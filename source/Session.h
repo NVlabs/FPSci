@@ -185,6 +185,7 @@ public:
 	Array<TrialConfig>	trials;							///< Array of trials (and their counts) to be performed
 	bool				closeOnComplete = false;		///< Close application on session completed?
 	bool				randomizeTaskOrder = true;		///< Randomize order of tasks presented within the session?
+	bool				weightByCount = true;			///< Ranomized based on count of task remaining
 
 	SessionConfig() : FpsConfig(defaultConfig()) {}
 	SessionConfig(const Any& any);

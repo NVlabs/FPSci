@@ -96,6 +96,7 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 		reader.getIfPresent("closeOnComplete", closeOnComplete);
 		reader.getIfPresent("randomizeTrialOrder", randomizeTaskOrder);
 		reader.getIfPresent("randomizeTaskOrder", randomizeTaskOrder);
+		reader.getIfPresent("weightByCount", weightByCount);
 		reader.getIfPresent("blockCount", blockCount);
 		reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
 		for (int i = 0; i < trials.length(); i++) {
@@ -128,6 +129,7 @@ Any SessionConfig::toAny(const bool forceAll) const {
 	a["description"] = description;
 	if (forceAll || def.closeOnComplete != closeOnComplete)	a["closeOnComplete"] = closeOnComplete;
 	if (forceAll || def.randomizeTaskOrder != randomizeTaskOrder) a["randomizeTaskOrder"] = randomizeTaskOrder;
+	if (forceAll || def.weightByCount != weightByCount) a["weightByCount"] = weightByCount;
 	if (forceAll || def.blockCount != blockCount)				a["blockCount"] = blockCount;
 	a["trials"] = trials;
 	if (forceAll || tasks.length() > 0) a["tasks"] = tasks;
@@ -217,7 +219,16 @@ bool Session::nextTrial() {
 		for (int i = 0; i < m_remainingTasks.size(); i++) {
 			for (int j = 0; j < m_remainingTasks[i].size(); j++) {
 				if (m_remainingTasks[i][j] > 0 || m_remainingTasks[i][j] == -1) {
-					unrunTaskIdxs.append(Array<int>(i,j));
+					if (m_sessConfig->randomizeTaskOrder && m_sessConfig->weightByCount) {
+						// Weight by remaining count of this trial type
+						for (int k = 0; k < m_remainingTasks[i][j]; k++) {
+							unrunTaskIdxs.append(Array<int>(i,j));  			// Add proportional to the # of times this task needs to be run
+						}
+					}
+					else {
+						// Add a single instance for each trial that is unrun (don't weight by remaining count)
+						unrunTaskIdxs.append(Array<int>(i,j));
+					}
 				}
 			}
 		}
