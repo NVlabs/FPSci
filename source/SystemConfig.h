@@ -14,7 +14,7 @@ public:
 	SystemConfig(const Any& any);
 
 	static SystemConfig load(String filename, bool saveJSON);
-	Any toAny(const bool forceAll = true) const;
+	Any toAny(const bool forceAll = false) const;
 	void printToLog();					// Print the latency logger config to log.txt
 
 };
