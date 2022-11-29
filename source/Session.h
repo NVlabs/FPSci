@@ -184,7 +184,6 @@ public:
 	Array<TaskConfig>   tasks;
 	Array<TrialConfig>	trials;							///< Array of trials (and their counts) to be performed
 	bool				closeOnComplete = false;		///< Close application on session completed?
-	bool				randomizeTrialOrder = true;		///< Randomize order of trials presented within the session?
 	bool				randomizeTaskOrder = true;		///< Randomize order of tasks presented within the session?
 
 	SessionConfig() : FpsConfig(defaultConfig()) {}

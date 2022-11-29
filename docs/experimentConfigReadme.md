@@ -48,8 +48,7 @@ In addition to these general parameters each session also has a few unique param
     * `session id` is a short name for the session
     * `description` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
     * `closeOnComplete` signals to close the application whenever this session (in particular) is completed
-    * `randomizeTaskOrder` determines whether tasks are presented in the order they are listed or in a randomized order (if specified)
-    * `randomizeTrialOrder` determines whether trials are presented in the order they are listed or in a randomized order (within a task `trialOrder` if specified)
+    * `randomizeTaskOrder` determines whether tasks are presented in the order they are listed or in a randomized order (if specified). `randomizeTrialOrder` is treated as `randomizeTaskOrder` to preserve its historical behavior.
     * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided)
     * `trials` is a list of trials referencing the `trials` table above:
         * `id` is an (optional) target ID that (if specified) is used for logging purposes. If unspecified the `id` defaults to the (integer) index of the trial in the `trials` array.
@@ -66,7 +65,6 @@ An example session configuration snippet is included below:
         "description" : "test",         // This is an arbitrary string tag (for now)
         "closeOnComplete": false,       // Don't automatically close the application when the session completes
         "randomizeTaskOrder": true,     // Randomize order of tasks by default
-        "randomizeTrialOrder": true,    // Randomize order of trials within a task by default
         "frameRate" : 120,              // Example of a generic parameter modified for this session
         "blockCount" : 1,         // Single block design
         "trials" : [

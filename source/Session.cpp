@@ -94,7 +94,7 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 		reader.get("id", id, "An \"id\" field must be provided for each session!");
 		reader.getIfPresent("description", description);
 		reader.getIfPresent("closeOnComplete", closeOnComplete);
-		reader.getIfPresent("randomizeTrialOrder", randomizeTrialOrder);
+		reader.getIfPresent("randomizeTrialOrder", randomizeTaskOrder);
 		reader.getIfPresent("randomizeTaskOrder", randomizeTaskOrder);
 		reader.getIfPresent("blockCount", blockCount);
 		reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
@@ -127,7 +127,6 @@ Any SessionConfig::toAny(const bool forceAll) const {
 	a["id"] = id;
 	a["description"] = description;
 	if (forceAll || def.closeOnComplete != closeOnComplete)	a["closeOnComplete"] = closeOnComplete;
-	if (forceAll || def.randomizeTrialOrder != randomizeTrialOrder) a["randomizeTrialOrder"] = randomizeTrialOrder;
 	if (forceAll || def.randomizeTaskOrder != randomizeTaskOrder) a["randomizeTaskOrder"] = randomizeTaskOrder;
 	if (forceAll || def.blockCount != blockCount)				a["blockCount"] = blockCount;
 	a["trials"] = trials;
@@ -227,7 +226,7 @@ bool Session::nextTrial() {
 		// Pick the new task and trial order index
 		int idx = 0;
 		// Are we randomizing task order (or randomizing trial order when trials are treated as tasks)?
-		if (m_sessConfig->randomizeTaskOrder || (m_sessConfig->tasks.size() == 0 && m_sessConfig->randomizeTrialOrder)) {				
+		if (m_sessConfig->randomizeTaskOrder) {				
 			idx = Random::common().integer(0, unrunTaskIdxs.size() - 1);		// Pick a random trial from within the array
 		}
 		m_currTaskIdx = unrunTaskIdxs[idx][0];
@@ -249,11 +248,6 @@ bool Session::nextTrial() {
 		for (const String& trialId : trialIds) {
 			m_taskTrials.insert(0, m_sessConfig->getTrialIndex(trialId));	// Insert trial at the front of the task trials
 			m_completedTaskTrials.set(trialId, 0);
-		}
-
-		// If we are using tasks and we are randomizing trial order, shuffle the trials array
-		if(m_sessConfig->tasks.length() > 0 && m_sessConfig->randomizeTrialOrder){
-			m_taskTrials.randomize();
 		}
 
 		// Add task to tasks table in database
