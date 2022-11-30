@@ -332,7 +332,7 @@ These flags control whether various information is written to the output files. 
 "logToSingleDb" = true,                 // Log all sessions affiliated with a given experiment to the same database file
 "sessionParametersToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table
 "trialParametersToLog": [],             // Don't log any trial-level parameters by default
-"logSessionDropDownUpdate" : false,     // Done log changes in the session drop down
+"logSessionDropDownUpdate" : false,     // Don't log changes in the session drop down
 ```
 
 *Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user]_[experiment config hash].db"`. This hash is printed to the `log.txt` from the run in case it is needed to disambiguate results files. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues. The experiment config hash takes into account only "valid" settings and ignores formatting only changes in the configuration file. Default values are used for the hash for anything that is not specified, so if a default is specified, the hash will match the config where the default was not specified.

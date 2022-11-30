@@ -122,12 +122,12 @@ struct PlayerAction {
 class TrialConfig : public FpsConfig {
 public:
 	String			id;				///< Trial ID (used for logging and required for task affiliation)
-	Array<String>	ids;			///< Trial ID list
+	Array<String>	targetIds;		///< Trial ID list
 	int				count = 1;		///< Count of trials to be performed
 	static int		defaultCount;	///< Default count to use
 
 	TrialConfig() : FpsConfig(defaultConfig()) {};
-	TrialConfig(const Array<String>& trialIds, int trialCount) : ids(trialIds), count(trialCount) {};
+	TrialConfig(const Array<String>& targetIds, int trialCount) : targetIds(targetIds), count(trialCount) {};
 	TrialConfig(const Any& any);
 
 	static shared_ptr<TrialConfig> create() { return createShared<TrialConfig>(); }
