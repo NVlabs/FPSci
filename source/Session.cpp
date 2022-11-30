@@ -206,7 +206,9 @@ bool Session::nextCondition() {
 	
 	// Get and update the trial configuration
 	m_trialConfig = TrialConfig::createShared<TrialConfig>(m_sessConfig->trials[m_currTrialIdx]);
-	m_app->updateTrial(m_trialConfig);
+	// Respawn player for first trial in session (override session-level spawn position)
+	m_app->updateTrial(m_trialConfig, false, m_firstTrial);	
+	if (m_firstTrial) m_firstTrial = false;
 
 	// Produce (potentially random in range) pretrial duration
 	if (isNaN(m_trialConfig->timing.pretrialDurationLambda)) m_pretrialDuration = m_trialConfig->timing.pretrialDuration;

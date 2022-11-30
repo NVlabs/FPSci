@@ -625,8 +625,8 @@ void FPSciApp::initPlayer(const shared_ptr<FpsConfig> config, const bool respawn
 	if (respawn) player->respawn();
 	updateMouseSensitivity();
 
-	// Set initial heading for session
-	sess->initialHeadingRadians = player->heading();
+	// Set initial heading for trial/session (from config spawn heading)
+	sess->initialHeadingRadians = config->scene.spawnHeadingDeg * pif() / 180.f;
 }
 
 void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
@@ -710,9 +710,9 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 	}
 }
 
-void FPSciApp::updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload) {
+void FPSciApp::updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload, const bool respawn) {
 	trialConfig = config;	// Naive way to store trial config pointer for now
-	updateConfigParameters(config, forceSceneReload);
+	updateConfigParameters(config, forceSceneReload, respawn);
 }
 
 void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const bool forceSceneReload, const bool respawn) {

@@ -257,7 +257,7 @@ public:
 	void markSessComplete(String id);
 	/** Updates experiment state to the provided session id and updates player parameters (including mouse sensitivity) */
 	virtual void updateSession(const String& id, bool forceSceneReload = false);
-	void updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload = false);
+	void updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload = false, const bool respawn = false);
 	void updateConfigParameters(const shared_ptr<FpsConfig> config, bool forceSceneReload = false, const bool respawn = false);
 	void updateFrameParameters(int frameDelay, float frameRate);
 	void updateTargetColor(const shared_ptr<TargetEntity>& target);
