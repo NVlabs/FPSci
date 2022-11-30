@@ -1,0 +1,11 @@
+{ 
+    currentUser = "sa2019_sampleuser"; 
+    sessions = ("60hz_0delay", "60hz_2delay", "120hz_0delay", "120hz_4delay", "240hz_0delay", "240hz_8delay");
+    settingsVersion = 1;
+    users = (
+        { 
+            id = "sa2019_sampleuser"; 
+            sessions = ("60hz_0delay", "60hz_2delay", "120hz_0delay", "120hz_4delay", "240hz_0delay", "240hz_8delay");
+        },
+    );
+}  
