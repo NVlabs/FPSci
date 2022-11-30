@@ -36,8 +36,8 @@ In addition to these general parameters each session also has a few unique param
     * `randomizeTrialOrder` determines whether trials are presented in the order they are listed or in a randomized order
     * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided).
     * `trials` is a list of trials referencing the `trials` table above:
-        * `id` is an (optional) target ID that (if specified) is used for logging purposes. If unspecified the `id` defaults to the (integer) index of the trial in the `trials` array.
-        * `ids` is a list of short names for the trial(s) to affiliate with the `targets` or `reactions` table below, if multiple ids are provided multiple target are spawned simultaneously in each trial
+        * `id` is an (optional) trial ID that (if specified) is used for logging purposes. If unspecified the `id` defaults to the (integer) index of the trial in the `trials` array.
+        * `targetIds` is a list of target names (`id` fields from within `targets` array elements) to spawn in this trial, if multiple target ids are provided multiple targets are spawned simultaneously in each trial
         * `count` provides the number of trials in this session (should always be an integer strictly greater than 0)
 
 #### Session Configuration Example
@@ -54,23 +54,25 @@ An example session configuration snippet is included below:
         "trials" : [
             {
                 // Single target example
-                "ids" : ["simple_target"],
+                "targetIds" : ["simple_target"],
                 "count": 20,
             },
             {
                 // Multi-target example
-                "ids" : ["simple_target", "world-space paramtetric", "example_target", "example_target"],
-                "count" : 5
+                "targetIds" : ["simple_target", "world-space paramtetric", "example_target", "example_target"],
+                "count" : 5,
             }
-        ]
+        ],
     },
     {
         "id" : "minimal-session",       // This session inherits all settings from the experiment above it
         "trials" : [
-            "id": "example trial";
-            "ids" : ["simple_target", "destination-based"],
-            "count" : 10
-        ]
+            {
+                "id": "example trial",
+                "targetIds" : ["simple_target", "destination-based"],
+                "count" : 10,
+            }
+        ],
     },
 ],
 ```

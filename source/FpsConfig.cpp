@@ -672,7 +672,7 @@ Question::Question(const Any& any) {
 		if (reader.getIfPresent("optionsPerRow", optionsPerRow)) {
 			if (type == Type::Rating) {		
 				// Ratings will ignore the optionsPerRow (always uses 1 row)
-				logPrintf("WARNING: Specified \"optionsPerRow\" parameter is ignored when using a \"Rating\" type question. If you'd like to change the layout look into using a \"MultipleChoice\" question instead!");
+				logPrintf("WARNING: Specified \"optionsPerRow\" parameter is ignored when using a \"Rating\" type question. If you'd like to change the layout look into using a \"MultipleChoice\" question instead!\n");
 			}
 		}
 

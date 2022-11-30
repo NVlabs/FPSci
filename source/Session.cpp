@@ -42,12 +42,17 @@ TrialConfig::TrialConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("id", id);
-		reader.get("ids", ids, "An \"ids\" field must be provided for each set of trials!");
+		if (!reader.getIfPresent("targetIds", targetIds)) {
+			if (reader.getIfPresent("ids", targetIds)) {
+				logPrintf("WARNING: Trial-level target IDs should be specified using \"targetIds\", the \"ids\" parameter is depricated!\n");
+			}
+			else throw "The \"targetIds\" field must be provided for each set of trials!";
+		}
 		if (!reader.getIfPresent("count", count)) {
 			count = defaultCount;
 		}
 		if (count < 1) {
-			throw format("Trial count < 1 not allowed! (%d count for trial with targets: %s)", count, Any(ids).unparse());
+			throw format("Trial count < 1 not allowed! (%d count for trial with targets: %s)", count, Any(targetIds).unparse());
 		}
 		break;
 	default:
@@ -59,7 +64,7 @@ TrialConfig::TrialConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 Any TrialConfig::toAny(const bool forceAll) const {
 	Any a = FpsConfig::toAny(forceAll);
 	a["id"] = id;
-	a["ids"] = ids;
+	a["targetIds"] = targetIds;
 	a["count"] = count;
 	return a;
 }
@@ -127,13 +132,13 @@ float SessionConfig::getTrialsPerBlock(void) const {
 }
 
 Array<String> SessionConfig::getUniqueTargetIds() const {
-	Array<String> ids;
+	Array<String> targetIds;
 	for (TrialConfig trial : trials) {
-		for (String id : trial.ids) {
-			if (!ids.contains(id)) { ids.append(id); }
+		for (String id : trial.targetIds) {
+			if (!targetIds.contains(id)) { targetIds.append(id); }
 		}
 	}
-	return ids;
+	return targetIds;
 }
 
 Session::Session(FPSciApp* app, shared_ptr<SessionConfig> config) : m_app(app), m_sessConfig(config), m_weapon(app->weapon) {
