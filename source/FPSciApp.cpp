@@ -581,17 +581,14 @@ void FPSciApp::initPlayer(const shared_ptr<FpsConfig> config, const bool respawn
 	player->setRespawnHeight(resetHeight);
 
 	// Update the respawn heading
-	if (isnan(config->scene.spawnHeadingDeg)) {
-		if (setSpawnPosition) {	// This is the first spawn in the scene
-			// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
+	float spawnHeadingDeg = config->scene.spawnHeadingDeg;
+	if (isnan(spawnHeadingDeg)) { 	// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
+		if (setSpawnPosition) {		// This is the first spawn in the scene
 			Point3 view_dir = playerCamera->frame().lookVector();
 			float spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
-			player->setRespawnHeadingDegrees(spawnHeadingDeg);
 		}
 	}
-	else {	// Respawn heading specified by the scene config
-		player->setRespawnHeadingDegrees(config->scene.spawnHeadingDeg);
-	}
+	player->setRespawnHeadingDegrees(spawnHeadingDeg);
 
 	// Set player respawn location
 	float respawnPosHeight = player->respawnPosHeight();	// Report the respawn position height
@@ -625,8 +622,8 @@ void FPSciApp::initPlayer(const shared_ptr<FpsConfig> config, const bool respawn
 	if (respawn) player->respawn();
 	updateMouseSensitivity();
 
-	// Set initial heading for trial/session (from config spawn heading)
-	sess->initialHeadingRadians = config->scene.spawnHeadingDeg * pif() / 180.f;
+	// Set initial heading for trial/session reference target (from player spawn heading)
+	sess->initialHeadingRadians = player->respawnHeadingRadians();
 }
 
 void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
