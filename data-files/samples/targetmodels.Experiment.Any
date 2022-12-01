@@ -1,5 +1,5 @@
 { 
-    description = "spheres"; 
+    description = "targetmodels"; 
     frameRate = 120; 
     showHUD = true;
     renderWeaponStatus = true;
@@ -58,12 +58,23 @@
             
         }, 
         { 
+            id = "cylinder"; 
+            description = "cylinder"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    ids = ( "cylinder", "cylinder"); 
+                } 
+            ); 
+            
+        }, 
+        { 
             id = "mixedtypes"; 
             description = "mixed types"; 
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "ico", "low", "mid", "high");
+                    ids = ( "ico", "low", "mid", "high", "cylinder");
                 }, 
             ); 
             
@@ -107,6 +118,15 @@
             // modelSpec = ArticulatedModel::Specification{
             //     filename = "model/target/high_poly_sphere.obj";
             // };
+        }, 
+        {
+            id = "cylinder"; 
+            destSpace = "player"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+            modelSpec = ArticulatedModel::Specification{
+                filename = "model/target/cylinder.obj";
+            },
         }, 
     ); 
     

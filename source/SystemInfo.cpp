@@ -3,8 +3,13 @@
 SystemInfo SystemInfo::get(void) {
 	SystemInfo info;
 
-	info.hostName = getenv("COMPUTERNAME");		// Get the host (computer) name
-	info.userName = getenv("USERNAME");			// Get the current logged in username
+	char *ptr = getenv("COMPUTERNAME");		// Get the host (computer) name (if available)
+	if (notNull(ptr)) info.hostName = ptr;
+	else info.hostName = "unknown";
+
+	ptr = getenv("USERNAME");				// Get the current logged in username (if available)
+	if (notNull(ptr))  info.userName = ptr;
+	else info.userName = "unknown";
 
 	// Get CPU name string
 	int cpuInfo[4] = { -1 };
