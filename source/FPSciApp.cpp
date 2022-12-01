@@ -585,10 +585,11 @@ void FPSciApp::initPlayer(const shared_ptr<FpsConfig> config, const bool respawn
 	if (isnan(spawnHeadingDeg)) { 	// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
 		if (setSpawnPosition) {		// This is the first spawn in the scene
 			Point3 view_dir = playerCamera->frame().lookVector();
-			float spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
+			spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
+			player->setRespawnHeadingDegrees(spawnHeadingDeg);
 		}
 	}
-	player->setRespawnHeadingDegrees(spawnHeadingDeg);
+	else player->setRespawnHeadingDegrees(spawnHeadingDeg);
 
 	// Set player respawn location
 	float respawnPosHeight = player->respawnPosHeight();	// Report the respawn position height
