@@ -20,6 +20,6 @@ public:
 
 	static SystemInfo get(void);						// Get the system info using (windows) calls
 
-	Any toAny(const bool forceAll = true) const;
+	Any toAny(const bool forceAll = false) const;
 	void printToLog();
 };

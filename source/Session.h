@@ -226,6 +226,7 @@ protected:
 	// Experiment management					
 	int m_destroyedTargets = 0;							///< Number of destroyed target
 	int m_trialShotsHit = 0;							///< Count of total hits in this trial
+	bool m_firstTrial = true;							///< Is this the first trial in this session?
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
 	int	m_currBlock = 1;								///< Index to the current block of trials
 	String m_feedbackMessage;							///< Message to show when trial complete

@@ -139,7 +139,6 @@ void FPSciApp::updateMouseSensitivity() {
 	// rad/dot = rad/cm * cm/dot = 2PI / (cm/turn) * 2.54 / (dots/in) = (2.54 * 2PI)/ (DPI * cm/360)
 	const double cmp360 = 36.0 / user->mouseDegPerMm;
 	const double radiansPerDot = 2.0 * pi() * 2.54 / (cmp360 * user->mouseDPI);
-	const shared_ptr<FirstPersonManipulator>& fpm = dynamic_pointer_cast<FirstPersonManipulator>(cameraManipulator());
 
 	// Control player motion using the experiment config parameter
 	shared_ptr<PlayerEntity> player = scene()->typedEntity<PlayerEntity>("player");
@@ -581,17 +580,15 @@ void FPSciApp::initPlayer(const shared_ptr<FpsConfig> config, const bool respawn
 	player->setRespawnHeight(resetHeight);
 
 	// Update the respawn heading
-	if (isnan(config->scene.spawnHeadingDeg)) {
-		if (setSpawnPosition) {	// This is the first spawn in the scene
-			// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
+	float spawnHeadingDeg = config->scene.spawnHeadingDeg;
+	if (isnan(spawnHeadingDeg)) { 	// No SceneConfig spawn heading specified, get heading from scene.Any player entity heading field
+		if (setSpawnPosition) {		// This is the first spawn in the scene
 			Point3 view_dir = playerCamera->frame().lookVector();
-			float spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
+			spawnHeadingDeg = atan2(view_dir.x, -view_dir.z) * 180 / pif();
 			player->setRespawnHeadingDegrees(spawnHeadingDeg);
 		}
 	}
-	else {	// Respawn heading specified by the scene config
-		player->setRespawnHeadingDegrees(config->scene.spawnHeadingDeg);
-	}
+	else player->setRespawnHeadingDegrees(spawnHeadingDeg);
 
 	// Set player respawn location
 	float respawnPosHeight = player->respawnPosHeight();	// Report the respawn position height
@@ -625,8 +622,8 @@ void FPSciApp::initPlayer(const shared_ptr<FpsConfig> config, const bool respawn
 	if (respawn) player->respawn();
 	updateMouseSensitivity();
 
-	// Set initial heading for session
-	sess->initialHeadingRadians = player->heading();
+	// Set initial heading for trial/session reference target (from player spawn heading)
+	sess->initialHeadingRadians = player->respawnHeadingRadians();
 }
 
 void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
@@ -660,7 +657,7 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 	// Update the application w/ the session parameters
 	updateUserMenu = true;
 	if (!m_firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
-	updateConfigParameters(sessConfig, forceSceneReload, true);
+	updateConfigParameters(sessConfig, forceSceneReload, true, false);
 
 	// Handle results files
 	const String resultsDirPath = startupConfig.experimentList[experimentIdx].resultsDirPath;
@@ -710,12 +707,12 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 	}
 }
 
-void FPSciApp::updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload) {
+void FPSciApp::updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload, const bool respawn) {
 	trialConfig = config;	// Naive way to store trial config pointer for now
-	updateConfigParameters(config, forceSceneReload);
+	updateConfigParameters(config, forceSceneReload, respawn);
 }
 
-void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const bool forceSceneReload, const bool respawn) {
+void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const bool forceSceneReload, const bool respawn, const bool trialLevel) {
 	// Update reticle
 	reticleConfig.index = config->reticle.indexSpecified ? config->reticle.index : currentUser()->reticle.index;
 	reticleConfig.scale = config->reticle.scaleSpecified ? config->reticle.scale : currentUser()->reticle.scale;
@@ -755,45 +752,46 @@ void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const 
 	m_combatFont = GFont::fromFile(System::findDataFile(config->targetView.combatTextFont));
 
 	// Load the experiment scene if we haven't already (target only)
-	if (config->scene.name.empty()) {
-		// No scene specified, load default scene
-		if (m_loadedScene.name.empty() || forceSceneReload) {
-			loadScene(m_defaultSceneName);					// Note: this calls onGraphics()
-			m_loadedScene.name = m_defaultSceneName;
+	if (trialLevel) {	// Only force scenes to load at the trial-level
+		if (config->scene.name.empty()) {
+			// No scene specified, load default scene
+			if (m_loadedScene.name.empty() || forceSceneReload) {
+				loadScene(m_defaultSceneName);					// Note: this calls onGraphics()
+				m_loadedScene.name = m_defaultSceneName;
+			}
+			// Otherwise let the loaded scene persist
 		}
-		// Otherwise let the loaded scene persist
-	}
-	else if (config->scene != m_loadedScene || forceSceneReload) {
-		loadScene(config->scene.name);
-		m_loadedScene = config->scene;
-	}
+		else if (config->scene != m_loadedScene || forceSceneReload) {
+			loadScene(config->scene.name);
+			m_loadedScene = config->scene;
+		}
 
-	// Player parameters
-	initPlayer(config, respawn);
+		initPlayer(config, respawn);			// Setup the player within the scene
 
-	// Check for play mode specific parameters
-	if (notNull(weapon)) weapon->clearDecals();
-	weapon->setConfig(&config->weapon);
-	weapon->setScene(scene());
-	weapon->setCamera(activeCamera());
+			// Check for play mode specific parameters
+		if (notNull(weapon)) weapon->clearDecals();
+		weapon->setConfig(&config->weapon);
+		weapon->setScene(scene());
+		weapon->setCamera(activeCamera());
 
-	// Update weapon model (if drawn) and sounds
-	weapon->loadModels();
-	weapon->loadSounds();
-	if (!config->audio.sceneHitSound.empty()) {
-		m_sceneHitSound = Sound::create(System::findDataFile(config->audio.sceneHitSound));
-		// Play silently to pre-load the sound
-		m_sceneHitSound->play(0.f);
-	}
-	if (!config->audio.refTargetHitSound.empty()) {
-		m_refTargetHitSound = Sound::create(System::findDataFile(config->audio.refTargetHitSound));
-		// Play silently to pre-load the sound
-		m_refTargetHitSound->play(0.f);
-	}
+		// Update weapon model (if drawn) and sounds
+		weapon->loadModels();
+		weapon->loadSounds();
+		if (!config->audio.sceneHitSound.empty()) {
+			m_sceneHitSound = Sound::create(System::findDataFile(config->audio.sceneHitSound));
+			// Play silently to pre-load the sound
+			m_sceneHitSound->play(0.f);
+		}
+		if (!config->audio.refTargetHitSound.empty()) {
+			m_refTargetHitSound = Sound::create(System::findDataFile(config->audio.refTargetHitSound));
+			// Play silently to pre-load the sound
+			m_refTargetHitSound->play(0.f);
+		}
 
-	// Load static HUD textures
-	for (StaticHudElement element : config->hud.staticElements) {
-		hudTextures.set(element.filename, Texture::fromFile(System::findDataFile(element.filename)));
+		// Load static HUD textures
+		for (StaticHudElement element : config->hud.staticElements) {
+			hudTextures.set(element.filename, Texture::fromFile(System::findDataFile(element.filename)));
+		}
 	}
 }
 

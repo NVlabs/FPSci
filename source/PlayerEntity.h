@@ -125,6 +125,7 @@ public:
     float headTilt() const { return m_headTilt; }
     float heading() const { return m_headingRadians;  }
     float respawnHeadingDeg() const { return m_spawnHeadingRadians * 180 / pif(); }
+    float respawnHeadingRadians() const { return m_spawnHeadingRadians; }
 
     /** For deserialization from Any / loading from file */
     static shared_ptr<Entity> create 
