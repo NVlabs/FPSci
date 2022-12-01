@@ -210,6 +210,11 @@ bool Session::nextCondition() {
 	m_app->updateTrial(m_trialConfig, false, m_firstTrial);	
 	if (m_firstTrial) m_firstTrial = false;
 
+	// Update session fields (if changed) from trial
+	m_player = m_app->scene()->typedEntity<PlayerEntity>("player");
+	m_scene = m_app->scene().get();
+	m_camera = m_app->activeCamera();
+
 	// Produce (potentially random in range) pretrial duration
 	if (isNaN(m_trialConfig->timing.pretrialDurationLambda)) m_pretrialDuration = m_trialConfig->timing.pretrialDuration;
 	else m_pretrialDuration = drawTruncatedExp(m_trialConfig->timing.pretrialDurationLambda, m_trialConfig->timing.pretrialDurationRange[0], m_trialConfig->timing.pretrialDurationRange[1]);
@@ -251,7 +256,6 @@ void Session::onInit(String filename, String description) {
 	m_player = m_app->scene()->typedEntity<PlayerEntity>("player");
 	m_scene = m_app->scene().get();
 	m_camera = m_app->activeCamera();
-
 	m_targetModels = &(m_app->targetModels);
 
 	// Check for valid session
