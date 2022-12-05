@@ -272,6 +272,10 @@ Note: The sound played when `referenceTargetPlayFireSound` is set to `true` is t
 |--------------------|------|------------------------------------------------------------------------------------|
 |`moveRate`          |m/s  | The rate of player motion, set this parameter to `0` to disable player motion      |
 |`moveScale`         |`Vector2`| A scaler for X/Y player-space motion (set to 0 to lock forward/back, strafe motion)|
+|`accelerationEnabled`  |`bool`| Whether or not acceleration is enabled.                                        |
+|`movementAcceleration` |m/s^2 | Player acceleration during movement (defaults to 3.0)                          |
+|`movementDeceleration` |m/s^2 | Player deceleration while stopping (defaults to 7.0)                           |
+|`sprintMultiplier`  |`float`| Multiplies with players move rate when player is sprinting (set 1 to turn off)   |
 |`playerAxisLock`    |`Array<bool>`| Axis aligned motion lock for player                                        |
 |`turnScale`         |`Vector2`| A scaler for horizontal/vertical player mouse motion (set to 0 to disable)     |
 |`playerHeight`      |m    | The height of the player above the ground when "standing"                          |
@@ -282,6 +286,9 @@ Note: The sound played when `referenceTargetPlayFireSound` is set to `true` is t
 |`playerGravity`     |m/s^2| The graivty vector that impacts the player                                         |
 |`disablePlayerMotionBetweenTrials`|`bool`|Don't allow the player to move when not in a trial?                  |
 |`resetPlayerPositionBetweenTrials`|`bool`|Respawn the player to their original position between trials?        |
+|`headBobEnabled`    |`bool` | Whether or not the headbob effect is enabled.                                    |
+|`headBobAmplitude`  |m      | This is additive to the crouch/playerHeight, Camera Y will bob within headBobAmplitude/2 and -headBobAmplitude/2.|
+|`headBobFrequency`  |`float`| How fast the headBob will happen. scales up with movement speed.                 |
 
 ```
 "moveRate": 0.0,                            // Player move rate (0 for no motion)
@@ -294,6 +301,13 @@ Note: The sound played when `referenceTargetPlayFireSound` is set to `true` is t
 "jumpInterval": 0.5,                        // Minimum jump interval
 "jumpTouch": true,                          // Require touch for jump
 "playerGravity": Vector3(0.0, -10.0, 0.0),  // Player gravity
+"sprintMultiplier": 1,                      // Player spring is disabled by default. (1 for no multiplied movement speed)
+"accelerationEnabled": false,               // Acceleration is disabled by default
+"movementAcceleration": 3.0f                // Acceleration during movement
+"movementDeceleration": 7.0f                // Deceleration while stopping
+"headBobEnabled": false,                    // HeadBob is disabled by default
+"headBobAmplitude": 0.1f,                   // HeadBob Amplitude
+"headBobFrequency": 1.0f,                   // HeadBob Frequency
 "disablePlayerMotionBetweenTrials": false,  // Don't allow the player to move in between trials
 "resetPlayerPositionBetweenTrials": false,  // Respawn the player in the starting location between trials
 ```

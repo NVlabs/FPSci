@@ -90,21 +90,30 @@ void PlayerEntity::onPose(Array<shared_ptr<Surface> >& surfaceArray) {
 }
 
 void PlayerEntity::updateFromInput(UserInput* ui) {
+	
+	m_walkSpeed = 0;
 
-	const float walkSpeed = *moveRate * units::meters() / units::seconds();
+	// Check if player is sprinting or not
+	if (!m_sprinting) {
+		m_walkSpeed = *moveRate * units::meters() / units::seconds();
+	}
+	else {
+		m_walkSpeed = *moveRate * *sprintMultiplier * units::meters() / units::seconds();
+	}
 
 	// Get walking speed here (and normalize if necessary)
-	Vector3 linear = Vector3(ui->getX()*moveScale->x, 0, -ui->getY()*moveScale->y);
-	if (linear.magnitude() > 0) {
-		linear = linear.direction() * walkSpeed;
+	m_linearVector = Vector3(ui->getX()*moveScale->x, 0, -ui->getY()*moveScale->y);
+	if (m_linearVector.magnitude() > 0) {
+		m_gettingMovementInput = true;
 	}
+
 	// Add jump here (if needed)
 	RealTime timeSinceLastJump = System::time() - m_lastJumpTime;
 	if (m_jumpPressed && timeSinceLastJump > *jumpInterval) {
 		// Allow jumping if jumpTouch = False or if jumpTouch = True and the player is in contact w/ the map
 		if (!(*jumpTouch) || m_inContact) {
 			const Vector3 jv(0, *jumpVelocity * units::meters() / units::seconds(), 0);
-			linear += jv;
+			m_linearVector += jv;
 			m_lastJumpTime = System::time();
 		}
 	}
@@ -115,8 +124,7 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 	float yaw = mouseRotate.x;
 	float pitch = mouseRotate.y;
 
-	// Set the player translation/view velocities
-	setDesiredOSVelocity(linear);
+	// Set the player view velocity
 	setDesiredAngularVelocity(yaw, pitch);
 }
 
@@ -147,6 +155,68 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 			respawn();
 		}
 	}
+
+	if (!m_gettingMovementInput) {
+
+		if (accelerationEnabled!= nullptr && *accelerationEnabled) {
+			m_acceleratedVelocity = max(m_acceleratedVelocity - *movementDeceleration * deltaTime, 0.0f);
+		}
+		else {
+			m_acceleratedVelocity = 0;
+		}
+
+		if (m_acceleratedVelocity > 0) {
+			m_linearVector = m_acceleratedVelocity * m_lastDirection;
+		}
+	}
+	else {
+
+		if (*accelerationEnabled) {
+			m_acceleratedVelocity = min(m_acceleratedVelocity + *movementAcceleration * deltaTime, m_walkSpeed);
+		}
+		else {
+			m_acceleratedVelocity = m_walkSpeed;
+		}
+
+		m_linearVector = m_linearVector.direction() * m_acceleratedVelocity;
+		m_lastDirection = m_linearVector.direction();
+	}
+	/** The HeadBob uses lerp to achieve the "Bobbing" effect. The lerp function tries to reach
+		the designated amplitude, but as Lerp can never reach final value, we change the polarity
+		when it reaches half of the designated amplitude. The lerp function will then try to reach
+		to the negative(-) of amplitude value. The polarity will again be changed when it reaches
+		half of (-amplitude), thus achieving the effect. 
+	 
+		The frequency (how fast the HeadBob will happen) is controlled by the headBobFrequency value
+		as well as the players current movement speed. So the faster the player moves, faster the
+		effect will be. Its also tied to deltaTime, so FPS will not effect how fast/slow HeadBob 
+		happens. 
+	*/
+	if (headBobEnabled != nullptr && *headBobEnabled && m_acceleratedVelocity > 0) {
+		if (!m_headBobPolarity) {
+			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, *headBobAmplitude, *headBobFrequency * m_acceleratedVelocity * deltaTime);
+
+			if (m_headBobCurrentHeight >= *headBobAmplitude / 2) {
+				m_headBobPolarity = !m_headBobPolarity;
+			}
+		}
+		else {
+			m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, -*headBobAmplitude, *headBobFrequency * m_acceleratedVelocity * deltaTime);
+
+			if (m_headBobCurrentHeight <= -*headBobAmplitude / 2) {
+				m_headBobPolarity = !m_headBobPolarity;
+			}
+		}
+	}
+	// Height of the camera will reset to the original position once the player has stopped moving
+	else if(headBobEnabled != nullptr && *headBobEnabled && m_acceleratedVelocity <= 0){
+		m_headBobCurrentHeight = lerp(m_headBobCurrentHeight, 0, *headBobFrequency * deltaTime);
+	}
+
+	//Set Players Translation velocity
+	setDesiredOSVelocity(m_linearVector);
+
+	m_gettingMovementInput = false;
 }
 
 void PlayerEntity::getConservativeCollisionTris(Array<Tri>& triArray, const Vector3& velocity, float deltaTime) const {

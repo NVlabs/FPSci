@@ -175,6 +175,41 @@ PlayerControls::PlayerControls(SessionConfig& config, std::function<void()> expo
 		c->setWidth(width*0.95f);
 	}movePane->endRow();
 	movePane->beginRow(); {
+		auto c = movePane->addCheckBox("Use Acceleration?", &(config.player.accelerationEnabled));
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width * 0.95f);
+	}movePane->endRow();
+	movePane->beginRow(); {
+		auto c = movePane->addNumberBox("Movement Acceleration", &(config.player.movementAcceleration), "m/s^2", GuiTheme::LINEAR_SLIDER, 0.001f, 100.0f);
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width * 0.95f);
+	}movePane->endRow();
+	movePane->beginRow(); {
+		auto c = movePane->addNumberBox("Movement Deceleration", &(config.player.movementDeceleration), "m/s^2", GuiTheme::LINEAR_SLIDER, 0.001f, 100.0f);
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width * 0.95f);
+	}movePane->endRow();
+	movePane->beginRow(); {
+		auto c = movePane->addNumberBox("Sprint Multiplier", &(config.player.sprintMultiplier), "x", GuiTheme::LINEAR_SLIDER, 1.0f, 10.0f);
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width * 0.95f);
+	}movePane->endRow();
+	movePane->beginRow(); {
+		auto c = movePane->addCheckBox("Use Headbob?", &(config.player.headBobEnabled));
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width * 0.95f);
+	}movePane->endRow();
+	movePane->beginRow(); {
+		auto c = movePane->addNumberBox("Headbob Amplitude", &(config.player.headBobAmplitude), "m", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f);
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width * 0.95f);
+	}movePane->endRow();
+	movePane->beginRow(); {
+		auto c = movePane->addNumberBox("Headbob Frequency", &(config.player.headBobFrequency), "x", GuiTheme::LINEAR_SLIDER, 0.0f, 10.0f);
+		c->setCaptionWidth(width / 2);
+		c->setWidth(width * 0.95f);
+	}movePane->endRow();
+	movePane->beginRow(); {
 		auto c = movePane->addNumberBox("Jump Velocity", &(config.player.jumpVelocity), "m/s", GuiTheme::LINEAR_SLIDER, 0.0f, 50.0f, 0.1f);
 		c->setCaptionWidth(width / 2);
 		c->setWidth(width*0.95f);
