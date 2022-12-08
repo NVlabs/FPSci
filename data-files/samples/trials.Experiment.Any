@@ -1,0 +1,142 @@
+{ 
+    description = "trials"; 
+    frameRate = 120; 
+    showHUD = true;
+    renderWeaponStatus = true;
+    cooldownMode = "ring";
+    cooldownColor = Color4(0.7,1.0,0.9,0.75);
+            
+    weapon = { 
+        id = "2hit"; 
+        firePeriod = 0.3;
+        damagePerSecond = 2;
+        autoFire = false;
+    }; 
+    sessions = ( 
+        { 
+            // This session tests out different weapon cooldowns and cooldown indicators while maintaining 2 hits to kill
+            id = "1target_cd"; 
+            description = "1 target cooldown"; 
+            trials = ( 
+                { 
+                    count = 2; 
+                    ids = ( "static"); 
+                }, 
+                { 
+                    count = 2; 
+                    ids = ( "static"); 
+                    cooldownMode = "box";
+                }, 
+                { 
+                    count = 2; 
+                    ids = ( "static"); 
+                    cooldownMode = "box";
+                    weapon = { 
+                        id = "2hit"; 
+                        firePeriod = 0.5;
+                        damagePerSecond = 1.1;
+                        autoFire = false;
+                    }; 
+                }, 
+                { 
+                    count = 2; 
+                    ids = ( "static"); 
+                    cooldownMode = "box";
+                    weapon = { 
+                        id = "2hit"; 
+                        firePeriod = 0.5;
+                        damagePerSecond = 1.1;
+                        autoFire = false;
+                    }; 
+                }, 
+                { 
+                    count = 2; 
+                    ids = ( "static"); 
+                    cooldownMode = "box";
+                    weapon = { 
+                        id = "2hit"; 
+                        firePeriod = 0.1;
+                        damagePerSecond = 5.5;
+                        autoFire = false;
+                    }; 
+                }, 
+                { 
+                    count = 2; 
+                    ids = ( "static"); 
+                    cooldownMode = "box";
+                    weapon = { 
+                        id = "2hit"; 
+                        firePeriod = 0.1;
+                        damagePerSecond = 5.5;
+                        autoFire = false;
+                    }; 
+                }, 
+            ); 
+            
+        }, 
+        { 
+            // This one assumes the 120 Hz limits for the values below 8.33 ms and creates a nearly 2 frame stutter periodically for most trials
+            id = "2targets_frames"; 
+            description = "2 targets frame timing"; 
+            trials = ( 
+                { 
+                    count = 5; 
+                    ids = ( "static", "static"); 
+                }, 
+                { 
+                    count = 5; 
+                    ids = ( "static", "static"); 
+                    frameTimeArray = (0.008, 0.016);
+                }, 
+                { 
+                    count = 5; 
+                    ids = ( "static", "static"); 
+                    frameTimeArray = (0.008, 0.008, 0.008, 0.016);
+                }, 
+                { 
+                    count = 5; 
+                    ids = ( "static", "static"); 
+                    frameTimeArray = (0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.016);
+                }, 
+            ); 
+            
+        }, 
+        { 
+            // This session varies the latency
+            id = "5targets_latency"; 
+            description = "5 targets latency"; 
+            trials = ( 
+                { 
+                    count = 5; 
+                    ids = ( "static", "static", "static", "static", "static"); 
+                }, 
+                { 
+                    count = 5; 
+                    ids = ( "static", "static", "static", "static", "static"); 
+                    frameDelay = 1;
+                }, 
+                { 
+                    count = 5; 
+                    ids = ( "static", "static", "static", "static", "static"); 
+                    frameDelay = 2;
+                }, 
+                { 
+                    count = 5; 
+                    ids = ( "static", "static", "static", "static", "static"); 
+                    frameDelay = 4;
+                }, 
+            ); 
+            
+        }, 
+    ); 
+    
+    targets = ( 
+        { 
+            id = "static"; 
+            destSpace = "player"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        }, 
+    ); 
+    
+} 
