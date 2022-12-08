@@ -19,7 +19,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "static"); 
+                    targetIds = ( "static"); 
                 } 
             ); 
             
@@ -30,7 +30,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "static", "static"); 
+                    targetIds = ( "static", "static"); 
                 } 
             ); 
             
@@ -41,7 +41,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "static", "static", "static", "static", "static"); 
+                    targetIds = ( "static", "static", "static", "static", "static"); 
                 } 
             ); 
             
@@ -52,7 +52,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "moving"); 
+                    targetIds = ( "moving"); 
                 } 
             ); 
             
@@ -63,7 +63,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "jumping"); 
+                    targetIds = ( "jumping"); 
                 } ); 
             
         }, 
@@ -73,15 +73,15 @@
             trials = ( 
                 { 
                     count = 7; 
-                    ids = ( "static");
+                    targetIds = ( "static");
                 }, 
                 { 
                     count = 7; 
-                    ids = ( "moving");
+                    targetIds = ( "moving");
                 }, 
                 { 
                     count = 6; 
-                    ids = ( "jumping");
+                    targetIds = ( "jumping");
                 }, 
             ); 
             

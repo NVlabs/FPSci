@@ -12,7 +12,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "static", "static", "moving"); 
+                    targetIds = ( "static", "static", "moving"); 
                 } ); 
             
             weapon = { 
@@ -29,7 +29,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "static", "static", "moving"); 
+                    targetIds = ( "static", "static", "moving"); 
                 } ); 
             
             weapon = { 
@@ -46,7 +46,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "static", "static", "moving"); 
+                    targetIds = ( "static", "static", "moving"); 
                 } ); 
             
             weapon = { 
@@ -63,7 +63,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "static", "static", "moving"); 
+                    targetIds = ( "static", "static", "moving"); 
                 } ); 
             
             weapon = { 
@@ -80,7 +80,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "static", "static", "moving"); 
+                    targetIds = ( "static", "static", "moving"); 
                 } ); 
             
             renderWeaponStatus = false;
@@ -103,7 +103,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "static", "static", "moving"); 
+                    targetIds = ( "static", "static", "moving"); 
                 } ); 
             
             weapon = { 
