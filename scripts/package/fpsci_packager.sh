@@ -52,10 +52,10 @@ cp ./data-files/samples/weapons.Status.Any dist/samples/
 cp ./data-files/samples/weapons.Experiment.Any dist/samples/
 cp ./data-files/samples/targets.Status.Any dist/samples/
 cp ./data-files/samples/targets.Experiment.Any dist/samples/
+cp ./data-files/samples/targetmodels.Status.Any dist/samples/
+cp ./data-files/samples/targetmodels.Experiment.Any dist/samples/
 cp ./data-files/samples/trials.Status.Any dist/samples/
 cp ./data-files/samples/trials.Experiment.Any dist/samples/
-cp ./data-files/samples/spheres.Status.Any dist/samples/
-cp ./data-files/samples/spheres.Experiment.Any dist/samples/
 cp ./data-files/samples/sample.User.Any dist/samples/
 cp ./data-files/samples/sa2019_track.Status.Any dist/samples/
 cp ./data-files/samples/sa2019_track.Experiment.Any dist/samples/
