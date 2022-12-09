@@ -58,9 +58,9 @@ void ExperimentConfig::init() {
 	}
 	else {
 		// Targets are present (make sure no 2 have the same ID)
-		Array<String> ids;
+		Array<String> targetIds;
 		for (TargetConfig target : targets) {
-			if (!ids.contains(target.id)) { ids.append(target.id); }
+			if (!targetIds.contains(target.id)) { targetIds.append(target.id); }
 			else {
 				// This is a repeat entry, throw an exception
 				throw format("Found duplicate target configuration for target: \"%s\"", target.id);
@@ -74,7 +74,7 @@ void ExperimentConfig::init() {
 		sess60.id = "60Hz";
 		sess60.description = "60Hz trials";
 		sess60.render.frameRate = 60.0f;
-		sess60.trials = Array<TrialCount>({ TrialCount(Array<String>({ "static", "moving", "jumping" }), 2) });
+		sess60.trials = Array<TrialConfig>({ TrialConfig(Array<String>({ "static", "moving", "jumping" }), 2) });
 
 		sessions.append(sess60);
 
@@ -82,7 +82,7 @@ void ExperimentConfig::init() {
 		sess30.id = "30Hz";
 		sess30.description = "30Hz trials";
 		sess30.render.frameRate = 30.0f;
-		sess30.trials = Array<TrialCount>({ TrialCount(Array<String>({ "static", "moving", "jumping" }), 2) });
+		sess30.trials = Array<TrialConfig>({ TrialConfig(Array<String>({ "static", "moving", "jumping" }), 2) });
 
 		sessions.append(sess30);
 	}
@@ -144,7 +144,7 @@ Array<Array<shared_ptr<TargetConfig>>> ExperimentConfig::getTargetsByTrial(int s
 	// Iterate through the trials
 	for (int i = 0; i < sessions[sessionIndex].trials.size(); i++) {
 		Array<shared_ptr<TargetConfig>> targets;
-		for (String id : sessions[sessionIndex].trials[i].ids) {
+		for (String id : sessions[sessionIndex].trials[i].targetIds) {
 			const shared_ptr<TargetConfig> t = getTargetConfigById(id);
 			targets.append(t);
 		}
@@ -158,7 +158,7 @@ Array<shared_ptr<TargetConfig>> ExperimentConfig::getSessionTargets(const String
 	Array<shared_ptr<TargetConfig>> targets;
 	Array<String> loggedIds;
 	for (auto trial : sessions[idx].trials) {
-		for (String& id : trial.ids) {
+		for (String& id : trial.targetIds) {
 			if (!loggedIds.contains(id)) {
 				loggedIds.append(id);
 				targets.append(getTargetConfigById(id));
@@ -178,8 +178,8 @@ bool ExperimentConfig::validate(bool throwException) const {
 	for (SessionConfig session : sessions) {
 		Array<String> sessionTargetIds;
 		// Build a list of target ids used in this session
-		for (TrialCount trial : session.trials) {
-			for (String id : trial.ids) { if (!sessionTargetIds.contains(id)) sessionTargetIds.append(id); }
+		for (TrialConfig trial : session.trials) {
+			for (String id : trial.targetIds) { if (!sessionTargetIds.contains(id)) sessionTargetIds.append(id); }
 		}
 		// Check each ID against the experiment targets array
 		for (String targetId : sessionTargetIds) {
@@ -219,11 +219,11 @@ void ExperimentConfig::printToLog() const{
 			sess.id.c_str(), sess.render.frameRate, sess.render.frameDelay);
 		// Now iterate through each run
 		for (int j = 0; j < sess.trials.size(); j++) {
-			String ids;
-			for (String id : sess.trials[j].ids) { ids += format("%s, ", id.c_str()); }
-			if (ids.length() > 2) ids = ids.substr(0, ids.length() - 2);
+			String targetIds;
+			for (String id : sess.trials[j].targetIds) { targetIds += format("%s, ", id.c_str()); }
+			if (targetIds.length() > 2) targetIds = targetIds.substr(0, targetIds.length() - 2);
 			logPrintf("\t\tTrial Run Config: IDs = [%s], Count = %d\n",
-				ids.c_str(), sess.trials[j].count);
+				targetIds.c_str(), sess.trials[j].count);
 		}
 	}
 	// Iterate through trials and print them

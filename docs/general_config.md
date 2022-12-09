@@ -312,6 +312,7 @@ These flags control whether various information is written to the output files. 
 |`logOnChange`                      |`bool` | `result.db` | Enable/disable for logging values to the `Player_Action` and `Target_Trajectory` tables only when changes occur (smaller file size when `true`) |
 |`logToSingleDb`                    |`bool` | `result.db` | Enable/disable for logging to a unified output database file (named using the experiment description and user ID)  |
 |`sessionParametersToLog`           |`Array<String>`| `result.db` | A list of other config parameters (by name) that are logged on a per-session basis to the `Sessions` table |
+|`trialParametersToLog`     |`Array<String>`| A list of additional parameter names (from the config) to log with each `Trials` table entry |
 |`logSessionDropDownUpdate`         |`bool`         | `log.txt`   | Controls whether session drop-down updates are written to `log.txt`  |
  
 ```
@@ -324,7 +325,8 @@ These flags control whether various information is written to the output files. 
 "logOnChange" = false,                  // Log every frame (do not log only on change)
 "logToSingleDb" = true,                 // Log all sessions affiliated with a given experiment to the same database file
 "sessionParametersToLog" = ["frameRate", "frameDelay"],        // Log the frame rate and frame delay to the Sessions table
-"logSessionDropDownUpdate" : false,
+"trialParametersToLog": [],             // Don't log any trial-level parameters by default
+"logSessionDropDownUpdate" : false,     // Don't log changes in the session drop down
 ```
 
 *Note:* When `logToSingleDb` is `true` the filename used for logging is `"[experiment description]_[current user]_[experiment config hash].db"`. This hash is printed to the `log.txt` from the run in case it is needed to disambiguate results files. In addition when `logToSingleDb` is true, the `sessionParametersToLog` should match for all logged sessions to avoid potential logging issues. The experiment config hash takes into account only "valid" settings and ignores formatting only changes in the configuration file. Default values are used for the hash for anything that is not specified, so if a default is specified, the hash will match the config where the default was not specified.

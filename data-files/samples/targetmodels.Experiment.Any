@@ -1,5 +1,5 @@
 { 
-    description = "spheres"; 
+    description = "targetmodels"; 
     frameRate = 120; 
     showHUD = true;
     renderWeaponStatus = true;
@@ -19,7 +19,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "ico"); 
+                    targetIds = ( "ico"); 
                 } 
             ); 
             
@@ -30,7 +30,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "low"); 
+                    targetIds = ( "low"); 
                 } 
             ); 
             
@@ -41,7 +41,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "mid", "mid"); 
+                    targetIds = ( "mid", "mid"); 
                 } 
             ); 
             
@@ -52,7 +52,18 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "high", "high"); 
+                    targetIds = ( "high", "high"); 
+                } 
+            ); 
+            
+        }, 
+        { 
+            id = "cylinder"; 
+            description = "cylinder"; 
+            trials = ( 
+                { 
+                    count = 20; 
+                    targetIds = ( "cylinder", "cylinder"); 
                 } 
             ); 
             
@@ -63,7 +74,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "ico", "low", "mid", "high");
+                    targetIds = ( "ico", "low", "mid", "high", "cylinder");
                 }, 
             ); 
             
@@ -107,6 +118,15 @@
             // modelSpec = ArticulatedModel::Specification{
             //     filename = "model/target/high_poly_sphere.obj";
             // };
+        }, 
+        {
+            id = "cylinder"; 
+            destSpace = "player"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+            modelSpec = ArticulatedModel::Specification{
+                filename = "model/target/cylinder.obj";
+            },
         }, 
     ); 
     
