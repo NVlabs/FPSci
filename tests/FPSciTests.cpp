@@ -288,6 +288,7 @@ TEST_F(FPSciTests, KillTargetFront) {
 	EXPECT_EQ(s_app->sess->currentState, PresentationState::trialTask);
 
 	int spawnedTargets = respawnTargets();
+	s_app->weapon->resetCooldown();
 
 	// Kill the front target - just fire
 	zeroCameraRotation();
@@ -305,7 +306,8 @@ TEST_F(FPSciTests, KillTargetFrontHoldclick) {
 	EXPECT_EQ(s_app->sess->currentState, PresentationState::trialTask);
 	
 	int spawnedTargets = respawnTargets();
-	
+	s_app->weapon->resetCooldown();
+
 	zeroCameraRotation();
 	s_fakeInput->window().injectMouseDown(0);
 	s_app->oneFrame();
@@ -324,6 +326,7 @@ TEST_F(FPSciTests, KillTargetRightRotate) {
 	EXPECT_EQ(s_app->sess->currentState, PresentationState::trialTask);
 
 	int spawnedTargets = respawnTargets();
+	s_app->weapon->resetCooldown();
 
 	// Kill the right target by rotating to line it up
 	zeroCameraRotation();
@@ -347,6 +350,7 @@ TEST_F(FPSciTests, KillTargetRightTranslate) {
 	EXPECT_EQ(s_app->sess->currentState, PresentationState::trialTask);
 	
 	int spawnedTargets = respawnTargets();
+	s_app->weapon->resetCooldown();
 
 	zeroCameraRotation();
 	auto player = getPlayer();
