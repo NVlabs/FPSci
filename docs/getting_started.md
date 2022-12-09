@@ -60,10 +60,10 @@ The only _required_ field within any given session configuration is the `trials`
             id : "test_sess",
             description: "my first session",
             frameRate : 120,
-            trials: [
-                ids: ["first_target", "first_target"],              // Spawn two "first_target"s at a time
+            trials: [{
+                targetIds: ["first_target", "first_target"],              // Spawn two "first_target"s at a time
                 count: 5                                            // Perform 5 of this trial
-            ]
+            }]
         }
     ]
 ```

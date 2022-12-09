@@ -19,7 +19,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "ico"); 
+                    targetIds = ( "ico"); 
                 } 
             ); 
             
@@ -30,7 +30,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "low"); 
+                    targetIds = ( "low"); 
                 } 
             ); 
             
@@ -41,7 +41,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "mid", "mid"); 
+                    targetIds = ( "mid", "mid"); 
                 } 
             ); 
             
@@ -52,7 +52,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "high", "high"); 
+                    targetIds = ( "high", "high"); 
                 } 
             ); 
             
@@ -63,7 +63,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "cylinder", "cylinder"); 
+                    targetIds = ( "cylinder", "cylinder"); 
                 } 
             ); 
             
@@ -74,7 +74,7 @@
             trials = ( 
                 { 
                     count = 20; 
-                    ids = ( "ico", "low", "mid", "high", "cylinder");
+                    targetIds = ( "ico", "low", "mid", "high", "cylinder");
                 }, 
             ); 
             

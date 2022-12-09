@@ -49,6 +49,7 @@ void FPSciApp::initExperiment(){
 	}
 
 	// Setup the scene
+	m_loadedScene.name = "";														// Clear scene name here
 	setScene(PhysicsScene::create(m_ambientOcclusion));
 	scene()->registerEntitySubclass("PlayerEntity", &PlayerEntity::create);			// Register the player entity for creation
 	scene()->registerEntitySubclass("FlyingEntity", &FlyingEntity::create);			// Register the target entity for creation
