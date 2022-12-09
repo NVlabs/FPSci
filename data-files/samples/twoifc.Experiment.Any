@@ -10,7 +10,6 @@
 {
     // global settings
     showMenuBetweenSessions = False;
-    logToSingleDb = False;
     clearMissDecalsWithReference = True;
     showReferenceTargetMissDecals = False;
 
@@ -67,7 +66,7 @@
             frameRate = 60;
             frameDelay = 0;
             trials = (
-                {ids = ("stray_fly_hard"), count = 1},
+                {targetIds = ("stray_fly_hard"), count = 1},
             );
         },
         {
@@ -75,7 +74,7 @@
             frameRate = 60;
             frameDelay = 2;
             trials = (
-                {ids = ("stray_fly_hard"), count = 1},
+                {targetIds = ("stray_fly_hard"), count = 1},
             );
             questions = {
                 {
@@ -94,7 +93,7 @@
             frameRate = 120;
             frameDelay = 0;
             trials = (
-                {ids = ("stray_fly_hard"), count = 1},
+                {targetIds = ("stray_fly_hard"), count = 1},
             );
         },
         {
@@ -102,7 +101,7 @@
             frameRate = 120;
             frameDelay = 4;
             trials = (
-                {ids = ("stray_fly_hard"), count = 1},
+                {targetIds = ("stray_fly_hard"), count = 1},
             );
             questions = {
                 {
@@ -121,7 +120,7 @@
             frameRate = 240;
             frameDelay = 0;
             trials = (
-                {ids = ("stray_fly_hard"), count = 1},
+                {targetIds = ("stray_fly_hard"), count = 1},
             );
         },
         {
@@ -129,7 +128,7 @@
             frameRate = 240;
             frameDelay = 8;
             trials = (
-                {ids = ("stray_fly_hard"), count = 1},
+                {targetIds = ("stray_fly_hard"), count = 1},
             );
             questions = {
                 {
