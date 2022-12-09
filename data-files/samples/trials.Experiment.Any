@@ -1,0 +1,154 @@
+{ 
+    description = "trial-level configuration example"; 
+    frameRate = 120; 
+    showHUD = true;
+    renderWeaponStatus = true;
+            
+    weapon = { 
+        id = "2hit"; 
+        firePeriod = 0.3;
+        damagePerSecond = 2;
+        autoFire = false;
+    }; 
+
+    sessions = ( 
+        { 
+            // This session tests out different weapon cooldowns and cooldown indicators while maintaining 2 hits to kill
+            id = "1target_cd"; 
+            description = "1 target cooldown"; 
+            cooldownMode = "ring";                          // Session-level config can still be used to set defaults for all trials
+            cooldownColor = Color4(0.7,1.0,0.9,0.75);       
+            trials = ( 
+                { 
+                    id = "ring";
+                    count = 2; 
+                    targetIds = ( "static"); 
+                }, 
+                { 
+                    id = "box";
+                    count = 2; 
+                    targetIds = ( "static"); 
+                    cooldownMode = "box";
+                }, 
+                { 
+                    id = "box slow fire";
+                    count = 2; 
+                    targetIds = ( "static"); 
+                    cooldownMode = "box";
+                    weapon = { 
+                        id = "2hit_slow"; 
+                        firePeriod = 0.5;
+                        damagePerSecond = 1.1;
+                    }; 
+                }, 
+                { 
+                    id = "ring slow fire";
+                    count = 2; 
+                    targetIds = ( "static"); 
+                    cooldownMode = "ring";          // Can specify this here, but optional as its the default behavior specified at the session-level
+                    weapon = { 
+                        id = "2hit_slow"; 
+                        firePeriod = 0.5;
+                        damagePerSecond = 1.1;
+                    }; 
+                }, 
+                { 
+                    id = "box fast fire";
+                    count = 2; 
+                    targetIds = ( "static"); 
+                    cooldownMode = "box";
+                    weapon = { 
+                        id = "2hit_fast"; 
+                        firePeriod = 0.1;
+                        damagePerSecond = 5.5;
+                    }; 
+                }, 
+                { 
+                    id = "ring fast fire";
+                    count = 2; 
+                    targetIds = ( "static"); 
+                    cooldownMode = "ring";
+                    weapon = { 
+                        id = "2hit_fast"; 
+                        firePeriod = 0.1;
+                        damagePerSecond = 5.5;
+                    }; 
+                }, 
+            ); 
+            
+        }, 
+        { 
+            // This session assumes the 120 Hz limits for the values below 8.33 ms and creates a nearly 2 frame stutter periodically for most trials
+            id = "2targets_frames"; 
+            description = "2 targets frame timing";
+            frameTimeArray = (0.008);                   // Set a default value and override in trials below
+            trials = ( 
+                {
+                    id = "constant"; 
+                    count = 5; 
+                    targetIds = ( "static", "static"); 
+                }, 
+                { 
+                    id = "1:2";
+                    count = 5; 
+                    targetIds = ( "static", "static"); 
+                    frameTimeArray = (0.008, 0.016);
+                }, 
+                { 
+                    id = "1:4";
+                    count = 5; 
+                    targetIds = ( "static", "static"); 
+                    frameTimeArray = (0.008, 0.008, 0.008, 0.016);
+                }, 
+                { 
+                    id = "1:8";
+                    count = 5; 
+                    targetIds = ( "static", "static"); 
+                    frameTimeArray = (0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.016);
+                }, 
+            ); 
+            
+        }, 
+        { 
+            // This session varies the latency
+            id = "5targets_latency"; 
+            description = "5 targets latency"; 
+            trials = ( 
+                { 
+                    id = "0 delay";
+                    count = 5; 
+                    targetIds = ( "static", "static", "static", "static", "static"); 
+                }, 
+                { 
+                    id = "1 delay";
+                    count = 5; 
+                    targetIds = ( "static", "static", "static", "static", "static"); 
+                    frameDelay = 1;
+                }, 
+                { 
+                    id = "2 delay";
+                    count = 5; 
+                    targetIds = ( "static", "static", "static", "static", "static"); 
+                    frameDelay = 2;
+                }, 
+                { 
+                    id = "4 delay";
+                    count = 5; 
+                    targetIds = ( "static", "static", "static", "static", "static"); 
+                    frameDelay = 4;
+                }, 
+            ); 
+            
+        }, 
+    ); 
+    
+    targets = ( 
+        { 
+            id = "static"; 
+            destSpace = "player"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        }, 
+    ); 
+    
+} 

@@ -171,7 +171,7 @@ void FPSciTests::zeroCameraRotation()
 int FPSciTests::respawnTargets()
 {
 	s_app->sess->clearTargets();
-	s_app->sess->initTargetAnimation();
+	s_app->sess->initTargetAnimation(true);
 
 	// TODO: investigate why it takes a frame for targets to be placed. Without this, the transform below is clobbered.
 	s_app->oneFrame();
@@ -234,7 +234,7 @@ TEST_F(FPSciTests, InitialTestConditions) {
 	ASSERT_TRUE(notNull(player));
 
 	// Default config properties
-	EXPECT_FALSE(s_app->sessConfig->weapon.autoFire);
+	EXPECT_FALSE(s_app->trialConfig->weapon.autoFire);
 }
 
 TEST_F(FPSciTests, UsingFixedTimestep) {
@@ -471,9 +471,9 @@ TEST_F(FPSciTests, TestAutoFire) {
 	const float damagePerFrame = 0.1f;
 	const float firePeriod = (float)fixedTestDeltaTime() - 0.001f;
 
-	s_app->sessConfig->weapon.autoFire = true;
-	s_app->sessConfig->weapon.damagePerSecond = damagePerFrame / firePeriod;
-	s_app->sessConfig->weapon.firePeriod = firePeriod;
+	s_app->trialConfig->weapon.autoFire = true;
+	s_app->trialConfig->weapon.damagePerSecond = damagePerFrame / firePeriod;
+	s_app->trialConfig->weapon.firePeriod = firePeriod;
 
 	s_app->oneFrame();
 
@@ -493,7 +493,7 @@ TEST_F(FPSciTests, TestAutoFire) {
 	}
 	EXPECT_TRUE(frontAlive) << "Low damage-per-second with auto-fire but target still died";
 
-	s_app->sessConfig->weapon.autoFire = false;
+	s_app->trialConfig->weapon.autoFire = false;
 }
 
 

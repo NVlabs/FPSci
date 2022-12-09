@@ -65,11 +65,11 @@
             frameDelay = 0;
             blockCount = 10;
             trials = (
-                {ids = ("static"), count = 3},
-                {ids = ("straight_fly"), count = 3},
-                {ids = ("stray_fly_easy"), count = 4},
-                {ids = ("stray_fly_hard"), count = 4},
-                {ids = ("strafe_jump"), count = 8}
+                {targetIds = ("static"), count = 3},
+                {targetIds = ("straight_fly"), count = 3},
+                {targetIds = ("stray_fly_easy"), count = 4},
+                {targetIds = ("stray_fly_hard"), count = 4},
+                {targetIds = ("strafe_jump"), count = 8}
             );
         },
         {
@@ -78,11 +78,11 @@
             frameDelay = 2;
             blockCount = 10;
             trials = (
-                {ids = ("static"), count = 3},
-                {ids = ("straight_fly"), count = 3},
-                {ids = ("stray_fly_easy"), count = 4},
-                {ids = ("stray_fly_hard"), count = 4},
-                {ids = ("strafe_jump"), count = 8}
+                {targetIds = ("static"), count = 3},
+                {targetIds = ("straight_fly"), count = 3},
+                {targetIds = ("stray_fly_easy"), count = 4},
+                {targetIds = ("stray_fly_hard"), count = 4},
+                {targetIds = ("strafe_jump"), count = 8}
             );
         },
         {
@@ -91,11 +91,11 @@
             frameDelay = 0;
             blockCount = 10;
             trials = (
-                {ids = ("static"), count = 3},
-                {ids = ("straight_fly"), count = 3},
-                {ids = ("stray_fly_easy"), count = 4},
-                {ids = ("stray_fly_hard"), count = 4},
-                {ids = ("strafe_jump"), count = 8}
+                {targetIds = ("static"), count = 3},
+                {targetIds = ("straight_fly"), count = 3},
+                {targetIds = ("stray_fly_easy"), count = 4},
+                {targetIds = ("stray_fly_hard"), count = 4},
+                {targetIds = ("strafe_jump"), count = 8}
             );
         },
         {
@@ -104,11 +104,11 @@
             frameDelay = 4;
             blockCount = 10;
             trials = (
-                {ids = ("static"), count = 3},
-                {ids = ("straight_fly"), count = 3},
-                {ids = ("stray_fly_easy"), count = 4},
-                {ids = ("stray_fly_hard"), count = 4},
-                {ids = ("strafe_jump"), count = 8}
+                {targetIds = ("static"), count = 3},
+                {targetIds = ("straight_fly"), count = 3},
+                {targetIds = ("stray_fly_easy"), count = 4},
+                {targetIds = ("stray_fly_hard"), count = 4},
+                {targetIds = ("strafe_jump"), count = 8}
             );
         },
         {
@@ -117,11 +117,11 @@
             frameDelay = 0;
             blockCount = 10;
             trials = (
-                {ids = ("static"), count = 3},
-                {ids = ("straight_fly"), count = 3},
-                {ids = ("stray_fly_easy"), count = 4},
-                {ids = ("stray_fly_hard"), count = 4},
-                {ids = ("strafe_jump"), count = 8}
+                {targetIds = ("static"), count = 3},
+                {targetIds = ("straight_fly"), count = 3},
+                {targetIds = ("stray_fly_easy"), count = 4},
+                {targetIds = ("stray_fly_hard"), count = 4},
+                {targetIds = ("strafe_jump"), count = 8}
             );
         },
         {
@@ -130,11 +130,11 @@
             frameDelay = 8;
             blockCount = 10;
             trials = (
-                {ids = ("static"), count = 3},
-                {ids = ("straight_fly"), count = 3},
-                {ids = ("stray_fly_easy"), count = 4},
-                {ids = ("stray_fly_hard"), count = 4},
-                {ids = ("strafe_jump"), count = 8}
+                {targetIds = ("static"), count = 3},
+                {targetIds = ("straight_fly"), count = 3},
+                {targetIds = ("stray_fly_easy"), count = 4},
+                {targetIds = ("stray_fly_hard"), count = 4},
+                {targetIds = ("strafe_jump"), count = 8}
             );
         },
     );

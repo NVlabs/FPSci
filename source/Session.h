@@ -119,17 +119,28 @@ struct PlayerAction {
 };
 
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */
-class TrialCount {
+class TrialConfig : public FpsConfig {
 public:
-	Array<String>	ids;			///< Trial ID list
+	String			id;				///< Trial ID (used for logging)
+	Array<String>	targetIds;		///< Trial ID list
 	int				count = 1;		///< Count of trials to be performed
 	static int		defaultCount;	///< Default count to use
 
-	TrialCount() {};
-	TrialCount(const Array<String>& trialIds, int trialCount) : ids(trialIds), count(trialCount) {};
-	TrialCount(const Any& any);
+	TrialConfig() : FpsConfig(defaultConfig()) {};
+	TrialConfig(const Array<String>& targetIds, int trialCount) : targetIds(targetIds), count(trialCount) {};
+	TrialConfig(const Any& any);
 
-	Any toAny(const bool forceAll = true) const;
+	static shared_ptr<TrialConfig> create() { return createShared<TrialConfig>(); }
+
+	// Use a static method to bypass order of declaration for static members (specific to Sampler s_freeList in GLSamplerObect)
+	// Trick from: https://www.cs.technion.ac.il/users/yechiel/c++-faq/static-init-order-on-first-use.html	
+	static FpsConfig& defaultConfig() {
+		static FpsConfig def;
+		def.questionArray = Array<Question>();		// Clear the questions array (don't inherit)
+		return def;
+	}
+
+	Any toAny(const bool forceAll = false) const;
 };
 
 /** Configuration for a session worth of trials */
@@ -138,8 +149,9 @@ public:
 	String				id;								///< Session ID
 	String				description = "Session";		///< String indicating whether session is training or real
 	int					blockCount = 1;					///< Default to just 1 block per session
-	Array<TrialCount>	trials;							///< Array of trials (and their counts) to be performed
+	Array<TrialConfig>	trials;							///< Array of trials (and their counts) to be performed
 	bool				closeOnComplete = false;		///< Close application on session completed?
+	bool				randomizeTrialOrder = true;		///< Randomize order of trials presented within the session
 
 	SessionConfig() : FpsConfig(defaultConfig()) {}
 	SessionConfig(const Any& any);
@@ -162,7 +174,8 @@ protected:
 	FPSciApp* m_app = nullptr;							///< Pointer to the app
 	Scene* m_scene = nullptr;							///< Pointer to the scene
 	
-	shared_ptr<SessionConfig> m_config;					///< The session this experiment will run
+	shared_ptr<SessionConfig> m_sessConfig;				///< Configuration for this session
+	shared_ptr<TrialConfig> m_trialConfig;				///< Configuration for the trial we are in 
 	
 	String m_dbFilename;								///< Filename for output logging (less the .db extension)
 
@@ -172,7 +185,8 @@ protected:
 
 	// Experiment management					
 	int m_destroyedTargets = 0;							///< Number of destroyed target
-	int m_trialShotsHit = 0;									///< Count of total hits in this trial
+	int m_trialShotsHit = 0;							///< Count of total hits in this trial
+	bool m_firstTrial = true;							///< Is this the first trial in this session?
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
 	int	m_currBlock = 1;								///< Index to the current block of trials
 	Array<Array<shared_ptr<TargetConfig>>> m_trials;	///< Storage for trials (to repeat over blocks)
@@ -193,7 +207,7 @@ protected:
 	int m_currTrialIdx;										///< Current trial
 	int m_currQuestionIdx = -1;								///< Current question index
 	Array<int> m_remainingTrials;							///< Completed flags
-	Array<int> m_completedTrials;								///< Count of completed trials
+	Array<int> m_completedTrials;							///< Count of completed trials
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
 	// Time-based parameters
@@ -231,7 +245,7 @@ protected:
 
 	inline void runTrialCommands(String evt) {
 		evt = toLower(evt);
-		auto cmds = (evt == "start") ? m_config->commands.trialStartCmds : m_config->commands.trialEndCmds;
+		auto cmds = (evt == "start") ? m_sessConfig->commands.trialStartCmds : m_sessConfig->commands.trialEndCmds;
 		for (auto cmd : cmds) { 
 			m_trialProcesses.append(runCommand(cmd, evt + " of trial")); 
 		}
@@ -246,7 +260,7 @@ protected:
 
 	inline void runSessionCommands(String evt) {
 		evt = toLower(evt);
-		auto cmds = (evt == "start") ? m_config->commands.sessionStartCmds : m_config->commands.sessionEndCmds;
+		auto cmds = (evt == "start") ? m_sessConfig->commands.sessionStartCmds : m_sessConfig->commands.sessionEndCmds;
 		for (auto cmd : cmds) { 
 			m_sessProcesses.append(runCommand(cmd, evt + " of session")); 
 		}
@@ -261,6 +275,7 @@ protected:
 
 	String formatFeedback(const String& input);
 	String formatCommand(const String& input);
+	bool presentQuestions(Array<Question>& questions);
 
 	/** Insert a target into the target array/scene */
 	inline void insertTarget(shared_ptr<TargetEntity> target);
@@ -389,7 +404,7 @@ public:
 	}
 
 	void randomizePosition(const shared_ptr<TargetEntity>& target) const;
-	void initTargetAnimation();
+	void initTargetAnimation(const bool task);
 	void spawnTrialTargets(Point3 initialSpawnPos, bool previewMode = false);
 
 	bool blockComplete() const;

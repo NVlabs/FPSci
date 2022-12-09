@@ -86,7 +86,7 @@ bool SceneConfig::operator!=(const SceneConfig& other) const {
 		playerCamera != other.playerCamera ||
 		//gravity != other.gravity ||
 		(isnan(resetHeight) ? !isnan(other.resetHeight) : resetHeight != other.resetHeight) ||
-		spawnPosition.isNaN() ? !other.spawnPosition.isNaN() : spawnPosition != other.spawnPosition ||				// Assume if any spawn coordinate is nan positions are equal
+		(spawnPosition.isNaN() ? !other.spawnPosition.isNaN() : spawnPosition != other.spawnPosition) ||				// Assume if any spawn coordinate is nan positions are equal
 		(isnan(spawnHeadingDeg) ? !isnan(other.spawnHeadingDeg) : spawnHeadingDeg != other.spawnHeadingDeg);
 }
 
@@ -555,6 +555,7 @@ void LoggerConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("logOnChange", logOnChange);
 		reader.getIfPresent("logSessionDropDownUpdate", logSessDDUpdate);
 		reader.getIfPresent("sessionParametersToLog", sessParamsToLog);
+		reader.getIfPresent("trialParametersToLog", trialParamsToLog);
 		reader.getIfPresent("logToSingleDb", logToSingleDb);
 		break;
 	default:
@@ -573,6 +574,7 @@ Any LoggerConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.logUsers != logUsers)							a["logUsers"] = logUsers;
 	if (forceAll || def.logOnChange != logOnChange)						a["logOnChange"] = logOnChange;
 	if (forceAll || def.sessParamsToLog != sessParamsToLog)				a["sessionParametersToLog"] = sessParamsToLog;
+	if (forceAll || def.trialParamsToLog != trialParamsToLog)			a["trialParametersToLog"] = trialParamsToLog;
 	if (forceAll || def.logSessDDUpdate != logSessDDUpdate)				a["logSessionDropDownUpdate"] = logSessDDUpdate;
 	if (forceAll || def.logToSingleDb != logToSingleDb)					a["logToSingleDb"] = logToSingleDb;
 	return a;
@@ -670,7 +672,7 @@ Question::Question(const Any& any) {
 		if (reader.getIfPresent("optionsPerRow", optionsPerRow)) {
 			if (type == Type::Rating) {		
 				// Ratings will ignore the optionsPerRow (always uses 1 row)
-				logPrintf("WARNING: Specified \"optionsPerRow\" parameter is ignored when using a \"Rating\" type question. If you'd like to change the layout look into using a \"MultipleChoice\" question instead!");
+				logPrintf("WARNING: Specified \"optionsPerRow\" parameter is ignored when using a \"Rating\" type question. If you'd like to change the layout look into using a \"MultipleChoice\" question instead!\n");
 			}
 		}
 

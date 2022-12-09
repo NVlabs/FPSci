@@ -67,9 +67,9 @@
           frameDelay = 0;
           blockCount = 10;
           trials = (
-              {ids = ("straight_fly"), count = 2},
-              {ids = ("stray_fly_easy"), count = 5},
-              {ids = ("strafe_jump"), count = 5}
+              {targetIds = ("straight_fly"), count = 2},
+              {targetIds = ("stray_fly_easy"), count = 5},
+              {targetIds = ("strafe_jump"), count = 5}
           );
       },
       {
@@ -78,9 +78,9 @@
           frameDelay = 2;
           blockCount = 10;
           trials = (
-              {ids = ("straight_fly"), count = 2},
-              {ids = ("stray_fly_easy"), count = 5},
-              {ids = ("strafe_jump"), count = 5}
+              {targetIds = ("straight_fly"), count = 2},
+              {targetIds = ("stray_fly_easy"), count = 5},
+              {targetIds = ("strafe_jump"), count = 5}
           );
       },
       {
@@ -89,9 +89,9 @@
           frameDelay = 0;
           blockCount = 10;
           trials = (
-              {ids = ("straight_fly"), count = 2},
-              {ids = ("stray_fly_easy"), count = 5},
-              {ids = ("strafe_jump"), count = 5}
+              {targetIds = ("straight_fly"), count = 2},
+              {targetIds = ("stray_fly_easy"), count = 5},
+              {targetIds = ("strafe_jump"), count = 5}
           );
       },
       {
@@ -100,9 +100,9 @@
           frameDelay = 4;
           blockCount = 10;
           trials = (
-              {ids = ("straight_fly"), count = 2},
-              {ids = ("stray_fly_easy"), count = 5},
-              {ids = ("strafe_jump"), count = 5}
+              {targetIds = ("straight_fly"), count = 2},
+              {targetIds = ("stray_fly_easy"), count = 5},
+              {targetIds = ("strafe_jump"), count = 5}
           );
       },
       {
@@ -111,9 +111,9 @@
           frameDelay = 0;
           blockCount = 10;
           trials = (
-              {ids = ("straight_fly"), count = 2},
-              {ids = ("stray_fly_easy"), count = 5},
-              {ids = ("strafe_jump"), count = 5}
+              {targetIds = ("straight_fly"), count = 2},
+              {targetIds = ("stray_fly_easy"), count = 5},
+              {targetIds = ("strafe_jump"), count = 5}
           );
       },
       {
@@ -122,9 +122,9 @@
           frameDelay = 8;
           blockCount = 10;
           trials = (
-              {ids = ("straight_fly"), count = 2},
-              {ids = ("stray_fly_easy"), count = 5},
-              {ids = ("strafe_jump"), count = 5}
+              {targetIds = ("straight_fly"), count = 2},
+              {targetIds = ("stray_fly_easy"), count = 5},
+              {targetIds = ("strafe_jump"), count = 5}
           );
       },
     );

@@ -33,11 +33,12 @@ class WaypointManager;
 // ready: ready scene that happens before beginning of a task.
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
-enum PresentationState { initial, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
+enum PresentationState { initial, referenceTarget, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
 static String presentationStateToString(const PresentationState& state) {
 	String stateStr = "N/A";
 	switch (state) {
 	case initial: stateStr = "initial"; break;
+	case referenceTarget: stateStr = "referenceTarget"; break;
 	case pretrial: stateStr = "pretrial";  break;
 	case trialTask: stateStr = "trialTask"; break;
 	case trialFeedback: stateStr = "trialFeedback";  break;
@@ -129,7 +130,7 @@ protected:
 
 	/** Called from onInit */
 	void makeGUI();
-	void updateControls(bool firstSession = false);
+	void updateDeveloperControls(const shared_ptr<FpsConfig>& config);
 	
 	void loadConfigs(const ConfigFiles& configs);
 
@@ -137,7 +138,7 @@ protected:
 	
 	/** Initializes player settings from configs and resets player to initial position 
 		Also updates mouse sensitivity. */
-	void initPlayer(bool firstSpawn = false);
+	void initPlayer(const shared_ptr<FpsConfig> config, const bool respawn = false, bool firstSpawn = false) ;
 
 	/** Move a window to the center of the display */
 	void moveToCenter(shared_ptr<GuiWindow> window) {
@@ -186,6 +187,7 @@ public:
 	shared_ptr<WaypointManager>		waypointManager;				///< Waypoint mananger pointer
 	
 	shared_ptr<SessionConfig>		sessConfig = SessionConfig::create();			///< Current session config
+	shared_ptr<TrialConfig>			trialConfig = TrialConfig::create();			///< Current trial config
 	shared_ptr<DialogBase>			dialog;							///< Dialog box
 	Question						currentQuestion;				///< Currently presented question
 
@@ -254,8 +256,10 @@ public:
 
 	void markSessComplete(String id);
 	/** Updates experiment state to the provided session id and updates player parameters (including mouse sensitivity) */
-	virtual void updateSession(const String& id, bool forceReload = false);
-	void updateParameters(int frameDelay, float frameRate);
+	virtual void updateSession(const String& id, bool forceSceneReload = false);
+	void updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload = false, const bool respawn = false);
+	void updateConfigParameters(const shared_ptr<FpsConfig> config, bool forceSceneReload = false, const bool respawn = false, const bool trialLevel = true);
+	void updateFrameParameters(int frameDelay, float frameRate);
 	void updateTargetColor(const shared_ptr<TargetEntity>& target);
 	void presentQuestion(Question question);
 
@@ -300,7 +304,7 @@ public:
 	void updateFPSIndicator(RenderDevice* rd, Vector2 resolution);					///< Update and draw a (custom) frame time indicator (developer mode feature)
 	void drawFeedbackMessage(RenderDevice* rd);										///< Draw a user feedback message (at full render device resolution)
 
-	void updateShaderBuffers();									///< Regenerate buffers (for configured shaders)
+	void updateShaderBuffers(const shared_ptr<FpsConfig> config);									///< Regenerate buffers (for configured shaders)
 
 	/** calls rd->pushState with the right delayed buffer. Creates buffers if needed */
 	void pushRdStateWithDelay(RenderDevice* rd, Array<shared_ptr<Framebuffer>> &delayBufferQueue, int &delayIndex, int lagFrames = 0);
