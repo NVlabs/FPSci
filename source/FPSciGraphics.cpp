@@ -327,6 +327,10 @@ void FPSciApp::drawDelayed2DElements(RenderDevice* rd, Vector2 resolution) {
 	if (trialConfig->hud.enable) {
 		drawHUD(rd, resolution);
 	}
+
+	if (trialConfig->aimAssist.showFoV && trialConfig->aimAssist.fov > 0) {
+		drawAimAssistFov(rd, resolution);
+	}
 }
 
 void FPSciApp::drawClickIndicator(RenderDevice* rd, String mode, Vector2 resolution) {
@@ -550,3 +554,24 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 	}
 }
 
+void FPSciApp::drawAimAssistFov(RenderDevice* rd, Vector2 resolution) {
+	const int segments = 50;
+	const float vFov = trialConfig->render.hFoV * resolution.y / resolution.x;	// Get the vertical resoluti
+	const float xRad = trialConfig->aimAssist.fov / trialConfig->render.hFoV * resolution.x;
+	const float yRad = trialConfig->aimAssist.fov / vFov * resolution.y;
+	const float radScale = 1 - trialConfig->aimAssist.fovWidth/100.f;
+	// Create the segments
+	for (int i = 0; i < segments; i++) {
+		if (i % 2 == 1) continue;
+		const float inc = static_cast<float>(2 * pi() / segments);
+		const float theta = -i * inc;
+		Vector2 center = resolution / 2.0f;
+		Array<Vector2> verts = {
+			center + Vector2(xRad * sin(theta), -yRad * cos(theta)),
+			center + Vector2(xRad * sin(theta + inc), -yRad * cos(theta + inc)),
+			center + Vector2(radScale * xRad * sin(theta + inc), -radScale *yRad * cos(theta + inc)),
+			center + Vector2(radScale * xRad * sin(theta), -radScale * yRad * cos(theta))
+		};
+		Draw::poly2D(verts, rd, trialConfig->aimAssist.fovColor);
+	}
+}

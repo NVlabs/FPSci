@@ -847,6 +847,8 @@ void FPSciApp::onNetwork() {
 
 
 void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
+	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
+
 	// TODO: this should eventually probably use sdt instead of rdt
 	RealTime currentRealTime;
 	if (m_lastOnSimulationRealTime == 0) {
@@ -905,6 +907,12 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		damagePerShot = (float)fireDuration * weapon->config()->damagePerSecond;
 	}
 
+	// Auto aim if requested
+	if (numShots > 0 && trialConfig->aimAssist.snapOnFire) {
+		assistAim(sess->hittableTargets());
+		playerCamera->setFrame(player->getCameraFrame());		// Update camera from player early in this case
+	}
+
 	// Actually shoot here
 	m_currentWeaponDamage = damagePerShot; // pass this to the callback where weapon damage is applied
 	bool shotFired = false;
@@ -961,9 +969,8 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		}
 	}
 
-	// Move the player
-	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
-	playerCamera->setFrame(p->getCameraFrame());
+	// Move the player camera to the player position
+	playerCamera->setFrame(player->getCameraFrame());
 	
 	// Handle developer mode features here
 	if (startupConfig.developerMode) {
@@ -981,7 +988,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			// Handle highlighting for selected target
 			waypointManager->updateSelected();
 			// Handle player motion recording here
-			waypointManager->updatePlayerPosition(p->getCameraFrame().translation);
+			waypointManager->updatePlayerPosition(player->getCameraFrame().translation);
 		}
 
 		// Example GUI dynamic layout code.  Resize the debugWindow to fill
@@ -1238,6 +1245,28 @@ void FPSciApp::setScopeView(bool scoped) {
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
 
+void FPSciApp::assistAim(const Array<shared_ptr<TargetEntity>>& targets) {
+	if (trialConfig->aimAssist.fov <= 0.f) return;		// Early exit for no aim assist
+	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
+
+	// Iterate through targets to find closest
+	float minAngle = trialConfig->aimAssist.fov;
+	shared_ptr<TargetEntity> closestTarget;
+	for (shared_ptr<TargetEntity> t : targets) {
+		Vector3 dir = player->frame().lookVector();
+		Vector3 diff = t->frame().translation - player->frame().translation;
+		float angle = 180 / pif() * acosf(dot(dir, diff)/(dir.magnitude()*diff.magnitude()));
+		if (angle < minAngle) {
+			minAngle = angle;
+			closestTarget = t;			// Record closest targets within the FoV
+		}
+	}
+	if (isNull(closestTarget)) return;	// No valid target in FoV, leave here
+
+	// Aim at the closest target in the FoV
+	player->lookAt(closestTarget->frame().translation);
+}
+
 void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	// Damage the target
 	float damage = m_currentWeaponDamage;
@@ -1347,7 +1376,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	}
 	else if (notNull(player)) {	// Zero the player velocity and rotation when in the setting menu
 		player->setDesiredOSVelocity(Vector3::zero());
-		player->setDesiredAngularVelocity(0.0, 0.0);
+		player->setDesiredRotationChange(0.0, 0.0);
 	}
 
 	// Handle scope behavior
@@ -1401,6 +1430,12 @@ void FPSciApp::onUserInput(UserInput* ui) {
 			if (trialConfig->audio.refTargetPlayFireSound && !trialConfig->weapon.loopAudio()) {		// Only play shot sounds for non-looped weapon audio (continuous/automatic fire not allowed)
 				weapon->playSound(true, false);			// Play audio here for reference target
 			}
+		}
+	}
+
+	for (GKey autoAim : keyMap.map["autoAim"]) {
+		if (ui->keyDown(autoAim)) {
+			assistAim(sess->hittableTargets());
 		}
 	}
 

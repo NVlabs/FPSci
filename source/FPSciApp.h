@@ -274,7 +274,10 @@ public:
 	void setMouseInputMode(MouseInputMode mode = MOUSE_FPM);
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
-	
+
+	void assistAim(const Array<shared_ptr<TargetEntity>>& targets);		// Automatically aim at the nearest (valid) target
+	void drawAimAssistFov(RenderDevice* rd, Vector2 resolution);		// Draw the aim assist FoV to the screen as a ring
+
 	/** Initialize an experiment */
 	void initExperiment();
 

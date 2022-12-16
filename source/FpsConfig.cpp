@@ -628,6 +628,31 @@ Any CommandConfig::addToAny(Any a, const bool forceAll) const {
 	return a;
 }
 
+void AimAssistConfig::load(AnyTableReader reader, int settingsVersion) {
+	switch (settingsVersion) {
+	case 1: 
+		reader.getIfPresent("aimAssistFoV", fov);
+		reader.getIfPresent("aimAssistShowFoV", showFoV);
+		reader.getIfPresent("aimAssistMaxSpeed", maxSpeedDegS);
+		reader.getIfPresent("aimAssistSnapOnFire", snapOnFire);
+		reader.getIfPresent("aimAssistFoVColor", fovColor);
+		reader.getIfPresent("aimAssistFoVWidth", fovWidth);
+		break;
+	default:
+		throw format("Did not recognize settings version: %d", settingsVersion);
+		break;
+	}
+}
+
+Any AimAssistConfig::addToAny(Any a, const bool forceAll) const{
+	AimAssistConfig def;
+	if (forceAll || fov != def.fov) a["aimAssistFoV"] = fov;
+	if (forceAll || showFoV != def.showFoV) a["aimAssistShowFoV"] = showFoV;
+	if (forceAll || maxSpeedDegS != def.maxSpeedDegS) a["aimAssistMaxSpeed"] = maxSpeedDegS;
+	if (forceAll || snapOnFire != def.snapOnFire) a["aimAssistSnapOnFire"] = snapOnFire;
+	return a;
+}	
+
 Question::Question(const Any& any) {
 	int settingsVersion = 1;
 	FPSciAnyTableReader reader(any);
