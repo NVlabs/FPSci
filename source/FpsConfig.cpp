@@ -633,10 +633,12 @@ void AimAssistConfig::load(AnyTableReader reader, int settingsVersion) {
 	case 1: 
 		reader.getIfPresent("aimAssistFoV", fov);
 		reader.getIfPresent("aimAssistShowFoV", showFoV);
-		reader.getIfPresent("aimAssistMaxSpeed", maxSpeedDegS);
-		reader.getIfPresent("aimAssistSnapOnFire", snapOnFire);
 		reader.getIfPresent("aimAssistFoVColor", fovColor);
 		reader.getIfPresent("aimAssistFoVWidth", fovWidth);
+		reader.getIfPresent("aimAssistSnapOnFire", snapOnFire);
+		reader.getIfPresent("aimAssistOnReference", allowOnReference);
+		reader.getIfPresent("aimAssistOnReal", allowOnReal);
+		reader.getIfPresent("aimAssistMaxSpeed", maxSpeedDegS);
 		break;
 	default:
 		throw format("Did not recognize settings version: %d", settingsVersion);

@@ -405,6 +405,8 @@ Questions are recorded in the results database along with a timestamp, the quest
 |`aimAssistFoVColor`    |`Color4`       |The color to draw the aim assist field of view on screen with (if enabled)                         |
 |`aimAssistFoVWidth`    |percent        |The width of the aim assist indicator drawn on screen (if enabled)                                 |
 |`aimAssistSnapOnFire`  |`bool`         |Does the aim assist snap to targets (if within the FoV) just before a fire event?                  |
+|`aimAssistOnReference` |`bool`         |Does the aim assist snap to reference targets (both for snap on fire and button press)?            |
+|`aimAssistOnReal`      |`bool`         |Does the aim assist snap to non-reference targets (both for snap on fire and button press)?        |
 
 Aim assist in FPSci has 2 primary modes. In push-button aim assist, the key bound to `autoAim` in the [key map](keymap.md) automatically snaps the aim to the center of the nearest target to the current crosshair position. When `aimAssistSnapOnFire` is set to `true` the application automatically runs the same aim assist snapping method just prior to whenever the weapon is fired (at a maximum of once per frame).
 
@@ -416,6 +418,8 @@ Defaults for all values above are provided in the example below:
 "aimAssistFoVColor": Color4(0,0,0,1); // Default to an opaque black FoV indicator when enabled
 "aimAsssistFoVWidth": 1;    // Default to 1% of the screen as the width of the FoV indicator
 "aimAssistSnapOnFire": false,   // Default to not snapping aim when firing (aim assist can be activated when FoV > 0 using the "aimAssist" key bind instead)
+"aimAssistOnReference": true,   // Default to allowing aim assist on reference targets (when enabled)
+"aimAssistOnReal": true,        // Default to allowing aim assist on real targets (when enabled)
 ```
 
 ## HUD settings

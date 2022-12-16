@@ -325,11 +325,16 @@ public:
 class AimAssistConfig {
 public:
 	float fov = 0.f;					///< Field of view for aim assist, set to 0 to disable
+
 	bool showFoV = false;				///< Display the aim assist FoV as a HUD element
-	float maxSpeedDegS = 1000.f;		///< Maximum aim assist speed in degrees/s
-	bool snapOnFire = true;				///< Snap the aim to the target on fire (if within the aim assist fov)
 	Color4 fovColor = Color4(0, 0, 0, 1); ///< Color for FoV display (when shown)
 	float fovWidth = 1;					///< Width of the FoV display (as a percentage of the screen)
+	
+	bool snapOnFire = true;				///< Snap the aim to the target on fire (if within the aim assist fov)
+	bool allowOnReference = true;		///< Allow aim assist on reference target
+	bool allowOnReal = true;			///< Allow aim assist on real targets
+
+	float maxSpeedDegS = 1000.f;		///< Maximum aim assist speed in degrees/s
 
 	AimAssistConfig() {};
 	void load(AnyTableReader reader, int settingsVersion = 1);

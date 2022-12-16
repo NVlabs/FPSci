@@ -275,6 +275,7 @@ public:
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
 
+	inline bool canAutoAim();
 	void assistAim(const Array<shared_ptr<TargetEntity>>& targets);		// Automatically aim at the nearest (valid) target
 	void drawAimAssistFov(RenderDevice* rd, Vector2 resolution);		// Draw the aim assist FoV to the screen as a ring
 

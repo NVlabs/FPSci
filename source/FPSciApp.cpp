@@ -908,9 +908,8 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	}
 
 	// Auto aim if requested
-	if (numShots > 0 && trialConfig->aimAssist.snapOnFire) {
+	if (numShots > 0 && trialConfig->aimAssist.snapOnFire && canAutoAim()) {
 		assistAim(sess->hittableTargets());
-		playerCamera->setFrame(player->getCameraFrame());		// Update camera from player early in this case
 	}
 
 	// Actually shoot here
@@ -1245,8 +1244,15 @@ void FPSciApp::setScopeView(bool scoped) {
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
 
+inline bool FPSciApp::canAutoAim() {
+	// Check auto aim enabled (FoV > 0) and in a valid state
+	return trialConfig->aimAssist.fov > 0 &&
+		((sess->currentState == PresentationState::referenceTarget && trialConfig->aimAssist.allowOnReference) ||
+		(sess->currentState == PresentationState::trialTask && trialConfig->aimAssist.allowOnReal));
+}
+
 void FPSciApp::assistAim(const Array<shared_ptr<TargetEntity>>& targets) {
-	if (trialConfig->aimAssist.fov <= 0.f) return;		// Early exit for no aim assist
+	if (!canAutoAim()) return;		// Early exit for no aim assist
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
 
 	// Iterate through targets to find closest
@@ -1265,6 +1271,7 @@ void FPSciApp::assistAim(const Array<shared_ptr<TargetEntity>>& targets) {
 
 	// Aim at the closest target in the FoV
 	player->lookAt(closestTarget->frame().translation);
+	playerCamera->setFrame(player->getCameraFrame());		// Update camera from player early
 }
 
 void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
@@ -1420,6 +1427,9 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
 		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::referenceTarget) && !m_userSettingsWindow->visible()) {
+			if (canAutoAim() && trialConfig->aimAssist.snapOnFire) {
+				assistAim(sess->hittableTargets());
+			}
 			Array<shared_ptr<Entity>> dontHit;
 			dontHit.append(m_explosions);
 			dontHit.append(sess->unhittableTargets());
@@ -1433,9 +1443,12 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		}
 	}
 
-	for (GKey autoAim : keyMap.map["autoAim"]) {
-		if (ui->keyDown(autoAim)) {
-			assistAim(sess->hittableTargets());
+	// Handle auto aim if requested
+	if (canAutoAim()) {
+		for (GKey autoAim : keyMap.map["autoAim"]) {
+			if (ui->keyDown(autoAim)) {
+				assistAim(sess->hittableTargets());
+			}
 		}
 	}
 
