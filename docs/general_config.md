@@ -411,6 +411,8 @@ Questions are recorded in the results database along with a timestamp, the quest
 
 Aim assist in FPSci has 2 primary modes. In push-button aim assist, the key bound to `autoAim` in the [key map](keymap.md) automatically snaps the aim to the center of the nearest target to the current crosshair position. When `aimAssistSnapOnFire` is set to `true` the application automatically runs the same aim assist snapping method just prior to whenever the weapon is fired (at a maximum of once per frame).
 
+Note that the `aimAssistFoV` is measured in all directions from the current aim direction (i.e., a 30° `aimAssistFoV` value implies a ±30° range of target that can be found by aim assist). Additionally when `aimAssistMaxSpeed` is specified fire events are not delayed, so when used with `aimAssistSnapOnFire` fire events may still result in a miss (if the displacement of the `aimAssistMaxSpeed` over a frame time is less than what is required to reach the target).
+
 Defaults for all values above are provided in the example below:
 
 ```
