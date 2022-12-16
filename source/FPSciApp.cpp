@@ -909,7 +909,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// Auto aim if requested
 	if (numShots > 0 && trialConfig->aimAssist.snapOnFire && canAutoAim()) {
-		assistAim(sess->hittableTargets());
+		assistAim(sess->hittableTargets(), sdt);
 	}
 
 	// Actually shoot here
@@ -1005,6 +1005,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	m_lastOnSimulationRealTime = m_lastOnSimulationRealTime + rdt;
 	m_lastOnSimulationSimTime = m_lastOnSimulationSimTime + sdt;
 	m_lastOnSimulationIdealSimTime = m_lastOnSimulationIdealSimTime + idt;
+	m_lastSdt = sdt;
 
 	// Clear button press state
 	shootButtonJustPressed = false;
@@ -1251,7 +1252,7 @@ inline bool FPSciApp::canAutoAim() {
 		(sess->currentState == PresentationState::trialTask && trialConfig->aimAssist.allowOnReal));
 }
 
-void FPSciApp::assistAim(const Array<shared_ptr<TargetEntity>>& targets) {
+void FPSciApp::assistAim(const Array<shared_ptr<TargetEntity>>& targets, const SimTime dt) {
 	if (!canAutoAim()) return;		// Early exit for no aim assist
 	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
 
@@ -1269,9 +1270,17 @@ void FPSciApp::assistAim(const Array<shared_ptr<TargetEntity>>& targets) {
 	}
 	if (isNull(closestTarget)) return;	// No valid target in FoV, leave here
 
+	// Check for speed violation
+	float interp = 1.f;
+	const float maxAngle = trialConfig->aimAssist.maxSpeedDegS * dt;
+	if (minAngle > maxAngle) {
+		// We are over max speed, move towards the target but not all the way there
+		interp = maxAngle / minAngle;
+	}
+
 	// Aim at the closest target in the FoV
-	player->lookAt(closestTarget->frame().translation);
-	playerCamera->setFrame(player->getCameraFrame());		// Update camera from player early
+	player->lookAt(closestTarget->frame().translation, interp);
+	playerCamera->setFrame(player->getCameraFrame());				// Update camera from player early
 }
 
 void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
@@ -1428,7 +1437,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
 		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::referenceTarget) && !m_userSettingsWindow->visible()) {
 			if (canAutoAim() && trialConfig->aimAssist.snapOnFire) {
-				assistAim(sess->hittableTargets());
+				assistAim(sess->hittableTargets(), m_lastSdt);
 			}
 			Array<shared_ptr<Entity>> dontHit;
 			dontHit.append(m_explosions);
@@ -1447,7 +1456,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	if (canAutoAim()) {
 		for (GKey autoAim : keyMap.map["autoAim"]) {
 			if (ui->keyDown(autoAim)) {
-				assistAim(sess->hittableTargets());
+				assistAim(sess->hittableTargets(), m_lastSdt);
 			}
 		}
 	}

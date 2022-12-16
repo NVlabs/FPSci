@@ -144,12 +144,21 @@ public:
     void setDesiredOSVelocity(const Vector3& objectSpaceVelocity) {  m_desiredOSVelocity = objectSpaceVelocity; }
     const Vector3& desiredOSVelocity() { return m_desiredOSVelocity; }
 
-    void lookAt(const Point3 pt) { 
-        m_frame.lookAt(pt);     // Update the frame (will be overwritten by player simulation, but used for camera update)
-        Vector3 diff = normalize(m_frame.translation - pt);
-        m_pitchRadians = acosf(dot(Vector3::unitY(), diff)) - pif() / 2;        // Get pitch/elevation
-        diff = normalize(Vector3(diff.x, 0, diff.z));                       // Get vector in X/Z plane for yaw/heading
-        m_yawRadians = -sign(dot(Vector3::unitX(), diff)) * acosf(dot(Vector3::unitZ(), diff));
+    void lookAt(const Point3 pt, float interp=1.f) {
+        const CFrame cam = getCameraFrame();    // Use the camera frame (not the player frame)
+        CFrame pframe = cam;                    // Make a copy of the frame
+        pframe.lookAt(pt);                      // Update the frame copy for "ideal" aim at point
+        
+        // Interpolate between current and point look vector (if specified)
+        Vector3 lookVec = lerp(cam.lookVector(), pframe.lookVector(), interp);
+        lookVec = normalize(-lookVec);          // Invert this vector (make it the positive Z axis)
+        m_frame.rotation.setColumn(2, lookVec); // Copy rotation back into player frame
+
+        // Update player direction
+        Vector3 dir = lookVec;
+        m_pitchRadians = acosf(dot(Vector3::unitY(), dir)) - pif() / 2;        // Get pitch/elevation
+        dir = normalize(Vector3(dir.x, 0, dir.z));                              // Get vector in X/Z plane for yaw/heading
+        m_yawRadians = -sign(dot(Vector3::unitX(), dir)) * acosf(dot(Vector3::unitZ(), dir));
     }
 
     void setDesiredRotationChange(const float y, const float p) {

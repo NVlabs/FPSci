@@ -334,7 +334,7 @@ public:
 	bool allowOnReference = true;		///< Allow aim assist on reference target
 	bool allowOnReal = true;			///< Allow aim assist on real targets
 
-	float maxSpeedDegS = 1000.f;		///< Maximum aim assist speed in degrees/s
+	float maxSpeedDegS = 1000000.f;		///< Maximum aim assist speed in degrees/s
 
 	AimAssistConfig() {};
 	void load(AnyTableReader reader, int settingsVersion = 1);
