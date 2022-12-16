@@ -407,6 +407,7 @@ Questions are recorded in the results database along with a timestamp, the quest
 |`aimAssistSnapOnFire`  |`bool`         |Does the aim assist snap to targets (if within the FoV) just before a fire event?                  |
 |`aimAssistOnReference` |`bool`         |Does the aim assist snap to reference targets (both for snap on fire and button press)?            |
 |`aimAssistOnReal`      |`bool`         |Does the aim assist snap to non-reference targets (both for snap on fire and button press)?        |
+|`aimAssistMaxSpeed`    |deg/s          |The maximum (per frame) speed that the aim assist is allowed to rotate the view at                 |
 
 Aim assist in FPSci has 2 primary modes. In push-button aim assist, the key bound to `autoAim` in the [key map](keymap.md) automatically snaps the aim to the center of the nearest target to the current crosshair position. When `aimAssistSnapOnFire` is set to `true` the application automatically runs the same aim assist snapping method just prior to whenever the weapon is fired (at a maximum of once per frame).
 
@@ -420,6 +421,7 @@ Defaults for all values above are provided in the example below:
 "aimAssistSnapOnFire": false,   // Default to not snapping aim when firing (aim assist can be activated when FoV > 0 using the "aimAssist" key bind instead)
 "aimAssistOnReference": true,   // Default to allowing aim assist on reference targets (when enabled)
 "aimAssistOnReal": true,        // Default to allowing aim assist on real targets (when enabled)
+"aimAssistMaxSpeed": 1000000    // Default max speed is high enough to do full rotations every frame (360deg * 1000Hz = 360k deg/s < 1 Mdeg/s)
 ```
 
 ## HUD settings
