@@ -650,8 +650,12 @@ Any AimAssistConfig::addToAny(Any a, const bool forceAll) const{
 	AimAssistConfig def;
 	if (forceAll || fov != def.fov) a["aimAssistFoV"] = fov;
 	if (forceAll || showFoV != def.showFoV) a["aimAssistShowFoV"] = showFoV;
-	if (forceAll || maxSpeedDegS != def.maxSpeedDegS) a["aimAssistMaxSpeed"] = maxSpeedDegS;
+	if (forceAll || fovColor != def.fovColor) a["aimAssistFoVColor"] = fovColor;
+	if (forceAll || fovWidth != def.fovWidth) a["aimAssistFoVWidth"] = fovWidth
 	if (forceAll || snapOnFire != def.snapOnFire) a["aimAssistSnapOnFire"] = snapOnFire;
+	if (forceAll || allowOnReference != def.allowOnReference) a["aimAsssistOnReference"] = allowOnReference;
+	if (forceAll || allowOnReal != def.allowOnReal) a["aimAssistOnReal"] = allowOnReal;
+	if (forceAll || maxSpeedDegS != def.maxSpeedDegS) a["aimAssistMaxSpeed"] = maxSpeedDegS;
 	return a;
 }	
 
