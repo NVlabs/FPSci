@@ -1739,7 +1739,7 @@ FPSciApp::Settings::Settings(const StartupConfig& startupConfig, int argc, const
 
 	useDeveloperTools = startupConfig.developerMode;
 
-	hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
+	hdrFramebuffer.depthGuardBandThickness = Vector2int16(0, 0);
 	hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
 	dataDir = FileSystem::currentDirectory();
 	screenCapture.includeAppRevision = false;
