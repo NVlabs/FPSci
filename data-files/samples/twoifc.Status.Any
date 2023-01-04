@@ -1,11 +1,12 @@
 { 
     currentUser = "sa2019_sampleuser"; 
-    sessions = ("60hz_0delay", "60hz_2delay", "120hz_0delay", "120hz_4delay", "240hz_0delay", "240hz_8delay");
+    allowRepeat = true; 
+    sessions = ("60hz_0delay", "60hz_2delay_q", "120hz_0delay", "120hz_4delay_q", "60hz_0delay", "120hz_0delay_q", "240hz_0delay", "240hz_8delay_q", "60hz_0delay", "240hz_0delay_q");
     settingsVersion = 1;
     users = (
         { 
             id = "sa2019_sampleuser"; 
-            sessions = ("60hz_0delay", "60hz_2delay", "120hz_0delay", "120hz_4delay", "240hz_0delay", "240hz_8delay");
+            sessions = ("60hz_0delay", "60hz_2delay_q", "120hz_0delay", "120hz_4delay_q", "60hz_0delay", "120hz_0delay_q", "240hz_0delay", "240hz_8delay_q", "60hz_0delay", "240hz_0delay_q");
         },
     );
 }  

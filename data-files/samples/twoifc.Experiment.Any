@@ -31,14 +31,13 @@
     sessionCompleteFeedback = "Session complete! Moving to next session.";
     allSessionsCompleteFeedback = "All Sessions Complete! Thank you for participating in this experiment.";
     // blockCompleteFeedback = "Block %lastBlock of %totalBlocks completed. Your score so far is %totalTimeLeftS.\nStarting Block %currBlock.";
-    weapon = "pistol",
     
     // weapon settings
     weapon = {
-        id = "pistol";
+        id = "Half Second Cooldown";
         firePeriod = 0.5;
         autoFire = False;
-        damagePerSecond = 2.0;
+        damagePerSecond = 2.1;
         maxAmmo = 3600;
     };
 
@@ -48,17 +47,7 @@
     cooldownMode = "ring";
     cooldownInnerRadius = 40.0;
     cooldownColor = Color4(1.0,1.0,1.0,0.8);
-    
-    // LDAT settings
-    renderClickPhoton = True;
-    clickPhotonSide = "left";
-    clickPhotonSize = Point2(0.05,0.095);
-    clickPhotonVertPos = 0.5;
-    clickPhotonColors = (
-        Color3(0.2,0.2,0.2),
-        Color3(0.8,0.8,0.8)
-    );
-    
+
     // session settings
     sessions = (
         {
@@ -70,9 +59,28 @@
             );
         },
         {
-            id = "60hz_2delay";
+            id = "60hz_2delay_q";
             frameRate = 60;
             frameDelay = 2;
+            trials = (
+                {targetIds = ("stray_fly_hard"), count = 1},
+            );
+            questions = {
+                {
+                    type = "MultipleChoice";
+                    prompt = "Was this trial better or worse than the previous one?";
+                    options = ["Better", "Worse"];
+                    optionKeys = ["1", "4"];
+                    fullscreen = true;
+                    showCursor = false;
+                    fontSize = 40;
+                }
+            };
+        },
+        {
+            id = "120hz_0delay_q";
+            frameRate = 120;
+            frameDelay = 0;
             trials = (
                 {targetIds = ("stray_fly_hard"), count = 1},
             );
@@ -97,9 +105,28 @@
             );
         },
         {
-            id = "120hz_4delay";
+            id = "120hz_4delay_q";
             frameRate = 120;
             frameDelay = 4;
+            trials = (
+                {targetIds = ("stray_fly_hard"), count = 1},
+            );
+            questions = {
+                {
+                    type = "MultipleChoice";
+                    prompt = "Was this trial better or worse than the previous one?";
+                    options = ["Better", "Worse"];
+                    optionKeys = ["1", "4"];
+                    fullscreen = true;
+                    showCursor = false;
+                    fontSize = 40;
+                }
+            };
+        },
+        {
+            id = "240hz_0delay_q";
+            frameRate = 240;
+            frameDelay = 0;
             trials = (
                 {targetIds = ("stray_fly_hard"), count = 1},
             );
@@ -124,7 +151,7 @@
             );
         },
         {
-            id = "240hz_8delay";
+            id = "240hz_8delay_q";
             frameRate = 240;
             frameDelay = 8;
             trials = (
@@ -147,28 +174,6 @@
     // target settings
     targets = (
         {
-            id = "static";
-            destSpace = "player";
-            elevationLocked = False;
-            speed = ( 0, 0 );
-            visualSize = ( 0.02, 0.02 );
-            eccH = ( 5.0, 15.0 );
-            eccV = ( 0.0, 1.0 );
-            motionChangePeriod = ( 1000000, 1000000 );
-            jumpEnabled = False;
-        },
-        {
-            id = "straight_fly";
-            destSpace = "player";
-            elevationLocked = False;
-            speed = ( 8, 15 );
-            visualSize = ( 0.02, 0.02 );
-            eccH = ( 5.0, 15.0 );
-            eccV = ( 0.0, 1.0 );
-            motionChangePeriod = ( 1000000, 1000000 );
-            jumpEnabled = False;
-        },
-        {
             id = "stray_fly_hard";
             destSpace = "player";
             elevationLocked = False;
@@ -178,32 +183,6 @@
             eccV = ( 0.0, 1.0 );
             motionChangePeriod = ( 0.5, 0.6 );
             jumpEnabled = False;
-        },
-        {
-            id = "stray_fly_easy";
-            destSpace = "player";
-            elevationLocked = False;
-            speed = ( 8, 15 );
-            visualSize = ( 0.02, 0.02 );
-            eccH = ( 5.0, 15.0 );
-            eccV = ( 0.0, 1.0 );
-            motionChangePeriod = ( 1.0, 1.2 );
-            jumpEnabled = False;
-        },
-        {
-            id = "strafe_jump";
-            destSpace = "player";
-            elevationLocked = true;
-            speed = ( 8, 15 );
-            visualSize = ( 0.02, 0.02 );
-            eccH = ( 5.0, 15.0 );
-            eccV = ( 0.0, 1.0 );
-            motionChangePeriod = ( 0.2, 0.8 );
-            jumpEnabled = true;
-            distance = ( 20, 25);
-            jumpPeriod = ( 0.3, 0.8 );
-            jumpSpeed = (7, 7);
-            accelGravity = (20, 20);
         },
     );
 
