@@ -643,6 +643,7 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 		// Create an empty session
 		sessConfig = SessionConfig::create();
 		sess = Session::create(this);
+		playerCamera = activeCamera();
 	}
 
 	// Update colored materials to choose from for target health
@@ -963,7 +964,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// Move the player
 	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
-	playerCamera->setFrame(p->getCameraFrame());
+	if(notNull(p)) playerCamera->setFrame(p->getCameraFrame());
 	
 	// Handle developer mode features here
 	if (startupConfig.developerMode) {
@@ -977,7 +978,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			updateFrameParameters(trialConfig->render.frameDelay, trialConfig->render.frameRate);
 		}
 
-		if (notNull(waypointManager)) {
+		if (notNull(waypointManager) && notNull(p)) {
 			// Handle highlighting for selected target
 			waypointManager->updateSelected();
 			// Handle player motion recording here
