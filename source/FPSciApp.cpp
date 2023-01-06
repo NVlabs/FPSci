@@ -711,6 +711,7 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 
 void FPSciApp::updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload, const bool respawn) {
 	trialConfig = config;	// Naive way to store trial config pointer for now
+	updateUserMenu = true;
 	updateConfigParameters(config, forceSceneReload, respawn);
 }
 
@@ -1405,12 +1406,28 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		}
 	}
 
-	if (m_lastReticleLoaded != currentUser()->reticle.index || m_userSettingsWindow->visible()) {
+	// Update reticle from user settings change (if needed)
+	if (reticleConfig != currentUser()->reticle || m_userSettingsWindow->visible()) {
+		bool updateReticlePreview = false;
 		// Slider was used to change the reticle
 		if (!trialConfig->reticle.indexSpecified) {		// Only allow reticle change if it isn't specified in experiment config
 			setReticle(currentUser()->reticle.index);
-			m_userSettingsWindow->updateReticlePreview();
+			updateReticlePreview = true;
 		}
+		if (!trialConfig->reticle.scaleSpecified) {
+			reticleConfig.scale = currentUser()->reticle.scale;
+			updateReticlePreview = true;
+		}
+		if (!trialConfig->reticle.colorSpecified) {
+			reticleConfig.color = currentUser()->reticle.color;
+			updateReticlePreview = true;
+		}
+		if (!trialConfig->reticle.changeTimeSpecified) {
+			reticleConfig.changeTimeS = currentUser()->reticle.changeTimeS;
+			updateReticlePreview = true;
+		}
+		if(updateReticlePreview) m_userSettingsWindow->updateReticlePreview();
+
 	}
 
 	playerCamera->filmSettings().setSensitivity(sceneBrightness);
