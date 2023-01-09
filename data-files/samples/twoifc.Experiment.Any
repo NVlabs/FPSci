@@ -4,7 +4,7 @@
 // Also note that the order of stimulus is determinisitic and likely needs additional
 // design to counterbalance and randomize presentation.
 // 
-// There's a variety of targets included even though they're not used to make
+// There is a variety of targets included even though they are not used to make
 // swapping to other target types easy during testing.
 
 {
