@@ -434,7 +434,7 @@ void FPSciApp::makeGUI() {
 	// Add the control panes here
 	updateUserMenu = true;
 	// If we require a new user show the menu on startup regardless of configuration
-	m_showUserMenu = experimentConfig.menu.showMenuOnStartup || experimentConfig.menu.requireUserAdd;	
+	showUserMenu = experimentConfig.menu.showMenuOnStartup || experimentConfig.menu.requireUserAdd;	
 	updateDeveloperControls(std::make_shared<FpsConfig>((FpsConfig)experimentConfig));
 }
 
@@ -658,7 +658,7 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 
 	// Update the application w/ the session parameters
 	updateUserMenu = true;
-	if (!m_firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
+	if (!m_firstSession) showUserMenu = sessConfig->menu.showMenuBetweenSessions;
 	updateConfigParameters(sessConfig, forceSceneReload, true, false);
 
 	// Handle results files
@@ -1193,8 +1193,8 @@ void FPSciApp::onAfterEvents() {
 		m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, trialConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
 		m_userSettingsWindow->setSelectedSession(selSess);
 		moveToCenter(m_userSettingsWindow);
-		m_userSettingsWindow->setVisible(m_showUserMenu);
-		setMouseInputMode(m_showUserMenu ? MouseInputMode::MOUSE_CURSOR : MouseInputMode::MOUSE_FPM);
+		m_userSettingsWindow->setVisible(showUserMenu);
+		setMouseInputMode(showUserMenu ? MouseInputMode::MOUSE_CURSOR : MouseInputMode::MOUSE_FPM);
 
 		// Add the new settings window and clear the semaphore
 		addWidget(m_userSettingsWindow);
