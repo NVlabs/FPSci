@@ -449,6 +449,7 @@ void Session::updatePresentationState()
 		// State for showing the trial reference target
 		if (remainingTargets == 0) {
 			newState = PresentationState::pretrial;
+			m_feedbackMessage = "";
 		}
 
 	}
