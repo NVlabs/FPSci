@@ -12,6 +12,7 @@
     showMenuBetweenSessions = False;
     clearMissDecalsWithReference = True;
     showReferenceTargetMissDecals = False;
+    description = "2IFC";
 
     scene = {
         name = "FPSci Simple Hallway";
@@ -51,23 +52,25 @@
     // session settings
     sessions = (
         {
-            id = "60hz_0delay";
+            id = "60hz_delay";
             frameRate = 60;
-            frameDelay = 0;
             trials = (
-                {targetIds = ("stray_fly_hard"), count = 1},
-            );
-        },
-        {
-            id = "60hz_2delay_q";
-            frameRate = 60;
-            frameDelay = 2;
-            trials = (
-                {targetIds = ("stray_fly_hard"), count = 1},
+                { 
+                    id = "0";
+                    frameDelay = 0;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "2";
+                    frameDelay = 2;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
             );
             questions = {
                 {
-                    type = "MultipleChoice";
+                    type = "Rating";
                     prompt = "Was this trial better or worse than the previous one?";
                     options = ["Better", "Worse"];
                     optionKeys = ["1", "4"];
@@ -78,15 +81,25 @@
             };
         },
         {
-            id = "120hz_0delay_q";
+            id = "120hz_delay";
             frameRate = 120;
-            frameDelay = 0;
             trials = (
-                {targetIds = ("stray_fly_hard"), count = 1},
+                { 
+                    id = "0";
+                    frameDelay = 0;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "4";
+                    frameDelay = 4;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
             );
             questions = {
                 {
-                    type = "MultipleChoice";
+                    type = "Rating";
                     prompt = "Was this trial better or worse than the previous one?";
                     options = ["Better", "Worse"];
                     optionKeys = ["1", "4"];
@@ -97,23 +110,25 @@
             };
         },
         {
-            id = "120hz_0delay";
-            frameRate = 120;
-            frameDelay = 0;
+            id = "240hz_delay";
+            frameRate = 240;
             trials = (
-                {targetIds = ("stray_fly_hard"), count = 1},
-            );
-        },
-        {
-            id = "120hz_4delay_q";
-            frameRate = 120;
-            frameDelay = 4;
-            trials = (
-                {targetIds = ("stray_fly_hard"), count = 1},
+                { 
+                    id = "0";
+                    frameDelay = 0;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "8";
+                    frameDelay = 8;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
             );
             questions = {
                 {
-                    type = "MultipleChoice";
+                    type = "Rating";
                     prompt = "Was this trial better or worse than the previous one?";
                     options = ["Better", "Worse"];
                     optionKeys = ["1", "4"];
@@ -124,15 +139,25 @@
             };
         },
         {
-            id = "240hz_0delay_q";
-            frameRate = 240;
+            id = "60v120";
             frameDelay = 0;
             trials = (
-                {targetIds = ("stray_fly_hard"), count = 1},
+                { 
+                    id = "60";
+                    frameRate = 60;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "120";
+                    frameRate = 120;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
             );
             questions = {
                 {
-                    type = "MultipleChoice";
+                    type = "Rating";
                     prompt = "Was this trial better or worse than the previous one?";
                     options = ["Better", "Worse"];
                     optionKeys = ["1", "4"];
@@ -143,23 +168,25 @@
             };
         },
         {
-            id = "240hz_0delay";
-            frameRate = 240;
+            id = "60v240";
             frameDelay = 0;
             trials = (
-                {targetIds = ("stray_fly_hard"), count = 1},
-            );
-        },
-        {
-            id = "240hz_8delay_q";
-            frameRate = 240;
-            frameDelay = 8;
-            trials = (
-                {targetIds = ("stray_fly_hard"), count = 1},
+                { 
+                    id = "60";
+                    frameRate = 60;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "240";
+                    frameRate = 240;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
             );
             questions = {
                 {
-                    type = "MultipleChoice";
+                    type = "Rating";
                     prompt = "Was this trial better or worse than the previous one?";
                     options = ["Better", "Worse"];
                     optionKeys = ["1", "4"];
