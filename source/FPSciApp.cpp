@@ -643,6 +643,7 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 		// Create an empty session
 		sessConfig = SessionConfig::create();
 		sess = Session::create(this);
+		playerCamera = activeCamera();
 	}
 
 	// Update colored materials to choose from for target health
@@ -710,6 +711,7 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 
 void FPSciApp::updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload, const bool respawn) {
 	trialConfig = config;	// Naive way to store trial config pointer for now
+	updateUserMenu = true;
 	updateConfigParameters(config, forceSceneReload, respawn);
 }
 
@@ -963,7 +965,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 	// Move the player
 	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
-	playerCamera->setFrame(p->getCameraFrame());
+	if(notNull(p)) playerCamera->setFrame(p->getCameraFrame());
 	
 	// Handle developer mode features here
 	if (startupConfig.developerMode) {
@@ -977,7 +979,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			updateFrameParameters(trialConfig->render.frameDelay, trialConfig->render.frameRate);
 		}
 
-		if (notNull(waypointManager)) {
+		if (notNull(waypointManager) && notNull(p)) {
 			// Handle highlighting for selected target
 			waypointManager->updateSelected();
 			// Handle player motion recording here
@@ -1404,12 +1406,28 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		}
 	}
 
-	if (m_lastReticleLoaded != currentUser()->reticle.index || m_userSettingsWindow->visible()) {
+	// Update reticle from user settings change (if needed)
+	if (reticleConfig != currentUser()->reticle || m_userSettingsWindow->visible()) {
+		bool updateReticlePreview = false;
 		// Slider was used to change the reticle
 		if (!trialConfig->reticle.indexSpecified) {		// Only allow reticle change if it isn't specified in experiment config
 			setReticle(currentUser()->reticle.index);
-			m_userSettingsWindow->updateReticlePreview();
+			updateReticlePreview = true;
 		}
+		if (!trialConfig->reticle.scaleSpecified) {
+			reticleConfig.scale = currentUser()->reticle.scale;
+			updateReticlePreview = true;
+		}
+		if (!trialConfig->reticle.colorSpecified) {
+			reticleConfig.color = currentUser()->reticle.color;
+			updateReticlePreview = true;
+		}
+		if (!trialConfig->reticle.changeTimeSpecified) {
+			reticleConfig.changeTimeS = currentUser()->reticle.changeTimeS;
+			updateReticlePreview = true;
+		}
+		if(updateReticlePreview) m_userSettingsWindow->updateReticlePreview();
+
 	}
 
 	playerCamera->filmSettings().setSensitivity(sceneBrightness);
@@ -1682,7 +1700,7 @@ FPSciApp::Settings::Settings(const StartupConfig& startupConfig, int argc, const
 
 	useDeveloperTools = startupConfig.developerMode;
 
-	hdrFramebuffer.depthGuardBandThickness = Vector2int16(64, 64);
+	hdrFramebuffer.depthGuardBandThickness = Vector2int16(0, 0);
 	hdrFramebuffer.colorGuardBandThickness = Vector2int16(0, 0);
 	dataDir = FileSystem::currentDirectory();
 	screenCapture.includeAppRevision = false;
