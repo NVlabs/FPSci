@@ -564,7 +564,6 @@ void Session::updatePresentationState()
 						m_app->quitRequest();
 					}
 				}
-				moveOn = true;														// Check for session complete (signal start of next session)
 			}
 		}
 		else {
