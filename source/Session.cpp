@@ -301,6 +301,9 @@ bool Session::nextTrial() {
 	// Respawn player for first trial in session (override session-level spawn position)
 	m_app->updateTrial(m_trialConfig, false, m_firstTrial);	
 	if (m_firstTrial) m_firstTrial = false;
+	else {
+		m_app->showUserMenu = false;	// Override showing the user menu after the first trial in the session
+	}
 
 	// Update session fields (if changed) from trial
 	m_player = m_app->scene()->typedEntity<PlayerEntity>("player");
@@ -585,6 +588,7 @@ void Session::updatePresentationState() {
 		// State for showing the trial reference target
 		if (remainingTargets == 0) {
 			newState = PresentationState::pretrial;
+			m_feedbackMessage = "";
 		}
 
 	}
@@ -746,7 +750,6 @@ void Session::updatePresentationState() {
 						m_app->quitRequest();
 					}
 				}
-				moveOn = true;									// Check for session complete (signal start of next session)
 			}
 		}
 		else {

@@ -104,7 +104,6 @@ protected:
 
     shared_ptr<UserMenu>					m_userSettingsWindow;				///< User settings window
 	MouseInputMode							m_mouseInputMode = MouseInputMode::MOUSE_CURSOR;	///< Does the mouse currently have control over the view
-	bool									m_showUserMenu = true;				///< Show the user menu after update?
 
 	bool									m_firstSession = true;				///< Flag indicating that this is the first session run
 	UserConfig								m_lastSavedUser;					///< Used to track if user has changed since last save
@@ -174,6 +173,8 @@ public:
 
 	ReticleConfig					reticleConfig;					///< Config for the active reticle
 	shared_ptr<Texture>             reticleTexture;					///< Texture used for reticle
+	bool							showUserMenu = true;			///< Show the user menu after update?
+
 	
 	Table<String, shared_ptr<Texture>> hudTextures;					///< Textures used for the HUD
 	shared_ptr<GuiTheme>			theme;	
