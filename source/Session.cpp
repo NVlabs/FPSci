@@ -655,14 +655,16 @@ void Session::updatePresentationState() {
 		}
 		if (allAnswered) {
 			m_currQuestionIdx = -1;		// Reset the question index
-			const int qIdx = m_sessConfig->tasks[m_currTaskIdx].questionIdx;
-			bool success = true;		// Assume success (for case with no questions)
-			if (qIdx >= 0 && !m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].correctAnswer.empty()) {				
-				// Update the success value if a valid question was asked and correctAnswer was given
-				success = m_sessConfig->tasks[m_currTaskIdx].questions[qIdx].result == m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].correctAnswer;
+			if (m_sessConfig->tasks.size() > 0) {
+				const int qIdx = m_sessConfig->tasks[m_currTaskIdx].questionIdx;
+				bool success = true;		// Assume success (for case with no questions)
+				if (qIdx >= 0 && !m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].correctAnswer.empty()) {
+					// Update the success value if a valid question was asked and correctAnswer was given
+					success = m_sessConfig->tasks[m_currTaskIdx].questions[qIdx].result == m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].correctAnswer;
+				}
+				if (success) m_feedbackMessage = formatFeedback(m_sessConfig->feedback.taskSuccess);
+				else m_feedbackMessage = formatFeedback(m_sessConfig->feedback.taskFailure);
 			}
-			if (success) m_feedbackMessage = formatFeedback(m_sessConfig->feedback.taskSuccess);
-			else m_feedbackMessage = formatFeedback(m_sessConfig->feedback.taskFailure);
 			newState = PresentationState::taskFeedback;
 		}
 	}
