@@ -99,7 +99,7 @@ void FPSciTests::SetUpTestSuiteSafe() {
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
 
-	assert(s_app->sess->currentState == PresentationState::trialFeedback);
+	assert(s_app->sess->currentState == PresentationState::referenceTarget);
 
 	System::sleep(0.5f);
 	s_app->oneFrame();
@@ -125,7 +125,7 @@ void FPSciTests::SelectSession(const String& sessionId) {
 	s_fakeInput->window().injectMouseUp(0);
 	s_app->oneFrame();
 
-	assert(s_app->sess->currentState == PresentationState::trialFeedback);
+	assert(s_app->sess->currentState == PresentationState::referenceTarget);
 
 	System::sleep(0.5f);
 	s_app->oneFrame();
