@@ -50,6 +50,8 @@ cp ./data-files/sound/fpsci_destroy_150ms.wav dist/sound/
 cp ./data-files/scene/Simple_Hallway.Scene.Any dist/scene/
 cp ./data-files/samples/weapons.Status.Any dist/samples/
 cp ./data-files/samples/weapons.Experiment.Any dist/samples/
+cp ./data-files/samples/twoifc.Status.Any dist/samples/
+cp ./data-files/samples/twoifc.Experiment.Any dist/samples/
 cp ./data-files/samples/trials.Status.Any dist/samples/
 cp ./data-files/samples/trials.Experiment.Any dist/samples/
 cp ./data-files/samples/targets.Status.Any dist/samples/

@@ -1,0 +1,214 @@
+// This is a sample of how to implement a 2 interval forced choice experiment.
+// Note that the `Status.Any` is an important part of the design because it controls
+// the order in which the sessions are presented to the user.
+// Also note that the order of stimulus is determinisitic and likely needs additional
+// design to counterbalance and randomize presentation.
+// 
+// There is a variety of targets included even though they are not used to make
+// swapping to other target types easy during testing.
+
+{
+    // global settings
+    showMenuBetweenSessions = False;
+    clearMissDecalsWithReference = True;
+    showReferenceTargetMissDecals = False;
+    description = "2IFC";
+
+    scene = {
+        name = "FPSci Simple Hallway";
+    };
+
+    feedbackDuration = 0.0; // Time allocated for providing user feedback
+    pretrialDuration = 0.0; // Time allocated for preparing for trial
+    maxTrialDuration = 5.0; // Maximum duration allowed for completion of the task
+    referenceTargetSize = 0.03;
+
+    // feedback settings
+    trialFeedbackDuration = 0.0;
+    referenceTargetInitialFeedback = "Use left shift key to clear the reference targets (red) and left mouse click to clear test targets (green).";
+    sessionFeedbackDuration = 1.0;
+    sessionCompleteFeedback = "Session complete! Moving to next session.";
+    allSessionsCompleteFeedback = "All Sessions Complete! Thank you for participating in this experiment.";
+    // blockCompleteFeedback = "Block %lastBlock of %totalBlocks completed. Your score so far is %totalTimeLeftS.\nStarting Block %currBlock.";
+    
+    // weapon settings
+    weapon = {
+        id = "Half Second Cooldown";
+        firePeriod = 0.5;
+        autoFire = False;
+        damagePerSecond = 2.1;
+        maxAmmo = 3600;
+    };
+
+    // UI settings
+    showHUD = True;
+    renderWeaponStatus = True;
+    cooldownMode = "ring";
+    cooldownInnerRadius = 40.0;
+    cooldownColor = Color4(1.0,1.0,1.0,0.8);
+
+    // session settings
+    sessions = (
+        {
+            id = "60hz_delay";
+            frameRate = 60;
+            trials = (
+                { 
+                    id = "0";
+                    frameDelay = 0;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "2";
+                    frameDelay = 2;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+            );
+            questions = {
+                {
+                    type = "Rating";
+                    prompt = "Was this trial better or worse than the previous one?";
+                    options = ["Better", "Worse"];
+                    optionKeys = ["1", "4"];
+                    fullscreen = true;
+                    showCursor = false;
+                    fontSize = 40;
+                }
+            };
+        },
+        {
+            id = "120hz_delay";
+            frameRate = 120;
+            trials = (
+                { 
+                    id = "0";
+                    frameDelay = 0;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "4";
+                    frameDelay = 4;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+            );
+            questions = {
+                {
+                    type = "Rating";
+                    prompt = "Was this trial better or worse than the previous one?";
+                    options = ["Better", "Worse"];
+                    optionKeys = ["1", "4"];
+                    fullscreen = true;
+                    showCursor = false;
+                    fontSize = 40;
+                }
+            };
+        },
+        {
+            id = "240hz_delay";
+            frameRate = 240;
+            trials = (
+                { 
+                    id = "0";
+                    frameDelay = 0;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "8";
+                    frameDelay = 8;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+            );
+            questions = {
+                {
+                    type = "Rating";
+                    prompt = "Was this trial better or worse than the previous one?";
+                    options = ["Better", "Worse"];
+                    optionKeys = ["1", "4"];
+                    fullscreen = true;
+                    showCursor = false;
+                    fontSize = 40;
+                }
+            };
+        },
+        {
+            id = "60v120";
+            frameDelay = 0;
+            trials = (
+                { 
+                    id = "60";
+                    frameRate = 60;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "120";
+                    frameRate = 120;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+            );
+            questions = {
+                {
+                    type = "Rating";
+                    prompt = "Was this trial better or worse than the previous one?";
+                    options = ["Better", "Worse"];
+                    optionKeys = ["1", "4"];
+                    fullscreen = true;
+                    showCursor = false;
+                    fontSize = 40;
+                }
+            };
+        },
+        {
+            id = "60v240";
+            frameDelay = 0;
+            trials = (
+                { 
+                    id = "60";
+                    frameRate = 60;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "240";
+                    frameRate = 240;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+            );
+            questions = {
+                {
+                    type = "Rating";
+                    prompt = "Was this trial better or worse than the previous one?";
+                    options = ["Better", "Worse"];
+                    optionKeys = ["1", "4"];
+                    fullscreen = true;
+                    showCursor = false;
+                    fontSize = 40;
+                }
+            };
+        },
+    );
+
+    // target settings
+    targets = (
+        {
+            id = "stray_fly_hard";
+            destSpace = "player";
+            elevationLocked = False;
+            speed = ( 8, 15 );
+            visualSize = ( 0.03, 0.03 );
+            eccH = ( 5.0, 15.0 );
+            eccV = ( 0.0, 1.0 );
+            motionChangePeriod = ( 0.5, 0.6 );
+            jumpEnabled = False;
+        },
+    );
+
+}
