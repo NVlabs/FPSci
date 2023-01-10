@@ -16,14 +16,12 @@
 
     scene = {
         name = "FPSci Simple Hallway";
-        spawnPosition = Point3(46.08, -2.2, 0);
-        spawnHeading = -90;
     };
 
     feedbackDuration = 0.0; // Time allocated for providing user feedback
-    pretrialDuration = 0.25; // Time allocated for preparing for trial
+    pretrialDuration = 0.0; // Time allocated for preparing for trial
     maxTrialDuration = 5.0; // Maximum duration allowed for completion of the task
-    referenceTargetSize = 0.02;
+    referenceTargetSize = 0.03;
 
     // feedback settings
     trialFeedbackDuration = 0.0;
@@ -205,7 +203,7 @@
             destSpace = "player";
             elevationLocked = False;
             speed = ( 8, 15 );
-            visualSize = ( 0.02, 0.02 );
+            visualSize = ( 0.03, 0.03 );
             eccH = ( 5.0, 15.0 );
             eccV = ( 0.0, 1.0 );
             motionChangePeriod = ( 0.5, 0.6 );
