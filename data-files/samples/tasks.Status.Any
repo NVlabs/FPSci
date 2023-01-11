@@ -1,0 +1,11 @@
+{ 
+    currentUser = "Sample User"; 
+    sessions = ( "1target_cd", "2targets_stutter"); 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            id = "Sample User"; 
+            sessions = ( "1target_cd", "2targets_stutter"); 
+        } ); 
+    
+} 
