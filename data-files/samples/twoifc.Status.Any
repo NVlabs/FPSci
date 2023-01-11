@@ -1,11 +1,11 @@
 { 
     currentUser = "Sample User"; 
-    sessions = ("60hz_delay", "120hz_delay", "60v120", "240hz_delay", "60v240");
+    sessions = ("delays", "60hz_delay1", "60hz_delay2", "120hz_delay1", "120hz_delay2", "240hz_delay1", "240hz_delay2", "60v120", "60v240");
     settingsVersion = 1;
     users = (
         { 
             id = "Sample User"; 
-            sessions = ("60hz_delay", "120hz_delay", "60v120", "240hz_delay", "60v240");
+            sessions = ("delays", "60hz_delay1", "60hz_delay2", "120hz_delay1", "120hz_delay2", "240hz_delay1", "240hz_delay2", "60v120", "60v240");
         },
     );
 }  

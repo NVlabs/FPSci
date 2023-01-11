@@ -49,8 +49,63 @@
 
     // session settings
     sessions = (
+        { 
+            // This is an example of how the task-style configuration compares to the trial-level
+            // compare this "delays" session to the 6 sessions implemented below and ordered in the status file
+            //      60hz_delay1, 60hz_delay2, 120hz_delay1, 120hz_delay2, 240hz_delay1, 240hz_delay2
+            id = "delays"; 
+            description = "delay comparison task-style"; 
+            tasks = [
+                {
+                    id = "normal";
+                    // Note that specifying multiple orderings for the stimulus is simple to express here
+                    trialOrders = [
+                        { order = ["0", "2"]; correctAnswer = "Worse"; },
+                        { order = ["0", "4"]; correctAnswer = "Worse"; },
+                        { order = ["0", "8"]; correctAnswer = "Worse"; },
+                        { order = ["2", "0"]; correctAnswer = "Better"; },
+                        { order = ["4", "0"]; correctAnswer = "Better"; },
+                        { order = ["8", "0"]; correctAnswer = "Better"; },
+                    ];
+                    questions = [ {
+                        type = "MultipleChoice";
+                        prompt = "Was this trial better or worse than the previous one?";
+                        randomOrder = false;
+                        options = ["Better", "Worse"];
+                        optionKeys = ["1", "4"];
+                        fullscreen = true;
+                        showCursor = false;
+                        fontSize = 40;
+                    } ];
+                    count = 1;
+                },
+            ];
+            trials = ( 
+                { 
+                    id = "0";
+                    frameDelay = 0;
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "2";
+                    frameDelay = 2;
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "4";
+                    frameDelay = 4;
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "8";
+                    frameDelay = 8;
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+            ); 
+            
+        }, 
         {
-            id = "60hz_delay";
+            id = "60hz_delay1";
             frameRate = 60;
             trials = (
                 { 
@@ -79,7 +134,36 @@
             };
         },
         {
-            id = "120hz_delay";
+            id = "60hz_delay2";
+            frameRate = 60;
+            trials = (
+                { 
+                    id = "2";
+                    frameDelay = 2;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "0";
+                    frameDelay = 0;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+            );
+            questions = {
+                {
+                    type = "Rating";
+                    prompt = "Was this trial better or worse than the previous one?";
+                    options = ["Better", "Worse"];
+                    optionKeys = ["1", "4"];
+                    fullscreen = true;
+                    showCursor = false;
+                    fontSize = 40;
+                }
+            };
+        },
+        {
+            id = "120hz_delay1";
             frameRate = 120;
             trials = (
                 { 
@@ -108,7 +192,36 @@
             };
         },
         {
-            id = "240hz_delay";
+            id = "120hz_delay2";
+            frameRate = 120;
+            trials = (
+                { 
+                    id = "4";
+                    frameDelay = 4;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "0";
+                    frameDelay = 0;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+            );
+            questions = {
+                {
+                    type = "Rating";
+                    prompt = "Was this trial better or worse than the previous one?";
+                    options = ["Better", "Worse"];
+                    optionKeys = ["1", "4"];
+                    fullscreen = true;
+                    showCursor = false;
+                    fontSize = 40;
+                }
+            };
+        },
+        {
+            id = "240hz_delay1";
             frameRate = 240;
             trials = (
                 { 
@@ -120,6 +233,35 @@
                 { 
                     id = "8";
                     frameDelay = 8;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+            );
+            questions = {
+                {
+                    type = "Rating";
+                    prompt = "Was this trial better or worse than the previous one?";
+                    options = ["Better", "Worse"];
+                    optionKeys = ["1", "4"];
+                    fullscreen = true;
+                    showCursor = false;
+                    fontSize = 40;
+                }
+            };
+        },
+        {
+            id = "240hz_delay2";
+            frameRate = 240;
+            trials = (
+                { 
+                    id = "8";
+                    frameDelay = 8;
+                    count = 1; 
+                    targetIds = ( "stray_fly_hard"); 
+                }, 
+                { 
+                    id = "0";
+                    frameDelay = 0;
                     count = 1; 
                     targetIds = ( "stray_fly_hard"); 
                 }, 
