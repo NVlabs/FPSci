@@ -350,7 +350,7 @@ void TimingConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 					pretrialDurationRange[0], pretrialDurationRange[1]).c_str();
 			}
 			else if (pretrialDurationRange.size() > 2) {
-				logPrintf("WARNING: \"pretrialDurationRange\" should be specified as a 2-element array but has length %d (ignoring last %d values)!",
+				logPrintf("WARNING: \"pretrialDurationRange\" should be specified as a 2-element array but has length %d (ignoring last %d values)!\n",
 					pretrialDurationRange.size(), pretrialDurationRange.size() - 2);
 			}
 			if (pretrialDuration < pretrialDurationRange[0] || pretrialDuration > pretrialDurationRange[1]) {
@@ -361,6 +361,7 @@ void TimingConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		}
 		reader.getIfPresent("maxTrialDuration", maxTrialDuration);
 		reader.getIfPresent("trialFeedbackDuration", trialFeedbackDuration);
+		reader.getIfPresent("taskFeedbackDuration", taskFeedbackDuration);
 		reader.getIfPresent("sessionFeedbackDuration", sessionFeedbackDuration);
 		reader.getIfPresent("clickToStart", clickToStart);
 		reader.getIfPresent("sessionFeedbackRequireClick", sessionFeedbackRequireClick);
@@ -379,6 +380,7 @@ Any TimingConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.pretrialDurationRange != pretrialDurationRange)		a["pretrialDurationRange"] = pretrialDurationRange;
 	if (forceAll || def.maxTrialDuration != maxTrialDuration)				a["maxTrialDuration"] = maxTrialDuration;
 	if (forceAll || def.trialFeedbackDuration != trialFeedbackDuration)		a["trialFeedbackDuration"] = trialFeedbackDuration;
+	if (forceAll || def.taskFeedbackDuration != taskFeedbackDuration)		a["taskFeedbackDuration"] = taskFeedbackDuration;
 	if (forceAll || def.sessionFeedbackDuration != sessionFeedbackDuration)	a["sessionFeedbackDuration"] = sessionFeedbackDuration;
 	if (forceAll || def.clickToStart != clickToStart)						a["clickToStart"] = clickToStart;
 	if (forceAll || def.sessionFeedbackRequireClick != sessionFeedbackRequireClick) a["sessionFeedbackRequireClick"] = sessionFeedbackRequireClick;
@@ -396,6 +398,8 @@ void FeedbackConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("pretrialAimInvalidFeedback", aimInvalid);
 		reader.getIfPresent("trialSuccessFeedback", trialSuccess);
 		reader.getIfPresent("trialFailureFeedback", trialFailure);
+		reader.getIfPresent("taskSuccessFeedback", taskSuccess);
+		reader.getIfPresent("taskFailureFeedback", taskFailure);
 		reader.getIfPresent("blockCompleteFeedback", blockComplete);
 		reader.getIfPresent("sessionCompleteFeedback", sessComplete);
 		reader.getIfPresent("allSessionsCompleteFeedback", allSessComplete);
@@ -426,6 +430,8 @@ Any FeedbackConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.aimInvalid != aimInvalid)			a["pretrialAimInvalidFeedback"] = aimInvalid;
 	if (forceAll || def.trialSuccess != trialSuccess)		a["trialSuccessFeedback"] = trialSuccess;
 	if (forceAll || def.trialFailure != trialFailure)		a["trialFailureFeedback"] = trialFailure;
+	if (forceAll || def.taskSuccess != taskSuccess)			a["taskSuccessFeedback"] = taskSuccess;
+	if (forceAll || def.taskFailure != taskFailure)			a["taskFailureFeedback"] = taskFailure;
 	if (forceAll || def.blockComplete != blockComplete)		a["blockCompleteFeedback"] = blockComplete;
 	if (forceAll || def.sessComplete != sessComplete)		a["sessionCompleteFeedback"] = sessComplete;
 	if (forceAll || def.allSessComplete != allSessComplete) a["allSessionsCompleteFeedback"] = allSessComplete;

@@ -121,7 +121,7 @@ struct PlayerAction {
 /** Trial count class (optional for alternate TargetConfig/count table lookup) */
 class TrialConfig : public FpsConfig {
 public:
-	String			id;				///< Trial ID (used for logging)
+	String			id;				///< Trial ID (used for logging and required for task affiliation)
 	Array<String>	targetIds;		///< Trial ID list
 	int				count = 1;		///< Count of trials to be performed
 	static int		defaultCount;	///< Default count to use
@@ -143,15 +143,54 @@ public:
 	Any toAny(const bool forceAll = false) const;
 };
 
+class TrialOrder {
+public:
+	Array<String>	order;			// The order of trials (by id)
+	//int				count = 1;		// The count of this order
+	String			correctAnswer = ""; // The correct answer for the task question in this order
+
+	TrialOrder() {};
+	TrialOrder(const Any& any) {
+		FPSciAnyTableReader reader(any);
+		reader.get("order", order);
+		reader.getIfPresent("correctAnswer", correctAnswer);
+		//reader.getIfPresent("count", count);
+		
+	}
+	Any toAny(const bool forceAll = false) const {
+		TrialOrder def;
+		Any a(Any::TABLE);
+		a["order"] = order;
+		if (forceAll || def.correctAnswer != correctAnswer) a["correctAnswer"] = correctAnswer;
+		//if (forceAll || count != def.count) a["count"] = count;
+		return a;
+	}
+};
+
+class TaskConfig {
+public:
+	String		id;						///< Task ID (used for logging)
+	Array<TrialOrder> trialOrders;		///< Valid trial orders for this task
+	Array<Question>	questions;			///< Task-level questions
+	int				questionIdx = -1;	// The index of the (task-level) question corresponding to the correct answer above (populated automatically)
+	int count = 1;						///< Count of times to present this task (in each of the trialOrders, currently unused)
+
+	TaskConfig() {};
+	TaskConfig(const Any& any);
+	Any toAny(const bool forceAll = false) const;
+};
+
 /** Configuration for a session worth of trials */
 class SessionConfig : public FpsConfig {
 public:
 	String				id;								///< Session ID
 	String				description = "Session";		///< String indicating whether session is training or real
 	int					blockCount = 1;					///< Default to just 1 block per session
+	Array<TaskConfig>   tasks;
 	Array<TrialConfig>	trials;							///< Array of trials (and their counts) to be performed
 	bool				closeOnComplete = false;		///< Close application on session completed?
-	bool				randomizeTrialOrder = true;		///< Randomize order of trials presented within the session
+	bool				randomizeTaskOrder = true;		///< Randomize order of tasks presented within the session?
+	bool				weightByCount = true;			///< Ranomized based on count of task remaining
 
 	SessionConfig() : FpsConfig(defaultConfig()) {}
 	SessionConfig(const Any& any);
@@ -165,7 +204,8 @@ public:
 
 	static shared_ptr<SessionConfig> create() { return createShared<SessionConfig>(); }
 	Any toAny(const bool forceAll = false) const;
-	float getTrialsPerBlock(void) const;			// Get the total number of trials in this session
+	float getTrialOrdersPerBlock(void) const;			// Get the total number of trials in this session
+	int getTrialIndex(const String& id) const;
 	Array<String> getUniqueTargetIds() const;
 };
 
@@ -189,7 +229,6 @@ protected:
 	bool m_firstTrial = true;							///< Is this the first trial in this session?
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
 	int	m_currBlock = 1;								///< Index to the current block of trials
-	Array<Array<shared_ptr<TargetConfig>>> m_trials;	///< Storage for trials (to repeat over blocks)
 	String m_feedbackMessage;							///< Message to show when trial complete
 
 	// Target management
@@ -204,10 +243,15 @@ protected:
 	Point3 m_lastRefTargetPos;								///< Last reference target location (used for aim invalidation)
 
 	int m_frameTimeIdx = 0;									///< Frame time index
-	int m_currTrialIdx;										///< Current trial
+	int m_currTaskIdx;										///< Current task index (from tasks array)
+	int m_currOrderIdx;										///< Current trial order index
+	int m_currTrialIdx;										///< Current trial index (from the trials array)
 	int m_currQuestionIdx = -1;								///< Current question index
-	Array<int> m_remainingTrials;							///< Completed flags
-	Array<int> m_completedTrials;							///< Count of completed trials
+	Array<int> m_taskTrials;								///< Indexes of trials (from trials array) for this task
+	Array<Array<int>> m_remainingTasks;						///< Count of remaining trials of each order
+	Array<Array<int>> m_completedTasks;						///< Count of completions of each trial order
+	int m_lastTaskIndex = 0;								///< Used for providing task index on questions
+	Table<String, int> m_completedTaskTrials;				///< Count of completed trial types in this task
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
 
 	// Time-based parameters
@@ -408,8 +452,7 @@ public:
 	void spawnTrialTargets(Point3 initialSpawnPos, bool previewMode = false);
 
 	bool blockComplete() const;
-	bool nextCondition();
-	bool hasNextCondition() const;
+	bool nextTrial();
 
 	const RealTime targetFrameTime();
 
@@ -448,12 +491,13 @@ public:
 	float getProgress();
 	double getScore();
 	String getFeedbackMessage();
+	int getTaskCount(const int currTaskIdx) const;
 
 	/** queues action with given name to insert into database when trial completes
 	@param action - one of "aim" "hit" "miss" or "invalid (shots limited by fire rate)" */
 	void accumulatePlayerAction(PlayerActionType action, String target="");
 	
-	bool updateBlock(bool init = false);
+	bool nextBlock(bool init = false);
 
 	bool moveOn = false;								///< Flag indicating session is complete
 	PresentationState currentState;						///< Current presentation state

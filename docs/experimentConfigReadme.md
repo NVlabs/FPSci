@@ -13,6 +13,21 @@ For a full description of fields see the descriptions below. Along with each sub
 ## File Location
 The `experimentconfig.Any` file is located in the [`data-files`](../data-files/) directory at the root of the project. If no `experimentconfig.Any` file is present at startup, a default experiment configuration is written to `experimentconfig.Any`.
 
+## Experiment Heirarchy
+FPSci uses a multi-tiered experiment and configuration heirarcy to manage presentation of stimulus to users. Configuration is inherited by each new lower level of the heirarchy from its parents, with only some levels of the heirarcy supporting specification of [general configuration](general_config.md).
+
+This heirarchy is intended to let developers re-use global configuration while tapering configuration towards specific conditions they'd like to change on a per session or trial level.
+
+The heirarchy of FPSci specification is as follows:
+- **Experiment**: Provides base-level general config at the highest-level (plus a few specific fields mentioned below)
+  - **Session**: Supports different general config (plus a few specific fields mentioned below)
+    - **Block**: A repeat of all tasks/trials below this level, *does not support configuration or questions*
+      - **Task**: A grouping of trials with a count and specific affiliated questions, *does not support configuration*
+        - **Trial**: Lowest-level (general) configuration, affiliates a (set of) target(s) with a task to run
+
+
+*Note:* Tasks and blocks do not need to be specified in FPSci. If blocks are not specified, by default each session consists of only 1 block (no repeats of the tasks/trials below the session). If tasks are not specified the default behavior is that each trial becomes its own task, with a task count as specified in the trial. For more information on tasks see the description below.
+
 # Experiment Config Field Descriptions
 
 The experment config supports inclusion of any of the configuration parameters documented in the [general configuration parameter guide](general_config.md). In addition to these common parameters, there are a number of unique inputs to experiment config. The following is a description of what each one means, and how it is meant to be used.
@@ -33,8 +48,9 @@ In addition to these general parameters each session also has a few unique param
     * `session id` is a short name for the session
     * `description` is used to indicate an additional mode for affiliated sessions (such as `real` vs `training`)
     * `closeOnComplete` signals to close the application whenever this session (in particular) is completed
-    * `randomizeTrialOrder` determines whether trials are presented in the order they are listed or in a randomized order
-    * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided).
+    * `randomizeTaskOrder` determines whether tasks are presented in the order they are listed or in a randomized order (if specified). `randomizeTrialOrder` is treated as `randomizeTaskOrder` to preserve its historical behavior.
+    * `weightByCount` determines whether tasks are randomized proportional to their remaining count (i.e. a task with 10 repeats remaining is 10x as likely to be shown next as a task with 1 repeat remaining)
+    * `blockCount` is an integer number of (repeated) groups of trials within a session, with the block number printed to the screen between "blocks" (or a single "default" block if not provided)
     * `trials` is a list of trials referencing the `trials` table above:
         * `id` is an (optional) trial ID that (if specified) is used for logging purposes. If unspecified the `id` defaults to the (integer) index of the trial in the `trials` array.
         * `targetIds` is a list of target names (`id` fields from within `targets` array elements) to spawn in this trial, if multiple target ids are provided multiple targets are spawned simultaneously in each trial
@@ -49,6 +65,8 @@ An example session configuration snippet is included below:
         "id" : "test-session",          // This is a short name for our session
         "description" : "test",         // This is an arbitrary string tag (for now)
         "closeOnComplete": false,       // Don't automatically close the application when the session completes
+        "randomizeTaskOrder": true,     // Randomize order of tasks by default
+        "weightByCount": true,          // Randomize based on the count of this task remaining
         "frameRate" : 120,              // Example of a generic parameter modified for this session
         "blockCount" : 1,         // Single block design
         "trials" : [
@@ -76,6 +94,65 @@ An example session configuration snippet is included below:
     },
 ],
 ```
+
+### Task Configuration
+FPSci tasks are a way to affiliate trials into meaningful grouping with repeat logic automatically managed.
+
+Tasks are configured using the following parameters:
+- `id` an identifier for the task, used for logging
+- `trialOrders` an array of valid orderings of trials (referenced by `id`) with each order consisting of:
+    - `order` the set of trials (in order) to be presented in this order
+    - `correctAnswer` the correct answer to respond to (the final) multiple choice question in the task (see [below](#task-successfailure-criteria))
+- `questions` a question(s) asked after each `trialOrder` is completed
+- `count` a number of times to repeat each of the `trialOrders` specified in this task
+
+Note that rather than being a direct `Array<Array<String>>` the `trialOrders` array needs to be an `Array<Object>` in order to parse correctly in the Any format. To do this the `trialOrders` array requires specification of an `order` array within it to accomplish this nesting, as demonstrated in the example below.
+
+For example a task may specify presenting 2 trials (in either order) then asking a question comparing them. An example of this configuration is provided below:
+
+```
+tasks = [
+    {
+        id = "comparison";
+        trialOrders = [
+            {order = ["trial 1", "trial 2"], correctAnswer = "first"},       // Show trial 1/2 in this order
+            {order = ["trial 2", "trial 1"], correctAnswer = "second"}        // Show trial 1/2 in reverse order
+        ];
+
+        // Present a question about which trial was preferred after any pairing of 2 trials
+        questions = [
+            {
+                prompt = "Which trial did you prefer?";
+                type = "MultipleChoice";
+                options = ["First", "Second"];
+            }
+        ];
+        
+        // Repeat each order 10 times (20 total sets of 2 trials)
+        count = 10;
+    },
+]
+```
+
+#### Task Success/Failure Criteria
+FPSci supports minimal "correctness" checking of questions that are asked affiliated with each `order` specified in the task configuration. In order to use this feature you must have at least one question with `type` of `"MultipleChoice"` specified in your task-level questions array. In this case you may choose to specify a `correctAnswer` field with each element in the `trialOrders` array. This answer *must* correspond to an option in the final multiple choice question of the task (if not an exception will be thrown).
+
+When specified correctly FPSci will check if the `correctAnswer` matches the response provided by a user during the task-level questions and if so display the `taskSuccessFeedback` message. If the response does not match `correctAnswer` the `taskFailureFeedback` message is provided instead. **It is up to the experiment designer to make sure the `correctAnswer` field exactly matches the desired option from the final multiple choice question in a task**.
+
+By default if no `correctAnswer` is specified or no `questions` are asked in a task FPSci defaults to the declaring all tasks a success.
+
+#### Task/Trial Interaction and Ordering
+When no `tasks` are specified in a session configuration, FPSci treats trials as tasks creating one task per trial *type* in the [trial configuration](#trial-configuration).
+
+As described [above](#session-configuration) the `randomizeTaskOrder` session-level configuration parameter allows the experiment designer to select tasks in either the order they are specified or a random order. To support legacy configuration `randomizeTrialOrder` is treated as equivalent to `randomizeTaskOrder` in FPSci, but is overwritten when `randomizeTaskOrder` is defined in the config. Trial order randomization within `order`s in tasks is current not supported in FPSci (all orders need to be specified explicitly).
+
+### Trial Configuration
+Trials provide the lowest level of [general configuration](general_configuration.md) in FPSci. Trials are specified with the following parameters:
+- `id` is a name to refer to this trial by in logging (and in [tasks](#task-configuration))
+- `targetIds` is an array of target ids to present within this trial
+- `count` is a count that is applied to this trial (when it is treated as a task)
+
+As mentioned above, if no tasks are specified, each trial's `count` is used to generate a task with a single trial order with just this trial inside of it. This provides a fallback to pre-task FPSci configuration in which trials were run this way directly below blocks.
 
 ### Target Configuration
 The `targets` array specifies a list of targets each of which can contain any/all of the following parameters. The following sections provide a more detailed breakdown of target parameters by group.

@@ -1,0 +1,11 @@
+{ 
+    currentUser = "Sample User"; 
+    sessions = ("delays");
+    settingsVersion = 1;
+    users = (
+        { 
+            id = "Sample User"; 
+            sessions = ("delays");
+        },
+    );
+}  

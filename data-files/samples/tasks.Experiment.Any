@@ -1,0 +1,176 @@
+{ 
+    description = "task-level configuration example"; 
+    frameRate = 120; 
+    showHUD = true;
+    renderWeaponStatus = true;
+    pretrialDuration = 0;
+            
+    weapon = { 
+        id = "2hit"; 
+        firePeriod = 0.3;
+        damagePerSecond = 2;
+        autoFire = false;
+    }; 
+
+    sessions = ( 
+        { 
+            // This session tests out different weapon cooldowns and cooldown indicators testing the memory of the participant
+            // for which one had which cooldown indicator
+            id = "1target_cd"; 
+            description = "1 target cooldown"; 
+            cooldownMode = "ring";                          // Session-level config can still be used to set defaults for all tasks
+            cooldownColor = Color4(0.7,1.0,0.9,0.75);
+
+            tasks = [
+                {
+                    id = "normal";
+                    // The order arrays refer to the trial array IDs
+                    // The correctAnswers must be in the question options for this task
+                    trialOrders = [
+                        {
+                            order = ["ring", "box"];
+                            correctAnswer = "box";
+                        },
+                        {
+                            order = ["box", "ring"];
+                            correctAnswer = "ring";
+                        },
+                        {
+                            order = ["ring slow fire", "box slow fire"];
+                            correctAnswer = "box";
+                        },
+                        {
+                            order = ["box slow fire", "ring slow fire"];
+                            correctAnswer = "ring";
+                        },
+                    ];
+                    questions = [ {
+                        prompt = "Which style of cooldown indicator did you see most recently?";
+                        type = "MultipleChoice";
+                        randomOrder = false;
+                        options = ["ring", "box"];
+                    } ];
+                    count = 1;
+                },
+                {
+                    id = "slow fire";
+                    trialOrders = [
+                        { order = ["ring"]; correctAnswer = "fast"; },
+                        { order = ["ring slow fire"]; correctAnswer = "slow"; },
+                        { order = ["box"]; correctAnswer = "fast"; },
+                        { order = ["box slow fire"]; correctAnswer = "slow"; },
+                    ];
+                    questions = [ {
+                        prompt = "Was the cooldown for the last trial fast, or slow?";
+                        type = "MultipleChoice";
+                        randomOrder = false;
+                        options = ["fast", "slow"];
+                    } ];
+                    count = 1;
+                },
+            ];
+            trials = ( 
+                { 
+                    id = "ring";
+                    targetIds = ( "static"); 
+                }, 
+                { 
+                    id = "box";
+                    targetIds = ( "static"); 
+                    cooldownMode = "box";
+                }, 
+                { 
+                    id = "ring slow fire";
+                    targetIds = ( "static"); 
+                    weapon = { 
+                        id = "2hit_slow"; 
+                        firePeriod = 0.5;
+                        damagePerSecond = 1.1;
+                    }; 
+                }, 
+                { 
+                    id = "box slow fire";
+                    targetIds = ( "static"); 
+                    cooldownMode = "box";
+                    weapon = { 
+                        id = "2hit_slow"; 
+                        firePeriod = 0.5;
+                        damagePerSecond = 1.1;
+                    }; 
+                }, 
+            ); 
+            
+        }, 
+        { 
+            // This session tests the ability of the user to compare stutter happening vs. not
+            id = "2targets_stutter"; 
+            description = "2 targets frame stutter";
+            weapon = { 
+                id = "1hit"; 
+                firePeriod = 0.2;
+                damagePerSecond = 6;
+                autoFire = false;
+            }; 
+            frameTimeArray = (0.008);                   // Set a default value and override in trials below
+            randomizeTaskOrder = true;                  // This is the default, but it's important to this session
+            tasks = [
+                {
+                    id = "none";
+                    trialOrders = [
+                        { order = ["none", "none"]; },
+                        { order = ["10/s", "10/s"]; },
+                        { order = ["2/s", "2/s"]; },
+                        { order = ["none", "10/s"]; },
+                        { order = ["10/s", "none"]; },
+                        { order = ["none", "2/s"]; },
+                        { order = ["2/s", "none"]; },
+                        { order = ["2/s", "10/s"]; },
+                        { order = ["10/s", "2/s"]; },
+                    ];
+                    questions = [ {
+                        prompt = "Which of the last 2 sets of targets felt more stuttery?";
+                        type = "MultipleChoice";
+                        randomOrder = false;
+                        options = ["first", "second"];
+                    } ];
+                    count = 2;
+                },
+            ];
+            trials = ( 
+                {
+                    id = "none"; 
+                    targetIds = ( "moving", "moving"); 
+                }, 
+                { 
+                    id = "10/s";
+                    targetIds = ( "moving", "moving"); 
+                    // This sequence should repeat about 10 times per second at the set 120 fps
+                    frameTimeArray = (0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.016);
+                }, 
+                { 
+                    id = "2/s";
+                    targetIds = ( "moving", "moving");
+                    // This should be 59 total entries, meaning there is 1 stutter every 59 frames, which should be roughly 2 every second
+                    frameTimeArray = (0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.016);
+                }, 
+            ); 
+            
+        }, 
+    ); 
+    
+    targets = ( 
+        { 
+            id = "static"; 
+            destSpace = "player"; 
+            speed = ( 0, 0 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        }, 
+        { 
+            id = "moving"; 
+            destSpace = "player"; 
+            speed = ( 10, 10 ); 
+            visualSize = ( 0.05, 0.05 ); 
+        }, 
+    ); 
+    
+} 
