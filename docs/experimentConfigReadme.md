@@ -149,7 +149,7 @@ As described [above](#session-configuration) the `randomizeTaskOrder` session-le
 ### Trial Configuration
 Trials provide the lowest level of [general configuration](general_configuration.md) in FPSci. Trials are specified with the following parameters:
 - `id` is a name to refer to this trial by in logging (and in [tasks](#task-configuration))
-- `ids` is an array of target ids to present within this trial
+- `targetIds` is an array of target ids to present within this trial
 - `count` is a count that is applied to this trial (when it is treated as a task)
 
 As mentioned above, if no tasks are specified, each trial's `count` is used to generate a task with a single trial order with just this trial inside of it. This provides a fallback to pre-task FPSci configuration in which trials were run this way directly below blocks.
