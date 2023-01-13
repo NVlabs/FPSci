@@ -1,12 +1,10 @@
 // This is a sample of how to implement a 2 interval forced choice experiment.
 // Note that the `Status.Any` is an important part of the design because it controls
 // the order in which the sessions are presented to the user.
-// Also note that the order of stimulus is determinisitic and likely needs additional
+// Also note that the order of stimulus is determinisitic and needs additional
 // design to counterbalance and randomize presentation.
 // 
-// There is a variety of targets included even though they are not used to make
-// swapping to other target types easy during testing.
-
+// For an example of how to auto-randomize presentation order, see the twoifc-task sample experiment.
 {
     // global settings
     showMenuBetweenSessions = False;
@@ -29,7 +27,6 @@
     sessionFeedbackDuration = 1.0;
     sessionCompleteFeedback = "Session complete! Moving to next session.";
     allSessionsCompleteFeedback = "All Sessions Complete! Thank you for participating in this experiment.";
-    // blockCompleteFeedback = "Block %lastBlock of %totalBlocks completed. Your score so far is %totalTimeLeftS.\nStarting Block %currBlock.";
     
     // weapon settings
     weapon = {
@@ -49,61 +46,6 @@
 
     // session settings
     sessions = (
-        { 
-            // This is an example of how the task-style configuration compares to the trial-level
-            // compare this "delays" session to the 6 sessions implemented below and ordered in the status file
-            //      60hz_delay1, 60hz_delay2, 120hz_delay1, 120hz_delay2, 240hz_delay1, 240hz_delay2
-            id = "delays"; 
-            description = "delay comparison task-style"; 
-            tasks = [
-                {
-                    id = "normal";
-                    // Note that specifying multiple orderings for the stimulus is simple to express here
-                    trialOrders = [
-                        { order = ["0", "2"]; correctAnswer = "Worse"; },
-                        { order = ["0", "4"]; correctAnswer = "Worse"; },
-                        { order = ["0", "8"]; correctAnswer = "Worse"; },
-                        { order = ["2", "0"]; correctAnswer = "Better"; },
-                        { order = ["4", "0"]; correctAnswer = "Better"; },
-                        { order = ["8", "0"]; correctAnswer = "Better"; },
-                    ];
-                    questions = [ {
-                        type = "MultipleChoice";
-                        prompt = "Was this trial better or worse than the previous one?";
-                        randomOrder = false;
-                        options = ["Better", "Worse"];
-                        optionKeys = ["1", "4"];
-                        fullscreen = true;
-                        showCursor = false;
-                        fontSize = 40;
-                    } ];
-                    count = 1;
-                },
-            ];
-            trials = ( 
-                { 
-                    id = "0";
-                    frameDelay = 0;
-                    targetIds = ( "stray_fly_hard"); 
-                }, 
-                { 
-                    id = "2";
-                    frameDelay = 2;
-                    targetIds = ( "stray_fly_hard"); 
-                }, 
-                { 
-                    id = "4";
-                    frameDelay = 4;
-                    targetIds = ( "stray_fly_hard"); 
-                }, 
-                { 
-                    id = "8";
-                    frameDelay = 8;
-                    targetIds = ( "stray_fly_hard"); 
-                }, 
-            ); 
-            
-        }, 
         {
             id = "60hz_delay1";
             frameRate = 60;
@@ -262,64 +204,6 @@
                 { 
                     id = "0";
                     frameDelay = 0;
-                    count = 1; 
-                    targetIds = ( "stray_fly_hard"); 
-                }, 
-            );
-            questions = {
-                {
-                    type = "Rating";
-                    prompt = "Was this trial better or worse than the previous one?";
-                    options = ["Better", "Worse"];
-                    optionKeys = ["1", "4"];
-                    fullscreen = true;
-                    showCursor = false;
-                    fontSize = 40;
-                }
-            };
-        },
-        {
-            id = "60v120";
-            frameDelay = 0;
-            trials = (
-                { 
-                    id = "60";
-                    frameRate = 60;
-                    count = 1; 
-                    targetIds = ( "stray_fly_hard"); 
-                }, 
-                { 
-                    id = "120";
-                    frameRate = 120;
-                    count = 1; 
-                    targetIds = ( "stray_fly_hard"); 
-                }, 
-            );
-            questions = {
-                {
-                    type = "Rating";
-                    prompt = "Was this trial better or worse than the previous one?";
-                    options = ["Better", "Worse"];
-                    optionKeys = ["1", "4"];
-                    fullscreen = true;
-                    showCursor = false;
-                    fontSize = 40;
-                }
-            };
-        },
-        {
-            id = "60v240";
-            frameDelay = 0;
-            trials = (
-                { 
-                    id = "60";
-                    frameRate = 60;
-                    count = 1; 
-                    targetIds = ( "stray_fly_hard"); 
-                }, 
-                { 
-                    id = "240";
-                    frameRate = 240;
                     count = 1; 
                     targetIds = ( "stray_fly_hard"); 
                 }, 
