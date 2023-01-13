@@ -1202,9 +1202,6 @@ void FPSciApp::onAfterEvents() {
 	}
 
 	if (reinitExperiment) {			// Check for experiment reinitialization (developer-mode only)
-		m_widgetManager->clear();
-		addWidget(debugWindow);
-		addWidget(developerWindow);
 		initExperiment();
 		reinitExperiment = false;
 	}
