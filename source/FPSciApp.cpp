@@ -779,7 +779,7 @@ void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const 
 
 		// Update weapon model (if drawn) and sounds
 		weapon->loadModels();
-		weapon->loadSounds();
+		if(startupConfig.audioEnable) weapon->loadSounds();
 		if (!config->audio.sceneHitSound.empty()) {
 			m_sceneHitSound = Sound::create(System::findDataFile(config->audio.sceneHitSound));
 			// Play silently to pre-load the sound
