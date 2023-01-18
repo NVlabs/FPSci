@@ -254,8 +254,9 @@ public:
 	void saveUserStatus(void);
 
 	// Pass throughts to user settings window (for now)
-	Array<String> updateSessionDropDown(void) { return m_userSettingsWindow->updateSessionDropDown(); }
-	shared_ptr<UserConfig> const currentUser(void) {  return userTable.getUserById(userStatusTable.currentUser); }
+	Array<String> updateSessionDropDown(void) const { return m_userSettingsWindow->updateSessionDropDown(); }
+	shared_ptr<UserConfig> const currentUser(void) const {  return userTable.getUserById(userStatusTable.currentUser); }
+	const bool userSettingsVisible() const { return m_userSettingsWindow->visible(); }
 
 	void markSessComplete(String id);
 	/** Updates experiment state to the provided session id and updates player parameters (including mouse sensitivity) */

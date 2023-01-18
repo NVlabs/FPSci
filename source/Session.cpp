@@ -302,7 +302,7 @@ bool Session::nextTrial() {
 	m_app->updateTrial(m_trialConfig, false, m_firstTrial);	
 	if (m_firstTrial) m_firstTrial = false;
 	else {
-		m_app->showUserMenu = false;	// Override showing the user menu after the first trial in the session
+		m_app->showUserMenu = m_app->userSettingsVisible();	// Override showing the user menu after the first trial in the session
 	}
 
 	// Update session fields (if changed) from trial
