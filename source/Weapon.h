@@ -101,6 +101,7 @@ public:
 	float	hitDecalTimeoutS = 0.1f;									///< Duration to show the hit decal for (in seconds)
 	float	hitDecalColorMult = 2.0f;									///< "Encoding" field (aka color multiplier) for hit decal
 
+	int		pelletsPerShot = 1;											///< Number of pellets to generate per shot
 	float	fireSpreadDegrees = 0;										///< The spread of the fire
 	String  fireSpreadShape = "uniform";								///< The shape of the fire spread distribution
 	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
@@ -202,7 +203,7 @@ public:
 		dummyShot controls whether it's a shot at the test target (is this true?)
 		targetIdx, hitDist and hitInfo are all returned along with the targetEntity that was hit
 	*/
-	shared_ptr<TargetEntity> fire(const Array<shared_ptr<TargetEntity>>& targets,
+	Array<shared_ptr<TargetEntity>> fire(const Array<shared_ptr<TargetEntity>>& targets,
 		int& targetIdx,
 		float& hitDist, 
 		Model::HitInfo& hitInfo, 

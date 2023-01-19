@@ -48,6 +48,7 @@ WeaponConfig::WeaponConfig(const Any& any) {
 		reader.getIfPresent("hitDecalTimeoutS", hitDecalTimeoutS);
 		reader.getIfPresent("hitDecalColorMult", hitDecalColorMult);
 
+		reader.getIfPresent("pelletsPerShot", pelletsPerShot);
 		reader.getIfPresent("fireSpreadDegrees", fireSpreadDegrees);
 		reader.getIfPresent("fireSpreadShape", fireSpreadShape);
 
@@ -341,7 +342,7 @@ void Weapon::clearDecals(bool clearHitDecal) {
 	}
 }
 
-shared_ptr<TargetEntity> Weapon::fire(
+Array<shared_ptr<TargetEntity>> Weapon::fire(
 	const Array<shared_ptr<TargetEntity>>& targets,
 	int& targetIdx, 
 	float& hitDist, 
@@ -356,91 +357,93 @@ shared_ptr<TargetEntity> Weapon::fire(
 	if (dummyShot) { spread = 0.f; }
 	else { m_ammo -= 1; }
 
+	Array<shared_ptr<TargetEntity>> hitTargets;
 	// Apply random rotation (for fire spread)
-	Matrix3 rotMat = Matrix3::fromEulerAnglesXYZ(0.f,0.f,0.f);
-	if (m_config->fireSpreadShape == "uniform") {
-		rotMat = Matrix3::fromEulerAnglesXYZ(m_rand.uniform(-spread / 2, spread / 2), m_rand.uniform(-spread / 2, spread / 2), 0);
-	}
-	else if (m_config->fireSpreadShape == "gaussian") {
-		rotMat = Matrix3::fromEulerAnglesXYZ(m_rand.gaussian(0, spread / 3), m_rand.gaussian(0, spread / 3), 0);
-	}
-	Vector3 dir = Vector3(0.f, 0.f, -1.f) * rotMat;
-	ray.set(ray.origin(), m_camera->frame().rotation * dir);
-
-	// Check for closest hit (in scene, otherwise this ray hits the skybox)
-	float closest = finf();
-	Array<shared_ptr<Entity>> dontHitItems = dontHit;
-	dontHitItems.append(m_currentMissDecals);
-	dontHitItems.append(targets);
-	dontHitItems.append(m_projectiles);
-	m_scene->intersect(ray, closest, false, dontHitItems, hitInfo);
-	if (closest < finf()) { hitDist = closest; }
-
-	// Create the bullet (if we need to draw it or are using non-hitscan behavior)
-	if (m_config->renderBullets || !m_config->hitScan) {
-		// Create the bullet start frame from the weapon frame plus muzzle offset
-		CFrame bulletStartFrame = m_camera->frame();
-		
-		// Apply bullet offset w/ camera rotation here
-		bulletStartFrame.translation += ray.direction() * m_config->bulletOffset;
-
-		// Angle the bullet start frame towards the aim point
-		Point3 aimPoint = m_camera->frame().translation + ray.direction() * 1000.0f;
-		// If we hit the scene w/ this ray, angle it towards that collision point
-		if (closest < finf()) {
-			aimPoint = hitInfo.point;
+	for (int i = 0; i < m_config->pelletsPerShot; i++) {
+		Matrix3 rotMat = Matrix3::fromEulerAnglesXYZ(0.f, 0.f, 0.f);
+		if (m_config->fireSpreadShape == "uniform") {
+			rotMat = Matrix3::fromEulerAnglesXYZ(m_rand.uniform(-spread / 2, spread / 2), m_rand.uniform(-spread / 2, spread / 2), 0);
 		}
-		bulletStartFrame.lookAt(aimPoint);
-
-		// Non-laser weapon, draw a projectile
-		if (!m_config->isContinuous()) {
-			const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastBulletId), m_scene.get(), m_bulletModel, bulletStartFrame);
-			bullet->setShouldBeSaved(false);
-			bullet->setCanCauseCollisions(false);
-			bullet->setCastsShadows(false);
-			bullet->setVisible(m_config->renderBullets);
-
-			const shared_ptr<Projectile> projectile = Projectile::create(bullet, m_config->bulletSpeed, !m_config->hitScan, m_config->bulletGravity, fmin((closest + 1.0f) / m_config->bulletSpeed, 10.0f));
-			m_projectiles.push(projectile);
-			m_scene->insert(projectile);
+		else if (m_config->fireSpreadShape == "gaussian") {
+			rotMat = Matrix3::fromEulerAnglesXYZ(m_rand.gaussian(0, spread / 3), m_rand.gaussian(0, spread / 3), 0);
 		}
-		// Laser weapon (very hacky for now...)
-		else {
-			// Need to do something better than this, draws for 2 frames and also doesn't work w/ the start frame aligned w/ the camera (see the backfaces)
-			//shared_ptr<CylinderShape> beam = std::make_shared<CylinderShape>(CylinderShape(Cylinder(bulletStartFrame.translation, aimPoint, 0.02f)));
-			//debugDraw(beam, FLT_EPSILON, Color4(0.2f, 0.8f, 0.0f, 1.0f), Color4::clear());
-		}
-	}
+		Vector3 dir = Vector3(0.f, 0.f, -1.f) * rotMat;
+		ray.set(ray.origin(), m_camera->frame().rotation * dir);
 
-	// Hit scan specific logic here (immediately do hit/miss determination)
-	shared_ptr<TargetEntity> target = nullptr;
-	if(m_config->hitScan){
-		// Check whether we hit any targets
-		int closestIndex = -1;
-		for (int t = 0; t < targets.size(); ++t) {
-			if (targets[t]->intersect(ray, closest, hitInfo)) {
-				closestIndex = t;
+		// Check for closest hit (in scene, otherwise this ray hits the skybox)
+		float closest = finf();
+		Array<shared_ptr<Entity>> dontHitItems = dontHit;
+		dontHitItems.append(m_currentMissDecals);
+		dontHitItems.append(targets);
+		dontHitItems.append(m_projectiles);
+		m_scene->intersect(ray, closest, false, dontHitItems, hitInfo);
+		if (closest < finf()) { hitDist = closest; }
+
+		// Create the bullet (if we need to draw it or are using non-hitscan behavior)
+		if (m_config->renderBullets || !m_config->hitScan) {
+			// Create the bullet start frame from the weapon frame plus muzzle offset
+			CFrame bulletStartFrame = m_camera->frame();
+
+			// Apply bullet offset w/ camera rotation here
+			bulletStartFrame.translation += ray.direction() * m_config->bulletOffset;
+
+			// Angle the bullet start frame towards the aim point
+			Point3 aimPoint = m_camera->frame().translation + ray.direction() * 1000.0f;
+			// If we hit the scene w/ this ray, angle it towards that collision point
+			if (closest < finf()) {
+				aimPoint = hitInfo.point;
+			}
+			bulletStartFrame.lookAt(aimPoint);
+
+			// Non-laser weapon, draw a projectile
+			if (!m_config->isContinuous()) {
+				const shared_ptr<VisibleEntity>& bullet = VisibleEntity::create(format("bullet%03d", ++m_lastBulletId), m_scene.get(), m_bulletModel, bulletStartFrame);
+				bullet->setShouldBeSaved(false);
+				bullet->setCanCauseCollisions(false);
+				bullet->setCastsShadows(false);
+				bullet->setVisible(m_config->renderBullets);
+
+				const shared_ptr<Projectile> projectile = Projectile::create(bullet, m_config->bulletSpeed, !m_config->hitScan, m_config->bulletGravity, fmin((closest + 1.0f) / m_config->bulletSpeed, 10.0f));
+				m_projectiles.push(projectile);
+				m_scene->insert(projectile);
+			}
+			// Laser weapon (very hacky for now...)
+			else {
+				// Need to do something better than this, draws for 2 frames and also doesn't work w/ the start frame aligned w/ the camera (see the backfaces)
+				//shared_ptr<CylinderShape> beam = std::make_shared<CylinderShape>(CylinderShape(Cylinder(bulletStartFrame.translation, aimPoint, 0.02f)));
+				//debugDraw(beam, FLT_EPSILON, Color4(0.2f, 0.8f, 0.0f, 1.0f), Color4::clear());
 			}
 		}
-		if (closestIndex >= 0) {
-			// Hit logic
-			target = targets[closestIndex];			// Assign the target pointer here (not null indicates the hit)
-			targetIdx = closestIndex;				// Write back the index of the target
 
-			m_hitCallback(target);				// If we did, we are in hitscan mode, apply the damage and manage the target here
-			// Offset position slightly along shot direction to avoid Z-fighting the target
-			drawDecal(hitInfo.point + 0.01f * -ray.direction(), ray.direction(), true);
-		}
-		else { 
-			m_missCallback(); 
-			// Offset position slightly along normal to avoid Z-fighting the wall
-			drawDecal(hitInfo.point + 0.01f * hitInfo.normal, hitInfo.normal);
+		// Hit scan specific logic here (immediately do hit/miss determination)
+		if (m_config->hitScan) {
+			// Check whether we hit any targets
+			int closestIndex = -1;
+			for (int t = 0; t < targets.size(); ++t) {
+				if (targets[t]->intersect(ray, closest, hitInfo)) {
+					closestIndex = t;
+				}
+			}
+			if (closestIndex >= 0) {
+				// Hit logic
+				hitTargets.append(targets[closestIndex]);			// Assign the target pointer here (not null indicates the hit)
+				targetIdx = closestIndex;				// Write back the index of the target
+
+				m_hitCallback(targets[closestIndex]);				// If we did, we are in hitscan mode, apply the damage and manage the target here
+				// Offset position slightly along shot direction to avoid Z-fighting the target
+				drawDecal(hitInfo.point + 0.01f * -ray.direction(), ray.direction(), true);
+			}
+			else {
+				m_missCallback();
+				// Offset position slightly along normal to avoid Z-fighting the wall
+				drawDecal(hitInfo.point + 0.01f * hitInfo.normal, hitInfo.normal);
+			}
 		}
 	}
 
 	END_PROFILER_EVENT();
 
-	return target;
+	return hitTargets;
 }
 
 void Weapon::playSound(bool shotFired, bool shootButtonUp) {

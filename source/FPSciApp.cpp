@@ -918,8 +918,8 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		float hitDist = finf();
 		int hitIdx = -1;
 
-		shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
-		if (isNull(target)) // Miss case
+		Array<shared_ptr<TargetEntity>> hitTargets = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
+		if (hitTargets.size() == 0) // Miss case
 		{
 			// Play scene hit sound
 			if (!weapon->config()->isContinuous() && notNull(m_sceneHitSound)) {
@@ -1396,7 +1396,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 			Model::HitInfo info;
 			float hitDist = finf();
 			int hitIdx = -1;
-			shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
+			Array<shared_ptr<TargetEntity>> hitTargets = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
 			if (trialConfig->audio.refTargetPlayFireSound && !trialConfig->weapon.loopAudio()) {		// Only play shot sounds for non-looped weapon audio (continuous/automatic fire not allowed)
 				weapon->playSound(true, false);			// Play audio here for reference target
 			}
