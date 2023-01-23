@@ -352,16 +352,20 @@ Array<shared_ptr<TargetEntity>> Weapon::fire(
 {
 	Ray ray = m_camera->frame().lookRay();		// Use the camera lookray for hit detection
 	float spread = m_config->fireSpreadDegrees * 2.f * pif() / 360.f;
+	int pellets = m_config->pelletsPerShot;
 
-	// ignore bullet spread on dummy targets
-	if (dummyShot) { spread = 0.f; }
+	// Ignore bullet spread and multiple pellets on dummy targets
+	if (dummyShot) { 
+		spread = 0.f; 
+		pellets = 1;
+	}
 	else { m_ammo -= 1; }
 
 	Array<shared_ptr<TargetEntity>> hitTargets;
 	Array<shared_ptr<TargetEntity>> remainingTargets = targets;
 
 	// Iterate for each pellet in the shot
-	for (int i = 0; i < m_config->pelletsPerShot; i++) {
+	for (int i = 0; i < pellets; i++) {
 		// Apply random rotation (for fire spread)
 		Matrix3 rotMat = Matrix3::fromEulerAnglesXYZ(0.f, 0.f, 0.f);
 		if (m_config->fireSpreadShape == "uniform") {
