@@ -918,8 +918,8 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		float hitDist = finf();
 		int hitIdx = -1;
 
-		shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
-		if (isNull(target)) // Miss case
+		Array<shared_ptr<TargetEntity>> hitTargets = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, false);			// Fire the weapon
+		if (hitTargets.size() == 0) // Miss case
 		{
 			// Play scene hit sound
 			if (!weapon->config()->isContinuous() && notNull(m_sceneHitSound)) {
@@ -954,6 +954,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		m_explosionRemainingTimes[i] -= sdt;
 		if (m_explosionRemainingTimes[i] <= 0) {
 			scene()->remove(explosion);
+			weapon->removeFromDontHit(explosion);		// Remove this explosion from the weapon's dont hit list
 			m_explosions.fastRemove(i);
 			m_explosionRemainingTimes.fastRemove(i);
 			i--;
@@ -1237,7 +1238,7 @@ void FPSciApp::setScopeView(bool scoped) {
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
 
-void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
+bool FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	// Damage the target
 	float damage = m_currentWeaponDamage;
 	target->doDamage(damage);
@@ -1285,6 +1286,7 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 		m_explosionIdx %= m_maxExplosions;
 		scene()->insert(newExplosion);
 		m_explosions.push(newExplosion);
+		weapon->addToDontHit(newExplosion);		// Don't hit explosions (update the weapon to know about this explosion)
 		m_explosionRemainingTimes.push(experimentConfig.getTargetConfigById(target->id())->destroyDecalDuration); // Schedule end of explosion
 		target->playDestroySound();
 
@@ -1311,6 +1313,8 @@ void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 		// Update the target color based on it's health
 		updateTargetColor(target);
 	}
+
+	return destroyedTarget;		// Return whether we destroyed this target or not
 }
 
 void FPSciApp::updateTargetColor(const shared_ptr<TargetEntity>& target) {
@@ -1391,12 +1395,11 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
 		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::referenceTarget) && !m_userSettingsWindow->visible()) {
 			Array<shared_ptr<Entity>> dontHit;
-			dontHit.append(m_explosions);
 			dontHit.append(sess->unhittableTargets());
 			Model::HitInfo info;
 			float hitDist = finf();
 			int hitIdx = -1;
-			shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
+			Array<shared_ptr<TargetEntity>> hitTargets = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
 			if (trialConfig->audio.refTargetPlayFireSound && !trialConfig->weapon.loopAudio()) {		// Only play shot sounds for non-looped weapon audio (continuous/automatic fire not allowed)
 				weapon->playSound(true, false);			// Play audio here for reference target
 			}

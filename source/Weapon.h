@@ -101,6 +101,7 @@ public:
 	float	hitDecalTimeoutS = 0.1f;									///< Duration to show the hit decal for (in seconds)
 	float	hitDecalColorMult = 2.0f;									///< "Encoding" field (aka color multiplier) for hit decal
 
+	int		pelletsPerShot = 1;											///< Number of pellets to generate per shot
 	float	fireSpreadDegrees = 0;										///< The spread of the fire
 	String  fireSpreadShape = "uniform";								///< The shape of the fire spread distribution
 	float	damageRollOffAim = 0;										///< Damage roll off w/ aim
@@ -136,6 +137,7 @@ protected:
 	shared_ptr<AudioChannel>		m_fireAudio;						///< Audio channel for fire sound
 	WeaponConfig*					m_config;							///< Weapon configuration
 
+	Array<shared_ptr<Entity>>		m_dontHit;							///< Objects that shouldn't be hit (currently app-generated explosions)
 	Array<shared_ptr<Projectile>>	m_projectiles;						///< Arrray of drawn projectiles
 
 	int								m_lastBulletId = 0;					///< Bullet ID (auto incremented)
@@ -148,7 +150,7 @@ protected:
 	shared_ptr<Scene>				m_scene;							///< Scene for weapon
 	shared_ptr<Camera>				m_camera;							///< Camera for weapon
 
-	std::function<void(shared_ptr<TargetEntity>)> m_hitCallback;		///< This is set to FPSciApp::hitTarget
+	std::function<bool(shared_ptr<TargetEntity>)> m_hitCallback;		///< This is set to FPSciApp::hitTarget
 	std::function<void(void)> m_missCallback;							///< This is set to FPSciApp::missEvent
 
 	int										m_lastDecalID = 0;
@@ -196,17 +198,26 @@ public:
 	int shotsTaken() const { return m_config->maxAmmo - m_ammo; }
 	void reload() { m_ammo = m_config->maxAmmo; }
 
+	void addToDontHit(shared_ptr<Entity> e) { m_dontHit.append(e); }
+	bool removeFromDontHit(shared_ptr<Entity> e) {
+		if (m_dontHit.contains(e)) {
+			m_dontHit.remove(m_dontHit.findIndex(e));
+			return true;
+		}
+		return false;
+	}
+
 	/**
 		targets is the list of targets to try to hit
 		Ignore anything in the dontHit list
 		dummyShot controls whether it's a shot at the test target (is this true?)
 		targetIdx, hitDist and hitInfo are all returned along with the targetEntity that was hit
 	*/
-	shared_ptr<TargetEntity> fire(const Array<shared_ptr<TargetEntity>>& targets,
+	Array<shared_ptr<TargetEntity>> fire(const Array<shared_ptr<TargetEntity>>& targets,
 		int& targetIdx,
 		float& hitDist, 
 		Model::HitInfo& hitInfo, 
-		Array<shared_ptr<Entity>>& dontHit,
+		Array<shared_ptr<Entity>> dontHit,
 		bool dummyShot);
 
 	// Records provided lastFireTime 
@@ -236,7 +247,7 @@ public:
 	// Plays the sound based on the weapon fire mode
 	void playSound(bool shotFired, bool shootButtonUp);
 	
-	void setHitCallback(std::function<void(shared_ptr<TargetEntity>)> callback) { m_hitCallback = callback; }
+	void setHitCallback(std::function<bool(shared_ptr<TargetEntity>)> callback) { m_hitCallback = callback; }
 	void setMissCallback(std::function<void(void)> callback) { m_missCallback = callback; }
 	
 	void setConfig(WeaponConfig* config) { m_config = config; }

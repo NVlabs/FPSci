@@ -153,7 +153,7 @@ protected:
 	/** Set the scoped view (and also adjust the turn scale), use setScopeView(!weapon->scoped()) to toggle scope */
 	void setScopeView(bool scoped = true);
 
-	void hitTarget(shared_ptr<TargetEntity> target);
+	bool hitTarget(shared_ptr<TargetEntity> target);
 	void missEvent();
 
 public:
