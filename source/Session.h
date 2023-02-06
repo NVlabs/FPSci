@@ -241,6 +241,7 @@ protected:
 	int m_trialShotsHit = 0;							///< Count of total hits in this trial
 	bool m_firstTrial = true;							///< Is this the first trial in this session?
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
+	bool m_askQuestions = true;							///< Semaphore used to skip session-level questions when no task is presented
 	int	m_currBlock = 1;								///< Index to the current block of trials
 	String m_feedbackMessage;							///< Message to show when trial complete
 

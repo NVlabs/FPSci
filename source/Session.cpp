@@ -491,10 +491,12 @@ void Session::onInit(String filename, String description) {
 		m_targetConfigs = m_app->experimentConfig.getTargetsByTrial(m_sessConfig->id);
 		if (!nextBlock(true)) {	// No new block to run go straight to feedback
 			currentState = PresentationState::sessionFeedback;
+			m_askQuestions = false;
 		}
 	}
 	else {	// Invalid session, move to displaying message
 		currentState = PresentationState::sessionFeedback;
+		m_askQuestions = false;
 	}
 }
 
@@ -810,7 +812,8 @@ void Session::updatePresentationState() {
 	else if (currentState == PresentationState::sessionFeedback) {
 		if (m_hasSession) {
 			if (stateElapsedTime > m_sessConfig->timing.sessionFeedbackDuration && (!m_sessConfig->timing.sessionFeedbackRequireClick || !m_app->shootButtonUp)) {
-				bool allAnswered = presentQuestions(m_sessConfig->questionArray);	// Ask session-level questions
+				bool allAnswered = true;
+				if(m_askQuestions) allAnswered = presentQuestions(m_sessConfig->questionArray);	// Ask session-level questions
 				if (allAnswered) {			// Present questions until done here
 					// Write final session timestamp to log
 					if (notNull(logger) && m_sessConfig->logger.enable) {
