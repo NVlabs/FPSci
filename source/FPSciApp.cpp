@@ -1427,7 +1427,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 
 	}
 
-	playerCamera->filmSettings().setSensitivity(sceneBrightness);
+	if(notNull(playerCamera)) playerCamera->filmSettings().setSensitivity(sceneBrightness);
     END_PROFILER_EVENT();
 }
 
@@ -1577,7 +1577,7 @@ void FPSciApp::oneFrame() {
         // The debug camera is not in the scene, so we have
         // to explicitly pose it. This actually does nothing, but
         // it allows us to trigger the TAA code.
-		playerCamera->onPose(m_posed3D);
+		if(notNull(playerCamera)) playerCamera->onPose(m_posed3D);
     } m_poseWatch.tock();
     END_PROFILER_EVENT();
 
