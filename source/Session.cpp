@@ -489,7 +489,9 @@ void Session::onInit(String filename, String description) {
 
 		// Iterate over the sessions here and add a config for each
 		m_targetConfigs = m_app->experimentConfig.getTargetsByTrial(m_sessConfig->id);
-		nextBlock(true);
+		if (!nextBlock(true)) {	// No new block to run go straight to feedback
+			currentState = PresentationState::sessionFeedback;
+		}
 	}
 	else {	// Invalid session, move to displaying message
 		currentState = PresentationState::sessionFeedback;
@@ -749,7 +751,7 @@ void Session::updatePresentationState() {
 					const TaskConfig& task = m_sessConfig->tasks[m_currTaskIdx];
 					const int toRun = task.type == TaskType::constant ? task.trialOrders[m_currOrderIdx].order.size() : m_adaptiveTrials.size();
 					logger->updateTaskEntry(toRun - m_taskTrials.size(), false);
-					if (!nextTrial()) newState = PresentationState::taskQuestions;
+					if (!nextTrial()) newState = PresentationState::taskQuestions;		// No new trials are available, move to task questions
 					else newState = PresentationState::referenceTarget;
 				}
 			}
@@ -800,8 +802,8 @@ void Session::updatePresentationState() {
 			}
 			else {	// Individual trial complete, go back to reference target
 				m_feedbackMessage = "";	// Clear the feedback message
-				nextTrial();
-				newState = PresentationState::referenceTarget;
+				if (!nextTrial()) newState = PresentationState::sessionFeedback;
+				else newState = PresentationState::referenceTarget;
 			}
 		}
 	}
@@ -921,8 +923,10 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	updatePresentationState();
 
 	// 2. Record target trajectories, view direction trajectories, and mouse motion.
-	accumulateTrajectories();
-	accumulateFrameInfo(rdt, sdt, idt);
+	if (notNull(m_trialConfig)) {
+		accumulateTrajectories();
+		accumulateFrameInfo(rdt, sdt, idt);
+	}
 }
 
 bool Session::presentQuestions(Array<Question>& questions) {
