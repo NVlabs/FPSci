@@ -100,11 +100,18 @@ FPSci tasks are a way to affiliate trials into meaningful grouping with repeat l
 
 Tasks are configured using the following parameters:
 - `id` an identifier for the task, used for logging
+- `type` can be `"constant"` for constant stimulus (uses trial orders) or `"adaptive"` for [script-based adaptive stimlulus](#adaptive-stimulus)
+
+The fields below are used for `"constant"` `type` tasks and ignored for `"adaptive"` tasks
 - `trialOrders` an array of valid orderings of trials (referenced by `id`) with each order consisting of:
     - `order` the set of trials (in order) to be presented in this order
     - `correctAnswer` the correct answer to respond to (the final) multiple choice question in the task (see [below](#task-successfailure-criteria))
 - `questions` a question(s) asked after each `trialOrder` is completed
 - `count` a number of times to repeat each of the `trialOrders` specified in this task
+
+The fields below are used for `"adaptive"` `type` tasks and ignored for `"constant"` tasks
+- `adaptationCmd` the command to run to adapt stimulus
+- `adaptationConfigPath` is the path to get the adaptive configuration from after running the `adaptationCmd` (default is `trials.Any`)
 
 Note that rather than being a direct `Array<Array<String>>` the `trialOrders` array needs to be an `Array<Object>` in order to parse correctly in the Any format. To do this the `trialOrders` array requires specification of an `order` array within it to accomplish this nesting, as demonstrated in the example below.
 
@@ -145,6 +152,19 @@ By default if no `correctAnswer` is specified or no `questions` are asked in a t
 When no `tasks` are specified in a session configuration, FPSci treats trials as tasks creating one task per trial *type* in the [trial configuration](#trial-configuration).
 
 As described [above](#session-configuration) the `randomizeTaskOrder` session-level configuration parameter allows the experiment designer to select tasks in either the order they are specified or a random order. To support legacy configuration `randomizeTrialOrder` is treated as equivalent to `randomizeTaskOrder` in FPSci, but is overwritten when `randomizeTaskOrder` is defined in the config. Trial order randomization within `order`s in tasks is current not supported in FPSci (all orders need to be specified explicitly).
+
+#### Adaptive Stimulus
+FPSci implements adaptive stimulus using a scripting-based flow. The `adaptationCmd` is called whenever the set of trials provided by a previous call is empty. FPSci expects this command to write a short trial config to the `adaptationConfigPath` (or `trials.Any` by deafult). The fields of this adaptive config file are as follows:
+
+- `trials` is the only required field in the config and specifies a list of trials, using any desired [general config](general_config.md) 
+- `progress` is the progress to report in this task, since this cannot be determined by FPSci, if unspecified `progress` is `fnan`
+- `questions` is a list of questions to ask following completing all trials presented in the `trials` array
+- `questionIndex` is the index of the question to assess correctness based upon (defaults to `-1` or the final trial)
+- `correctAnswer` the answer to declare as "correct" for the question indexed by `questionIndex`
+
+The adaptive stimulus script indicates that the task is complete by returning an empty `trials` array.
+
+Note that for adaptive stimulus scripting that requires feedback from the application the adaptation script needs to read the FPSci results database to get its 
 
 ### Trial Configuration
 Trials provide the lowest level of [general configuration](general_configuration.md) in FPSci. Trials are specified with the following parameters:
