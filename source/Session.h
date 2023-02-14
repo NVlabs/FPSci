@@ -353,7 +353,7 @@ protected:
 	/** Get the total target count for the current trial */
 	int totalTrialTargets() const {
 		int totalTargets = 0;
-		const TaskConfig& task = m_sessConfig->tasks[m_currTaskIdx];
+		const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
 		const Array<shared_ptr<TargetConfig>> targetConfigs = task.type == TaskType::constant ? m_targetConfigs[m_currTrialIdx] : m_adaptiveTargetConfigs[m_currTrialIdx];
 		for (shared_ptr<TargetConfig> target : targetConfigs) {
 			if (target->respawnCount == -1) {
