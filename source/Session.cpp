@@ -134,6 +134,7 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 	FPSciAnyTableReader reader(any);
 	Set<String> uniqueIds;
 
+	bool allAdaptive = true;
 	switch (settingsVersion) {
 	case 1:
 		TrialConfig::defaultConfig() = (FpsConfig)(*this);		// Setup the default configuration for trials here
@@ -145,20 +146,30 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 		reader.getIfPresent("randomizeTaskOrder", randomizeTaskOrder);
 		reader.getIfPresent("weightByCount", weightByCount);
 		reader.getIfPresent("blockCount", blockCount);
-		reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
-		for (int i = 0; i < trials.length(); i++) {
-			if (trials[i].id.empty()) {						// Look for trials without an id
-				trials[i].id = String(std::to_string(i));	// Autoname w/ index
-			}
-			uniqueIds.insert(trials[i].id);
-			if (uniqueIds.size() != i + 1) {
-				logPrintf("ERROR: Duplicate trial ID \"%s\" found (trials without IDs are assigned an ID equal to their index in the trials array)!\n", trials[i].id);
-			}
-		}
-		if (uniqueIds.size() != trials.size()) {
-			throw "Duplicate trial IDs found in experiment config. Check log.txt for details!";
-		}
 		reader.getIfPresent("tasks", tasks);
+
+		for (TaskConfig& task : tasks) {
+			if (task.type != TaskType::adaptive) {
+				allAdaptive = false;
+				break;
+			}
+		}
+		if (!allAdaptive) {
+			// Only get and check trials when not all tasks are adaptive
+			reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
+			for (int i = 0; i < trials.length(); i++) {
+				if (trials[i].id.empty()) {						// Look for trials without an id
+					trials[i].id = String(std::to_string(i));	// Autoname w/ index
+				}
+				uniqueIds.insert(trials[i].id);
+				if (uniqueIds.size() != i + 1) {
+					logPrintf("ERROR: Duplicate trial ID \"%s\" found (trials without IDs are assigned an ID equal to their index in the trials array)!\n", trials[i].id);
+				}
+			}
+			if (uniqueIds.size() != trials.size()) {
+				throw "Duplicate trial IDs found in experiment config. Check log.txt for details!";
+			}
+		}
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
