@@ -50,6 +50,14 @@ void FPSciLogger::initResultsFile(const String& filename,
 		logPrintf(("Error opening log file: " + filename).c_str());					// Write an error to the log
 	}
 
+	// Build up array of all (additional) trial parameters to log
+	m_trialParams = sessConfig->logger.trialParamsToLog;
+	for (const TrialConfig& t : sessConfig->trials) {
+		for (const String& p : t.logger.trialParamsToLog) {
+			if (!m_trialParams.contains(p)) m_trialParams.append(p);
+		}
+	}
+
 	// Create tables if a new log file is opened
 	if (createNewFile) {
 		createExperimentsTable(expConfigFilename);
@@ -57,16 +65,7 @@ void FPSciLogger::initResultsFile(const String& filename,
 		createTasksTable();
 		createTargetTypeTable();
 		createTargetsTable();
-		
-		// Build up array of all trial parameters to log
-		m_trialParams = sessConfig->logger.trialParamsToLog;
-		for (const TrialConfig& t : sessConfig->trials) {
-			for (const String& p : t.logger.trialParamsToLog) {
-				if (!m_trialParams.contains(p)) m_trialParams.append(p);
-			}
-		}
 		createTrialsTable(m_trialParams);
-		
 		createTargetTrajectoryTable();
 		createPlayerActionTable();
 		createFrameInfoTable();
