@@ -149,7 +149,7 @@ public:
 	void logTargetTypes(const Array<shared_ptr<TargetConfig>>& targets);
 
 	/** Wakes up the logging thread and flushes even if the buffer limit is not reached yet. */
-	void flush(bool blockUntilDone);
+	void flush(bool blockUntilDone=false);
 	
 	/** Generate a timestamp for logging */
 	static String genUniqueTimestamp();

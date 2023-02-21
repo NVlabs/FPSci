@@ -312,6 +312,7 @@ bool Session::nextTrial() {
 	if (m_taskTrials.length() == 0) {	// We are out of trials, load a new task
 		// Handle adaptive update here (task progres managed below)
 		if (task.type == TaskType::adaptive) {
+			logger->flush();								// Write all pending results to disk here (TODO: should be blocking!)
 			adaptiveDone = !adaptStimulus(task.adaptCmd);	// This method handles reading from the resulting input file
 			if (adaptiveDone) {	// Mark single trial order in this task as complete (no remaining trials)
 				m_completedTasks[m_currTaskIdx][0] += 1;		// Mark this task (single order) as complete
