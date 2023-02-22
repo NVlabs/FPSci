@@ -98,8 +98,9 @@ if not done:
         print(f"Found last trial rates of {lastRates[0]} and {lastRates[1]} Hz")
         
         #TODO: Replace this logic in the future (code decides how many answers were "yes I can tell a difference" required to adapt)
-        ndRatio = sum([1 for a in answers[:ND_TO_END] if 'no' in a.lower()]) / ND_TO_END
-        print(f'{100*ndRatio}% of last {ND_TO_END} responses were "no difference"...')
+        answerCount = min(len(answers), ND_TO_END)
+        ndRatio = sum([1 for a in answers[:answerCount] if 'no' in a.lower()]) / answerCount
+        print(f'{100*ndRatio}% of last {answerCount} responses were "no difference"...')
 
         if ndRatio >= 0.5: # Step away from the baseline
             print('Mostly "no difference": keep last levels')
