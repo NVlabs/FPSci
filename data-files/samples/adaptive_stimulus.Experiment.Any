@@ -1,0 +1,42 @@
+{
+    description = "Adaptive Stimulus Example";
+
+    // This must be logged for the adaptation script to work!
+    trialParametersToLog: ["frameRate"], 
+
+    // 1-hit fast firing weapon
+    weapon = {
+        firePeriod = 0.1;
+        damagePerSecond = 10;
+    };
+
+    sessions = [
+        {
+            id = "AdaptFrameRate";
+            description = "An example session dynamically adapting frame rate";
+
+            // The task array handles all creation of trials here (no trials array required)
+            tasks = [
+                {
+                    id = "fr_adapt";    
+                    type = "adaptive";      // Required to indicate this is adaptive
+                    count = 4;
+
+                    // This command will be called to generate a new trials.Any file
+                    adaptationCmd = "python samples/framerate_adapt_sample.py";
+                }
+            ];
+        }
+    ];
+
+    targets = [
+        { 
+            "axisLocked": [ false, false, true ], 
+            "destSpace": "player", 
+            "id": "moving", 
+            "motionChangePeriod": [ 2, 3 ], 
+            "speed": [ 7, 10 ], 
+            "visualSize": [ 0.05, 0.05 ]
+        }
+    ];
+}

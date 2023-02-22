@@ -1,0 +1,11 @@
+{ 
+    currentUser = "Sample User"; 
+    sessions = ( "AdaptFrameRate"); 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            id = "Sample User"; 
+            sessions = ( "AdaptFrameRate"); 
+        } ); 
+    
+} 
