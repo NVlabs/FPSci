@@ -1,21 +1,14 @@
-VERBOSE = True
+VERBOSE = True # This sets whether additional checks are performed and warnings/errors printed
 
-def setTrialTargetIds(config, trialId, targetIds):
-    if type(targetIds) is not list and VERBOSE: 
-        raise f'Provided targetIds must be a list (is a {type(targetIds)})!'
-    # Find the trial in the config array and modify its targetIds field
-    for t in config['trials']:
-        if t['id'] == trialId: 
-            t['targetIds'] = targetIds # Update the targetIds
-            return
-    raise f'Could not find trial with id {trialId}!'
-
-def emptyTaskConfig(progress=100):
-    return {
+# An empty task (task complete signal) with optional progress value
+def emptyTaskConfig(progress=None):
+    config = {
         'trials': [],
-        'progress': progress
     }
+    if progress is not None: config['progress'] = progress
+    return config
 
+# A task which sets a single parameter to an array of values and asks a question
 def singleParamTaskConfig(param, values, targetIds, questions, progress=None, questionIdx=None, correctAnswer=None, description=None):
     # Build base config
     config = {
@@ -47,6 +40,18 @@ def singleParamTrialArray(param, values, targetIds, randomizeOrder=False):
         })
     return trials
 
+# Set the target ids for a specific trial (allows customization of targets on a per-trial basis)
+def setTrialTargetIds(config, trialId, targetIds):
+    if type(targetIds) is not list and VERBOSE: 
+        raise f'Provided targetIds must be a list (is a {type(targetIds)})!'
+    # Find the trial in the config array and modify its targetIds field
+    for t in config['trials']:
+        if t['id'] == trialId: 
+            t['targetIds'] = targetIds # Update the targetIds
+            return
+    raise f'Could not find trial with id {trialId}!'
+
+# Write this configuration to an any file (defaults to trials.Any)
 def writeToAny(path, config, fname='trials.Any'):
     import os, json
     # Add filename if missing from provided path
