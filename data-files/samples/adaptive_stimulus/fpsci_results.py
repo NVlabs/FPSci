@@ -42,7 +42,7 @@ def getCurrentTaskId(db): return runSingleResultQuery(db, 'SELECT task_id FROM T
 def getCurrentTaskIndex(db, taskId=None):
     q = 'SELECT task_index FROM Tasks '
     if taskId is not None: q += f'WHERE task_id is "{taskId}" '
-    q += 'ORDER BY task_index DESC LIMIT 1'
+    q += 'ORDER BY rowid DESC LIMIT 1'
     return runSingleResultQuery(db, q)
 
 def getTrialCountByTask(db, taskId=None):
