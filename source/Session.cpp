@@ -72,6 +72,7 @@ Any TrialConfig::toAny(const bool forceAll) const {
 TaskConfig::TaskConfig(const Any& any) {
 	FPSciAnyTableReader reader(any);
 	reader.get("id", id, "Tasks must be provided w/ an \"id\" field!");
+	reader.getIfPresent("count", count);
 	// Get task type
 	String typeStr;
 	if (reader.getIfPresent("type", typeStr)) {
@@ -80,7 +81,6 @@ TaskConfig::TaskConfig(const Any& any) {
 	if (type == TaskType::constant) {
 		// Get constant stimulus parameters
 		reader.get("trialOrders", trialOrders, "Constant stimulus tasks must be provided w/ trial orders!");
-		reader.getIfPresent("count", count);
 		reader.getIfPresent("questions", questions);
 
 		// Get the list of options from the final multiple choice question
@@ -195,6 +195,9 @@ Any SessionConfig::toAny(const bool forceAll) const {
 }
 
 bool Session::adaptStimulus(const String& adaptCmd) {
+	// Make sure any results are written to disk (make this blocking in the future)
+	logger->flush();
+
 	// Build and run blocking command to update task
 	CommandSpec cmd = CommandSpec(adaptCmd, false, true);
 	runCommand(cmd, "Adaptive stimulus update");
@@ -208,7 +211,12 @@ bool Session::adaptStimulus(const String& adaptCmd) {
 	reader.getIfPresent("correctAnswer", m_adaptiveCorrectAnswer);
 	reader.get("trials", m_adaptiveTrials, format("The provided adaptive stimulus config file (%s) does not contain any trials!", m_sessConfig->tasks[m_currTaskIdx].adaptConfigPath).c_str());
 
-	if (m_adaptiveTrials.length() == 0) return false;		// Script returned no new trials (end of adaptive task)
+	if (m_adaptiveTrials.length() == 0) {				// Script returned no new trials (end of adaptive task)
+		m_completedTasks[m_currTaskIdx][0] += 1;		// Mark this task (single order) as complete
+		m_remainingTasks[m_currTaskIdx][0] -= 1;		// Clear the remaining tasks (was -1 to indicate unknown)
+		m_adaptiveTrialCount = 0;						// Clear the adaptive trial count for this task
+		return true;									// Return true to indicate complete
+	}
 
 	m_adaptiveTargetConfigs.clear();
 	m_currTrialIdx = -1;									// Pre-decrement so incrememnt brings this to 0 for the first trial index
@@ -228,7 +236,7 @@ bool Session::adaptStimulus(const String& adaptCmd) {
 		}
 	}
 
-	return true;
+	return false;
 }
 
 float SessionConfig::getTrialOrdersPerBlock(void) const {
@@ -306,23 +314,19 @@ const RealTime Session::targetFrameTime()
 	return defaultFrameTime;
 }
 
-bool Session::nextTrial() {
+bool Session::nextTrial(const bool init) {
 	const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
 	bool adaptiveDone = false;
 	if (m_taskTrials.length() == 0) {	// We are out of trials, load a new task
-		// Handle adaptive update here (task progres managed below)
-		if (task.type == TaskType::adaptive) {
-			logger->flush();								// Write all pending results to disk here (TODO: should be blocking!)
-			adaptiveDone = !adaptStimulus(task.adaptCmd);	// This method handles reading from the resulting input file
-			if (adaptiveDone) {	// Mark single trial order in this task as complete (no remaining trials)
-				m_completedTasks[m_currTaskIdx][0] += 1;		// Mark this task (single order) as complete
-				m_remainingTasks[m_currTaskIdx][0] = 0;			// Clear the remaining tasks (was -1 to indicate unknown)
-				m_adaptiveTrialCount = 0;						// Clear the adaptive trial count for this task
+		if (task.type == TaskType::adaptive && !init) {			// We are in an existing task (won't need to do any task math)
+			int lastTrialCount = m_adaptiveTrialCount;			// This will be cleared by the following call (if done)
+			adaptiveDone = adaptStimulus(task.adaptCmd);		// This method handles reading from the resulting input file
+			if (adaptiveDone) {
+				logger->updateTaskEntry(lastTrialCount, true);	// Make sure this is marked as completed here
 			}
 		}
-
-		// If we have finished a constant stimulus trial order or the adaptive stimulus is done advance to another task
-		if (task.type == TaskType::constant || adaptiveDone) {
+		// If we have finished a constant stimulus trial order or the adaptive stimulus is done advance to a new task
+		if (task.type == TaskType::constant || adaptiveDone || init) {
 			// Build an array of unrun tasks in this block
 			Array<Array<int>> unrunTaskIdxs;
 			for (int i = 0; i < m_remainingTasks.size(); i++) {
@@ -366,8 +370,8 @@ bool Session::nextTrial() {
 					taskId = m_sessConfig->trials[m_currTaskIdx].id;
 				}
 				else {
-					trialIds = m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order;
-					taskId = m_sessConfig->tasks[m_currTaskIdx].id;
+					trialIds = task.trialOrders[m_currOrderIdx].order;
+					taskId = task.id;
 				}
 				for (const String& trialId : trialIds) {
 					int trialIdx = m_sessConfig->getTrialIndex(trialId);
@@ -379,12 +383,22 @@ bool Session::nextTrial() {
 				logger->addTask(m_sessConfig->id, m_currBlock - 1, taskId, getTaskCount(m_currTaskIdx), trialIds);
 			}
 			else if (task.type == TaskType::adaptive) {
-				adaptiveDone = !adaptStimulus(task.adaptCmd);	// This method handles reading from the resulting input file
-				//if(adaptiveDone) // TODO: do we need to handle this case (done on first run?) 
+				// This case handles when we need to transition to a new adaptive stimulus task (re-adapt stimulus here b/c previous call was empty)
+				if (init || adaptiveDone) {
+					// Write the new task to the database (allow script to read it on call)
+					logger->addTask(m_sessConfig->id, m_currBlock - 1, task.id, getTaskCount(m_currTaskIdx), Array<String>("adaptive"));
+				}
+				// Adapt stimulus for a new task here
+				adaptiveDone = adaptStimulus(task.adaptCmd);
+				if(adaptiveDone) {	
+					// TODO: Decide what to do when this new task returns an empty result...
+				}
 			}
 		}
-
 	}
+
+	// Check for no new trial (can come from adaptive stimulus case being finished)
+	if (m_taskTrials.length() == 0) return false;		
 
 	// Get and update the trial configuration
 	m_trialConfig = m_taskTrials.pop();
@@ -456,20 +470,19 @@ bool Session::nextBlock(bool init) {
 			// Use a single order for adaptive stimulus, allow multiple orders for constant stimulus
 			const TaskConfig& task = m_sessConfig->tasks[i];
 			const int orderCnt = task.type == TaskType::constant ? task.trialOrders.size() : 1;		// Only 1 order for adaptive tasks
-			const int remainingCnt = task.type == TaskType::constant ? task.count : -1;				// Treat all adaptive tasks as endless trials (to begin with)
 			for (int j = 0; j < orderCnt; j++) {
 				if (init) {
 					m_completedTasks[i].append(0);	// Zero completed count
-					m_remainingTasks[i].append(Array<int>(remainingCnt)); // Append to complete count
+					m_remainingTasks[i].append(Array<int>(task.count)); // Append to complete count
 				}
 				else {
 					m_completedTasks[i][j] = 0;
-					m_remainingTasks[i][j] += remainingCnt;
+					m_remainingTasks[i][j] += task.count;
 				}
 			}
 		}
 	}
-	return nextTrial();
+	return nextTrial(true);
 }
 
 void Session::onInit(String filename, String description) {
@@ -647,15 +660,13 @@ void Session::processResponse() {
 
 	// Update completed/remaining task state
 	const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
-	if (m_taskTrials.size() == 0) {										// Task is complete update tracking
-		if (task.type == TaskType::constant) {
-			m_completedTasks[m_currTaskIdx][m_currOrderIdx] += 1;		// Mark task trial order as completed if constant (task isn't necessarily done if adaptive)
-		}
+	if (m_taskTrials.size() == 0 && task.type == TaskType::constant) {	// Task is complete update tracking
+		m_completedTasks[m_currTaskIdx][m_currOrderIdx] += 1;			// Mark task trial order as completed if constant (task isn't necessarily done if adaptive)
 		if (m_remainingTasks[m_currTaskIdx][m_currOrderIdx] > 0) {		// Remove task trial order from remaining
 			m_remainingTasks[m_currTaskIdx][m_currOrderIdx] -= 1;
 		}
 	}
-	m_completedTaskTrials[m_trialConfig->id] += 1;						// Incrememnt count of this trial type in task
+	m_completedTaskTrials[m_trialConfig->id] += 1;						// Increment count of this trial type in task
 
 	// This update is only used for completed trials
 	if (notNull(logger)) {
@@ -764,8 +775,10 @@ void Session::updatePresentationState() {
 				if (m_taskTrials.length() == 0) newState = PresentationState::taskQuestions;	// Move forward to providing task-level feedback
 				else {		// Individual trial complete, go back to reference target
 					const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
-					const int toRun = task.type == TaskType::constant ? task.trialOrders[m_currOrderIdx].order.size() : m_adaptiveTrials.size();
-					logger->updateTaskEntry(toRun - m_taskTrials.size(), false);
+					const int completeTrials = task.type == TaskType::constant ?
+						task.trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size() :
+						m_adaptiveTrialCount;
+					logger->updateTaskEntry(completeTrials, false);
 					if (!nextTrial()) newState = PresentationState::taskQuestions;		// No new trials are available, move to task questions
 					else newState = PresentationState::referenceTarget;
 				}
@@ -802,10 +815,10 @@ void Session::updatePresentationState() {
 			int completeTrials = 1;		// Assume 1 completed trial (if we don't have specified tasks)
 			const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
 			if (m_sessConfig->tasks.size() > 0) {
-				const int toRun = task.type == TaskType::constant ? task.trialOrders[m_currTrialIdx].order.size() : m_adaptiveTrials.size();
-				completeTrials = toRun - m_taskTrials.size();
+				completeTrials = task.type == TaskType::constant ? task.trialOrders[m_currTrialIdx].order.size() - m_taskTrials.size() : m_adaptiveTrialCount;
 			}
-			logger->updateTaskEntry(completeTrials, true);
+			const bool complete = task.type == TaskType::constant ? true : false;
+			logger->updateTaskEntry(completeTrials, complete);
 			if (blockComplete()) {
 				m_currBlock++;
 				if (m_currBlock > m_sessConfig->blockCount) {	// End of session (all blocks complete)
