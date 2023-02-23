@@ -815,7 +815,7 @@ void Session::updatePresentationState() {
 			int completeTrials = 1;		// Assume 1 completed trial (if we don't have specified tasks)
 			const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
 			if (m_sessConfig->tasks.size() > 0) {
-				completeTrials = task.type == TaskType::constant ? task.trialOrders[m_currTrialIdx].order.size() - m_taskTrials.size() : m_adaptiveTrialCount;
+				completeTrials = task.type == TaskType::constant ? task.trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size() : m_adaptiveTrialCount;
 			}
 			const bool complete = task.type == TaskType::constant ? true : false;
 			logger->updateTaskEntry(completeTrials, complete);
