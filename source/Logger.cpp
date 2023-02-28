@@ -250,6 +250,7 @@ void FPSciLogger::createTasksTable() {
 
 void FPSciLogger::addTask(const String& sessId, const int blockIdx, const String& taskId, const int taskIdx, const Array<String>& trialOrder) {
 	m_taskTimeStr = genUniqueTimestamp();
+	String trialOrderStr = trialOrder.length() > 0 ? "'" + Any(trialOrder).unparse() + "'" : "NULL";
 	const RowEntry taskValues = {
 		"'" + sessId + "'",
 		String(std::to_string(blockIdx)),
@@ -257,7 +258,7 @@ void FPSciLogger::addTask(const String& sessId, const int blockIdx, const String
 		String(std::to_string(taskIdx)),
 		"'" + m_taskTimeStr + "'",
 		"NULL",
-		"'" + Any(trialOrder).unparse() + "'",
+		trialOrderStr,
 		"0",
 		"0"
 	};

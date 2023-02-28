@@ -391,7 +391,7 @@ bool Session::nextTrial(const bool init) {
 				// This case handles when we need to transition to a new adaptive stimulus task (re-adapt stimulus here b/c previous call was empty)
 				if (init || adaptiveDone) {
 					// Write the new task to the database (allow script to read it on call)
-					logger->addTask(m_sessConfig->id, m_currBlock - 1, task.id, getTaskCount(m_currTaskIdx), Array<String>("adaptive"));
+					logger->addTask(m_sessConfig->id, m_currBlock - 1, task.id, getTaskCount(m_currTaskIdx), Array<String>());
 				}
 				// Adapt stimulus for a new task here
 				adaptiveDone = adaptStimulus(task.adaptCmd);
