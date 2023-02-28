@@ -45,26 +45,38 @@ def getCurrentTaskIndex(db, taskId=None):
     q += 'ORDER BY rowid DESC LIMIT 1'
     return runSingleResultQuery(db, q)
 
-def getTrialCountByTask(db, taskId=None):
-    q = 'SELECT rowid FROM Trials '
-    if taskId is not None: q += f'WHERE task_id is "{taskId}"'
-    rows = runQuery(db, q)
-    if rows is None: return 0
-    return len(rows)
+def getTaskStartTime(db, taskId=None, taskIndex=None):
+    q = 'SELECT start_time FROM Tasks '
+    if taskId is not None: 
+        q += f'WHERE task_id is "{taskId}" '
+        if taskIndex is not None: q += f'AND task_index is {taskIndex} '
+    q += 'ORDER BY rowid DESC LIMIT 1'
+    return runSingleResultQuery(db, q)
+
+def getTrialCountByTask(db, taskId=None, taskIndex=None):
+    q = 'SELECT trials_complete FROM Tasks '
+    if taskId is not None: 
+        q += f'WHERE task_id is "{taskId}" '
+        if taskIndex is not None: q += f'AND task_index is {taskIndex} '
+    q += 'ORDER BY rowid DESC LIMIT 1'
+    count = runSingleResultQuery(db, q)
+    if count is None: return 0
+    return count
 
 def getTotalTrialCount(db):
     rows = runQuery(db, f'SELECT rowid FROM Trials')
     if rows is None: return 0
     return len(rows)
 
-def getLastQuestionResponses(db, n=1, taskId=None, taskIdx=None): 
+def getLastQuestionResponses(db, n=1, taskId=None, taskIdx=None, startTime=None): 
     # You should specify a task id in order to filter on index
     if taskId is None and taskIdx is not None: raise Exception("Task index was provided but no task id!")
     # If no task ID is specified check all records
     q = 'SELECT response FROM Questions '
     if taskId is not None: 
         q += f'WHERE task_id is "{taskId}" '
-        if not (taskIdx is None): q += f'AND task_index is {taskIdx} '
+        if taskIdx is not None: q += f'AND task_index is {taskIdx} '
+        if startTime is not None: q += f'AND time > "{startTime}" '
     q += f'ORDER BY rowid DESC LIMIT {n}'
     if n == 1: return runSingleResultQuery(db, q)
     else: return runQueryAndUnpack(db, q)

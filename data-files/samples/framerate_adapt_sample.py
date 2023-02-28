@@ -59,10 +59,17 @@ if TASK_INDEX is None:
 print(f'Using task id: "{TASK_ID}" and index: {TASK_INDEX}')
 
 # Print trial status (informational only)
-print(f'Db contains a total of {results.getTotalTrialCount(db)} trial(s) ({results.getTrialCountByTask(db, TASK_ID)} for this task)')
+total_trials = results.getTotalTrialCount(db)
+task_trial_cnt = results.getTrialCountByTask(db, TASK_ID)
+idx_trial_cnt = results.getTrialCountByTask(db, TASK_ID, TASK_INDEX)
+print(f'Results database contains a total of {total_trials} trial(s). {task_trial_cnt} ({idx_trial_cnt}) for this task (index)!')
+
+# Use time to filter out only questions that come from our current task iteration
+START_TIME = results.getTaskStartTime(db, TASK_ID, TASK_INDEX)
+print(f'Filtering responses using task start time of: {START_TIME}')
 
 # Get answers for questions from our task (used for generating next task)
-answers = results.getLastQuestionResponses(db, MAX_QUESTIONS, TASK_ID, TASK_INDEX)
+answers = results.getLastQuestionResponses(db, MAX_QUESTIONS, TASK_ID, TASK_INDEX, START_TIME)
 print(f'Got {len(answers)} responses from results file...')
 
 # Check various termination conditions
