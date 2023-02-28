@@ -183,8 +183,9 @@ public:
 	int				questionIdx = -1;			///< The index of the (task-level) question corresponding to the correct answer above (populated automatically)
 
 	// Adaptive task type parameters
-	String		adaptCmd;					///< For adaptive tasks, the command to call for adaptation
+	String		adaptCmd;						///< For adaptive tasks, the command to call for adaptation
 	String		adaptConfigPath = "trials.Any";	///< For adaptive tasks, the input Any file to read for newly adapted trial(s)
+	bool		removeAdaptConfig = true;		///< For adaptive tasks, remove the adaptive config after consuming it
 
 	int count = 1;								///< Count of times to present this task (in each of the trialOrders, currently unused)
 

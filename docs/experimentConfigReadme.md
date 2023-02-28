@@ -112,6 +112,7 @@ The fields below are used for `"constant"` `type` tasks and ignored for `"adapti
 The fields below are used for `"adaptive"` `type` tasks and ignored for `"constant"` tasks
 - `adaptationCmd` the command to run to adapt stimulus
 - `adaptationConfigPath` is the path to get the adaptive configuration from after running the `adaptationCmd` (default is `trials.Any`)
+- `removeAdaptationConfig` controls whether FPSci removes the adaptiation config from disk after reading it (preventing accidental "double reads"). This defaults to true.
 
 Note that rather than being a direct `Array<Array<String>>` the `trialOrders` array needs to be an `Array<Object>` in order to parse correctly in the Any format. To do this the `trialOrders` array requires specification of an `order` array within it to accomplish this nesting, as demonstrated in the example below.
 
@@ -138,6 +139,13 @@ tasks = [
         // Repeat each order 10 times (20 total sets of 2 trials)
         count = 10;
     },
+    {
+        id = "adaptive";        // Example of adaptive task
+
+        adaptationCmd = "python samples/framerate_adapt_sample.py";     // Must be provided
+        adaptationConfigPath = "trials.Any";        // Default value is "trials.Any" in data-files directory
+        removeAdaptationConfig = true;              // Default is to remove the trials.Any file after read
+    }
 ]
 ```
 

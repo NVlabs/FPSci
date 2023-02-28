@@ -110,6 +110,7 @@ TaskConfig::TaskConfig(const Any& any) {
 		// Get adaptive stimulus parameters
 		reader.get("adaptationCmd", adaptCmd);
 		reader.getIfPresent("adaptationConfigPath", adaptConfigPath);
+		reader.getIfPresent("removeAdaptationConfig", removeAdaptConfig);
 	}
 }
 
@@ -195,6 +196,7 @@ Any SessionConfig::toAny(const bool forceAll) const {
 }
 
 bool Session::adaptStimulus(const String& adaptCmd) {
+	const TaskConfig& task = m_sessConfig->tasks[m_currTaskIdx];
 	// Make sure any results are written to disk (make this blocking in the future)
 	logger->flush();
 
@@ -203,13 +205,16 @@ bool Session::adaptStimulus(const String& adaptCmd) {
 	runCommand(cmd, "Adaptive stimulus update");
 
 	// Get fields from Any
-	Any a = Any::fromFile(m_sessConfig->tasks[m_currTaskIdx].adaptConfigPath);
+	Any a = Any::fromFile(task.adaptConfigPath);
 	AnyTableReader reader(a);
 	reader.getIfPresent("progress", m_adaptiveProgress);
 	reader.getIfPresent("questions", m_adaptiveQuestions);
 	reader.getIfPresent("questionIndex", m_adaptiveQuestionIndex);
 	reader.getIfPresent("correctAnswer", m_adaptiveCorrectAnswer);
 	reader.get("trials", m_adaptiveTrials, format("The provided adaptive stimulus config file (%s) does not contain any trials!", m_sessConfig->tasks[m_currTaskIdx].adaptConfigPath).c_str());
+
+	// Remove Any file if requested (avoids duplicate reads)
+	if (task.removeAdaptConfig) remove(task.adaptConfigPath.c_str());
 
 	if (m_adaptiveTrials.length() == 0) {				// Script returned no new trials (end of adaptive task)
 		m_completedTasks[m_currTaskIdx][0] += 1;		// Mark this task (single order) as complete
