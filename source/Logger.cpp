@@ -310,6 +310,7 @@ void FPSciLogger::createTargetTrajectoryTable() {
 }
 
 void FPSciLogger::recordTargetLocations(const Array<TargetLocation>& locations) {
+	if (locations.length() == 0) return;
 	Array<RowEntry> rows;
 	for (const auto& loc : locations) {
 		String stateStr = presentationStateToString(loc.state);
@@ -343,6 +344,7 @@ void FPSciLogger::createPlayerActionTable() {
 }
 
 void FPSciLogger::recordPlayerActions(const Array<PlayerAction>& actions) {
+	if (actions.length() == 0) return;
 	Array<RowEntry> rows;
 	for (PlayerAction action : actions) {
 		String stateStr = presentationStateToString(action.state);
@@ -383,6 +385,7 @@ void FPSciLogger::createFrameInfoTable() {
 }
 
 void FPSciLogger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
+	if (frameInfo.length() == 0) return;
 	Array<RowEntry> rows;
 	for (FrameInfo info : frameInfo) {
 		Array<String> frameValues = {
@@ -545,10 +548,12 @@ void FPSciLogger::loggerThreadEntry()
 		recordPlayerActions(playerActions);
 		recordTargetLocations(targetLocations);
 
-		insertRowsIntoDB(m_db, "Questions", questions);
-		insertRowsIntoDB(m_db, "Targets", targets);
-		insertRowsIntoDB(m_db, "Users", users);
-		insertRowsIntoDB(m_db, "Trials", trials);
+		if(questions.length() > 0) insertRowsIntoDB(m_db, "Questions", questions);
+		if(targets.length() > 0) insertRowsIntoDB(m_db, "Targets", targets);
+		if(users.length() > 0) insertRowsIntoDB(m_db, "Users", users);
+		if(trials.length() > 0) insertRowsIntoDB(m_db, "Trials", trials);
+
+		if (m_flushNow) m_flushNow = false;
 
 		lk.lock();
 	}
