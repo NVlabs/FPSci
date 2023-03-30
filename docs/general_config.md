@@ -703,10 +703,10 @@ In addition to the programmable behavior above the general config also supports 
 
 | Parameter Name                    | Type                  | Description                                                                                   |
 |-----------------------------------|------------------------|----------------------------------------------------------------------------------------------|
-|`commandsOnSessionStart`           |`Array<CommandSpec>`    | Command(s) to run at the start of a new session. Command(s) quit on session end              |
-|`commandsOnSessionEnd`             |`Array<CommandSpec>`    | Command(s) to run at the end of a new session. Command(s) not forced to quit                 |
-|`commandsOnTrialStart`             |`Array<CommandSpec>`    | Command(s) to run at the start of a new trial within a session. Command(s) quit on trial end |
-|`commandsOnTrialEnd`               |`Array<CommandSpec>`    | Command(s) to run at the end of a new trial within a session. Command(s) not forced to quit  |
+|`sessionStartCmds`                 |`Array<CommandSpec>`    | Command(s) to run at the start of a new session. Command(s) quit on session end              |
+|`sessionEndCmds`                   |`Array<CommandSpec>`    | Command(s) to run at the end of a new session. Command(s) not forced to quit                 |
+|`TrialStartCmds`                   |`Array<CommandSpec>`    | Command(s) to run at the start of a new trial within a session. Command(s) quit on trial end |
+|`TrialEndCmds`                     |`Array<CommandSpec>`    | Command(s) to run at the end of a new trial within a session. Command(s) not forced to quit  |
 
 Note that the `Array` of commands provided for each of the parameters above is ordered, but the commands are launched (nearly) simultaneously. This means that run order within a set of commands cannot be strictly guaranteed. If you have serial dependencies within a list of commands consider using a script to sequence them.
 
@@ -721,29 +721,29 @@ Each command is specified using a `CommandSpec` which itself supports sub-fields
 For example, the following will cause session start, session end, trial start and trial end strings to be written to a `commandLog.txt` file.
 
 ```
-commandsOnSessionStart = ( 
+sessionStartCmds = ( 
     { command = "cmd /c echo Session start>> commandLog.txt", blocking = true },
     { command = "cmd /c echo Session start second command>> commandLog.txt"} 
 );
-commandsOnSessionEnd = (
+sessionEndCmds = (
     { command = "cmd /c echo Session end>> commandLog.txt", blocking = true }, 
     { command = "cmd /c echo Session end second command>> commandLog.txt" }
 );
-commandsOnTrialStart = ( { command = "cmd /c echo Trial start>> commandLog.txt" } );
-commandsOnTrialEnd = ( { command = "cmd /c echo Trial end>> commandLog.txt" } );
+trialStartCmds = ( { command = "cmd /c echo Trial start>> commandLog.txt" } );
+trialEndCmds = ( { command = "cmd /c echo Trial end>> commandLog.txt" } );
 ```
 
 Another common use would be to run a python script/code at the start or end of a session. For example:
 
 ```
-commandsOnSessionStart = ( { command = "python \"../scripts/event logger/event_logger.py\"" } );
-commandsOnSessionEnd = ( { command = "python -c \"f = open('texttest.txt', 'w'); f.write('Hello world!'); f.close()\"", blocking = true } );
+sessionStartCmds = ( { command = "python \"../scripts/event logger/event_logger.py\"" } );
+sessionEndCmds = ( { command = "python -c \"f = open('texttest.txt', 'w'); f.write('Hello world!'); f.close()\"", blocking = true } );
 ```
 
 Alternatively, to open a web page at the end of a session you could use:
 
 ```
-commandsOnSessionEnd = ( { command = "cmd /c start [webpage URL]", foreground = true } );
+sessionEndCmds = ( { command = "cmd /c start [webpage URL]", foreground = true } );
 ```
 
 ### Supported Substrings for Commands
