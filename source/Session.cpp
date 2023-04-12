@@ -772,9 +772,12 @@ void Session::updatePresentationState() {
 	{ // handle state transition.
 		m_timer.startTimer();
 		if (newState == PresentationState::referenceTarget) {
-			initTargetAnimation(false);	// Spawn the reference (and also preview if requested) target(s)
+			if (!m_trialConfig->targetView.showRefTarget) {
+				newState = PresentationState::pretrial;			// If we don't want to show reference targets skip this step
+			}
+			else initTargetAnimation(false);	// Spawn the reference (and also preview if requested) target(s)
 		}
-		else if (newState == PresentationState::pretrial) {
+		if (newState == PresentationState::pretrial) {
 			// Clear weapon miss decals (if requested)
 			if (m_trialConfig->targetView.clearDecalsWithRef) {
 				m_weapon->clearDecals();
