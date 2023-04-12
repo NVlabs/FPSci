@@ -33,7 +33,7 @@ class WaypointManager;
 // ready: ready scene that happens before beginning of a task.
 // task: actual task (e.g. instant hit, tracking, projectile, ...)
 // feedback: feedback showing whether task performance was successful or not.
-enum PresentationState { initial, referenceTarget, pretrial, trialTask, trialFeedback, sessionFeedback, complete };
+enum PresentationState { initial, referenceTarget, pretrial, trialTask, trialFeedback, taskQuestions, taskFeedback, sessionFeedback, complete };
 static String presentationStateToString(const PresentationState& state) {
 	String stateStr = "N/A";
 	switch (state) {
@@ -42,6 +42,8 @@ static String presentationStateToString(const PresentationState& state) {
 	case pretrial: stateStr = "pretrial";  break;
 	case trialTask: stateStr = "trialTask"; break;
 	case trialFeedback: stateStr = "trialFeedback";  break;
+	case taskQuestions: stateStr = "taskQuestions"; break;
+	case taskFeedback: stateStr = "taskFeedback"; break;
 	case sessionFeedback: stateStr = "sessionFeedback";  break;
 	case complete: stateStr = "complete"; break;
 	}
@@ -103,7 +105,6 @@ protected:
 
     shared_ptr<UserMenu>					m_userSettingsWindow;				///< User settings window
 	MouseInputMode							m_mouseInputMode = MouseInputMode::MOUSE_CURSOR;	///< Does the mouse currently have control over the view
-	bool									m_showUserMenu = true;				///< Show the user menu after update?
 
 	bool									m_firstSession = true;				///< Flag indicating that this is the first session run
 	UserConfig								m_lastSavedUser;					///< Used to track if user has changed since last save
@@ -173,6 +174,8 @@ public:
 
 	ReticleConfig					reticleConfig;					///< Config for the active reticle
 	shared_ptr<Texture>             reticleTexture;					///< Texture used for reticle
+	bool							showUserMenu = true;			///< Show the user menu after update?
+
 	
 	Table<String, shared_ptr<Texture>> hudTextures;					///< Textures used for the HUD
 	shared_ptr<GuiTheme>			theme;	

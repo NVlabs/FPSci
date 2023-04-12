@@ -434,7 +434,7 @@ void FPSciApp::makeGUI() {
 	// Add the control panes here
 	updateUserMenu = true;
 	// If we require a new user show the menu on startup regardless of configuration
-	m_showUserMenu = experimentConfig.menu.showMenuOnStartup || experimentConfig.menu.requireUserAdd;	
+	showUserMenu = experimentConfig.menu.showMenuOnStartup || experimentConfig.menu.requireUserAdd;	
 	updateDeveloperControls(std::make_shared<FpsConfig>((FpsConfig)experimentConfig));
 }
 
@@ -643,6 +643,7 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 		// Create an empty session
 		sessConfig = SessionConfig::create();
 		sess = Session::create(this);
+		playerCamera = activeCamera();
 	}
 
 	// Update colored materials to choose from for target health
@@ -657,7 +658,7 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 
 	// Update the application w/ the session parameters
 	updateUserMenu = true;
-	if (!m_firstSession) m_showUserMenu = sessConfig->menu.showMenuBetweenSessions;
+	if (!m_firstSession) showUserMenu = sessConfig->menu.showMenuBetweenSessions;
 	updateConfigParameters(sessConfig, forceSceneReload, true, false);
 
 	// Handle results files
@@ -710,6 +711,7 @@ void FPSciApp::updateSession(const String& id, const bool forceSceneReload) {
 
 void FPSciApp::updateTrial(const shared_ptr<TrialConfig> config, const bool forceSceneReload, const bool respawn) {
 	trialConfig = config;	// Naive way to store trial config pointer for now
+	updateUserMenu = true;
 	updateConfigParameters(config, forceSceneReload, respawn);
 }
 
@@ -777,7 +779,7 @@ void FPSciApp::updateConfigParameters(const shared_ptr<FpsConfig> config, const 
 
 		// Update weapon model (if drawn) and sounds
 		weapon->loadModels();
-		weapon->loadSounds();
+		if(startupConfig.audioEnable) weapon->loadSounds();
 		if (!config->audio.sceneHitSound.empty()) {
 			m_sceneHitSound = Sound::create(System::findDataFile(config->audio.sceneHitSound));
 			// Play silently to pre-load the sound
@@ -968,8 +970,9 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		}
 	}
 
-	// Move the player camera to the player position
-	playerCamera->setFrame(player->getCameraFrame());
+	// Move the player
+	const shared_ptr<PlayerEntity>& p = scene()->typedEntity<PlayerEntity>("player");
+	if(notNull(p)) playerCamera->setFrame(p->getCameraFrame());
 	
 	// Handle developer mode features here
 	if (startupConfig.developerMode) {
@@ -983,7 +986,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			updateFrameParameters(trialConfig->render.frameDelay, trialConfig->render.frameRate);
 		}
 
-		if (notNull(waypointManager)) {
+		if (notNull(waypointManager) && notNull(p)) {
 			// Handle highlighting for selected target
 			waypointManager->updateSelected();
 			// Handle player motion recording here
@@ -1198,8 +1201,8 @@ void FPSciApp::onAfterEvents() {
 		m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, trialConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
 		m_userSettingsWindow->setSelectedSession(selSess);
 		moveToCenter(m_userSettingsWindow);
-		m_userSettingsWindow->setVisible(m_showUserMenu);
-		setMouseInputMode(m_showUserMenu ? MouseInputMode::MOUSE_CURSOR : MouseInputMode::MOUSE_FPM);
+		m_userSettingsWindow->setVisible(showUserMenu);
+		setMouseInputMode(showUserMenu ? MouseInputMode::MOUSE_CURSOR : MouseInputMode::MOUSE_FPM);
 
 		// Add the new settings window and clear the semaphore
 		addWidget(m_userSettingsWindow);
@@ -1207,9 +1210,6 @@ void FPSciApp::onAfterEvents() {
 	}
 
 	if (reinitExperiment) {			// Check for experiment reinitialization (developer-mode only)
-		m_widgetManager->clear();
-		addWidget(debugWindow);
-		addWidget(developerWindow);
 		initExperiment();
 		reinitExperiment = false;
 	}
@@ -1461,12 +1461,28 @@ void FPSciApp::onUserInput(UserInput* ui) {
 		}
 	}
 
-	if (m_lastReticleLoaded != currentUser()->reticle.index || m_userSettingsWindow->visible()) {
+	// Update reticle from user settings change (if needed)
+	if (reticleConfig != currentUser()->reticle || m_userSettingsWindow->visible()) {
+		bool updateReticlePreview = false;
 		// Slider was used to change the reticle
 		if (!trialConfig->reticle.indexSpecified) {		// Only allow reticle change if it isn't specified in experiment config
 			setReticle(currentUser()->reticle.index);
-			m_userSettingsWindow->updateReticlePreview();
+			updateReticlePreview = true;
 		}
+		if (!trialConfig->reticle.scaleSpecified) {
+			reticleConfig.scale = currentUser()->reticle.scale;
+			updateReticlePreview = true;
+		}
+		if (!trialConfig->reticle.colorSpecified) {
+			reticleConfig.color = currentUser()->reticle.color;
+			updateReticlePreview = true;
+		}
+		if (!trialConfig->reticle.changeTimeSpecified) {
+			reticleConfig.changeTimeS = currentUser()->reticle.changeTimeS;
+			updateReticlePreview = true;
+		}
+		if(updateReticlePreview) m_userSettingsWindow->updateReticlePreview();
+
 	}
 
 	playerCamera->filmSettings().setSensitivity(sceneBrightness);

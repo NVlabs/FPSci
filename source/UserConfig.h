@@ -18,6 +18,13 @@ public:
 
 	void load(FPSciAnyTableReader reader, int settingsVersion = 1);
 	Any addToAny(Any a, bool forceAll = false) const;
+	bool operator!=(ReticleConfig other) {
+		return index != other.index ||
+			scale[0] != other.scale[0] || scale[1] != other.scale[1] ||
+			color[0] != other.color[0] || color[1] != other.color[1] ||
+			changeTimeS != other.changeTimeS;
+	}
+
 };
 
 /**Class for managing user configuration*/

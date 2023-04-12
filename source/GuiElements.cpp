@@ -463,6 +463,12 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	// User Settings Pane
 	if (config.showUserSettings && !needUser) {
 		m_currentUserPane = m_parent->addPane("Current User Settings");
+		// Update config based on what is specified at the trial-level
+		if (app->trialConfig->reticle.indexSpecified) config.allowReticleIdxChange = false;
+		if (app->trialConfig->reticle.scaleSpecified) config.allowReticleSizeChange = false;
+		if (app->trialConfig->reticle.colorSpecified) config.allowReticleColorChange = false;
+		if (app->trialConfig->reticle.changeTimeSpecified) config.allowReticleChangeTimeChange = false;
+		config.allowReticleChange = config.allowReticleIdxChange || config.allowReticleSizeChange || config.allowReticleColorChange || config.allowReticleChangeTimeChange;
 		drawUserPane(config, m_users.users[m_users.getUserIndex(m_userStatus.currentUser)]);
 	}
 
@@ -610,13 +616,14 @@ void UserMenu::drawUserPane(const MenuConfig& config, UserConfig& user)
 				a->setWidth(m_rgbSliderWidth);
 				a->moveRightOf(b, rgbCaptionWidth);
 			} reticleControlPane->endRow();
-			if (config.allowReticleChangeTimeChange) {
-				reticleControlPane->beginRow(); {
-					auto c = reticleControlPane->addNumberBox("Reticle Change Time", &(user.reticle.changeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
-					c->setCaptionWidth(150.0f);
-					c->setWidth(m_sliderWidth);
-				} reticleControlPane->endRow();
-			}
+		}
+
+		if (config.allowReticleChangeTimeChange) {
+			reticleControlPane->beginRow(); {
+				auto c = reticleControlPane->addNumberBox("Reticle Change Time", &(user.reticle.changeTimeS), "s", GuiTheme::LINEAR_SLIDER, 0.0f, 5.0f, 0.01f);
+				c->setCaptionWidth(150.0f);
+				c->setWidth(m_sliderWidth);
+			} reticleControlPane->endRow();
 		}
 
 		// Draw a preview of the reticle here
@@ -761,7 +768,7 @@ void UserMenu::updateReticlePreview() {
 	m_reticlePreviewPane->removeAllChildren();
 	// Redraw the preview
 	shared_ptr<Texture> reticleTex = m_app->reticleTexture;
-	Color4 rColor = m_users.getUserById(m_userStatus.currentUser)->reticle.color[0];
+	Color4 rColor = m_app->reticleConfig.color[0];
 
 	RenderDevice* rd = m_app->renderDevice;
 	rd->push2D(m_reticleBuffer); {

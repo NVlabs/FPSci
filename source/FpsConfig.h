@@ -155,6 +155,7 @@ public:
 	Array<float>	pretrialDurationRange = {};					///< Pretrial duration range (if randomized)
 	float           maxTrialDuration = 100000.0f;				///< Maximum time spent in any one trial task
 	float           trialFeedbackDuration = 1.0f;				///< Time in the per-trial feedback state in seconds
+	float			taskFeedbackDuration = 1.0f;				///< Time in the per-task feedback state in seconds
 	float			sessionFeedbackDuration = 2.0f;				///< Time in the session feedback state in seconds
 	bool			clickToStart = true;						///< Require a click before starting the first session (spawning the reference target)
 	bool			sessionFeedbackRequireClick = false;		///< Require a click to progress from the session feedback?
@@ -175,6 +176,8 @@ public:
 	String aimInvalid = "Invalid trial! Do not displace your aim during the pretrial duration.";	///< Message to display when a trial is invalidated due to pretrial aim displacement
 	String trialSuccess = "%trialTaskTimeMs ms!";													///< Successful trial feedback message
 	String trialFailure = "Failure!";																///< Failed trial feedback message
+	String taskSuccess = "";																		///< Task success (answer correct), off (empty) by default
+	String taskFailure = "";																		///< Task failed (answer incorrect), off (empty) by default
 	String blockComplete = "Block %lastBlock complete! Starting block %currBlock.";					///< Block complete feedback message
 	String sessComplete = "Session complete! You scored %sessionScore!";							///< Session complete feedback message
 	String allSessComplete = "All Sessions Complete!";												///< All sessions complete feedback message
