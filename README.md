@@ -7,12 +7,12 @@ You can get a stand alone version of `FPSci` compiled for Windows 10 [here](http
 ## G3D dependence
 FPSci depends on the [G3D innovation engine](https://casual-effects.com/g3d) which is a prerequisite for building FPSci. [Installation instructions](https://casual-effects.com/g3d/www/index.html#install).
 
-When you check out G3D, you'll need some data files from the `research` and `game` subdirectories so you can't just checkout the `common` subdirectory.
+If you install G3D using its `installg3d.cmd` installer, then this will automatically install Python, Visual Studio Community Edition, and Subversion for you.
 
-If you install G3D using its `.hta` installer, then this will automatically install Visual Studio Community Edition for you.
+If you manually check out G3D, you'll need some data files from the `research` and `game` subdirectories so you can't just checkout the `common` subdirectory. The current version of FPSci requires at least G3D revision `r7217` for the visual studio version upgrade, but most of the code will work withe earlier versions of G3D as well.
 
 ## Build instructions
-The solution file (`FirstPersonScience.sln`) can build and run using [Visual Studio 2019](https://visualstudio.microsoft.com/vs/).
+The solution file (`FirstPersonScience.sln`) can build and run using [Visual Studio 2022](https://visualstudio.microsoft.com/vs/).
 
 ## Instructions for configuring and running an experiment
 `FirstPersonScience` implements a simple mouse-controlled view model with a variety of parameters controllable through various `.Any` files (more on this below). The scene, weapon, target size/behavior, and frame rate/latency controls are all available via this interface.

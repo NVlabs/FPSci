@@ -10,7 +10,6 @@
     <ClInclude Include="..\tests\TestFakeInput.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="..\data-files\test\experimentconfig.Any">
       <Filter>Config Files</Filter>
     </None>
@@ -32,6 +31,7 @@
     <None Include="..\data-files\scene\Test_Cornell_Box.Scene.Any">
       <Filter>Config Files</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Config Files">

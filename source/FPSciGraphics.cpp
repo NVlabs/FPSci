@@ -327,6 +327,10 @@ void FPSciApp::drawDelayed2DElements(RenderDevice* rd, Vector2 resolution) {
 	if (trialConfig->hud.enable) {
 		drawHUD(rd, resolution);
 	}
+
+	if (trialConfig->aimAssist.showFoV && trialConfig->aimAssist.fov > 0) {
+		drawAimAssistFov(rd, resolution);
+	}
 }
 
 void FPSciApp::drawClickIndicator(RenderDevice* rd, String mode, Vector2 resolution) {
@@ -550,3 +554,31 @@ void FPSciApp::drawHUD(RenderDevice *rd, Vector2 resolution) {
 	}
 }
 
+void FPSciApp::drawAimAssistFov(RenderDevice* rd, Vector2 resolution) {
+	const int segments = 50;
+	const float fov = trialConfig->aimAssist.fov * pif() / 180.f;
+	const float radScale = 1 - trialConfig->aimAssist.fovWidth / 100.f;
+
+	// Use a copy of the camera to get SS coords of radius
+	Camera copyCam = *playerCamera;
+	copyCam.lookAt(copyCam.frame().translation + Vector3(0.f, 0.f, 1.0f));		// Redirect camera to get look vector into the XZ plane (z axis)
+	Vector3 viewDir = -copyCam.frame().lookVector();							// Get view direction vector
+	viewDir = viewDir * Matrix3::fromAxisAngle(Vector3::unitY(), fov);			// Rotate about Y-axis (yaw rotation)
+	const Vector3 loc = copyCam.project(copyCam.frame().translation + viewDir, resolution); // Project yaw rotation into camera screen space
+	const float R = loc.x - resolution.x / 2.f;									// Find radius by subtracting SS coordinate from center of screen x-coordinate
+
+	// Create the segments
+	for (int i = 0; i < segments; i++) {
+		if (i % 2 == 1) continue;
+		const float inc = static_cast<float>(2 * pif() / segments);
+		const float theta = -i * inc;
+		Vector2 center = resolution / 2.0f;
+		Array<Vector2> verts = {
+			center + Vector2(R * sinf(theta), -R * cosf(theta)),
+			center + Vector2(R * sinf(theta + inc), -R * cosf(theta + inc)),
+			center + Vector2(radScale * R * sinf(theta + inc), -radScale * R * cosf(theta + inc)),
+			center + Vector2(radScale * R * sinf(theta), -radScale * R * cosf(theta))
+		};
+		Draw::poly2D(verts, rd, trialConfig->aimAssist.fovColor);
+	}
+}
