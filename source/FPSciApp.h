@@ -83,6 +83,7 @@ protected:
 	float									m_debugMenuHeight = 0.0f;			///< Height of the debug menu when in developer mode
 
 	RealTime								m_lastJumpTime = 0.0f;				///< Time of last jump
+	SimTime									m_lastSdt;							///< Last sim delta time
 public:
 	RealTime								m_lastOnSimulationRealTime = 0.0f;	///< Wall clock time last onSimulation finished
 	SimTime									m_lastOnSimulationSimTime = 0.0f;	///< Simulation time last onSimulation finished
@@ -277,7 +278,11 @@ public:
 	void setMouseInputMode(MouseInputMode mode = MOUSE_FPM);
 	/** reads current user settings to update sensitivity in the controller */
     void updateMouseSensitivity();
-	
+
+	inline bool canAutoAim();
+	void assistAim(const Array<shared_ptr<TargetEntity>>& targets, const SimTime dt);		// Automatically aim at the nearest (valid) target
+	void drawAimAssistFov(RenderDevice* rd, Vector2 resolution);		// Draw the aim assist FoV to the screen as a ring
+
 	/** Initialize an experiment */
 	void initExperiment();
 
