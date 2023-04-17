@@ -26,9 +26,9 @@ public:
 	String yTurnScaleAdjustMode = "Invert";						///< Y turn scale adjustment mode (can be "None", "Invert", or "Slider")
 
 	bool allowReticleChange = false;							///< Allow the user to adjust their crosshair
-	bool allowReticleIdxChange = true;							///< If reticle change is allowed, allow index change
-	bool allowReticleSizeChange = true;							///< If reticle change is allowed, allow size change
-	bool allowReticleColorChange = true;						///< If reticle change is allowed, allow color change
+	bool allowReticleIdxChange = false;							///< If reticle change is allowed, allow index change
+	bool allowReticleSizeChange = false;						///< If reticle change is allowed, allow size change
+	bool allowReticleColorChange = false;						///< If reticle change is allowed, allow color change
 	bool allowReticleChangeTimeChange = false;					///< Allow the user to change the reticle change time
 	bool showReticlePreview = true;								///< Show a preview of the reticle
 
