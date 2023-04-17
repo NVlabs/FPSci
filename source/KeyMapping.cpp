@@ -14,6 +14,7 @@ KeyMapping::KeyMapping() {
 	map.set("shoot", Array<GKey>{ GKey::LEFT_MOUSE });
 	map.set("scope", Array<GKey>{ GKey::RIGHT_MOUSE});
 	map.set("dummyShoot", Array<GKey>{ GKey::LSHIFT });
+	map.set("autoAim", Array<GKey>{GKey::TAB});
 	map.set("dropWaypoint", Array<GKey>{ (GKey)'q' });
 	map.set("toggleRecording", Array<GKey>{ (GKey)'r' });
 	map.set("toggleRenderWindow", Array<GKey>{ (GKey)'1' });

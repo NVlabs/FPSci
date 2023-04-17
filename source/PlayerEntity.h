@@ -8,14 +8,13 @@ protected:
     Sphere          m_collisionProxySphere;
 
     // Radians per frame
-    float           m_desiredYawVelocity;
-    float           m_desiredPitchVelocity;
+    float           m_desiredYawDelta;
+    float           m_desiredPitchDelta;
 
     // Radians
-	float           m_spawnHeadingRadians = 0.0f;
-	float           m_headingRadians = 0.0f;
-    /** Unused for rendering, for use by a fps cam. */
-    float           m_headTilt;
+	float           m_spawnYawRadians = 0.f;
+	float           m_yawRadians = 0.f;
+    float           m_pitchRadians =0.f;
 
 	float			m_respawnHeight = fnan();
 	Point3			m_respawnPosition;
@@ -108,24 +107,24 @@ public:
 	void setMoveEnable(bool enabled) { m_motionEnable = enabled; }
 
 	void setRespawnPosition(Point3 pos) { m_respawnPosition = pos; }
-    void setRespawnHeadingDegrees(float headingDeg) { m_spawnHeadingRadians = pif() / 180.f * headingDeg; }
+    void setRespawnHeadingDegrees(float headingDeg) { m_spawnYawRadians = pif() / 180.f * headingDeg; }
 	void setRespawnHeight(float height) { m_respawnHeight = height; }
 
 	void respawn() {
 		m_frame.translation = m_respawnPosition;
-		m_headingRadians = m_spawnHeadingRadians;
-		m_headTilt = 0.0f;                              // Reset heading tilt
+		m_yawRadians = m_spawnYawRadians;
+		m_pitchRadians = 0.0f;                              // Reset heading tilt
         m_inAir = true;                                 // Set in air to let player "fall" if needed
 		setDesiredOSVelocity(Vector3::zero());
-		setDesiredAngularVelocity(0.0f, 0.0f);
+		setDesiredRotationChange(0.0f, 0.0f);
 	}
 
 	float health(void) { return m_health; }
     /** In radians... not used for rendering, use for first-person cameras */
-    float headTilt() const { return m_headTilt; }
-    float heading() const { return m_headingRadians;  }
-    float respawnHeadingDeg() const { return m_spawnHeadingRadians * 180 / pif(); }
-    float respawnHeadingRadians() const { return m_spawnHeadingRadians; }
+    float headTilt() const { return m_pitchRadians; }
+    float heading() const { return m_yawRadians;  }
+    float respawnHeadingDeg() const { return m_spawnYawRadians * 180 / pif(); }
+    float respawnHeadingRadians() const { return m_spawnYawRadians; }
 
     /** For deserialization from Any / loading from file */
     static shared_ptr<Entity> create 
@@ -145,9 +144,26 @@ public:
     void setDesiredOSVelocity(const Vector3& objectSpaceVelocity) {  m_desiredOSVelocity = objectSpaceVelocity; }
     const Vector3& desiredOSVelocity() { return m_desiredOSVelocity; }
 
-    void setDesiredAngularVelocity(const float y, const float p) {
-        m_desiredYawVelocity    = y;
-        m_desiredPitchVelocity  = p;
+    void lookAt(const Point3 pt, float interp=1.f) {
+        const CFrame cam = getCameraFrame();    // Use the camera frame (not the player frame)
+        CFrame pframe = cam;                    // Make a copy of the frame
+        pframe.lookAt(pt);                      // Update the frame copy for "ideal" aim at point
+        
+        // Interpolate between current and point look vector (if specified)
+        Vector3 lookVec = lerp(cam.lookVector(), pframe.lookVector(), interp);
+        lookVec = normalize(-lookVec);          // Invert this vector (make it the positive Z axis)
+        m_frame.rotation.setColumn(2, lookVec); // Copy rotation back into player frame
+
+        // Update player direction
+        Vector3 dir = lookVec;
+        m_pitchRadians = acosf(dot(Vector3::unitY(), dir)) - pif() / 2;        // Get pitch/elevation
+        dir = normalize(Vector3(dir.x, 0, dir.z));                              // Get vector in X/Z plane for yaw/heading
+        m_yawRadians = -sign(dot(Vector3::unitX(), dir)) * acosf(dot(Vector3::unitZ(), dir));
+    }
+
+    void setDesiredRotationChange(const float y, const float p) {
+        m_desiredYawDelta    = y;
+        m_desiredPitchDelta  = p;
     }
 
     /** Converts the current VisibleEntity to an Any.  Subclasses should

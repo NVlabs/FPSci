@@ -856,6 +856,8 @@ void FPSciApp::onNetwork() {
 
 
 void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
+	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
+
 	// TODO: this should eventually probably use sdt instead of rdt
 	RealTime currentRealTime;
 	if (m_lastOnSimulationRealTime == 0) {
@@ -912,6 +914,11 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 		newLastFireTime = shootButtonJustReleased ? m_lastOnSimulationRealTime + rdt * 0.5f : currentRealTime;
 		RealTime fireDuration = weapon->fireDurationUntil(newLastFireTime);
 		damagePerShot = (float)fireDuration * weapon->config()->damagePerSecond;
+	}
+
+	// Auto aim if requested
+	if (numShots > 0 && trialConfig->aimAssist.snapOnFire && canAutoAim()) {
+		assistAim(sess->hittableTargets(), sdt);
 	}
 
 	// Actually shoot here
@@ -990,7 +997,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 			// Handle highlighting for selected target
 			waypointManager->updateSelected();
 			// Handle player motion recording here
-			waypointManager->updatePlayerPosition(p->getCameraFrame().translation);
+			waypointManager->updatePlayerPosition(player->getCameraFrame().translation);
 		}
 
 		// Example GUI dynamic layout code.  Resize the debugWindow to fill
@@ -1008,6 +1015,7 @@ void FPSciApp::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	m_lastOnSimulationRealTime = m_lastOnSimulationRealTime + rdt;
 	m_lastOnSimulationSimTime = m_lastOnSimulationSimTime + sdt;
 	m_lastOnSimulationIdealSimTime = m_lastOnSimulationIdealSimTime + idt;
+	m_lastSdt = sdt;
 
 	// Clear button press state
 	shootButtonJustPressed = false;
@@ -1244,6 +1252,44 @@ void FPSciApp::setScopeView(bool scoped) {
 	player->turnScale = currentTurnScale();												// Scale sensitivity based on the field of view change here
 }
 
+inline bool FPSciApp::canAutoAim() {
+	// Check auto aim enabled (FoV > 0) and in a valid state
+	return trialConfig->aimAssist.fov > 0 &&
+		((sess->currentState == PresentationState::referenceTarget && trialConfig->aimAssist.allowOnReference) ||
+		(sess->currentState == PresentationState::trialTask && trialConfig->aimAssist.allowOnReal));
+}
+
+void FPSciApp::assistAim(const Array<shared_ptr<TargetEntity>>& targets, const SimTime dt) {
+	if (!canAutoAim()) return;		// Early exit for no aim assist
+	const shared_ptr<PlayerEntity>& player = scene()->typedEntity<PlayerEntity>("player");
+
+	// Iterate through targets to find closest
+	float minAngle = trialConfig->aimAssist.fov;
+	shared_ptr<TargetEntity> closestTarget;
+	for (shared_ptr<TargetEntity> t : targets) {
+		Vector3 dir = player->frame().lookVector();
+		Vector3 diff = t->frame().translation - player->frame().translation;
+		float angle = 180 / pif() * acosf(dot(dir, diff)/(dir.magnitude()*diff.magnitude()));
+		if (angle < minAngle) {
+			minAngle = angle;
+			closestTarget = t;			// Record closest targets within the FoV
+		}
+	}
+	if (isNull(closestTarget)) return;	// No valid target in FoV, leave here
+
+	// Check for speed violation
+	float interp = 1.f;
+	const float maxAngle = trialConfig->aimAssist.maxSpeedDegS * dt;
+	if (minAngle > maxAngle) {
+		// We are over max speed, move towards the target but not all the way there
+		interp = maxAngle / minAngle;
+	}
+
+	// Aim at the closest target in the FoV
+	player->lookAt(closestTarget->frame().translation, interp);
+	playerCamera->setFrame(player->getCameraFrame());				// Update camera from player early
+}
+
 void FPSciApp::hitTarget(shared_ptr<TargetEntity> target) {
 	// Damage the target
 	float damage = m_currentWeaponDamage;
@@ -1353,7 +1399,7 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	}
 	else if (notNull(player)) {	// Zero the player velocity and rotation when in the setting menu
 		player->setDesiredOSVelocity(Vector3::zero());
-		player->setDesiredAngularVelocity(0.0, 0.0);
+		player->setDesiredRotationChange(0.0, 0.0);
 	}
 
 	// Handle scope behavior
@@ -1397,6 +1443,9 @@ void FPSciApp::onUserInput(UserInput* ui) {
 	
 	for (GKey dummyShoot : keyMap.map["dummyShoot"]) {
 		if (ui->keyPressed(dummyShoot) && (sess->currentState == PresentationState::referenceTarget) && !m_userSettingsWindow->visible()) {
+			if (canAutoAim() && trialConfig->aimAssist.snapOnFire) {
+				assistAim(sess->hittableTargets(), m_lastSdt);
+			}
 			Array<shared_ptr<Entity>> dontHit;
 			dontHit.append(m_explosions);
 			dontHit.append(sess->unhittableTargets());
@@ -1406,6 +1455,15 @@ void FPSciApp::onUserInput(UserInput* ui) {
 			shared_ptr<TargetEntity> target = weapon->fire(sess->hittableTargets(), hitIdx, hitDist, info, dontHit, true);			// Fire the weapon
 			if (trialConfig->audio.refTargetPlayFireSound && !trialConfig->weapon.loopAudio()) {		// Only play shot sounds for non-looped weapon audio (continuous/automatic fire not allowed)
 				weapon->playSound(true, false);			// Play audio here for reference target
+			}
+		}
+	}
+
+	// Handle auto aim if requested
+	if (canAutoAim()) {
+		for (GKey autoAim : keyMap.map["autoAim"]) {
+			if (ui->keyDown(autoAim)) {
+				assistAim(sess->hittableTargets(), m_lastSdt);
 			}
 		}
 	}

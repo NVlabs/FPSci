@@ -325,6 +325,25 @@ public:
 	Any addToAny(Any a, const bool forceAll = false) const;
 };
 
+class AimAssistConfig {
+public:
+	float fov = 0.f;					///< Field of view for aim assist, set to 0 to disable
+
+	bool showFoV = false;				///< Display the aim assist FoV as a HUD element
+	Color4 fovColor = Color4(0, 0, 0, 1); ///< Color for FoV display (when shown)
+	float fovWidth = 1;					///< Width of the FoV display (as a percentage of the screen)
+	
+	bool snapOnFire = true;				///< Snap the aim to the target on fire (if within the aim assist fov)
+	bool allowOnReference = true;		///< Allow aim assist on reference target
+	bool allowOnReal = true;			///< Allow aim assist on real targets
+
+	float maxSpeedDegS = 1000000.f;		///< Maximum aim assist speed in degrees/s
+
+	AimAssistConfig() {};
+	void load(AnyTableReader reader, int settingsVersion = 1);
+	Any addToAny(Any a, const bool forceAll = false) const;
+};
+
 class Question {
 public:
 	enum Type {
@@ -374,6 +393,7 @@ public:
 	WeaponConfig		weapon;			                        ///< Weapon to be used
 	MenuConfig			menu;									///< User settings window configuration
 	CommandConfig		commands;								///< Commands to run during execution
+	AimAssistConfig     aimAssist;								///< Aim assist configuration
 	Array<Question>		questionArray;							///< Array of questions for this experiment/trial
 
 	// Constructors
@@ -403,6 +423,7 @@ public:
 		logger.load(reader, settingsVersion);
 		menu.load(reader, settingsVersion);
 		commands.load(reader, settingsVersion);
+		aimAssist.load(reader, settingsVersion);
 		switch (settingsVersion) {
 		case 1:
 			reader.getIfPresent("scene", scene);
@@ -439,6 +460,7 @@ public:
 		a = logger.addToAny(a, forceAll);
 		a = menu.addToAny(a, forceAll);
 		a = commands.addToAny(a, forceAll);
+		a = aimAssist.addToAny(a, forceAll);
 		a["questions"] = questionArray;
 		a["weapon"] = weapon.toAny(forceAll);
 		return a;

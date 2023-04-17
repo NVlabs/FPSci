@@ -806,5 +806,6 @@ void UserMenu::setVisible(bool enable) {
 void UserMenu::resumePress() {
 	if (m_config.requireUserAdd && !m_app->userAdded) return;
 	setVisible(!visible());
-	m_app->setMouseInputMode(visible() ? FPSciApp::MouseInputMode::MOUSE_CURSOR : FPSciApp::MouseInputMode::MOUSE_FPM);
+	if (visible()) m_app->setMouseInputMode(FPSciApp::MouseInputMode::MOUSE_CURSOR);					// If the window is visible always set cursor mode
+	else if (isNull(m_app->dialog)) m_app->setMouseInputMode(FPSciApp::MouseInputMode::MOUSE_FPM);		// Only revert to FPM mode if the window isn't visible and a dialog isn't present
 }

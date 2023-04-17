@@ -65,12 +65,12 @@ float PlayerEntity::heightOffset(float height) const {
 
 void PlayerEntity::init(const Sphere& collisionProxy) {
     m_collisionProxySphere = collisionProxy;
-    m_desiredOSVelocity     = Vector3::zero();
-    m_desiredYawVelocity    = 0;
-    m_desiredPitchVelocity  = 0;
-	m_spawnHeadingRadians   = frame().getHeading();
-    m_headingRadians        = frame().getHeading();
-    m_headTilt              = 0;
+    m_desiredOSVelocity = Vector3::zero();
+    m_desiredYawDelta = 0.f;
+    m_desiredPitchDelta = 0.f;
+	m_spawnYawRadians = frame().getHeading();
+    m_yawRadians = frame().getHeading();
+    m_pitchRadians = 0.f;
 }
 
 bool PlayerEntity::doDamage(float damage) {
@@ -112,12 +112,12 @@ void PlayerEntity::updateFromInput(UserInput* ui) {
 
 	// Get the mouse rotation here
 	Vector2 mouseRotate = ui->mouseDXY() * turnScale * (float)m_cameraRadiansPerMouseDot;
-	float yaw = mouseRotate.x;
-	float pitch = mouseRotate.y;
+	float deltaYaw = mouseRotate.x;
+	float deltaPitch = mouseRotate.y;
 
 	// Set the player translation/view velocities
 	setDesiredOSVelocity(linear);
-	setDesiredAngularVelocity(yaw, pitch);
+	setDesiredRotationChange(deltaYaw, deltaPitch);
 }
 
 /** Maximum coordinate values for the player ship */
@@ -130,13 +130,14 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 
 	if (!isNaN(deltaTime)) {
 		// Apply rotation first
-		m_headingRadians += m_desiredYawVelocity;												// Integrate the yaw change into heading
-		m_headingRadians = mod1((m_headingRadians) / (2 * pif())) * 2 * pif();					// Keep the user's heading value in the [0,2pi) range		
-		m_headTilt -= m_desiredPitchVelocity;													// Integrate the pitch change into head tilt
-		m_headTilt = clamp(m_headTilt, -89.9f * units::degrees(), 89.9f * units::degrees());	// Keep the user's head tilt to <90°
+		m_yawRadians += m_desiredYawDelta;													// Integrate the yaw change into heading
+		m_yawRadians = mod1((m_yawRadians) / (2 * pif())) * 2 * pif();					// Keep the user's heading value in the [0,2pi) range		
+		m_pitchRadians -= m_desiredPitchDelta;														// Integrate the pitch change into head tilt
+		m_pitchRadians = clamp(m_pitchRadians, -89.9f * units::degrees(), 89.9f * units::degrees());	// Keep the user's head tilt to <90°
+
 		// Set player frame rotation based on the heading and tilt
-		m_frame.rotation = Matrix3::fromAxisAngle(Vector3::unitY(), -m_headingRadians) * Matrix3::fromAxisAngle(Vector3::unitX(), m_headTilt);
-		
+		m_frame.rotation = Matrix3::fromAxisAngle(Vector3::unitY(), -m_yawRadians) * Matrix3::fromAxisAngle(Vector3::unitX(), m_pitchRadians);
+
 		// Translation update - in direction after rotating
 		if (m_motionEnable) {
 			m_inContact = slideMove(deltaTime);

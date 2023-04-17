@@ -15,9 +15,10 @@ When `developerMode=false` the following keys are used:
 |`D`            |Move backward                  |   
 |`L Ctrl`       |Crouch                         |
 |`Space`        |Jump                           |
-|`Esc` or `Tab` |Open in-game menu              |
+|`Esc`          |Open in-game menu              |
 |`L Mouse`      |Fire the weapon during trial   |
-|`R Shift`      |Fire the weapon pre-trial      |
+|`L Shift`      |Fire the weapon pre-trial      |
+|`Tab`          |Aim assist snap to target (if enabled) |
 |`-`            |Quit the application           |
 
 ### Developer Mode
@@ -57,7 +58,8 @@ This file associates each of the map names outlined below to an array of `GKey` 
 |Open in-game menu                  |`openMenu`             |`["Esc"]`              |
 |Fire the weapon during trial       |`shoot`                |`["L Mouse"]`          |
 |Use a scope                        |`scope`                |`["R Mouse"]`          |
-|Fire the weapon pre-trial          |`dummyShoot`           |`["R Shift"]`          |
+|Fire the weapon pre-trial          |`dummyShoot`           |`["L Shift"]`          |
+|Snap aim to nearest target         |`autoAim`              |`["Tab"]`              |
 |Quit the application               |`quit`                 |`["Keypad -", "Pause"]`|
 |Select a waypoint                  |`selectWaypoint`       |`["L Mouse"]`          |
 |Drop a waypoint                    |`dropWaypoint`         |`["Q"]`                |

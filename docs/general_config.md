@@ -403,6 +403,35 @@ There are 2 primary differences between questions with `type` of `MultipleChoice
 
 Questions are recorded in the results database along with a timestamp, the question prompt, a `responseArray` indicating available options and the `response` the user provided. If multiple choice, a `keyArray` is included with `optionKeys` values (as specified) and the `presentedResponses` array provides the response/key pairs in the order they were presented to the user for that question, which is particularly helpful when the order is randomized.
 
+## Aim Assist seetigns
+| Parameter Name        |Units          |Description                                                                                        |               
+|-----------------------|---------------|---------------------------------------------------------------------------------------------------|
+|`aimAssistFoV`         |degrees        |The field of view in which to assist aim (either on button press or on fire)                       |
+|`aimAssistShowFoV`     |`bool`         |Show the aim assist field of view on-screen?                                                       |
+|`aimAssistFoVColor`    |`Color4`       |The color to draw the aim assist field of view on screen with (if enabled)                         |
+|`aimAssistFoVWidth`    |percent        |The width of the aim assist indicator drawn on screen (if enabled)                                 |
+|`aimAssistSnapOnFire`  |`bool`         |Does the aim assist snap to targets (if within the FoV) just before a fire event?                  |
+|`aimAssistOnReference` |`bool`         |Does the aim assist snap to reference targets (both for snap on fire and button press)?            |
+|`aimAssistOnReal`      |`bool`         |Does the aim assist snap to non-reference targets (both for snap on fire and button press)?        |
+|`aimAssistMaxSpeed`    |deg/s          |The maximum (per frame) speed that the aim assist is allowed to rotate the view at                 |
+
+Aim assist in FPSci has 2 primary modes. In push-button aim assist, the key bound to `autoAim` in the [key map](keymap.md) automatically snaps the aim to the center of the nearest target to the current crosshair position. When `aimAssistSnapOnFire` is set to `true` the application automatically runs the same aim assist snapping method just prior to whenever the weapon is fired (at a maximum of once per frame).
+
+Note that the `aimAssistFoV` is measured in all directions from the current aim direction (i.e., a 30° `aimAssistFoV` value implies a ±30° range of target that can be found by aim assist). Additionally when `aimAssistMaxSpeed` is specified fire events are not delayed, so when used with `aimAssistSnapOnFire` fire events may still result in a miss (if the displacement of the `aimAssistMaxSpeed` over a frame time is less than what is required to reach the target).
+
+Defaults for all values above are provided in the example below:
+
+```
+"aimAssistFoV" : 0,         // Defaults to aim assist off (0 FoV)
+"aimAssistShowFoV": false,  // Don't draw the aim assist FoV to the screen by default
+"aimAssistFoVColor": Color4(0,0,0,1); // Default to an opaque black FoV indicator when enabled
+"aimAsssistFoVWidth": 1;    // Default to 1% of the screen as the width of the FoV indicator
+"aimAssistSnapOnFire": false,   // Default to not snapping aim when firing (aim assist can be activated when FoV > 0 using the "aimAssist" key bind instead)
+"aimAssistOnReference": true,   // Default to allowing aim assist on reference targets (when enabled)
+"aimAssistOnReal": true,        // Default to allowing aim assist on real targets (when enabled)
+"aimAssistMaxSpeed": 1000000    // Default max speed is high enough to do full rotations every frame (360deg * 1000Hz = 360k deg/s < 1 Mdeg/s)
+```
+
 ## HUD settings
 | Parameter Name        |Units      | Description                                                                                                           |
 |-----------------------|-----------|-----------------------------------------------------------------------------------------------------------------------|

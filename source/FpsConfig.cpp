@@ -634,6 +634,37 @@ Any CommandConfig::addToAny(Any a, const bool forceAll) const {
 	return a;
 }
 
+void AimAssistConfig::load(AnyTableReader reader, int settingsVersion) {
+	switch (settingsVersion) {
+	case 1: 
+		reader.getIfPresent("aimAssistFoV", fov);
+		reader.getIfPresent("aimAssistShowFoV", showFoV);
+		reader.getIfPresent("aimAssistFoVColor", fovColor);
+		reader.getIfPresent("aimAssistFoVWidth", fovWidth);
+		reader.getIfPresent("aimAssistSnapOnFire", snapOnFire);
+		reader.getIfPresent("aimAssistOnReference", allowOnReference);
+		reader.getIfPresent("aimAssistOnReal", allowOnReal);
+		reader.getIfPresent("aimAssistMaxSpeed", maxSpeedDegS);
+		break;
+	default:
+		throw format("Did not recognize settings version: %d", settingsVersion);
+		break;
+	}
+}
+
+Any AimAssistConfig::addToAny(Any a, const bool forceAll) const{
+	AimAssistConfig def;
+	if (forceAll || fov != def.fov) a["aimAssistFoV"] = fov;
+	if (forceAll || showFoV != def.showFoV) a["aimAssistShowFoV"] = showFoV;
+	if (forceAll || fovColor != def.fovColor) a["aimAssistFoVColor"] = fovColor;
+	if (forceAll || fovWidth != def.fovWidth) a["aimAssistFoVWidth"] = fovWidth;
+	if (forceAll || snapOnFire != def.snapOnFire) a["aimAssistSnapOnFire"] = snapOnFire;
+	if (forceAll || allowOnReference != def.allowOnReference) a["aimAsssistOnReference"] = allowOnReference;
+	if (forceAll || allowOnReal != def.allowOnReal) a["aimAssistOnReal"] = allowOnReal;
+	if (forceAll || maxSpeedDegS != def.maxSpeedDegS) a["aimAssistMaxSpeed"] = maxSpeedDegS;
+	return a;
+}	
+
 Question::Question(const Any& any) {
 	int settingsVersion = 1;
 	FPSciAnyTableReader reader(any);
