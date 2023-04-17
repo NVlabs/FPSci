@@ -122,10 +122,7 @@ class RenderControls : public GuiWindow {
 protected:
 	FPSciApp* m_app = nullptr;
 	GuiButton* m_showFullUserMenuBtn = nullptr;
-	MenuConfig m_storedMenuConfig;
 	bool	m_showFullUserMenu = false;
-
-	void updateUserMenu(void);
 
 	RenderControls(FPSciApp* app, FpsConfig& config, bool& drawFps, const int numReticles, float& brightness,
 		const shared_ptr<GuiTheme>& theme, const int maxFrameDelay = 360, const float minFrameRate = 1.0f, const float maxFrameRate=1000.0f, float width=400.0f, float height=10.0f);

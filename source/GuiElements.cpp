@@ -233,17 +233,6 @@ RenderControls::RenderControls(FPSciApp* app, FpsConfig& config, bool& drawFps, 
 		c->setWidth(width*0.95f);
 	}framePane->endRow();
 
-	auto menuPane = pane->addPane("User Menu");
-	menuPane->beginRow(); {
-		m_storedMenuConfig.allowReticleChange = true;
-		m_storedMenuConfig.allowReticleChangeTimeChange = true;
-		m_showFullUserMenuBtn = menuPane->addButton("Show Full User Menu", this, &RenderControls::updateUserMenu);
-		if (config.menu.allowAnyChange()) {
-			// Default setup already allows any change
-			m_showFullUserMenuBtn->setEnabled(false);
-			m_showFullUserMenu = true;
-		}
-	} menuPane->endRow();
 
 	auto otherPane = pane->addPane("Other");
 	otherPane->beginRow();{
@@ -255,20 +244,6 @@ RenderControls::RenderControls(FPSciApp* app, FpsConfig& config, bool& drawFps, 
 	moveTo(Vector2(0, 300));
 }
 
-void RenderControls::updateUserMenu() {
-	MenuConfig tmp = m_app->sessConfig->menu;		// Store current config
-	m_app->sessConfig->menu = m_storedMenuConfig;	// Swap the config w/ the stored version
-	if (!m_showFullUserMenu) {
-		m_showFullUserMenu = true;
-		m_showFullUserMenuBtn->setCaption("Hide Full User Menu");
-	}
-	else {
-		m_showFullUserMenu = false;
-		m_showFullUserMenuBtn->setCaption("Show Full User Menu");
-	}
-	m_storedMenuConfig = tmp;						// Update the stored config
-	m_app->updateUserMenu = true;					// Set the semaphore to update the user menu
-}
 
 WeaponControls::WeaponControls(WeaponConfig& config, const shared_ptr<GuiTheme>& theme, float width, float height) :
 	GuiWindow("Weapon Controls", theme, Rect2D::xywh(5, 5, width, height), GuiTheme::NORMAL_WINDOW_STYLE, GuiWindow::HIDE_ON_CLOSE), m_config(config)
