@@ -158,7 +158,7 @@ void UserStatusTable::validate(const Array<String>& sessions, const Array<String
 		for (String userSessId : userStatus.sessionOrder) {
 			noSessions = false;
 			if (!sessions.contains(userSessId)) {
-				throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in the experiment config file's \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions);
+				throw format("User \"%s\" has session with ID: \"%s\" in their User Status \"sessions\" Array. This session ID does not appear in the experiment config file's \"sessions\" array. Valid options are: %s", userStatus.id, userSessId, expSessions.c_str());
 			}
 		}
 	}
