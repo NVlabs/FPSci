@@ -400,8 +400,9 @@ void Session::onInit(String filename, String description) {
 		m_targetConfigs = m_app->experimentConfig.getTargetsByTrial(m_sessConfig->id);
 		nextBlock(true);
 	}
-	else {	// Invalid session, move to displaying message
-		currentState = PresentationState::sessionFeedback;
+	else {	
+		currentState = PresentationState::sessionFeedback;		// Invalid session, move to displaying message	
+		m_app->trialConfig = TrialConfig::create();				// Update the app trial config to inherit the session parameters (i.e. user add)
 	}
 }
 
