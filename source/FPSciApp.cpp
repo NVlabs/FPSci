@@ -72,6 +72,7 @@ void FPSciApp::initExperiment(){
 
 	updateMouseSensitivity();				// Update (apply) mouse sensitivity
 	const Array<String> sessions = m_userSettingsWindow->updateSessionDropDown();	// Update the session drop down to remove already completed sessions
+	m_firstSession = true;
 	updateSession(sessions[0], true);		// Update session to create results file/start collection
 }
 
@@ -360,7 +361,7 @@ void FPSciApp::updateDeveloperControls(const shared_ptr<FpsConfig>& config) {
 	if (notNull(m_playerControls)) {
 		visible = m_playerControls->visible();
 		rect = m_playerControls->rect();
-		removeWidget(m_playerControls);
+		if(m_widgetManager->contains(m_playerControls)) removeWidget(m_playerControls);
 	}
 	m_playerControls = PlayerControls::create(*config, std::bind(&FPSciApp::exportScene, this), theme);
 	m_playerControls->setVisible(visible);
@@ -373,7 +374,7 @@ void FPSciApp::updateDeveloperControls(const shared_ptr<FpsConfig>& config) {
 	if (notNull(m_renderControls)) {
 		visible = m_renderControls->visible(); 
 		rect = m_renderControls->rect();
-		removeWidget(m_renderControls);
+		if(m_widgetManager->contains(m_renderControls)) removeWidget(m_renderControls);
 	}
 	m_renderControls = RenderControls::create(this, *config, renderFPS, numReticles, sceneBrightness, theme, MAX_HISTORY_TIMING_FRAMES);
 	m_renderControls->setVisible(visible);
@@ -386,7 +387,7 @@ void FPSciApp::updateDeveloperControls(const shared_ptr<FpsConfig>& config) {
 	if (notNull(m_weaponControls)) {
 		visible = m_weaponControls->visible();
 		rect = m_weaponControls->rect();
-		removeWidget(m_weaponControls);
+		if(m_widgetManager->contains(m_weaponControls)) removeWidget(m_weaponControls);
 	}
 	m_weaponControls = WeaponControls::create(config->weapon, theme);
 	m_weaponControls->setVisible(visible);
@@ -400,15 +401,21 @@ void FPSciApp::makeGUI() {
 	debugWindow->setVisible(startupConfig.developerMode);
 
 	if (startupConfig.developerMode) {
+		if (m_widgetManager->contains(developerWindow->cameraControlWindow)) removeWidget(developerWindow->cameraControlWindow);
 		developerWindow->cameraControlWindow->setVisible(startupConfig.developerMode);
+		addWidget(developerWindow->cameraControlWindow);
+
+		if (m_widgetManager->contains(developerWindow->videoRecordDialog)) removeWidget(developerWindow->videoRecordDialog);
 		developerWindow->videoRecordDialog->setEnabled(true);
 		developerWindow->videoRecordDialog->setCaptureGui(true);
+		addWidget(developerWindow->videoRecordDialog);
 
 		// Update the scene editor (for new PhysicsScene pointer, initially loaded in GApp)
-		removeWidget(developerWindow->sceneEditorWindow);
+		if(m_widgetManager->contains(developerWindow->sceneEditorWindow)) removeWidget(developerWindow->sceneEditorWindow);
 		developerWindow->sceneEditorWindow = SceneEditorWindow::create(this, scene(), theme);
 		developerWindow->sceneEditorWindow->moveTo(developerWindow->cameraControlWindow->rect().x0y1() + Vector2(0, 15));
 		developerWindow->sceneEditorWindow->setVisible(startupConfig.developerMode);
+		addWidget(developerWindow->sceneEditorWindow);
 	}
 
 	// Open sub-window buttons here (menu-style)
@@ -421,7 +428,7 @@ void FPSciApp::makeGUI() {
 	}debugPane->endRow();
 
 	// Create the user settings window
-	if (notNull(m_userSettingsWindow)) { removeWidget(m_userSettingsWindow); }
+	if (notNull(m_userSettingsWindow) && m_widgetManager->contains(m_userSettingsWindow)) { removeWidget(m_userSettingsWindow); }
 	m_userSettingsWindow = UserMenu::create(this, userTable, userStatusTable, sessConfig->menu, theme, Rect2D::xywh(0.0f, 0.0f, 10.0f, 10.0f));
 	addWidget(m_userSettingsWindow);
 	openUserSettingsWindow();

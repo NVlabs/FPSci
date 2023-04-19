@@ -302,7 +302,7 @@ bool Session::nextTrial() {
 	m_app->updateTrial(m_trialConfig, false, m_firstTrial);	
 	if (m_firstTrial) m_firstTrial = false;
 	else {
-		m_app->showUserMenu = false;	// Override showing the user menu after the first trial in the session
+		m_app->showUserMenu = m_app->userSettingsVisible();	// Override showing the user menu after the first trial in the session
 	}
 
 	// Update session fields (if changed) from trial
@@ -400,8 +400,9 @@ void Session::onInit(String filename, String description) {
 		m_targetConfigs = m_app->experimentConfig.getTargetsByTrial(m_sessConfig->id);
 		nextBlock(true);
 	}
-	else {	// Invalid session, move to displaying message
-		currentState = PresentationState::sessionFeedback;
+	else {	
+		currentState = PresentationState::sessionFeedback;		// Invalid session, move to displaying message	
+		m_app->trialConfig = TrialConfig::create();				// Update the app trial config to inherit the session parameters (i.e. user add)
 	}
 }
 
