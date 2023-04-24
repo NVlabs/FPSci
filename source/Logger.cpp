@@ -50,6 +50,14 @@ void FPSciLogger::initResultsFile(const String& filename,
 		logPrintf(("Error opening log file: " + filename).c_str());					// Write an error to the log
 	}
 
+	// Build up array of all (additional) trial parameters to log
+	m_trialParams = sessConfig->logger.trialParamsToLog;
+	for (const TrialConfig& t : sessConfig->trials) {
+		for (const String& p : t.logger.trialParamsToLog) {
+			if (!m_trialParams.contains(p)) m_trialParams.append(p);
+		}
+	}
+
 	// Create tables if a new log file is opened
 	if (createNewFile) {
 		createExperimentsTable(expConfigFilename);
@@ -57,16 +65,7 @@ void FPSciLogger::initResultsFile(const String& filename,
 		createTasksTable();
 		createTargetTypeTable();
 		createTargetsTable();
-		
-		// Build up array of all trial parameters to log
-		m_trialParams = sessConfig->logger.trialParamsToLog;
-		for (const TrialConfig& t : sessConfig->trials) {
-			for (const String& p : t.logger.trialParamsToLog) {
-				if (!m_trialParams.contains(p)) m_trialParams.append(p);
-			}
-		}
 		createTrialsTable(m_trialParams);
-		
 		createTargetTrajectoryTable();
 		createPlayerActionTable();
 		createFrameInfoTable();
@@ -251,6 +250,7 @@ void FPSciLogger::createTasksTable() {
 
 void FPSciLogger::addTask(const String& sessId, const int blockIdx, const String& taskId, const int taskIdx, const Array<String>& trialOrder) {
 	m_taskTimeStr = genUniqueTimestamp();
+	String trialOrderStr = trialOrder.length() > 0 ? "'" + Any(trialOrder).unparse() + "'" : "NULL";
 	const RowEntry taskValues = {
 		"'" + sessId + "'",
 		String(std::to_string(blockIdx)),
@@ -258,7 +258,7 @@ void FPSciLogger::addTask(const String& sessId, const int blockIdx, const String
 		String(std::to_string(taskIdx)),
 		"'" + m_taskTimeStr + "'",
 		"NULL",
-		"'" + Any(trialOrder).unparse() + "'",
+		trialOrderStr,
 		"0",
 		"0"
 	};
@@ -311,6 +311,7 @@ void FPSciLogger::createTargetTrajectoryTable() {
 }
 
 void FPSciLogger::recordTargetLocations(const Array<TargetLocation>& locations) {
+	if (locations.length() == 0) return;
 	Array<RowEntry> rows;
 	for (const auto& loc : locations) {
 		String stateStr = presentationStateToString(loc.state);
@@ -344,6 +345,7 @@ void FPSciLogger::createPlayerActionTable() {
 }
 
 void FPSciLogger::recordPlayerActions(const Array<PlayerAction>& actions) {
+	if (actions.length() == 0) return;
 	Array<RowEntry> rows;
 	for (PlayerAction action : actions) {
 		String stateStr = presentationStateToString(action.state);
@@ -384,6 +386,7 @@ void FPSciLogger::createFrameInfoTable() {
 }
 
 void FPSciLogger::recordFrameInfo(const Array<FrameInfo>& frameInfo) {
+	if (frameInfo.length() == 0) return;
 	Array<RowEntry> rows;
 	for (FrameInfo info : frameInfo) {
 		Array<String> frameValues = {
@@ -546,10 +549,12 @@ void FPSciLogger::loggerThreadEntry()
 		recordPlayerActions(playerActions);
 		recordTargetLocations(targetLocations);
 
-		insertRowsIntoDB(m_db, "Questions", questions);
-		insertRowsIntoDB(m_db, "Targets", targets);
-		insertRowsIntoDB(m_db, "Users", users);
-		insertRowsIntoDB(m_db, "Trials", trials);
+		if(questions.length() > 0) insertRowsIntoDB(m_db, "Questions", questions);
+		if(targets.length() > 0) insertRowsIntoDB(m_db, "Targets", targets);
+		if(users.length() > 0) insertRowsIntoDB(m_db, "Users", users);
+		if(trials.length() > 0) insertRowsIntoDB(m_db, "Trials", trials);
+
+		if (m_flushNow) m_flushNow = false;
 
 		lk.lock();
 	}

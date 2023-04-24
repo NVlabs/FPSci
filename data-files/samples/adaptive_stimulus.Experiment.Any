@@ -1,0 +1,78 @@
+{
+    description = "Adaptive Stimulus Example";
+
+    // This must be logged for the adaptation script to work!
+    trialParametersToLog: ["frameRate"];
+
+    // 1-hit fast firing weapon
+    weapon = {
+        firePeriod = 0.1;
+        damagePerSecond = 10;
+    };
+
+    sessions = [
+        {
+            id = "Intro";
+            description = "A session that introduces the conditions";
+
+            referenceTargetInitialFeedback = "This session familiarizes you with the frame rates used in this experiment";
+            sessionCompleteFeedback = "Introduction complete, please let the experimenter know if you could not notice a difference!";
+
+            // Single intro task
+            tasks = [
+                {
+                    id = "intro";
+                    trialOrders = [
+                        { order =  ["60", "108"]; }   
+                    ];
+                }
+            ];
+
+            // Use 2 named trials to introduce conditions
+            trials = [
+                {
+                    id = "60";
+                    frameRate = 60;
+                    trialSuccessFeedback = "This was an example of a 60Hz trial";
+                    targetIds = ["moving", "moving", "moving"];
+                },
+                {
+                    id = "108";
+                    frameRate = 108;
+                    trialSuccessFeedback = "This was an example of a 108Hz trial";
+                    targetIds = ["moving", "moving", "moving"];
+                }
+            ]
+        },
+        {
+            id = "AdaptFrameRate";
+            description = "An example session dynamically adapting frame rate";
+
+            referenceTargetInitialFeedback = "This session adapts frame rate based on your answers to questions\nRespond to each question to the best of your ability!";
+            taskFailureFeedback = "Successfully completed the task!";       // Since we do not provide a correct answer task will always "fail"
+
+            // The task array handles all creation of trials here (no trials array required)
+            tasks = [
+                {
+                    id = "fr_adapt";    
+                    type = "adaptive";      // Required to indicate this is adaptive
+                    count = 4;
+
+                    // This command will be called to generate a new trials.Any file
+                    adaptationCmd = "python samples/framerate_adapt_sample.py";
+                }
+            ];
+        }
+    ];
+
+    targets = [
+        { 
+            "id": "moving", 
+            "axisLocked": [ false, false, true ], 
+            "destSpace": "player", 
+            "motionChangePeriod": [ 2, 3 ], 
+            "speed": [ 7, 10 ], 
+            "visualSize": [ 0.05, 0.05 ]
+        }
+    ];
+}

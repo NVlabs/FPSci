@@ -309,6 +309,7 @@ public:
 	bool blocking = false;								///< Flag to indicate to block on this process complete
 
 	CommandSpec() {}
+	CommandSpec(const String& cmd, const bool foreground, const bool block): cmdStr(cmd), foreground(foreground), blocking(block) {};
 	CommandSpec(const Any& any);
 
 	Any toAny(const bool forceAll = true) const;

@@ -167,13 +167,27 @@ public:
 	}
 };
 
+enum class TaskType {
+	constant,
+	adaptive
+};
+
 class TaskConfig {
 public:
-	String		id;						///< Task ID (used for logging)
-	Array<TrialOrder> trialOrders;		///< Valid trial orders for this task
-	Array<Question>	questions;			///< Task-level questions
-	int				questionIdx = -1;	// The index of the (task-level) question corresponding to the correct answer above (populated automatically)
-	int count = 1;						///< Count of times to present this task (in each of the trialOrders, currently unused)
+	String		id;								///< Task ID (used for logging)
+	TaskType	type = TaskType::constant;		///< The type of this task (constant vs adaptive)
+	
+	// Constant task type parameters
+	Array<TrialOrder> trialOrders;				///< Valid trial orders for this task
+	Array<Question>	questions;					///< Task-level questions
+	int				questionIdx = -1;			///< The index of the (task-level) question corresponding to the correct answer above (populated automatically)
+
+	// Adaptive task type parameters
+	String		adaptCmd;						///< For adaptive tasks, the command to call for adaptation
+	String		adaptConfigPath = "trials.Any";	///< For adaptive tasks, the input Any file to read for newly adapted trial(s)
+	bool		removeAdaptConfig = true;		///< For adaptive tasks, remove the adaptive config after consuming it
+
+	int count = 1;								///< Count of times to present this task (in each of the trialOrders, currently unused)
 
 	TaskConfig() {};
 	TaskConfig(const Any& any);
@@ -228,6 +242,7 @@ protected:
 	int m_trialShotsHit = 0;							///< Count of total hits in this trial
 	bool m_firstTrial = true;							///< Is this the first trial in this session?
 	bool m_hasSession;									///< Flag indicating whether psych helper has loaded a valid session
+	bool m_askQuestions = true;							///< Semaphore used to skip session-level questions when no task is presented
 	int	m_currBlock = 1;								///< Index to the current block of trials
 	String m_feedbackMessage;							///< Message to show when trial complete
 
@@ -239,17 +254,27 @@ protected:
 	Array<shared_ptr<TargetEntity>> m_hittableTargets;		///< Array of targets that can be hit
 	Array<shared_ptr<TargetEntity>> m_unhittableTargets;	///< Array of targets that can't be hit
 
+	float m_adaptiveProgress = fnan();						///< Progress reported in last adaptive feedback
+	int m_adaptiveTrialCount = 0;							///< Count of total adaptive trials
+	Array<Question> m_adaptiveQuestions;					///< Questions provided by adaptive feedback
+	int m_adaptiveQuestionIndex = -1;						///< Correct answer to adaptive stimulus question
+	String m_adaptiveCorrectAnswer;							///< Correct answer to adaptive stimulus question
+	Array<TrialConfig> m_adaptiveTrials;								///< Storage for adaptive trials
+	Array<Array<shared_ptr<TargetConfig>>> m_adaptiveTargetConfigs;		///< Array of adaptive target configs (dynamic)
+
 	Table<String, TargetLocation> m_lastLogTargetLoc;		///< Last logged target location (used for logOnChange)
 	Point3 m_lastRefTargetPos;								///< Last reference target location (used for aim invalidation)
 
 	int m_frameTimeIdx = 0;									///< Frame time index
-	int m_currTaskIdx;										///< Current task index (from tasks array)
-	int m_currOrderIdx;										///< Current trial order index
-	int m_currTrialIdx;										///< Current trial index (from the trials array)
+	int m_currTaskIdx = 0;	 								///< Current task index (from tasks array)
+	int m_currOrderIdx = 0;									///< Current trial order index
+	int m_currTrialIdx = 0;									///< Current trial index (from the trials array)
 	int m_currQuestionIdx = -1;								///< Current question index
-	Array<int> m_taskTrials;								///< Indexes of trials (from trials array) for this task
+	
+	Array<shared_ptr<TrialConfig>> m_taskTrials;			///< Pointers to trials for this task
 	Array<Array<int>> m_remainingTasks;						///< Count of remaining trials of each order
 	Array<Array<int>> m_completedTasks;						///< Count of completions of each trial order
+	
 	int m_lastTaskIndex = 0;								///< Used for providing task index on questions
 	Table<String, int> m_completedTaskTrials;				///< Count of completed trial types in this task
 	Array<Array<shared_ptr<TargetConfig>>> m_targetConfigs;	///< Target configurations by trial
@@ -317,6 +342,8 @@ protected:
 		m_sessProcesses.clear();
 	}
 
+
+	bool adaptStimulus(const String& adaptCmd);
 	String formatFeedback(const String& input);
 	String formatCommand(const String& input);
 	bool presentQuestions(Array<Question>& questions);
@@ -327,7 +354,9 @@ protected:
 	/** Get the total target count for the current trial */
 	int totalTrialTargets() const {
 		int totalTargets = 0;
-		for (shared_ptr<TargetConfig> target : m_targetConfigs[m_currTrialIdx]) {
+		const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
+		const Array<shared_ptr<TargetConfig>> targetConfigs = task.type == TaskType::constant ? m_targetConfigs[m_currTrialIdx] : m_adaptiveTargetConfigs[m_currTrialIdx];
+		for (shared_ptr<TargetConfig> target : targetConfigs) {
 			if (target->respawnCount == -1) {
 				totalTargets = -1;		// Ininite spawn case
 				break;
@@ -452,7 +481,7 @@ public:
 	void spawnTrialTargets(Point3 initialSpawnPos, bool previewMode = false);
 
 	bool blockComplete() const;
-	bool nextTrial();
+	bool nextTrial(const bool init = false);
 
 	const RealTime targetFrameTime();
 

@@ -72,31 +72,45 @@ Any TrialConfig::toAny(const bool forceAll) const {
 TaskConfig::TaskConfig(const Any& any) {
 	FPSciAnyTableReader reader(any);
 	reader.get("id", id, "Tasks must be provided w/ an \"id\" field!");
-	reader.get("trialOrders", trialOrders, "Tasks must be provided w/ trial orders!");
 	reader.getIfPresent("count", count);
-	reader.getIfPresent("questions", questions);
+	// Get task type
+	String typeStr;
+	if (reader.getIfPresent("type", typeStr)) {
+		if (!typeStr.compare("adaptive")) type = TaskType::adaptive;
+	}
+	if (type == TaskType::constant) {
+		// Get constant stimulus parameters
+		reader.get("trialOrders", trialOrders, "Constant stimulus tasks must be provided w/ trial orders!");
+		reader.getIfPresent("questions", questions);
 
-	// Get the list of options from the final multiple choice question
-	Array<String> options;
-	for (int i = 0; i < questions.size(); i++) {
-		// Use options from the final multiple choice question
-		if (questions[i].type == Question::Type::MultipleChoice) {
-			questionIdx = i;
-			options = questions[i].options;
+		// Get the list of options from the final multiple choice question
+		Array<String> options;
+		for (int i = 0; i < questions.size(); i++) {
+			// Use options from the final multiple choice question
+			if (questions[i].type == Question::Type::MultipleChoice) {
+				questionIdx = i;
+				options = questions[i].options;
+			}
+		}
+
+		// Check that each trial order has a valid correctAnswer (if specified)
+		for (TrialOrder& order : trialOrders) {
+			if (!order.correctAnswer.empty()) {
+				if (options.size() == 0) {
+					throw format("Task \"%s\" specifies a \"correctAnswer\" but no multiple choice questions are specified!", id);
+				}
+				// This order has a specified correct answer
+				if (!options.contains(order.correctAnswer)) {
+					throw format("The specfied \"correctAnswer\" (\"%s\") for task \"%s\" is not a valid option for the final multiple choice question in this task!", order.correctAnswer, id);
+				}
+			}
 		}
 	}
-
-	// Check that each trial order has a valid correctAnswer (if specified)
-	for (TrialOrder& order : trialOrders) {
-		if (!order.correctAnswer.empty()) {
-			if (options.size() == 0) {
-				throw format("Task \"%s\" specifies a \"correctAnswer\" but no multiple choice questions are specified!", id);
-			}
-			// This order has a specified correct answer
-			if (!options.contains(order.correctAnswer)) {
-				throw format("The specfied \"correctAnswer\" (\"%s\") for task \"%s\" is not a valid option for the final multiple choice question in this task!", order.correctAnswer, id);
-			}
-		}
+	else if(type == TaskType::adaptive){
+		// Get adaptive stimulus parameters
+		reader.get("adaptationCmd", adaptCmd);
+		reader.getIfPresent("adaptationConfigPath", adaptConfigPath);
+		reader.getIfPresent("removeAdaptationConfig", removeAdaptConfig);
 	}
 }
 
@@ -104,9 +118,15 @@ Any TaskConfig::toAny(const bool forceAll) const {
 	TaskConfig def;
 	Any a(Any::TABLE);
 	a["id"] = id;
-	a["trialOrders"] = trialOrders;
-	if (forceAll || def.count != count) a["count"] = count;
-	if (forceAll || questions.length() > 0) a["questions"] = questions;
+	if (type == TaskType::constant) {
+		a["trialOrders"] = trialOrders;
+		if (forceAll || def.count != count) a["count"] = count;
+		if (forceAll || questions.length() > 0) a["questions"] = questions;
+	}
+	else if (type == TaskType::adaptive) {
+		a["adaptationCmd"] = adaptCmd;
+		if (forceAll || def.adaptConfigPath != adaptConfigPath) a["adaptationConfigPath"] = adaptConfigPath;
+	}
 	return a;
 }
 
@@ -115,6 +135,7 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 	FPSciAnyTableReader reader(any);
 	Set<String> uniqueIds;
 
+	bool allAdaptive = true;
 	switch (settingsVersion) {
 	case 1:
 		TrialConfig::defaultConfig() = (FpsConfig)(*this);		// Setup the default configuration for trials here
@@ -126,20 +147,30 @@ SessionConfig::SessionConfig(const Any& any) : FpsConfig(any, defaultConfig()) {
 		reader.getIfPresent("randomizeTaskOrder", randomizeTaskOrder);
 		reader.getIfPresent("weightByCount", weightByCount);
 		reader.getIfPresent("blockCount", blockCount);
-		reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
-		for (int i = 0; i < trials.length(); i++) {
-			if (trials[i].id.empty()) {						// Look for trials without an id
-				trials[i].id = String(std::to_string(i));	// Autoname w/ index
-			}
-			uniqueIds.insert(trials[i].id);
-			if (uniqueIds.size() != i + 1) {
-				logPrintf("ERROR: Duplicate trial ID \"%s\" found (trials without IDs are assigned an ID equal to their index in the trials array)!\n", trials[i].id);
-			}
-		}
-		if (uniqueIds.size() != trials.size()) {
-			throw "Duplicate trial IDs found in experiment config. Check log.txt for details!";
-		}
 		reader.getIfPresent("tasks", tasks);
+
+		for (TaskConfig& task : tasks) {
+			if (task.type != TaskType::adaptive) {
+				allAdaptive = false;
+				break;
+			}
+		}
+		if (!allAdaptive) {
+			// Only get and check trials when not all tasks are adaptive
+			reader.get("trials", trials, format("Issues in the (required) \"trials\" array for session: \"%s\"", id));
+			for (int i = 0; i < trials.length(); i++) {
+				if (trials[i].id.empty()) {						// Look for trials without an id
+					trials[i].id = String(std::to_string(i));	// Autoname w/ index
+				}
+				uniqueIds.insert(trials[i].id);
+				if (uniqueIds.size() != i + 1) {
+					logPrintf("ERROR: Duplicate trial ID \"%s\" found (trials without IDs are assigned an ID equal to their index in the trials array)!\n", trials[i].id);
+				}
+			}
+			if (uniqueIds.size() != trials.size()) {
+				throw "Duplicate trial IDs found in experiment config. Check log.txt for details!";
+			}
+		}
 		break;
 	default:
 		debugPrintf("Settings version '%d' not recognized in SessionConfig.\n", settingsVersion);
@@ -162,6 +193,55 @@ Any SessionConfig::toAny(const bool forceAll) const {
 	a["trials"] = trials;
 	if (forceAll || tasks.length() > 0) a["tasks"] = tasks;
 	return a;
+}
+
+bool Session::adaptStimulus(const String& adaptCmd) {
+	const TaskConfig& task = m_sessConfig->tasks[m_currTaskIdx];
+	// Make sure any results are written to disk (make this blocking in the future)
+	logger->flush();
+
+	// Build and run blocking command to update task
+	CommandSpec cmd = CommandSpec(adaptCmd, false, true);
+	runCommand(cmd, "Adaptive stimulus update");
+
+	// Get fields from Any
+	Any a = Any::fromFile(task.adaptConfigPath);
+	AnyTableReader reader(a);
+	reader.getIfPresent("progress", m_adaptiveProgress);
+	reader.getIfPresent("questions", m_adaptiveQuestions);
+	reader.getIfPresent("questionIndex", m_adaptiveQuestionIndex);
+	reader.getIfPresent("correctAnswer", m_adaptiveCorrectAnswer);
+	reader.get("trials", m_adaptiveTrials, format("The provided adaptive stimulus config file (%s) does not contain any trials!", m_sessConfig->tasks[m_currTaskIdx].adaptConfigPath).c_str());
+
+	// Remove Any file if requested (avoids duplicate reads)
+	if (task.removeAdaptConfig) remove(task.adaptConfigPath.c_str());
+
+	if (m_adaptiveTrials.length() == 0) {				// Script returned no new trials (end of adaptive task)
+		m_completedTasks[m_currTaskIdx][0] += 1;		// Mark this task (single order) as complete
+		m_remainingTasks[m_currTaskIdx][0] -= 1;		// Clear the remaining tasks (was -1 to indicate unknown)
+		m_adaptiveTrialCount = 0;						// Clear the adaptive trial count for this task
+		return true;									// Return true to indicate complete
+	}
+
+	m_adaptiveTargetConfigs.clear();
+	m_currTrialIdx = -1;									// Pre-decrement so incrememnt brings this to 0 for the first trial index
+
+	if (m_adaptiveQuestionIndex == -1) {
+		m_adaptiveQuestionIndex = m_adaptiveQuestions.size() - 1;	// Use final question if unspecified
+	}
+
+	// Build up m_taskTrials array and manage completed
+	for (int i = 0; i < m_adaptiveTrials.size(); i++) {
+		m_taskTrials.insert(0, createShared<TrialConfig>(m_adaptiveTrials[i]));
+		m_adaptiveTargetConfigs.append(Array<shared_ptr<TargetConfig>>());
+		m_completedTaskTrials.set(m_adaptiveTrials[i].id, 0);
+		// Build targets array here
+		for (const String& id :  m_taskTrials[i]->targetIds) {
+			m_adaptiveTargetConfigs[i].append(m_app->experimentConfig.getTargetConfigById(id));
+		}
+	}
+
+	return false;
 }
 
 float SessionConfig::getTrialOrdersPerBlock(void) const {
@@ -212,7 +292,7 @@ Session::Session(FPSciApp* app) : m_app(app), m_weapon(app->weapon) {
 const RealTime Session::targetFrameTime()
 {
 	const RealTime defaultFrameTime = 1.0 / m_app->window()->settings().refreshRate;
-	if (!m_hasSession) return defaultFrameTime;
+	if (!m_hasSession || isNull(m_trialConfig)) return defaultFrameTime;
 
 	uint arraySize = m_trialConfig->render.frameTimeArray.size();
 	if (arraySize > 0) {
@@ -239,65 +319,104 @@ const RealTime Session::targetFrameTime()
 	return defaultFrameTime;
 }
 
-bool Session::nextTrial() {
-	// Do we need to create a new task?
-	if(m_taskTrials.length() == 0) {
-		// Build an array of unrun tasks in this block
-		Array<Array<int>> unrunTaskIdxs;
-		for (int i = 0; i < m_remainingTasks.size(); i++) {
-			for (int j = 0; j < m_remainingTasks[i].size(); j++) {
-				if (m_remainingTasks[i][j] > 0 || m_remainingTasks[i][j] == -1) {
-					if (m_sessConfig->randomizeTaskOrder && m_sessConfig->weightByCount) {
-						// Weight by remaining count of this trial type
-						for (int k = 0; k < m_remainingTasks[i][j]; k++) {
-							unrunTaskIdxs.append(Array<int>(i,j));  			// Add proportional to the # of times this task needs to be run
+bool Session::nextTrial(const bool init) {
+	const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
+	bool adaptiveDone = false;
+	if (m_taskTrials.length() == 0) {	// We are out of trials, load a new task
+		if (task.type == TaskType::adaptive && !init) {			// We are in an existing task (won't need to do any task math)
+			int lastTrialCount = m_adaptiveTrialCount;			// This will be cleared by the following call (if done)
+			adaptiveDone = adaptStimulus(task.adaptCmd);		// This method handles reading from the resulting input file
+			if (adaptiveDone) {
+				logger->updateTaskEntry(lastTrialCount, true);	// Make sure this is marked as completed here
+			}
+		}
+		// If we have finished a constant stimulus trial order or the adaptive stimulus is done advance to a new task
+		if (task.type == TaskType::constant || adaptiveDone || init) {
+			// Build an array of unrun tasks in this block
+			Array<Array<int>> unrunTaskIdxs;
+			for (int i = 0; i < m_remainingTasks.size(); i++) {
+				for (int j = 0; j < m_remainingTasks[i].size(); j++) {
+					if (m_remainingTasks[i][j] > 0 || m_remainingTasks[i][j] == -1) {
+						if (m_sessConfig->randomizeTaskOrder && m_sessConfig->weightByCount) {
+							const int iterCount = m_remainingTasks[i][j] != -1 ? m_remainingTasks[i][j] : 1;
+							// Weight by remaining count of this trial type
+							for (int k = 0; k < iterCount; k++) {
+								unrunTaskIdxs.append(Array<int>(i, j));  			// Add proportional to the # of times this task needs to be run
+							}
 						}
-					}
-					else {
-						// Add a single instance for each trial that is unrun (don't weight by remaining count)
-						unrunTaskIdxs.append(Array<int>(i,j));
+						else {
+							// Add a single instance for each trial that is unrun (don't weight by remaining count)
+							unrunTaskIdxs.append(Array<int>(i, j));
+						}
 					}
 				}
 			}
-		}
-		if (unrunTaskIdxs.size() == 0) return false;		// If there are no remaining tasks return
+			if (unrunTaskIdxs.size() == 0) return false;		// If there are no remaining tasks return
 
-		// Pick the new task and trial order index
-		int idx = 0;
-		// Are we randomizing task order (or randomizing trial order when trials are treated as tasks)?
-		if (m_sessConfig->randomizeTaskOrder) {				
-			idx = Random::common().integer(0, unrunTaskIdxs.size() - 1);		// Pick a random trial from within the array
-		}
-		m_currTaskIdx = unrunTaskIdxs[idx][0];
-		m_currOrderIdx = unrunTaskIdxs[idx][1];
-		
-		m_completedTaskTrials.clear();
-		// Populate the task trial and completed task trials array
-		Array<String> trialIds;
-		String taskId;
-		if (m_sessConfig->tasks.size() == 0) {
-			// There are no tasks in this session, we need to create this task based on a single trial
-			trialIds = Array<String>(m_sessConfig->trials[m_currTaskIdx].id);
-			taskId = m_sessConfig->trials[m_currTaskIdx].id;
-		}
-		else {
-			trialIds = m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order;
-			taskId = m_sessConfig->tasks[m_currTaskIdx].id;
-		}
-		for (const String& trialId : trialIds) {
-			m_taskTrials.insert(0, m_sessConfig->getTrialIndex(trialId));	// Insert trial at the front of the task trials
-			m_completedTaskTrials.set(trialId, 0);
-		}
+			// Pick the new task and trial order index
+			int idx = 0;
+			// Are we randomizing task order (or randomizing trial order when trials are treated as tasks)?
+			if (m_sessConfig->randomizeTaskOrder) {
+				idx = Random::common().integer(0, unrunTaskIdxs.size() - 1);		// Pick a random trial from within the array
+			}
+			m_currTaskIdx = unrunTaskIdxs[idx][0];
+			m_currOrderIdx = unrunTaskIdxs[idx][1];
+			m_completedTaskTrials.clear();
 
-		// Add task to tasks table in database
-		logger->addTask(m_sessConfig->id, m_currBlock-1, taskId, getTaskCount(m_currTaskIdx), trialIds);
+			const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
+
+			// Populate the task trial and completed task trials array
+			if (task.type == TaskType::constant) {
+				Array<String> trialIds;
+				String taskId;
+				if (m_sessConfig->tasks.size() == 0) {
+					// There are no tasks in this session, we need to create this task based on a single trial
+					trialIds = Array<String>(m_sessConfig->trials[m_currTaskIdx].id);
+					taskId = m_sessConfig->trials[m_currTaskIdx].id;
+				}
+				else {
+					trialIds = task.trialOrders[m_currOrderIdx].order;
+					taskId = task.id;
+				}
+				for (const String& trialId : trialIds) {
+					int trialIdx = m_sessConfig->getTrialIndex(trialId);
+					m_taskTrials.insert(0, createShared<TrialConfig>(m_sessConfig->trials[trialIdx]));	// Insert trial at the front of the task trials
+					m_completedTaskTrials.set(trialId, 0);
+				}
+
+				// Add task to tasks table in database
+				logger->addTask(m_sessConfig->id, m_currBlock - 1, taskId, getTaskCount(m_currTaskIdx), trialIds);
+			}
+			else if (task.type == TaskType::adaptive) {
+				// This case handles when we need to transition to a new adaptive stimulus task (re-adapt stimulus here b/c previous call was empty)
+				if (init || adaptiveDone) {
+					// Write the new task to the database (allow script to read it on call)
+					logger->addTask(m_sessConfig->id, m_currBlock - 1, task.id, getTaskCount(m_currTaskIdx), Array<String>());
+				}
+				// Adapt stimulus for a new task here
+				adaptiveDone = adaptStimulus(task.adaptCmd);
+				if(adaptiveDone) {	
+					// TODO: Decide what to do when this new task returns an empty result...
+				}
+			}
+		}
 	}
 
-	// Select the next trial from this task (pop trial from back of task trails)
-	m_currTrialIdx = m_taskTrials.pop();
+	// Check for no new trial (can come from adaptive stimulus case being finished)
+	if (m_taskTrials.length() == 0) return false;		
 
 	// Get and update the trial configuration
-	m_trialConfig = TrialConfig::createShared<TrialConfig>(m_sessConfig->trials[m_currTrialIdx]);
+	m_trialConfig = m_taskTrials.pop();
+
+	// Select the next trial from this task (pop trial from back of task trails)
+	if (task.type == TaskType::constant) {
+		m_currTrialIdx = m_sessConfig->getTrialIndex(m_trialConfig->id);
+	}
+	else if(task.type == TaskType::adaptive){
+		m_currTrialIdx += 1;	// Increment the index for adaptive stimulus
+		m_adaptiveTrialCount += 1;	// Count the overall trials presented
+	}
+
 	// Respawn player for first trial in session (override session-level spawn position)
 	m_app->updateTrial(m_trialConfig, false, m_firstTrial);	
 	if (m_firstTrial) m_firstTrial = false;
@@ -347,25 +466,28 @@ bool Session::nextBlock(bool init) {
 			}
 		}
 	}
-	else {
+	else {	// Note all adaptive stimlulus follows this case
 		for (int i = 0; i < m_sessConfig->tasks.size(); i++) {
 			if (init) {
 				m_completedTasks.append(Array<int>());		// Initialize task-level completed trial orders array
 				m_remainingTasks.append(Array<int>());		// Initialize task-level remaining trial orders array
 			}
-			for (int j = 0; j < m_sessConfig->tasks[i].trialOrders.size(); j++) {
+			// Use a single order for adaptive stimulus, allow multiple orders for constant stimulus
+			const TaskConfig& task = m_sessConfig->tasks[i];
+			const int orderCnt = task.type == TaskType::constant ? task.trialOrders.size() : 1;		// Only 1 order for adaptive tasks
+			for (int j = 0; j < orderCnt; j++) {
 				if (init) {
 					m_completedTasks[i].append(0);	// Zero completed count
-					m_remainingTasks[i].append(m_sessConfig->tasks[i].count); // Append to complete count
+					m_remainingTasks[i].append(Array<int>(task.count)); // Append to complete count
 				}
 				else {
 					m_completedTasks[i][j] = 0;
-					m_remainingTasks[i][j] += m_sessConfig->tasks[i].count;
+					m_remainingTasks[i][j] += task.count;
 				}
 			}
 		}
 	}
-	return nextTrial();
+	return nextTrial(true);
 }
 
 void Session::onInit(String filename, String description) {
@@ -398,17 +520,29 @@ void Session::onInit(String filename, String description) {
 
 		// Iterate over the sessions here and add a config for each
 		m_targetConfigs = m_app->experimentConfig.getTargetsByTrial(m_sessConfig->id);
-		nextBlock(true);
+		if (!nextBlock(true)) {	// No new block to run go straight to feedback
+			currentState = PresentationState::sessionFeedback;
+			m_askQuestions = false;
+		}
 	}
 	else {	// Invalid session, move to displaying message
 		currentState = PresentationState::sessionFeedback;
+		m_askQuestions = false;
 	}
 }
 
 void Session::randomizePosition(const shared_ptr<TargetEntity>& target) const {
 	static const Point3 initialSpawnPos = m_camera->frame().translation;
-	const int trialIdx = m_sessConfig->getTrialIndex(m_trialConfig->id);
-	shared_ptr<TargetConfig> config = m_targetConfigs[trialIdx][target->paramIdx()];
+	shared_ptr<TargetConfig> config;
+	if (m_sessConfig->tasks[m_currTaskIdx].type == TaskType::constant) {
+		const int trialIdx = m_sessConfig->getTrialIndex(m_trialConfig->id);
+		config = m_targetConfigs[trialIdx][target->paramIdx()];
+	}
+	else {
+		for (shared_ptr<TargetConfig> tConfig : m_adaptiveTargetConfigs[m_currTrialIdx]) {
+			if (tConfig->id == target->id()) config = tConfig;
+		}
+	}
 	const bool isWorldSpace = config->destSpace == "world";
 	Point3 loc;
 
@@ -476,11 +610,15 @@ void Session::initTargetAnimation(const bool task) {
 }
 
 void Session::spawnTrialTargets(Point3 initialSpawnPos, bool previewMode) {
+	const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
+	const Array<shared_ptr<TargetConfig>> trialTargetConfigs = task.type == TaskType::constant ? m_targetConfigs[m_currTrialIdx] : m_adaptiveTargetConfigs[m_currTrialIdx];
+
 	// Iterate through the targets
-	for (int i = 0; i < m_targetConfigs[m_currTrialIdx].size(); i++) {
+	for (int i = 0; i < trialTargetConfigs.size(); i++) {
 		const Color3 previewColor = m_trialConfig->targetView.previewColor;
-		shared_ptr<TargetConfig> target = m_targetConfigs[m_currTrialIdx][i];
-		const String name = format("%s_%d_%d_%d_%s_%d", m_sessConfig->id, m_currTaskIdx, m_currOrderIdx, m_completedTasks[m_currTaskIdx][m_currOrderIdx], target->id, i);
+		const shared_ptr<TargetConfig> target = trialTargetConfigs[i];
+		const int trialIdx = task.type == TaskType::constant ? m_completedTasks[m_currTaskIdx][m_currOrderIdx] : m_adaptiveTrialCount - 1;
+		const String name = format("%s_%d_%d_%d_%s_%d", m_sessConfig->id, m_currTaskIdx, m_currOrderIdx, trialIdx, target->id, i);
 
 		const float spawn_eccV = (target->symmetricEccV ? randSign() : 1) * Random::common().uniform(target->eccV[0], target->eccV[1]);
 		const float spawn_eccH = (target->symmetricEccH ? randSign() : 1) * Random::common().uniform(target->eccH[0], target->eccH[1]);
@@ -526,13 +664,14 @@ void Session::processResponse() {
 	recordTrialResponse(m_destroyedTargets, totalTargets);				// Record the trial response into the database
 
 	// Update completed/remaining task state
-	if (m_taskTrials.size() == 0) {										// Task is complete update tracking
-		m_completedTasks[m_currTaskIdx][m_currOrderIdx] += 1;			// Mark task trial order as completed
+	const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
+	if (m_taskTrials.size() == 0 && task.type == TaskType::constant) {	// Task is complete update tracking
+		m_completedTasks[m_currTaskIdx][m_currOrderIdx] += 1;			// Mark task trial order as completed if constant (task isn't necessarily done if adaptive)
 		if (m_remainingTasks[m_currTaskIdx][m_currOrderIdx] > 0) {		// Remove task trial order from remaining
 			m_remainingTasks[m_currTaskIdx][m_currOrderIdx] -= 1;
 		}
 	}
-	m_completedTaskTrials[m_trialConfig->id] += 1;						// Incrememnt count of this trial type in task
+	m_completedTaskTrials[m_trialConfig->id] += 1;						// Increment count of this trial type in task
 
 	// This update is only used for completed trials
 	if (notNull(logger)) {
@@ -545,14 +684,14 @@ void Session::processResponse() {
 			}
 			bool taskComplete = true;
 			for (int remaining : m_remainingTasks[i]) {
-				if (remaining > 0) {
+				if (remaining != 0) {
 					taskComplete = false;
 					break;
 				}
 			}
 			if (taskComplete) { completeTasks += 1; }
 		}
-
+		if (task.type == TaskType::adaptive) completeTrials = m_adaptiveTrialCount;
 		// Update session entry in database
 		logger->updateSessionEntry(m_currBlock > m_sessConfig->blockCount, completeTasks, completeTrials);			
 	}
@@ -640,27 +779,34 @@ void Session::updatePresentationState() {
 				m_feedbackMessage = "";		// Clear the feedback message
 				if (m_taskTrials.length() == 0) newState = PresentationState::taskQuestions;	// Move forward to providing task-level feedback
 				else {		// Individual trial complete, go back to reference target
-					logger->updateTaskEntry(m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size(), false);
-					nextTrial();
-					newState = PresentationState::referenceTarget;
+					const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
+					const int completeTrials = task.type == TaskType::constant ?
+						task.trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size() :
+						m_adaptiveTrialCount;
+					logger->updateTaskEntry(completeTrials, false);
+					if (!nextTrial()) newState = PresentationState::taskQuestions;		// No new trials are available, move to task questions
+					else newState = PresentationState::referenceTarget;
 				}
 			}
 		}
 	}
 	else if (currentState == PresentationState::taskQuestions) {
 		bool allAnswered = true;
+		TaskConfig task;
 		if (m_sessConfig->tasks.size() > 0) {
+			task = m_sessConfig->tasks[m_currTaskIdx];
 			// Only ask questions if a task is specified (otherwise trial-level questions have already been presented)
-			allAnswered = presentQuestions(m_sessConfig->tasks[m_currTaskIdx].questions);
+			allAnswered = task.type == TaskType::constant ? presentQuestions(task.questions) : presentQuestions(m_adaptiveQuestions);
 		}
 		if (allAnswered) {
 			m_currQuestionIdx = -1;		// Reset the question index
-			if (m_sessConfig->tasks.size() > 0) {
-				const int qIdx = m_sessConfig->tasks[m_currTaskIdx].questionIdx;
-				bool success = true;		// Assume success (for case with no questions)
-				if (qIdx >= 0 && !m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].correctAnswer.empty()) {
-					// Update the success value if a valid question was asked and correctAnswer was given
-					success = m_sessConfig->tasks[m_currTaskIdx].questions[qIdx].result == m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].correctAnswer;
+			if (m_sessConfig->tasks.size() > 0 && task.questions.size() > 0) {
+				const int qIdx = task.type == TaskType::constant ? task.questionIdx : m_adaptiveQuestionIndex;
+				const String& correctAnswer = task.type == TaskType::constant ? task.trialOrders[m_currOrderIdx].correctAnswer : m_adaptiveCorrectAnswer;
+				const String& result = task.type == TaskType::constant ? task.questions[qIdx].result : m_adaptiveQuestions[qIdx].result;
+				bool success = true;						// Assume success (for case with no questions)
+				if (qIdx >= 0 && !correctAnswer.empty()) { 	// Update the success value if a valid question was asked and correctAnswer was given
+					success = result == correctAnswer;
 				}
 				if (success) m_feedbackMessage = formatFeedback(m_sessConfig->feedback.taskSuccess);
 				else m_feedbackMessage = formatFeedback(m_sessConfig->feedback.taskFailure);
@@ -672,8 +818,12 @@ void Session::updatePresentationState() {
 		if (stateElapsedTime > m_sessConfig->timing.taskFeedbackDuration) {
 			m_feedbackMessage = "";
 			int completeTrials = 1;		// Assume 1 completed trial (if we don't have specified tasks)
-			if (m_sessConfig->tasks.size() > 0) completeTrials = m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size();
-			logger->updateTaskEntry(completeTrials, true);
+			const TaskConfig& task = m_sessConfig->tasks.size() == 0 ? TaskConfig() : m_sessConfig->tasks[m_currTaskIdx];
+			if (m_sessConfig->tasks.size() > 0) {
+				completeTrials = task.type == TaskType::constant ? task.trialOrders[m_currOrderIdx].order.size() - m_taskTrials.size() : m_adaptiveTrialCount;
+			}
+			const bool complete = task.type == TaskType::constant ? true : false;
+			logger->updateTaskEntry(completeTrials, complete);
 			if (blockComplete()) {
 				m_currBlock++;
 				if (m_currBlock > m_sessConfig->blockCount) {	// End of session (all blocks complete)
@@ -687,15 +837,16 @@ void Session::updatePresentationState() {
 			}
 			else {	// Individual trial complete, go back to reference target
 				m_feedbackMessage = "";	// Clear the feedback message
-				nextTrial();
-				newState = PresentationState::referenceTarget;
+				if (!nextTrial()) newState = PresentationState::sessionFeedback;
+				else newState = PresentationState::referenceTarget;
 			}
 		}
 	}
 	else if (currentState == PresentationState::sessionFeedback) {
 		if (m_hasSession) {
 			if (stateElapsedTime > m_sessConfig->timing.sessionFeedbackDuration && (!m_sessConfig->timing.sessionFeedbackRequireClick || !m_app->shootButtonUp)) {
-				bool allAnswered = presentQuestions(m_sessConfig->questionArray);	// Ask session-level questions
+				bool allAnswered = true;
+				if(m_askQuestions) allAnswered = presentQuestions(m_sessConfig->questionArray);	// Ask session-level questions
 				if (allAnswered) {			// Present questions until done here
 					// Write final session timestamp to log
 					if (notNull(logger) && m_sessConfig->logger.enable) {
@@ -811,8 +962,10 @@ void Session::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 	updatePresentationState();
 
 	// 2. Record target trajectories, view direction trajectories, and mouse motion.
-	accumulateTrajectories();
-	accumulateFrameInfo(rdt, sdt, idt);
+	if (notNull(m_trialConfig)) {
+		accumulateTrajectories();
+		accumulateFrameInfo(rdt, sdt, idt);
+	}
 }
 
 bool Session::presentQuestions(Array<Question>& questions) {
@@ -829,7 +982,8 @@ bool Session::presentQuestions(Array<Question>& questions) {
 				if (m_sessConfig->logger.enable) {										// Log the question and its answer
 					if (currentState == PresentationState::trialFeedback) {
 						// End of trial question, log trial id and index
-						logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog, m_sessConfig->tasks[m_currTaskIdx].id, m_lastTaskIndex, m_trialConfig->id, m_completedTaskTrials[m_trialConfig->id]-1);
+						const String taskId = m_sessConfig->tasks.size() == 0 ? "" : m_sessConfig->tasks[m_currTaskIdx].id;
+						logger->addQuestion(questions[m_currQuestionIdx], m_sessConfig->id, m_app->dialog, taskId, m_lastTaskIndex, m_trialConfig->id, m_completedTaskTrials[m_trialConfig->id]-1);
 					}
 					else if (currentState == PresentationState::taskQuestions) {
 						// End of task question, log task id (no trial info)
@@ -860,10 +1014,9 @@ bool Session::presentQuestions(Array<Question>& questions) {
 
 void Session::recordTrialResponse(int destroyedTargets, int totalTargets) {
 	if (!m_sessConfig->logger.enable) return;		// Skip this if the logger is disabled
-	if (m_trialConfig->logger.logTrialResponse) {
-		String taskId;
-		if (m_sessConfig->tasks.size() == 0) taskId = m_trialConfig->id;
-		else taskId = m_sessConfig->tasks[m_currTaskIdx].id;
+		if (m_trialConfig->logger.logTrialResponse) {
+		const String taskId = m_sessConfig->tasks.size() == 0 ? m_trialConfig->id : m_sessConfig->tasks[m_currTaskIdx].id;
+		const int trialIdx = m_sessConfig->tasks.size() == 0 || m_sessConfig->tasks[m_currTaskIdx].type == TaskType::constant ? m_completedTasks[m_currTaskIdx][m_currOrderIdx] : m_adaptiveTrialCount - 1;
 		// Get the (unique) index for this run of the task
 		m_lastTaskIndex = getTaskCount(m_currTaskIdx);
 		// Trials table. Record trial start time, end time, and task completion time.
@@ -873,7 +1026,7 @@ void Session::recordTrialResponse(int destroyedTargets, int totalTargets) {
 			"'" + taskId + "'",
 			String(std::to_string(m_lastTaskIndex)),
 			"'" + m_trialConfig->id + "'",
-			String(std::to_string(m_completedTasks[m_currTaskIdx][m_currOrderIdx])),
+			String(std::to_string(trialIdx)),
 			"'" + m_taskStartTime + "'",
 			"'" + m_taskEndTime + "'",
 			String(std::to_string(m_pretrialDuration)),
@@ -967,29 +1120,33 @@ float Session::getRemainingTrialTime() {
 
 float Session::getProgress() {
 	if (notNull(m_sessConfig)) {
-		// Get progress across tasks
-		float remainingTrialOrders = 0.f;
-		for (Array<int> trialOrderCounts : m_remainingTasks) {
-			for (int orderCount : trialOrderCounts) {
-				if (orderCount < 0) return 0.f;				// Infinite trials, never make any progress
-				remainingTrialOrders += (float)orderCount;
+		if (m_sessConfig->tasks[m_currTaskIdx].type == TaskType::adaptive) {
+			return m_adaptiveProgress;
+		}
+		else {	// Get progress across constant tasks
+			float remainingTrialOrders = 0.f;
+			for (Array<int> trialOrderCounts : m_remainingTasks) {
+				for (int orderCount : trialOrderCounts) {
+					if (orderCount < 0) return 0.f;				// Infinite trials, never make any progress
+					remainingTrialOrders += (float)orderCount;
+				}
 			}
-		}
 
-		// Get progress in current task
-		int completedTrialsInOrder = 0;
-		int totalTrialsInOrder = 1; // If there aren't tasks specified there is always 1 trial in this order (single order/trial task)
-		if(m_sessConfig->tasks.size() > 0) totalTrialsInOrder = m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.length();
-		for (const String& trialId : m_completedTaskTrials.getKeys()) {
-			completedTrialsInOrder += m_completedTaskTrials[trialId];
+			// Get progress in current task
+			int completedTrialsInOrder = 0;
+			int totalTrialsInOrder = 1; // If there aren't tasks specified there is always 1 trial in this order (single order/trial task)
+			if (m_sessConfig->tasks.size() > 0) totalTrialsInOrder = m_sessConfig->tasks[m_currTaskIdx].trialOrders[m_currOrderIdx].order.length();
+			for (const String& trialId : m_completedTaskTrials.getKeys()) {
+				completedTrialsInOrder += m_completedTaskTrials[trialId];
+			}
+			float currTaskProgress = (float)completedTrialsInOrder / (float)totalTrialsInOrder;
+
+			// Start by getting task-level progress (based on m_remainingTrialOrders)
+			float overallProgress = 1.f - (remainingTrialOrders / m_sessConfig->getTrialOrdersPerBlock());
+			// Special case to avoid "double counting" completed tasks (if incomplete add progress in the current task, if complete it has been counted)
+			if (currTaskProgress < 1) overallProgress += currTaskProgress / m_sessConfig->getTrialOrdersPerBlock();
+			return overallProgress;
 		}
-		float currTaskProgress = (float) completedTrialsInOrder / (float) totalTrialsInOrder;
-		
-		// Start by getting task-level progress (based on m_remainingTrialOrders)
-		float overallProgress = 1.f - (remainingTrialOrders / m_sessConfig->getTrialOrdersPerBlock());
-		// Special case to avoid "double counting" completed tasks (if incomplete add progress in the current task, if complete it has been counted)
-		if (currTaskProgress < 1) overallProgress += currTaskProgress / m_sessConfig->getTrialOrdersPerBlock();
-		return overallProgress;
 	}
 	return fnan();
 }
