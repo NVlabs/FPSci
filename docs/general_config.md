@@ -718,9 +718,9 @@ These flags control the display of the in-game user menu:
 "xTurnScaleAdjustMode": "None",         // Don't allow X-turn scale adjustment (use sensitivity)
 "yTurnScaleAdjustMode": "Invert",       // Only allow simple "invert" behavior for Y turn scale
 "allowReticleChange": false,            // Don't allow the user to change the reticle (ignore below)
-"allowReticleIdxChange": true,          // If reticle changes are enabled, allow index (reticle style) changes
-"allowReticleSizeChange": true,         // If reticle changes are enabled, allow size changes
-"allowReticleColorChange": true,        // If reticle changes are enabled, allow color changes
+"allowReticleIdxChange": false,         // If reticle changes are enabled, allow index (reticle style) changes
+"allowReticleSizeChange": false,        // If reticle changes are enabled, allow size changes
+"allowReticleColorChange": false,       // If reticle changes are enabled, allow color changes
 "allowReticleTimeChange": false,        // Even if reticle change is enabled, don't allow "shrink time" to change
 "showReticlePreview": true,             // If reticle changes are enabled show the preview
 "showMenuOnStartup" : true,             // Show the user menu when the application starts
