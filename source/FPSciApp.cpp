@@ -619,6 +619,8 @@ void FPSciApp::initPlayer(const shared_ptr<FpsConfig> config, const bool respawn
 	player->height = &config->player.height;
 	player->crouchHeight = &config->player.crouchHeight;
 
+	player->strafeDivider = &config->render.strafeDivider;
+
 	// Respawn player
 	if (respawn) player->respawn();
 	updateMouseSensitivity();

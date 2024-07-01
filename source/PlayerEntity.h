@@ -46,6 +46,8 @@ public:
 	float			m_cameraRadiansPerMouseDot;		///< Player mouse sensitivity
 	Vector2			turnScale;				///< Player asymmetric mouse scaler - typically near 1:1
 
+    int*            strafeDivider;              ///< Integer how many frames to count between updating strafing
+
 	float*			moveRate = nullptr;	        ///< Player movement rate (m/s)
 	Vector2*		moveScale = nullptr;	    ///< Player X/Y movement scale vector (interpreted as unit vector)
 	Array<bool>*	axisLock = nullptr;		    ///< World-space axis lock

@@ -128,7 +128,13 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
     }
     simulatePose(absoluteTime, deltaTime);
 
+	static G3D::SimTime slideDeltaTime = 0.;
+	static int callCount = 1;
+
 	if (!isNaN(deltaTime)) {
+		// Accumulate for occasional slide only
+		slideDeltaTime += deltaTime;
+
 		// Apply rotation first
 		m_yawRadians += m_desiredYawDelta;													// Integrate the yaw change into heading
 		m_yawRadians = mod1((m_yawRadians) / (2 * pif())) * 2 * pif();					// Keep the user's heading value in the [0,2pi) range		
@@ -138,9 +144,16 @@ void PlayerEntity::onSimulation(SimTime absoluteTime, SimTime deltaTime) {
 		// Set player frame rotation based on the heading and tilt
 		m_frame.rotation = Matrix3::fromAxisAngle(Vector3::unitY(), -m_yawRadians) * Matrix3::fromAxisAngle(Vector3::unitX(), m_pitchRadians);
 
-		// Translation update - in direction after rotating
-		if (m_motionEnable) {
-			m_inContact = slideMove(deltaTime);
+		if (strafeDivider && callCount >= *strafeDivider) {
+			// Translation update - in direction after rotating
+			if (m_motionEnable) {
+				m_inContact = slideMove(slideDeltaTime);
+			}
+			slideDeltaTime = 0.;
+			callCount = 1;
+		}
+		else {
+			callCount += 1;
 		}
 		
 		// Check for "off map" condition and reset position here...

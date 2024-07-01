@@ -100,6 +100,8 @@ void RenderConfig::load(FPSciAnyTableReader reader, int settingsVersion) {
 		reader.getIfPresent("frameDelay", frameDelay);
 		reader.getIfPresent("frameTimeArray", frameTimeArray);
 		reader.getIfPresent("frameTimeRandomize", frameTimeRandomize);
+
+		reader.getIfPresent("strafeDivider", strafeDivider);
 		
 		reader.getIfPresent("frameTimeMode", frameTimeMode);
 		frameTimeMode = toLower(frameTimeMode);	// Convert to lower case
@@ -169,7 +171,9 @@ Any RenderConfig::addToAny(Any a, bool forceAll) const {
 	if (forceAll || def.samplerPrecomposite != samplerPrecomposite)	a["samplerPrecomposite"] = samplerPrecomposite;
 	if (forceAll || def.samplerComposite != samplerComposite)	a["samplerComposite"] = samplerComposite;
 	if (forceAll || def.samplerFinal != samplerFinal)			a["samplerFinal"] = samplerFinal;
-	
+
+	if (forceAll || def.strafeDivider != strafeDivider)			a["strafeDivider"] = strafeDivider;
+
 	return a;
 }
 

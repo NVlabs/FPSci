@@ -29,6 +29,7 @@ public:
 	// Rendering parameters
 	float           frameRate = 1000.0f;						///< Target (goal) frame rate (in Hz)
 	int             frameDelay = 0;								///< Integer frame delay (in frames)
+	int				strafeDivider = 1;							///< Integer number of frames between move updates
 	Array<float>	frameTimeArray = { };						///< Array of target frame times (in seconds)
 	bool			frameTimeRandomize = false;					///< Whether to choose a sequential or random item from frameTimeArray
 	String			frameTimeMode = "always";					///< Mode to use for frame time selection (can be "always", "taskOnly", or "restartWithTask", case insensitive)

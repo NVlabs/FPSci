@@ -229,6 +229,10 @@ RenderControls::RenderControls(FPSciApp* app, FpsConfig& config, bool& drawFps, 
 		c->setWidth(width*0.95f);
 	} framePane->endRow();
 	framePane->beginRow(); {
+		auto c = framePane->addNumberBox("Strafe every", &(config.render.strafeDivider), "frames", GuiTheme::LINEAR_SLIDER, 1, 360, 1);
+		c->setWidth(width * 0.95f);
+	} framePane->endRow();
+	framePane->beginRow(); {
 		auto c = framePane->addNumberBox("Display Lag", &(config.render.frameDelay), "f", GuiTheme::LINEAR_SLIDER, 0, maxFrameDelay);
 		c->setWidth(width*0.95f);
 	}framePane->endRow();
