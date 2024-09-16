@@ -1,0 +1,20 @@
+{ 
+    settingsVersion = 1; 
+    users = ( 
+        { 
+            id = "anon"; 
+            invertY = false; 
+            mouseDPI = 800; 
+            mouseDegPerMillimeter = 2.81; 
+            reticleChangeTime = 0.3; 
+            reticleColor = ( 
+                Color4(1, 0, 0, 1 ), 
+                Color4(1, 0, 0, 1 ) ); 
+            
+            reticleIndex = 39; 
+            reticleScale = ( 1, 1 ); 
+            scopeTurnScale = Vector2(0, 0 ); 
+            turnScale = Vector2(1, 1 ); 
+        } ); 
+    
+} 

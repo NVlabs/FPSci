@@ -1,0 +1,65 @@
+{
+    settingsVersion = 1; 
+    
+    description = "TargetEdgeTest";
+    scene = { 
+        // name = "FPSci Square Map v2 (Floor Offset)";
+        name = "FPSci Simple Hallway";
+    };
+
+    frameDelay = 0;
+    frameRate = 60;
+
+    trialFeedbackDuration = 0.0;
+    pretrialDuration = 0.001;
+    maxTrialDuration = 10000000.0;
+
+	showMenuOnStartup = false;
+    showMenuBetweenSessions = false;
+
+    weapon = {
+        id = "default"; 
+        maxAmmo = 100000;
+        firePeriod = 0.1;
+        instantKill = true;
+        damagePerSecond = 100;
+        autoFire = false;
+    };
+
+    sessions = (
+        {
+            id = "main";
+            trials = (
+                {
+                    ids = ( "front" );
+                    count = 10;
+                }
+            );
+        },
+
+    );
+
+    targets = (
+        {
+            id = "front";
+            speed = [ 0.0, 0.0 ];
+            visualSize = [ 0.5, 0.5 ];
+            destSpace = "world";
+            // For Square Map v2
+            // spawnBounds = AABox {
+            //     Point3(0, 1.5, -12.00001),
+            //     Point3(0.00001, 1.50001, -12.0),
+            // };
+            // For FPSci Simple Hallway
+            spawnBounds = AABox {
+                Point3(38, -2.35, -0.35001),
+                Point3(38.00001, -2.35001, -0.35),
+            };
+            moveBounds = AABox {
+                Point3(-100.0, -100.0, -100.0),
+                Point3(100.0, 100.0, 100.0),
+            };
+            respawnCount = 0;
+        },
+    );
+}
