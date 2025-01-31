@@ -8,6 +8,7 @@ The `startupconfig.Any` file is located in the [`data-files` directory](../data-
 The following fields are valid for a startupconfig.Any file:
 
 * `developerMode` controls whether the application is run in experiment mode, or [developer mode](./developermode.md). When `false` the application is in experiment/play mode and is ready to collect data. In developer mode (`developerMode`=`true`) the application is run with additional windows available for user mouse interaction.
+* `experimentListEnable` controls whether the experiment list that shows when [developer mode](./developermode.md) is enabled shows even when developer mode is off. This is useful when you want to quickly switch between different experiments without having to restart the application. For example, if you have a set of different days you want participants to do different experiment variations, you could use this list to swap between them. When `developerMode`=`false`, the list will only show if `experimentListEnable` is also `true`.
 * `waypointEditorMode` controls whether the application is run including additional support for [target path creation/waypoint editing](./patheditor.md). Waypoint editor mode **only applies when `developerMode`=`true`**! In waypoint editor mode an additional menu is made available and the user can drop waypoints or start/stop record their motion using key bound functions.
 * `fullscreen` controls whether the application is run in fullscreen mode or windowed (independent of other options)
 * `windowSize` controls the (default) window size when running in windowed mode (`fullscreen`=`false`) as a `Vector2`. The window can then be resized from this default while running.
@@ -48,12 +49,14 @@ defaultExperiment = {
 };
 ```
 
-As an example of how to use the `experimentList`, let's say we have 2 experiments that use the same userConfig, keymap, and results, but have their own experimentConfig and userStatus to track progress. The `experimentList` for this example might look something like the following:
+## Experiment List
+As an example of how to use the `experimentList` (when either `experimentListEnable=true` or `developerMode=true`), let's say we have 2 experiments that use the same userConfig, keymap, and results, but have their own experimentConfig and userStatus to track progress. The `experimentList` for this example might look something like the following:
 
 ```
 {
     audioEnable = true; 
     developerMode = true; 
+    experimentListEnable = true, // Note that this is only required if developer mode is false
     fullscreen = false; 
     waypointEditorMode = false; 
     defaultExperiment = {

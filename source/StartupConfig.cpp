@@ -83,6 +83,7 @@ StartupConfig::StartupConfig(const Any& any) {
 	switch (settingsVersion) {
 	case 1:
 		reader.getIfPresent("developerMode", developerMode);
+		reader.getIfPresent("experimentListEnable", experimentListEnable);
 		reader.getIfPresent("waypointEditorMode", waypointEditorMode);
 		reader.getIfPresent("fullscreen", fullscreen);
 		reader.getIfPresent("windowSize", windowSize);
@@ -144,10 +145,11 @@ Any StartupConfig::toAny(const bool forceAll) const {
 	StartupConfig def;		// Create a dummy default config for value testing
 	Any a(Any::TABLE);
 	if (forceAll || def.developerMode != developerMode)								a["developerMode"] = developerMode;
+	if (forceAll || def.experimentListEnable != experimentListEnable)				a["experimentListEnable"] = experimentListEnable;
 	if (forceAll || def.waypointEditorMode != waypointEditorMode)					a["waypointEditorMode"] = waypointEditorMode;
 	if (forceAll || def.fullscreen != fullscreen)									a["fullscreen"] = fullscreen;
 	if (forceAll || def.audioEnable != audioEnable)									a["audioEnable"] = audioEnable;
-	if (forceAll || def.jsonAnyOutput != jsonAnyOutput)									a["jsonAnyOutput"] = jsonAnyOutput;
+	if (forceAll || def.jsonAnyOutput != jsonAnyOutput)								a["jsonAnyOutput"] = jsonAnyOutput;
 	a["defaultExperiment"] = defaultExperiment;
 	a["experimentList"] = experimentList;
 
