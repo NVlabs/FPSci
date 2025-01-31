@@ -30,6 +30,7 @@ public:
 class StartupConfig {
 public:
 	bool	developerMode = false;								///< Sets whether the app is run in "developer mode" (i.e. w/ extra menus)
+	bool	experimentListEnable = false;						///< Enables the list of experiments to load even when developerMode is false
 	bool	waypointEditorMode = false;							///< Sets whether the app is run w/ the waypoint editor available
 	bool	fullscreen = true;									///< Whether the app runs in windowed mode
 	Vector2 windowSize = { 1920, 980 };							///< Window size (when not run in fullscreen)

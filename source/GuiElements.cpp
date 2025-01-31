@@ -420,7 +420,7 @@ UserMenu::UserMenu(FPSciApp* app, UserTable& users, UserStatusTable& userStatus,
 	m_expPane->setCaptionHeight(40);
 
 	// Only draw experiment selection box in developer mode
-	if (app->startupConfig.developerMode) {
+	if (app->startupConfig.developerMode || app->startupConfig.experimentListEnable) {
 		m_expPane->beginRow(); {
 			m_expPane->addDropDownList("Experiment", app->experimentNames(), &(app->experimentIdx));
 			m_expPane->addButton("Select Experiment", this, &UserMenu::updateExperimentPress);
